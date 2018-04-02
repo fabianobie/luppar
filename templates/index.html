@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% load tags %}
+
+{% block title %} Luppar - {% trans "Search Engine" %} {% endblock %}
+{% block content %}
+
+    <style>
+        .ui-autocomplete-loading {
+            background: white url("/static/img/load.gif") right center no-repeat;
+        }
+
+        .ui-autocomplete {
+            position: absolute;
+            cursor: default; /*max-*/
+            width: 300px;
+            overflow: auto;
+            padding-right: 20px;
+        }
+        .ui-menu .ui-menu-item h4 {
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+  </style>
+
+    <div class="jumbotron">
+        {% autoescape off %}{% bootstrap_messages %}{% endautoescape %}
+        <span class="text-center">
+            <form class="form-horizontal" action="/search" method="get">
+                <div class="row row-eq-height">
+                    <div class="col-xs-12 col-sm-3 col-md-3 vcenter">
+                        <h1 class="logo"><a href="/">Lu<i class="glyphicon glyphicon-search icon-flipped" style="color: gray"><i class="glyphicon glyphicon-search" style="width: 10px;right: 45px;color: black;"></i></i>ar</a></h1>
+                    </div>
+                    <div class="col-xs-12 col-sm-9 col-md-9 vcenter">
+                        <span class="hidden-xs">
+                            <br />
+                        </span>
+                        <div class="input-group form-group-lg">
+                              <input type="search" id="search_query" name="q" required="true" class="form-control clearable" placeholder="{% trans "Search" %}..." value="{{ query_text }}" />
+                              <input type="hidden" id="id_query" name="qid" />
+                              <input type="hidden" id="id_page" name="page" value="{{ page }}" />
+                              <span class="input-group-btn">
+                                <button class="btn btn-primary btn-lg" type="submit"><i class="glyphicon glyphicon-search"></i></button>
+                              </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-group">
+                  <div class="panel panel-default">
+                    <div class="panel-heading text-right">
+                      <h3 class="panel-title">
+                          <a data-toggle="collapse" href="#collapse1">{% trans "Options" %}</a>
+                          {% if total_docs > 1 %}
+                             | <a data-toggle="collapse" href="#collapse2">{% trans "Details" %}</a>
+                          {% endif %}
+                      </h3>
+                    </div>
+                    <div id="collapse1" class="panel-collapse collapse">
+                      <div class="panel-body">
+                              <div class="form-group form-group">
+                                      <div class="col-sm-3 col-md-3">
+                                          <label class="control-label">{% trans "Collection" %}</label>
+                                          <select id="source_select" name="source_select" class="form-control">
+                                              {% for source in source_list %}
+                                                <option value="{{ source.slug }}" {% if source.slug == source_select %} selected {% endif %}>{{ source.name }}</option>
+                                              {% endfor %}
+                                          </select>
+                                      </div>
+                                      <div class="col-sm-3 col-md-3">
+                                          <label class="control-label">{% trans "Query Processor" %}</label>
+                                          <select id="query_processor" name="query_processor" class="form-control">
+                                              {% for query_processor in query_processor_list %}
+                                                <option value="{{ query_processor.slug }}" {% if query_processor.slug == query_processor_select %} selected {% endif %}>{{ query_processor.name }}</option>
+                                              {% endfor %}
+                                          </select>
+                                      </div>
+                                      <div class="col-sm-3 col-md-3">
+                                          <label class="control-label">{% trans "Search Model" %}</label>
+                                          <select id="search_model" name="search_model" class="form-control">
+                                              {% for search in search_list %}
+                                                <option value="{{ search.slug }}" {% if search.slug == search_model_select %} selected {% endif %}>{{ search.name }}</option>
+                                              {% endfor %}
+                                          </select>
+                                      </div>
+                                      <div class="col-sm-3 col-md-3">
+                                          <label class="control-label">{% trans "Free search" %}</label>
+                                          <div class="text-center">
+                                            <input type="checkbox" name="free_search"  >
+                                          </div>
+                                      </div>
+
+
+                              </div>
+                      </div>
+                    </div>
+                    <div id="collapse2" class="panel-collapse collapse">
+
+                      <div class="panel-body">
+                              <div class="form-group form-group text-left">
+                                    <div class="col-md-12">{{ result_config|linebreaks }} </div>
+                              </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            </form>
+        </span>
+        {% if total_docs > 1 %}
+        <div class="panel panel-default">
+            <div class="panel-heading"> <b>{{ total_docs }}</b> {% trans "results" %} {% trans "in" %} <b>{{ total_time }}</b> {% trans "seconds" %}</div>
+            <div class="panel-body">
+
+                     <div class="list-group {% if free_search == 'on' or not documents_relevant %} col-md-12 {% else  %} col-md-6 {% endif %}">
+                     <div class="panel-heading"><i>{% trans "Retrieval" %}</i></div>
+                         {% for doc in documents %}
+                             <span class="list-group-item" style="background-color: #ffffe6">
+                                    <span class="badge">{{forloop.counter}}º</span>
+                                    <h4><a href="/document/{{ source_select }}/{{ doc.idd }}">DOC {{ doc.idd }}</a></h4>
+
+                                    <p>{{ doc.prev_text}}...</p>
+                                    <a class="" title="{% trans "Relevance Feedback" %}"><i class="glyphicon glyphicon-star"></i> {% trans "Related documents" %}...</a>
+
+                             </span>
+                         {% endfor %}
+                     </div>
+
+                    {% if free_search != 'on' and documents_relevant %}
+                        <div class="list-group {% if free_search == 'on' %} col-md-12 {% else  %} col-md-6 {% endif %}">
+                        <div class="panel-heading"><i>{% trans "Relevant" %}</i></div>
+                             {% for doc in documents_relevant %}
+                                 <span class="list-group-item" style="background-color: #e6ffe6">
+                                        <span class="badge">{{forloop.counter}}º</span>
+                                        <h4><a href="/document/{{ source_select }}/{{ doc.idd }}">DOC {{ doc.idd }}</a></h4>
+                                        <p>{{ doc.prev_text}}...</p>
+                                        <a class="" title="{% trans "Relevance Feedback" %}"><i class="glyphicon glyphicon-star"></i> {% trans "Related documents" %}...</a>
+                                 </span>
+                             {% endfor %}
+                         </div>
+                    {% endif %}
+                    <div class="col-md-12">
+                        {% bootstrap_pagination documents url="/search?"|add:request.GET.urlencode size="large" pages_to_show="9" %}
+                    </div>
+            </div>
+        </div>
+        {% elif query_text %}
+            <div class="notfound">
+                {% blocktrans %}
+                <p>
+                    Your search <b><i>"{{ query_text }}"</i></b> found no corresponding document.
+                </p>
+                <p>
+                    <ul>
+                        <li>Verify that the words are typed correctly</li>
+                        <li>Use other words for your search</li>
+                    </ul>
+                </p>
+                {% endblocktrans %}
+            </div>
+        {% endif %}
+    </div>
+<script type="application/javascript">
+$(document).ready(function() {
+
+        $( "#search_query" )
+            .on( "keydown", function( event ) {
+            if ( event.keyCode === $.ui.keyCode.TAB &&
+                $( this ).autocomplete( "instance" ).menu.active ) {
+              event.preventDefault();
+            }
+          })
+            .autocomplete({
+                  minLength: 0,
+                  source: function( request, response ) {
+                    $.ajax( {
+                      url: "query_preview",
+                      dataType: "json",
+                      data: {
+                        q: request.term,
+                          s: $( "#source_select" ).find(":selected").val()
+                      },
+                      success: function( data ) {
+                        response( data );
+                      }
+                    } );
+                  },
+                change: function (event, ui) {
+                    if(!ui.item){
+                        if(!$("[name='free_search']").bootstrapSwitch('state')){
+                            $("#search_query").val("");
+                        }
+                    }
+                },
+                select: function( event, ui ) {
+                    console.log( "Selected: " + ui.item.fields.text);
+                    this.value = ui.item.fields.text;
+                    $( "#id_query" ).val(ui.item.fields.idq);
+                    return false;
+                }
+            } ).focus(function(){
+                $(this).autocomplete("search");
+            }).autocomplete( "instance" )._renderItem = function( ul, item ) {
+                  var length = 100
+                  var re = new RegExp("^" + this.term) ;
+                  var t = item.fields.text.replace(re,"<span style='font-weight:bold;color:Blue;'>" +
+                          this.term +
+                          "</span>");
+                  return $( "<li></li>" )
+                      .data( "item.autocomplete", item )
+                      .append( "<h4 style='overflow-x:hidden; text-overflow: ellipsis; white-space: nowrap;'>" + t +  "</h4>" )
+                      .appendTo( ul );
+            };
+
+            var status_free =  '{{ free_search }}'=='on'? true : false;
+
+
+		    $("[name='free_search']").bootstrapSwitch({
+				 size:'medium',
+				 handleWidth:'50px',
+				 labelWidth:'50px',
+				 onText:'{% trans "Yes" %}',
+				 offText:'{% trans "No" %}',
+				 inverse:false,
+				 state:true,
+				 onColor:'success',
+				 offColor:'info',
+            });
+
+		    $("[name='free_search']").bootstrapSwitch('state',status_free);
+
+
+
+
+        });
+</script>
+{% endblock %}
