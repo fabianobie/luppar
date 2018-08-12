@@ -1,0 +1,1041 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+APLICAÇÃO DO Q-LEARNING PARA DEFINIÇÃO DA POLÍTICA ÓTIMA DE ACIONAMENTO DE
+CONTROLADORES PID, NEURAL E FUZZY EM UM PROCESSO DE CONTROLE DE NÍVEL
+ANTHONY ANDREY RAMALHO DINIZ, ARMANDO JOSÉ J. LEMOS FILHO, PAULO ROBERTO DA MOTTA PIRES,
+SÉRGIO MASSAO KANAZAVA, JORGE DANTAS DE MELO, ADRIÃO DUARTE DÓRIA NETO
+Departamento de Engenharia de Computação e Automação,
+Universidade Federal do Rio Grande do Norte
+Natal, Rio Grande do Norte, Brasil
+E-mails anthonyandrey@yahoo.com, armandolemos1@hotmail.com,
+prmotta@gmail.com, sergiocompras@yahoo.com.br, jdmelo@dca.ufrn.br,
+adriao@dca.ufrn.br
+Abstract
+ Using PID, fuzzy and neural controllers separately has its pros and cons, depending on the application. The possibility of applying them all together demands the implementation of an intelligent agent able to switch among them according to
+some kind of priority. This paper proposes the application of an intelligent agent, applying reinforcement learning, to determinate
+the optimal policy of switching among the three controllers (PID, neural and fuzzy), connected to a second order process (tanks
+system) with known behavior. The reinforcement learning algorithm applied was the Q-learning, using a -greedy policy, with
+the online training of the agent. Through this experiment was possible concluding that reinforcement learning can be effective to
+implement a policy of switching among different controllers, as a way of taking advantage of their individual positive characteristics and improve the system response of a physical system.
+Keywords
+ PID control, neural control, fuzzy control, reinforcement learning, Q-learning.
+Resumo
+ O uso isolado de controladores PID, fuzzy ou neural apresenta vantagens e desvantagens, dependendo da aplicação. O
+aproveitamento conjunto destes controladores_pode ser obtido através da implementação de um agente inteligente capaz de
+estabelecer a prioridade de acionamento de cada um deles. Este artigo propõe a aplicação de um agente inteligente, utilizando
+aprendizagem_por_reforço, para determinação da política ótima de acionamento de três controladores projetados de acordo com
+técnicas distintas (PID, neural e fuzzy), aplicados a um processo de segunda ordem (sistema de tanques) com dinâmica conhecida.
+O algoritmo de aprendizagem_por_reforço aplicado foi o Q-learning, utilizando uma política -gulosa, e o treinamento do agente
+foi realizado através do método online. Através desse experimento foi possível concluir que a aprendizagem_por_reforço pode ser
+eficaz para implementar uma política de chaveamento entre diferentes controladores, como uma forma de aproveitar
+características positivas de cada um deles e aperfeiçoar a saída de um sistema físico.
+Palavras-chave
+ .
+
+1
+
+Para o controle_chaveado dos fornos de
+reaquecimento, o conhecimento da temperatura
+inicial das placas é necessário para que seja escolhida
+a malha_de_controle mais adequada ao processo
+naquele momento. Nesse caso, a política ótima de
+acionamento dos controladores não será fixa, pois irá
+variar de acordo com a dinâmica da temperatura
+inicial da carga desses fornos.
+Uma técnica de controle semelhante tem sido
+estudada para proteção de construções ou pontes dos
+efeitos de fortes terremotos ou ventanias. Um desafio
+na aplicação das técnicas de controle a esses casos
+tem sido a limitação dos atuadores, porque o
+tamanho dos sistemas estudados em controle
+estrutural geralmente leva a forças de controle muito
+grandes, que podem ser irrealizáveis tanto do ponto
+de vista econômico como do prático (Kim and
+Jabbari, 2004).
+Para esse tipo de sistema, Nguyen et al. (1998) e
+Kim e Jabbari (2002), apresentaram uma
+aproximação sobressaturada, que poderia fornecer
+um bom desempenho numa mesma faixa, tal como os
+métodos de controle_linear. O principal problema
+dessa aproximação está na confiabilidade da
+aplicação de um único controlador, que, para melhor
+desempenho, necessita da sintonia com ganho alto.
+Com base no desconhecimento da natureza dos
+
+Introdução
+
+Na indústria metalúrgica, os problemas de
+modelagem_e_controle de fornos de reaquecimento
+têm sido objeto de estudo desde a década de setenta.
+Dentre as razões que levaram a esse foco, destaca-se
+o fato de o problema de controle da temperatura das
+placas não ser trivial, devido  irregularidade da
+carga do forno, uma vez que as dimensões das placas
+são variadas e também ocorrem variações de
+temperatura, tanto das placas como da própria
+atmosfera do forno (Teixeira et al., 2007a).
+Devido a essa variação nas temperaturas das
+placas e das demais zonas do processo, Teixeira et al.
+(2007b) verificaram que as malhas_de_controle de
+temperatura para os fornos de reaquecimento
+poderiam assumir valores diferentes de ganho e
+constantes de tempo. Como uma solução para esse
+problema, eles propuseram uma estratégia de
+controle com três controladores PID para a zona de
+pré-aquecimento, combinados com uma técnica de
+controle_chaveado, onde seriam estabelecidos dois
+níveis hierárquicos. Nessa solução, um dos níveis
+seria responsável por informar ao outro, com base no
+dado da placa que estaria sendo desenformada, quais
+os parâmetros do controlador a ser utilizado.
+
+3270
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+receber níveis de tensão entre -3 a 3 volts e operar
+tanto no modo de bombeio como de sucção.
+Os níveis dos tanques eram medidos através de
+um sensor de pressão em cada um deles, posicionado
+no fundo e configurado para medição de nível. A
+figura 1, adaptada de Pan et al. (2005), ilustra o
+sistema utilizado.
+Os tanques do kit possuem 25cm de altura, mas
+o nível é indicado pelo sistema em função de valores
+de tensão que variam de 0 a 4 volts. Neste trabalho
+optou-se por trabalhar diretamente com o nível
+medido em valores de tensão, razão pela qual os
+gráficos apresentados farão referência ao nível dos
+tanques em volts. Também é importante ressaltar que
+os valores de nível medidos para ambos os tanques
+serão indicados através de duas curvas nos mesmos
+gráficos, identificadas conforme legenda, sendo o
+nível do tanque 2 a variável que se desejava
+controlar. Todos os testes foram realizados
+considerando um ponto de ajuste (setpoint) de 2
+volts. Para evitar o transbordo do tanque situado no
+nível mais elevado, introduziu-se no código uma
+limitação (não-linearidade) no valor de tensão
+(intertravamento) que seria acionada sempre que
+fosse atingido o nível mais alto admissível para
+aquele tanque (4 volts), de tal modo que o bombeio
+de líquido para o tanque 1 não fosse suficiente para
+ultrapassar o nível limite.
+A implementação dos códigos dos controladores
+e do agente inteligente foram realizadas utilizando o
+software MATLAB, que é compatível com o kit
+(processo) utilizado, e pode enviar comandos para
+acionamento da bomba e leitura dos sensores
+mediante uso do driver de comunicação
+disponibilizado pela Quanser Consulting Inc. Os
+controladores foram projetados da seguinte forma
+
+terremotos, geralmente os projetos são muito
+conservadores, onde os piores casos são utilizados. O
+problema é que sintonizar o controlador apenas para
+uma faixa específica de movimentos do solo descarta
+outras faixas de terremotos potencialmente
+perigosos, que quando ocorrem prejudicam
+drasticamente o desempenho do controlador.
+Uma solução proposta por Kse and Jabbari
+(2003), foi uma técnica de escalonamento de ganho
+(gain_scheduling), que resulta em um conjunto de
+controladores
+que
+podem
+ser
+ajustados
+automaticamente, de acordo com a resposta do
+sistema, através do ajuste dos ganhos desses
+controladores.
+Nos casos citados anteriormente, os processos
+sofrem mudanças em suas dinâmicas, que no caso
+dos fornos de reaquecimento é a temperatura da
+carga e no caso dos terremotos é a imprevisibilidade
+da magnitude. Quando trabalha-se com um processo
+de comportamento conhecido, é possível projetar
+controladores distintos, de maneira que cada um
+deles produza sua própria variação na dinâmica do
+sistema (tempo de subida, tempo de estabilização,
+sobressinal, etc.). Desta forma, através do
+chaveamento entre vários controladores, pode ser
+possível operar o sistema com um desempenho
+melhor do que seria proporcionado pela aplicação de
+apenas um único controlador.
+A proposta deste artigo é partir do projeto de três
+controladores distintos (PID, neural e fuzzy) e propor
+um agente inteligente, utilizando aprendizagem por
+reforço, para estabelecer a política ótima de
+acionamento desses controladores em um sistema de
+segunda ordem. O algoritmo de aprendizagem por
+reforço aplicado foi o Q-learning, com uma política
+-gulosa, treinado através do método online.
+A estrutura deste artigo é a seguinte a Seção 2
+contempla o projeto dos controladores na Seção 3 é
+apresentado o projeto do agente inteligente utilizando
+a aprendizagem_por_reforço e na Seção 4 são
+mostrados os resultados obtidos mediante aplicação
+do agente ao sistema de tanques. As conclusões e
+perspectivas são apresentadas na Seção 5.
+2 Projeto dos Controladores
+Para o desenvolvimento deste trabalho foi
+utilizado o kit_educacional desenvolvido e
+comercializado pela Quanser Consulting Inc.,
+composto por dois tanques interligados e um
+reservatório externo. Os dois tanques estavam
+posicionados em alturas distintas, de tal forma que o
+líquido do tanque superior podia fluir livremente para
+o tanque inferior e, por fim, para o reservatório
+externo, também livremente. Uma bomba foi
+utilizada para bombear o líquido do reservatório
+externo para o tanque superior, de tal forma que o
+controle_de_nível era realizado em função da
+quantidade de líquido bombeada, como resultado do
+nível de tensão enviado para essa bomba, que poderia
+
+Figura 1. Esquemático do sistema utilizado
+
+2.1 Controlador PID
+Segundo Ogata (2000), mais da metade dos
+controladores industriais em uso atualmente utiliza
+
+3271
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+As curvas de resposta para os tanques estão
+devidamente identificadas na figura 3, onde também
+é possível constatar que o sistema de nível tem uma
+dinâmica lenta, principalmente quando se busca
+controlar o tanque 2. O setpoint do controlador foi
+2 volts, conforme anteriormente citado, e embora a
+escala de tempo seja apresentada em ciclos de
+processamento, o tempo total de execução do teste do
+controlador levou aproximadamente 1 minuto e 30
+segundos, que foi a duração padronizada para todos
+os experimentos realizados durante a coleta dos
+dados para esta pesquisa, correspondente a 120
+períodos de amostragem.
+
+estratégias de controle PID ou PID modificadas. Para
+ele, a utilidade dos controles PID reside na sua
+aplicabilidade  maioria dos sistemas_de_controle e
+sistemas_de_controle_de_processos contínuos, onde é
+sabido que as estruturas de controle PID e PID
+modificadas provaram sua utilidade ao propiciar
+controle satisfatório, embora não possam fornecer
+controle_ótimo em muitas situações específicas.
+Para projetar o controlador PID, utilizou-se o
+modelo do sistema de tanques acoplados,
+disponibilizado pela Quanser (2002), para modelar o
+sistema utilizando a ferramenta Simulink do
+MATLAB. Introduziu-se no modelo a ferramenta
+Simulink Response Optimization, combinada com o
+bloco de definição de restrições (Output
+Constraints), para tornar possível especificar a
+dinâmica desejável para o sistema, mediante
+definição de alguns parâmetros, dentre os quais
+destacam-se tempo de subida, sobressinal máximo
+(overshoot), tempo de estabelecimento e percentual
+máximo do valor de saída em torno do ponto de
+ajuste
+(setpoint)
+para
+consideração
+de
+estabelecimento da saída. Com essas especificações,
+o Simulink executava uma série de iterações para
+estimar os parâmetros do controlador PID que
+produziam a dinâmica mais próxima  desejável. A
+figura 2 ilustra a forma como foi estruturado o
+modelo no Simulink.
++-
+
+Controlador
+PID
+
+Processo
+
+2.2 Controlador Neural
+Segundo Rezende (2002, p.142), as redes_neurais
+artificiais (RNAs) são modelos matemáticos que se
+assemelham s estruturas neurais biológicas e que
+têm capacidade computacional adquirida por meio de
+aprendizado e generalização. Através das redes
+neurais artificiais, a personalidade do processo é
+armazenada pela forma como os elementos de
+processamento (nós) são conectados e pela
+importância atribuída a cada nó (peso) (Lipták,
+2006).
+A rede_neural artificial é treinada com
+exemplos, ou seja, ela contém o mecanismo
+adaptativo para aprendizado a partir desses exemplos
+e de ajustar seus parâmetros com base no
+conhecimento que é adquirido através desse processo
+de adaptação. Durante o treinamento dessas redes,
+os pesos são ajustados até que a saída da rede
+coincida com a do processo real (Lipták, 2006).
+Como uma das filosofias de projeto do
+controlador neural poderia ser a aplicação de um
+conjunto de exemplos para ajuste dos pesos
+sinápticos e reprodução de um comportamento
+desejável, decidiu-se utilizar um conjunto de dados
+que representasse o comportamento do controlador
+PID para o projeto da rede_neural no MATLAB.
+Com esse objetivo, modificou-se a configuração
+inicial do modelo utilizado no Simulink para que o
+MATLAB pudesse armazenar o conjunto de dados
+de entrada_e_saída do controlador PID, gerados no
+momento da simulação, em vetores que pudessem ser
+utilizados para o projeto do controlador neural. A
+estrutura modificada é apresentada na figura 4.
+De acordo com Campos and Saito (2004), as
+redes_neurais possuem uma propriedade de
+aproximação universal, o que significa que para
+qualquer função determinística suficientemente
+regular, existe pelo menos uma rede de neurônios
+artificiais sem retroalimentação, possuindo uma
+camada intermediária, além da de entrada e de saída,
+que aproxima esta função e suas derivadas
+sucessivas, no sentido dos mínimos_quadrados, com
+uma precisão arbitrária. Assim, com o conjunto de
+dados de entrada do sistema e saídas desejáveis, fruto
+da simulação do comportamento do controlador PID
+no Simulink, projetou-se uma rede_neural do tipo
+
+y(t)
+
+Degrau
+Figura 2. Estrutura do sistema modelado
+
+Nível dos tanques (volts)
+
+Como resultado da estimação_de_parâmetros,
+foram obtidos os ganhos proporcional kp  1,6 ganho
+integral ki  0,11 e ganho derivativo kd  0, ou seja,
+um controlador PI seria suficiente para controlar o
+nosso sistema. O projeto não foi otimizado, pois o
+objetivo maior desta pesquisa não era obter
+controladores ótimos, mas fornecer controladores
+distintos para o treinamento do agente inteligente.
+Com os parâmetros do controlador definidos, o
+código MATLAB para implementação do
+controlador PID foi testado utilizando os parâmetros
+calculados pelo Simulink, conectando o PC ao
+sistema de tanques, obtendo-se como respostas as
+curvas apresentadas na figura 3.
+
+Tempo (ciclos de processamento)
+Figura 3. Resposta do sistema de tanques ao controle PID
+
+3272
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+controladores apresentarem desempenho geralmente
+inferior ao dos operadores (Lipták, 2006).
+Entretanto, na maioria dos casos, observa-se que
+o operador é capaz de articular uma boa estratégia de
+controle, baseada em sua intuição e experiência,
+sendo que essa estratégia pode ser representada por
+um conjunto de regras de decisão heurística que, se
+utilizada adequadamente, pode gerar um controlador
+heurístico de bom desempenho (Rezende, 2005).
+O controlador baseado na lógica_fuzzy se insere
+nesse contexto, pois não necessita de um modelo
+analítico do processo, uma vez que ele calcula sua
+ações de controle em função de uma base de
+conhecimento heurística de como se deve controlar o
+processo. Por sua vez o processo pode ser complexo,
+representado por modelos imprecisos ou ter
+comportamento incerto (Campos and Saito, 2004).
+Segundo Rezende (2005), não existe um
+procedimento rigoroso de síntese para o
+desenvolvimento de um algoritmo de controle_fuzzy.
+Uma base de regras de produção deve ser criada a
+partir do conhecimento do sistema, através da
+experiência de um especialista ou das leis físicas.
+Para o caso específico deste trabalho, na
+primeira etapa, identificaram-se as entradas e saídas
+do controlador, definiram-se os níveis admissíveis
+para o mapeamento e montou-se a base de regras.
+Como entradas, adotou-se o sinal de erro
+(diferença entre o nível desejado para o tanque mais
+baixo e o nível medido no tanque) e a derivada do
+sinal de erro, para indicar a tendência que o nível do
+tanque está seguindo a saída do sistema foi o nível
+de tensão enviado para a bomba. Criamos sete
+intervalos para a entrada erro, três intervalos para a
+entrada derivada do erro e cinco intervalos para a
+saída tensão da bomba. Para a base de regras
+utilizamos o modelo Mamdani, pois permitia
+escrever regras do tipo if temp  Média and
+deltatemp  Positivo then deltaresfr 
+Positivopequeno, o que era suficiente para atender
+s exigências do projeto.
+
+perceptron_de_múltiplas_camadas (multi layer
+perceptron - MLP), com apenas uma camada oculta.
+Vetor de
+dados de
+entrada
+
++-
+
+Vetor de
+dados de
+saída
+
+Controlador
+PID
+
+Processo
+
+y(t)
+
+Degrau
+Figura 4. Estrutura do sistema modelado
+
+Nível dos tanques (volts)
+
+Após vários testes, verificou-se que uma rede
+MLP, com um neurônio na entrada, cinco neurônios
+na camada intermediária e um neurônio na saída,
+após o ciclo de treinamento com os vetores dos dados
+de erro (valor desejado  valor de saída do processo)
+e das saídas desejadas (sinal de controle para o
+processo), utilizando o algoritmo de retropropagação
+(backpropagation), apresentava o comportamento
+desejado. A criação, treinamento e teste da rede
+neural foi realizada utilizando o toolbox do
+MATLAB, devido  possibilidade da rede ficar
+disponível no Workspace do software para ser
+utilizada pelo programa implementado.
+A aplicação do controlador neural ao sistema de
+tanques produziu o resultado mostrado na figura 5.
+Para obtenção desse resultado, foram realizados
+vários treinamentos da rede, conforme mencionado
+pelo Haykin (2001), que afirma que nas aplicações
+práticas do algoritmo de retropropagação, o
+aprendizado resulta das muitas apresentações de um
+determinado conjunto de exemplos de treinamento
+para o perceptron_de_múltiplas_camadas.
+
+Banco de
+Regras
+
+Tempo (ciclos de processamento)
+Conversão
+Escalar > Fuzzy
+
+Figura 5. Resposta do sistema de tanques ao controle_neural
+
+Como não haviam sido definidas especificações
+rígidas para a dinâmica do sistema controlado pela
+rede_neural, trabalhou-se com essa sintonia, que
+proporcionou uma dinâmica um pouco mais rápida
+que o controle com o PID. O tempo de execução do
+teste foi o mesmo adotado para o PID, ou seja, 1
+minuto e 30 segundos.
+
+Máquina de
+Inferência
+
+Conversão
+Fuzzy > Escalar
+
+Sistema de Controle Fuzzy
+Sistema
+Físico
+Figura 6. Sistema de controle_fuzzy baseado no modelo de
+Mamdani
+
+As funções de pertinência para as entradas e
+saídas foram definidas de acordo com as
+recomendações de Jantzen (1998), sendo as centrais
+do tipo triangular e as extremidades do tipo trapézio.
+Inicialmente, as funções triangulares foram definidas
+
+2.3 Controlador Fuzzy
+Muitos processos_industriais operados por
+humanos não podem ser automatizados através das
+técnicas de controle_clássico, devido a esses
+3273
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+onde  representa o retorno (somatório dos
+reforços) recebido ao longo do tempo, 
+representa o sinal de reforço imediato e  é o fator de
+desconto, definido no intervalo 0    1 para
+garantir que  seja finito.
+O comportamento que o agente deve seguir para
+alcançar a maximização (minimização) do retorno é
+chamado de política e pode ser expresso por .
+Segundo Lima Jr. et al (2005), uma política ,  é
+um mapeamento de estados  em ações , tomadas
+naquele estado, e representa a probabilidade de
+seleção de cada uma das ações possíveis, de tal
+forma que as melhores ações correspondem s
+maiores probabilidades de escolha.
+Para avaliar a qualidade das ações tomadas pelo
+agente, aplica-se o conceito de função de valor
+estado-ação , , que representa uma estimativa
+do retorno total esperado, ou seja, da qualidade de
+uma ação tomada pelo agente quando está seguindo
+uma política  qualquer. Ele representa o valor
+esperado de retorno total para o estado    (estado
+atual) quando a ação  é escolhida e segue daí por
+diante a política  , conforme estabelecido pela
+expressão (3).
+
+Nível dos tanques (volts)
+
+de forma simétrica, mas na etapa de testes foi
+necessário ajustá-las para aperfeiçoar o controle do
+processo.
+A implementação do controlador_fuzzy também
+foi realizada no MATLAB, uma vez que o software
+dispõe de um toolbox onde pode ser configurada toda
+a inferência fuzzy, que fica disponível no Workspace
+para uso no MATLAB. O código do controlador foi
+escrito de maneira que quando o MATLAB
+realizasse a leitura dos sinais de entrada, calculasse o
+erro e requisitasse  inferência fuzzy que calculasse o
+sinal de controle para ser enviado  bomba. Ao final
+do projeto, a resposta do sistema ao controle_fuzzy é
+mostrada na figura 7.
+
+Tempo (ciclos de processamento)
+Figura 7. Resposta do sistema de tanques ao controle_fuzzy
+
+
+
+Da mesma forma que no caso do controle_neural,
+não adotou-se uma maior rigidez na especificação do
+controlador_fuzzy, uma vez que o objetivo do trabalho
+era apenas disponibilizar três controladores com
+características distintas para o testar o agente
+inteligente. Mais uma vez o tempo de teste obedeceu
+ao padrão, aproximadamente 1 minuto e
+30 segundos.
+
+Quando se pensa na natureza do aprendizado, a
+ideia que se aprende interagindo com o ambiente é
+provavelmente a primeira que surge. Em sintonia
+com esse conceito, Sutton e Barto (2002) definem a
+aprendizagem_por_reforço como aprender o que fazer
+ como mapear situações para ações  de maneira a
+se maximizar um sinal de recompensa numérica.
+A finalidade do processo de aprendizagem por
+reforço é orientar o agente a tomar ações que venham
+a maximizar (ou minimizar) o somatório dos sinais
+de reforço (recompensa ou punição numérica)
+recebidos ao longo do tempo, denominado retorno
+total esperado, o que nem sempre significa
+maximizar o reforço imediato a receber (Lima Jr. et
+al., 2005). A expressão para o somatório dos sinais
+de reforço em um horizonte_infinito é mostrada em
+(1-2).
+
+ 
+
+
+
+
+
+   
+
+   
+
+
+
+     ,    !
+
+
+
+(3)
+
+Sutton e Barto (2002) apresentam duas
+questões centrais para a aprendizagem_por_reforço
+ Dada uma política , , qual a melhor
+forma de estimar , ?
+ Conhecendo-se uma resposta afirmativa
+para a questão anterior, de que forma essa
+política pode ser modificada, tal que , 
+aproxime o valor ótimo dessa função, e a
+consequente política ótima correspondente
+possa ser obtida?
+A literatura contempla vários algoritmos que
+podem ser utilizados para responder essas questões,
+mas nesse trabalho optou-se pelo uso do algoritmo
+Q-learning, desenvolvido por Watkins et al. (1992),
+que dentre suas vantagens está o fato dele aproximar
+diretamente o valor ótimo de , , independente
+da política utilizada. Os valores de ,  são
+atualizados segundo a equação (4).
+
+3 Projeto do Agente Inteligente
+
+            
+
+ ,
+
+,   ,   "    max  , 
+(, )
+(4)
+
+(1)
+(2)
+
+3274
+
+onde " é a taxa de aprendizagem e  é a taxa de
+desconto.
+Dado que a convergência do algoritmo só é
+garantida se todos os pares estado-ação forem
+visitados infinitas vezes, a escolha da política a ser
+utilizada no Q-learning deve garantir que todos os
+pares tenham uma probabilidade de serem visitados
+não-nula, o que pode ser alcançado utilizando uma
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+76  6 ( 6
+
+política -gulosa, definida por (5) (Lima Jr. et al,
+2002).
+1 ( +  -. , se     arg max , 
+
+,   *
+,
+(5)
+,  5 
+-.
+,
+
+onde, 6 é o valor desejado para o nível do tanque
+2, 6 é o valor efetivamente medido para o
+referido tanque e  é o período de amostragem do
+sistema, cujo valor adotado foi de 0,5 segundos.
+76
+
+O algoritmo que implementa o Q-learning é
+apresentado na figura 8.
+Inicialize ,  arbitrariamente
+Repita (para cada episódio)
+Inicializar 
+Repita (para cada instante de tempo)
+Escolher  para  usando a política 
+Dado a ação , observe , 
+
+6
+
+  
+até condição de parada estabelecida
+Figura 8.Algoritmo Q-learning
+
+Para a utilização da aprendizagem_por_reforço,
+definiu-se que os estados admissíveis seriam os
+valores do erro (diferença entre o nível desejado no
+tanque inferior e o nível efetivamente medido).
+Como em um sistema contínuo existem infinitos
+estados em uma escala de -4 e +4 volts, discretizouse o sinal de erro com resolução de 0,2 volts e
+construiu-se uma tabela que admitia 41 estados
+discretos. Assim, o mapeamento dos estados era dado
+pela expressão (6).
+(6)
+
+onde 6 era o estado no instante 6, e 76 era o
+erro entre o nível desejado e o medido no tanque
+inferior no instante 6.
+No código de implementação do agente, cada
+controlador era referenciado por um índice e as ações
+admissíveis correspondiam  escolha (acionamento)
+de um dos três controladores. Foi adotada uma
+política -gulosa, com 90 de chance de escolha da
+ação com maior estimativa.
+Para definir a recompensa ao agente tinha-se
+que, em condições ideais, reproduzir o
+comportamento de entrada de maneira idêntica, ou
+seja, minimizar os valores de erro. Como uma
+sequência de dois valores de erro, entre intervalos
+seguidos de amostragem, produzem uma função que
+pode ser aproximada por um trapézio (figura 9), a
+melhor resposta viria se houvesse uma minimização
+da área dessa figura. Assim, concluímos que uma
+função de recompensa adequada ao nosso problema
+poderia ser uma expressa conforme apresentado em
+(7-8).
+76  76  1
+ 
+ 
+2
+
+76  1
+
+
+
+61
+
+Figura 9.Área delimitada pela curva de erro
+
+,   ,   "  
+max  , (, )
+
+6  76  5  21
+
+(8)
+
+O próximo passo foi o processo de treinamento
+do agente no início do processo de aprendizagem, o
+agente não tem qualquer conhecimento do resultado
+de escolher entre as diferentes ações, por isso ele
+realiza várias ações e observa seus resultados por
+um tempo, o agente explora muitas ações que
+resultam em recompensas cada vez maiores e
+gradualmente tende a repetí-las (exploração) após
+isto, ele adquire conhecimento a partir das ações e
+eventualmente aprende a repetir aquelas que resultam
+em maiores recompensas (explotação).
+Para o treinamento, a disponibilidade do kit para
+testes nos levou a preferir o treinamento online,
+porque o resultado final apresentaria maior exatidão
+quando comparado  aplicação do agente a um
+modelo computacional do sistema. O treinamento foi
+configurado para ser executado em 250 episódios,
+com cada um deles levando 120 períodos de decisão,
+controlados por um índice interno criado para ser
+incrementado a cada período de amostragem. Cada
+episódio levava, em média, 1 minuto e 30 segundos
+para ser executada. A seguir apresentaremos os
+resultados obtidos pela aplicação do agente.
+4 Resultados
+
+Nível dos tanques (volts)
+
+O treinamento online do agente apresentou a
+evolução ilustrada nas figuras 10a-c.
+A tabela 1 indica as políticas que foram sendo
+obtidas ao final de cada um dos episódios destacados,
+onde cada linha corresponde a uma faixa de erro e
+cada coluna corresponde a um dos controladores
+utilizados durante o experimento.
+
+Tempo (ciclos de processamento)
+
+(7)
+
+3275
+
+Figura 10a. Resposta do sistema no 1o episódio
+
+Nível dos tanques (volts)
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Tempo (ciclos de processamento)
+
+Tempo (ciclos de processamento)
+Figura 12. Sequência de chaveamento realizada pelo agente
+
+Figura 10b. Resposta do sistema no 100o episódio
+Nível dos tanques (volts)
+
+Das curvas de resposta mostradas, observa-se
+que a curva de resposta do sistema quando utilizado
+o agente se estabiliza em um tempo menor que
+aquela do controlador neural, cuja utilização é
+destacada na política do agente.
+5 Conclusão
+Tempo (ciclos de processamento)
+
+Ao final do treinamento, foi determinada a
+política ótima de acionamento dos controladores pelo
+agente, na busca de maximização da função retorno
+estabelecida. Em comparação com todos os
+controladores originalmente utilizados, o agente
+conseguiu um tempo de estabilização mais rápido e
+uma resposta menos oscilatória, provando que a
+aprendizagem_por_reforço pode ser aplicada para
+otimização de sistemas_de_controle e escalonamento
+de controladores (gain_scheduling).
+Por fim, através desse experimento foi possível
+concluir que a aprendizagem_por_reforço pode ser
+eficaz para implementar uma política de
+chaveamento entre diferentes controladores, como
+uma forma de aproveitar as melhores características
+de cada um deles e aperfeiçoar a resposta de um
+sistema físico.
+
+Figura 10c. Resposta do sistema no 250o episódio
+
+Os valores referenciados na tabela correspondem
+ probabilidade de escolha de cada controlador para
+as faixas de valor do erro discretizado. A política
+obtida após o 250 episódio foi destacada e diz
+respeito  política ótima que foi adotada para o teste
+do agente.
+Tabela 1a. Evolução da política após 1o, 100o e 250o episódios.
+Erro (v)
+-0,8
+-0,6
+-0,4
+-0,2
+0,0
+0,2
+0,4
+0,6
+0,8
+1,0
+1,2
+1,4
+1,6
+1,8
+2,0
+
+1a política
+PID neural fuzzy
+0,33
+0,33
+0,33
+1
+0
+0
+0
+0
+1
+0
+1
+0
+0
+1
+0
+0
+0
+1
+0
+1
+0
+1
+0
+0
+0
+1
+0
+0
+1
+0
+0
+1
+0
+1
+0
+0
+0
+1
+0
+0
+1
+0
+0,33
+0,33
+0,33
+
+100a política
+PID neural fuzzy
+0
+0
+1
+1
+0
+0
+0
+1
+0
+0
+1
+0
+1
+0
+0
+0
+1
+0
+0
+0
+1
+0
+1
+0
+0
+0
+1
+1
+0
+0
+0
+0
+1
+0
+0
+1
+0
+1
+0
+1
+0
+0
+1
+0
+0
+
+250a política
+PID neural fuzzy
+0
+0
+1
+1
+0
+0
+0
+1
+0
+1
+0
+0
+0
+1
+0
+0
+1
+0
+1
+0
+0
+1
+0
+0
+0
+1
+0
+1
+0
+0
+0
+0
+1
+0
+0
+1
+0
+1
+0
+0
+0
+1
+1
+0
+0
+
+Referências Bibliográficas
+Campos, M. M. and Saito, K.. (2004). Sistemas
+Inteligentes em Controle e Automação de
+Processos. Ciência Moderna Ltda., Rio de
+Janeiro  RJ.
+
+Assim, o agente foi configurado para chavear
+entre os controladores de acordo com a política
+ótima, fornecendo a resposta indicada na figura 11.
+Nível dos tanques (volts)
+
+Haykin, S. (2001). Redes Neurais Princípios e
+Prática. 2nd ed, Bookman, Porto Alegre  RS.
+Jantzen, J. (1998). Design of Fuzzy Controllers.
+Technical Report No. 98-E-864, Technical
+University of Denmark.
+Kim, J. H. and Jabbari, F. (2002). Actuator
+Saturation and Control Design for Buildings
+Under Seismic Excitation. Journal of
+Engineering Mechanics, 128(4), pp. 403-412.
+
+Tempo (ciclos de processamento)
+Figura 11. Resposta do sistema sob o comando do agente
+
+A sequência de chaveamento está ilustrada na
+figura 12, que indica no eixo das ordenadas os
+controladores utilizados e cuja curva indica o
+controlador chaveado em cada instante de decisão.
+
+Kim, J. H. and Jabbari, F. (2004). Scheduled
+Controllers for Buildings Under Seismic
+Excitation with Limited Actuator Capacity.
+Journal of Engineering Mechanics, 130(7), pp.
+800-808.
+3276
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Quanser (2002). Coupled Water Tank Experiments.
+Quanser Consulting Inc., Canadá.
+
+Kse, I. E. and Jabbari, F. (2003). Scheduled
+Controllers for Linear Systems with Bounded
+Actuators. Automatica, 39(8), pp. 1377-1387.
+
+Teixeira, B. O. S. Jota, F. G. and Teixeira, M. H.
+(2007a). Modelagem, Controle e Otimização do
+Processo dos Fornos de Reaquecimento de
+Placas. Revista Controle  Automação, Vol.18,
+No.1.
+
+Lima Jr., M. L. Melo, J. D. Dória Neto, A. D.
+(2005). Utilização de Sistemas Inteligentes
+Baseados em Aprendizagem por Reforço para a
+Otimização do Problema do Gerenciamento de
+Sondas de Produção Terrestre. 3 Congresso
+Brasileiro de PD em Petróleo e Gás, IBP,
+2004.
+
+Teixeira, M. H. Jota, F. G. Carmo, R. A. and
+Oliveira, C. A. S. (2007b). Aplicação de
+Controle
+Avançado
+nos
+Fornos
+de
+Reaquecimento de Placas da Linha de Tiras a
+Quente da Usiminas. Tecnologia em Metalurgia
+e Materiais, Vol.4, No.1, pp. 30-35.
+
+Lipták, B. G. (2006). Instrument Engineers
+Handbook Process Control and Optimization.
+4th ed, CRC Press, Boca Ranton  FL, USA.
+Nguyen, T. Jabbari, F. Miguel, S. (1998).
+Controller
+Designs
+for
+Seismic-Excited
+Buildings with Bounded Actuators. Journal of
+Engineering Mechanics, 124(8), pp. 857-865.
+
+Rezende, S. O. (2005). Sistemas Inteligentes
+Fundamentos e Aplicações. Manole, Barueri 
+SP.
+Sutton, R. S. and Barto, A. G. (2002). Reinforcement
+Learning An Introduction. 4th printing, The MIT
+Press.
+
+Ogata, K. (2000). Engenharia de Controle Moderno.
+3ed, LTC, Rio de Janeiro  RJ.
+
+Watkins, C. J. C. H. and Dayan, P. (1992). Qlearning Machine Learning. Kluwer Academic
+Publishers, pp. 279-292.
+
+Pan, H. Wong, H. Kapila, V. Queiroz, M. S.
+(2005). Experimental Validation of a Nonlinear
+Backstepping Liquid Level Controller for a State
+Coupled Two Tank System. Control Engineering
+Practice 13, pp. 27-40.
+
+3277

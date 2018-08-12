@@ -1,0 +1,982 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+DESENVOLVIMENTO DE UM CONTROLADOR MULTIVARIÁVEL PARA FILTROS UNIVERSAIS
+MARCOS B. KETZER, CURSINO B. JACOBINA.
+LEIAM, Departamento de Engenharia Elétrica, Universidade Federal de Campina Grande
+Caixa Postal 10053, 58.429-970, Campina Grande, Paraíba.
+E-mails marcos.ketzer@ee.ufcg.edu.br, jacobina@dee.ufcg.edu.br
+
+Abstract The Unified Power Quality Conditioner (UPQC) is used as an efficient solution to problems related to power quality.
+The topology, which integrates the series and parallel active filter, has capacity of compensation of both, solving problems concerning the source as well as the load. However, the compensation capacity and the efficiency of the converter are associated to
+the implemented control. Thus, this paper uses a multivariate approach for synthesis and development of a decoupled control.
+The proposed controller coordinates the UPQC to effectively compensate for the disturbances caused by nonlinear loads and
+voltage harmonics on the network, both when on steady state and under transient conditions.
+Keywords Active Filter, UPQC, Multivariable Control.
+Resumo O Condicionador Unificado de Qualidade de Energia (Unified Power Quality Conditioner, UPQC) é utilizado como
+uma solução eficiente para problemas relacionados  qualidade_de_energia. A topologia, a qual integra o filtro_ativo série e o paralelo, tem capacidade de compensação de ambos, solucionado problemas relativos  fonte assim como  carga. Entretanto, a capacidade de compensação assim como a eficiência do conversor está associado aos controladores implementados. Sendo assim,
+este trabalho utiliza uma abordagem multivariável para síntese e desenvolvimento de um controle desacoplado. O controlador
+proposto coordena o UPQC para compensar de forma efetiva os distúrbios causados por cargas não-lineares e harmônicos de tensão da rede, tanto em regime quando em condições transitórias.
+Palavras-chave .
+.
+
+1 Introdução
+O aumento de cargas com comportamento nãolinear usualmente devido ao uso de sistemas de conversão baseados dispositivos eletrônicos de potência,
+no mais diversos meios, deteriorou a Qualidade de
+Energia Elétrica (QEE). Neste contexto, vários dispositivos, tais como (Dynamics Voltage Restorer,
+DVR), fontes_ininterruptas_de_energia (Uninterruptible Power Supplies, UPS), e Filtros Ativos de Potência (Active Power Filters, APF), tem a proposta de
+correção destes problemas (Kwan, 2009). Várias
+pesquisas mostram que os Condicionadores Unificados de Qualidade de Energia (Unified Power Quality
+Conditioner, UPQC, também chamado Filtro Universal), uma integração de filtros_ativos série e paralelo,
+têm a capacidade de solucionar simultaneamente
+quase todos os problemas associados á QEE. Estas
+características encorajam seu contínuo desenvolvimento, buscando aprimorar a eficiência e reduzir
+custos.
+As estratégias de controle são um dos tópicos
+mais relevantes em sistemas eletrônicos em potência.
+A capacidade de compensação de filtros_ativos está
+diretamente associada aos algoritmos de controle
+utilizados. Especificamente para UPQC, os projetos
+de controle não são triviais, pois se caracterizam
+como sistemas_multivariáveis. Sendo assim, este
+assunto tem despertado a atenção de diversos pesquisadores e várias estratégias têm sido desenvolvidas
+ao longo dos anos (Khadkikar, 2011). Entretanto,
+
+ISBN 978-85-8001-069-5
+
+maior parte das técnicas desenvolvidas são abordam
+simplificações que ignoram diversos aspectos do
+conversor unificado. Em outros casos, quando é
+abordado maior detalhamento, há dificuldades de
+implementação devido aos requisitos de processamento e sensores.
+As técnicas mais comuns de controle de filtros
+ativos preocupam-se em detectar os harmônicos, ou
+outros problemas de QEE, e posteriormente utilizam
+o filtro com um controle de saída de corrente para
+injetar as componentes de cancelamento. Tais técnicas não tem realimentação dos sinais que verificam
+necessariamente se o sistema foi compensado, sendo
+assim, estes são de certa forma, métodos de malha
+aberta. Ainda, usualmente os filtros série e paralelo,
+são controlados de forma independente, não relevando o acoplamento que existe entre ambos os conversores (Li, 2006).
+Uma proposta com base em controle_preditivo é
+feita em Kwan (Kwan, 2007), que trata o UPQC
+como uma unidade única. As questões multivariáveis
+são tratadas com relativa facilidade, entretanto, requerem um processamento elevado o que limita suas
+aplicações em tempo_real. Outras estratégias de controle_não-linear baseados em sliding mode control
+(Kolhatkat, 2005), deadbeat (Kamran, 1998), controle_não-linear com realimentação linearizada (Le,
+2008), e as baseadas em modelos (Model-Based)
+como em Merlin (Melin, 2011), são propostas alternativas ao problema. Cada técnica não-linear encontra dificuldade ou na predição do comportamento do
+sistema, ou nos aspectos de implementação, sendo
+2698
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+elas limite de processamento, ou ainda, robustez,
+sendo sensível aos erros_de_modelagem. Visando
+contornar essas dificuldades, técnicas de controle
+foram desenvolvidas, levando em consideração também os aspectos multivariáveis (Kwan, 2009). A
+síntese desses controladores, entretanto, não é simples e possui vários graus de liberdade que dependem
+da visão do projetista e da planta em análise, do qual
+depende o sucesso da técnica. Visando simplificar as
+estratégias, algumas baseadas em heurística e adaptação foram desenvolvidas, entre elas, a aplicação de
+redes_neurais artificiais, (Ming, 2006), e otimização
+não-linear, tal como particle_swarm_optimization
+(Karanki, 2010). Novamente essas técnicas têm a
+previsão de comportamento limitada, ou, sobrecarregam os processadores, exigindo investimentos significativos em hardware.
+Este trabalho consiste no desenvolvimento de
+um controlador multivariável linear, mantendo a
+simplicidade de implementação característica dos
+mesmos, e ainda, abordando o sistema do UPQC
+como MIMO, tratando os problemas de acoplamento.
+O controlador desenvolvido dá ao UPQC capacidade
+de correção de harmônicos tanto derivados da fonte,
+como da carga_não-linear. Alternativamente, o compensador também permite compensar reativos na
+frequência fundamental, afundamentos e sobretensões. Para comprovar os aspectos teóricos formulados, o controlador desenvolvido é validado através
+da simulação no software SIMULINK da
+MathWorks.
+
+O circuito consiste em dois inversores de tensão
+(Voltage Source Inverters, VSI) de ponte_completa.
+O primeiro VSI é conectado em série, através de um
+transformador, e o segundo em série, através de uma
+indutância. O transformador faz-se necessário devido
+ao acoplamento do barramento contínuo (CC). Seu
+comportamento, entretanto, pode ser ignorado se
+considerado uma pequena reatância de dispersão e
+perdas não significativas. Por fim, a Figura 2 mostra
+o circuito_equivalente para o UPQC, considerando os
+VSI como fontes de corrente controladas e a carga
+representada por uma fonte de corrente. A representação de carga como fonte de corrente é mais coerente devido s múltiplas componentes harmônicas
+envolvidas no modelo, sendo, portanto, uma carga
+genérica.
+
++
+-
+
+Figura 2. Topologia da UPS.
+
+A partir do circuito_equivalente, se obtém a seguinte representação em espaço_de_estados
+
+2 Desenvolvimento do Controlador
+
+
+(1)
+(2)
+
+2.1 Modelo do filtro universal
+A Figura 1 mostra o circuito típico de UPQCs
+monofásicos. A estrutura do UPQC é basicamente a
+união do filtro_ativo_de_potência série, e o paralelo.
+Usualmente o filtro série é responsável pela compensação dos distúrbios_de_tensão na fonte de energia, e
+o filtro paralelo é responsável pela compensação da
+corrente de carga. Ainda, o filtro paralelo normalmente é o responsável pelo controle do barramento
+CC (Khadkikar, 2011).
+
++
+-
+
+Onde os vetores de estado são definidos por
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+E as matrizes dos coeficientes por
+
+
+
+
+
+
+
+
+Carga
+Não
+Linear
+
+
+
+
+
+
+
+
+
+
+
+*
+
+
+
+
++
+
+
+
+
+
+
+
+
+*
+
++
+
+Figura 1. Topologia do UPQC.
+
+ISBN 978-85-8001-069-5
+
+2699
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+
+
+Por se tratar de um sistema linear, a estabilidade
+do sistema pode ser verificada pelos autovalores da
+matriz de transição (
+)) definido por (3).
+)
+
+(
+
+)
+
+(3)
+Se forem consideradas as perdas pequenas
+(
+e
+), a expressão (3) pode ser simplificada na forma (4).
+(
+
+(8)
+(9)
+
+Que resulta na equação na matriz de transferência
+dada por (10).
+)
+
+)
+
+)
+
+)
+
+))
+
+( (
+
+Para determinação dos ganhos uma matriz intermediária é definida em (10).
+
+
+
+
+
+(4)
+
+Por (4) é verificado, que o sistema possui dois
+autovalores puramente complexos, característicos de
+sistemas ressonantes. Dessa forma, o não cuidado no
+projeto MIMO, pode resulta em interações entre os
+componentes do UPQC.
+2.2 Método de desacoplamento por retroação de
+estados.
+O método de desacoplamento por retroação de
+estados para sistemas_lineares foi originalmente proposto por Falb (Falb, 1967). O método proposto pelo
+autor descreve matrizes de ganho de retroação (feedback) e direto (feed-foward). Tal, método considera
+um sistema modelado como as expressões (5) e (6),
+com entradas, e saídas e estados.
+
+
+(5)
+(6)
+
+Pela definição, o desacoplamento é realizado
+entre entrada_e_saída, considerando que ambas em
+mesmo número, de forma que a primeira entrada seja
+SISO com a primeira saída. Os estados do sistema
+equivalente, por sua vez, não estão necessariamente
+desacoplados.
+O sistema do UPQC proposto difere de (1) e (2).
+Entretanto, como a matriz
+é nula, esta pode ser
+desprezada, levando a forma proposta pelo autor.
+Como neste trabalho a rejeição aos distúrbios é realizada pelos próprios controladores de retroação de
+estados, não há interações entre os atuadores frente 
+rejeição que interfiram ao funcionamento do mesmo.
+O desacoplamento é desenvolvido em função das
+ações de controle. Ainda, o acoplamento entre os
+distúrbios deve ser considerado numa possível compensação feed-foward. O controle de desacoplamento
+tem a estrutura definida em (7).
+
+(10)
+
+)
+
+
+
+
+
+(11)
+
+Onde
+para cada
+é o mínimo
+que faça
+, ou
+se
+sendo
+e
+éa
+linha da matriz .
+No Teorema I de Falb (Falb, 1967) está a prova de
+condição suficiente e necessária para que se a matriz
+for não singular, existe uma matriz de ganhos e
+que desacoplam o sistema MIMO. As matrizes de
+ganhos são então dadas por (12) e (13).
+
+
+
+(12)
+(13)
+
+O sistema em malha_fechada desacoplado resultante transforma o sistema numa forma diagonal com
+integradores tal como (14), o que pode trazer problemas no desenvolvimento e realização do controle
+em malha_fechada.
+
+)
+
+
+
+
+
+
+
+
+
+
+
+(14)
+
+Entretanto, existe a possibilidade de alocação de
+pólos definindo a matriz como (11).
+
+
+
+
+E outra matriz
+presso em 16.
+
+
+
+
+
+(15)
+
+definida cada linha por
+)
+
+, ex-
+
+(16)
+
+(7)
+Por fim, os ganhos são definidos por (17) e (18).
+Onde
+representa as entradas do controle. O
+sistema se torna
+
+ISBN 978-85-8001-069-5
+
+(17)
+(18)
+2700
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A matriz de transferência resulta em (19). Esta
+tem a forma diagonal como em (14), mas sem ter
+necessariamente pólos na origem, mas alocados conforme desejado.
+
+Por (25) é evidente que o sistema está desacoplado, e o projeto do controlador multivariável pode ser
+então abordado como dois sistemas SISO.
+2.4 Controladores SISO
+
+)
+(
+)
+
+(19)
+
+2.3 Desacoplamento MIMO do UPQC.
+Considerando o equacionamento do UPQC em
+(1) e (2), e a metodologia de desacoplamento por
+retroação de estados descrito na seção anterior, é
+possível desacoplar as interações entre os filtros série
+e paralelo. Sendo assim, a matriz definida em (11),
+para o UPQC, resulta em (20).
+
+Uma vez o sistema desacoplado, o projeto SISO
+pode ser realizado. O controle dos sistemas SISO é
+desenvolvido utilizando retroação de estados, alocando os polos de cada sistema. Para este projeto, é
+necessário obter dois sistemas a partir daquele representado por (23) e (24). A representação de cada
+sistema equivalente é possível através da sua realização mínima onde os estados não controláveis e não
+observáveis são eliminados.
+A partir da inspeção de (23) e (24) obtém-se as
+seguintes realizações mínimas de (26) a (29), sendo
+referente ao sistema do filtro série e o filtro paralelo.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(26)
+
+(20)
+
+
+
+
+
+
+As matrizes de ganhos definidas em (12) e (13),
+resultam em (21) e (22).
+
+
+
+
+
+
+
+*
+
+
+
+
+
++
+
+
+
+
+
+
+
+
+
+(21)
+
+
+
+
+
+(22)
+
+O sistema em malha_fechada resultante tem a
+representação definida em (23) e (24).
+
+
+(23)
+(24)
+
+
+
+(27)
+
+*
+
+
+
++
+
+
+(28)
+(29)
+
+Apesar do desacoplamento entre entrada_e_saída
+ter sido demonstrado por (25), os sistemas SISO
+ainda possui estados em comum ( ) que o acoplaria
+novamente caso uma técnica de retroação seja utilizada. Para resolver este problema, uma transformação de similaridade pode ser utilizada. Sendo assim,
+é considerada a transformação definida por (30).
+
+(30)
+
+Onde
+
+
+
+Pelas características de linearidades do modelo
+desenvolvido, de (30) pode-se obter (31).
+
+
+
+
+
+
+
+
+
+
+)
+
+*
+
+
+
+
+
+(31)
+
++
+
+A matriz de transferência do sistema em malha
+fechada tem a forma (25).
+
+)
+
+
+
+(25)
+
+Logo, o sistema definido em (26) e (27) assume
+a representação dada em (32) e (33).
+
+ 
+
+*
+
++ 
+
+
+*
+
+
++
+
+
+(32)
+
+(33)
+
+A partir dos sistemas equivalentes desenvolvidos
+para o controle do filtro paralelo e série independente, podem ser projetados os controladores por retroa-
+
+ISBN 978-85-8001-069-5
+
+2701
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ção de estados, onde neste trabalho, é utilizada a
+técnica de alocação de pólos. A ação integrativa é
+incluída no projeto para garantir o rastreamento assintótico da referência. A Figura 3 apresenta o esquema de controle incluindo a técnica de desacoplamento.
+
+Kfas
+
+hipótese de uma compensação total de harmônicos,
+os sinais na frequência fundamental são distúrbios
+que trazem erro de fase nos controladores da malha
+rápida. Além disto, o próprio controle apresenta erros
+em regime que em certar circunstâncias podem tornar-se significativos. Para a convergência assintótica
+do erro, a teoria do princípio do modelo interno oferece uma solução. O principio do modelo interno
+afirma que um sistema seguirá um sinal de referência, com rejeição aos distúrbios, sem erro em regime,
+quando o modelo que gera essa referência esta incluído no sistema realimentado estável. No caso do
+sistema UPQC, a aplicação do princípio do modelo
+interno leva a aplicação do controlador_ressonante
+definido em (34).
+)
+
+Kfap
+
+UPQC
+
+(34)
+
+SPWM
+
+Figura 3. Esquema de Controle Multivariável- Malha Rápida.
+
+2.5 Esquema de Controle Completo
+
+Onde
+é a frequência da rede e
+é a ganho do
+controlador.
+O esquema de controle desenvolvido para o
+UPQC é apresentado na Figura 3. Além das estruturas já definidas pelos ganhos de desacoplamento, o
+controlador da malha rápida por alocação de pólos e
+os compensadores ressonantes, é desenvolvido o
+controle do barramento contínuo, definido pela tensão no capacitor.
+
+O controlador proposto trabalha pela imposição
+do sinal senoidal nas variáveis de saída da rede, com
+fase, amplitude e ângulo específicos. Dessa forma, na
+
+PI
+
+Kfas
+
+Kfap
+
+UPQC
+
+SPWM
+
+PLL
+
+Figura 4. Esquema de Controle Multivariável Proposto.
+
+Um PLL (Phase-Loked-Loop) é utilizado para obter o angulo de sincronização da fundamental, e assim extrair esta de . Os ângulos obtidos são utilizados para gerar a referência de
+e em fase com a
+fundamental de .
+A amplitude referência
+é determinada pelo
+controlador Proporcional-Integrativo (PI) do barramento de corrente contínua, que modula a corrente
+utilizando o sinal do PLL, permitindo assim, a operação com fator_de_potência unitário. A escolha de
+
+ISBN 978-85-8001-069-5
+
+amplitude e fase de
+é arbitrária, e pode ser definida em função das características desejadas de operação, minimização_de_perdas, entre outros.
+3 Resultados de Simulação
+Para verificar e validar o controlador desenvolvido foram realizadas simulações utilizando o software
+SIMULINK da MathWorks utilizando os parâmetros da tabela I. O conversor opera com chaveamento
+2702
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Tabela 1. Caracterização do UPQC.
+0.01 p.u.
+
+0.01 p.u.
+
+0.1 p.u.
+
+0.2 p.u.
+
+10 p.u.
+
+Para verificar o desempenho do conversor é analisada sua operação sob regime, e transitória.
+3.1 Resposta em Regime
+No primeiro momento o UPQC é validado operando em regime com uma carga linear, sendo composta por um indutor e resistor equivalente (cada
+qual com valor de 0.7 p.u.). Nesta situação é utilizada
+para compensação somente de componentes na frequência fundamental da rede, fazendo a correção do
+fluxo_de_potência, e da tensão disponível  carga. A
+Figura 5 apresenta os resultados no domínio_do_tempo da simulação realizada. A THD da corrente de
+entrada é 0.5, enquanto que a tensão de saída tem
+uma THD de 0.02. Como verificado, a compensação é realizado de forma efetiva tanto na corrente de
+entrada, como na tensão entregue a carga.
+Ig
+I-FAP
+Vg
+V-Carga
+
+Amplitude (p.u.)
+
+2
+
+1
+
+0.81
+
+0.82
+0.83
+Tempo (s)
+
+0.84
+
+0.85
+
+Figura 5. Resultados de Simulação  Carga Linear.
+
+2
+
+Vg
+I-Carga
+
+1
+Amplitude
+
+1
+
+0
+
+-1
+
+-2
+0.8
+
+0.81
+
+0.82
+0.83
+Tempo (s)
+
+0.84
+
+0.85
+
+3.2 Resposta Transitória
+
+-1
+
+0
+
+-1
+
+-2
+0.9
+
+Ig
+I-Carga
+V-Carga
+Vg
+
+2
+
+Figura 7. Resultados de Simulação  Carga Não-linear.
+
+0
+
+-2
+0.8
+
+No segundo caso é verificado o desempenho do
+UPQC para mitigação de harmônicos. Neste caso é
+considerada uma carga_não-linear descrita por uma
+ponte retificadora completa, contemplando filtro
+capacitivo no lado CC. Também, no mesmo cenário,
+é considerada a adição do terceiro harmônico, com
+amplitude de 0.2 p.u., sobreposto  fundamental da
+rede. Os resultados de simulação para a corrente de
+carga e tensão de da rede em regime são apresentados na Figura 6. A Figura 7 apresenta os resultados
+de simulação, com os sinais de compensação do filtro
+universal. A THD da corrente da carga é de 48.3
+enquanto que a corrente de entrada é de 1.9. A
+tensão de saída é de 0.6. Como verificado, o UPQC
+consegue efetivamente manter a tensão de carga
+senoidal, assim como a corrente de entrada.
+
+Amplitude (p.u.)
+
+de 20Khz, e o controle opera numa frequência de
+80Khz.
+
+0.91
+
+0.92
+0.93
+Tempo (s)
+
+0.94
+
+Figura 6. Resultados de Simulação  Carga Não-linear. Corrente
+da carga e tensão da rede.
+
+ISBN 978-85-8001-069-5
+
+Uma vez validada a operação em regime, também
+é necessário verificar se o conversor opera com estabilidade sob transitórios na fonte de entrada, ou na
+carga. A análise de operação em transitórios é relevante, pois além de verificar a estabilidade do controlador, ela permite determinar a capacidade da UPQC
+realizar compensações de QEE, não necessariamente
+relativas aos harmônicos.
+Sendo assim, considerando a carga_não-linear utilizada na verificação de mitigação de harmônicos, é
+desenvolvido um cenário onde ocorre sua desconexão. As Figuras 8, 9 e 10 apresentam os resultados de
+simulação durante o transitório. Quando ocorre a
+desconexão de carga, a corrente de entrada é ajustada
+para variar conforme a necessidade através do projeto do controlador de tensão do barramento contínuo.
+Os requisitos de velocidade de atuação do controle
+dependem do capacitor utilizado. De forma geral,
+quanto menor o capacitor é necessário uma resposta
+mais rápida para não afetar os controladores de malha rápida, que podem levam a operação em regiões
+não-lineares do conversor (saturação). Na Figura 8 é
+apresentado o transitório na corrente de carga, e a
+corrente de entrada. Na Figura 9 são apresentados os
+
+2703
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+sinais de compensação, assim como aqueles associados ao controle. Como verificado, o sistema é estável
+operando no transitório em questão. Na Figura 10 é
+apresentada a tensão do barramento contínuo
+,
+assim como a respectiva corrente de referência
+.
+A envoltória da corrente de entrada é reduzida até a
+convergência mostrando a estabilidade assintótica do
+controlador de tensão do barramento contínuo.
+Ig
+I-Carga
+
+1
+
+2
+
+Ig
+I-FAP
+V-Carga
+Vg
+
+0
+
+-1
+
+-2
+0.95
+
+1
+
+1.05
+
+1.1
+
+Tempo (s)
+
+Amplitude (p.u.)
+
+Amplitude (p.u.)
+
+2
+
+O segundo cenário transitório verifica a capacidade do controle contra afundamentos_de_tensão.
+Neste caso o transitório ocorre na fonte , caindo
+instantaneamente para 0.7 p.u., e retornando a forma
+original após aproximadamente um ciclo e meio da
+fundamental. A verificação de afundamento é realizado considerando os harmônicos da rede e da carga
+não-linear dos casos anteriores. Os resultados de
+simulação são apresentados na Figura 11. Nestas
+condições, o conversor opera de forma estável, ainda,
+corrigindo o afundamento e os harmônicos de tensão
+e corrente.
+
+1
+
+0
+
+-1
+
+Figura 8. Resultados de Simulação - Transitório de Carga.
+
+-2
+
+Amplitude (p.u.)
+
+2
+
+Ig
+I-FAP
+V-Carga
+Vg
+
+1
+
+0
+
+-1
+
+-2
+0.95
+
+1
+Tempo (s)
+
+1.05
+
+Figura 9. Resultados de Simulação  Transitório de Carga.
+
+1.5
+
+Vcc
+Referência Ig
+
+1
+
+1.01
+
+1.02
+
+1.03 1.04 1.05
+Tempo (s)
+
+1.06
+
+1.07
+
+1.08
+
+Figura 11. Resultados de Simulação  Afundamento de Tensão.
+
+5 Conclusão
+Este trabalho apresentou a síntese e desempenho
+de um controlador multivariável com desacoplamento aplicado a UPQC. O presente controle permite o
+UPQC corretamente compensar problemas de harmônicos e afundamentos_de_tensão, operando de
+forma estável nas condições de regime e transitórias.
+Em relação s técnicas presentes na literatura,
+este trabalho contribui com o desenvolvimento de um
+controle_linear, o que facilita a predição do comportamento do sistema em malha_fechada, com a capacidade de tratar de forma eficiente a interação entre o
+filtro série e o paralelo. Ainda, este utiliza uma estrutura de fácil implementação, utilizando topologias
+convencionais e elegantes sob ótica de controle.
+
+Amplitude (p.u.)
+
+1
+
+Agradecimentos
+0.5
+
+Os autores agradecem ao apoio e suporte do
+CNPq.
+
+0
+
+Referências Bibliográficas
+-0.5
+
+-1
+0.8
+
+1
+
+1.2
+
+1.4
+Tempo (s)
+
+1.6
+
+1.8
+
+Figura 10. Resultados de Simulação  Transitório de Carga.
+
+ISBN 978-85-8001-069-5
+
+2
+
+Falb, P. L., Wolovich, W. A., (1967). Decoupling in
+the Design and Synthesis of Multivariable Control Systems. IEEE Transactions on Automatic
+Control, Vol., AC-12, No. 6, pp 651-659.
+Kamran, F., Habetler, T.G., (1998). Combined
+Deadbeat Control of a Series-Parallel Converter
+
+2704
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Combination Used as a universal Power Filter.
+IEEE Transactions on Power Electronics, Vol.
+13, No. 1, pp160-168.
+Karanki, S. B., Mishra, M. K., Kumar, B. K., (2010).
+Particle Swarm Optimization-Based Feedback
+Controller for Unified Power Quality Conditioner. IEEE Transactions Power Delivery, Vol. 25,
+No. 4, pp281402824.
+Khadkikar, V. (2011). Enhancing Electric Power
+Quality Using UPQC A comprehensive Overview. IEEE, Transactions on Power Electronics,
+Vol. 27, pp 2284-2297.
+Kolhatkat, Y. Y., Errebeli, R. R., Das, S. P. (2005).
+A sliding mode controller based optimum UPQC
+with minimum VA loading. In proc. Power Engineering Society (PESGM), pp871-875.
+Kwan, K. H., Chu, Y. C., So, P. L. (2009). ModelBase H Control of a Unified Power Quality
+Conditioner. IEEE Transactions on Industrial
+Electronics, Vol. 56, No. 7, pp 2493-2504.
+Kwan, K. H., Png, Y. S., Chu, Y. C., So, P. L.,
+(2007). Model predictive Control of Unified
+Power Quality Conditioner. IEEE Systems and
+Control, No. 1, pp 25-34.
+Le, J., Xie, Y., Zhi, Z., Lin, C (2008). A nonlinear
+control strategy for UPQC. IEEE Electrical Machines and Systems, pp2067-2070.
+Li, P., Bai, Q., Li, G. (2006). Coordinated Control
+Strategy for UPQC and Its Verification. IEEE,
+Power Engineering Society General Meeting, pp
+1-8.
+Melin, P. E., Espinoza, J. J., Baiers, C. R., Guzman J.
+I., Espinosa, E. E. (2011). Unified Power Quality Conditioner based on Current Source Converters for Harmonic Mitigation using Decoupled Control Strategy. IECON 2011 - Conference on IEEE Industrial Electronics Society, pp
+4152-4157.
+Ming, Z., Jian-Ru, W., Zhi-Qiang, W., Jian C.
+(2006). Control method for power quality compensation based on Levenberg-Marquardt optimized BP neural networks. IEEE Electronics
+and Motion Control,Vol. 3, pp 1-3.
+
+ISBN 978-85-8001-069-5
+
+2705

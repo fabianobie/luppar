@@ -1,0 +1,953 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+UM ALGORITMO DE VIDA ARTIFICIAL PARA AGRUPAMENTO DE DADOS
+MARCIO F. DAVID, LEANDRO N. DE CASTRO, DIEGO G. SANTOS
+Laboratório de Computação Natural, Faculdade de Computação e Informática e Programa de Pós-Graduação
+em Engenharia Elétrica, Universidade Presbiteriana Mackenzie
+Rua da Consolação 930, Consolação, 01302-090, Sao Paulo, SP
+E-mails mfdavid@gmail.com, lnunes@mackenzie.br, diegogadens@gmail.com
+Abstract This paper presents the use of an artificial life algorithm applied to the task of data clustering, drawing on emergent
+behavior in groups of agents. The new algorithm presented, called cBoids, is based on the classic Boids model, with some modifications introduced in the agents behavior. In order to subdivide a database by these agents, a group of Boids is used, where
+each Boid represents an object of the database. The three original rules of the Boids model were modified so that the values of
+each object can influence their behavior. In addition, two new rules, responsible for the creation and destruction of centroids
+were proposed. Based on experiments, we can say that the algorithm successfully grouped four databases.
+Keywords Data mining, Natural Computing, Boids.
+Resumo Este artigo apresenta a aplicação de um algoritmo de vida artificial  tarefa de agrupamento_de_dados, inspirando-se
+em comportamentos emergentes de grupos de agentes. O novo algoritmo apresentado, chamado de cBoids, é baseado no modelo
+clássico de Boids, com algumas modificações inseridas no comportamento dos agentes. A fim de subdividir uma base de dados
+através destes agentes, um grupo de Boids é utilizado, onde cada Boid representa um objeto da base. As três regras originais do
+modelo Boids foram modificadas para que os valores de cada objeto influenciem em seu comportamento. Além disso, duas novas regras, responsáveis pela criação e destruição de centróides foram criadas. Com base nos experimentos realizados, pode-se
+dizer que o algoritmo classificou com sucesso quatro bases de dados.
+Palavras-chave .
+
+1
+
+algoritmo e seus objetivos. Na Seção 3 é apresentada
+uma breve introdução sobre Agrupamento de Dados.
+Em seguida, nas Seções 4 e 5, são apresentados, respectivamente, o modelo Boids e o algoritmo cBoids
+proposto. As avaliações comparativas com o algoritmo k-means são descritas na Seção 6. Por fim, na
+Seção 7 são apresentadas as conclusões obtidas com
+o desenvolvimento deste trabalho.
+
+Introdução
+
+Os algoritmos bio-inspirados têm sido utilizados
+para vários propósitos há um longo tempo. Redes
+neurais artificiais, algoritmos_genéticos, sistemas
+imunológicos artificiais e o modelo de Boids são
+apenas alguns exemplos de sistemas bio-inspirados
+que podem ser aplicados em diversos problemas de
+engenharia, por exemplo, agrupamento_de_dados,
+otimização e navegação_autônoma (de Castro  Von
+Zuben, 2000), (Handl, 2007), (Mondada, 2003), (de
+Castro, 2007).
+Este artigo apresenta um algoritmo de agrupamento_de_dados baseado em um modelo de vida artificial. Neste modelo é utilizado um grupo de agentes
+não dotados de inteligência individual, sendo que
+todos estes agentes se movimentam em um dado espaço bi-dimensional. Ainda que os membros do grupo não possuam características comportamentais exclusivas, quando a movimentação de todos inicia, um
+comportamento emergente coletivo pode ser observado. O algoritmo pioneiro que discute esta abordagem, apresentado por Reynolds (1987), é utilizado
+como base para o desenvolvimento do algoritmo
+cBoids (Clustering Boids) através da modificação de
+suas três regras básicas e da adição de mais duas regras probabilísticas relacionadas ao problema de
+agrupamento_de_dados.
+O restante deste artigo está organizado da seguinte maneira. Primeiramente, na Seção 2, é introduzida a motivação que inspirou a criação deste novo
+
+2
+
+Motivação e Objetivos
+
+A classe dos algoritmos bio-inspirados, ou inspirados na natureza, recebe destaque devido  eficiência eou eficácia obtida na utilização destes para
+resolução de problemas complexos (de Castro, 2007).
+Os algoritmos inspirados na natureza continuam sendo propostos e aqueles já existentes também recebem
+melhorias continuamente. Sendo assim, o objetivo
+deste trabalho é apresentar um novo algoritmo bioinspirado para a tarefa de agrupamento_de_dados.
+Através da observação do comportamento de
+pássaros e sua capacidade de formação de bandos,
+algumas teorias para a criação de mecanismos similares para a realização de agrupamento_de_dados foram
+estudadas e testadas. Apesar de o modelo escolhido
+(Boids) ter sido criado inicialmente para ser utilizado
+em animações computacionais, este se mostrou suficientemente robusto para ser utilizado em agrupamento_de_dados aplicando-se apenas algumas modificações em suas regras de funcionamento. Sendo assim, este artigo apresenta o funcionamento do algo-
+
+5073
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+ritmos sempre trarão a mesma configuração final dos
+grupos, enquanto outros podem resultar em diferentes
+configurações em cada uma de suas execuções.
+
+ritmo cBoids, juntamente com os testes e os resultados alcançados.
+Sob uma perspectiva da tarefa de agrupamento
+de dados, a maioria dos algoritmos descritos na literatura assume que a quantidade de grupos é fornecida
+pelo usuário (Kaufman, 1990 Miligan,1996). Dessa
+forma, estes algoritmos se concentram em obter k
+grupos de objetos semelhantes de acordo com algum
+critério pré-estabelecido. Liu (1968) define que o
+número de possibilidades de se classificar n objetos
+em k grupos é dado por
+k 
+1 k
+n
+(1)
+N (n, k )   (1) i  k  i 
+k! i  0
+i
+Ao considerar que o valor de k é desconhecido, o
+número total de maneiras de se agrupar n objetos em
+k grupos é
+
+
+
+k n
+k 1
+
+N (n, k )
+
+(2)
+
+O problema de se encontrar uma solução ótima para a
+separação de n objetos em k grupos é NP-hard (Falkenauer, 1998) e, devido ao fato de que o número de
+separações possíveis desses n objetos em k grupos
+aumenta aproximadamente na razão knk!, a tentativa
+de se encontrar uma solução ótima globalmente é
+usualmente inviável sob o ponto de vista computacional (Arabie et al., 1996). Conforme observado por
+Kaufman  Rousseeuw (1990), a maioria das abordagens encontradas na literatura adota critérios numéricos que determinam o número de grupos baseando-se em partições obtidas para diversos valores de k.
+Portanto, este trabalho se motiva e se justifica
+tanto sob o ponto de vista do algoritmo bio-inspirado,
+quanto sob a perspectiva do problema que se pretende resolver.
+
+Figura 1. Diferentes agrupamentos para uma mesma base de dados.
+
+Analisando-se os agrupamentos a e b da Figura 1 pode-se notar que ambos possuem diferenças
+entre si, porém as duas configurações são aceitáveis e
+podem ser consideradas como corretas. A diferença é
+que uma delas possui um nível maior de generalização, criando apenas dois subgrupos maiores, enquanto a outra subdivide os dados em um número maior
+de subgrupos, com cada um contendo um número
+menor de objetos.
+As bases de dados podem conter objetos com valores numéricos, binários, simbólicos ou qualquer
+outro tipo de atributo, mas nem todo algoritmo de
+agrupamento é capaz de tratar todos os tipos de atributos. Por isso, ao realizar a tarefa de agrupamento
+de dados, um dos principais fatores que deve ser considerado na escolha de um algoritmo são os tipos dos
+objetos da base de dados que será analisada (Gan et
+al., 2007).
+
+3 Agrupamento de Dados
+A tarefa de Agrupamento de Dados (Data Clustering) tem como finalidade fazer a categorização ou
+separação de dados utilizando algum mecanismo para
+calcular o grau de similaridade (ou dissimilaridade)
+entre os dados (de Sá, 2001). Assim, o objetivo de
+um algoritmo de agrupamento é que na saída de sua
+execução os grupos formados tenham alta similaridade entre si e baixa similaridade com os outros grupos.
+As técnicas de agrupamento são utilizadas para descobrir grupos no conjunto de dados e identificar estruturas abstratas que possam residir nestes grupos
+(Kogan, 2007). Trata-se, portanto, de uma tarefa que
+procura segmentar bases de dados heterogêneas em
+subgrupos ou segmentos homogêneos (Jain et al.,
+1999). Ao contrário da tarefa de classificação, em
+Agrupamento de Dados o conjunto de categorias ou
+rótulos não é conhecido a priori (Amigó et al., 2008).
+Uma mesma base de dados pode ter seus objetos
+agrupados de diversas formas, dependendo do algoritmo de agrupamento e dos parâmetros utilizados
+(Figura 1). Dependendo das condições iniciais e das
+técnicas utilizadas para o agrupamento, alguns algo-
+
+4 O Modelo Boids
+Boids é um modelo de vida artificial proposto
+em 1987 por Craig W. Reynolds com o objetivo de
+modelar a movimentação coordenada de bandos de
+animais de forma bastante realista. Embora a palavra
+Boid seja uma abreviação de Bird-oid (parecido
+com um pássaro), os conceitos deste modelo podem
+ser estendidos para diversos outros tipos de animais.
+Um propósito para este tipo de modelo é auxiliar a
+produção de animações feitas em computadores (de
+Castro, 2007), (Reynolds, 1987).
+5074
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Reynolds ficou fascinado com a maneira pela
+qual os bandos de animais são formados e se movem
+pelo ambiente de uma forma que parece aleatória,
+mas, ao mesmo tempo, sincronizada. O trajeto percorrido pelos pássaros, por exemplo, é bastante complexo. Na perspectiva da animação através da computação, escrever um script contendo diversos pássaros
+e seus trajetos da forma tradicional é uma tarefa trabalhosa e que pode gerar um resultado não realista.
+Além disso, caso seja necessário alterar o percurso
+percorrido pelo bando, todo o trabalho deve ser refeito. Reynolds decidiu então buscar uma nova forma de
+resolver este problema e chegou a um modelo que
+consiste basicamente na atribuição de três regras
+comportamentais simples a cada um dos agentes
+virtuais (Boids). Estas regras descrevem como um
+Boid deve se comportar a partir de sua condição local
+(posições e velocidades de outros indivíduos próximos)
+1. Separação Quando um Boid encontra outros
+dentro do seu campo de visão, esta regra faz com
+que eles se separem a fim de evitar uma colisão.
+A Figura 2 representa uma possível situação na
+qual um Boid possui três outros Boids dentro de
+seu campo de visão.
+
+3.
+
+O objetivo da regra de coesão é aproximar os
+Boids. O mesmo campo de visão estabelecido
+para a realização das tarefas de separação e alinhamento é utilizado para a coesão. Para aproximar os Boids, esta regra move cada Boid em
+direção a posição média dos outros Boids da vizinhança. Para isso, deve-se
+ Calcular o ponto médio (xm,ym) dos Boids vizinhos
+ Calcular o ângulo que o Boid deve se mover
+para ir em direção a posição (xm,ym).
+Na Figura 4 é representado um Boid que possui
+quatro vizinhos. O ponto (xm,ym) é calculado e em
+seguida o ângulo formado entre o Boid e o ponto
+(xm,ym) é calculado. A seta representa a direção e
+sentido que o Boid deve seguir para se aproximar de
+seus vizinhos.
+
+Figura 4. Ilustração do resultado da regra de coesão.
+
+Dessa forma, para criar uma animação de pássaros voando pelo ambiente, basta dar as coordenadas
+iniciais e, através de regras comportamentais, os indivíduos apresentarão um comportamento emergente
+coordenado, evitando colisão e promovendo a formação de bandos.
+Esses fenômenos emergentes e auto-organizados
+é que geram um resultado realista, já que não é possível prever exatamente qual será o movimento feito
+por cada indivíduo, mas não é difícil observar uma
+sincronização ao ver o bando como um todo. Dessa
+forma, algumas poucas regras simples, capazes apenas de analisar condições locais, conseguem, após
+diversas iterações, promover a realização de tarefas
+complexas no cenário global.
+Em seu artigo original, Reynolds (1987) não
+descreve um algoritmo explicitamente, mas apenas os
+princípios básicos de funcionamento das três regras
+propostas de forma conceitual. Portanto, cada autor
+interpreta de sua maneira e cria seu próprio algoritmo
+para atender suas necessidades específicas. Neste
+artigo são apresentadas as modificações das três regras comportamentais básicas além das novas regras
+propostas para a criação do algoritmo cBoids a ser
+aplicado em problemas de agrupamento_de_dados.
+A seguinte estrutura de dados é proposta para
+representar cada Boid
+o Coordenadas (x,y) Posição onde se encontra o
+Boid no ambiente.
+
+Figura 2. Ilustração do resultado da regra de separação.
+
+2.
+
+Alinhamento Quando um Boid avista outros
+dentro de seu campo de visão, o algoritmo tenta
+aproximar os valores dos ângulos e velocidades
+dos Boids, fazendo com que eles tendam a voar
+em uma mesma direção e sentido. A Figura 3 representa uma possível situação na qual um Boid
+tenta se alinhar com vizinhos.
+
+Figura 3. Ilustração do resultado da regra de alinhamento.
+
+5075
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Ângulo  Direção e sentido para onde o Boid
+está voando.
+o Velocidade v Velocidade de deslocamento do
+Boid.
+A cada ciclo do algoritmo todos os Boids analisam o ambiente em sua volta e, após esta análise,
+decidem para onde seguir. Em seguida as variáveis
+são recalculadas para cada Boid de acordo com as
+três regras comportamentais básicas. Cada Boid possui um campo de visão em sua volta e todos os demais Boids que estão dentro de seu campo de visão
+são considerados seus vizinhos. Sempre que dois ou
+mais Boids estão dentro do campo de visão um do
+outro as regras comportamentais são aplicadas.
+o
+
+5.1 Regras dos Centróides
+As duas novas regras presentes no algoritmo
+cBoids são as de Junção e Separação dos Centróides.
+A primeira delas, de junção, tem como objetivo
+agrupar dois Boids em um único centróide. Toda vez
+que dois Boids estão dentro do campo de visão um do
+outro existe uma probabilidade de ambos se unirem
+formando um único grupo. Essa probabilidade é diretamente proporcional  afinidade entre os dois Boids.
+Quando ocorre a junção, um dos Boids deixa de fazer
+parte do ambiente, enquanto o outro continua voando
+normalmente. Junto com o Boid que continua voando
+haverá uma referência para o Boid que deixou de
+voar e também para todos os objetos que ele agrupou
+previamente. Para decidir se os centróides devem ou
+não se agrupar é sorteado um número aleatório entre
+0 e 1. Para que se agrupem, este número deve ser
+maior do que o valor da probabilidade de junção entre os dois.
+A regra de junção dos centróides é probabilística
+podendo permitir a junção de objetos que não deveriam fazer parte do mesmo grupo. Para minimizar este
+problema, uma regra que permite a separação dos
+centróides, ou seja, que cria novos centróides, foi
+proposta. Quando dois ou mais objetos estão agrupados, existe uma probabilidade de um deles sair do
+grupo e voltar a voar no ambiente. Duas afinidades
+são levadas em consideração para o cálculo da probabilidade de um Boid sair de um grupo
+1. Afinidade com o centróide do seu grupo atual
+(quanto maior, menor a probabilidade de o objeto sair do grupo atual), e,
+2. Maior afinidade encontrada entre todos os outros
+centróides existentes (quanto maior, maior a
+probabilidade de o objeto deixar o grupo atual).
+Inicialmente é calculada a afinidade entre o Boid
+e o centróide do grupo ao qual ele pertence, cg, e o
+resultado é armazenado na variável Ag. Em seguida, é
+calculada a afinidade entre o Boid e todos os demais
+centróides e a maior afinidade encontrada é armazenada na variável Am. A probabilidade Pl de separação
+do Boid é então calculada através da Equação (6)
+
+5 Algoritmo cBoids
+No algoritmo cBoids, os Boids são dispostos em
+um ambiente 2D toroidal de tamanho limitado. Cada
+objeto da base de dados é representado inicialmente
+por um Boid. Dessa forma, para uma base de dados
+com n objetos, o algoritmo criará inicialmente n
+Boids para representá-los. Conforme os Boids voam
+pelo ambiente, objetos multidimensionais são projetados neste espaço e os Boids podem ser vistos como
+uma espécie de ponteiro para os objetos da base de
+dados. Dessa forma, a posição na qual o Boid se encontra não tem uma ligação direta com os valores dos
+objetos que ele representa.
+A afinidade entre dois Boids indica quantitativamente a similaridade entre os objetos correspondentes quanto mais similares forem os objetos, maior
+será a afinidade entre os Boids. O algoritmo cBoids
+utiliza a afinidade dos Boids como um dos parâmetros mais significativos para a tarefa de agrupamento.
+Por isso, é importante que a implementação do algoritmo seja capaz de comparar os atributos de dois
+Boids de forma eficaz. Na implementação apresentada neste artigo, o cálculo da afinidade é igual ao inverso da distância Euclidiana entre os objetos da base
+de dados que esses Boids representam (normalizados
+entre 0 e 1), como pode ser visto na Equação (3)
+1
+(3)
+Aij 
+ b i  b j 
+
+Ag 
+
+onde bi e bj são os Boids que estão sendo comparados e  é a norma da diferença entre os dois vetores
+(distância Euclidiana entre eles). No caso de objetos
+idênticos a afinidade entre eles é máxima, ou seja,
+igual a 1.
+Cada Boid do ambiente é tratado como um centróide ou protótipo de um cluster e cada centróide
+pode agrupar outros Boids. Por exemplo, em uma
+base de dados com 200 objetos, o algoritmo irá inicialmente ter 200 Boids. Esse número decairá com o
+passar do tempo, tendendo ao número ideal de grupos
+da base de dados.
+
+1
+ b  c g 
+
+(4)
+
+
+1
+Am  arg max jC 
+  b  c
+j
+
+
+Pl  Am  Ag 
+
+2
+
+
+
+ 
+
+(5)
+
+(6)
+
+onde b é o vetor de coordenadas do Boid,  é a
+norma da diferença entre os vetores b e cg, e C é o
+conjunto de todos os centróides.
+
+5076
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+1. Inicie o sistema com n Boids, onde n
+é o número de objetos da base de dados. Cada Boid é inicialmente um centróide.
+2. Para cada Boid centróide, faça
+a. Calcule o ângulo de separação.
+b. Calcule o ângulo médio dos vizinhos.
+c. Calcule o ângulo de coesão.
+d. Calcule a média de afinidade com
+os vizinhos.
+e. Atualize o ângulo do Boid considerando a média de afinidade com
+seus vizinhos.
+f. Para cada Boid previamente agrupado, faça
+i.
+Calcule Ag (afinidade com o
+grupo atual). Eq. (4).
+ii. Calcule Am (maior das afinidades entre os outros grupos).
+Eq. (5).
+iii. Calcule a probabilidade de
+desagrupar. Eq. (6).
+iv. Se a regra decidir desagrupar, faça
+1. Remova o Boid do grupo.
+2. Retorne o Boid para o ambiente em uma posição aleatória, com velocidades e
+ângulos também aleatórios.
+3. Para cada um dos outros centróides,
+faça
+a. Calcule a probabilidade de juntar, proporcional  afinidade entre os centróides.
+b. Se a regra decidir juntar os grupos, faça
+i.
+Junte os grupos (copie todos
+os elementos de um para outro)
+ii. Remova um dos centróides.
+c. Se o critério de parada for atingido, pare o algoritmo.
+
+5.2 Regras de Separação, Alinhamento e Coesão
+Para que pudessem ser utilizadas em um contexto de agrupamento_de_dados, as três regras básicas
+dos Boids foram alteradas da seguinte forma
+1. Regra de separação a intensidade da força de
+separação entre dois Boids é inversamente proporcional  afinidade entre eles quanto menor a
+afinidade, maior será a força de separação entre
+eles e vice-versa.
+2. Regra de alinhamento o cálculo do ângulo de
+alinhamento no algoritmo cBoids é similar ao
+cálculo do modelo clássico. Assim, o ângulo resultante desta regra será um valor entre o ângulo
+atual do Boid e o ângulo médio de seus vizinhos.
+A única diferença é que, no algoritmo cBoids,
+quanto maior for a afinidade entre os Boids, mais
+próximo do ângulo médio será o novo ângulo.
+3. Regra de coesão funciona de forma similar 
+regra do modelo original, com a diferença de que
+a intensidade da coesão varia conforme a afinidade entre os Boids quanto maior a afinidade,
+maior a coesão.
+5.3 Critério de Parada
+O algoritmo finaliza sua execução quando um
+dado número de ciclos se passa sem que haja alteração nos grupos formados pelos Boids. Isso significa
+que, se t ciclos se passarem sem que nenhum centróide novo seja proposto ou nenhum dos centróides
+existentes se agrupem, o algoritmo assume que o sistema está estabilizado e finaliza sua execução. Um
+ciclo no algoritmo cBoids pode ser definido como um
+trecho de execução do algoritmo em que as posições,
+ângulos e velocidades dos Boids são atualizados.
+Uma vez atualizados, o algoritmo recomeça sua execução (novo ciclo) analisando novamente as informações locais dos Boids e executando as regras, até que
+o critério de parada seja alcançado.
+O critério de parada possui um papel importante,
+já que é uma das principais variáveis de controle que
+influenciam a quantidade de grupos encontrados.
+Com um valor muito baixo para o número limite de
+ciclos, o algoritmo pode parar sua execução em uma
+situação com uma quantidade ainda muito grande de
+grupos, muito superior ao valor ideal. Caso o valor
+limite de ciclos seja muito alto, a quantidade de execuções das regras de Junção e Separação dos centróides é aumentada, já que os Boids continuarão interagindo mais tempo do que deveriam.
+Testes preliminares com as bases Ruspini, Animais e Iris indicaram que 1.000 iterações sem modificações nos grupos é um valor adequado na maioria
+das situações para essas bases de dados. O algoritmo
+abaixo resume os principais passos do cBoids.
+
+Pseudocódigo 1 Algoritmo cBoids.
+
+6 Experimentos e Resultados
+O Algoritmo cBoids foi implementado na linguagem de programação Java e os testes foram realizados utilizando as bases de dados Ruspini (Ruspini,
+1970), Animais (Haykin, 1999) e Iris (Fisher, 1936).
+Para cada base de dados, o algoritmo foi executado
+10 vezes e o seu desempenho em relação s medidas
+de avaliação Acurácia e Quantidade de Grupos Formados foi comparado ao desempenho do algoritmo kmeans (MacQueen, 1967). Os resultados a serem
+apresentados foram executados em um computador
+com processador Intel Core2 Quad de 2.6Ghz e
+dois gigas de memória RAM utilizando o sistema
+operacional Ubuntu Linux 9.10 e a máquina virtual
+Java 1.6.0.16 da Sun Microsystems. Nas subseções
+seguintes serão apresentados os materiais e métodos
+utilizados, incluindo uma descrição das bases de dados.
+
+5077
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+6.1 Base Animais
+
+e, na maioria dos experimentos executados, chega a
+um ponto de equilíbrio com apenas dois grupos distintos. Após mais alguns ciclos sem variação no número de grupos, o critério de parada é atingido e o
+algoritmo finaliza sua execução.
+O algoritmo foi executado 10 vezes e, considerando os resultados dos dois agrupamentos indicados
+acima como o correto, tem-se como acurácia média o
+valor de 94,38. No pior caso a acurácia foi de
+87,50 e no melhor caso de 100.
+O resultado do agrupamento realizado pelo algoritmo k-means com a mesma base de dados e com o
+parâmetro k configurado como 2 (número de grupos)
+foi equivalente ao apresentado pelo algoritmo cBoids,
+com a diferença que o valor de k escolhido para o kmédias foi a média dos valores propostos automaticamente pelo cBoids, k  2.
+
+A base de dados Animais (Tabela 1) contém 16
+objetos, cada um com 13 atributos binários e é uma
+base utilizada para testar redes auto-organizáveis
+(Haykin, 1999), além de outros algoritmos de agrupamento_de_dados.
+Tabela 1. Base de dados Animais
+Tem
+
+Gosta de
+
+Peq
+Méd
+Gde
+2 Patas
+4 Patas
+Cabelo
+Casco
+Crina
+Penas
+Caçar
+Correr
+Voar
+Nadar
+
+É
+
+Pomba
+Galinha
+Pato
+Ganso
+Coruja
+Falcão
+Águia
+Raposa
+Cachorro
+
+Lobo
+Gato
+Tigre
+Leão
+Cavalo
+Zebra
+Vaca
+
+1
+1
+1
+1
+1
+1
+0
+0
+0
+0
+1
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+1
+1
+1
+1
+0
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+1
+1
+1
+1
+
+1
+1
+1
+1
+1
+1
+1
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+0
+1
+1
+1
+1
+1
+1
+1
+1
+1
+
+0
+0
+0
+0
+0
+0
+0
+1
+1
+1
+1
+1
+1
+1
+1
+1
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+1
+1
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+0
+0
+1
+1
+1
+0
+
+1
+1
+1
+1
+1
+1
+1
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+1
+1
+1
+1
+0
+1
+1
+1
+1
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+1
+1
+0
+1
+1
+1
+1
+0
+
+1
+0
+0
+1
+1
+1
+1
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+0
+1
+1
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+6.2 Base Ruspini
+Ruspini é uma base de dados com 75 objetos,
+sendo que cada objeto contém dois números inteiros
+como atributos (Ruspini, 1970). Na Figura 6 pode-se
+observar a distribuição espacial dos objetos que constituem a base de dados.
+
+Inicialmente, o cBoids gera 16 grupos ou centróides, sendo que cada grupo contém um único objeto. A Figura 5 mostra a variação do número de grupos em função do tempo em uma execução típica do
+algoritmo cBoids para a base Animais. Inicialmente
+acontece uma rápida redução de grupos, seguida de
+períodos de aumentos e reduções no número de centróides eventualmente atingindo uma estabilização e
+convergência para uma solução final.
+20
+15
+
+Figura 6. Distribuição espacial dos objetos da base Ruspini
+
+10
+
+Ao executar o algoritmo cBoids utilizando a
+base de dados Ruspini, o algoritmo cria inicialmente
+72 Boids (centróides), sendo que cada um representa
+um grupo de dados que contém um único objeto.
+Assim como ocorreu para a base de dados Animais,
+nos primeiros ciclos há uma grande redução no número de centróides, seguido de um período de instabilidade durante o qual o número de junções e separações dos centróides é grande, como pode ser observado na Figura 7. Passado este período o algoritmo
+estabiliza.
+
+5
+0
+0
+
+500
+
+1000
+
+1500
+
+2000
+
+2500
+
+3000
+
+3500
+
+Figura 5. Comportamento do número de Boids no ambiente para
+uma execução típica do cBoids para a base Animais.
+
+A solução mais comum proposta pelo algoritmo
+para esta base de dados foi
+o Agrupamento 1 cão, vaca, raposa, lobo, zebra, leão, cavalo, tigre e gato.
+o Agrupamento 2 pato, galinha, águia, pombo, coruja, falcão e ganso.
+Analisando o comportamento do algoritmo nos
+10 experimentos realizados, é possível verificar que,
+nos primeiros ciclos, o número de grupos diminui
+rapidamente até ficar com uma média de 7 grupos. A
+partir deste ponto o algoritmo começa a refinar os
+grupos, mas a quantidade de junções de centróides e
+criação de novos centróides ainda é elevada. Após
+mais alguns ciclos, o algoritmo começa a estabilizar
+
+Figura 7. Comportamento do número de Boids no ambiente para
+uma execução típica do cBoids para a base Ruspini
+
+5078
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+2.
+
+A característica de agrupamento dinâmico do
+cBoids sugere que ele, em princípio, é capaz de
+trabalhar com bases de dados em ambientes dinâmicos.
+Nos experimentos realizados neste artigo observou-se que o algoritmo tem bom desempenho quando
+aplicado em bases de dados numéricas e nas quais
+grupos naturais são encontrados. Sob o ponto de vista
+de complexidade computacional, a adição de duas
+regras comportamentais e modificação das regras
+originais não alteram a ordem de grandeza da complexidade do algoritmo, que continua sendo quadrática em relação ao número de objetos da base.
+Os experimentos mostraram que o algoritmo
+cBoids foi capaz de realizar o agrupamento_de_dados
+com acurácia média superior a 90 nas três bases de
+dados testadas. Experimentos extras devem ser realizados a fim de avaliar se o algoritmo cBoids pode ser
+aplicado com sucesso em bases de dados nas quais o
+número de classes é maior que o número de agrupamentos naturais disponíveis, como é o caso da base
+Iris.
+Como trabalhos futuros podemos citar a necessidade de testes em bases maiores e com dados do
+mundo real, como aplicações de bioinformática e
+dados textuais. Além disso, o algoritmo precisa ser
+comparado com outras propostas presentes na literatura. Por último, mas não menos importante, a natureza dinâmica do algoritmo sugere que este pode ser
+aplicado em bases de dados que variam em relação
+ao tempo, ficando esta tarefa ainda por ser explorada.
+
+Durante a execução dos experimentos, uma das
+execuções resultou em apenas uma solução com três
+clusters, porém a solução mais frequente foi a de
+quatro grupos com agrupamento perfeito, ou seja, em
+90 dos experimentos realizados o cBoids convergiu
+para a mesma solução ótima da base de dados Ruspini.
+Nas dez execuções a média de acurácia foi de
+96,70. No pior caso a acurácia foi de 77,80 e no
+melhor caso a acurácia foi de 100.
+Executando o algoritmo k-means para esta base
+de dados e configurando o parâmetro k como 4, o
+resultado também foi equivalente ao do algoritmo
+cBoids.
+6.3 Base Íris
+Para realizar a avaliação da performance do algoritmo em uma base do mundo real, foram feitos
+alguns testes utilizando-se a base Íris de Fisher
+(1936). Esta base é composta por 150 objetos distribuídos em três diferentes classes de plantas, sendo
+uma classe linearmente separável das outras e as duas
+classes restantes não separáveis linearmente. Portanto, sob o ponto de vista de agrupamento_de_dados há
+apenas dois grupos naturais na base, um contendo
+uma única classe de planta e outro contendo duas
+classes de planta. De forma simplificada, podemos
+definir grupos naturais como aqueles tais que a distância intragrupo é maior que a intergrupo.
+O algoritmo cBoids uniu os Boids até que restassem apenas dois grupos, sugerindo que a base contém
+apenas dois grupos naturais de dados, como era de se
+esperar. Nos experimentos com o algoritmo k-means,
+utilizando k como três, não foi possível em nenhuma
+das execuções encontrar os três grupos desta base de
+dados.
+Sendo assim, depois de executar os experimentos
+com os algoritmos cBoids e k-means para este conjunto de dados, foi possível observar que nenhum
+deles foi capaz de dividir as classes não_linearmente
+separáveis, o que não contesta a habilidade dos algoritmos em encontrar grupos naturais.
+
+Agradecimentos
+Os autores agradecem  CAPES, ao CNPq, 
+FAPESP e ao fundo MackPesquisa da Universidade
+Presbiteriana Mackenzie pelo suporte financeiro no
+desenvolvimento deste trabalho.
+Referências Bibliográficas
+Amigó, E Gonzalo, J Artiles, J. and Verdejo, F.
+(2008). A comparison of Extrinsic Clustering
+Evaluation Metrics based on Formal Constraints
+Technical Report. Departamento de Lenguajes y
+Sistemas Informaticos UNED, Madrid, Spain.
+Arabie, P. Hubert, L.J. and De Soete, G. (1996),
+Clustering and Classification, World Scientific,
+Publishing Co. Pte. Ltd., Singapore.
+de Castro, L. N. and Von Zuben, F. J. (2000). An
+Evolutionary Immune Network for Data
+Clustering. Proceedings of 6th Brazilian
+Symposium on Neural Networks, pp. 84- 89.
+IEEE Computer Society.
+de Castro, L. N. (2007). Fundamentals of Natural
+Computing An Overview, Physics of Life
+Reviews, 4, p. 1-36.
+de Sá, M. (2001). Pattern Recognition Concepts,
+Methods and Applications. New York Springer.
+
+7 Conclusões
+O algoritmo cBoids proposto neste trabalho demonstrou ser capaz de resolver problemas de agrupamento_de_dados. Para os dois experimentos preliminares realizados o algoritmo foi capaz de agrupar
+corretamente dois conjuntos de dados sintéticos com
+um alto valor de acurácia na maioria das execuções.
+Os testes também mostraram que os resultados dos
+algoritmos cBoids e k-means são bastante similares,
+porém o cBoids conta com duas vantagens em relação ao k-means
+1. O cBoids não requer que o número de grupos
+seja especificado a priori, sendo este número definido automaticamente pelo algoritmo
+
+5079
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Liu, G. L., Introduction to combinatorial mathematics, McGraw Hill, 1968.
+Macqueen, J. B. (1967). Some Methods for
+classification and Analysis of Multivariate
+Observations. Proc. of the fifth Berkeley
+Symposium on Mathematical Statistics and
+Probability. Berkeley University of California
+Press. pp. 281-297.
+Miligan, G. W., Clustering Validation Results and
+Implications for Applied Analyses, In
+ARABIE, P., HUBERT, L.J., DE SOETE, G.
+Editors, Clustering and Classification, pp. 341373, World Scientific, Publishing Co. Pte. Ltd.,
+Singapore, 1996.
+Mondada, F Guignard, A Bonani, M Br, D
+Lauria, M. and Floreano, D. (2003). SWARMBOT From Concept to Implementation.
+Autonomous Systems Lab, Swiss Federal
+Institute of Technology in Lausanne (EPFL).
+Reynolds, C. (1987). Flocks, herds and schools A
+distributed
+behavioral
+model.
+Computer
+Graphics Conference. Anaheim SIGGRAPH 87
+Conference Proceedings. p. 25-34.
+Ruspini, H. R. (1970). Numerical Methods for Fuzzy
+Clustering. Information Sciences, 2, pp. 139350.
+
+Falkenauer, E., (1998) Genetic Algorithms and
+Grouping Problems, John Wiley and Sons Ltd.,
+West Sussex, England.
+Fisher, R. (1936). The Use of Multiple
+Measurements in Taxonomic Problems. Ann. of
+Eugenics, 7, pp. 179-188.
+Gan, G Ma, C. and Wu, J. (2007). Data Clustering
+Theory,
+Algorithms,
+and
+Applications.
+Philadelphia SIAM, Society for Industrial and
+Applied Mathematics.
+Handl, J. and Meyer, B. (2007). Ant-based and
+swarm-based clustering. Swarm Intelligence, pp.
+95--113.
+Haykin, S., (1999). Neural Networks A
+Comprehensive Foundation. Old Tappan
+Prentice- Hall.
+Jain, A. K Murty, M. N. and Flynn, P. J. (1999).
+Data Clustering A Review. ACM Computing
+Surveys, Vol. 31, No. 3.
+Kaufman, L. and Rousseeuw, P. J. (1990), Finding
+Groups in Data  An Introduction to Cluster
+Analysis, Wiley Series in Probability and Mathematical Statistics.
+Kogan, J. (2007). Introduction to Clustering Large
+and High-Dimensional Data. Cambridge
+University Press, University of Maryland,
+Baltimore.
+
+5080

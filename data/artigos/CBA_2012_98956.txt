@@ -1,0 +1,551 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+EXTRACAO DE CARACTERISTICAS E CASAMENTO DE PADROES APLICADOS
+A ESTIMACAO DE POSICAO DE UM VANT
+Euler Guimaraes Horta, Elcio Hideiti Shiguemori, Haroldo Fraga de Campos Velho,
+Antonio de Padua Braga
+
+
+Departamento de Computacao
+Universidade Federal dos Vales do Jequitinhonha e Mucuri
+Diamantina, MG, Brasil
+
+
+Divisao de Geointeligencia
+Instituo de Estudos Avancados
+Sao Jose dos Campos, SP, Brasil
+
+
+Laboratorio Associado de Computacao e Matematica Aplicada
+Instituto Nacional de Pesquisas Espaciais
+Sao Jose dos Campos, SP, Brasil
+
+
+Programa de Pos-Graduacao em Engenharia Eletrica
+Universidade Federal de Minas Gerais
+Av. Antonio Carlos 6627, 31270-901, Belo Horizonte, MG, Brasil
+Emails euler.horta@ufvjm.edu.br, elcio@ieav.cta.br, haroldo@lac.inpe.br,
+apbraga@ufmg.br
+Abstract The flight control of an unmanned aerial vehicle (UAV) can be performed in different ways. For
+the autonomous control of the aircraft is possible to use GPS signals, but this technology belongs to another
+country, which makes it necessary to develop alternative ways to control the UAV. An alternative is the use of
+template_matching, matching the camera image of the aircraft with georeferenced satellite images in order to
+estimate the geographical position of the UAV. In this paper we present an efficient template_matching based on
+feature extraction of type Ring Projection Transform, which makes the algorithm invariant to rotation between
+the images and computationally efficient, since it allows the calculation of correlation between vectors instead of
+arrays. We present the results of the matching of 6 images and the estimated positions of the UAV.
+Keywords Feature Extraction, Ring Projection Transform (RPT), Template Matching, Normalized Correlation, Georeferenced Images
+Resumo O controle do voo de um Veculo Aereo nao Tripulado (VANT) pode ser realizado de diversas
+formas. Para o controle_autonomo da aeronave e possvel a utilizacao de sinais de GPS, porem essa tecnologia
+pertence a outro pas, o que torna necessario o desenvolvimento de formas alternativas para o controle do VANT.
+Uma alternativa e o uso de casamento_de_padroes, relacionando a imagem da camera da aeronave com imagens
+de satelite georreferenciadas, a fim de se estimar a posicao geografica do VANT. Neste trabalho apresentaremos
+uma forma eficiente de casamento_de_padroes baseado em extracao_de_caractersticas do tipo Ring Projection
+Transform, o que torna o algoritmo invariante a rotacao entre as imagens e computacionalmente eficiente, ja
+que possibilita o calculo de correlacao entre vetores, ao inves de matrizes. Sao apresentados os resultados do
+casamento de 6 imagens e as posicoes estimadas do VANT.
+Palavras-chave 
+
+1
+
+Introducao
+
+Veculos Aereos nao Tripulados (VANTs) consistem em pequenas aeronaves capazes de voar grandes distancias sem tripulacao. Atualmente existem varias aplicacoes para esse tipo de veculo
+como, por exemplo, controle de fronteiras, sensoriamento_remoto, aplicacoes policiais, etc. Esses
+veculos podem ser controlados a partir de uma estacao terrestre atraves de comunicacao por radiofrequencia ou podem ser autonomos, controlandose sozinhos atraves de algoritmos instalados nos
+mesmos. Esses algoritmos podem ser baseados no
+uso de sinais de GPS (Global Positioning System)
+(Roberts et al., 2002) ou atraves de processamento
+de imagens_georreferenciadas (Goltz, 2011).
+
+ISBN 978-85-8001-069-5
+
+O uso dos sinais de GPS e desvantajoso
+por ser uma tecnologia de propriedade norteamericana, sendo que o sistema pode deixar de ser
+disponibilizado para outros pases caso eles desejem. Para contornar esse problema, tem sido proposto o uso de processamento_de_imagens para estimar a posicao dos VANTs (Goltz, 2011) e, atraves disso, controlar o voo do mesmo. Uma tecnica
+adequada para este tipo de aplicacao e o casamento_de_padroes (template_matching), de forma
+que, atraves de imagens captadas pelo veculo, e
+realizado o casamento das mesmas com imagens
+de satelite georreferenciadas referentes a regiao
+que sera sobrevoada pela aeronave (Goltz, 2011).
+A realizacao do casamento_de_padroes em imagens digitais esta susceptvel a diversos problemas,
+
+5045
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+como diferencas de brilho entre o template e a imagem alvo, diferenca de escala, diferenca de rotacao
+entre as imagens, entre outros. A qualidade do
+casamento dos padroes e a consequente estimacao
+da posicao do VANT e totalmente dependente da
+forma como esses problemas sao tratados durante
+o pre-processamento dos dados.
+Outro problema encontrado e a limitacao do
+peso que a aeronave consegue transportar, o que limita a quantidade de equipamentos que podem ser
+embarcados no VANT, sendo, portanto, um parametro a ser minimizado. Os algoritmos tambem
+devem ser computacionalmente eficientes, uma
+vez que os circuitos que podem ser embarcados
+nesse tipo de aeronave nao sao muito potentes,
+como FPGAs, por exemplo.
+O objetivo deste trabalho e realizar o casamento_de_padroes entre a imagem captada pelo
+VANT e a imagem de satelite georreferenciada,
+lidando com os seguintes problemas custo_computacional do algoritmo embarcado na aeronave
+reducao do numero de equipamentos embarcados
+solucao do problema de rotacao das imagens e da
+diferenca de brilho entre elas. Para tanto serao
+utilizados uma tecnica de extracao de bordas para
+lidar com o problema da diferenca de brilho, uma
+tecnica de extracao_de_caractersticas denominada
+Ring Projection Transform (RPT) para solucionar
+os problemas de rotacao da imagem, de custo_computacional do casamento_de_padroes e de reducao
+de pelo menos um equipamento na aeronave.
+O artigo encontra-se organizado da seguinte
+forma a secao II apresenta a metodologia utilizada neste trabalho, a secao III apresenta os resultados obtidos e uma discussao sobre os mesmos
+e por fim a secao IV apresenta as conclusoes.
+2
+2.1
+
+Metodologia
+
+Dados Utilizados
+
+Os dados utilizados foram fornecidos pelo Instituto Nacional de Pesquisas Espaciais (INPE). Eles
+consistem na imagem de satelite georreferenciada
+da cidade de Sao Jose dos Campos, no estado de
+Sao Paulo, e em fotografias obtidas por um VANT
+durante um voo em uma parte dessa cidade. A
+imagem de satelite e de 2004 (Goltz, 2011), tendo
+sido obtida pelo satelite Quickbird da empresa Digital Globe (Digital Globe, n.d.). Sua resolucao espacial e de 0, 61mpixel. As fotografias aereas foram obtidas em 2006 atraves de um voo controlado
+a partir de uma estacao de controle na superfcie
+(Goltz, 2011). A resolucao espacial das fotografias
+nao foi fornecida, mas foi estimada manualmente,
+observando-se que ela e em torno de 37 maior
+que a resolucao do satelite, ficando em torno de
+0, 38mpixel.
+Para a realizacao deste trabalho foram selecionadas 6 fotografias de tamanho 480  720 que
+
+ISBN 978-85-8001-069-5
+
+apos o ajuste de escala ficaram com o tamanho
+178  267.
+2.2
+
+Metodo Proposto
+
+A metodologia proposta neste trabalho visa a obter a coordenada geografica do VANT realizando
+um casamento_de_padroes com menor custo_computacional possvel e invariante a rotacao entre as
+imagens. Todo o processo e realizado em uma janela de busca de tamanho 201  201 sobre a imagem alvo, escolhida a partir da coordenada geografica de onde o VANT inicia o voo. A medida
+que o VANT sobrevoa a regiao, a janela de busca
+e deslocada sobre a imagem da cidade, sendo o
+ponto central a ultima coordenada calculada pelo
+VANT. Esse processo evita que sejam calculados
+os casamentos de padroes sobre a imagem da cidade inteira, o que geraria um custo_computacional desnecessario.
+A seguir sao apresentados os passos realizados
+pela metodologia proposta.
+ Colocar a imagem template na mesma escala
+da imagem de satelite
+ Aplicar um filtro de mediana em cada uma
+das imagens para retirar detalhes indesejados
+ Realizar uma extracao de bordas a fim de resolver o problema de variacao de brilho entre
+as imagens
+ Calcular a Ring Projection Transform (RPT)
+do template
+ Realizar a correlacao_normalizada entre a
+RPT do template e todas as RPTs calculadas sobre a janela de busca da imagem alvo.
+Para tanto, o template e deslizado sobre a
+janela de busca
+ Escolher o casamento com maior correlacao
+e obter as coordenadas geograficas do ponto
+central desse casamento como sendo a posicao
+atual do VANT.
+2.3
+
+Filtro de Mediana e Extracao de Bordas
+
+Para a remocao de detalhes indesejados nas imagens, tanto alvo quanto template, foi aplicado em
+cada uma delas um filtro de mediana com mascara
+de tamanho 3  3. Esse filtro consiste em deslizar uma mascara sobre a imagem, substituindo o
+nvel de cinza do pxel central da janela pela mediana dos pxeis situados em sua vizinhanca. Maiores detalhes podem ser obtidos em (Filho and
+Neto, 1999).
+A diferenca de brilho entre a imagem de satelite e as imagens obtidas pelo VANT e prejudicial ao processo de casamento_de_padroes, uma
+vez que, em imagens em escala de cinza, cada pixel nada mais e do que um valor de brilho, sendo
+
+5046
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+o valor mais baixo 0 e o valor mais elevado 255.
+Para solucionar esse problema foi utilizado um algoritmo de extracao de bordas aplicado nas imagens filtradas. O algoritmo escolhido e denominado filtro de Canny (Canny, 1986), que e capaz
+de eliminar rudos e extrair bordas com bastante
+qualidade.
+2.4
+
+Extracao de Caractersticas - Ring Projection Transform
+
+Para solucionar o problema de rotacao da imagem do template e para minimizar o custo_computacional do calculo da correlacao_normalizada,
+foi utilizado neste trabalho uma tecnica de extracao_de_caractersticas denominada Ring Projection Transform (RPT) (Tang et al., 1998 Lee
+and Chen, 2009 Tsai and Chiang, 2002 Lin and
+Chen, 2008 Lin et al., 2006). Essa tecnica consiste em modificar as coordenadas cartesianas dos
+pxeis da imagem para coordenadas polares, conforme a equacao 1. Para tanto, e localizado o pxel central da imagem, modificando a origem do
+sistema de coordenadas para este ponto. Para
+uma imagem T de tamanho M  N temos que
+o raio e um valor inteiro no intervalo 0, R onde
+R  min(M2, N2) e o angulo  e variado no
+intervalo (0, 2).
+
+x  r cos 
+(1)
+y  r sin 
+Para cada raio sera encontrado os pontos pertencentes ao crculo referente a ele e sera calculada
+a intensidade media dos pxeis sobre esse crculo,
+conforme a equacao 2, onde Sr e o numero de pxeis presentes no crculo (Tang et al., 1998). Dessa
+forma a imagem passa a ser representada por um
+vetor onde cada posicao representa a intensidade
+media dos pxeis sobre o crculo de raio r. Isso
+diminui o custo_computacional, pois a correlacao
+normalizada passara a ser realizada somente entre dois vetores e nao entre duas matrizes, como
+ocorre nas tecnicas de template_matching comuns.
+Alem disso, a RPT tambem resolve o problema da
+rotacao da imagem, ja que independente da rotacao, a intensidade media dos pxeis sobre o crculo
+sera aproximadamente a mesma.
+
+PT (r) 
+
+1 X
+T (r cos k , r sin k )
+Sr
+
+(2)
+
+k
+
+As figuras 1(a) e 1(b) mostram um exemplo
+de uma imagem rotacionada em relacao a outra.
+As figuras 2(a) e 2(b) mostram as bordas extradas das imagens filtradas e as figuras 3(a) e 3(b)
+mostram as RPTs das bordas das duas imagens.
+Como pode ser observado, as RPTs das bordas
+extradas das duas imagens sao praticamente as
+mesmas com pequenas variacoes, o que resolve o
+problema de rotacao.
+
+ISBN 978-85-8001-069-5
+
+Essa tecnica possibilita que a maior parte do
+custo_computacional do metodo proposto, que e
+referente ao calculo das RPTs sobre a imagem
+alvo, possa ser realizado na superfcie da Terra, ao
+inves de ser realizado no ar. Para tanto, basta deslocar uma janela de mesmo tamanho do template
+sobre a imagem alvo e calcular a RPT referente
+a mesma. Essas RPTs serao, entao, armazenadas
+na memoria do computador do VANT para que,
+quando estiver no ar, ele calcule somente a RPT
+da imagem aerea captada pela camera e realize a
+correlacao_normalizada entre as RPTs das janelas
+da imagem alvo com a RPT do template. Alem
+dessa reducao do custo_computacional, tambem
+torna desnecessario o uso de bussola para corrigir
+a rotacao da imagem, o que reduz o numero de
+equipamentos embarcados na aeronave.
+2.5
+
+Casamento de Padroes - Correlacao Normalizada
+
+Para a etapa de casamento_de_padroes (template
+matching) sera utilizada a correlacao_normalizada
+(Lin et al., 2006 Lin and Chen, 2008) entre dois
+vetores, conforme equacao 3. O custo_computacional dessa etapa e diminudo, uma vez que a correlacao e calculada entre vetores, com complexidade
+O(R), onde R e o raio do maior anel da RPT do
+template, ao inves de matrizes, que possui complexidade O(N 2 ) para um template de tamanho
+N  N.
+3
+
+Resultados
+
+A partir da imagem georreferenciada da cidade
+de Sao Jose dos Campos foram identificados, visualmente, os pontos inicial e final da trajetoria
+do VANT, possibilitando que a imagem fosse recortada na regiao de interesse, como mostra a figura 4, a fim de realizar o casamento_de_padroes
+somente nessa area. A metodologia proposta foi
+executada utilizando-se 6 fotografias com a escala ajustada e convertidas para escala de cinza.
+Para um melhor ajuste do template, cada fotografia foi recortada em uma janela de 101  101,
+conservando-se o centro da imagem.
+Observou-se, durante os experimentos, que realizar o casamento_de_padroes diretamente sobre
+a imagem alvo nao traz bons resultados, por isso
+foi realizado um deslocamento de uma janela de
+busca sobre a mesma. Esse deslocamento foi realizado de forma visual, uma vez que ainda nao foi
+possvel realizar um ajuste automatico desse deslocamento baseado na posicao do VANT, sendo,
+portanto, um objetivo para trabalhos futuros. O
+tamanho da janela de busca foi definido como
+sendo 201  201 apos testes iniciais.
+A figura 5 mostra o resultado do casamento
+de padroes dos 6 templates apos a execucao do
+metodo proposto. A tabela 1 mostra as latitudes
+
+5047
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+(a) Imagem em escala de cinza original
+
+(b) Imagem em escala de cinza rotacionada
+em 90 graus
+
+Figura 1 Exemplo de imagens rotacionadas entre si
+
+(a) Bordas extradas da imagem original filtrada
+
+(b) Bordas extradas da imagem rotacionada e filtrada
+
+Intensidade media dos pxeis de cada raio
+
+Intensidade media dos pxeis de cada raio
+
+Figura 2 Exemplo de bordas extradas de imagens filtradas
+
+0.14
+
+0.12
+
+0.1
+
+0.08
+
+0.06
+
+0.04
+
+0.02
+
+0
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+Raio
+
+60
+
+70
+
+80
+
+90
+
+0.14
+
+0.12
+
+0.1
+
+0.08
+
+0.06
+
+0.04
+
+0.02
+
+0
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+Raio
+
+60
+
+70
+
+80
+
+90
+
+(a) RPT das bordas extradas da imagem original filtrada (b) RPT das bordas extradas da imagem filtrada e rotacionada
+
+Figura 3 Exemplo de RPTs de bordas extradas de imagens rotacionadas entre si
+
+ISBN 978-85-8001-069-5
+
+5048
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+hPT , PS i 
+
+PR
+PR
+PR
+((R + 1) r0 PT (r)PS (r)  r0 PT (r) r0 PS (r))2  100
+PR
+P
+P
+PR
+R
+R
+(R + 1) r0 PT (r)2  ( r0 PT (r))2 (R + 1) r0 PS (r)2  ( r0 PS (r))2 
+
+Figura 4 Regiao de interesse para a realizacao do
+casamento_de_padroes
+
+e longitudes estimadas e originais. As coordenadas originais foram obtidas atraves de fotografias
+georreferenciadas fornecidas pelo INPE. Essas fotografias foram utilizadas apenas para obter essas
+coordenadas a fim de validar o modelo. Todo o
+processo foi executado nas imagens originais, ou
+seja, nao foi realizado ajuste de rotacao a fim de
+verificar a eficacia da tecnica RPT.
+O erro de estimacao das coordenadas geograficas da fotografia em metros, mostrado na tabela 1, foi calculado utilizando-se a equacao 4
+(Longley, 2005), como sendo a distancia entre a
+coordenada do ponto estimado e a coordenada do
+ponto original. Nessa equacao RT erra representa
+o raio medio da circunferencia da Terra. Como
+pode ser observado o erro ficou dentro do toleravel para o controle de um VANT, ja que, segundo
+Goltz et al. (Goltz, 2011), o erro maximo aceitavel
+de estimacao da localizacao da aeronave e de 200
+metros. O erro medio cometido foi em torno de
+59 metros, o que esta de acordo com Goltz et al.
+(Goltz, 2011), uma vez que para o mesmo extrator
+de bordas (Canny) o autor obteve erro medio em
+torno de 44 metros.
+A performance da metodologia proposta e diretamente dependente da qualidade dos dados utilizados. Dessa forma, para melhorar os resultados
+seriam necessarios testes com outras formas de extracao de bordas, como apresentado por Goltz et
+al. (Goltz, 2011), ou, ate mesmo, tentar trabalhar
+com as imagens em escala de cinza, utilizando alguma heurstica para aproximar o brilho das imagens do VANT do brilho das imagens de satelite.
+
+ISBN 978-85-8001-069-5
+
+(3)
+
+Figura 5 Resultado do casamento_de_padroes utilizando 6 templates
+4
+
+Conclusao
+
+Neste trabalho foi apresentado um metodo para
+estimacao da posicao de um VANT que e independente da rotacao das imagens e que tem baixo
+custo_computacional, no que se refere a etapa de
+casamento_de_padroes, ja que a RPT possibilita
+o calculo de correlacao entre vetores ao inves de
+matrizes. A metodologia tambem possibilita que
+pelo menos a bussola deixe de ser levada pelo
+VANT, reduzindo assim a carga transportada. Os
+resultados obtidos sugerem que o metodo funciona bem, mas podem ser melhorados utilizando-se
+outras formas de extrair bordas das imagens, ou
+ate mesmo trabalhando-se com imagens em escala
+de cinza, ajustado-as atraves de alguma heurstica
+para a correcao do brilho entre as imagens. Os erros de estimacao de posicao obtidos sugerem que
+o metodo possa ser utilizando em um VANT, uma
+vez que o mesmo aceita erros de posicionamento
+da ordem de 200 metros.
+Como trabalhos futuros propoe-se automatizar o deslocamento da janela de busca, o que pode
+ser feito utilizando a velocidade do VANT, automatizar a correcao de escala, o que pode ser realizado a partir da resolucao espacial da camera
+utilizada e da altura da aeronave, aplicacao de diferentes tecnicas de extracao de bordas e uso de
+heursticas para correcao do brilho.
+Por fim, o trabalho demonstrou que o controle de VANTs baseados em estimacao da posicao atraves de casamento_de_padroes e promissor,
+podendo, no futuro, dispensar o uso de GPS nesse
+tipo de aplicacao.
+
+5049
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+d  RT erra arccos(cos(lat1) cos(lat2) cos(lon1  lon2) + sin(lat1) sin(lat2))
+
+(4)
+
+Tabela 1 Latitude e Longitude estimada e original para cada imagem e erro de estimacao em metros
+Imagem Lat Est ( ) Lat Ori ( ) Lon Est ( ) Lon Ori ( ) Erro (m)
+0002
+-23.1976
+-23.1977
+-45.8759
+-45.8764
+50.8
+0003
+-23.1975
+-23.1972
+-45.8763
+-45.8759
+50.9
+0004
+-23.1972
+-23.1967
+-45.8745
+-45.8755
+116.9
+0005
+-23.1959
+-23.1962
+-45.8746
+-45.8751
+55.1
+0006
+-23.1957
+-23.1957
+-45.8743
+-45.8747
+35.4
+0007
+-23.1954
+-23.1951
+-45.8745
+-45.8742
+47.1
+Agradecimentos
+Os autores agradecem ao CNPq e a FAPEMIG
+pelo apoio financeiro.
+Referencias
+Canny, J. (1986). A Computational Approach
+to Edge Detection, Pattern Analysis and
+Machine Intelligence, IEEE Transactions on
+PAMI-8(6) 679698.
+Digital Globe (n.d.).
+URL httpwww.digitalglobe.com
+Filho, O. and Neto, H. (1999). Processamento
+digital de imagens, Serie Academica, BRASPORT.
+
+Roberts, J. M., Corke, P. I. and Buskey, G. (2002).
+Low-cost flight control system for a small autonomous helicopter, In IEEE Int. Conf. on
+Robotics and Automation, pp. 546551.
+Tang, Y., Li, B., Ma, H. and Lin, J. (1998). Ringprojection-wavelet-fractal signatures a novel
+approach to feature extraction, Circuits and
+Systems II Analog and Digital Signal Processing, IEEE Transactions on 45(8) 1130
+1134.
+Tsai, D.-M. and Chiang, C.-H. (2002). Rotationinvariant pattern matching using wavelet decomposition, Pattern Recogn. Lett. 23 191
+201.
+
+Goltz, G. A. M. (2011). Redes neurais artificiais em imagems para estimacao da posicao
+de um vant, Masters thesis, INPE - Instituto
+Nacional de Pesquisas Espaciais, Sao Jose dos
+Campos.
+Lee, W.-C. and Chen, C.-H. (2009). A fast template_matching method for rotation invariance using two-stage process, Proceedings of
+the 2009 Fifth International Conference on
+Intelligent Information Hiding and Multimedia Signal Processing, IIH-MSP 09, IEEE
+Computer Society, Washington, DC, USA,
+pp. 912.
+Lin, Y.-H. and Chen, C.-H. (2008). Template matching using the parametric template vector
+with translation, rotation and scale invariance, Pattern Recogn. 41 24132421.
+Lin, Y.-H., Chen, C.-H. and Wei, C.-C. (2006).
+New method for subpixel image matching
+with rotation invariance by combining the parametric template method and the ring projection transform process, Optical Engineering 45(6) 067202.
+Longley, P. (2005). Geographic information systems and science, 2nd ed, Wiley.
+
+ISBN 978-85-8001-069-5
+
+5050

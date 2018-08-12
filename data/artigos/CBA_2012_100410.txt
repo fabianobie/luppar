@@ -1,0 +1,1057 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+CONTROLE PREDITIVO ROBUSTO DE ROBÔS MÓVEIS PARA SEGUIMENTO DE CAMINHO
+ÍTALO J. L. BATISTA, BISMARK C. TORRICO, GIOVANNI C. BARROSO E OTACÍLIO DE M. ALMEIDA
+Laboratório de Automação e Robótica, Depto. de Engenharia Elétrica , Universidade Federal do Ceará
+Caixa Postal 6007, 60.775-640, Fortaleza, CE, BRASIL
+E-mails italoloiola@gmail.com, bismark@dee.ufc.br, gcb@fisica.ufc.br,
+otacilio@dee.ufc.br
+Abstract  This paper presents a robust predictive control algorithm applied to the problem of path tracking of mobile robots.
+The algorithm studied (GPC-T) exhibits properties of robustness against uncertainties and unmodeled dynamics, moreover, there
+is shown the simplicity of design of the controller, both from the standpoint of keeping as from the standpoint of the design. The
+controller performance is compared with another strategy (GPC nominal). The simulation results show the satisfactory
+performance of the controller addressed.
+Keywords  Mobile robots Path-tracking Predictive controller.
+Resumo  Este artigo apresenta um algoritmo de controle_preditivo_robusto aplicado ao problema de seguimento_de_caminho
+de robôs_móveis. O algoritmo estudado (GPC-T) apresenta propriedades de robustez frente a incertezas e dinâmicas nãomodeladas, além disso, é mostrada a simplicidade do projeto deste controlador, tanto do ponto de vista de sintonia quanto do
+ponto de vista do projeto. O desempenho do controlador é comparado com outra estratégia (GPC nominal). Os resultados de simulação mostram o desempenho satisfatório do controlador abordado.
+Palavras-chave  .
+
+1
+
+Introdução
+
+Em robótica_móvel, do ponto de vista de controle, uma das questões mais importantes é o problema
+de seguimento_de_caminho, que consiste em projetar
+técnicas de controle que visam assegurar que o veículo segue uma dada trajetória. A dificuldade aumenta
+na medida em que são consideradas incertezas como
+dinâmica não modelada do tipo não-estruturada, o
+atrito na superfície e os distúrbios desconhecidos e
+limitados, além do fato de se tratar de um sistema
+multivariável (Gómez-Ortega, 1994).
+O problema de seguimento_de_caminho de robôs
+móveis pode ser resolvido por meio de três
+abordagens diferentes a) considerando apenas o
+modelo_cinemático, b) considerando apenas o modelo
+dinâmico, e c) considerando os modelos cinemático e
+dinâmico. Dessa forma, muitas estratégias de controle têm sido testadas e relatadas na literatura (Freund
+et al., 1998 Sun, 2005)
+Apesar de que nos trabalhos citados anteriormente a trajetória de referência futura é conhecida,
+essa informação não é usada em sua totalidade pelas
+estratégias de controle. Uma técnica que permite levar em conta a referência futura é controle_preditivo
+baseado em modelo (CPBM ou MPC, Model Preditive Control) o que o torna uma das estratégias mais
+adequadas para este tipo de problema (Camacho e
+Bordons 2004).
+Os primeiros artigos referentes ao MPC surgiram
+no final da década de 70. Desde então, tanto na indústria quanto no meio acadêmico, esse tipo de controlador vem se desenvolvendo e ganhando mais espaço a cada ano. O MPC não é uma estratégia de
+
+ISBN 978-85-8001-069-5
+
+controle específica e sim uma classe de métodos de
+controle desenvolvida em torno de certas ideias comuns. Estes métodos têm se revelado na prática como
+poderosas técnicas de controle durante as duas últimas décadas e está entre as poucas técnicas de controle_avançado que tem um grande impacto na indústria (Camacho e Bordons, 2004). No contexto de
+robótica, isso se deve, entre outros motivos, s seguintes vantagens
+ É particularmente atraente para os operadores com conhecimento limitado de controle,
+pois os conceitos e o ajuste são relativamente simples, pois há uma redução na quantidade de parâmetros de ajuste e consequentemente na complexidade computacional.
+ O caso multivariável (sistema MIMO) pode
+ser tratado de uma forma simples
+ Introduz pré-alimentação de forma natural
+para compensar perturbações mensuráveis
+ No caso de modelos lineares sem restrições,
+o controlador resultante é linear
+ Sua extensão para o tratamento_de_restrições
+é conceitualmente simples e podem ser incluídas sistematicamente durante o projeto
+ É muito eficiente quando as referências futuras são conhecidas
+ Intrinsecamente tem compensação para os
+tempos mortos.
+Esquemas de controle_preditivo para robôs_móveis baseado em algoritmos de otimização não-linear
+são abordados em Lim et al., (2008) e Gómez-Ortega
+e Camacho (1994). Em Gu e Hu (2002) é proposto
+um controle_preditivo não-linear inteligente baseado
+em redes_neurais para predição de estados. No entan-
+
+1015
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+to, os resultados destas abordagens não-lineares apresentam um alto custo_computacional, dificultando a
+implementação em tempo_real embarcado, haja vista
+que estas plataformas embarcadas (microprocessadasmicrocontroladas) têm algumas limitações, principalmente em relação  quantidade de memória disponível e velocidade de processamento. Assim, torna-se complexo a aplicação de uma estratégia de controle_preditivo não-linear que seja robusta tal que
+consiga se adaptar a essas limitações, sem perder as
+propriedades principais, a flexibilidade e a versatilidade.
+Khne et. al. (2004) desenvolveram algoritmos
+lineares e não_lineares de MPC com restrições usando um modelo de linearizações sucessivas em espaço
+de estados, mas também apresenta um custo_computacional elevado e os aspectos de estabilidade e robustez não foram abordados.
+Ollero e Amidi (1991) abordam estratégias de
+controle_preditivo baseado em modelo de predição
+linear usando a técnica de controle_preditivo generalizado (GPC), onde uma função de custo quadrática é
+minimizada e o erro de rastreamento e controle é
+penalizado. Por outro lado, Rafo et al., (2009) e
+Normey-Rico et al. (1999) também utilizam um controlador GPC, baseado em um modelo_linearizado em
+coordenadas locais do robô, no entanto mostram como melhorar a robustez quando as incertezas são
+consideradas e é proposta uma nova estratégia, a Smith-preditor-based GPC (SPGPC).
+Sabe-se que a robustez do GPC pode ser melhorada pelo uso de filtros através da inclusão do polinômio T(q-1) do modelo de perturbação nas predições. As propriedades do polinômio T e o seu papel
+na melhoria da robustez do GPC são discutidos com
+mais detalhe em Clarke e Mohtadi (1989).
+Os trabalhos referenciados tratam da aplicação
+de controle_preditivo a robôs_móveis, mas nada foi
+encontrado relacionado ao mesmo problema usando a
+formulação do GPC com a inclusão do polinômio T.
+Neste trabalho é aplicado e analisado um algoritmo de controle_preditivo para seguimento_de_caminho de robôs_móveis, usando a técnica GPC baseado
+em um modelo_linear com a inclusão de uma préfiltragem do tipo polinômio T para melhorar a compensação robusta do atraso_de_transporte e a rejeição
+ao distúrbio (GPC-T), adicionando robustez ao controlador frente a dinâmicas não modeladas. O algoritmo estudado apresenta o mesmo comportamento
+robusto que o SPGPC, porém o ajuste é mais simples
+e é conceitualmente mais fácil de projetá-lo de acordo com o tipo de perturbação, uma vez que o mesmo
+leva em conta o modelo das perturbações para o cálculo do controle_ótimo.
+Yoon e Clarke (1994) dão diretrizes para melhor
+escolha do polinômio T, no entanto o estudo é realizado apenas para plantas estáveis, dessa forma, estas
+diretrizes não se aplicam ao problema de seguimento
+de caminho, pois o robô possui uma dinâmica integradora. Embora o polinômio T seja ajustado neste
+
+ISBN 978-85-8001-069-5
+
+trabalho, as metodologias necessárias para tal são
+relativamente complexas, merecendo um espaço exclusivo para que se possa dar o tratamento adequado
+a este problema.
+A apresentação deste artigo tem a seguinte sequência. Na seção 2 é descrita a teoria da estratégia
+de controle que fundamenta este trabalho e vários
+aspectos relacionados  suas aplicações, além da
+formulação do algoritmo para o robô_móvel. A seção
+3 é dedicada  apresentação da análise da robustez.
+Os resultados obtidos de simulação são discutidos e
+analisados na Seção 4. Finalmente na seção 5 são
+apresentadas as conclusões e propostas futuras.
+2 Controlador Preditivo
+Os controladores aqui analisados utilizam uma
+lei de controle calculada a partir da minimização de
+uma função objetivo do tipo
+d+N
+
+  y (t + k t )  w(t + k )
+
+k  d +1
+
+2
+
+Nu 1
+
++   u (t + k ) (1)
+k 0
+
+em que  é a predição da saída do processo, u é a
+variação do controle, w é a trajetória de referência
+futura,  é a ponderação do controle, d é o atraso do
+sistema, N e Nu são o horizonte de predição e de
+controle, respectivamente.
+Porém os algoritmos utilizam diferentes
+procedimentos para calcular as predições da saída (t
++ k) e diferentes caminhos para obter o valor dos
+controles ótimos u(t + k) como será mostrado a
+seguir.
+2.1 A estratégia GPC (formulação padrão)
+O GPC (Generalized Predictive Control) é um
+dos métodos mais populares de MPC tanto na indústria quanto no meio acadêmico. A ideia básica do
+GPC é calcular uma sequência de sinais de controle
+futuros de maneira a minimizar uma função de custo
+definida sobre o horizonte de predição (Eq. 1).
+Nesta formulação, o cálculo das predições é realizado através do modelo CARIMA (Controlled Auto-Regressive Integrated Moving-Average) que representa a dinâmica do processo e das perturbações
+(Clarke et al., 1987)
+
+A(q 1 ) y (t )  B (q 1 )u (t  1  d ) + C (q 1 )
+
+1
+e(t ) (2)
+
+
+No modelo CARIMA u(t), y(t) e e(t) representam o sinal de entrada, de saída e o distúrbio no instante t. A, B e C são polinômios no operador atraso
+unitário q-1, com A e C mônicos
+
+1016
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A( q 1 )  1 + a1q 1 + K + am q 1
+B ( q 1 )  b0 + b1q 1 + K + bm q 1
+
+(3)
+
+C ( q 1 )  1 + c1q 1 + K + cm q 1
+
+y (t + d + k  t ) 
+
+Se a planta tiver tempo_morto não nulo, então o
+elemento líder do polinômio B é considerado zero. A
+denominação média móvel integrada
+
+x(t ) 
+
+C (q  1)
+e(t )
+
+
+(4)
+
+considera e(t) como uma sequência aleatória descorrelacionada. Esta é a representação mais adequada
+para muitas aplicações industriais, pois permite modelar distúrbios do tipo degrau ou do movimento
+browniano que estão presentes em plantas industriais
+(Clarke et al., 1987).
+A formulação do controlador GPC considera o
+modelo de distúrbio C como parâmetro de projeto
+do controlador, assumido como T. Isto é, em lugar
+de considerar o polinômio C como resultado de algum procedimento de identificação. Sendo assim, o
+polinômio T pode ser utilizado (GPC-T) para melhorar a rejeição ao distúrbio, adicionando robustez ao
+controlador frente a dinâmicas não modeladas.
+O modelo descrito na Eq. 2 pode ser equivalentemente representado pela seguinte equação
+
+A( q 1 ) y (t )  B( q 1 ) u (t  1  d ) + T ( q 1 )e(t ) (5)
+em que os coeficientes dos polinômios
+
+E j ( q 1 )  1 + e1q 1 + K + am q  ne
+F j ( q 1 )  f 0 + f1q 1 + K + f nf q  nf
+ne  1  j
+
+quer u(t + i) sendo i > 1, dando como resultado a
+predição de variância mínima da saída
+
+Nesta expressão, (t + k  t) é função dos valores
+conhecidos até o instante t e das entradas de controle
+futuras, ainda a serem calculadas. Portanto, para distinguir entre os valores de controle passados e futuros
+usa-se a seguinte equação de Diophantine
+E (q 1 ) B(q 1 )  Gk (q 1 )T (q 1 ) + q  k k (q 1 )
+
+y (t + d + k  t )  Gk (q 1 ) u (t + k  1) + k (q 1 )
+u f (t  1) + Fk (q 1 ) y f (t )
+
+y (t + d + k  t )  Gk (q 1 )u (t + d + k  1) +
++ f (t + d + k  t )
+
+(12)
+
+em que o primeiro termo do lado direito corresponde
+ resposta forçada (predita), devida aos futuros incrementos de controle u(t + d + k - 1), k  0. O
+segundo termo, f(t + k  t), é a predição da resposta
+livre (predita) de y(t + k), assumindo que os futuros
+incrementos de controle depois do tempo t + 1 são
+nulos.
+Na Eq. 11, uf(t - 1) e yf(t), são versões filtradas
+de u(t) e y(t)
+
+y f (t )T 1 (q 1 )u (t )
+y f (t )T 1 (q 1 ) y (t )
+
+(13)
+
+Assim, a resposta livre predita é dada por
+f (t + d + k  t )  k (q 1 )u f (t  1) + Fk (q 1 ) y f (t ) (14)
+
+(7)
+
+Pela manipulação do modelo do sistema, Eq. 2, e
+Eq. 7, encontra-se a seguinte representação
+F (q 1 ) E (q 1 ) B(q 1 )
+y (t + d + k )  k 1 + k
+u (t + k  1 (8)
+T (q )
+T (q 1 )
++ E k (q 1 )e(t + k )
+
+Sabe-se que Ek tem grau k  1, portanto os componentes da sequência e(t) estarão todos no futuro,
+podendo ser considerados nulos no preditor ótimo, ou
+seja, a esperança matemática é igual a zero Eje(t + j)
+ 0, dados os sinais medidos até o instante t e qual-
+
+ISBN 978-85-8001-069-5
+
+(11)
+
+ou equivalentemente
+
+(6)
+
+são determinados pelo conhecimento do intervalo de
+predição j e dos polinômios A(q-1) e T(q-1) aplicandose a seguinte Equação de Diophantine
+
+(10)
+
+que substituída na Eq. 9, resulta na seguinte predição
+
+n f  max( na , nc  j )
+
+T (q 1 )  E (q 1 ) A(q 1 )  + q  k Fk ( q 1 )
+
+Fk (q 1 ) E k (q 1 ) B (q 1 )
++
+u (t + k  1)
+(9)
+T (q 1 )
+T (q 1 )
+
+que pode ser escrita como
+y  Gu + F ( z 1 ) y (t ) + G ( z 1 )u (t  1)
+
+(15)
+
+em que
+ y (t + d + 1  t ) 
+ y (t + d + 2  t ) 
+
+y
+
+
+M
+
+
+
+y
+(
+t
++
+d
++
+N
+
+t
+)
+
+
+
+ u (t ) 
+ u (t + 1) 
+
+u
+
+
+M
+
+
+
+u
+(
+t
++
+N
+
+1
+)
+
+
+
+1017
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Este modelo mais detalhado pode ser encontrado
+em (Gómez-Ortega, 1994). Assim, o modelo_linear
+do robô_móvel é dado por
+
+
+
+(G d +1 (q 1 )  g 0 )q
+
+
+1
+1
+2
+(
+G
+(
+q
+)
+
+g
+
+g
+q
+)
+q
+d +2
+0
+1
+
+G  (q 1 )  
+
+
+M
+
+1
+1
+( N 1)
+N 
+(
+G
+(
+q
+)
+
+g
+
+g
+q
+
+L
+
+q
+q
+)
+q
+0
+1
+N 1
+ d + N
+
+
+ g0
+ g
+G 1
+ M
+
+ g N 1
+
+0
+g0
+M
+g N 2
+
+0
+0 
+M
+
+L g0 
+
+L
+L
+M
+
+ Fd +1 (q ) 
+
+
+F (q 1 ) 
+F   d +2
+
+
+M
+
+1 
+ Fd + N (q )
+
+em que y(t)  ((t) y(t))T e u(t)  (t). (t) é a
+orientação do robô, y(t) é a posição do robô, (t) é o
+raio de curvatura, d é o tempo_morto, V é a
+velocidade linear, Ta é o período de amostragem e I é
+uma matriz identidade (2 x 2). Neste trabalho V é
+considerado constante.
+
+A Eq. 1 pode ser reescrita como
+J  (Gu  f  w) T (Gu + f  w) + u T u
+
+(20)
+
+ 1 
+ (t ) 
+(1  z 1 ) I 
+  VT VT  2 (t  1  d )
+y
+(
+t
+)
+
+
+ a 
+
+1
+
+(16)
+
+em que
+w   w(t + d + 1), w(t + d + 2)L w(t + d + N )T
+
+(17)
+
+O mínimo de J, assumindo que não existem restrições sobre o sinal de controle, pode ser encontrado, tornando o gradiente de J igual a zero, o que conduz a
+u   H 1b  (G T G + I ) 1 G T ( w  f )
+
+(18)
+
+Na prática, somente o primeiro sinal de controle
+(primeiro elemento do vetor u) é aplicado ao processo, que é dado por
+u (t )  k ( w  f )
+
+(19)
+
+em que K é a primeira linha de matriz (GTG + I)GT. Isto tem um significado claro se não houver
+nenhum erro futuro previsto, ou seja, se (w - f)  0,
+então não há mudança de controle, já que o objetivo
+será cumprido com a evolução livre do processo. No
+entanto, caso contrário, haverá um incremento na
+ação de controle que é aplicada em relação aos erros
+futuros, e não em relação aos erros passados, como é
+o caso nos controladores convencionais (Camacho e
+Bordons, 2004).
+1
+
+2.2 O GPC para o Robô Móvel
+2.2.1 Modelo de Predição
+
+A formulação do controlador_preditivo proposto
+neste trabalho baseia-se em um modelo_linear para
+predição de postura de um robô_móvel com
+acionamento diferencial em um plano.
+O modelo obtido consiste em uma linearização
+em coordenadas de referências locais do robô como
+pode ser visto na Fig. 1, a formulação completa pode
+ser encontrada em Gómez-Ortega (1994).
+
+ISBN 978-85-8001-069-5
+
+Figura 1. Modelo do robô_móvel em coordenadas locais.
+
+O esforço de controle é usado como o inverso do
+raio de curvatura na implementação para simplificar a
+representação do modelo, como mostrado em
+(Gómez-Ortega, 1994).
+Estas equações linearizadas são válidas apenas
+para pequenos valores de . Assim, se o robô não
+estiver posicionado na trajetória de referência, os
+valores de  necessários para atingir o caminho
+desejado será muito grande, e o modelo_linearizado
+não será válido. Desta forma, o robô_móvel deve
+estar sempre localizado próximo  trajetória de
+referência para que os valores de  sejam pequenos.
+Uma alternativa para evitar este problema é
+considerar técnicas para aproximação da trajetória de
+referência (Rafo et al., 2009 Normey-Rico et al.,
+1999 e Gómez-Ortega, 1994). Neste trabalho, as técnicas de aproximação de trajetória não serão abordadas, desta forma, o ponto de partida do robô será
+sempre próximo  trajetória de referência.
+O modelo final é um sistema_multivariável com
+uma-entradaduas-saídas, onde o raio de curvatura é a
+variável de controle, e a orientação e a posição local
+do robô são as variáveis controladas.
+2.2.2 Cálculo das Predições
+
+Neste trabalho adota-se o modelo de predições
+para  e y (Eq. 21) para facilitar a análise, o qual é
+equivalente ao da Eq. 5.
+
+1018
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+x1
+n1
+64447
+444
+8 647
+48
+K1
+T1
+ (t + j )   u (t + j  1  d ) +  e(t + j )
+A
+A
+K
+T
+y (t + j )  2 u (t + j  1  d ) + 2 e(t + j )
+A44424443 1
+A4243
+1
+x2
+
+(21)
+
+Nota-se na Eq. 27 que o polinômio T está presente apenas no denominador do modelo de perturbações, mostrando a simplicidade na sintonia para prover a robustez do controlador.
+Assim, para o caso sem restrições a lei de controle obtida das Eqs. 1 e 27 é dada por
+
+n2
+
+Usando Eq. Diophantina da Eq. 22 e x(t), chegase  predição para a saída do modelo (Eq. 23)
+
+
+1  A(q 1 ) Ek (q 1 )  + q 1Fk (q 1 )
+
+(22)
+
+sendo Ã(q-1)  A(q-1),
+
+u (t )   KF1 x1 (t + d )  Fr1 ( y1  x1 ) 
+ KG p u (t1 )  KF2 x2 (t + d )  Fr 2 ( y2  x2 )
+
+(28)
+
+Assim, por simplicidade, este controle_ótimo obtido será usado apenas para análise da robustez, porém na implementação a instabilidade interna será
+anulada.
+
+G1 + q 1G 1p
+
+
+x1 (t + d + k )  F x(t + d ) + E k1 B u (t  1 + k ) (23)
+1
+k
+
+2
+k
+
+2
+k
+
+x 2 (t + d + k )  F x (t + d ) + E B u (t  1 + k )
+
+2
+
+G +q
+
+1
+
+G 2p
+
+Os termos passados e futuros contidos em
+Ej(z1)B(z1)u(t + j  1) devem ser separados. Sejam, então, os termos no passado representados por qk
+Gp, e no futuro por G que, substituindo na Eq. 23,
+resultam em
+
+O GPC pode ser representado como ilustrado na
+Fig. 2, usada aqui somente para a análise comparativa
+de robustez em relação ao GPC-T.
+No caso do GPC-T, os controladores primários
+C(z) da Fig. 2 são dados pela Eq. 29
+
+C1 ( z ) 
+
+FT1 (q 1 )
+ + (GT1 q 1 )q 1
+
+FT2 (q 1 )
+C1 ( z ) 
+ + (GT2 q 1 )q 1
+
+x 2 (t + d + k )  G 1 u (t  1 + k ) + Fk1 x(t + d ) +
++ G 1p u (t  1)
+
+2.2.3 Estrutura e ajuste do controlador
+
+(29)
+
+(24)
+sendo FT (q1)  KF e GT(q1)  Gp.
+O pré-filtro F(z), também da Fig. 2, para o GPCT, é como mostrado na Eq. 30.
+
+x 2 (t + d + k )  G 2 u (t  1 + k ) + Fk2 x(t + d ) +
++ G p2 u (t  1)
+Assim, usando a Eq. Diophantina (Eq. 25) e n(t) encontram-se as predições da perturbação (Eq. 26)
+
+
+T (q 1 )  A(q 1 ) H i + d ( q 1 ) + q  d  j I i + d (q 1 )
+
+(25)
+
+sendo Hj+d(z1) e Ii+d(z1)
+
+n1 (t + j  t )  I 1j
+
+n1 (t )
++ H 1j e(t + j )
+1
+T1 (q )
+
+n 2 (t )
+n 2 (t + j  t )  I
++ H 2j e(t + j )
+1
+T2 ( q )
+
+(26)
+
+2
+j
+
+j  1L N 2
+Portanto, das Eqs. 24 e 26, a predição da saída
+pode ser dada, na forma matricial, por
+
+C1 ( z ) 
+
+(27)
+
+(30)
+
+Da seção anterior tem-se que a ordem de FT(z1)
+é na e a de GT(z1) é nb  1. Como neste trabalho os
+processos abordados são aproximados por modelos
+de primeira ordem com atraso, tem-se que na  1 e
+nb  0. Logo, os controladores primários C(z) da Fig.
+2 sempre terá um pólo e um zero, e o pré-filtro F(z)
+sempre possuirá um ganho constante, pois KT é uma
+constante para uma referência w(t) constante, e um
+pólo que cancela o zero do controlador C(z) na malha
+fechada do sistema.
+O filtro de robustez Fr(z) do GPC-T é dado por
+
+Fr1 ( z ) 
+
+I T1 ( q 1 )
+T1 (q 1 ) FT1 (q 1 )
+
+Fr1 ( z ) 
+
+I T2 (q 1 )
+T2 (q 1 ) FT2 (q 1 )
+
+f
+
+6444
+474444
+8
+ F 1 0   x1 (t + d ) 
+ (t )  G 1 
+ y(t )   2  u + 
++
+2 
+
+ G 
+ 0 F   x 2 (t + d )
+G 1 
+ I 1  n (t )  0  n (t )
++  p2  u (t  1) +   1 1 +  1  2 1
+0  T1 (q )  I  T2 (q )
+G p 
+4
+144
+44444
+2444444443
+
+1
+ + (G q 1 )q 1
+1
+T
+
+(31)
+
+sendo IT (q1)  KI.
+
+f
+
+ISBN 978-85-8001-069-5
+
+1019
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A estrutura proposta para T(z-1), neste trabalho, é
+de segunda ordem, suficiente para rejeitar ruídos e
+perturbações (Camacho e Bordons, 2004), como
+mostrado na Eq. 32
+
+T1 (q 1 )  (1   1q 1 ) 2
+
+ ( (e jw )) ( M (e jw )) < 1, w  (0,
+
+
+Ts
+
+)
+
+(36)
+
+(32)
+
+T2 (q 1 )  (1   2 q 1 ) 2
+sendo 1 e 2 os únicos parâmetros de ajuste.
+Observe que, uma vez que FT(z1) está determinado em função de N, o ajuste do filtro de robustez
+depende apenas da relação de T(z1) com IT(z1) (ver
+Eq. 31). Portanto, o ajuste de Fr(z) do GPC-T depende apenas de 1 e 2, o que torna o seu ajuste muito
+simples.
+
+Figura 3. Estrutura M - .
+
+A estrutura aqui estudada (ver fig. 3), através da
+redução de blocos pode ser considerada para formar
+M - , onde  é uma matriz transferência diagonal e
+M  W1FCW2 (Morari e Zafiriou, 1989). Portanto, a
+condição de estabilidade torna-se
+
+ (W1(e jw ) F (e jw )W2 (e jw )) <  ((e jw )),
+
+w  (0,
+
+Ts
+
+(37)
+
+)
+
+Usando a propriedade  ( XY )   ( X ) (Y ) a
+Eq. 37 pode ser transformada em
+
+Figura 2. Estrutura DTC equivalente para análise da robustez.
+
+Na estrutura da Fig. 4, os blocos C1, C2 e F representam um controlador primário com dois graus
+de liberdade" que não é afetado pelo valor de Fr. Os
+resultados desta análise serão usados para estudar a
+influência do polinômio T sobre a robustez do controle da estrutura.
+
+3 Análise da Robustez
+Nesta seção, para simplificar, a robustez é
+analisada em estado estacionário, região onde o
+sistema está livre de restrições. Para este objetivo,
+incertezas aditivas são consideradas Pr(z)  P(z) +
+P(z), em que Pr(z) representa a planta real, P(z) é o
+modelo nominal e P(z) são incertezas (Morari e
+Zafiriou, 1989).
+Em geral P(z) pode ser escrita como P(z) 
+W1(z) (z) W2(z), onde W1(z) e W2(z) são matrizes
+de transferência multivariáveis e (z) é uma matriz
+de transferência diagonal que satisfaz a seguinte
+condição  ( (e jw ))  1, w. ( X ) que representa o
+valor singular máximo de X.
+Para análise da robustez, a refêrencia do sistema
+deve ser considerada igual a zero e no diagrama de
+blocos deve ser ajustada para formar a estrutura M , como ilustrado na Fig. 3. A condição de
+estabilidade para esta estrutura é dada por (Morari e
+Zafiriou, 1989)
+
+ISBN 978-85-8001-069-5
+
+ ( F (e jw )) (W1 (e jw )C (e jw )W2 (e jw )(e jw )) < 1,
+(38)
+
+w  (0,
+
+Ts
+
+)
+
+Colocar o filtro em evidência obtém-se
+
+ ( F (e jw )) <
+w  (0,
+
+
+Ts
+
+1
+,
+ (W1 (e )C (e )W2 (e jw ) (e jw ))
+jw
+
+jw
+
+(39)
+
+)
+
+Para manter a condição de estabilidade, o filtro
+F(z) deve ser sintonizado para assegurar a desigualdade da Eq. 39. Esta sintonia é realizada através do
+parâmetro  do polinômio T. O termo do lado direito
+da Eq. 39 depende da estratégia de controle C(z) e do
+modelo de incertezas P(z) no atraso L (Morari e Zafiriou, 1989).
+Uma vez que o filtro F(s) é diagonal, os valores
+singulares são dados em módulo dos elementos
+diagonais, de modo que a única variável do filtro
+Fi(z) deve ser escolhida para satisfazer
+
+ i ( Fi (e jw ))  Fi (e jw )   ( F (e jw ))
+
+(40)
+
+Assim, a robustez depende da razão LT, 
+medida que esta relação aumenta, a robustez do
+sistema diminui e, quando essa proporção tende ao
+infinito a robustez tende a zero.
+
+1020
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+4 Resultados de Simulação
+Neste item a estratérgia de controle estudada
+(GPC-T) é comparada ao algoritmo GPC nominal, a
+fim de ilustrar a simplicidade na sintonia e melhoria
+na robustez. Assim, são mostrados os resultados de
+simulação para uma trajetória formada por círculo e
+quadrado. Esta trajetória tem características
+especiais, tais como mudanças repentinas de
+orientação e direção do robô, úteis para testar o
+controlador em diferentes condições de operação. Em
+todas as figuras, a linha tracejada representa a
+trajetória de referência.
+Os parâmetros de ajuste de ambos os
+controladores são tempo de amostragem Ta  0,2,
+velocidade linear V  0,1 ms, horizonte de predição
+e controle N  Nu  15, e   0,5, a escolha desses
+parâmatros são justificados em (Normey-Rico et al.,
+1999).
+O controlador GPC-T tem dois parâmetros
+adicionais de sintonia e foram ajustados para atingir a
+robustez desejada, 1  0,97 (orientação) e 2  0,97
+(posição). Em ambos os casos é usado o modelo
+completo não-linear do robô_móvel, definido em
+Gómez-Ortega (1994).
+São simulados dois cenários, no primeiro deles
+os controladores estão livres de ruído na saída,
+enquanto que no segundo é adicionado ruído na
+medição, suposição que é realista para a maioria de
+casos práticos, especialmente no controle de
+processos_industriais.
+Os resultados de simulação para o caso sem
+ruído aditivo nas saídas são ilustrados na Fig. 4, na
+qual se observa o desempenho da ação de controle,
+pela Fig. 4(b), sobre o comportamento do robô.
+Como esperado, os controladores têm respostas
+semelhantes, a postura (posição e orientação)
+controlada converge para a trajetória de referência,
+como pode ser visto na Fig. 4(a).
+
+(b) Sinal de controle (1)
+Figura 4. Seguimento de caminho para GPC (linha contínua) e
+GPC-T (linha traço-ponto) caso sem ruído nas saídas.
+
+Para análise comparativa de desempenho do
+controladores, foram adicionadas incertezas como
+uma seqência aleatória descorrelacionada nas saídas
+(orientação e posição) com amplitude na faixa de
+0,1 rad e de 10 cm, respectivamente, para se
+aproximar ao processo real.
+Na Fig. 5 (b), verifica-se o efeito da propriedade
+do GPC-T de rejeição de ruído, o qual não se
+propaga para o sinal de controle.
+
+(a) Resposta de postura do robô_móvel
+
+(a) Resposta de postura do robô_móvel
+(b) Sinal de controle (1)
+Figura 5. Seguimento de caminho para GPC (linha contínua) e
+GPC-T (linha traço-ponto) com ruído nas saídas.
+
+ISBN 978-85-8001-069-5
+
+1021
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Observe também na Fig. 5 (b) que o GPC
+apresenta uma elevada variação no sinal de controle
+em relação ao GPC-T, enquanto que o GPC-T é capaz de lidar com os ruídos nas saídas, convergindo de
+forma robusta para a trajetória de referência (Fig.
+5(a)), além disso, o mesmo é capaz de rejeitar
+incertezas do modelo e no tempo de atraso, mantendo
+a simplicidade da estrutura original e da sintonia do
+controlador.
+Para ilustrar quantitativamente o desempenho
+dos controladores, a Tabela 1 mostra alguns
+resultados quanto ao erro de posição (ey) e orientação
+(e), pode-se notar que o controlador GPC-T
+apresenta um menor índice de erro de rastreamento
+da referência para o caso com ruído aditivo nas
+saídas, evidenciando os benefícios obtidos com
+utilização do GPC-T ao invés do GPC.
+Tabela 1. Erro de desempenho na saída dos controladores.
+
+Controlador
+GPC (sem ruído)
+GPC-T (sem ruído)
+GPC (com ruído)
+GPC-T (com ruído)
+
+ey
+0,94 x 10-3
+0,89 x 10-3
+4,32 x 10-3
+1,01 x 10-3
+
+e
+0,52 x 10-3
+0,49 x 10-3
+0,58 x 10-3
+0,46 x 10-3
+
+5 Conclusão
+Neste artigo foi estudada uma estratégia de controle
+preditivo robusto multivariável (GPC-T) para o problema de seguimento_de_caminho de robôs_móveis. O
+controlador desenvolvido contém implicitamente um
+compensador de atrasos e apresenta robustez frente
+s incertezas e s dinâmicas não modeladas. Desta
+forma, uma análise da robustez foi realizada, mostrando o desempenho deste controlador e comparando com o GPC nominal, porém a estrutura abordada
+apresenta como vantagens principais a simplicidade
+tanto do ponto de vista de formulação quanto da sintonia, além disso, é conceitualmente mais simples de
+projetá-lo de acordo com o tipo de perturbação, já
+que o modelo das perturbações é usado para o cálculo do controle_ótimo. O controlador permitiu manter
+as saídas nas referências desejadas frente as nãolinearidades do processo e ao nível de ruído elevado
+nas medidas dos sinais de saída. Em trabalhos futuros
+pretende-se estudar detalhadamente as propriedades
+de robustez, estabilidade e factibilidade do algoritmo
+para propor metodologias para melhor sintonia do
+polinômio T e estender os resultados para algoritmos
+de controle_preditivo não-lineares. Além de comparar
+o GPC-T com outras estratégias de controle que apresente aspectos de robustez intrínseca.
+Agradecimentos
+Agradecimento ao Conselho Nacional de Desenvolvimento Científico e Tecnológico (CNPq) e  Coordenação de Aperfeiçoamento de Pessoal de Nível
+Superior (CAPES) pelo apoio financeiro.
+
+ISBN 978-85-8001-069-5
+
+Referências Bibliográficas
+Camacho, E. F. e Bordons, C. (2004). Model
+Predictive Control, 2nd edn, Springer Verlag.
+Clarke, D. W. e Mohtadi, C. (1989). Properties of
+generalized predictive, Automatica 25 859875.
+Clarke, D. Mothadi, C. e Tuffs, P. (1987).
+Generalized Predictive Control. Part I The Basic
+Algorithm and Part II Extensions and
+Interpretations, Automatica 23(2) 137160.
+Freund, E.,  Mayr, R. (1997). Nonlinear path
+control in automated vehicle guidance. IEEE
+Transactions on Robotics and Automation,
+13(1), 49-60.
+Lim, H., Kang, Y., Kim, C., Kim, J. and You, B.J.
+(2008). Nonlinear model predictive controller
+design with obstacle avoidance for a mobile
+robot, Mechtronic and Embedded Systems and
+Applications, 2008. MESA 2008. IEEEASME
+International Conference on, pp. 494-499.
+Gómez-Ortega, J. (1994). Navegation en robots mo
+viles basada en tecnicas de control predicitvo
+neuronal. PhD thesis. Escuela Sup. De
+Ingenieros, Univ. de Sevilla.
+Gu, D. Hu, H. (2002) Neural predictive control for a
+car-like mobile robot, Robotics and Autonomous
+Systems 39(2), p. 73-86.
+Khne, F. Lages, W. F. and Gomes Da Silva, J. M.
+G. (2004) Model predictive control of a mobile
+robot using linearization. Proc. IEEE Mechatron.
+Robot, vol. 4, pp. 525530, Aachen, Germany.
+Morari, M., Zafiriou E. (1989) Robust Process
+Control. PraticeHall, Englewwood Cliffs, NJ.
+Normey-Rico, J. E., Gómez-Ortega, J. and Camacho,
+E. F. (1999) A Smith predictor based generalised
+predictive controller for mobile robot
+pathtracking in Control Eng. Pract., Jun. 1999,
+vol. 7, pp. 729740.
+Ollero, A.,  Amidi, O. (1991). Predictive path
+tracking of mobile robots. Applications to the
+CMU Navlab. Proceedings of the IEEE Fifth
+International Conference on Advanced Robotics.
+(pp. 1081-1086) Pisa.
+Palmor,
+Z.
+J.
+(1996).
+Time
+Delay
+CompensationSmith
+Predictor
+and
+its
+Modifications, CRC Press and IEEE Press.
+Raffo, G. Gomes, G. Normey-Rico, J. Kelber, C.
+and Becker, L. (2009). A predictive controller
+for autonomous vehicle path tracking, Intelligent
+Transportation Systems, IEEE Transactions on
+10(1) 92-102.
+Sun, S. (2005) Designing Approach on Trajectory
+Tracking Control of Mobile Robot. Robotcs and
+Computer-Integrated Manufacturing, New York,
+Elsevier, v. 21, n. 1, p. 81-85.
+Yoon, T. W. e Clarke, D. (1994). Advances in
+Model-Based Predictive Control, chapter
+Towards Robust Adaptive Predictive Control,
+Oxford University Press.
+
+1022

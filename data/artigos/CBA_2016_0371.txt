@@ -1,0 +1,722 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+UMA METODOLOGIA DE PORTE DE SISTEMA OPERACIONAL DE TEMPO
+REAL PARA PLATAFORMAS DE HARDWARE
+Tiago N. Ukei, Denis S. Loubach
+
+
+Laboratorio de Computacao Avancada, Controle e Sistemas Embarcados - FEM
+Universidade Estadual de Campinas - UNICAMP
+Campinas, SP, Brasil
+Emails tiago.ukei@gmail.com, dloubach@fem.unicamp.br
+
+Abstract Real-time embedded_systems have become increasingly more complex, requiring the development
+of more reliable and more efficient code. Although the testing stage of these systems has been improved in
+the past few years, it is not able to simulate all the possible conditions to which the system will be exposed
+during its lifecycle, making it necessary to develop techniques and methodologies in order to increase quality
+and reliability of such systems. Despite the research performed on this subject, a general and unified method
+for porting a real-time operating system on a hardware platform is hardly found in the literature. This article
+presents, therefore, a methodology with this purpose, which was then tested and validated through FreeRTOS
+porting on an ARM platform. We suggest the use of our methodology in future works for further testing and
+possible improvements.
+Keywords
+
+Embedded systems, Porting, Methodology, RTOS.
+
+Resumo Sistemas embarcados de tempo_real tem se tornado cada vez mais complexos, o que exige o desenvolvimento de codigos mais confiaveis e eficientes. Embora a fase de testes desses sistemas venha sendo
+aprimorada nos ultimos anos, ela nao e capaz de reproduzir todas as condicoes a que o sistema estara exposto
+durante seu funcionamento, tornando-se necessario o desenvolvimento de tecnicas e metodologias para aumentar
+a qualidade e confiabilidade de tais sistemas. Apesar das pesquisas nessa area, ainda nao se encontra na literatura
+um metodo unico e generalista para realizar o porte de um sistema_operacional_de_tempo_real em uma plataforma
+de hardware. Este artigo apresenta uma metodologia com essa finalidade, a qual foi testada e validada por meio
+de um porte realizado do FreeRTOS em uma plataforma ARM. Sugere-se que a metodologia apresentada seja
+utilizada em trabalhos futuros para testes e eventuais aprimoramentos.
+Palavras-chave
+
+.
+
+Introducao
+
+Sistemas embarcados de tempo_real estao presentes em praticamente todos os lugares automoveis,
+aeronaves, eletrodomesticos, televisoes, celulares,
+MP3, porteiros eletronicos, entre muitos outros.
+Com as aplicacoes tornando-se cada vez mais complexas, surge a necessidade de um gerenciamento
+confiavel e eficiente das tarefas executadas por um
+dispositivo. Portanto, os desenvolvedores de software tem se apoiado cada mais em sistemas_operacionais para desempenhar suas funcoes.
+Embora uma serie de testes seja realizada antes da liberacao do produto para o mercado, nao
+e possvel replicar todas as condicoes a que o sistema estara exposto quando colocado em funcionamento, ou seja, o teste de software nao representa, por si so, uma solucao para alcancar a
+previsibilidade nos sistemas_de_tempo_real. Para
+se obter uma performance mais robusta sob varias condicoes de operacao, e necessario utilizar
+metodologias de projeto avancadas, alem de uma
+analise aprofundada do codigo fonte e mecanismos especficos do sistema operacional, projetados
+para suportar aplicacoes com restricoes temporais
+(Buttazzo, 2011).
+Apesar do numero de pesquisas e estudos relacionados aos sistemas_computacionais de tempo
+real na atualidade, nao se encontra na literatura
+
+ISSN 2525-8311
+
+um metodo unico e generalista que possa ser utilizado para realizar o porte de um sistema_operacional_de_tempo_real (real-time operating system
+- RTOS) em uma plataforma de hardware qualquer. A literatura apresenta, entretanto, alguns
+metodos tratando parte desta questao. Devido a
+complexidade envolvida nesse processo, e importante que haja uma sequencia bem definida das
+atividades necessarias para que o porte do sistema
+seja efetuado com exito.
+Dado esse contexto, o objetivo deste artigo
+e apresentar uma metodologia geral de porte de
+um RTOS em uma plataforma de hardware, bem
+como valida-la por meio da implementacao do
+porte do FreeRTOS em uma plataforma de desenvolvimento FRDM-KL25Z, seguindo os passos
+da metodologia apresentada.
+O restante deste artigo e organizado nas seguintes secoes. A Secao 2 traz uma revisao de
+literatura com as principais definicoes e trabalhos
+relacionados. Na Secao 3 e apresentada nossa proposta de metodologia de porte de um RTOS em
+forma de um fluxograma de processo, o qual e utilizado para a implementacao de um porte especfico, descrita na Secao 4. A Secao 5 apresenta os
+resultados obtidos do experimento e, por fim, na
+Secao 6, sao apresentadas as conclusoes e principais contribuicoes deste artigo.
+
+1223
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+2
+
+Revisao de literatura
+
+Sistemas embarcados com hardware relativamente
+simples (e.g., relogio digital), onde nao se justifica a adocao de um sistema operacional devido ao
+overhead introduzido na aplicacao, sao geralmente
+implementados com base em uma arquitetura bare
+metal. Em contrapartida, aplicacoes mais complexas, como um sistema avionico, requerem um
+gerenciamento mais preciso do escalonamento das
+tarefas, o que justifica a utilizacao de um RTOS.
+Segundo Barabanov (1997, p. 1), um sistema
+operacional de tempo_real e um sistema operacional capaz de garantir os requisitos de tempo dos
+processos sob seu controle. Ele deve escalonar a
+execucao dos programas de maneira temporizada,
+gerenciar os recursos do sistema e prover suporte
+basico para sincronizacao, comunicacao, temporizacao precisa, gerenciamento de dispositivos de
+entradasada (ES) e uma fundacao consistente
+para o desenvolvimento do codigo de aplicativo (Li
+and Yao, 2003 Stankovic and Rajkumar, 2004).
+Para que o RTOS se comunique de forma
+adequada com o hardware, e necessario um conjunto de drivers especficos para os componentes
+de hardware do sistema, conhecido como board
+support package (BSP) (Li and Yao, 2003). Segundo Kumar et al. (2013), o BSP fornece o suporte mnimo para carregar o sistema operacional e contem os drivers para todos os dispositivos
+no sistema target, disponibilizando uma abstracao do hardware para as camadas mais altas do
+software. De acordo com Hedlund and Aronson
+(2002), a estrutura de um BSP inclui a configuracao da CPU, da memoria, das interrupcoes de
+hardware, do timer do escalonador do sistema e
+os drivers de dispositivos.
+O desenvolvimento de um BSP nao e uma
+tarefa trivial, dependendo do nvel de complexidade do hardware. Para se desenvolver um BSP
+e necessario conhecer a arquitetura de hardware
+do target, o fluxo de dados, o mapa de memoria, o mapa de interrupcoes, alem da linguagem
+de montagem especfica para o microprocessador.
+Boa parte dos desenvolvedores, no entanto, utiliza o BSP de um porte anteriormente realizado
+para uma plataforma de hardware similar e faz
+as devidas adaptacoes no codigo para a aplicacao
+especfica.
+A metodologia empregada por Young (2015)
+para realizar o porte do FreeRTOS em uma plataforma de desenvolvimento FRDM-KL25Z resumese nos seguintes passos
+1. Pesquisar sobre a arquitetura do processadoresquema de gerenciamento de memoria.
+Definir as constantes e macros apropriadas
+nos arquivos de cabecalho, necessarias para
+a configuracao do clock, tamanho do heap e
+da pilha, nveis de prioridade, etc
+
+ISSN 2525-8311
+
+2. Utilizar o codigo de um porte anterior para
+plataforma semelhante, realizar as modificacoes necessarias no arquivo port.c, implementando inicialmente a funcao de inicializacao da pilha
+3. Determinar quais funcoes sao dependentes
+de inicializacao da pilha e implementa-las de
+forma incremental ate que seja possvel compilar o FreeRTOS e
+4. Implementar um BSP mnimo para suportar
+a utilizacao do LED RGB (testes de temporizacao).
+No estudo apresentado por Schafer (2007), em
+que e feito o porte do RTEMS em uma plataforma Blackfin, tambem e adotada uma abordagem incremental, iniciando-se por um porte simples e, posteriormente, adicionando-se funcionalidades mais complexas ao sistema, como rotinas
+de tratamento de interrupcoes. As tarefas essenciais apontadas pelo autor para que o porte fosse
+realizado com sucesso envolvem a implementacao
+das funcoes de gerenciamento da troca de contexto
+e das rotinas de tratamento de interrupcoes, alem
+dos drivers de dispositivos e configuracao do clock.
+E necessario ainda configurar adequadamente algumas macros para a correta inicializacao e utilizacao da pilha, tais como as que definem a direcao de crescimento, o tamanho mnimo e o alinhamento.
+No trabalho apresentado por Souza (2007) e
+desenvolvida um metodologia iterativa para realizar o porte do Linux em sistemas_embarcados.
+A metodologia proposta consiste, basicamente, na
+deteccao das partes dos codigos-fonte que devem
+ser modificadas para que seja realizado o porte
+do sistema operacional para a nova plataforma,
+respeitando-se os passos (Souza, 2007, p. 52) (i)
+avaliar os requisitos iniciais do projeto usando um
+modelo de tomada_de_decisao (ii) identificar quais
+elementos de hardware nao tem correspondente
+suporte de software (iii) identificar quais codigos
+de software devem ser modificados (iv) identificar
+as dependencias entre os componentes de software
+(v) identificar a precedencia de realizacao das modificacoes.
+Dentro deste contexto, nossa proposta de metodologia visa ser mais generalista e abstrata em
+comparacao com as apresentadas ate aqui, entretanto, ela ainda e realizada de forma manual.
+Alem disso, tambem se busca definir claramente, por meio de um fluxograma de processo, a
+sequencia das atividades necessarias para realizar
+o porte de um RTOS qualquer em uma plataforma
+de hardware, conforme introduzido na secao a seguir.
+
+1224
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+3
+
+Metodologia proposta para porte de
+um RTOS em uma plataforma de
+hardware
+
+A nossa metodologia baseou-se num estudo previamente realizado de um BSP existente e funcional fornecido pelo KSDK (Kinetis Software
+Development Kit) para o porte do FreeRTOS
+para a plataforma FRDM-KL25Z, utilizando-se o
+Processor Expert, que e uma ferramenta integrada
+ao ambiente_de_desenvolvimento para auxiliar na
+geracao automatica de codigo.
+Apos a analise da estrutura e a implementacao
+do codigo, foi desenvolvida uma metodologia que
+visa fornecer os passos, em aspectos gerais, para
+a realizacao do porte de um RTOS qualquer em
+uma plataforma de hardware, sem considerar suas
+peculiaridades. A Figura 1 mostra o fluxograma
+do processo de porte proposto. Os pontos mais
+importantes desta metodologia serao discorridos
+adiante.
+
+e do BSP sejam divididos em dois diretorios principais um, contendo os arquivos dependentes do
+porte e outro, os independentes. Os arquivos especficos ao target (ID 3) sao responsaveis pela configuracao do clock, do timer gerador de ticks (interrupcoes periodicas para o escalonador), do controlador de interrupcoes, da memoria e pela troca
+de contexto. A parte do kernel independente do
+porte (ID 4) esta relacionada essencialmente a manipulacao de tarefas, filas de mensagens, mutexes,
+listas e corrotinas.
+O processo ID 6, detalhado na Figura 2, e o
+passo central desta metodologia, o qual consiste
+em realizar as alteracoes nos codigos relacionados
+ao hardware. Esse passo pode ser dividido em tres
+blocos
+ Inicializacao do hardware compreende os
+codigos que sao essenciais para a inicializacao do sistema, porem sao independentes do
+RTOS sendo portado, tais como o vetor de
+inicializacao e as funcoes de configuracao do
+clock e PLL (Phase Locked Loop).
+ Port do RTOS sao os arquivos de configuracao que adaptam o RTOS para ser executado na plataforma de hardware especfica.
+ Drivers de dispositivos e a parte do BSP
+adicional, necessaria para a utilizacao dos perifericos pelo aplicativo.
+
+Figura 1 Fluxograma do processo de porte segundo a metodologia proposta.
+Recomenda-se que os codigos fonte do kernel
+
+ISSN 2525-8311
+
+Muitos microprocessadores possuem o codigo
+em assembly do vetor de inicializacao disponvel
+para download, fornecido pelos proprios fabricantes. No entanto, caso seja necessario implementalo, deve-se recorrer a documentacao do microprocessador, que possui todas as informacoes necessarias para sua configuracao, tais como os modos
+de operacao do processador, a configuracao da pilha, o mapa de registradores, de memoria e do
+vetor de inicializacao, o gerenciamento_de_energia, o conjunto de instrucoes e os perifericos do
+processador.
+Outro documento essencial para o porte e o
+datasheet ou manual de referencia do microcontrolador, o qual contem todas as informacoes necessarias para configurar o hardware, incluindo o clock,
+o controlador de interrupcao, os timers e demais
+perifericos. Entre essas informacoes, destacam-se
+o endereco dos registradores, os bits de configuracao e os modos de operacao de cada dispositivo.
+Um arquivo de cabecalho contendo o mapeamento
+dos registradores dos perifericos e geralmente fornecido pelo fabricante do microcontrolador ou desenvolvedores third party.
+Para realizar o porte do sistema operacional,
+e necessario ainda consultar o manual de porte e a
+documentacao fornecida pelos desenvolvedores do
+RTOS, que servem de guia para a implementacao
+da interface completa para que o sistema operacional se comunique adequadamente com o hardware.
+
+1225
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Por fim, deve-se testar e depurar o programa
+(ID 10) para verificar se o sistema atende aos
+requisitos funcionais e, principalmente, temporais, validando o processo de porte do RTOS.
+Recomenda-se fortemente que esse processo seja
+iterativo e implementado gradativamente, isto e,
+deve-se compilar e testar o programa inicialmente
+com uma estrutura basica para seu funcionamento
+e entao adicionar, de forma gradual, as funcionalidades do RTOS no programa de usuario.
+4
+
+Teste e validacao da metodologia
+
+Para validacao da metodologia proposta, foi realizado o porte do FreeRTOS em uma plataforma
+FRDM-KL25Z e de um programa aplicativo basico capaz de testar algumas funcionalidades crticas do RTOS, tais como temporizacao, escalonamento_de_tarefas e bloqueio de recursos. O diagrama de requisitos do sistema e ilustrado na Figura 4.
+eII 2eIeIe
+o eeeeIe e II e11
+i eieI i eiie
+ssssssssssssssssssssss
+
+eeee
+
+eeee
+
+eeeeeeeee
+
+Figura 2 Desdobramento do processo ID 6 da
+metodologia apresentada.
+Em geral, essa interface e composta por uma lista
+de constantes que devem ser definidas e um conjunto de funcoes que devem ser implementadas.
+Os passos subsequentes da metodologia sao
+necessarios para verificar e validar o porte realizado, apesar de nao fazerem parte do processo de
+porte propriamente dito. O passo ID 7, expandido
+na Figura 3, consiste em implementar um codigo
+mnimo de aplicativo e a funcao main() para verificar se o porte foi realizado com sucesso.
+
+eeee
+
+eeeeeeee o
+
+eeeer e ee
+
+1ee1ee11
+
+1ee1ee12
+
+1ee1ee13
+
+e  e eee ee   ee e
+eeee eeeee e ee   e
+eee e eeee e
+eeeee
+...
+
+e  e eee ee   ee e
+eeee eee o e e
+ee   eeee. e eeee e
+eeeee ...
+
+e  e eee ee eee
+e
+eee e ee eeee e
+ee
+e e e e
+  e eeee e ee
+
+e e e e
+  e e ee  ee .
+
+Figura 4 Diagrama de requisitos do sistema.
+Primeiramente foi feito um estudo do codigo
+do BSP obtido com o auxlio do Processor Expert,
+bem como de sua organizacao. Para organizar o
+codigo fonte do RTOS conforme a metodologia,
+foi consultado o guia de porte do FreeRTOS, o
+qual informa a estrutura de diretorios e a organizacao do codigo fonte do sistema operacional.
+Em seguida, realizou-se o download dos arquivos fonte do FreeRTOS a partir de seu site oficial
+(httpwww.freertos.org) e, entao, organizouse o codigo da maneira apresentada na Figura 5,
+a qual mostra o diagrama de pacotes utilizado na
+modelagem do programa implementado no experimento.
+Cnngssssnaasnsnnsnsnassansnngannnn
+nsnnssshaSnngnahsnasahsnnsahnsennh
+sssssssssssssssssss
+nnnnnnnnnnn
+1 iee1e
+e1
+snnnssss
+
+snnsnsnCCnss
+snssnss
+
+snnnssss
+
+snssnss
+
+sngs
+
+sngs
+sngs
+SsssSSSs
+ssn
+
+nnnnsss
+
+Figura 3 Desdobramento do processo ID 7 da
+metodologia apresentada.
+nnsnnens
+
+O passo ID 8 equivale a geracao da imagem
+executavel e carregamento no target. Em caso de
+erro de compilacao, deve-se realizar as correcoes
+necessarias (ID 9) e recompilar o codigo, em um
+processo iterativo, ate que se obtenha a imagem
+executavel com exito.
+
+ISSN 2525-8311
+
+CnsnsCCCnCCCC
+
+CsgCnng
+
+Figura 5 Diagrama de pacotes implementados.
+
+1226
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Conforme os passos ID 3 e 4 da nossa metodologia, o codigo fonte do FreeRTOS foi dividido em dois diretorios separados. No diretorio
+portable foram colocados os arquivos que dependem do porte, os quais ainda foram subdivididos
+nas pastas CortexM0p GCC e MemMang. Na primeira pasta foram colocados os arquivos port.c e
+portmacro.h, que dependem do processador e do
+compilador, e na segunda, foi copiado o arquivo
+que gerencia a memoria heap. No outro diretorio
+(src) foram colocados os arquivos do kernel que
+nao sao especficos ao porte realizado, tais como
+tasks.c, list.c e queue.c.
+Foi configurado entao o ambiente_de_desenvolvimento KDS (Kinetis Design Studio) e criado
+um novo projeto do Processor Expert, chamado
+tccblink, porem o KSDK nao foi utilizado para
+a geracao automatica de codigo. Dessa forma, o
+projeto importou apenas o makefile, os arquivos
+de configuracao do linker e do debugger e os arquivos especficos ao microcontrolador, fornecidos
+pela propria NXP, fabricante da plataforma.
+A tool-chain utilizada para geracao da imagem executavel foi a GNU ARM Embedded Toolchain arm-none-eabi-.
+Os arquivos responsaveis pela inicializacao do
+hardware, relacionados aos passos 6.a e 6.b da Figura 2, sao definidos no padrao CMSIS (Cortex
+Microcontroller Software Interface Standard) e
+fornecidos pela NXP. O CMSIS-Core define os arquivos startupMKL25Z.S e systemMKL25Z4.c,
+contidos na pasta StartupCode.
+No arquivo systemMKL25Z4.h foi selecionada
+a configuracao desejada para o clock do sistema modo PEE (PLL Engaged External), que usa um
+cristal externo de 4 MHz e um PLL para alcancar
+a frequencia de 48 MHz de alta precisao.
+As definicoes do passo 6.c foram realizadas no arquivo portmacro.h.
+O arquivo
+FreeRTOSConfig.h contem uma lista de definicoes
+para configurar o RTOS conforme as necessidades
+do software aplicativo (ID 6.d). Os passos 6.e a 6.g
+foram implementados no arquivo port.c, o qual
+contem as funcoes necessarias para que o RTOS
+execute na plataforma de hardware utilizada.
+Os
+arquivos
+contidos
+no
+diretorio
+Application foram entao implementados para
+executar as tarefas do aplicativo. Os arquivos
+leddriver.c e leddriver.h implementam
+um driver mnimo para utilizacao do LED RGB
+contido na plataforma de desenvolvimento (ID
+6.h).
+O passo ID 7 consiste na criacao e configuracao das tarefas Task1 e Task2 do software aplicativo, de forma a satisfazer os requisitos do sistema.
+Por fim, o programa foi compilado e testado
+de forma iterativa, ate que os requisitos do sistema
+fossem satisfeitos, conforme sugerem os passos ID
+8 a 10 da metodologia.
+O diagrama de definicao de blocos dos prin-
+
+ISSN 2525-8311
+
+cipais componentes do sistema sao apresentados
+na Figura 6. O codigo completo pode ser encontrado em <httpsgithub.comtiagoukei
+tnnnd
+tccblink>.
+ddtdttnn
+nnnnnnssn.s.nnnnnnnnnn.nn
+
+nnnnnnnnnnnnndnnnn.nnnnnnnn
+
+nnnnnnndgn.nnndnnnn.nnnnttd2444
+
+dnnnnsgnnnn.s.nnnnngnnnn.s.nsn.nn.ngnnn.nn
+
+tndgddgdddgtdnnnnnnnndnd...
+ddgtnddgdtndgdnnndnnnndndnn.
+
+tnnnnn..n.gdgn.s. nsn.nn.ngnnn.nn
+dnnnnsgnnnn.nn.nnnn.s.nn.ngnnn.nn
+
+nnnnnnnnnnnnnnnnnnnnnnnn.
+
+nnnnnnnnnnnnnnnnnnnnnndnnd1
+
+nnnnnnnnnnnnnnnnnnnnnndnnd2
+
+ddn.dnnndnn.nnn.dndndnn.
+dnnd1dnnnnddndnn.
+dnnd1dnnnddnddnnnnnnnnndnn...dnd...
+
+1
+
+1
+
+2
+
+dnnd2dnnnnddndnn.
+dnnd2dnnnddnddnnnnnnnnndnn..dnd...
+
+nnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnndnnnn.nnnngnnngdgngnngng
+
+nn.nnnnn.nnnn.nnnnn.nnn.nn...
+ddnnnnnnndndnndnddndnn.
+ddnnnnnnndnnnnnn.nnnddndnn.
+ddnnnnnnndndnnnn.nnnnnddndnn.
+nnnnddnnnn
+
+nnnnnnndgn.nnnnnnnnnnnnnnnnnnndttd2444
+
+ddnnnddnnnnnddndnn.
+gnnnnd.nn.nnnddndnn.
+tngnnnndngddndnn.
+
+nnnnnnndgn.nnnnnnnnnnnnn*nnnndttd2444
+
+gnnngdgnnnnnnnntnnnntnntnngnn.nnnd1
+nnnnnd7
+nnnnnd8
+gnnngdgndnnnnnndgnnnn
+nddnnntnnnnnddndnn...
+ddnnngnnndndndnn..dndnn.
+ddnnndnnnnnnnnntnnndnddndnn.
+.dnnntnngnnn.nnnnndnddnnndndn
+
+n*nnnngnnngnnndnnnnnt2dn
+
+n*nnnndnnnddndnn.
+n*nnnngnnngnnnddn.nnnddndnn.
+
+gnnngdgnnnnnnnntnnnngnnnn.ttndtggnnnnnnnnnnn
+gnnngdgnnnnnnnntnnnngnnnn.ttndtggnnnnnn
+
+n.dnnndnnnnnnnnnnnnnddn.dnnggnnnndnnnnndd*nndn.*n.gn.nndnndgnnnnnnndn*nddnnnnnnnnnndnn..dnnnnndd*nndn.
+nnddnndd.nndnnnnddndnn.
+ddnnnnnnnngnnnndnndddndnn.
+.dnnnnnnnnnn.n.nnnnddntnnnd*nndn
+ddnnndn.nn.n.nnnnddndnn.
+ddnnndnnn.ddndnn.
+ddnnndnnnngnnnnnnnnddndnn.
+ddnnnd.nngnnnnnnnddndnn.
+nnnnndnnnnnnnntnndgnnndngddnnnnngnn..nnng
+dgnnnndnnnnnnnntnndgnnndngdnntnndnnnnngnn..nnngdndnn.
+dnn.ndd.nn.nnnddndnn.
+n*ndnndd.nn.nnnddndnn.
+nndnnnnndnnnndnnnnnnnnddndnn.
+
+nnnnndngtdtggtd.nnnn
+nnnnddgtdddgdgtdtnnnnn
+nnnntddddnddtttdtdnnnn
+nnnntntdtddndnnnn
+nnnnddddtddndnn.
+nnnnddddtdgggtddngddndnn.
+nnnndttdntddg.dttddngddndnn.
+nnnntdnntddddtddggdddnddndnn.
+nnnndtntddddtddggdddnddndnn.
+nnnndtddgdggdddgndddndnn.
+nnnndtdddggdddgndddndnn.
+nnnndnntdgdtgddgtddggdgddndnn.
+nnnndnntdgdtgddgtddndnn.
+nnnntgdddndnn.
+nnnnnddddtddggddddtnntdgggtddngddndnn.
+nnnngddngddtddggddddtnntdgggtddngddndnn.
+
+Figura 6 Diagrama de definicao de blocos.
+Os blocos destacados em amarelo na Figura
+6 constituem o software aplicativo, implementado
+pelo usuario, e o arquivo FreeRTOSConfig.h, que
+faz parte do codigo baixado do site do FreeRTOS,
+onde foram definidas as constantes para customizar o kernel do sistema operacional para a aplicacao.
+dngn.1.ng.1
+Os blocos verdes sao especficos ao hardware
+e fornecidos pela NXP, enquanto os laranjas sao
+os arquivos fonte do RTOS, os quais nao sofreram
+modificacao.
+Ja os blocos em azul sao os arquivos centrais do porte, que permitem a comunicacao do
+software com o hardware. Ambos os arquivos
+(port.c e portmacro.h) foram reaproveitados de
+um porte anterior realizado em um processador
+Cortex-M0, considerando as modificacoes necessarias para adapta-los para o Cortex-M0+.
+5
+
+Resultados
+
+O sistema utilizado para validacao da nossa metodologia, apesar de ser simples, possui varias caractersticas dos sistemas_embarcados de tempo
+real, incluindo restricoes temporais bem definidas,
+tratamento de interrupcoes, troca de contexto e
+gerenciamento de recursos compartilhados, bem
+como acesso a perifericos da plataforma de desenvolvimento.
+A Figura 7 ilustra as tensoes nos pinos de
+sada do microcontrolador obtidas com a utilizacao de um osciloscopio de dois canais. Observase que os requisitos caractersticos de sistemas de
+tempo_real mencionados anteriormente sao satisfeitos com precisao ( < 1ms). Esta figura tambem ilustra a parte de troca de contexto das tarefas.
+
+1227
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+Troca de contexto
+
+X 0.864
+Y 3.36
+
+Tensão V
+
+3
+
+X 2.864
+Y 3.36
+
+X 4.864
+Y 3.36
+
+X 6.864
+Y 3.36
+
+2
+1
+0
+
+X 1.864
+Y 0
+
+0
+
+1
+
+2
+
+X 3.864
+Y 0
+
+3
+
+4
+5
+Tempo s
+
+X 5.864
+Y 0
+
+6
+
+7
+
+Saída no pino LEDRGBGREEN
+
+4
+
+8
+
+9
+
+X 7.064
+Y 3.36
+
+2
+1
+0
+
+X 6.964
+Y 0
+
+0
+
+1
+
+2
+
+3
+
+4
+5
+Tempo s
+
+6
+
+7
+
+8
+
+9
+
+Figura 7 Tensao nos pinos que acionam os LEDs.
+E importante ressaltar tambem que a quantidade de memoria obtida no porte seguindo a nossa
+metodologia (18.556 bytes) foi reduzida em relacao a obtida segundo o Processor Expert (20.872
+bytes), o que equivale a uma reducao de aproximadamente 11, decorrente do fato de o programa
+ser customizado para a aplicacao, sendo removidas todas as partes nao utilizadas.
+6
+
+Conclusoes
+
+Este artigo apresentou uma metodologia geral de
+porte de um RTOS em uma plataforma de hardware, bem como sua validacao por meio da implementacao do porte do FreeRTOS na plataforma
+FRDM-KL25.
+A metodologia apresentada mostrou-se adequada para o porte realizado, uma vez que satisfez
+os requisitos de tempo_real do sistema. O fluxograma proposto fornece uma sequencia de passos
+bem definidos, evitando que o desenvolvedor escreva codigo desnecessario, ao mesmo tempo em
+que garante que as atividades essenciais para o
+porte sejam realizadas, minimizando os erros decorrentes do processo.
+Nossa metodologia difere-se das estudadas na
+literatura no sentido em que define claramente,
+por meio de um fluxograma de processo, a sequencia das atividades necessarias para realizar o porte
+de um RTOS e tambem fornece uma abstracao
+que procura viabilizar a aplicacao desses conceitos
+para qualquer combinacao de sistema operacional
+e plataforma de hardware, embora a implementacao do BSP seja bastante especfica.
+Pretende-se, em trabalhos futuros, realizar o
+porte de diferentes RTOSs em diversas plataformas utilizando-se desta metodologia, visando expandir a validacao de sua aplicabilidade e, eventualmente, aprimora-la.
+No contexto da Internet das Coisas, bastante
+difundido atualmente, intentamos realizar o porte
+dos RTOSs Zephyr (Zephyr Project, 2016) e Xenomai (Barbalace et al., 2008) em diferentes pla-
+
+ISSN 2525-8311
+
+taformas de hardware, como por exemplo Beaglebone Black, Edison e Raspberry. Sugere-se ainda,
+estudar a automatizacao em alguns aspectos do
+processo de porte, com o intuito de minimizar
+eventuais erros de codificacao manual introduzidos durante sua geracao.
+Agradecimentos
+
+X 6.864
+Y 3.44
+
+3
+Tensão V
+
+Troca de contexto
+
+Saída no pino LEDRGBRED
+
+4
+
+Agradecemos a UNICAMP e a FEM por fornecerem os meios necessarios para o desenvolvimento deste trabalho que foi parcialmente suportado pelo processo no 201424855-8, Fundacao de
+Amparo a Pesquisa do Estado de Sao Paulo (FAPESP)1 .
+Referencias
+Barabanov, M. (1997). A Linux-based real-time
+operating system.
+Barbalace, A., Luchetta, A., Manduchi, G., Moro,
+M., Soppelsa, A. and Taliercio, C. (2008).
+Performance comparison of VxWorks, Linux,
+RTAI, and Xenomai in a hard real-time application, IEEE Transactions on Nuclear Science 55(1) 435439.
+Buttazzo, G. C. (2011). Hard Real-Time Computing Systems, 3 edn, Springer US, New York.
+Hedlund, M. and Aronson, F. (2002). Evaluation of real-time operating systems for safetycritical systems.
+Kumar, K. E., Kamaraju, M. and Yadav, A. K.
+(2013). Porting and BSP customization of Linux on ARM platform, International Journal
+of Computer Applications 80(15) 3642.
+Li, Q. and Yao, C. (2003). Real-Time Concepts for
+Embedded Systems, CMP Books, Berkeley.
+Schafer, P. A. (2007). Dynamic loading and linking native code on a real-time operating system.
+Souza, O. (2007). Metodologia para porte do sistema operacional Linux para sistemas_embarcados.
+Stankovic, J. A. and Rajkumar, R. (2004). Realtime operating systems, Kluwer Academic
+Publishers 28 237253.
+Young, R. (2015). Porting a real-time operating
+system and developing a board support package.
+Zephyr Project (2016).
+httpswww.zephyrproject.org.
+1 As opinioes, hipoteses e conclusoes ou recomendacoes
+expressas neste material sao de responsabilidade dos autores e nao necessariamente refletem a visao da FAPESP
+
+1228

@@ -1,0 +1,465 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+CÁLCULO DE DISTÂNCIAS EUCLIDIANAS ENTRE HISTOGRAMAS PARA SISTEMAS DE LOCALIZAÇÃO ROBÓTICA
+EM FPGA
+A. A. NASCIMENTO, P. C. M. A. FARIAS, D. M. MATOS JÚNIOR, J. L. C. CARVALHO
+PPGEE - PROGRAMA DE PÓS GRADUAÇÃO EM ENGENHARIA ELÉTRICA
+ESCOLA POLITÉCNICA DA UNIVERSIDADE FEDERAL DA BAHIA,
+SALVADOR, BA, BRASIL
+Abstract
+ Vision Based Autonomous Robot Navigation systems often deal with two main issues obstacle detection and localization. In both cases the used algorithms demand pre-processing of input images in order to avoid specific characteristics and to
+redress illumination inconsistencies. For navigation in real-time, the pre-processing needs to be done as quickly as possible, saving time for the most robust procedures of scene detection and analysis. This need requires severe restrictions on the acquisition
+performance, which justifies the pre-processing routine adaptations on dedicated hardware. This project aims an implementation
+of one module of images equalization by using a HDL (Hardware Description Language) method. It is also attempted to measure
+distance between histograms by means of the Euclidian distance. These attempts are useful in supporting localization mechanisms in autonomous navigation.
+Keywords
+ Robot Localization, Euclidean Distance, Histogram Equalization, Computer Vision, FPGA.
+Resumo
+ Sistemas de navegação_autônoma baseados em visão robótica geralmente lidam com dois problemas principais detecção de obstáculos e localização. Em ambos os casos os algoritmos utilizados demandam um pré-processamento das imagens
+de entrada para eliminar (ou isolar) características específicas e compensar variações de iluminação. Para navegação em tempo
+real, o pré-processamento precisa ser feito com o máximo de rapidez possível, salvando tempo para os procedimentos mais robustos de detecção e análise de cena. Esta necessidade impõe severas restrições de desempenho da aquisição, o que justifica a adaptação das rotinas de pré-processamento em hardware dedicado. Este projeto propõe a implementação em HDL (Hardware
+Description Language) de um módulo de equalização de imagens e cálculo de distância_euclidiana entre histogramas, para auxiliar mecanismos de localização em navegação_autônoma.
+Palavras-chave
+ .
+
+1
+
+global em um mapa topológico previamente armazenado, utilizando distância_euclidiana entre histogramas e o algoritmo de detecção robusta SIFT (Scaleinvariant feature transform).
+Recentemente, os sistemas de visão robótica se
+tornaram uma alternativa extremamente popular para
+realizar este tipo de tarefa. A principal vantagem de
+um sistema de visão, com relação a alternativas baseadas em multi-sensores, é grande o volume de informações espaciais que podem ser extraídas de uma
+única imagem. O aumento na oferta e na variedade e
+de sensores visuais de baixo_custo também contribuiu
+para a popularização dos sistemas de visão em robótica. Alguns projetos como a CMUCam, (Goode et
+al., 2012), oferecem uma plataforma completa para
+visão embarcada, incluindo, além do sensor visual,
+um microcontrolador e diversos periféricos para
+controle servovisual e comunicação, eliminando a
+necessidade de um sistema externo de inteligência
+em aplicações de pequeno porte, como em (Project,
+2013).
+Na última década os sistemas de visão robótica
+se tornaram peças fundamentais em inúmeras aplicações de navegação_autônoma. No entanto, o desempenho dos processos de aquisição e análise de imagens é um fator crucial para aplicações de navegação
+em tempo_real. Durante a navegação, o robô precisa
+estimar sua posição e identificar obstáculos a cada
+passo da trajetória. Um sistema de visão adequado
+deve ser capaz de capturar e analisar imagens o mais
+rápido possível, transferindo informações espaciais a
+
+Introdução
+
+Os sistemas de navegação são uma peça fundamental no projeto de robôs autônomos. Sua principal
+atribuição é decidir para onde o robô deve se mover,
+considerando informações prévias do ambiente, além
+da posição e a orientação do veículo e das informações adquiridas nos sensores. O sistema deve ser
+capaz de conduzir o robô por uma trajetória segura,
+evitando obstáculos e possivelmente identificando
+pontos de interesse. Adicionalmente, o veículo também deve ser capaz de perceber quando atingiu o
+objetivo final do seu percurso. Neste contexto, surgem dois problemas comuns em sistemas de navegação_autônoma a identificação de obstáculos e pontos
+de interesse e a localização do robô com relação ao
+ambiente.
+Uma forma direta de tratar estes problemas é a
+combinação de mapeamento prévio do ambiente com
+informações adquiridas de vários sensores. Em (Tsukiyama, 2011),por exemplo, o autor apresenta um
+sistema de navegação robótico com localização global baseada em RFID (Radio Frequency IDentification). Em (Drumheller, 1987), por sua vez, são utilizadas informações de sonar para localizar um veículo
+em ambientes fechados, o algoritmo apresentado é
+tolerante a ruídos e variações no ambiente, como a
+presença de obstáculos móveis (e.g. alteração na
+posição da mobília em um escritório). Em (Maohai et
+al., 2011), os autores propõem uma arquitetura de
+visão omnidirecional hierárquica para localização
+93
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+da aplicação. A Seção 2 descreve os algoritmos de
+equalização e cálculo de distância escolhidos. A
+seguir, a Seção 3 apresenta a arquitetura do sistema,
+os detalhes de implementação e as restrições de cada
+componente. Finalmente, as Seções 4 e 5 apresentam
+e discutem os resultados de simulação, respectivamente.
+
+medida que o sistema navega. Esta condição impõe
+severas restrições de desempenho ao sistema de visão
+embarcado, sobretudo em aplicações de alta velocidade. O problema se torna ainda mais crítico quando
+se considera a alta complexidade dos algoritmos de
+visão_computacional (e.g. visão estéreo, detecção de
+features, etc.), dificultando sua aplicação em ambientes com memória, energia e processamento limitados.
+Em arquiteturas de propósito geral os algoritmos
+de visão são implementados em software, o que limita o tempo de execução  frequência do microprocessador utilizado. Uma alternativa viável para aumentar
+o desempenho destas aplicações é a utilização de
+blocos de hardware dedicados para acelerar diferentes etapas da aquisição e processamento_de_imagens.
+Nos últimos vinte anos, várias pesquisas foram desenvolvidas com o objetivo de adaptar algoritmos de
+visão_computacional em FPGA (Field-programmable
+gate array), oferecendo soluções de alto_desempenho
+para visão embarcada, como em (Chalimbaud et al.,
+2006), (GholamHosseini and Hu, 2008), (Hagiwara
+et al., 2011) e (Jin et al. , 2010). Uma vantagem do
+uso de FPGA, além do melhor desempenho com
+relação a sistemas de propósito geral, é a flexibilidade que hardware programável oferece, o que o torna
+ideal para o projeto incremental de sistemas de navegação em ambientes diversificados.
+A operação de um sistema de visão pode ser resumida nas seguintes etapas aquisição de imagens,
+pré-processamento, detecção e extração de features e,
+finalmente, transmissão das informações. As etapas
+de aquisição e pré-processamento são comuns a
+qualquer sistema de processamento_digital_de_imagens e, normalmente, envolvem algum tipo de filtragem para melhorar, ou isolar, características específicas da imagem (e.g. equalização_de_histogramas,
+detecção_de_bordas, suavização, etc.). Seu objetivo é
+adequar as entradas para facilitar as tarefas de detecção de características e o cálculo de informações de
+profundidade. Geralmente o pré-processamento é
+executado no hardware diretamente ligado ao sensor
+de aquisição, e, por isso, atrasos nestas etapas podem
+comprometer seriamente o desempenho de toda a
+cadeia de tratamento.
+Este trabalho propõe o desenvolvimento de um
+módulo de hardware em HDL para equalização e
+cálculo de distância_euclidiana de histogramas. O
+módulo possui uma interface UART para comunicação externa e é capaz de calcular e equalizar histogramas de imagens em escala de cinza com resolução
+fixa. O sistema é ideal para aplicações que precisam
+selecionar um grupo pequeno de imagens a partir de
+um conjunto muito grande de entradas como em
+(Maohai et al., 2011). Neste caso, como o custo
+computacional do algoritmo principal de detecção é
+muito alto, aplicá-lo em todas as imagens adquiridas
+durante o percurso é inviável para navegação em
+tempo_real. Uma pré-seleção de imagens é feita utilizando distância_euclidiana entre os histogramas,
+depois disso somente as melhores são encaminhadas
+ao SIFT. O uso de um hardware dedicado para este
+tratamento inicial visa uma melhoria no desempenho
+
+2 Algoritmos de pré-processamento
+Um sistema de visão_computacional para navegação_autônoma geralmente tem duas atribuições
+básicas detecção de obstáculos e localização do
+veículo. As duas tarefas envolvem a extração e a
+identificação de características específicas da imagem, como quinas, bordas, texturas conhecidas, objetos de cores específicas, etc. Uma vez extraídas, estas
+características são classificadas de acordo com uma
+base conhecimento previamente adquirida e os resultados são encaminhados para o sistema_de_controle
+de movimentos do robô. Esta separação entre visão e
+controle motor permite a reutilização do sistema em
+diferentes plataformas, assumindo que exista um
+protocolo de comunicação comum entre eles.
+As seguintes etapas resumem a operação de um
+sistema de visão genérico aquisição de imagens, préprocessamento, detecção de features e transmissão.
+Uma vez capturada a imagem, o sistema aplica algum tipo de filtragem para isolar elementos particulares (e.g. detecção_de_bordas), ou extrair ruídos (e.g.
+suavização), dependendo da aplicação desejada. Em
+aplicações de tempo_real é importante que o préprocessamento seja realizado o mais rápido possível,
+visto que algoritmos de detecção e comparação normalmente exigem um tempo razoável de computação.
+2.1 Equalização de Histogramas
+Uma técnica de pré-processamento bastante comum em visão robótica é a equalização_de_histogramas. Imagens equalizadas são menos suscetíveis a
+variações de iluminação, o que facilita técnicas de
+comparação e identificação de características. O
+histograma de uma imagem digital é a soma das
+ocorrências dos valores de intensidade dos pixels
+desta imagem. Entende-se o histograma como sendo
+a probabilidade de ocorrência de cada nível de intensidade. Um histograma equalizado pode ser descrito
+pela Equação 1
+.
+(1)
+é o valor de intensidade do k-ésimo pixel
+Onde
+da imagem que vai de 0 a 255 (para imagens de 8
+bits),
+é número de ocorrências para este valor e
+é número de colunas multiplicado pelo
+número de linhas da imagem, isto é, a quantidade
+total de pixels disponível. Este tipo de histograma é
+um tipo aproximado de função de densidade de pro-
+
+94
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+babilidade, ou PDF (do inglês probability density
+function).
+Considerando uma imagem R e sua respectiva
+PDF,
+, a equalização de um pixel
+é a transformação descrita pela Equação 2, onde L é o número de níveis de intensidade da imagem. O processo
+gera uma nova imagem equalizada S, com pixels
+representados por
+.
+
+2.2 Localização Topológica
+Os problemas de localização em robótica normalmente envolvem a comparação de uma imagem
+candidata com um mapa armazenado a priori. Em
+(Yagi et al, 1995), por exemplo, um mapa topológico
+do ambiente é criado durante a fase de treinamento,
+em seguida, durante a navegação, o robô identifica
+que atingiu um ponto específico do mapa comparando a imagem atual com uma imagem de referência.
+Um algoritmo robusto baseado em azimutes de uma
+imagem omnidirecional é utilizado para comparação.
+Uma outra técnica de comparação entre imagens
+é o cálculo da distância_euclidiana entre seus histogramas. A distância pode ser determinada de acordo
+e
+são os histogramas
+com Equação 3, onde
+das imagens comparadas e N é o número máximo de
+agrupamentos (bins). Quanto menor a distância D
+entre os histogramas, mais próximas são as imagens.
+
+.
+(2)
+A Figura 1 mostra uma mesma imagem antes (a,
+c) e depois (b, d) do processo de equalização, bem
+como seus respectivos histogramas. Percebe-se uma
+melhoria no contraste e, consequentemente, uma
+melhoria na nitidez da imagem. Quanto ao histograma percebe-se que a distribuição assume uma forma
+mais igualitária.
+
+(3)
+.
+
+(a)
+
+Apesar da distância_euclidiana não ser uma medida muito precisa de comparação entre duas cenas,
+ela pode ser usada para pré-selecionar um conjunto
+de imagens relativamente próximas de uma referência, descartando imagens muito distantes e, consequentemente, reduzindo o espaço total de buscas,
+como descrito em (Maohai et al., 2011). Esta préseleção aumenta significativamente o desempenho do
+algoritmo de localização, o que pode ser decisivo
+para navegação em alta velocidade.
+
+(b)
+
+3 Arquitetura de aquisição
+O sistema descrito neste trabalho foi projetado
+para atuar como um periférico ao sistema principal
+de visão e navegação, como ilustrado na Figura 2. A
+ligação entre o FPGA e a câmera é feita por meio de
+uma interface UART de comunicação. Consideramos
+um sistema de visão especializado em identificar
+obstáculos e localizar o veículo de acordo com um
+mapa topológico previamente conhecido, como descrito na Seção 2.
+
+(c)
+
+(d)
+Figura 1. Exemplo de equalização_de_histogramas e seu efeito
+sobre a imagem. a) Imagem original não equalizada b) Imagem
+após a equalização c) Histograma não equalizado de a d) Histograma equalizado de b.
+
+95
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+cada histograma também é armazenado em um banco
+específico de registradores. Os módulos distcalc e
+equalizer, por sua vez, são acionados após a recepção
+de comandos de cálculo de distância e equalização,
+via UART. O módulo CORE é responsável pela
+interpretação dos comandos e sincronização dos
+sinais de controle. A operação do sistema é ilustrada
+no diagrama de estados da Figura 5.
+
+Figura 2. Arquitetura de interligação entre a câmera, o sistema de
+controle de visão e o FPGA.
+
+O microcontrolador embarcado na câmera é responsável pelas etapas de aquisição das imagens no
+sensor visual e pela detecção e extração de features.
+O programa básico de visão é executado no microcontrolador e recebe como entrada as imagens capturadas pelo sensor. Como saída do sistema, são encaminhadas ao controle de navegação um conjunto de
+informações sobre a presença de obstáculos ao redor
+do veículo e um comando de interrupção quando ele
+atinge uma landmark. A comunicação entre o FPGA
+e a câmera obedece um protocolo de troca de comandos descrito na Figura 3. O programa pode selecionar
+entre o cálculo de distância e a equalização de uma
+das imagens. O valor da distância é enviado como
+um inteiro de dois bytes, quanto menor a distância
+mais próximas são as imagens.
+
+Figura 4. Arquitetura básica do sistema.
+
+4 Resultados de experimentos
+A arquitetura inicialmente foi simulada em um
+software de simulação de RTL, o Simvision (Inc, C.
+2013). Foram gerados casos de teste para o cálculo
+de histogramas e distância_euclidiana entre imagens
+de resolução NxN (quadradas). Os resultados foram
+comparados com as saídas de um script em Matlab
+usado como modelo_de_referência.
+
+Figura 3. Protocolo de comunicação entre a câmera e o módulo
+FPGA.
+
+Figura 5. Máquina de estados do sistema em FPGA.
+
+A Figura 4 resume os principais elementos arquiteturais do sistema em FPGA, implementados em
+Verilog. As imagens são armazenadas como um
+único vetor de pixels em dois bancos de registradores
+(IMAGEA e IMAGEB). Atualmente o sistema
+suporta apenas imagens em escala de cinza com
+resolução fixa. Os blocos histcalc e distcalc, são
+responsáveis pelo criação dos histogramas e pelo
+cálculo da distância entre eles, respectivamente. O
+módulo histcalc é acionado automaticamente sempre que uma imagem é carregada através da UART,
+
+As Figuras 6(a) e 6(b) apresentam duas versões
+de uma mesma cena, a primeira sem equalização e a
+segunda equalizada pelo hardware desenvolvido. A
+verificação funcional do sistema em HDLé feita
+comparando-se as saídas que ele apresenta com as
+saídas do modelo_de_referência em Matlab, dado um
+conjunto de entradas comum aos dois. O sistema é
+considerado verificado se todas as saídas apresentadas forem iguais s saídas do modelo_de_referência.
+Para esta simulação utilizamos como entradas um
+conjunto de imagens não equalizadas. Como saídas
+
+96
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+foram considerados os histogramas gerados, o conteúdo dos bancos de registradores IMAGEA depois
+da equalização e a distância_euclidiana entre as imagens em IMAGEA e IMAGEB. Todas as comunicações com o sistema foram feitas por um módulo
+UART incorporado ao RTL do projeto. O próprio
+Simvision gera estímulos equivalentes a transmissão
+de dados pela UART.
+
+(b)
+
+(a) Imagem não equalizada
+
+(c)
+Figura 7. Imagens para experimento de localização. a) Imagem de
+referência b) Imagem em um ponto intermediário do percurso c)
+Imagem no mesmo local da referência mas capturada de um
+ângulo diferente.
+
+(b)Imagem após a equalização
+Figura 6. Resultado da equalização de imagem utilizando módulo
+de hardware.
+
+A Tabela 1 mostra a distância_euclidiana das Figuras 7(b) e 7(c), com relação a imagem de referência 7(a). A tabela também apresenta os resultados do
+experimento considerando histogramas de comprimentos variados. O número de bins do histograma
+tem impacto direto sobre a quantidade de memória e
+o desempenho final do sistema, por isso a importância de testar diferentes valores para estimar uma
+região satisfatória de resultados com o menor custo
+possível.
+
+Após os experimentos de equalização, o passo
+seguinte foi observar os resultados para um ambiente
+de localização por visão, utilizando o modelo de
+cálculo de distâncias euclidianas entre diferentes
+histogramas. A ideia do experimento foi simular uma
+situação comum em navegação por mapa topológico,
+onde o robô precisa comparar cada imagem adquirida
+no percurso com a imagem de referência do próximo
+nó a ser atingido. Comparando a distância entre as
+imagens ele pode estimar se está próximo ou não da
+referência. Todas as imagens foram obtidas na mesma sala. A Figura 7(a) foi usada como referência
+para a localização, a Figura 7(b) representa um ponto
+intermediário do percurso até a referencia e, finalmente, a Figura 7(c) foi capturada no mesmo local da
+referência, porém um pouco rotacionada. Todas as
+imagens foram equalizadas antes da comparação.
+
+Tabela 1. Distância Euclidiana nas imagens 7(b)
+e 7(c) com relação a referência 7(a)
+Imagem
+Distância Euclidiana
+N de Bins
+B
+37010
+32
+B
+22023
+128
+B
+17940
+256
+C
+28047
+32
+C
+20081
+128
+C
+15447
+256
+5 Conclusões
+A equalização é uma técnica útil para melhoria
+de contraste de imagens com histograma concentrado
+em regiões específicas (e.g. centro, uma das bordas,
+etc.). O espalhamento da distribuição de probabilidade dos pixels melhora o contraste e pode auxiliar a
+identificação de características mais sutis da cena,
+como pôde ser observado nas Figuras 6(a) e 6(b). A
+técnica pode ser incluída na etapa de préprocessamento para visão robótica, com o intuito de
+
+(a)
+
+97
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Maohai, L., Lining, S., Qingcheng, H., Zesu, C. and
+Songhao, P. (2011). Robust omnidirectional
+vision based mobile robot hierarchical
+localization and autonomous navigation,
+Information Technology Journal 10(1) 2939.
+Project, C. (2013). Spoonbot. http
+www.cmucam.orgprojectscmucam3
+wikiSpoonBot.
+Tsukiyama, T. (2011). Rfid based navigation system
+for indoor mobile robots, World Congress, Vol.
+18, pp. 10841089.
+Yagi, Y., Nishizawa, Y. and Yachida, M. (1995).
+Map-based navigation for a mobile robot with
+omnidirectional image sensor copis, Robotics
+and Automation, IEEE Transactions on 11(5)
+634648.
+
+tornar o sistema de navegação mais robusto  variações específicas de iluminação.
+A simplicidade do algoritmo de equalização
+permite uma rápida adaptação para HDL. O tempo de
+equalização é proporcional  resolução da imagem e
+ao número de bins do histograma. No caso específico
+do projeto em FPGA, o número de ciclos de clock
+necessários para equalizar uma imagem é muito
+menor que o necessário para a transmissão da mesma
+imagem via UART, o que possibilita uma estimativa
+aproximada do desempenho do módulo. O principal
+gargalo da arquitetura apresentada é a transmissão
+das imagens e histogramas para dentro e fora do
+módulo de hardware.
+A medida de distância_euclidiana pode ser utilizada para pré-selecionar imagens candidatas a um
+algoritmo de comparação mais robusto. A implementação do algoritmo em HDL, que é sintetizável tanto
+em Circuito Integrado como em FPGA, também
+oferece um ganho significativo de desempenho com
+relação a alternativa em software. Os resultados da
+Tabela 1 mostraram que o número de bins escolhido
+para o histograma influência a precisão da medida.
+Quanto maior a resolução do histograma mais precisa
+é a medida de distância entre duas imagens. No entanto, o projeto do hardware deve considerar o acordo entre a precisão da medida de distância e custo
+computacional do cálculo em histogramas de resolução máxima.
+Referências Bibliográficas
+Chalimbaud, P. et al. (2006). Embedded active vision
+system based on an fpga architecture,
+EURASIP Journal on Embedded Systems 2007.
+Drumheller, M. (1987). Mobile robot localization
+using sonar, Pattern Analysis and Machine
+Intelligence, IEEE Transactions on (2) 325
+332.
+GholamHosseini, H. and Hu, S. (2008). A high speed
+vision system for robots using fpga technology,
+Mechatronics and Machine Vision in Practice,
+2008. M2VIP 2008. 15th International
+Conference on, pp. 8184.
+Goode, A., Rowe, A. and Agyeman, K. (2012).
+Cmucam project. httpwww.cmucam.org.
+Hagiwara, H., Asami, K. and Komori, M. (2011).
+Fpga implementation of image processing for
+real-time robot vision system, Convergence and
+Hybrid Information Technology, Springer, pp.
+134141.
+Inc, C. (2013). Simvision.
+httpwww.cadence.comproductsfventerprise
+simulator.
+Jin, S., Cho, J., Dai Pham, X., Lee, K. M., Park, S.K., Kim, M. and Jeon, J. W. (2010). Fpga
+design and implementation of a realtime stereo
+vision system, Circuits and Systems for Video
+Technology, IEEE Transactions on 20(1) 15
+26.
+
+98

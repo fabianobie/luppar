@@ -1,0 +1,849 @@
+HARDWARE ARCHITECTURE FOR REAL TIME VIDEO-OBJECT SEGMENTATION FROM STATIC BACKGROUND
+JOZIAS P. OLIVEIRA, RAIMUNDO C.S. FREIRE, ELMAR U.K. MELCHER, EVALDO G. PELAES
+
+Núcleo de Sistemas Embarcados, Universidade do Estado do Amazonas, Escola Superior de Tecnologia
+Av. Darcy Vargas, 1200, 69065020 Parque Dez, AM, MANAUS
+E-mailsjoziasparente@yahoo.com, rcsfreire@dee.ufcg.edu.br,
+elmar@dsc.ufcg.edu.br, pelaes@ufpa.br
+
+Abstract
+ Video segmentation is a fundamental step in many vision systems including video surveillance and traffic monitoring. Background subtraction is a method typically used to segment moving regions in video sequences taken from a static camera by comparing each new frame to a model of the scene background. In this paper, a hardware system for video segmentation
+is proposed from algorithm to hardware architecture level. The video segmentation algorithm improves a Gaussian background
+model by applying a two-stage linear compensation procedure to remove the undesirable subtraction results from noise and illumination_changes. The algorithm was prototyped on an Altera field-programmable gate array platform (DE-2). At a clock rate of
+100 MHz, the architecture can process 30 frames per second, where the image resolution is 640 x 507 pixels. The capability of
+the system is demonstrated for several video sequences.
+Keywords
+ Hardware, FPGA, Video Segmentation, Background Subtraction.
+Resumo
+ Segmentação de vídeo é um passo fundamental na muitos sistemas de visão, tais como sistemas de vigilância e monitoramento de tráfego. A subtração_de_fundo é um método normalmente utilizado para detectar regiões em movimento, a partir
+de seqências de vídeo capturadas com uma câmera estática, que consiste em comparar cada quadro corrente com um modelo da
+imagem de fundo previamente capturado. Neste trabalho é proposto um sistema implementado em hardware para a segmentação
+de vídeo que melhora a técnica de subtração_de_fundo baseada em modelos Gaussianos por meio de uma compensação linear
+que visa minimizar os falsos positivos gerados por mudanças de iluminação. O algoritmo foi implementado em um kit de desenvolvimento da Altera (DE-2) e opera com uma freqência de 100 MHz, processando 30 quadros por segundo com resolução
+igual a 640 x 507 pixels. A capacidade do sistema é demonstrada para várias seqências de vídeo.
+Palavras-chave
+ .
+
+1
+
+sively update the background model using a linear
+filter (Francois and Medioni, 1999 Su and Chen,
+2008 Niu and Jiang, 2008). Such an approach can be
+misleading in surveillance applications since a person
+can become part of the background, hence not being
+detected anymore. In this paper, we propose a
+method for background subtraction using YCbCr
+color space. The background model is built up using
+statistical parameters such as the mean and the standard deviation. We present a two-stage compensation
+procedure to remove the undesirable subtraction results from illumination_changes. First, the confidence
+intervals for mean values by using a confidence coefficient equal to 95 is calculated. Then, each current
+pixel value is compared with its respective confidence interval and those out of the interval have their
+deviations compensated by a function defined empirically. Experimental results demonstrate the reduction of false positives. The video segmentation algorithm proposed is aimed at fixed-point arithmetic
+architectures. In fixed-point architectures, memory
+and bus widths are smaller, leading to a definitively
+lower cost and power consumption. Most of the algorithms proposed for background subtraction are designed for software implementation and have a large
+complexity for real-time (30 fps) and low cost applications (Hu and Su, 2007). An implementation in
+hardware is one approach to perform the video segmentation in real time (Oliveira et al. 2006 Jiang et
+
+Introduction
+
+Video segmentation is usually termed as foreground (moving objects) segmentation in a fixed
+camera scenario. Background subtraction is a common approach for discriminating moving objects in
+image sequence by comparing each new frame to a
+model of the background scene (Piccardi, 2004
+Parks, 2008). In the case of a static or motion compensated camera, static background subtraction
+methods can be applied to segment the interesting
+foreground objects from the background (Karaman et
+al. 2005). Accurate foreground segmentation is a
+difficult task due to such factors as illumination
+variation, occlusion, background movements, and
+noise. A good background model must handle the
+effects of illumination and achieve high sensitivity in
+the detection of moving objects with the lowest possible false positives. In (Baisheng and Yunqi, 2004),
+the background model is periodically updated to
+adapt to the illumination_changes. In (Lou et al.
+2002), the color components are preprocessed by
+illumination homomorphic filtering to avoid the influence of lighting changes. In (Elgammal et al.
+2000), they use a Kernel function to estimate the density function of background images to deal with geometric and illumination_changes. Another common
+approach to deal with lighting variations is to recur2637
+
+al. 2009). We proposed an FPGA architecture for
+video segmentation that can perform the scene analysis in real time by using the background subtraction
+technique presented in this paper. At a clock rate of
+100 MHz, the architecture can process 30 frames per
+second, where the image resolution is 640 x 507. The
+proposed video segmentation algorithm is for realtime, nonuser-interactive scenario applications that
+do not require high-quality segmentation results and
+where less complex content is involved (Correa and
+Pereira, 2004). This paper is organized as follows
+Section 2 describes the background modeling
+method. Section 3 presents the proposed hardware
+architecture. Section 4 reviews the performance of
+the proposed hardware architecture as well as the
+hardware resource utilization. Conclusions and future
+work are presented in Section 5.
+
+s(k ) (Y , Cb, Cr) 
+
+A point estimate is a single numerical value used
+to estimate the corresponding population parameter.
+For example, the sample mean is a point estimate for
+the population mean. Although we can calculate a
+sample mean, we never know exactly where the
+population mean is. Confidence intervals are used to
+estimate how accurate the population mean is likely
+to be, with a given degree of certainty. Conventionally, the confidence intervals are calculated for a 95
+degree of certainty, although they can be calculated
+for 99 or any other value. Considering an unknown
+variance, the confidence interval is given by the following expression (Papoulis, 1991)
+
+x  tu
+
+2.1 Background Modeling
+
+2.1.1 Mean
+The mean is the average of the values of N
+frames obtained for each pixel k (x, y) in each color
+component Y, Cb and Cr according to Equation 1
+
+i 1
+
+i (k )
+
+(Y , Cb, Cr )
+
+s
+N
+
+<  < x + tu
+
+(3)
+
+s
+N
+
+We can thus state with a given degree of certainty that  is in that interval and tu is the u percentile of the student-t distribution with N  1 degrees of
+freedom. The confidence intervals are used for identifying the current pixels with significant variations
+regarding their means. Our hypothesis is that without
+any illumination_changes or objects in the scene,
+most of the pixels are within the confidence intervals.
+The upper and lower limits of the confidence interval
+are defined as follows
+
+Background modeling constructs a reference image representing the background. We train the background images in the YCbCr space and compute
+some parameters over a number of static background
+frames to construct the background modeling. A pixel
+is modeled by three parameters mean, standard deviation, and confidence interval.
+
+I
+
+(2)
+
+2.1.3 Confidence Interval
+
+The basic scheme of the background subtraction
+is to subtract the image from a reference image that
+models the background scene. Typically, the basic
+steps of the algorithm are background modeling,
+threshold selection and subtraction operation or pixel
+classification (Horprasert et al. 1999).
+
+N
+
+)
+
+This is an unbiased estimate of the population
+standard deviation () and it tends to  if N is large
+( 30) according to the central limit theorem (Papoulis, 1991).
+
+2 Background Subtraction
+
+1
+x ( k ) (Y , Cb, Cr ) 
+N
+
+(
+
+2
+1 N
+ Ii(k) (Y, Cb, Cr)  xi(k ) (Y, Cb, Cr)
+N 1 i 1
+
+(1)
+
+UL ( k )  x ( k ) (Y , Cb , Cr ) + t u
+
+s ( k ) (Y , Cb , Cr )
+
+LL ( k )  x ( k ) (Y , Cb , Cr )  t u
+
+s ( k ) (Y , Cb , Cr )
+
+(4)
+
+N
+
+(5)
+
+N
+
+2.2 Threshold Selection
+Where i is the frame number, and k is the pixels coordinates (x, y). The values of x are used as the point
+estimate of the population mean ().
+
+Threshold selection determines appropriate
+threshold values used in the pixel classification operation. We use the standard deviation of the background model to threshold the background differences by K(Y,Cb,Cr) times (x,y)(Y,Cb,Cr) where
+K(Y,Cb,Cr) are determined automatically for each
+image. In order to automatically determine the minimum K(Y,Cb,Cr), the pixel classification performance is analyzed as soon as the background reference
+model is constructed. We set the number of false
+positives detection at 50, which corresponds to
+0.01 of the image size (640 x 507). The process
+starts by assigning a default minimum K value equal
+
+2.1.2 Standard Deviation
+Due to variations in environmental lighting and
+noise levels generated by the camera the same pixel
+will not have identical values over time (Horprasert
+et al. 1999). Therefore, it is necessary to compute the
+variations of each pixel k in N frames in each component of Y, Cb and Cr. These variations are expressed by the sample standard deviation according
+to Equation 2
+
+2638
+
+if I ( k ) (Y , Cb , Cr ) > UL ( k ) (Y , Cb , Cr ) 
+
+I ( k ) (Y , Cb , Cr )  x ( k ) (Y , Cb , Cr )  2 7
+
+ PCF( k ) (Y , Cb, Cr ) 
+I (Y , Cb , Cr )
+
+
+or
+
+if I (Y , Cb , Cr ) < LL (Y , Cb , Cr ) 
+(k)
+ (k )
+
+I (Y , Cb , Cr )  x ( k ) (Y , Cb , Cr )  2 7
+ PCF (Y , Cb, Cr )  ( k )
+(k )
+
+x ( k ) (Y , Cb , Cr )
+
+
+to 1. After that, pixel classification is performed pixel
+by pixel for each Y, Cb, and Cr component. Next,
+the number of pixels classified as belonging to the
+foreground is counted and compared against 50. If it
+is greater than 50, K is incremented by 1 and the
+process is repeated until the detection rate is
+achieved. In the end, we have a threshold for each
+pixel of Y, Cb and Cr components T(x,y)(Y,Cb,Cr).
+
+(10)
+
+Pixel classification or foreground detection is
+described as a binary classification whereby each
+pixel in an image is assigned a label to the class of
+foreground or background. In order to classify each
+current pixel, the luminance and the chromaticity
+components of each pixel k are subtracted from the
+background model and the results are multiplied by
+the pixel variation compensation function according
+to Equation 8.
+
+I(k) is the value of pixel k during the segmentation
+phase, UL(k)(Y,Cb,Cr) and LL(k)(Y,Cb,Cr) are the
+upper and lower limit values calculated during the
+training phase. This approach is based on empirical
+evaluation of the results over a large test set of videos. When the video objects enter the background,
+the variation of some pixels will overstep the confidence interval causing false positive detection. By
+detecting those pixels, the number of false positives
+can be reduced by lowering the spread of the background difference values (Oliveira, 2009).
+
+BD(k ) (Y, Cb, Cr)  PCF(k) (Y, Cb, Cr)
+
+3 Video Segmentation Architecture
+
+2.3 Pixel Classification
+
+Fk (Y, Cb, Cr) 
+
+(8)
+
+7
+
+2
+
+The block diagram of the proposed architecture for
+the video segmentation algorithm described in this
+paper is illustrated in Figure 1. We used the development and education board DE-2 from Altera for
+testing our design (Altera, 2009). The FPGA contains
+the following blocks I2C interface, video decoder
+interface, video segmentation unit, SRAM interface,
+SDRAM interface and VGA encoder interface. At the
+start-up, the I2C interface configures the video decoder (ADV7181) to correctly decode the input video
+and converts into a digital ITU-R BT.656 format.
+The video decoder provides 720 x 507 active resolution. In our implementation, 640 pixels per line were
+used, that is, decimation was done. This task is performed by the video decoder interface. The video
+decoder interface extracts video information from the
+ITU-R BT.656 and provides at its output 16-bit 422
+YCbCr data, with 640 active samples of Y per line,
+and 320 active samples each of Cb and Cr per line.
+This information, together with the pixel clock of
+13.5MHz, are sent to the video processing unit which
+performs all the steps necessary for background subtraction proposed in this paper. One approach to accomplish all operations in real time (30 fps) is to use
+two line buffers. While one line is stored, the previous one is read from the buffer and the pixels are sent
+to the video segmentation unit (Oliveira et. al 2006).
+In this work we used a 100 MHz clock frequency to
+capture pixels, that is, considering a 13.5 MHz pixel
+clock, all the operations were performed within 7
+clock cycles and it was not necessary any input line
+buffer. The video encoder interface receives the
+video data after the video segmentation operation and
+converts 422 YCbCr into RGB format before delivering it to the video encoder (ADV7123).
+
+Fk(Y,Cb,Cr) is the background difference (BD) multiplied by the pixel variation compensation function
+(PCF). We multiply PCF by 27 to keep a precision of
+seven fractional bits (Oliveira et. al 2006). Thats
+why it is necessary to divide Equation 8 by 27. Then,
+by comparing the suitable thresholds to the value of
+Fk(Y,Cb,Cr), our method classifies a given pixel into
+two categories, that is, background (B) or foreground
+(F), according to the following mask
+
+mask
+
+ F , F ( k ) (Y ) > T ( k ) (Y )
+
+ or
+ F ( k ) ( Y ) > T ( k ) ( Y )
+
+ or
+F
+(Y ) > T ( k ) (Y )
+ (k )
+ B , otherwise
+
+(9)
+
+2.4 Pixel variation compensation function
+In practice environments, illumination_changes
+often occur over time and can be due to a gradual
+change in illumination, a sudden change in illumination, a shadow, or motion in parts of the scene background. These changes can be local, affecting only
+part of the background, or global, affecting the entire
+background. It is important that the background
+model tolerates these kinds of changes, either by being invariant to them or by adapting to them. In order
+to deal with pixel variations in the background, we
+defined a function to compensate such changes and,
+therefore, reduce the number of pixels incorrectly
+classified as belonging to the foreground. The pixel
+compensation variation function (PCF) is defined
+according to equation 10
+
+2639
+
+FPGA EP2C35F672C6
+I2 C
+Interface
+
+Data
+Data
+
+SRAM
+Interface
+
+Data
+
+SRAM
+
+Control
+Control
+
+Control
+
+VIDEO
+VIDEO
+IN
+
+Video
+Decoder Data
+ADV7181 ITU656
+
+Video
+YCbCr
+Decoder
+422
+Interface
+
+SEGMENTATION
+
+Data
+
+UNIT
+
+SDRAM
+Interface
+
+Control
+
+Data
+
+SDRAM
+
+Control
+
+Control
+YCbCr
+422
+
+VGA
+Encoder
+Interface
+
+Data
+
+VGA
+Encoder
+ADV7123
+
+Control
+
+Control
+Video
+Line
+Buffer
+(x2)
+
+VGA OUT
+
+Figure 1 Block diagram of FPGA architecture proposed to perform video segmentation
+
+The SRAM interface is used to read and
+write background reference image parameters into
+SRAM memory (IS61LV25616). The SDRAM
+memory is used as a frame buffer to store the segmented image to be exhibited by the video encoder.
+In (Oliveira, 2009), all the blocks of the video segmentation unit designed to perform the background
+subtraction operation are described.
+
+In the sequence of images 1, both shadow detection
+and pixel variation compensation function were used
+during the pixel classification phase. The white points are the pixels classified as belonging to the foreground. Due to highlights in the window, some pixels
+were misclassified as foreground.
+
+4 Architecture Performance
+In this section, the results of the FPGA architecture in an actual environment with highlights and
+illumination variations are presented. Figure 2 shows
+the sequence of images used for testing the performance of our architecture. The upper left image is the
+background reference image without any object.
+There is strong sunshine entering into the room
+through a window and it causes highlights on the wall
+and on the sofa. The next two upper images are the
+background reference images with one and two lamps
+turned on, respectively. The histograms of the Y
+component are illustrated below the background reference images. When the two lamps are turned on,
+the global mean brightness varies from 186.4 to
+207.9, which corresponds to an increase of 11.53 .
+In Figure 3, the results of the foreground detection
+performed with our proposed FPGA architecture with
+the lamps turned off are shown.
+
+Figure 2 Sequence of images to evaluate the hardware architecture performance under lighting variation environments.
+
+2640
+
+145
+
+137
+
+129
+
+121
+
+113
+
+97
+
+105
+371
+
+89
+
+81
+
+73
+
+357
+
+2
+
+65
+
+57
+
+49
+
+41
+
+33
+
+25
+
+9
+
+1
+
+1
+
+17
+
+False Positive ()
+
+1
+0,9
+0,8
+0,7
+0,6
+0,5
+0,4
+0,3
+0,2
+0,1
+0
+Frame Number
+
+6
+
+False Positive ()
+
+5
+
+3
+
+4
+3
+2
+1
+
+455
+
+441
+
+427
+
+413
+
+399
+
+385
+
+343
+
+329
+
+315
+
+301
+
+287
+
+273
+
+259
+
+245
+
+231
+
+217
+
+203
+
+189
+
+175
+
+161
+
+147
+
+0
+Frame Number
+
+5
+
+2,5
+2
+1,5
+1
+0,5
+1345
+
+1335
+
+1325
+
+1315
+
+1305
+
+1295
+
+1285
+
+1275
+
+1265
+
+1255
+
+1245
+
+1235
+
+1225
+
+1215
+
+1205
+
+1185
+
+0
+1195
+
+4
+
+False Positive ()
+
+3
+
+Frame Number
+
+6
+
+False Positive ()
+
+30
+25
+20
+15
+10
+5
+1167
+
+1119
+
+1071
+
+975
+
+1023
+
+927
+
+879
+
+831
+
+783
+
+735
+
+687
+
+639
+
+591
+
+543
+
+495
+
+447
+
+399
+
+351
+
+0
+
+Frame Number
+
+Figure 3 Results of the segmentation performed with our hardware architecture. 1) The lamps are turned off and pixel variation
+compensation function is on for YCbCr 2) The pixel variation compensation function for Y components is turned off 3) The
+pixel variation compensation function is on for Y component and off for both Cb and Cr components 4) idem to 1) 5) One lamp
+is turned on and pixel variation compensation function is on 6) One lamp is turned on and pixel variation compensation function
+
+According to the graph of false positives, the number
+of pixels incorrectly classified as foreground is
+around 1. In the sequence of images 2, the pixel
+variation compensation function for the Y component
+was turned off. This caused an increase in the percentage of false positives from 1 to 5. In this
+case, the highlight points in the window and on the
+sofa were misclassified as foreground. In the sequence of images 3, the pixel variation compensation
+function of the Y component was turned on and
+turned off for Cb and Cr. In this case, the percentage
+of false positives was reduced from 5 to approximately 1.5, and a region in the sofa was misclassified as belonging to the foreground, besides those
+pixels in the window. In the sequence of images 4,
+the pixel variation compensation function is turned
+on again. In the sequence of images 5, one lamp was
+turned on and both shadow detection and pixel variation compensation function were used during the
+pixel classification phase. In this case, the false positives are around 2. In the sequence of images 6, the
+pixel compensation variation function of the Y
+component was turned off and the percentage of false
+
+positives increased to 25. As a person walks into
+the room, it changes the pixel values around him and
+so the percentage of false positives. By using the
+pixel compensation function, the percentage of false
+positives reduced from 25 to 2.
+4.1 Hardware Resource Utilization
+This section presents the FPGA synthesis results
+for the proposed hardware architecture. The hardware
+architecture was prototyped using the development
+and education board DE-2 from Altera. The FPGAbased board is centered on a Cyclone II
+(EP2C35F672C6) device with 33,000 logic elements.
+The proposed architecture was modeled by using the
+hardware description language Verilog.
+The ModelSim tool from Mentor Graphics was
+used for simulation. Quartus II from Altera was used
+for synthesis and place  route. The architecture
+processes 30 frames per second and the image resolution is 640 x 507. The hardware resources utilized are
+presented in Table 1.
+
+2641
+
+Table 1 Synthesis results for the proposed hardware architecture
+
+Module
+
+Francois, A. and Medioni, G (1999) Adaptive Color
+Background
+Modeling
+for
+Real-Time
+Segmentation of Video Streams. In Proceedings
+of International on Imaging Science, Systems,
+and Technology, pp.227-232.
+Horprasert, T. Harwood, D. and Davis, L.S (1999)
+A Statistical Approach for Real Time Robust
+Background Subtraction. IEEE ICCV99
+FRAME-RATE WORKSHOP.
+Hu, J.S. and Su, T.M (2007) Robust background
+subtraction with shadow and highlight removal
+for indoor surveillance. EURASIP Journal on
+Advances in Signal Processing, Volume 2007,
+Article ID 82931.
+Jiang, H. Ardo, H. and Owall, V (2009) A hardware
+architecture for real-time video segmentation
+utilizing memory reduction techniques. IEEE
+Transactions on Circuits and Systems for Video
+Technology, Vol 19, No. 2.
+Karaman, M. Goldmann, L. Yu, D. and Sikora, T
+(2005) Comparison of static background
+segmentation methods. In Proceedings of the
+SPIE, Volume 5960, pp 2140-2151.
+Lou, J. Yang, H. Hu, W. and Tan, T (2002) An
+illumination
+invariant
+change
+detection
+algorithm. The 5th Asian Conference on
+Computer Vision, Melbourne, Australia.
+Niu, L. and Jiang, N (2008) A Moving Objects
+Detection Algorithm Based on Improved
+Background Subtraction. In Eighth International
+Conference on Intelligent Systems Design and
+Applications, p. 604-607.
+Oliveira, J.P. (2009) Método para Extração de
+Objetos de uma Imagem de Referência Estática
+com Estimativas da Variação de Iluminação.
+Tese de Doutorado. Universidade Federal do
+Pará  Instituto de Tecnologia.
+Oliveira, J.P. Printes, A.L. Freire, R.C.S. Melcher,
+E. U. and Silva, I.S.S (2006) FPGA architecture
+for static background subtraction in real time. In
+Proceedings of the 19th annual symposium on
+Integrated circuits and systems design, Ouro
+Preto, MG. Brazil.
+Papoulis, A (1991) Probability, random variables,
+and stochastic process. Third edition. Mc-GrawHill.
+Parks, D.H. and Fels, S.S (2008) Evaluation of
+background subtraction algorithms with postprocessing. IEEE Fifth International Conference
+on Advanced Video and Signal Based
+Surveillance.
+Piccardi, M (2004) Background subtraction
+techniques a review. In Proceedings of IEEE
+SMC 2004 International Conference on Systems,
+Man and Cybernetics, Vol. 4, pp. 3099-3104.
+Su, S.T. and Chen, Y.Y (2008) Moving Object
+Segmentation
+Using
+Improved
+Running
+Gaussian Average Background Model. In
+Digital Image Computing Techniques and
+Applications, p. 24  31.
+
+Number of Logic Elements
+
+Video Segmentation Unit
+SRAM Interface
+SDRAM interface
+Video Decoder Interface
+VGA Encoder Interface
+I2C Interface
+Total
+
+3270
+61
+705
+160
+349
+88
+4633 (14 )
+
+5 Conclusions
+In this paper we presented a method for videoobject segmentation from a static background by exploiting YCbCr color space. We presented a pixel
+compensation function to deal with lighting variations normally found in real environments. Therefore,
+it was not necessary to update the background model
+to deal with changes in illumination. By using a recursive update approach, when a person slowed his
+walking or remained still, he became part of the
+background. We did not use any filter to reduce the
+number of pixels falsely marked as belonging to the
+foreground. The algorithm was validated in MatLab
+with fixed-point operations, and then it was prototyped in a hardware architecture. The hardware architecture was able to process 30 fps with a 640x507
+image resolution. The main application of the proposed algorithm is for indoor environments with
+static backgrounds, such as karaoke systems, where a
+background video could be automatically mixed with
+the video clip. In this way, a person standing in front
+of a background would appear in the video clip while
+singing his favorite song. Improvements are necessary for outdoors where the background scene is dynamic.
+References
+Altera development and education board DE-2
+(2009)
+Available
+from
+httpwww.altera.comeducationunivmaterialsboardsunv-de2-board.html
+Acessed
+20122009.
+Baisheng, C. and Yunqi, L (2004) Indoor and
+outdoor people detection and shadow
+suppression by exploiting HSV color
+information. In Proceedings of the Fourth
+International Conference on Computer and
+Information Technology, pp. 137  142.
+Correa, P.L. and Pereira, F (2004) Classification of
+video segmentation application scenarios. IEEE
+Transactions on Circuits and Systems for Video
+Technology, Vol 14, No. 5.
+Elgammal, A. Harwood, D. and Davis, L (2000)
+Non-parametric
+Model
+for
+Background
+Subtraction. 6th European Conference on
+Computer Vision, Dublin, Ireland.
+
+2642

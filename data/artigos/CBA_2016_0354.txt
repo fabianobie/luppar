@@ -1,0 +1,954 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+AVALIACAO EXPERIMENTAL DE UM RASTREADOR LINEAR QUADRATICO
+COM RESTRICOES EMPREGANDO UM SERVOPOSICIONADOR LINEAR COM
+ACOPLAMENTO FLEXIVEL
+Gustavo Toledo de Azevedo, Roberto Kawakami Harrop Galvao, Fabio Andrade de
+Almeida, Jose Roberto Colombo Junior
+
+
+Instituto de Aeronautica e Espaco - IAE
+Praca Mal. Eduardo Gomes, 50 - Vila das Acacias - CEP 12.228-904
+Sao Jose dos Campos, SP, Brasil
+
+
+Instituto Tecnologico de Aeronautica - ITA
+Divisao de Engenharia Eletronica 12228-900
+Sao Jose dos Campos, SP, Brasil
+Emails gustavogta@iae.cta.br, kawakami@ita.br, almeidafaa@iae.cta.br,
+colombojrj@gmail.com
+Abstract This paper presents an experimental investigation concerning the application of a constrained
+linear-quadratic tracker (CLQT) technique to a two-mass-spring system widely employed in the literature. The
+introduction of an additional inner loop is proposed to allow the use of an equilibrium relation that does not
+hold in the case of plants with integrating dynamics. As a result, the CLQT controller was able to drive the
+controlled variable (passive cart position) to the desired value, with small steady-state error (approximately 1 )
+ascribed to the presence of dry friction. Even under active constraints on the spring deformation and the actuator
+voltage, the overall time involved in the control calculations was much smaller than the sampling time, which
+corroborates the computational efficiency of the CLQT control law.
+Keywords
+
+Constrained linear-quadratic tracker, invariant set, optimization, two-mass-spring system.
+
+Resumo Este trabalho investiga a aplicacao experimental de uma tecnica de rastreador linear-quadratico
+com restricoes (constrained linear-quadratic tracker, CLQT) a um sistema de carro e reboque acoplados por
+mola, amplamente utilizado na literatura. A introducao de uma malha interna adicional e proposta de modo a
+permitir o emprego de uma relacao de equilbrio que nao seria valida no caso de plantas com dinamica integrativa.
+Como resultado, observou-se que o controlador CLQT foi capaz de conduzir a variavel controlada (posicao do
+reboque) para o valor desejado, com pequeno erro de regime (aproximadamente 1 ) atribudo a presenca de
+atrito seco. Mesmo com restricoes ativas sobre o deformacao da mola e a tensao aplicada ao atuador, o tempo
+total requerido para calculo do controle se mostrou bem menor que o perodo de amostragem, comprovando a
+eficiencia computacional da lei de controle CLQT.
+Palavras-chave .
+
+1
+
+Introducao
+
+A tecnica conhecida como Controle Preditivo Baseado em Modelo (Model-based Predictive Control,
+MPC) envolve a solucao de um problema de controle_otimo em tempo_real, considerando valores
+preditos para as variaveis de entrada, estado e
+sada da planta ao longo de um horizonte movel.
+Tipicamente, o horizonte e deslocado a cada perodo de amostragem, de modo a levar em conta as
+novas leituras dos sensores nas predicoes a serem
+realizadas. Uma das principais vantagens do MPC
+consiste na possibilidade de se considerar restricoes de operacao, que usualmente estao ativas nas
+proximidades de condicoes economicamente otimas (Maciejowski, 2002).
+Com uma formulacao adequada do problema
+de otimizacao, e possvel obter garantias de estabilidade e atendimento das restricoes, mesmo empregando um horizonte de predicao finito (Mayne
+et al., 2000). Para esse proposito, pode-se impor que o estado ingresse, ao final do horizonte,
+em um conjunto_invariante e admissvel quanto as
+
+ISSN 2525-8311
+
+restricoes de operacao (Gilbert and Tan, 1991).
+Contudo, em tarefas de rastreamento, haveria a
+necessidade de se recalcular o conjunto_invariante
+a cada mudanca na referencia, o que poderia resultar em um custo_computacional proibitivo para
+aplicacao em tempo_real.
+Uma abordagem para contornar essa dificuldade, apresentada em (Almeida, 2011), consiste
+em parametrizar o conjunto_invariante em termos
+de valores de equilbrio admissveis para o estado
+e o controle, associados ao valor da referencia. Em
+tempo_real, o conjunto_invariante pode ser particularizado para uma dada referencia, sem a necessidade de repetir todas as operacoes computacionais realizadas na fase de projeto. A tecnica de
+controle assim proposta foi denominada feasible
+target tracking MPC (FTT-MPC).
+Em um trabalho posterior (Almeida et al.,
+2012), uma simplificacao do FTT-MPC foi proposta com o intuito de reduzir ainda mais o custo
+computacional. A nova tecnica, denominada rastreador_linear_quadratico com restricoes (constrained linear quadratic tracker, CLQT) envolve o uso
+
+1180
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+de uma malha com realimentacao linear de estado,
+cuja referencia e ajustada a cada perodo de amostragem, de modo a garantir o atendimento das restricoes. Como exemplo de aplicacao, foram apresentadas simulacoes numericas com um modelo de
+veculo aereo nao tripulado.
+O presente trabalho apresenta um estudo de
+caso experimental de aplicacao da lei de controle
+CLQT proposta em (Almeida et al., 2012). A
+planta empregada consiste de um sistema de dois
+carros acoplados por uma mola, que e um exemplo classico utilizado na avaliacao de tecnicas de
+controle (Wie and Bernstein, 1992), (Colombo Junior et al., 2016). Neste caso, alem da limitacao
+na amplitude de controle (tensao eletrica aplicada
+ao atuador), foi imposta uma restricao sobre o
+maximo deformacao da mola. Este tipo de restricao pode ser util em aplicacoes envolvendo sistemas mecanicos com modos flexveis, tais como
+aeronaves com estruturas delgadas (Andrioli Junior et al., 2008). Vale salientar que o sistema em
+questao possui dinamica relativamente rapida em
+comparacao com processos_industriais tipicamente
+considerados em aplicacoes de controle_preditivo,
+o que justifica a preocupacao com a carga_computacional (Colombo Junior et al., 2016).
+Como contribuicao com respeito a formulacao
+CLQT original, propoe-se a introducao de uma
+malha interna adicional para permitir o uso de relacoes de equilbrio que nao seriam validas para
+plantas com dinamica integrativa, tais como o sistema empregado no estudo de caso.
+2
+
+Rastreador Linear Quadratico com
+Restricoes
+
+Nesta secao, apresenta-se a formulacao CLQT originalmente proposta em (Almeida et al., 2012).
+Para fins de projeto, considera-se que a dinamica
+da planta seja descrita por um modelo a tempo
+discreto da forma
+x(k + 1)  Ax(k) + Bu(k) + Bd d(k)
+d(k + 1)  d(k)
+y(k)  Cx(k)
+z(k)  Hy(k)
+
+(1)
+(2)
+(3)
+(4)
+
+em que x(k)  Rn e o vetor_de_estados, u(k)  Rm
+e o vetor de entradas de controle, y(k)  Rp e o
+vetor de sadas medidas, z(k)  Rq (com q  m)
+e o vetor de sadas controladas, d(k)  Rq e um
+vetor de perturbacao (suposto constante) e A, B,
+Bd , C, H sao matrizes de dimensoes apropriadas.
+O vetor de perturbacao d(k) e includo no modelo com o intuito de representar possveis descasamentos com respeito a real dinamica da planta,
+bem como a acao de disturbios externos. Supoese que um observador_de_estados seja empregado
+para estimar os vetores de estado x(k) e pertur-
+
+ISSN 2525-8311
+
+bacao d(k), com base nas entradas u(k) e sadas
+medidas y(k) (Maeder et al., 2009).
+O sistema_de_controle tem por objetivo conduzir a sada z(k) ate uma referencia r  Rq constante, respeitando restricoes de operacao da forma
+cmin  c(k)  cmax
+
+(5)
+
+umin  u(k)  umax
+
+(6)
+
+s
+
+sendo c(k)  R um vetor de variaveis de processo
+sujeitas a restricoes, que se relaciona com o vetor
+de estado por meio de
+c(k)  Cc x(k)
+
+(7)
+
+com Cc  Rsn . Nas restricoes (5) e (6), os
+vetores cmin , cmax  Rs e umin , umax  Rm denotam os limitantes (componente a componente)
+para c(k) e u(k), respectivamente.
+A lei de controle adotada e da forma
+u(k)  uss (k)  Kx(k)  xss (k)
+
+(8)
+
+sendo K uma matriz de ganhos previamente definida de modo que os autovalores de (A  BK)
+se encontrem no interior do crculo unitario. Os
+vetores xss (k)  Rn e uss (k)  Rm (com subndice ss do ingles steady-state) correspondem a
+um ponto de equilbrio da planta, sendo recalculados a cada instante k de modo a conduzir progressivamente a sada z(k) ate a referencia r, respeitando as restricoes de operacao.
+Com base em (1), pode-se deduzir a seguinte
+relacao de equilbrio envolvendo xss (k) e uss (k)
+xss (k)  (I  A)1 Buss (k) + (I  A)1 Bd d(k)
+(9)
+sendo I uma matriz identidade de dimensoes apropriadas. Supoe-se aqui que (I  A) seja inversvel.
+Substituindo a expressao de xss (k) dada por
+(9) na lei de controle (8), obtem-se
+u(k)   Kx(k)  (I  A)1 Bd d(k)
++ K(I  A)1 B + Iuss (k)
+
+(10)
+
+Para se garantir o atendimento das restricoes sobre o estado e o controle, a estrategia adotada consiste em calcular o vetor uss (k) de modo
+que o estado x(k) esteja em um conjunto_invariante e admissvel quanto a (5) e (6) (Gilbert
+and Tan, 1991). Para caracterizar tal conjunto,
+considera-se a dinamica descrita por (1), (2) com
+controle u(k) dado por (10), supondo que uss (k)
+seja uma constante. Com isso, chega-se a uma
+nova equacao de estado da forma (11), com x(k),
+d(k) e uss (k) sujeitos as restricoes expressas em
+(12), em que cssmin , cssmax e ussmin , ussmax sao
+limitantes para os vetores c(k) e u(k) em regime
+permanente. Adicionalmente, supoe-se que sejam
+conhecidos limitantes dmin e dmax para o vetor de
+perturbacao d(k).
+Como discutido em (Gilbert and Tan, 1991),
+o conjunto_invariante O obtido com base em
+
+1181
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+(11) e (12) corresponde a um poliedro no espaco
+Rn+q+m . Para dados valores de x(k) e d(k), uma
+operacao de corte (slice) (Herceg et al., 2013) do
+poliedro O pode ser realizada de modo a obter um
+
+
+
+ 
+x(k + 1)
+A  BK
+ d(k + 1)   
+0
+uss (k + 1)
+0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Cc
+Cc
+0
+0
+K
+K
+0
+0
+0
+0
+
+BK(I  A)1 + IBd
+I
+0
+
+0
+0
+Cc (I  A)1 Bd
+Cc (I  A)1 Bd
+K(I  A)1 Bd
+K(I  A)1 Bd
+I
+I
+0
+0
+
+min
+
+(HCxss (k)  r)T Qss (HCxss (k)  r)
++ uTss (k)Rss uss (k)
+
+(13)
+
+sujeito a
+xss (k)  (I  A)1 Buss (k) + Bd d(k)
+uss (k)  Uss (k)
+
+(14)
+(15)
+
+sendo Qss > 0, Rss > 0 matrizes de peso.
+Substituindo (14) em (13), chega-se a um
+custo quadratico em uss (k). Como a restricao (15)
+consiste em um conjunto de desigualdades lineares
+sobre uss (k), tem-se um problema de programacao quadratica (Maciejowski, 2002). Cabe ressaltar que o esforco computacional e relativamente
+modesto, em comparacao com formulacoes tradicionais de controle_preditivo, pois o problema de
+otimizacao envolve apenas m variaveis de decisao.
+No caso de entrada unica (m  1), o problema
+consiste tao somente na minimizacao de uma funcao quadratica de variavel escalar pertencente a
+um intervalo de valores admissveis.
+A Figura 1 (na proxima pagina) apresenta um
+diagrama_de_blocos com a estrutura do controlador. Um observador_de_estados e empregado para
+
+gerar estimativas x(k), d(k),
+que sao empregadas
+em lugar dos vetores de estado x(k) e perturbacao
+d(k) nas equacoes acima apresentadas.
+3
+
+Uso de uma malha interna adicional
+
+Se A tiver um ou mais autovalores unitarios (correspondentes a dinamicas integrativas a tempo
+
+ISSN 2525-8311
+
+
+
+BK(I  A)1 B + I
+x(k)
+  d(k) 
+0
+I
+uss (k)
+
+0
+0
+Cc (I  A)1 B
+Cc (I  A)1 B
+K(I  A)1 B + I
+K(I  A)1 B  I
+0
+0
+I
+I
+
+Dessa forma, o problema de otimizacao a ser
+resolvido a cada instante de amostragem pode ser
+formulado como
+xss (k),uss (k)
+
+conjunto de vetores uss (k) admissveis, denotado
+por Uss (k). Vale salientar que Uss (k) e um poliedro no espaco Rp , que pode ser descrito por meio
+de desigualdades lineares sobre uss (k).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+x(k)
+
+
+  d(k)   
+
+
+
+ uss (k)
+
+
+
+
+
+
+
+
+
+
+
+cmax
+cmin
+cssmax
+cssmin
+umax
+umin
+dmax
+dmin
+ussmax
+ussmin
+
+(11)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(12)
+
+discreto), a matriz (I  A) nao sera inversvel, impedindo o uso direto da relacao (9). Para contornar esse problema, propoe-se aqui o uso de uma
+malha interna adicional com realimentacao estatica de sada, como ilustrado na Fig. 2.
+Nesse caso, a equacao de estado (1) para a
+dinamica da planta e reescrita com uma entrada
+v(k) em lugar de u(k), ou seja
+x(k + 1)  Ax(k) + Bv(k) + Bd d(k)
+
+(16)
+
+sendo v(k) calculada como
+v(k)  Kmi Cx(k) + u(k)
+
+r
+
+(17)
+
+Planta considerada no CLQT
+z (k )
+v ( k)
+u ( k)
+Planta
+Controlador
++-y ( k)
+
+Kmi
+
+Figura 2 Malha interna com realimentacao estatica de sada.
+Substituindo a expressao (17) em (16), obtem-se
+x(k + 1)  (A  BKmi C) x(k) + Bu(k) + Bd d(k)
+
+z
+
+Ami
+
+(18)
+Desse modo, se a matriz Ami  (ABKmi C)
+nao tiver autovalores unitarios, torna-se possvel
+empregar a formulacao CLQT apresentada na Secao 2, trocando-se A por Ami .
+
+1182
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Figura 1 Arquitetura do controlador (retangulo com borda tracejada).
+Com a inclusao da malha interna, deve-se considerar restricoes da forma
+vmin  v(k)  vmax
+
+(19)
+
+em lugar das restricoes de controle (6) na formulacao original do CLQT. Tendo em vista (17) e (10)
+(com Ami em lugar de A), chega-se a
+v(k) (Kmi C + K)x(k) + K(I Ami )1 Bd d(k)
++K(I Ami )1 B + Iuss (k)
+
+(20)
+
+A restricao (19), em conjunto com (20), permite escrever novas desigualdades que devem ser
+includas em (12), substituindo aquelas envolvendo umax e umin . Procedimento similar pode
+ser empregado para impor restricoes sobre o valor
+de equilbrio vss (k) em lugar das desigualdades
+envolvendo ussmax e ussmin em (12).
+4
+4.1
+
+Estudo de caso experimental
+
+Modelo da planta
+
+O sistema empregado neste trabalho esta representado de forma esquematica na Fig. 3. As variaveis xc e xr representam deslocamentos relativos
+com respeito a uma condicao de equilbrio inicial.
+Motor
+
+Carro
+
+Reboque
+
+xc
+
+xr
+
+Figura 3 Diagrama esquematico do sistema.
+A dinamica do sistema a tempo contnuo e
+descrita por um modelo da forma x  Ac x + Bc v,
+T
+com vetor de estado x  xc xr xc xr  , sendo v a
+tensao aplicada ao motor. Considerando-se valores nominais para os parametros fsicos do sistema
+(Colombo Junior et al., 2014), as matrizes Ac e Bc
+sao dadas por
+
+
+0
+0
+1
+0
+ 0
+
+0
+0
+1
+ (21)
+Ac  
+ 124 124 11,5
+
+0
+262 262
+0
+4,06
+ISSN 2525-8311
+
+Bc 
+
+
+
+0
+
+0
+
+1,72
+
+0
+
+T
+
+(22)
+
+O modelo do sistema foi discretizado considerando a existencia de um segurador de ordem
+zero na entrada da planta, de modo a obter as
+matrizes A e B utilizadas na representacao (16).
+Empregou-se um perodo de amostragem T 
+0,025 s, como em (Colombo Junior et al., 2014).
+Para fins de projeto, adotou-se um modelo de perturbacao de entrada, ou seja, tomou-se Bd  B
+em (16), com d escalar.
+O sistema e dotado de sensores para as posicoes xc e xr , que correspondem as duas primeiras
+variaveis de estado. Assim, tem-se y  xc xr T ,
+que corresponde a empregar a seguinte matriz C
+na equacao (3)
+
+
+1 0 0 0
+C
+(23)
+0 1 0 0
+Foi escolhida a posicao do reboque como variavel controlada, isto e z  xr . Desse modo, a
+matriz H na equacao (4) e dada por
+
+
+H 0 1
+(24)
+A matriz Ac apresentada em (21) tem autovalores em 0, 9,4 e 3,1  19,1j. O autovalor
+na origem esta associado a uma dinamica integrativa entre velocidade e posicao. Como resultado
+da discretizacao, a matriz A apresenta um autovalor unitario, tornando necessario o uso da malha
+interna adicional descrita na Secao 3.
+4.2
+
+Projeto do controlador
+
+Na malha interna, empregou-se
+
+
+Kmi  1,6723 0,2655 ,
+
+(25)
+
+que posiciona os autovalores de Ami em 0,995,
+0,797 e 0,8220,426j. Detalhes sobre o metodo de
+projeto empregado para obtencao de Kmi podem
+ser encontrados em (Azevedo, 2014). A matriz de
+ganho K foi projetada de modo a alocar os autovalores de (Ami  BK) em 0,70, 0,71, 0,72, 0,73.
+
+1183
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Posição do Carro
+0.2
+
+xc (m)
+
+O observador foi entao projetado alocando-se
+os polos da dinamica de erro de estimacao em 0,50,
+0,51, 0,52, 0,53, 0,54.
+Na tarefa de controle, adotou-se uma referencia r  0,2 m para a variavel controlada (posicao
+do reboque). Limitantes simetricos (valor maximo
+  valor mnimo) foram empregados em todas
+as restricoes, como apresentado na Tabela 1. Em
+particular, foi imposta uma restricao de 1,0 cm
+sobre o deformacao da mola (xc  xr ), como em
+(Colombo Junior et al., 2014).
+
+tado de um ensaio no qual a restricao foi relaxada
+para xc  xr   30 cm (linha em traco e ponto).
+Nota-se que o deformacao da mola torna-se muito
+mais pronunciado, comprovando que a restricao
+estava ativa no primeiro caso.
+A Fig. 6 apresenta o controle u  uss 
+K(x  xss ) gerado pelo CLQT, bem como a tensao v  Kmi C x + u aplicada ao motor. Nota-se
+que a tensao permaneceu dentro da faixa de 6 V,
+como imposto no projeto.
+
+A lei de controle foi implementada em Matlab
+2012a, empregando um computador com processador i5-3470S e 6 GB de RAM. As operacoes de
+obtencao e corte do conjunto_invariante foram realizadas com o pacote MPT (Herceg et al., 2013).
+O problema de programacao quadratica para obtencao de uss (k) a cada instante de amostragem
+foi resolvido empregando o Matlab Optimization
+Toolbox. A interface com o hardware da planta foi
+feita empregando um modulo Q2-USB e o software
+QuaRC (ambos da Quanser Consulting).
+
+0.5
+
+1
+
+ISSN 2525-8311
+
+2
+
+2.5
+
+3
+
+3.5
+
+4
+
+3
+
+3.5
+
+4
+
+0.2
+
+0.1
+0.05
+0
+
+0
+
+0.5
+
+1
+
+1.5
+
+2
+
+2.5
+
+tempo (s)
+
+Figura 4 Posicao do carro (xc ) e reboque (xr ).
+0.025
+Ativa
+Relaxada
+
+Deformação da mola (m)
+
+0.02
+0.015
+0.01
+0.005
+0
+0.005
+0.01
+0.015
+
+0
+
+0.5
+
+1
+
+1.5
+
+2
+
+2.5
+
+3
+
+3.5
+
+4
+
+tempo (s)
+
+Figura 5 Deformacao da mola (xc  xr ), para
+os casos de restricao ativa e relaxada. As linhas
+tracejada indicam os limitantes de  1 cm.
+Saída do CLQT
+5
+
+0
+
+5
+0.5
+
+1
+
+1.5
+
+2
+
+2.5
+
+3
+
+3.5
+
+4
+
+3
+
+3.5
+
+4
+
+tempo (s)
+Tensão aplicada ao motor
+
+Resultados experimentais
+5
+
+v (V)
+
+As posicoes do carro e reboque ao longo do ensaio estao apresentadas na Fig. 4. Como se pode
+observar, o reboque e conduzido ate a referencia
+r  0,2 m, com pequeno erro de regime ( 1 ),
+que pode ser atribudo a presenca de atrito seco.
+Pode-se verificar na Fig. 5 que o deformacao
+da mola (linha cheia) permaneceu dentro da faixa
+de 1 cm, com apenas pequenas violacoes (< 0,05
+cm) em dois pontos, cuja causa pode ser atribuda
+a um possvel descasamento entre a planta e o modelo de projeto. A Fig. 5 mostra tambem o resul-
+
+1.5
+
+0.15
+
+0
+
+5
+
+0
+
+tempo (s)
+Posição do Reboque
+
+u (V)
+
+Limitantes
+30,0 cm
+30,0 cm
+1,0 cm
+29,7 cm
+29,7 cm
+6,0 V
+5,94 V
+5,94 V
+
+0.1
+
+0
+
+Tabela 1 Limitantes considerados no projeto.
+Variaveis
+xc
+xr
+xc  xr
+xcss
+xrss
+v
+vss
+d
+
+0.15
+
+0.05
+
+xr (m)
+
+Os pesos do custo (13) foram fixados em Qss  1
+e Rss  105 .
+Para implementacao do observador, foram
+empregadas as seguintes equacoes de estado e
+sada, que incorporam a perturbacao escalar d(k)
+em um vetor de estado aumentado (k) 
+ T
+T
+x (k) d(k)
+, como em (Maeder et al., 2009)
+
+
+
+
+Ami Bd
+B
+(k + 1) 
+(k) +
+u(k)
+014 1
+0
+(26)
+
+
+y(k)  C 021 (k)
+(27)
+
+0
+
+5
+0
+
+0.5
+
+1
+
+1.5
+
+2
+
+2.5
+
+tempo (s)
+
+Figura 6 Sinal de controle u e tensao v. As linhas
+tracejada indicam os limitantes de  6 V.
+Ainda com respeito a Fig. 6, vale notar que
+a tensao ao final do ensaio e nao nula com uma
+tendencia de crescimento. Tal tendencia fica mais
+
+1184
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+clara na componente uss do sinal de controle,
+apresentada na Fig. 7. Esse efeito decorre da acao
+integral de controle introduzida pelo uso do estimador de perturbacao. Neste caso, a perturbacao
+esta associada ao atrito seco responsavel pelo erro
+de regime observado na posicao do reboque. Uma
+analise mais detalhada sobre a estimativa de perturbacao pode ser encontrada
+em (Azevedo, 2014).
+u
+ss
+
+1.4
+
+1.2
+
+uss (V)
+
+1
+
+0.8
+
+0.6
+
+0.4
+
+0.2
+
+0
+
+0
+
+0.5
+
+1
+
+1.5
+
+2
+
+2.5
+
+3
+
+3.5
+
+4
+
+tempo (s)
+
+Figura 7 Parcela uss do sinal de controle u.
+Por fim, foi registrado o tempo total para calculo do controle a cada instante de amostragem,
+incluindo a operacao de corte do conjunto_invariante e a solucao do problema de otimizacao. O
+maior tempo (9 ms) ocorreu no incio da tarefa
+de controle, devido a realizacao de inicializacoes
+na rotina do otimizador. Subsequentemente, os
+tempos foram todos inferiores a 4 ms, valor bem
+menor que o perodo de amostragem (25 ms).
+6
+
+Conclusao
+
+Neste trabalho, investigou-se a aplicacao da tecnica de controle CLQT proposta em (Almeida
+et al., 2012) a um sistema de laboratorio amplamente utilizado na literatura. O uso de uma malha interna adicional foi proposto para permitir o
+emprego de uma relacao de equilbrio entre controle (uss ) e estado (xss ) que nao seria valida para
+plantas com dinamica integrativa.
+O controlador CLQT foi capaz de conduzir
+a variavel controlada para o valor desejado, com
+pequeno erro de regime atribudo a presenca de
+atrito seco. A tensao aplicada ao motor permaneceu dentro dos limitantes ao longo de todo o
+ensaio. Pequenas violacoes pontais da restricao
+sobre o deformacao da mola foram observadas durante o transitorio, possivelmente devido a descasamentos entre a planta e o modelo.
+O tempo total requerido para calculo do controle se mostrou bem menor que o perodo de
+amostragem. Contudo, acredita-se que um tempo
+ainda menor poderia ser obtido explorando-se a
+estrutura particularmente simples do problema
+(minimizacao de um custo quadratico de variavel
+escalar uss pertencente a um intervalo de valores
+admissveis), em lugar de se utilizar um otimizador numerico. Tal possibilidade sera investigada
+em trabalhos futuros.
+
+ISSN 2525-8311
+
+Agradecimentos
+A realizacao deste trabalho foi apoiada pela FAPESP (201117610-0), CNPq (Produtividade em
+Pesquisa 3037142014-0), Capes (Bolsa de Doutorado) e Finep (Captaer e Captaer II).
+Referencias
+Almeida, F. A. (2011). Reference management
+for fault-tolerant model predictive control,
+Journal of Guidance, Control, and Dynamics
+34(1) 44  56.
+Almeida, F. A., Guerra, E. B., DOliveira, F. A.
+and Mello, A. W. (2012). Constrained linear quadratic tracker for optimal flight performance, Journal of Guidance, Control, and
+Dynamics 35(6) 19111918.
+Andrioli Junior, R. L., Paiva, H. M. and Galvao,
+R. K. H. (2008). Controle preditivo com restricoes de aeronaves_flexveis, Anais do XVII
+CBA, Juiz de Fora, MG, Artigo 40053.
+Azevedo, G. T. (2014). Controle de um sistema de posicionamento com acoplamento
+flexvel empregando rastreador_linear_quadratico com restricoes, Dissertacao de Mestrado,
+ITA, Sao Jose dos Campos, SP.
+Colombo Junior, J. R., Afonso, R. J. M., Galvao,
+R. K. H. and Assuncao, E. (2014). Avaliacao experimental de controlador_preditivo robusto usando LMIs para sistema de dinamica
+rapida, Anais do XX CBA, Belo Horizonte,
+MG, pp. 3244  3251.
+Colombo Junior, J. R., Afonso, R. J. M., Galvao, R. K. H. and Assuncao, E. (2016).
+Robust model predictive control of a benchmark eletromechanical system, Journal of
+Control, Automation and Electrical Systems
+27(1) 119131.
+Gilbert, E. G. and Tan, K. T. (1991). Linear systems with state and control constraints The
+theory and application of maximal output admissible sets, IEEE Transactions on Automatic Control 36 10081020.
+Herceg, M., Kvasnica, M., Jones, C. and Morari,
+M. (2013). Multi-Parametric Toolbox 3.0,
+Proc. of the European Control Conference,
+Zurich, Switzerland, pp. 502510.
+Maciejowski, J. M. (2002). Predictive control with
+constraints, Prentice Hall, Harlow, England.
+Maeder, U., Borrelli, F. and Morari, M. (2009). Linear offset-free model predictive control, Automatica 45(10) 22142222.
+Mayne, D. Q., Rawlings, J. B., Rao, C. V. and
+Scokaert, P. O. M. (2000). Constrained model predictive control Stability and optimality, Automatica 36(6) 789  814.
+Wie, B. and Bernstein, D. S. (1992). Benchmark problems for robust control design,
+Journal of Guidance, Control, and Dynamics
+15(5) 10571059.
+
+1185

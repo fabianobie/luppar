@@ -1,0 +1,575 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+CONTROLE DE ATITUDE DO SATÉLITE UNIVERSITÁRIO ITASAT ESTABILIZADO POR
+ROTAÇÃO DUAL PARA AVALIAÇÃO DE AMORTECIMENTO MECÂNICO DE NUTAÇÃO
+PEDRO DE SOUZA LOBO ALMEIDA, WILDER DA VERA CRUZ VIEGAS, JACQUES WALDMANN
+Departament of Sistem and Control  Instituto Tecnológico de Aeronáutica
+Pç. Marechal Eduardo Gomes, 50  CEP 12.228-900  São José dos Campos  SP  Brazil
+E-mails pedro.souzalobo@gmail.com, viegaswilder@yahoo.com.br, jacques@ita.br
+
+Abstract
+ The present work evaluates the feasibility of a mechanical nutation damper, here modeled with concentrated parameters, to shorten the acquisition time by the attitude_control system of the low-cost, university satellite ITASAT, which here
+presents a dual-spin configuration and is actuated by a magnetotorquer triad and a momentum wheel. ITASAT is to be launched
+in a Sun-synchronous orbit, nominally circular with 778km of altitude and subject to environmental disturbances, such as gravitational and electromagnetic torques. Nutation damping, wheel spin-axis pointing and attitude_control accuracy with the damping device is evaluated. Firstly, an open-loop simulation is carried out without control actions or environmental disturbances to
+select adequate damper parameters. Then, the damper model is integrated in a closed-loop simulation, including environmental
+disturbances, measurement errors, extended Kalman filter-based estimation and control. Damper dynamics is not considered in
+the filter dynamics model. The results so far point to a significant improvement in attitude acquisition due to faster nutation
+damping with respect to purely magnetic actuation, while preserving the advantage of gyroscopic stiffness by the momentum
+wheel during the eclipse in every orbit.
+Keywords
+ Attitude control and estimation, satellite, mechanical nutation damping, pointing accuracy.
+Resumo
+ Este trabalho avalia a viabilidade de utilização de um dispositivo de amortecimento_mecânico_de_nutação, utilizando
+modelagem por parâmetros concentrados, para auxiliar no controle_de_atitude do satélite universitário ITASAT, o qual aqui apresenta uma configuração de rotação dual e será atuado por magnetotorqueadores e por uma roda_de_momentum. É previsto o lançamento do mesmo em uma órbita Sol-síncrona, nominalmente circular com 778km de altitude e sujeito a torques de perturbação ambiental, a saber, gravitacional e eletromagnético. Para fins de avaliação da estabilidade do satélite com a introdução do
+dispositivo, seu movimento é simulado primeiramente em malha_aberta, sem ação de controle e de qualquer perturbação. Essa
+disposição é útil para selecionar parâmetros adequados para o amortecedor. Em seguida, o modelo do amortecedor é integrado
+em um modelo mais completo de simulação, incluindo os efeitos de perturbação ambiental, erros de medida, estimação baseada
+em filtro estendido de Kalman e controle em malha_fechada. A dinâmica do amortecedor não é considerada no modelo_dinâmico
+embutido no filtro. Os resultados indicam melhoria significativa na aquisição de atitude devido ao amortecimento de nutação
+mais rápido que com atuação puramente magnética, enquanto é mantida a vantagem da rigidez giroscópica pela roda_de_momentum durante o eclipse em cada órbita.
+ Controle e estimação de atitude, satélites, amortecimento_mecânico_de_nutação, acurácia_do_apontamento.
+Palavras-chave
+
+.
+A atitude em torno do eixo de spin da roda de
+momentum deveria ser controlada a fim de garantir
+comunicação do satélite com a Terra e pode ser corrigida torqueando a roda_de_momentum. Tal correção,
+entretanto, não é realizada pelo SCA neste trabalho,
+sendo atribuído ao controle apenas o apontamento do
+eixo da roda. Foram especificados para o projeto uma
+velocidade relativa do rotor de 450 rpm em relação 
+plataforma e um momentum angular da roda de 10
+N.m.s.
+O ITASAT será lançado como carga secundária,
+provavelmente aproveitando o lançamento de algum
+satélite principal do INPE. Dessa forma, fica imposto
+que todos os sistemas do satélite devem permanecer
+desligados até o lançamento, só posteriormente podendo ser ativados. Dessa forma, o controle_de_atitude prevê quatro fases de operação a primeira consistindo na fase de ativação da roda a fim de adquirir
+uma velocidade relativa entre plataforma e rotor a
+
+Introdução
+
+O presente trabalho é motivado pelo programa
+de satélite universitário ITASAT, o qual propõe o
+desenvolvimento de um satélite com rotação dual,
+cujo corpo (plataforma) deve ser estabilizado em três
+eixos e deve possuir uma roda_de_momentum (rotor)
+para garantir rigidez giroscópica. Por se tratar de um
+programa de baixo_custo, não serão disponibilizados
+sensores_inerciais, o que tornou necessário o desenvolvimento de um sistema de determinação de atitude
+(SDA) que utiliza sensores solares e magnetômetro
+tri-axial para, por meio de filtro de Kalman estendido
+(EKF), gerar estimativas da atitude e velocidades
+angulares, conforme Santos e Waldmann (2009).
+A configuração proposta para o sistema_de_controle_de_atitude (SCA) objetiva garantir a estabilidade
+e o apontamento em três eixos da plataforma. Dessa
+forma, objetiva-se manter, com ação dos magnetotorqueadores (Waschburger e Waldmann, 2009), uma
+das faces do satélite constantemente voltada para o
+Sol a fim de garantir o suprimento de energia necessário ao satélite, fixando um painel_solar nessa face.
+
+3336
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+segunda consistindo em remover o momentum angular da plataforma, preservando apenas o do rotor a
+terceira, em gerar o correto apontamento desse momentum angular em relação ao referencial proposto e,
+por último, a remoção do movimento de nutação,
+garantindo que o momentum angular apresente componente apenas na direção de rotação do rotor.
+Esse trabalho propõe uma alternativa para a
+quarta etapa, de modo a realizá-la paralelamente s
+três primeiras, eliminando ou reduzindo drasticamente sua necessidade. Tal trabalho se justifica devido ao
+fato que a demora para um correto apontamento implica em dificuldades críticas no carregamento das
+baterias embarcadas. Dessa forma, quanto mais longo
+for esse tempo, maiores são os riscos de descarga
+profunda da bateria sem a adequada recarga e o satélite se tornar inútil em órbita.
+A primeira proposta sugerida para o amortecimento do movimento de nutação foi o dispositivo
+utilizado nos satélites de coleta de dados (SCD1 e
+SCD2). Ele consiste de um anel parcialmente preenchido por um fluido viscoso acoplado ao corpo do
+satélite e com centro deslocado em relação ao eixo de
+rotação. Porém, tal dispositivo necessita estar em
+rotação para um correto funcionamento, conforme
+descrito por Alfriend (1974) e Fonseca (1990), necessitando dessa forma ser montado junto ao rotor.
+Dessa forma, tal proposta se tornou desvantajosa,
+primeiro devido  complexidade necessária para a
+sua montagem e segundo por ser lançado sem rotação, o que aumentaria a complexidade de modelagem
+do anel fora de sua região característica de operação.
+Eliminada tal opção, foi proposto um dispositivo
+mecânico utilizando um sistema massa-molaamortecedor, responsável por dissipar a energia cinética da velocidade_angular ao redor dos eixos ortogonais ao eixo do rotor, conforme proposto por Alfriend e Hubert (1974) e Kaplan (1981). Para simplificar as equações, foi proposta a instalação de tal dispositivo paralelamente ao eixo do rotor, sobre um
+dos eixos principais do satélite com um deslocamento
+em relação ao centro de massa, conforme mostrado
+na Figura 1.
+
+Para a determinação do amortecedor, torna-se
+necessária a definição dos parâmetros do mesmo, ou
+seja, os valores da massa m que se desloca ao longo
+do amortecedor, a constante da mola k e o coeficiente
+de amortecimento c, bem como o deslocamento b do
+amortecedor  origem do sistema.
+2 Modelagem do Amortecedor
+2.1 Dinâmica do Satélite com Roda de Momentum e
+Amortecedor
+Devido  presença tanto do amortecedor quanto
+da roda_de_momentum, o satélite perde a característica de corpo rígido. Dessa forma, toda vez que alguma
+grandeza se referir a alguma das três partes do satélite será utilizado um sub-índice para identificá-lo,
+sendo p para a plataforma, r para o rotor e d para o
+amortecedor. Pela Figura 1 é possível perceber também que a massa pode apresentar um deslocamento
+paralelo ao eixo do rotor. Esse deslocamento está
+representado pela variável z. O representa a origem
+do sistema de coordenadas e corresponde ao centro
+de massa do sistema quando z  0.
+Em um sistema de partículas (ou no caso de corpos rígidos que possam ser representados por um
+ponto material), temos o momentum angular da iésima partícula dado por Hibbeler (1983)
+
+
+
+
+H i  ri  mi vi
+
+(1)
+
+onde os vetores r e v representam, respectivamente, a
+posição e velocidade da partícula i em relação  origem O. Derivando-se a equação (1) e somando-se
+todas as partículas do sistema, temos
+
+
+
+
+H   (ri  mi vi )
+
+(2)
+
+Considerando o vetor ai como sendo a aceleração inercial da partícula i e aO a aceleração do sistema de referência, temos que
+
+  
+vi  ai  aO
+
+(3)
+
+e juntando (2) e (3) chegamos por fim a
+
+
+
+
+ 
+H   (ri  mi ai )  ( mi ri ) aO
+
+
+ 
+ 
+  ri  Fi   M  H + ( mi ri ) aO
+
+(4)
+
+Pode-se perceber claramente que, quando a origem do sistema corresponde ao centro de massa do
+conjunto de partículas, a somatória  direita na equação (4) se torna nula. Porém, como no sistema considerado há uma variação na posição do centro de mas-
+
+Figura 1. Representação de eixos e amortecedor (Kaplan, 1981)
+
+3337
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+onde IzR é o momento de inércia do rotor ao redor do
+eixo de rotação.
+Substituindo (9), (10) e (11) em (4) e desenvolvendo as equações, chega-se a
+
+sa em relação  origem, tal fenômeno não ocorre.
+Entretanto, como o deslocamento se dá apenas no
+eixo-z, temos que os componentes nos eixos x e y se
+anulam, de modo que tal somatória resulta em
+
+( m r )  m
+i i
+
+d
+
+zk
+
+M x  I x  x   y  z ( I y  I z ) + I zR  y
+
+(5)
+
++ mz (1   )( x z   y  z z + 2 x z )
+
+A partir desse ponto, devido  frequência com
+que aparecerá, o sub-índice d, referente  massa da
+partícula dentro do amortecedor, será omitido e essa
+massa será representada simplesmente por m.
+A aceleração da origem do sistema se deve 
+movimentação do centro de massa. A posição do
+centro de massa em relação  origem pode ser dada
+por
+
+(6)
+r   zk
+
+ mbz ( z +  x  y )
+M y  I y  y   x  z ( I z  I x )  I zR  x
++ mz (1   )( y z +  x  z z + 2 y z )
+
+
+M z  I z  z   x  y ( I x  I y ) + I zR 
+
+ mb( x z   y  z z + 2 x z )
+
+(7)
+
+onde  corresponde ao valor percentual da massa do
+amortecedor em relação  massa total do satélite, ou
+seja,
+(8)
+m
+
+
+
+(14)
+
+Essas três equações isoladamente não são suficientes para resolver o problema completo pois no total
+existem cinco variáveis (e suas derivadas). Dessa
+forma tornam-se necessárias mais duas equações para
+completar o problema. A primeira é referente  troca
+de energia entre a plataforma e o rotor e pode ser
+expressa por
+
+e consequentemente
+
+
+
+d ( zk)
+a CM  
+ aO
+2
+dt
+
+(13)
+
+ mb(z   x2 z +  z2 z )
+
+CM
+
+2
+
+(12)
+
+ +  )
+T  I zR (
+z
+
+(15)
+
+m + m p + mr
+e a segunda referente  movimentação da massa dentro do amortecedor, dada por
+
+Utilizando e desenvolvendo as equações (5) e (7)
+obtém-se que
+
+0  m(1   ) z + cz + k  m(1   )( x2
+
+( mi ri ) aO 
+
++  y2 )z + mb( x  z   y )
+
+ x z 2   y  z z 2 + 2 x zz 
+
+
+  m  y z 2 +  x  z z 2 + 2 y zz 
+
+
+0
+
+
+
+2.2 Definição dos Parâmetros
+(9)
+
+A primeira etapa deste trabalho consiste na definição dos parâmetros do amortecedor ou seja, definir
+valores para as constantes c, m, k e b. Para a definição de b, adotou-se utilizar o amortecedor fixado 
+lateral do satélite, primeiro para garantir um valor
+significativo para a constante e segundo por facilitar
+o processo de fixação do amortecedor ao satélite.
+Dessa forma, pelas especificações do projeto, definiu-se b  0,30m. Em seguida foi definida a massa do
+amortecedor. Como se estima que o satélite terá uma
+massa total de 85kg, decidiu-se por adotar um valor
+m  0,25kg. Com esses dois parâmetros definidos, os
+valores de c e k foram definidos por meio de uma
+análise da equação (16).
+Para isso, desconsiderou-se as entradas das velocidades angulares, de modo a chegar em um modelo
+de segunda ordem dado por
+
+Falta agora o desenvolvimento da derivada temporal do momentum angular do satélite. Para isso,
+considere que Ix, Iy e Iz correspondem aos momentos
+de inércia principal de todo o satélite quando z  0.
+Dessa forma, temos que, para um caso geral, o tensor
+de inércia pode ser dado por
+
+ I x + mz 2
+
+I   0
+  mbz
+
+
+0
+I y + mz
+0
+
+2
+
+ mbz 
+
+0 
+I z 
+
+(10)
+
+e, conforme pode ser visto em Kaplan (1981),
+
+
+
+H  I    mbz j + I zR  k
+
+(16)
+
+(11)
+
+3338
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+1
+Z ( s)
+m(1   )
+
+c
+k
+F ( s )
+s2 + s
++
+m(1   ) m(1   )
+
+Com tais configurações, foram geradas simulações para as primeiras 36h de operação do satélite,
+considerando, primeiramente, a massa com deslocamento bloqueado e, consequentemente, desabilitando
+o amortecedor. Posteriormente, a simulação foi repetida liberando-se a massa, de modo que o amortecedor operasse livremente. Em ambos os casos foram
+consideradas como condições iniciais velocidades
+angulares de 0,5s em cada eixo do corpo e um apontamento inicial com erro de 15.
+Como se objetivava uma avaliação inicial do desempenho do dispositivo amortecedor, estas simulações foram determinísticas, ou seja, o controle foi
+realizado sem a utilização do EKF para a estimação
+da velocidade_angular e atitude do satélite.
+Conforme dito anteriormente, o satélite necessita
+ser lançado com a roda desligada. Dessa forma, a
+primeira função do SCA é o acionamento da roda até
+que a mesma atinja a velocidade relativa de referência nominal. Em seguida, dá-se início ao processo de
+aquisição do momentum angular de referência, que
+implica tanto na geração de sua magnitude, quanto no
+seu apontamento na direção desejada, mediante atuação dos magnetotorqueadores. Por fim, atingido o
+momentum angular de referência, inicia-se a atenuação da movimento de nutação.
+Dessa forma, a análise do amortecedor se dará
+por meio do comportamento das velocidades angulares, em especial sobre os eixos do corpo x e y, responsáveis pelo movimento de nutação, e pelo erro
+entre o momentum angular de referência e o real.
+Pode-se considerar que o apontamento do satélite
+está correto quando o erro no momentum angular e as
+velocidades angulares convergirem para valores aceitáveis, próximos a zero.
+Primeiramente, as Figuras 3 e 4 mostram o comportamento das velocidades angulares, nos eixos x e
+y do corpo do satélite, com o amortecedor liberado e
+travado, respectivamente.
+
+(17)
+
+Por meio desse modelo e de simulações, chegouse ao valor de c  0,2492kgs e k  0,4985kgs2. Com
+esses valores, fez-se um teste inicial para análise da
+funcionalidade do amortecedor, desconsiderando
+qualquer tipo de entrada de torque, seja do SCA ou
+de perturbações. Foi considerada uma velocidade
+inicial nula no eixo z e de 20s nos eixos x e y do
+corpo do satélite, bem como a rotação nominal de
+450rpm para a roda_de_momentum. O resultado desta
+simulação pode ser observado na Figura 2, onde se
+percebe as velocidades nos eixos x e y serem reduzidas até praticamente zero.
+Apesar de o intervalo de tempo necessário para
+tal fenômeno ocorrer aparentar ser grande, para a
+aplicação prevista o período total da simulação corresponde a um terço do tempo de uma volta na órbita
+e ele é considerado extremamente aceitável.
+
+Figura 2. Amortecimento das velocidades nos eixos x e y
+
+Foi percebido ainda que o deslocamento da massa manteve-se sempre dentro do intervalo de 15cm.
+3 Simulação Completa
+3.1 Avaliação do amortecedor em simulação determinística
+Terminada a etapa de definição dos parâmetros
+do amortecedor, sua dinâmica foi integrada em um
+simulador mais completo, o qual inclui os efeitos de
+perturbação de órbita e o SCA para controle da atitude e velocidades angulares. Esse modelo e o controle
+magnético por magnetotorqueadores para apontamento baseia-se no trabalho desenvolvido para estabilização por rotação em Waschburger e Waldmann
+(2009), porém aqui adaptado para a configuração
+dual-spin.
+Considerou-se como parâmetros para a simulação uma órbita polar, Sol-síncrona, 1030h, com altitude de 778km, o que implica em uma órbita de aproximadamente 100 minutos.
+
+Figura 3. Velocidades Angulares nos eixos x e y com amortecedor
+
+Pode-se observar claramente a eficácia do amortecedor. Na configuração em que se encontra travado,
+portanto inoperante, percebe-se que as velocidades
+angulares em torno desses eixos não só não são amortecidas, como passam por agravamento. Na configuração com o dispositivo de amortecimento, percebese a rápida redução de tais velocidades, bem como a
+manutenção de seus valores próximos de zero.
+
+3339
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Para uma melhor comparação, a Figura 8 mostra
+a norma do erro para ambos os casos. Percebe-se
+novamente que ambas as curvas praticamente se sobrepõem.
+
+Figura 4. Velocidades Angulares nos eixos x e y sem amortecedor
+
+Quando se avalia o comportamento da velocidade no eixo z, mostrado na figura 5, percebe-se claramente que houve pouca influência do amortecedor
+sobre tal componente, resultando nas duas curvas
+praticamente sobrepostas.
+
+Figura 8. Norma dos erros do momentum angular
+
+Tal fenômeno já era esperado tendo em vista que
+as forças geradas pelo movimento da massa, e consequentemente o torque aplicado ao satélite, é significativamente pequeno.
+É possível ainda perceber que o deslocamento da
+massa é significativamente baixo, como mostrado na
+Figura 9. Esse é um dos fatores que faz com que o
+amortecimento seja lento em uma primeira análise
+(cerca de 2h para eliminar uma velocidade de 0,5s).
+Figura 5. Velocidades Angulares no eixo Z com e sem amortecimento
+
+Por fim comparou-se o erro entre os componentes do momentum angular em cada eixo e suas referências. A Figura 6 mostra o comportamento do erro
+de cada componente para o caso amortecido enquanto a Figura 7 mostra para o caso não amortecido.
+
+Figura 9. Deslocamento da massa do amortecedor
+
+Entretanto, para a aplicação desejada, esse tempo de amortecimento da nutação é satisfatoriamente
+curto e atende os requisitos operacionais do satélite e
+de aquisição de atitude para recarga de suas baterias
+imediatamente após a separação.
+3.2 Simulação completa
+
+Figura 6. Erro de apontamento do momentum angular com amortecimento
+
+Tendo se mostrada vantajosa a utilização do dispositivo de amortecimento, uma nova simulação foi
+realizada, utilizando dessa vez o EKF para efetuar a
+estimação da atitude e vetor velocidade_angular do
+satélite, bem como a velocidade do rotor. Todas as
+demais configurações da simulação foram mantidas.
+Entretanto, a dinâmica do amortecedor foi desconsiderada no filtro de Kalman estendido e passa a compor o seu erro de modelagem.
+Com essa abordagem, foram geradas as curvas
+referentes aos componentes do vetor velocidade_angular do satélite, a velocidade da roda_de_momentum,
+
+Figura 7. Erro de apontamento sem amortecimento
+
+3340
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+apontamento do momentum angular quando comparado ao caso determinístico. Entretanto, investigação
+adicional é requerida para considerar o efeito composto do amortecedor com controle da roda ao girar o
+satélite em torno do eixo da roda e, assim, posicionar
+adequadamente as antenas do satélite quando necessário.
+
+o erro de momentum angular em relação ao seu valor
+de referência e a direção do Sol.
+
+Figura 10. Velocidades angulares nos eixos x e y com amortecedor.
+
+Analisando os gráficos das velocidades angulares, tanto na Figura 10 quanto no caso determinístico
+da Figura 3, é possível perceber que, periodicamente,
+surgem perturbações, as quais são rapidamente eliminadas. Tal fenômeno pode ser explicado devido 
+dinâmica de funcionamento do SCA. O SCA usa
+magnetômetro e sensor de Sol na estimação de atitude e vetor velocidade_angular do satélite pelo EKF.
+Durante os períodos em que a Terra eclipsa o Sol, o
+EKF tem seu erro de estimação amplificado. Dessa
+forma, o SCA interrompe a ação de controle nesse
+período. Quando sai do eclipse, o SCA volta a acionar os magnetotorqueadores visando corrigir o apontamento. Tal atuação induz movimento de nutação.
+Esse fenômeno, entretanto, somente é perceptível
+quando o ângulo de nutação é significativamente
+pequeno.
+
+Figura 12. Velocidade de rotação da roda.
+
+Figura 13. Erro de apontamento.
+
+Figura 14. Norma do erro do momentum angular
+Figura 11. Velocidade Angular no eixo Z.
+
+A Figura 11 mostra o comportamento da velocidade_angular no eixo Z e se assemelha ao mostrado
+no caso determinístico (Figura 5). Pode-se perceber
+que há pouca influência no comportamento da roda
+devido  movimentação da massa do amortecedor,
+conforme mostrado na Figura 12.
+Ao comparamos os resultados com os da simulação do problema determinístico da Seção 3.1, observa-se que, ao desconsiderar o amortecedor no modelo
+dinâmico do EKF, parece ser plausível assumir que
+os esforços internos gerados pelo mesmo são suficientemente pequenos para serem tratados como incertezas de modelagem. Analisando as Figuras 13 e 14,
+observa-se que há pouca variação no vetor do erro de
+
+Figura 15. Apontamento do painel_solar
+
+A Figura 15 por fim mostra a evolução da
+direção do Sol em relação um vetor normal ao painel
+solar, mostrada em coordenadas polares. O aponta-
+
+3341
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Kaplan, M. H. (1981). Modern Spacecraft Dynamics
+ Control, Wiley.
+Santos, D. A. e Waldmann, J. (2009). Attitude and
+Angular Rate Estimation from Vector
+Measurements of Magnetometer and Sun Sensor
+for Low-Cost ITASAT Satellite. Proceedings of
+the International Congress of Mechanical
+Engineering (COBEM)
+Waschburger, R. e Waldmann, J. (2009).
+Magnetotorquer-only attitude_control system
+robust to wide range of initial conditions for lowcost
+spin-stabilized
+ITASAT
+satellite.
+Proceedings of the International Congress of
+Mechanical Engineering (COBEM).
+
+mento exato em direção ao Sol ocorre quando as coordenadas de azimute e elevação são nulas.
+4 Conclusão
+Comparadas as simulações com e sem o dispositivo de amortecimento, foi possível verificar uma
+redução no tempo necessário para o apontamento. Ao
+atenuar a nutação mais rapidamente que na atuação
+puramente magnética investigada em Waschburger e
+Waldmann (2009), a direção desejada para o momentum angular passa a convergir em significativamente
+menos tempo com o eixo de apontamento desejado
+do satélite. Os resultados já obtidos apontam para
+melhorias significativas no desempenho do sistema
+de controle_de_atitude devido a amortecimento de
+nutação mais rápido, enquanto preserva-se a vantagem de rigidez giroscópica pela roda_de_momentum
+durante o eclipse em cada órbita.
+Em trabalhos futuros, em parceria com equipes
+de outros subsistemas do projeto ITASAT, pretendese analisar a utilização de tal dispositivo, investigando a melhoria na captação_de_energia e o impacto
+térmico sobre o satélite em decorrência do apontamento constante de uma única face em direção ao Sol
+na configuração aqui investigada, com roda_de_momentum, assim como na configuração de corpo rígido
+estabilizada por rotação spin (Waschburger e Waldmann, 2009). O presente trabalho é uma análise inicial para verificar o efeito e possíveis benefícios da
+utilização de dispositivo mecânico de amortecimento.
+Agradecimentos
+Agradecimentos são devidos pelo uso de recursos
+materiais e financeiros disponibilizados aos autores
+pelo projeto FINEPCTAINPE SIA (Sistemas Inerciais para Aplicação Aeroespacial) e pelas bolsas de
+estudo concedidas aos dois primeiros autores pelo
+projeto AEBINPE ITASAT.
+Referências Bibliográficas
+Alfriend, K.T. (1974). Partially Filled Viscous Ring
+Nutation Damper. Journal of Spacecraft and
+Rockets, Vol. 11, No. 7, pp. 456-462.
+Alfriend, K. T. and Hubert, C. H. (1974). Stability of
+a Dual-Spin Satellite with Two Dampers. Journal
+of Spacecraft and Rockets, Vol. 11, No. 7, pp.
+469-474.
+Fonseca, I. M. e Souza, P. N. (1990). Modelagem do
+Movimento Rrotacional de um Corpo Rígido
+Dotado de um Amortecedor de Nutação Anular
+Viscoso e sua Validação Experimental. RBCM J.
+of the Braz. Soc. Mech. Sc., Vol. XII, No. 1, pp.
+89-111.
+Hibbeler, R. C. (1983). Engineering Mechanics 
+Dynamics, Macmillan.
+
+3342

@@ -1,0 +1,637 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+DESENVOLVIMENTO DE UMA PLATAFORMA HARDWARE IN THE LOOP PARA SIMULAÇÃO DE UMA ESTAÇÃO DE
+CONTROLE EM SOLO DE UM VANT DE PEQUENO PORTE UTILIZANDO O X-PLANE.
+DIEGO DE A. CARVALHO.
+Bolsista Fundação de Amparo  Pesquisa do Amazonas  FAPEAM, Divisão de Engenharia Eletrônica e
+Computação, Instituto Tecnológico de Aeronáutica  ITA, Sala 83, 12228-900, São José dos Campos  São
+Paulo - Brasil
+E-mails diegoac@ita.br
+
+ADRIANO BITTAR, NEUSA M. F. DE OLIVEIRA
+Divisão de Engenharia Eletrônica e Computação, Instituto Tecnológico de Aeronáutica  ITA, Sala 83, 12230900, São José dos Campos  São Paulo - Brasil
+E-mails bittar@ita.br, neusa@ita.br
+
+Abstract This paper proposes a way to validate the program that was developed to manage the data of the Ground Control Station of a UAV, using a platform Hardware-in-the-Loop capable of generate the flight data from aircraft and send to the Ground
+Station using serial port, with the aim of simulating the operation. For this we used the flight simulator X-Plane, which in this
+work serves as the aircraft and as a part of the autopilot system that is a system embedded in onboard computer responsible for
+autonomy of UAV, and a microcontroller ARM CortexM3, which is the onboard computer on complete system and in this
+work is performing the tasks related to communication between X-Plane and the Ground Station. Thus, the development presented in this paper is such that, assuming all the data of aircraft state obtained for onboard computer of UAV, the entire communication system UAV  Ground Station is tested. Specifically, the tasks can be cited for using the communication protocol, because all data are encapsulated in the format of the communication protocol defined for this system and unencapsulated in the Ground Station, sending information to the onboard computer to Ground Station and presentation of flight data.
+Keywords Ground Control Station, UAV, Hardware-in-the-Loop, Simulation, Data acquisition.
+Resumo Tendo como finalidade validar o programa que foi desenvolvido para gerenciar os dados da Estação de Controle em
+Solo de um VANT, este trabalho propõe uma plataforma Hardware-in-the-Loop capaz de gerar dados de vôo de uma aeronave e
+enviar para a Estação Solo via serial, objetivando simular o funcionamento da mesma. Para tal foi utilizado o simulador de vôo
+X-Plane, que funciona como a aeronave e parte do piloto_automático, ou seja, sistema_embarcado no computador de bordo responsável pela autonomia do VANT, e um microcontrolador ARM Cortex M3, que é o computador de bordo no sistema completo
+e neste trabalho executa tarefas relativas  comunicação entre o simulador de vôo e a Estação Solo. Assim, o desenvolvimento
+deste trabalho é tal que, admitindo-se obtidos todos os dados de vôo pelo computador de bordo, todo o sistema de comunicação
+VANT - Estação Solo é testado. Especificamente podem ser citadas as tarefas de utilização do protocolo de comunicação, pois
+todos os dados são encapsulados no formato do protocolo de comunicação definido para este sistema no computador de bordo e
+desencapsulados na Estação Solo envio de informações do computador de bordo para a Estação Solo e a apresentação dos dados
+de vôo.
+Palavras-chave .
+
+1
+
+Introdução
+
+Os chamados VANTs, Veículos Aéreos Não
+Tripulados, vêm sendo cada vez mais comuns no
+cotidiano internacional, visto que o emprego de aeronaves deste tipo em missões de cunho civis e militares vem aumentando além das pesquisas acadêmicas. A introdução dos VANTs tem como um dos
+principais objetivos promover a segurança e a eficiência em operações de grandes relevâncias para a
+população mundial. Sendo assim, diversos estudos
+foram e continuam sendo feitos nesta área. De modo
+metodológico e para facilitar o entendimento, esses
+sistemas podem ser divididos em três grandes blocos
+que são a Navegação, a Guiagem e o Controle (Fiúza, 2005), os quais estão embarcados na aeronave.
+Existe ainda mais uma parte do sistema que fica em
+solo, é a Estação de Controle em Solo (ECS), sendo
+este o tema abordado neste trabalho.
+
+ISBN 978-85-8001-069-5
+
+O bloco de navegação desempenha um papel fundamental no sistema de uma aeronave não tripulada, pois suas saídas com os dados de navegação são
+utilizados na guiagem e no controle. Ele também
+fornece a sincronização de tempo preciso para as
+outras partes do sistema. Dentre as diversas formas
+em que o sistema de navegação pode atuar, a navegação inercial é uma das mais utilizadas, podendo por
+meio de uma IMU (Inertial Measurement Unit),
+calcular os ângulos de Euler da aeronave, sua velocidade nos três eixos e sua posição tridimensional,
+permitindo posteriormente transformar a posição em
+coordenadas geográficas. Compõem ainda o sistema
+de navegação sensores de pressão estática e diferencial utilizados para medir altitude e velocidade do ar,
+respectivamente. Um receptor GPS ( Global Positioning System) normalmente é utilizado para fornecer
+latitude e longitude, e corrigir erros do sistema inercial.
+
+1120
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A Guiagem é a parte responsável por gerar a trajetória na qual a aeronave irá seguir e para isso existem
+várias técnicas na literatura que podem ser usadas
+para determinar os pontos que serão seguidos, chamados de waypoints (Santos, 2011). Os pontos de
+interesses que devem ser alcançados pelo VANT
+durante o vôo são definidos pela latitude, longitude e
+altitude desejada. Para alcançar o ponto desejado, a
+guiagem ao longo da trajetória coleta informações do
+bloco de navegação e utiliza-as a fim de corrigir,
+através do bloco de controle, o movimento da aeronave.
+O controle é a parte do sistema que tem a função de
+manter uma atitude determinada para a aeronave com
+base nos ângulos associados aos três eixos da aeronave. O controle age aplicando forças em uma ou
+mais superfície da aeronave, a fim de obter-se uma
+aeronave voando de forma estável e suave. Outra
+função determinante do bloco de controle é manter
+referencias de vôo dados pelo controlador do vôo
+como velocidade, altitude, trajetória (Makhdoom,
+2010).
+É através do bloco de controle que os parâmetros do
+VANT são ajustados, como por exemplo, quando se
+deseja um vôo mais suave, com um avião menos
+agressivo nos movimentos, são colocados saturadores, que limitam a deflexão da superfície de controle
+da aeronave, na malha_de_controle afim de se obter
+movimentos menos agressivos durante as manobras
+ao longo do vôo (Ozimina, 1995).
+Por último tem-se a ECS que é responsável por disponibilizar os dados de vôo em solo. Existem dois
+componentes fundamentais que compõem a estação
+de controle em solo de um sistema VANT, sendo o
+primeiro um computador onde está embarcado o
+software da estação e a interface_gráfica pela qual o
+controlador do vôo terá acesso aos dados reais da
+aeronave durante sua trajetória. O segundo é o link
+de comunicação que faz a ponte entre a aeronave e a
+terra para que se possam transmitir os dados para o
+solo (Griffiths, 2007).
+Neste trabalho será abordada uma plataforma de
+simulação com o intuito de validar o software desenvolvido para gerenciar os dados recebidos na Estação
+de Controle em Solo e disponibilizá-los em uma
+interface_gráfica para a tripulação em solo. Os recebidos pela ECS são gerados através do simulador de
+vôo X-Plane, e a conversão de protocolos entre XPlane e ECS é feita através de um microcontrolador.
+2 Plataforma De Simulação
+Para validar o programa desenvolvido para a Estação de Controle em Solo do Pegasus AutoPilot, que
+é um piloto_automático para aeronaves não tripuladas
+de asa fixa ainda em fase de desenvolvimento, idealizou-se uma plataforma HIL (Hardware-In-theLoop) , que fosse capaz de gerar os dados de vôo de
+forma similar aos sensores reais, que estarão presentes no VANT.
+
+ISBN 978-85-8001-069-5
+
+Tal plataforma de simulação, que é apresentada na
+Fig. (1), é composta por dois computadores, a qual
+um executa o programa da Estação de Solo e o outro
+executa o X-Plane, que é o simulador de vôo escolhido para ser utilizado neste trabalho. A estrutura
+montada para simulação é composta ainda por um
+microcontrolador ARM Cortex M3 que faz a interface entre os dois computadores.
+
+Figura 1. Plataforma de simulação da ECS.
+
+2.1 X-Plane
+O
+X-Plane tem
+quatro métodos
+para disponibilizar os dados do vôo para os usuários
+através da visualização na tela X-Plane, por meio de
+gráficos apresentados dentro do simulador, por meio
+um arquivo de texto com os dados de vôo, e ainda
+enviando os pela porta ethernet do computador através do protocolo UDP (User DataGram Protocol)
+(Jenie, 2006).
+O UDP é o protocolo de comunicação padrão para
+jogos e videoconferências. É uma forma de comunicação rápida, porém sem garantia de recebimento de
+dado, pois não conta com estruturas de controle, tais
+como, retransmissões, acknowlegdments, controle de
+fluxo. Apesar de este poder apresentar dados corrompidos, as simulações de controle_de_aeronaves
+não têm sofrido com esse problema (Garcia, 2008).
+Neste trabalho foi escolhido o protocolo UDP para
+obter os dados de vôo do simulador, devido este
+possuir capacidade de enviar e receber dados para
+outros dispositivos (Ribeiro, 2010), neste caso está
+estabelecendo a comunicação entre o ARM Cortex
+M3 e o X-Plane.
+O X-Plane permite, através do UDP rate, ilustrado
+no canto inferior direito da Fig. (2), ajustar a quantidade de pacotes que será enviado a cada segundo. A
+taxa de envio desses pacotes utilizada nesse projeto é
+de 20 pacotes por segundos, garantindo uma atualização da tela da ECS a cada 0.05 segundos (ou 50
+milissegundos).
+O formato do pacote de dados do X-Plane é composto por um cabeçalho de pacote com os bytes D,
+A, T, A, I, e em seguida são enviados subconjuntos de pacotes de dados cada um com um
+rótulo identificador. Cada subconjunto contém até
+oito dados, de quatro bytes cada, pois as informações
+do X-Plane são disponibilizadas em formato de ponto
+flutuante simples, conforme IEEE Standard 754
+(2008). A Tab. (1) ilustra o formato do pacote XPlane.
+
+1121
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Tabela 1. Pacote de dados do X-Plane.
+0
+D
+9
+B1
+41
+R1
+73
+B1
+
+Cabeçalho
+Rótulo 1
+1
+2
+3
+4
+5
+6
+7
+A
+T
+A
+I
+R1
+R2
+R3
+DADO 1
+...
+DADO 8
+10
+11
+12
+13-36
+37
+38
+39
+B2
+B3
+B4
+...
+B1
+B2
+B3
+Rótulo 2
+DADO 1
+42
+43
+44
+45
+46
+47
+48
+R2
+R3
+R4
+B1
+B2
+B3
+B4
+DADO 8
+74
+75
+76
+B2
+B3
+B4
+
+8
+R4
+40
+B4
+...
+49-72
+...
+
+sistema Pegasus Autopilot. Para evitar trabalhos de
+confecção de placa de circuito impresso, foi utilizado
+o kit de desenvolvimento EK-LM3S6965 da Luminary Micro.
+Apesar de haver a possibilidade de implementar a
+comunicação direta via UDP entre os dois computadores da plataforma_de_teste proposta, optou-se por
+acrescentar esse dispositivo, para validar a recepção
+serial do programa da Estação de Solo, pois na versão final da ECS será utilizado um link serial sem fio
+para transmissão_de_dados de vôo. Deste modo validando o tratamento dos dados da serial nesta fase, o
+tempo de testes na versão final é reduzido.
+Assim o ARM Cortex M3 neste trabalho opera como
+um conversor UDP para Serial, para facilitar a validação e a verificação dos dados enviados. Os dados
+recebidos são mostrados no display presente na placa, e comparados com os dados recebidos na ECS.
+O microcontrolador trabalha como um conversor
+UDP-SERIAL, e como um tradutor de protocolos,
+pois o formato dos pacotes de dados recebido pela
+ECS difere do pacote enviado pelo X-Plane. O pacote de dados recebido pela Estação Terra é ilustrado
+na Tab. (2). Ele apresenta um cabeçalho de identificação P, G, seguidos dos dados que devem ser
+disponibilizados na tela da estação terra, mais um
+Checksum e o byte final !.
+Tabela 2. Pacote recebido pela ECS
+Cabeçalho
+P
+g
+Dado 5
+Velocidade
+
+Figura 2. Interface para seleção de dados a serem transmitidos pelo X-Plane
+
+Utilizando a interface de entradas e saídas presente
+no X-Plane, é possível selecionar os dados que serão
+enviados pelo simulador. Na Fig. (2) é ilustrada a
+interface e os parâmetros que serão enviados para o
+dispositivo externo via UDP. Os dados selecionados
+são
+ Atitude da aeronave (arfagem, rolagem e
+proa magnética)
+ Velocidade do ar
+ Altitude em relação ao nível do mar
+ Longitude e Latitude.
+
+Dado 1
+Rolagem
+Dado 6
+Latitude
+
+Dado 2
+Arfagem
+Dado 7
+Longitude
+
+Dado 3
+Proa mag.
+Crc
+Checksum
+
+Dado 4
+Altitude
+Final
+!
+
+O checksum foi implementado para verificar a assertividade dos dados na comunicação,
+O firmware desenvolvido para o microcontrolador
+foi feito em linguagem C e segue o fluxograma mostrado na Fig. (3).
+
+2.2 ARM Cortex M3
+O ARM Cortex M3 utilizado é o LM3S6965 de
+fabricação da Texas Instruments. Esse microcontrolador, ilustrado na Figura (3), foi utilizado para fazer
+a interface entre o X-Plane a o computador responsável pela ECS. Um dos principais motivos por adotar
+esse microcontrolador é o suporte a Ethernet integrado, permitindo implementar a comunicação UDP
+disponibilizada pela X-Plane. Além desse fato esse
+microcontrolador é utilizado em outras partes do
+
+ISBN 978-85-8001-069-5
+
+Figura 3. Fluxograma geral do funcionamento do programa do
+ARM.
+
+2.3 Software ECS
+O programa proposto para a Estação de Controle
+em Solo do Pegasus AutoPilot, foi desenvolvido no
+ambiente LabView. Como fora dito anteriormente,
+este programa comunica-se com outros dispositivos
+
+1122
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+via comunicação serial. Existem outras maneiras
+possíveis para comunicação, pois existe um computador inteiramente disponível para a ECS, no entanto
+após a validação do software da ECS, o ARM será
+substituído por um link para transmissão remota de
+dados que estará embarcado no VANT. Este link
+disponibiliza os dados das leituras dos sensores embarcados no VANT, via serial RS-232, assim como o
+microcontrolador utilizado. Desse modo, após os
+testes e validação aqui propostos, a estação terra fica
+totalmente pronta para receber os dados de navegação do VANT quando necessário.
+Além da comunicação serial, o programa tem a opção da aquisição via UDP, diretamente do X-Plane, o
+que permitiu avaliar a as conversões de dados, que
+são feitas no programa como a conversão de binário
+32 bits para real, pois o simulador de vôo disponibiliza os dados em binário de 32 bits. Note que tanto o
+ARM Cortex M3 quanto o X-Plane são little-endian,
+enquanto que o LabView é big-endian.
+Para criar um ambiente mais agradável ao operador
+da Estação de Controle em Solo foi desenvolvida a
+interface_gráfica em forma de abas mostrada a seguir
+nas Figuras (4, 5 e 6).
+
+altitude, direção, posicionamento e atitude da aeronave.
+Na Fig. (5a e b) são apresentados os painéis de configurações e depuração respectivamente. Na aba de
+configurações o operador tem a possibilidade de
+configurar as velocidades de transmissão_de_dados,
+local de armazenamento dos arquivos, com os dados
+dos vôos, qual câmera estará utilizando, dentre outras
+configurações. A aba de depuração da interface possibilita que o operador da ECS, possa monitorar em
+tempo_real, na integra, os dados recebidos na ECS, as
+conversões de dados, validação de pacote de dados,
+pacotes de dados que foram rejeitados, possibilitando
+diagnosticar de forma mais rápida algum problema
+durante o vôo.
+
+Figura 5a. Painel de Configuração
+
+Figura 4a. Painel de aquisição via UDP
+
+Figura 4b. Painel principal com aquisição_de_dados via serial
+
+Na Fig. (4) podem ser vistas as interfaces principais
+desenvolvidas para o monitoramento dos dados recebidos na Estação de Controle em Solo. A Fig. (4a)
+apresenta a tela de aquisição_de_dados via UDP e a
+Fig. (4b) o painel de recepção de dados via serial,
+que é a tela usada pelo operador do vôo. Ainda no
+painel de recepção serial é reservado um espaço para
+mostrar a imagem capturada através de uma câmera.
+A imagem é simulada através de uma placa de captura externa. Apesar de não estar implementada no
+VANT, a utilização da câmera está sendo avaliada
+neste trabalho a fim de que possa ser utilizada em
+uma próxima etapa do trabalho. Pelo painel de recepção é possível monitorar os dados de velocidade,
+ISBN 978-85-8001-069-5
+
+Figura 5b. Painel de depuração
+
+Na Fig. (6a), é mostrada a aba de gráficos na qual
+pode ver a evolução de cada dado de vôo ao longo do
+tempo, e na Fig. (6b) a aba com a interface do Google Mapas que permite que o controlador da Estação
+de Solo do Pegasus Autopilot visualize a trajetória
+que o VANT está percorrendo em um mapa estático
+que é atualizado a cada dez segundos. Os dados de
+GPS que são recebidos pela Estação de Solo são
+utilizados para gerar um endereço html com as coordenadas do ponto e com isso o programa da ECS
+desenvolvido plota no mapa a rota que a aeronave
+esta percorrendo.
+
+Figura 6a. Painel de gráficos
+
+1123
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Esses valores são pontos integrantes da curva apresentada no gráfico de excursão do ângulo de rolamento mostrado na Fig. (8a). Na tabela em questão
+os valores dos quatro bytes que formam o número em
+ponto_flutuante estão em formato decimal. A Fig.
+(8b) ilustra instrumento de horizonte artificial, presente na aba de aquisição_de_dados serial, Fig. (4b),
+do programa da ECS. A imagem refere-se ao instante
+em que o quarto dado da Tab. (3) foi recebido, momento este que a aeronave no simulador atinge o pico
+máximo do movimento de rolamento no período
+observado.
+
+Figura 6b. Painel Google Maps
+
+3 Resultados
+Utilizando a plataforma de simulação proposta
+neste trabalho foram realizadas as simulações com o
+objetivo de validar o programa desenvolvido para a
+Estação de Solo do Pegasus Autopilot, estes resultados serão discutidos a seguir.
+Um dos pontos que é necessária atenção é quanto ao
+formato em que os dados eram recebidos pelo programa, pois como o programa da ECS foi desenvolvido no ambiente do LabView, os dados precisariam
+ter seus bytes invertidos antes de transformados em
+pontos flutuantes de precisão simples (float), pois o
+mesmo recebe e armazena os dados no forma bigendian, diferente do X-plane que envia os dados no
+formato little-endian.
+Assim, cada dado recebido em um pacote é composto
+de 32 bits, ver Tab.2, está no formato little-endian.
+Estes dados devem ser invertidos e ordenados como
+mostrados na Fig. (7) para que se possa transformálos em números reais.
+
+Figura 8a. Excursão do ângulo de rolamento em um instante do
+vôo
+
+Figura 7. Forma em que os bits são ordenados para transformar
+quatro bytes em um número real
+
+Após inverter os dados recebidos e ordená-los na
+forma em que mostra a Fig. (7), aplicando a Eq. (1)
+obtem-se o número real correspondente.
+23
+
+valor  (1) sin al (1   bi 2 1 ) x 2 (exp 127)
+
+(1)
+
+i 1
+
+Onde é o valor do bit na posição i.
+Na Tab. (3) constam dados da conversão de alguns
+valores coletados do ângulo de rolamento da aeronave em vôo. Os bytes apresentados referem-se a leituras distintas do dado 1 apresentado na Tab. (2) deste
+trabalho.
+Tabela 3. Conversão dos valores do ângulo de rolamento
+Byte 2
+Byte 3
+Byte 4
+Byte 5
+Valor
+
+L1
+201
+25
+236
+64
+7.38
+
+L2
+223
+94
+60
+65
+11.77
+
+ISBN 978-85-8001-069-5
+
+L3
+109
+124
+75
+65
+12.72
+
+L4
+209
+222
+98
+65
+14.18
+
+L5
+83
+110
+35
+65
+10.21
+
+Figura 8b. Horizonte artificial
+
+Foram analisados os dados de altitude e ângulo de
+arfagem, que apresentam variações quando o profundor da aeronave sofre uma deflexão para cima ou
+para baixo. A Fig. (9) representa o movimento de
+arfagem da aeronave quando se provoca uma deflexão na superfície do profundor. Aplicando-se uma
+determinada deflexão ao profundor da aeronave ela
+apresenta um ângulo de arfagem de aproximadamente 13 graus durante o tempo em que a deflexão é
+mantida, Fig. (10a).
+O ângulo de arfagem da aeronave está diretamente
+relacionado  sua variação de altitude. Como se pode
+observar na Fig. (10b), durante o tempo em que a
+aeronave mantém um ângulo de arfagem constante, a
+altitude varia também a uma taxa constante. Quanto
+maior for o ângulo maior será a taxa de subida da
+aeronave.
+
+1124
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 9. Movimento de arfagem da aeronave
+Figura 11b. Amostragem da velocidade em vôo
+
+Figura 12. Aeronave no simulador X-Plane
+Figura 10a. Amostragem da altitude
+
+As amostras foram realizadas com um período de
+amostragem de cinqenta milissegundos para todos
+os casos acima apresentados.
+4 Conclusão e Trabalhos Futuros
+
+Figura10b. Ângulo de arfagem durante um instante do vôo
+
+Na Fig. (11) são tratados dois momentos distintos do
+vôo, a Fig. (11a) mostra  evolução do ângulo de
+rolamento no instante da finalização de uma curva,
+quando na seqência a aeronave volta a posição
+estável com o ângulo de rolamento igual a zero. A
+Fig. (11b) mostra o comportamento da velocidade
+horizontal (airspeed), em kmh, no instante da decolagem da aeronave. A aeronave simulada no X-Plane
+nos testes apresentados foi um Piper J3 de 16 de
+escala modelada utilizando-se a ferramenta Plane
+Maker do próprio simulador. A Fig. (12) apresenta
+um instante de vôo desta aeronave no simulador de
+vôo.
+
+Figura 11a. Amostragem do ângulo de rolamento
+
+ISBN 978-85-8001-069-5
+
+Com a plataforma desenvolvida, foi possível validar o programa da Estação de Controle em Solo que
+será utilizada pelo sistema Pegasus Autopilot. Os
+resultados foram satisfatórios quanto aos dados recebidos na ECS, quando comparados entre a interface,
+o simulador de vôo X-Plane e a interface criada no
+display do kit em que o ARM Cortex M3 está embarcado. Utilizando uma comunicação direta via
+cabo serial entre o ARM e o programa da ECS no
+LabView, foi possível obter uma atualização dos
+dados tanto nos gráficos quanto na interface visual
+com instrumentos a uma freqência de 20 Hz, proporcionando informação de vôo ao controlador do
+vôo a uma taxa adequada. Foi possível ainda validar
+a recepção de imagem através de uma placa de captura externa e transmissão na tela da interface.
+Outro ponto que foi observado com resultado satisfatório foi a gravação do arquivo com os dados de vôo,
+o que permite que após o término de um ensaio de
+vôo o mesmo possa ser reproduzido para que se possa analisar com mais precisão os dados coletados.
+Caso os dados coletados sejam de um vôo real, é
+possível serem aplicados no X-Plane, e fazer uma
+simulação do vôo no simulador.
+A simulação de vôo no X-Plane permitiu verificar e
+solucionar problemas quanto ao recebimento de
+dados na estação terra antes de um vôo com uma
+aeronave real, isso diminuiu custo e tempo do projeto. Além da análise do recebimento e tratamento de
+dados pela ECS, foi possível estabelecer a velocidade
+do pacote de dados e a taxa de atualização, que são
+fatores extremamente importantes pra o sistema de
+
+1125
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+um VANT. A plataforma foi elaborada para se trabalhar com a estação Pegasus AutoPilot, porém desde
+que adaptado o formato dos dados disponibilizados
+pela serial do microcontrolador, qualquer outra Estação de Solo pode ser testada sem grandes alterações.
+A utilização do Simulador garantiu mais confiança
+nos dados recebidos, pois como em um vôo real,
+dados são coletados e enviados para a ECS a todo o
+momento. O uso do simulador também permitiu
+fazer movimentos bruscos com a aeronave e verificar
+a escala dos instrumentos da ECS.
+Atualmente está sendo planejada a implementação do
+sistema de aquisição de imagens por meio de uma
+câmera instalada na aeronave. Neste contexto para
+trabalhos futuros esperasse criar um link de transmissão de imagem embarcada no VANT, que será prontamente disponibilizado para a tripulação através da
+ECS, possibilitando vôos de reconhecimento de aéreas em tempo_real, além de diversas outras aplicações.
+
+Frontiers in Education Conference (FIE) IEEE,
+Washington, DC, USA.
+Santos, S.R.B., Júnior, C.L.N., Júnior, S.N.G., Bittar,
+A., Oliveira, N.M.F., 2011, Experimental
+Framework For Evaluation Of Guidance And
+Control Algorithms For UAVs, 21Brazilian
+Congresso f Mechanical Engineering, Natal,
+Brazil.
+Wishart, S., Kim, J.-H., Sukkarieh, S., 2006, Realtime Navigation, Guidance, and Control of a
+UAV using Low-cost Sensors, Springer Tracts
+in Advanced Robotics, Vol. 24, pp. 299-309.
+
+Agradecimentos
+Os autores agradecem ao apoio financeiro da
+FAPEAM  Fundação de Amparo  Pesquisa do
+Amazonas e CAPES  Coordenação de Aperfeiçoamento de Pessoal de Nível Superior por meio de
+bolsas de mestrado, como também o ITA  Instituto
+Tecnológico de Aeronáutica pela colaboração no
+desenvolvimento da pesquisa.
+Referências Bibliográficas
+Fiúza, J.M.F., 2005, Piloto Automático de uma
+aeronave, Relatório de Trabalho de Final de
+Curso. Lisboa, Portugal.
+Garcia R., and Barnes L., 2009 Multi-UAV
+Simulator Utilizing X-Plane, IEEE J. Intelligent
+ Robotic Systems, vol. 57, pp. 393-406.
+Griffiths, S., Saunders, J., Curtis, A., McLain, T. e
+Beard, R. 2007, Obstacle and Terrain
+Avoidance for Miniature Aerial Vehicles,
+Advances in Unmanned Aerial Vehicles, State
+os Art and the Road to Autonomy, vol. 33,
+pp.213-244, Florida, USA.
+Jenie, Y.I., Indriyanto, T., 2006, X-Plane-Simulink
+Simulation of a Pitch-Holding Automatic
+Control System for Boeing 747, Presented in
+Indonesian-Taiwan
+Workshop,
+Bandung,
+Indonesia.
+Makhdoom, I.H., Qin, S.-Y., 2010, Matlab-Based
+Flight Control Design Scheme for UAVs,
+World Congress on Intelligent Control and
+Automation, Jinan, China.
+Ozimina, C.D., Tayman, S.K., Chaplin, H.E., 1995,
+Flight Control System Design For A Small
+Unmanned Aircraft, American Control
+Conference, Washington, USA.
+Ribeiro, L.R., Oliveira, N.M.F., 2010, UAV
+Autopilot Controllers Test Plataform Using
+MatlabSimulink and X-Plane, Proceedings of
+ISBN 978-85-8001-069-5
+
+1126

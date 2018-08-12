@@ -1,0 +1,894 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ESTIMADOR DE DEMANDA TRIFÁSICO EM TEMPO REAL PARA SISTEMAS DE DISTRIBUIÇÃO
+JULIO A. D. MASSIGNAN, CAMILA A. FANTIN, JOÃO B. A. LONDON JR
+Departamento de Engenharia Elétrica e de Computação, Escola de Engenharia de São Carlos, Universidade de
+São Paulo
+Av. Trabalhador São Carlense, 400  Pq. Arnold Schmidt  São CarlosSP
+E-mails julio.massignan@usp.br, camilafantin@usp.br, jbalj@sc.usp.br
+MARCOS H. M. CAMILLO
+COPEL Distribuição SA
+Rua Chile, 10  Vila Brasil  LondrinaPR
+E-mails marcos.camillo@copel.com
+Abstract
+ This paper proposes a Real Time Three-Phase Load Estimator for radial, unbalanced and asymmetric distribution
+feeders. The proposed three-phase load estimator is based on off-line information (customers consumption and typical load
+curves) a computationally efficient three-phase load-flow algorithm, which uses a data structure named Node-Depth Encoding
+and the few available real-time measurements. Using only off-line information, the proposed three-phase load estimator enables
+the off-line estimation of the loads of distribution transformers (aggregated load curves) and provides a measure of uncertainty of
+the estimation. It also refines the off-line estimates by processing the available real-time measurements via a computationally efficient three-phase load flow algorithm. The load estimates can then be used for several distribution feeder automated applications, as service restoration, distribution contingency analysis and demand response. Several simulation results (with IEEE distribution test feeders) have demonstrated the efficiency of the proposed three-phase load estimator.
+Keywords
+ Distribution Systems, Load Estimation, Load Allocation, State Estimation, Real Time Operation.
+Resumo
+ Este trabalho propõe um Estimador de Demandas Trifásicas em Tempo Real para alimentadores de distribuição radiais, desbalanceados e assimétricos. O estimador de demandas trifásicas proposto é baseado em informações off-line (consumo
+mensal dos consumidores e curvas_de_carga típicas) um algoritmo computacionalmente eficiente para cálculo de fluxo_de_potência baseado na estrutura de dados denominada Representação Nó-Profundidade e nas poucas medidas disponíveis em tempo_real. Considerando somente as informações off-line, o estimador de demandas trifásicas proposto permite a estimação das demandas dos transformadores_de_distribuição (curvas_de_carga agregadas) com uma medida da incerteza da estimativa. Além disso,
+processando as medidas disponíveis em tempo_real, via um algoritmo eficiente para cálculo de fluxo_de_potência, o estimador
+proposto permite o refinamento das estimativas off-line. As estimativas de demanda podem então ser utilizadas por diversas aplicações automatizadas nos alimentadores de distribuição, como restabelecimento_de_energia, análise de contingências e resposta
+pela demanda. Diversos resultados de simulações (utilizando os alimentadores teste do IEEE) demonstram a eficiência do estimador de demandas trifásicas proposto.
+Palavras-chave
+ .
+
+1
+
+Introdução
+
+O monitoramento em tempo_real é crucial para diversas aplicações automatizadas em Sistemas de
+Distribuição (SDs), como avaliação da condição
+operacional dos alimentadores análise de contingências restabelecimento_de_energia controle e otimização de tensão e VAr (Zidan et al., 2016). Porém
+somente pequenas partes dos alimentadores são monitoradas através de medidas disponíveis em tempo
+real nos SDs. Assim, tradicionalmente a condição
+operacional dos alimentadores é determinada examinando perfis de carga. Como esses perfis são aproximações estatísticas da demanda dos consumidores,
+a qualidade do monitoramento em tempo_real em
+geral é sobre-estimada (Lefebvre et al., 2014).
+Para possibilitar a determinação mais confiável da
+condição operacional em tempo_real de alimentadores de SDs, esses sistemas vêm sendo equipados com
+sistemas SCADA. Além disso, recentes esforços para
+incorporar conceitos de redes_inteligentes, como
+infraestruturas_de_medição avançadas baseadas em
+
+ISSN 2525-8311
+
+medidores_inteligentes, estão disponibilizando novos
+dados em tempo_real para os centros de controle e
+operação dos SDs (Baran, 2012). Estes esforços de
+aumentar o número de medidas disponíveis, em tempo_real, nos alimentadores de distribuição têm motivado o desenvolvimento de Estimadores de Estado
+para Sistemas de Distribuição (EESDs), que tem
+como objetivo determinar estimativas precisas das
+demandas dos SDs.
+Em Ghosh et al. (1997) é apresentado um procedimento de modelagem_de_cargas baseado no cálculo
+de fluxo_de_potência probabilístico, curvas de demanda típicas e nas poucas medidas disponíveis nos
+SDs. O uso do EESD trifásico, baseado no método
+dos mínimos_quadrados ponderados, proposto em
+Baran  Kelley (1994) e Baran  Mcdermott (2009)
+apresenta melhorias nas estimativas de demanda ao
+incorporar as medidas em tempo_real. Em Dafi et
+al. (2013) é desenvolvido um Estimador de Demanda
+em Tempo Real também baseado no método dos
+mínimos_quadrados ponderados. Este estimador
+calcula valores de ajuste para as demandas inicialmente estimadas a partir de informações off-line.
+
+1584
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Outros trabalhos como Bernieri et al. (1996) e
+Manitsas et al. (2012) fazem uso de redes_neurais
+artificiais para o processo de estimação_de_demanda
+em SDs. Além destes trabalhos, em Rousseaux
+(2015) a formulação do estimador de estado convencional é estendida para incorporar as demandas dos
+alimentadores como variáveis de estado.
+Entretanto, apesar de todos estes esforços, em função dos altos custos das infraestruturas_de_medição e
+de comunicação, em um curto período de tempo os
+SDs não serão equipados com um sistema de medição em tempo_real suficiente para possibilitar requisitos de observabilidade para EESD. Face ao exposto,
+o problema continua sendo o de determinar estimativas das demandas dos SDs, da maneira mais precisa
+possível, a partir de um número limitado de medições
+disponíveis em tempo_real (Lefebvre et al. 2014
+Baran 2012).
+Este trabalho propõe um Estimador de Demandas Trifásicas em Tempo Real (EDTTR) baseado
+em três estágios que são executados iterativamente
+(1) Estimação de Demandas Off-line  este estágio
+consiste em estimar as demandas dos transformadores_de_distribuição dos alimentadores a partir dos
+perfis de carga e de informações de consumo de
+energia dos consumidores (2) Fluxo de potência via
+RNP em Tempo Real - cálculo de fluxo_de_potência
+em tempo_real através de um algoritmo de varredura
+diretainversa computacionalmente eficiente baseado
+na estrutura de dados chamada Representação NóProfundidade (RNP) (3) Refinamento em Tempo
+Real das Estimativas neste estágio os valores medidos disponíveis no SD são comparados com os
+valores calculados no Estágio (2), e realiza-se um
+refinamento das estimativas de demandas.
+Dentre as contribuições do presente trabalho, a
+principal é a extensão para sistemas trifásicos desbalanceados e assimétricos do estimador de demanda
+proposto em Massignan et al. (2015) e análises de
+diferentes aspectos da metodologia proposta.
+
+cargas é a soma estatística dos perfis de consumo em
+p.u., caracterizados por um valor médio e desvio
+padrão, usando curvas_de_carga típicas por tipo de
+consumidor. Os valores dos perfis de consumo em
+p.u. são transformados em kW usando uma base de
+potência para cada consumidor (Pbasecons), definida a
+partir do consumo mensal de energia de cada consumidor (kWhcons), conforme indicado na equação (1)
+kWhcons
+(1)
+Pbase  cons  1 . p(t )dt 
+24
+
+24x30
+
+A curva agregada de cada transformador j é a soma estatística dos perfis de consumo de todos os
+consumidores conectados a seu circuito secundário,
+usando as equações (2) e (3). O processo de agregação de cargas é realizado separadamente por fase
+, ou seja, para a fase a são agregadas as cargas
+dos consumidores conectados a esta fase, e de maneira análoga, para as fases b e c. Assim, cada uma
+das fases é relacionada com uma estimativa off-line
+individual de demanda.
+(2)
+mj  mclass cons..Pbase cons.
+cons j
+
+
+
+j 
+
+(
+
+class  cons.
+
+.Pbase  cons. )2
+
+(3)
+
+cons j
+
+onde mj e j são, respectivamente, o valor esperado
+da demanda de potência_ativa agregada e seu desvio
+padrão na barra j, fase  e, mclasscons e classcons são,
+respectivamente, o valor esperado da potência_ativa e
+seu desvio padrão da curva_de_carga dos consumidores alimentados pelo transformador da barra j.
+A equação (2) fornece a estimativa off-line da carga de potência_ativa (injeção_de_potência_ativa) na
+barra j. A estimativa da injeção de potência reativa na
+barra j pode ser calculada de maneira similar, caso
+informação análoga esteja disponível, ou utilizando
+um fator_de_potência típico para cada transformador
+de distribuição. Neste trabalho é utilizado um fator
+de potência igual a 0,92, visto que não é comum as
+distribuidoras de energia possuírem perfis típicos de
+consumo de reativos.
+A Fig. 1 ilustra o Estágio 1 do EDTTR proposto
+para um transformador j qualquer.
+
+2 Estimador de Demandas Trifásicas em Tempo
+Real
+O EDTTR proposto compreende três estágios Estágio 1 Estimação de demandas off-line Estágio 2
+Fluxo de Potência via RNP e Estágio 3 Refinamento das Estimativas off-line. O Estágio 1 é realizado de
+maneira off-line considerando informações disponíveis nas bases de dados das distribuidoras de energia.
+Os Estágios 2 e 3 são realizados em conjunto em
+tempo_real conforme a aquisição das medidas pelo
+sistema SCADA.
+2.1 Estágio 1 Estimação de Demandas Off-line
+Neste estágio as demandas do SD são alocadas
+como injeções de potência_ativa e reativa nas barras
+com transformadores_de_distribuição, e são determinadas a partir do processo de agregação de cargas
+(Jardini et al., 2000). O processo de agregação de
+ISSN 2525-8311
+
+Figura 1. Estimação de Demandas Off-line no transformador j
+
+As estimativas off-line obtidas neste estágio podem ser utilizadas como pseudo-medidas em EESD.
+Os próximos dois estágios refinam estas estimativas
+incluindo as informações provenientes das medidas
+disponíveis em tempo_real.
+2.2 Estágio 2 Fluxo de Potência Trifásico via RNP
+em Tempo Real
+O cálculo de fluxo_de_potência trifásico é realizado
+para comparar os valores de demanda incialmente
+
+1585
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+estimados no estágio 1 com os valores medidos em
+tempo_real.
+Basicamente o cálculo de fluxo_de_potência consiste em duas varreduras que são processadas iterativamente através da topologia do SD (1) Varredura
+Inversa considerando os valores de demandas estimados no Estágio 1 (injeções de potência_ativa e
+reativa nas barras com transformadores_de_distribuição), o fluxo_de_potência (ou corrente) para todos os
+ramos nos alimentadores (representado como uma
+árvore de grafo) são calculados através de uma varredura que inicia nas últimas barras de cada alimentador
+(nó folha) e termina nas subestações (nós raízes) e
+(2) Varredura Direta calcula as tensões complexas
+para todas as barras da rede_elétrica através de uma
+varredura que inicia nas subestações e termina nas
+últimas barras dos alimentadores. A topologia do SD
+é determinada em tempo_real conforme as informações dos estados das chaves e disjuntores dos alimentadores provenientes do sistema SCADA.
+A Fig. 2 ilustra o tipo de conexão e três modelagens de carga dependentes de tensão (potência constante, corrente constante e impedância constante)
+utilizadas para o cálculo de fluxo_de_potência. As
+injeções de correntes das cargas são calculadas a
+partir da equação (4).
+
+vas de demanda conforme as medidas em tempo_real
+através da comparação entre os valores medidos em
+tempo_real e calculados pelo fluxo_de_potência.
+Para comparar o valor das medidas em tempo_real
+disponíveis com os valores de fluxo_de_potência (ou
+corrente) calculados no Estágio 2, o SD é dividido
+em sub redes chamadas Áreas de Medição (AMs).
+Uma AM é definida como uma sub rede conexa que
+não possui medição em tempo_real alguma em seus
+ramos e cujas conexões s demais sub redes são
+definidas por ramos que possuem medidas em tempo
+real (Dafi et al., 2013). A Fig. 3 ilustra um SD
+dividido em 6 AMs. Ressalta-se que existem basicamente dois tipos de barras dentro de uma AM barras
+correspondentes aos transformadores_de_distribuição,
+cujas demandas (injeções de potência_ativa e reativa)
+foram estimadas no Estágio 1 e barras sem cargas
+que são tratadas como "medidas virtuais" com injeção nula de potência_ativa e reativa. Vale ressaltar
+que o conceito de AMs é proposto para redes radiais
+de distribuição não tendo sido considerada uma extensão deste conceito para redes malhadas.
+
+Figura 2 Modelos de cargas trifásicas e conexões
+ Pa
+
+ I a  
+    Pb
+Ib   
+ Ic  
+ 
+ Pc
+
+
++ j .Q a 
+.V a
+Va
++ j .Q b 
+.V b
+Vb
++ j .Q c 
+.V c
+Vc
+
+ZIP
+
+ZIP
+
+ZIP
+
+
+
+
+
+
+
+
+
+
+ Pab
+
+
+ I ab  
+    Pbc
+ I bc   
+ Ica  
+ 
+ Pca
+
+
++ j .Q ab 
+. V ab
+Vab
++ j .Q bc 
+. V bc
+Vbc
++ j.Q ca 
+. V ca
+Vca
+
+ZIP
+
+ZIP
+
+ZIP
+
+
+
+
+
+
+
+
+
+
+(4)
+
+onde, Pa, Pb, Pc e Qa, Qb, Qc representam as demandas ativa e reativa trifásicas para a conexão em estrela Pab, Pbc, Pca e Qab, Qbc, Qca representam as
+demandas ativa e reativa trifásicas para a conexão em
+delta e ZIP representa o modelo dependente de tensão (0  potência constante, 1  corrente constante e
+2  impedância constante).
+Detalhes sobre o cálculo de fluxo_de_potência trifásico com reguladores_de_tensão, transformadores,
+bancos_de_capacitores, e outros equipamentos e modelos podem ser encontrados em Cheng  Shirmohammadi (1995) e Xiao et al. (2006). Para obter
+eficiência computacional, o cálculo de fluxo_de_potência é realizado utilizando a representação em
+grafos do alimentador chamada RNP (Santos et al.,
+2008). Como demonstrado em Santos et al. (2008), a
+RNP melhora a eficiência computacional do algoritmo de fluxo_de_potência por varredura diretainversa.
+2.3 Estágio 3 Refinamento em Tempo Real das Estimativas
+O Estágio 3 é realizado em conjunto com o Estágio 2, em tempo_real, de forma a refinar as estimati-
+
+ISSN 2525-8311
+
+Figura 3. Áreas de medição definidas pelos ramos que possuem
+medidas em tempo_real
+
+De modo geral, a ideia básica do Estágio 3 é ajustar os valores estimados no Estágio 1, conforme as
+medidas em tempo_real de fluxo_de_potência (ou
+corrente) na fronteira de cada AM. Portanto, depois
+de dividir o SD em AMs, é necessário calcular as
+diferenças entre as medidas em tempo_real nas fronteiras das AMs, com os fluxos de potência (ou corrente) calculados no Estágio 2. É importante ressaltar
+que as diferenças de potência_ativa e reativa (PAM,
+QAM) são calculadas separadamente para cada fase
+ de cada AM, subtraindo os valores de AMs a
+jusante, como mostrado nas equações (5) e (6)
+
+
+(5)
+P  ( P
+  P  )  ( Pcalc
+. mont   Pcalc . jus )
+AMi
+
+med . mont
+
+med . jus
+
+
+
+(6)
+QAMi  (Qmed . mont   Qmed . jus )  (Qcalc
+. mont   Qcalc . jus )
+
+onde, Pmed.mont (Qmed.mont) e Pmed.jus (Qmed.jus) representam o fluxo_de_potência_ativa (reativa) medido em
+tempo_real nos ramos das fronteiras a montante e a
+jusante da AM i, respectivamente e Pcalc.mont
+(Qcalc,mont) e Pcalc.jus (Qcalc.jus) representam o fluxo
+de potência_ativa (reativa) calculado no estágio 2 nos
+ramos de fronteira a montante e a jusante da AM i,
+respectivamente.
+Quando existem medidas de corrente, ao invés de
+medidas de fluxo_de_potência nos ramos a montante
+eou a jusante da AM, para calcular a diferença de
+
+1586
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+potência, usando as equações (5) e (6), é necessário
+converte-las em medidas equivalentes de fluxo de
+potência, usando a equação (7).
+ jAMi
+
+
+
+(7)
+PAMi
++ jQAMi  corrente  VAMi
+.I AMi
+ med .e
+ corrente
+
+onde, zmed é o valor medido obtido pelo sistema
+SCADA zcalc é o respectivo valor calculado pelo
+Estágio 2 e med é o desvio padrão da medida obtido
+através da equação (10) (Singh et al. 2009)
+
+onde PAMicurrent (QAMicurrent) é a medida equivalente
+de fluxo_de_potência_ativa (reativa) para a medida de
+magnitude de corrente (IAMi) no ramo a montante (ou
+a jusante) da AM i e VAMi e AMi são, respectivamente, a magnitude de tensão da barra mais próxima
+da medida de corrente e a diferença angular entre o
+fasor de tensão e o fasor de corrente do ramo a montante (ou a jusante) da AM i, ambos calculados pelo
+algoritmo de fluxo_de_potência executado no estágio
+2. A Fig. 4 apresenta um exemplo deste caso ilustrando a medida equivalente de fluxo_de_potência
+para as medidas de magnitude de corrente.
+
+ med  pr ().zmed 3
+
+Figura 4. Medidas de fluxo_de_potência e corrente nos ramos a
+montante e a jusante de uma AM
+
+Se as diferenças de potência de cada AM, definidas pelas equações (5) e (6), forem menores que duas
+vezes o desvio padrão da correspondente medida
+(dado pela precisão do medidor), o EDTTR é considerado como convergido e retorna as demandas
+estimadas. Caso contrário, os valores estimados no
+Estágio 1 são ajustados baseando-se nestas diferenças de potência (medido e calculado), e o processo se
+repete retornando no Estágio 2.
+Para ajustar as demandas estimadas no Estágio 1,
+as diferenças de potência de uma AM são distribuídas entre as suas cargas, de acordo com os valores
+das cargas agregadas, conforme a equação (8)
+m
+
+(8)
+mj  ajustado  mj + PAMi
+. j
+
+m
+ i
+iAM
+,
+onde mj é a estimativa off-line de demanda ativa na
+barra j, obtida pela equação (2), e mj-ajustado é seu
+valor ajustado. A diferença de demanda reativa também é distribuída através da equação (8), mas neste
+caso considerando a estimativa off-line de demanda
+reativa na barra j.
+Barras sem cargas são tratadas como medidas virtuais de injeção nula de potência_ativa e reativa e não
+são ajustadas pelo algoritmo.
+Após o ajuste das demandas, os Estágio 2 e 3 são
+executados iterativamente, até que seja alcançada a
+convergência do EDTTR proposto, isto é, até que as
+diferenças de potência definidas pelas equações (5) e
+(6) forem menores que duas vezes o desvio padrão da
+correspondente medida da AM (equação (9)). Observa-se que após a primeira iteração do EDTTR proposto, o Estágio 3 refina os valores de cargas ajustados na iteração anterior.
+zmed  zcalc  2. med
+
+ISSN 2525-8311
+
+(9)
+
+(10)
+
+onde pr() corresponde  precisão do medido. A
+equação (9) representa um critério de parada para o
+EDTTR baseado no intervalo de confiança de 98
+dado  medida (2.med), assumindo que o erro da
+medida segue distribuição normal N(0, med2).
+3 Resultados de Simulações
+O alimentador de teste IEEE34 (IEEE 2016) foi
+utilizado para avaliar o desempenho do EDTTR
+proposto. Os dados de carga foram modificados para
+representar o horizonte de um dia de simulação,
+considerando 428 consumidores separados em residencial, comercial, industrial e iluminação_pública. A
+Fig. 5 apresenta o alimentador de teste, com as medidas em tempo_real consideradas, que definem três
+AMs, e respectiva codificação do grafo via RNP. As
+simulações foram realizadas em um computador com
+processador 2 quad 2,33 GHz, 4 GRAM de memória,
+e script em MATLAB para o algoritmo do EDTTR.
+
+Figura 5. Alimentador teste IEEE 34 barras e representação
+correspondente via RNP
+
+A partir de um caso de referência de fluxo_de_potência foram geradas 30 amostras de simulação, cada
+uma representando um conjunto de medidas em tempo_real, geradas através da inclusão de erros aleatórios de distribuição N(0, med) para o horizonte de um
+dia. Para cada uma das amostras de medidas o
+EDTTR foi então aplicado para verificar seu desempenho em estimar as demandas dos transformadores
+de distribuição. O desempenho do EDTTR foi avaliado em termos do Erro Médio Absoluto (EMA) definido pela equação (11), aplicada em cada fase .
+N
+
+EMAj 
+
+ P  (t )  P  (ref )
+j
+
+t 1
+
+j
+
+N
+
+(11)
+
+onde, Pj(t) é a demanda de potência_ativa estimada
+pelo EDTTR proposto para a barra j na amostra teste
+t e Pj(ref) é a demanda de potência_ativa de referência para a barra j N é o número total de amostras.
+A tabela I ilustra o desempenho do EDTTR, apresentando a melhor e pior estimativa de demanda, de
+acordo com o EMA percentual calculado em relação
+ demanda do caso de referência.
+
+1587
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Nota-se que o EDTTR apresenta melhores estimativas de demanda ativa, uma vez que estas partem de
+uma estimativa inicial mais precisa do que as de
+demanda reativa (neste trabalho adotado um fator de
+potência de 0,92 no Estágio 1). Vale ressaltar também que o EDTTR apresenta erro percentual de
+estimação condizente com os encontrados na literatura, entre 8 e 50 (Dafi et al., 2013 Singh et al.,
+2009 Kong et al., 2011).
+TABELA I. ERRO DE ESTIMAÇÃO DE DEMANDA
+
+Barra
+
+Melhor
+Estimativa
+Pior
+Estimativa
+
+834
+840
+834
+808
+808
+802
+
+Fase
+
+Demanda
+Ativa
+
+Demanda
+Reativa
+
+EMA ()
+
+EMA ()
+
+4,676
+4,694
+4,710
+20,085
+17,254
+18,016
+
+5,823
+5,486
+5,502
+41,040
+37,940
+40,491
+
+a
+b
+c
+a
+b
+c
+
+Para esclarecer a capacidade do EDTTR proposto
+em refinar as demandas estimadas no Estágio 1, a
+Fig. 6, Fig. 7 e Fig. 8 mostram (pior estimativa de
+demanda para cada fase) a curva_de_demanda do
+caso de referência (curva em azul) o valor médio das
+demandas de potência_ativa estimadas em todas as 30
+amostras de teste (curva em vermelho) o EMA das
+curvas de demanda estimadas (curva em vermelho
+próxima do eixo horizontal) e a curva_de_carga agregada estimada no Estágio 1 (curva em verde).
+Caso de Referência
+Demanda Estimada Média
+Curva de Carga Agregada
+EMA das Demanda Estimada
+
+40
+
+30
+
+Tipo
+
+800-802
+
+P-Q
+
+814-850
+
+P-Q
+
+852-832
+
+P-Q
+
+Fase
+a
+b
+c
+a
+b
+c
+a
+b
+c
+
+Fluxo de
+Potência
+Ativa
+
+Fluxo de
+Potência
+Reativa
+
+EMA ()
+
+EMA ()
+
+1,355
+0,972
+1,068
+0,304
+0,230
+0,271
+0,027
+0,018
+0,020
+
+2,676
+1,934
+1,897
+0,757
+0,542
+0,537
+0,127
+0,091
+0,086
+
+O tempo médio de execução dos Estágios 2 e 3 foi
+de 0,0635 s, apresentando assim desempenho para
+aplicações em tempo_real. O número médio de iterações entre execuções dos Estágios 2 e 3 foi de 2,77.
+O desempenho do EDTTR foi analisado considerando erro na curva_de_carga de alguns consumidores, ou seja, um perfil de consumo diferente do representado pelas curvas_de_carga típicas. Desta maneia a
+hipótese de que consumidores pertencentes a uma
+mesma classe é avaliada no processo do EDTTR. A
+Fig. 9 apresenta a pior estimativa entre as fases.
+40
+
+35
+
+10
+
+3AM
+
+6AM
+
+9AM
+
+12PM
+
+3PM
+
+6PM
+
+9PM
+
+12AM
+
+Figura 6. Pior estimativa para a fase a  barra 808
+25
+
+Demanda Ativa - Fase B (kW )
+
+Localização
+do Medidor
+
+20
+
+0
+12AM
+
+Caso de Referência
+Demanda Estimada Média
+EMA da Demanda Estimada
+Curva de Carga Agregada
+
+20
+
+30
+
+Caso de Referência
+Demanda Estimada Média
+EMA da Demanda Estimada
+Curva de Carga Agregada
+
+25
+20
+15
+10
+5
+0
+12AM
+
+15
+
+3AM
+
+6AM
+
+9AM
+
+12PM
+
+3PM
+
+6PM
+
+9PM
+
+12AM
+
+Figura 9. Estimação de demanda na presença de erros_grosseiros
+nas curvas_de_carga típicas
+
+10
+
+5
+
+0
+12AM
+
+3AM
+
+6AM
+
+9AM
+
+12PM
+
+3PM
+
+6PM
+
+9PM
+
+12AM
+
+Figura 7. Pior estimativa para a fase b  barra 856
+40
+
+Caso de Referência
+Demanda Estimada Média
+EMA da Demanda Estimada
+Curva de Carga Agregada
+
+35
+Demanda Ativa - Fase C (kW)
+
+TABELA II. ERRO ENTRE VALORES MEDIDOS E CALCULADOS
+
+Demanda Ativa - Fase B (kW )
+
+Demanda Ativa - Fase A (kW)
+
+50
+
+res de distribuição dos alimentadores e também o
+refinamento dessas estimativas utilizando as medidas
+disponíveis em tempo_real.
+A tabela II apresenta o erro entre os valores medidos e calculados para uma das medidas disponíveis
+em tempo_real. Assim, o EDTTR provê estimativas
+de demanda para os alimentadores de maneira que a
+solução do fluxo_de_potência se aproxime da condição de operação do alimentador, considerando o
+intervalo de confiança de cada medidor.
+
+30
+25
+20
+15
+10
+5
+0
+12AM
+
+3AM
+
+6AM
+
+9AM
+
+12PM
+
+3PM
+
+6PM
+
+9PM
+
+12AM
+
+Figura 8. Pior estimativa para a fase c  barra 806
+
+Como pode ser visto, o EDTTR proposto permite
+estimativas off-line das demandas dos transformadoISSN 2525-8311
+
+Como pode ser observado, a curva agregada obtida
+no Estágio 1 não é uma boa representação da demanda de referência, considerando tanto o perfil de carga
+quanto a escala. As piores estimativas de demanda
+foram observadas nas barras com consumidores de
+perfil de consumo diferente das curvas_de_carga típicas. As demais barras mantiveram comportamento
+similar ao apresentado no teste anterior. Como outros
+estimadores de demanda propostos na literatura
+(Dafi et al., 2013 Kong et al., 2011), os perfis de
+carga típicos possuem um papel crucial no processo
+de estimação_de_demanda. Estes perfis podem ser
+melhorados com atualizações periódicas dos perfis
+de carga, incrementos em sua representação estatística (correlações com variáveis climáticas, levanta-
+
+1588
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+mento das distribuições de probabilidade, entre outras) e instalação de medidores_inteligentes.
+Vale ressaltar que somente cargas com conexão
+em estrela foram consideradas nos testes apresentados neste trabalho. Quando cargas em delta são consideradas, o problema do Estágio 3 não pode ser
+desacoplado por fase, e a equação (8) não irá prover
+um refinamento apropriado para as cargas em delta.
+Em (Dafi et al., 2013) é apresentado um tratamento
+especial para as cargas em delta no problema de
+estimação_de_demandas. Estes autores apresentam o
+problema de acoplamento entre fases e utilizam um
+estimador de demandas baseado na matriz de sensibilidade das barras que possuem cargas em delta. Em
+um trabalho futuro este problema será tratado com
+mais detalhes, incorporando uma metodologia para o
+tratamento de cargas em delta no EDTTR proposto.
+4 Conclusão
+Este trabalho apresentou um EDTTR para alimentadores de distribuição baseado em informações offline (curvas_de_carga típicas, informações de consumo_de_energia dos consumidores) um algoritmo
+computacionalmente eficiente para cálculo de fluxo
+de potência baseado na estrutura de dados RNP e
+nas medidas disponíveis em tempo_real.
+Considerando somente as informações off-line, o
+EDTTR proposto permite a estimação das cargas dos
+transformadores_de_distribuição (agregação de cargas), provendo uma medida da incerteza, que pode
+ser utilizada como pseudo-medidas de injeção de
+potência_ativa e reativa em EESDs (Estágio 1 do
+ECTR proposto). Além disto, processando as medidas disponíveis em tempo_real, o EDTTR proposto
+permite o refinamento das estimativas de carga obtidas pelas informações off-line no Estágio 1.
+Em um trabalho futuro será incorporada uma metodologia para o tratamento de cargas em delta no
+processo do EDTTR. Além disto, o EDTTR será
+aplicado e validado com medições em campo em um
+sistema real de distribuição brasileiro.
+Agradecimentos
+Os autores agradecem ao CNPq, Fundação de Amparo  Pesquisa do Estado de São Paulo (FAPESP processo n 201222624-3), FIPAI e COPEL pelo
+apoio financeiro.
+Referências Bibliográficas
+Baran, M., 2012. Branch current based state estimation for distribution system monitoring. Em
+IEEE PES General Meeting, pp.1215.
+Baran, M.  Kelley, A., 1994. State estimation for
+real-time monitoring of distribution systems.
+IEEE Trans. on Power Systems, 9(3), pp.1601
+1609.
+Baran, M.  Mcdermott, T.E., 2009. State Estimation for Real Time Monitoring of Distribution
+
+ISSN 2525-8311
+
+Feeders. Em IEEE PES General Meeting. Calgary, AB, pp. 14.
+Bernieri, A. et al., 1996. Neural networks and pseudo-measurements for real-time monitoring of
+distribution systems. IEEE Trans. on Instrumentation and Measurement, 45(2), pp.645
+650.
+Cheng, C.S.  Shirmohammadi, D., 1995. A threephase power flow method for real-time distribution system analysis. IEEE Trans. on Power
+Systems, 10(2), pp.671679.
+Dafi, I. et al., 2013. Real time estimation of loads
+in radial and unsymmetrical three-phase distribution networks. IEEE Trans. on Power Systems, 28(4), pp.48394848.
+Ghosh, a K., Lubkeman, D.L.  Jones, R.H., 1997.
+Load modeling for distribution circuit state estimation. IEEE Trans. on Power Delivery,
+12(2), pp.9991005.
+IEEE, 2016. IEEE Test Feeders. Disponível em
+httpewh.ieee.orgsocpesdsacomtestfeeders
+index.html Acessado em 22052016.
+Jardini, J. a. et al., 2000. Daily Load Profiles for
+Industrial Low Voltage Consumers. IEEE
+Trans. on Power Delivery, 15(1), pp.375380.
+Kong, W. et al., 2011. Advanced Load Modelling
+Techniques for State Estimation on Distribution Networks With Multiple. Em IEEE PSCC
+Conference. Stockholm.
+Lefebvre, S., Prévost, J.  Lenoir, L., 2014. Distribution State Estimation A necessary requirement
+for the smart_grid. Em 2014 IEEE PES General
+Meeting. National Harbor, pp. 15.
+Manitsas, E. et al., 2012. Distribution System State
+Estimation Using an Artificial Neural Network
+Approach for Pseudo Measurement Modeling.
+IEEE Trans. on Power Systems, 27(4),
+pp.18881896.
+Massignan, J.A.D. et al., 2015. Real-time load estimation for distribution feeders. Em IEEE
+PowerTech. Eindhoven, pp. 16.
+Rousseaux, P., 2015. A new formulation of state
+estimation in distribution systems including
+demand and generation states. Em IEEE Power
+Tech Conference. Eindhoven.
+Santos, A.C. et al., 2008. A power flow method
+computationally efficient for large-scale distribution systems. Em IEEE PES TD Conference and Exposition Latin America. pp. 16.
+Singh, R., Pal, B.C.  Vinter, R.B., 2009. Measurement placement in distribution system state estimation. IEEE Trans. on Power Systems,
+24(2), pp.668675.
+Xiao, P., Yu, D.C.  Yan, W., 2006. A unified threephase transformer model for distribution load
+flow calculations. IEEE Trans. on Power Systems, 21(1), pp.153159.
+Zidan, A. et al., 2016. Fault Detection , Isolation and
+Service Restoration in Distribution Systems 
+State-of-the-art and Future Trends. IEEE
+Trans. on Smart Grid (Aceito para publicação).
+1589

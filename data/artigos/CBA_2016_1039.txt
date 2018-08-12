@@ -1,0 +1,886 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+CONTROLE REPETITIVO APLICADO A MANIPULADORES ROBOTICOS COM
+ERRO DE ESTRUTURA DE MODELO
+Israel Goncalves de Oliveira, Walter Fetter Lages
+
+
+Dept. de Sistemas Eletricos de Automacao e Energia, Universidade Federal do Rio Grande do Sul
+Av. Osvaldo Aranha 103, 90035-190
+Porto Alegre, Rio Grande do Sul, Brasil
+Emails israel@ece.ufrgs.br, fetter@ece.ufrgs.br
+Abstract This work presents a repetitive control strategy applied to robotic manipulators. The goal in using
+this controller is the tracking of periodic trajectories in the joint space. The controller synthesis is based on the
+internal model principle with the addition of a repetitive structure and a stabilizing state feedback. The design
+of the repetitive controller gains is done through a convex optimization problem with linear matrix inequalities
+(LMI) constraints. The formulation of the optimization problem is based on the Lyapunov stability theory using
+a Lyapunov-Krasoviskii functional and a restriction to limit the controller gains. A comparison between the
+computed-torque control and the repetitive controller applied to the manipulator is presented to validate of the
+proposed repetitive controller. The Robot Operating System (ROS) is used to implement the controller and
+simulate the robot with error in the structre of the model.
+Keywords Robot control, manipulator robot, repetitive control, computed-torque control, linear matrix
+inequalities, Robot Operating System
+Resumo Este trabalho apresenta um controlador_repetitivo aplicado a manipuladores_roboticos. O objetivo
+e que o manipulador siga uma trajetoria de referencia periodica no espaco das juntas. A sntese do controlador
+parte do princpio do modelo interno com a adicao de uma estrutura repetitiva e uma realimentacao_de_estados
+estabilizante. O projeto dos ganhos do controlador_repetitivo e feito atraves de um problema de otimizacao
+convexa com restricoes na forma de inequacoes matriciais_lineares (LMIs). A formulacao do problema de otimizacao parte da teoria de estabilidade de Lyapunov com um funcional Lyapunov-Krasoviskii, com adicao de
+um custo quadratico, para ajuste de desempenho, e de uma restricao para limitar os ganhos do controlador. E
+apresentada a comparacao entre a estrategia_de_controle_repetitivo proposto e a estrategia de torque_calculado.
+O sistema ROS (Robot Operating System) e usado para implementar os controladores e simular o manipulador
+com perturbacoes geradas por erro de estrutura de modelo.
+Palavras-chave 
+
+1
+
+Introducao
+
+O presente trabalho propoem o uso da estrategia
+de controle_repetitivo (Hara et al., 1988) para manipuladores_roboticos seguirem referencias de trajetorias periodicas e, eventualmente, rejeicao de
+perturbacoes periodicas que podem surgir devido
+a erros_de_modelagem.
+Uma origem comum de erros_de_modelagem
+em robotica e quando se faz uma linearizacao por
+realimentacao (Slotine and Li, 1991) do modelo
+do robo. O erro de linearizacao pode ocorrer, de
+forma geral, por erro parametrico no calculo da
+linearizacao eou por diferenca entre as estruturas do modelo do manipulador e do modelo na
+linearizacao. Na pratica, a exatidao absoluta na
+linearizacao nao e possvel e o erro no seguimento
+de referencia tende a ser maior quanto maiores forem os erros na linearizacao. O erro parametrico
+ocorre quando os parametros do modelo utilizados no calculo da linearizacao sao imprecisos. O
+erro de estrutura de modelo pode ocorrer quando,
+por exemplo, ha atrito nas juntas e tal atrito nao
+e levado em consideracao na estrutura do modelo
+utilizado na linearizacao.
+Em Kasac et al. (2008) e apresentado um controle com multiplos modos ressonantes aplicado
+
+ISSN 2525-8311
+
+no espaco das juntas a um manipulador planar
+de dois_graus_de_liberdade. A compensacao das
+nao linearidades e feita atraves de uma serie de
+Fourier cujas componentes frequenciais sao estimadas, e tal compensacao e dada no calculo do
+torque. E garantida estabilidade assintotica atraves da adicao de um termo nao linear derivativo
+no calculo do torque. O autor utiliza um empilhamento de modos ressonantes chamando-o de um
+repetitivo de dimensao finita. E apresentado em
+Omata et al. (1987) um esquema de controle_repetitivo para uma classe de sistemas_nao_lineares.
+Garante-se estabilidade no sentido L2 aplicando o
+teorema de passividade para sistemas_nao_lineares. Tal formulacao aplicada a um manipulador
+robotico demanda o conhecimento pleno da matriz de inercia. Tsai et al. (1988) apresenta uma
+analise e implementacao experimental de um esquema de controle_repetitivo em tempo_discreto
+para um manipulador_robotico. O controlador
+proposto pelos autores utiliza o controle_repetitivo em paralelo com o controle_por_torque_calculado, podendo compensar possveis erros parametricos na linearizacao do modelo_dinamico do
+manipulador. Em Wang et al. (2015) e oferecida
+uma implementacao do controle_repetitivo para
+uso em um manipulador bpede utilizado na re-
+
+3585
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+abilitacao da caminhada. Os autores propoem o
+uso do controle_repetitivo em serie com um controle PD (Proporcional-Derivativo) a fim de garantir estabilidade assintotica.
+No presente artigo se propoe usar uma realimentacao_linearizante para obter-se um modelo_linear do robo e considerar as nao linearidades nao
+compensadas como perturbacoes e erros_de_modelagem. Supondo uma referencia periodica, estas pertubacoes sao formadas principalmente por
+sinais periodicos e portanto, um controlador_repetitivo e usado para rejeita-las. O problema de
+projetar os ganhos do controlador_repetitivo e formulado como um problema de otimizacao convexa
+com custo quadratico nos estados e restricoes para
+limitar os ganhos do controlador a valores seguros,
+alem de garantir a estabilidade assintotica.
+O artigo esta organizado como segue. Na secao 2 sao apresentados o modelo_dinamico do manipulador e a sua linearizacao_por_realimentacao.
+Na secao 3 e apresentada a estrategia_de_controle
+repetitivo proposta, bem como a forma de aplicacao ao manipulador e o projeto dos ganhos. E
+apresentada brevemente a estrategia_de_controle
+por torque_calculado na secao 4. Alguns detalhes
+da simulacao e implementacao sao apresentados
+na secao 5. Os resultados das simulacoes e comparacoes entre as estrategias_de_controle_repetitivo
+e torque_calculado sao apresentados na secao 6. A
+secao 7 apresenta a conclusao do presente trabalho.
+2
+
+Modelagem do manipulador_robotico
+
+Utiliza-se o manipulador WAM da Barrett
+(Barrett Technology, Inc., 2011), mostrado na figura 1, que possui sete graus de liberdade. O Modelo dinamico no espaco das juntas de um manipulador_robotico com n graus de liberdade pode
+ser obtido atraves do formalismo de Lagrange (Fu
+et al., 1987) e e dado por
+  M (q)q + V (q,q) + G(q)
+
+(1)
+
+onde   Rn e o torque aplicado nas juntas q 
+Rn sao as variaveis de junta M (  )  Rnn e a
+matriz de inercia V (  )  Rn e o vetor de forcas
+centrfugas e de Coriolis e G(  )  Rn e o vetor de
+forcas gravitacionais.
+Como o controlador_repetitivo proposto supoe
+uma planta linear, e considerando que o modelo do
+manipulador e nao linear e fortemente acoplado, e
+desejavel que se faca uma linearizacao. Aqui sera
+feita uma linearizacao_por_realimentacao, resultando em um sistema linear com desacoplamento
+entre as juntas do manipulador. Tomando o modelo (1), pode-se utilizar a seguinte realimentacao
+de estados linearizante
+  M (q) + V (q,q) + G(q)
+
+ISSN 2525-8311
+
+(2)
+
+Figura 1 Manipulador Barrett WAM.
+
+onde M (  ) e a matriz de inercia nominal V (  )
+e o vetor de forcas centrfugas e Coriolis G(  ) e o
+vetor de forcas gravitacionais nominal e   RN 
+e a nova entrada de controle que sera utilizada
+para estabilizar o sistema linearizado.
+Supondo que nao haja descasamento de modelo e que nao haja erro parametrico, tem-se
+M (q)  M (q), V (q,q)  V (q,q), G(q)  G(q) e,
+entao, obtem-se o seguinte modelo_linear do manipulador entre as variaveis de junta (q) e a entrada
+de controle 
+q  
+(3)
+Valendo-se do desacoplamento do modelo_dinamico linear do manipulador (3), e conveniente
+representar a dinamica de cada variavel de junta
+separadamente no espaco_de_estados. Considerando separadamente cada uma das juntas tem-se
+para a i-esima variavel de junta, i  1, 2, . . . n, o
+seguinte modelo_linear
+qi  i
+
+(4)
+
+T
+qi (t)
+e ui (t) , i (t)
+
+(5)
+
+Definindo
+
+xi (t) , qi (t)
+
+a dinamica linearizada de cada junta, representada no espaco_de_estados, e dada por
+(
+xi (t)  Axi (t) + Bui (t)
+(6)
+yi (t)  Cxi (t)
+sendo
+A
+3
+
+
+
+
+ 
+
+
+0 1
+0
+,B 
+eC 1 0
+0 0
+1
+
+Estrategia de controle_repetitivo
+
+O princpio basico que norteia o controle_repetitivo e a aplicacao do princpio do modelo interno
+
+3586
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+(Francis and Wonham, 1976). O princpio do modelo interno consiste em incluir na malha_de_controle um bloco com dinamica igual a da referencia.
+No domnio da frequencia, equivale a incluir os polos no semiplano direito (SPD) fechado existentes
+na transformada de Laplace da referencia (Francis
+and Wonham, 1976). No presente caso, desejase seguirrejeitar sinais periodicos genericos, com
+perodo LRef , cujas componentes frequenciais sao
+multiplos infinitos de uma frequencia fundamental
+(2LRef ). Para tanto, uma estrategia_de_controle que atende o seguimentorejeicao de sinais
+periodicos genericos e o uso do controle_repetitivo
+(Hara et al., 1988). Tal modelo, cujos polos estao nas harmonicas k2LRef para k  N, pode
+ser obtido a partir de um elemento de atraso e
+considerando o tempo de atraso L igual ao sinal
+de interesse L  LRef , sendo E(s) e Yrc (s), as
+transformadas de Laplace do erro (e(t)) de seguimento do sinal periodico e da sada do controlador (yrc (t)), respectivamente, obtem-se a seguinte
+funcao de transferencia
+Hrc (s) 
+
+Yrc (s)
+1
+
+E(s)
+1  esL
+
+(7)
+
+Neste caso, tem-se Hrc (jk2L)   k 
+N, ou seja, Hrc (s) apresenta infinitos polos sobre o
+eixo j que coincidem com as frequencias harmonicas do sinal de interesse. A introducao desse
+modelo no controlador acrescenta infinitos polos
+sobre o eixo imaginario, tornando impossvel estabilizar o sistema com tal modelo em seu controlador. Para tornar possvel estabilizar o sistema
+com o controle_repetitivo, introduz-se um filtro
+passa-baixas de primeira ordem em serie com o
+elemento de atraso (Hara et al., 1988), conforme
+representado na figura 2, sendo c a frequencia de
+corte do filtro passa-baixas. A funcao de transferencia do controlador_repetitivo com o filtro e,
+entao, dada por
+Hrc (s) 
+
+Yrc (s)
+
+E(s)
+1
+
+1
+c
+sL
+s+c e
+
+E(s)
+
+(8)
+
+Yrc (s)
++
+c
+s+c
+
+esL
+
+Figura 2 Diagrama do controlador Hrc com filtro
+passa-baixas.
+Uma possvel representacao no espaco_de_estados para Hrc (s) e dada na seguinte forma (Bonan
+et al., 2011)
+
+
+xrc (t)  c  xrc (t) + xrc (t  L) + e(t  L)
+yrc (t)  xrc (t) + e(t)
+(9)
+
+ISSN 2525-8311
+
+O sistema com o controlador Hrc com filtro
+passa-baixas e estabilizavel ao custo de um erro
+no seguimentorejeicao de sinais periodicos o qual
+esta relacionado com a frequencia de corte quanto
+maior a frequencia de corte menor sera tal erro. A
+introducao do filtro passa-baixas em serie com o
+elemento de atraso causa um deslocamento de fase
+e um ganho finito nas frequencias fundamental e
+harmonicas da referencia (Lorenzini et al., 2015).
+Uma das formas de se contornar tal problema e na
+correcao do tempo de atraso (L) em (8), considerando o perodo da referencia LRef , o atraso deve,
+entao, ser calculado como (Lorenzini et al., 2015)
+
+
+
+LRef
+2
+L
+2  arctan
+(10)
+2
+c LRef
+Tendo como objetivo controlar o manipulador_robotico, o uso do controle_repetitivo parte da
+aplicacao direta no sistema linearizado (6). Neste
+caso, considera-se um controlador Hrc (s) e uma
+realimentacao_de_estados estatica para estabilizar
+o sistema em malha_fechada com ri (t) sendo a
+referencia de posicao da i-esima variavel de junta,
+Kx como o ganho dos estados e Krc sendo o ganho do controlador_repetitivo. Uma possvel representacao no espaco_de_estados do sistema com
+o controlador proposto em malha_fechada e dada
+por
+
+xi (t)  Axi (t) + Bui (t)
+
+
+
+
+yi (t)
+ Cxi (t)
+
+
+
+
+x
+(t)
+
+c  xrc (t)+
+ rc
+
++xrc (t  L) + ei (t  L)
+(11)
+
+
+y
+(t)
+
+x
+(t)
++
+e
+(t)
+
+rc
+rc
+i
+
+
+
+ui (t)  Kx xi (t) + Krc yrc (t)
+
+
+
+ei (t)
+ ri (t)  yi (t)
+
+Observa-se que o projeto dos ganhos e feito
+considerando o sistema linearizado e desacoplado
+entre as variaveis de junta. Portanto, para aliviar
+a notacao, a formulacao que segue nao carrega o
+ndice respectivo a i-esima variavel de junta. Os
+mesmos ganhos obtidos podem ser utilizados nos
+controladores de todas as variaveis de junta. Para
+projetar os ganhos Kx e Krc pode-se utilizar a teoria de Lyapunov a fim de se obter estabilidade
+assintotica. Para tanto, rescreve-se o sistema (11)
+como um sistema aumentado, primeiramente definindo
+
+T
+x(t) , x(t) xrc (t)
+(12)
+Neste caso, o ganho de realimentacao do sistema aumentado pode ser escrito como
+
+
+(13)
+K , (Kx  Krc C) Krc   K1 K2 K3
+
+Portanto, o sistema aumentado pode ser representado como
+
+
+x(t)
+ Ax(t) + Ad x(t  L) + Bu(t)
+(14)
+u(t)  K x(t) + Krc r(t)
+
+3587
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+com
+Ad 
+
+4
+h
+
+c
+
+023
+0 c
+
+i
+
+,A 
+
+h
+
+A 021
+012 c
+
+i
+
+e B   B0 
+
+No projeto dos ganhos e considerado um argumento de estabilidade e que a referencia e limitada, portanto e apropriado considerar r(t)  0.
+Seja, agora, um funcional LyapunovKrasoviskii candidato (Gu et al., 2012) dado
+por
+T
+
+(x(t))  x (t)P x(t) +
+
+Zt
+
+xT ()Qx()d (15)
+
+tL
+
+R 1
+0
+
+
+
+
+xT E x + uT F u dt
+
+(16)
+
+com E  E T  0 e F  F T  0.
+Considerando este criterio, se
+(x) + 1 (xT E x + uT F u) < 0
+
+(17)
+
+integrando (17) em t  0, + ) obtem-se que
+Z
+0
+
+
+xT E x + uT F u dt < (x(0))
+
+(18)
+
+Valendo-se da formulacao LMI em de Oliveira
+(2016), obtem-se o seguinte problema de otimizacao, com a restricao de estabilidade e a restricao
+dos autovalores do sistema com realimentacao de
+estados por regiao
+W  ,Y    arg min ,
+,W,S,Y
+
+sujeito a
+  HeAW +BY +S
+
+
+W AT
+ 
+d
+
+F
+
+1
+2Y
+1
+2W
+
+(19)
+ 
+S 
+0 
+
+
+E
+0 0
+h
+
+
+ HeAW +BY +2(c)W
+(AW +BY +(c)W )T
+
+
+
+
+I
+
+W
+
+
+
+i
+
+< 0
+< 0
+
+E, entao, a partir da solucao otima de (19)
+obtem-se K  Y W 1 , e os ganhos do controlador
+repetitivo e da realimentacao_de_estados sao calculados, a partir de (13), com Krc  K3 e Kx 
+K1 K2 +KrcC, respectivamente. Lembrando que
+com estes ganhos garante-se que o sistema (11) e
+assintoticamente estavel, que J(x,u)  (x(0))
+e, adicionalmente, um limite para os autovalores
+de (A + B K).
+
+ISSN 2525-8311
+
+Na estrategia_de_controle por Torque Calculado,
+apos a linearizacao_por_realimentacao, e feita uma
+transformacao de variaveis de forma que a origem
+do novo sistema seja a referencia (Fu et al., 1987)
+ri para a i-esima variavel e utiliza-se um controlador PD para levar o erro para zero. Assim, o
+controlador por torque_calculado e equivalente a
+seguinte lei de controle para o sistema linearizado
+por realimentacao (6)
+ui (t)  ri (t) + KD ei (t) + KP ei (t)
+
+(20)
+
+n2
+
+De acordo com a teoria de LyapunovKrasoviskii (Gu et al., 2012), para que o sistema
+aumentado (14) seja estavel deve-se ter (x) < 0,
+com P  P T > 0 e Q  QT > 0.
+A fim de considerar o custo da energia dos
+estados e do controle, um funcional quadratico e
+utilizado como criterio de desempenho
+J(x,u) 
+
+Estrategia de controle por torque
+calculado
+
+o que leva as expressoes KP 
+e KD  2n ,
+para os ganhos proporcional e derivativo, respectivamente sendo n a frequencia natural e  o
+coeficiente de amortecimento.
+5
+
+Simulacao
+
+O controlador proposto foi utilizado apenas na
+junta de numero 2, sendo utilizado o controle por
+torque_calculado nas demais juntas, em todas as
+simulacoes denominadas RC. Nas simulacoes denominadas CT, foi utilizado o controle por torque
+calculado em todas as juntas. Em todos os experimentos o tempo de simulacao foi de 60s, passo de
+integracao de 100s, taxa de atualizacao do controlador de 1ms e 500 iteracoes no metodo GaussSeidel.
+A implementacao das simulacoes ocorreu no
+Robot Operating System (Barros, 2014). O simulador utilizado foi o Gazebo (Koenig and Howard,
+2004) utilizando a biblioteca a Open Dynamics
+Engine (ODE).
+Para simular o erro de modelo, o torque de
+atrito na junta foi modelado por
+D(q2 ,q2 )  d0 q2  (d1  sin(q2 R2 )) q2
+
+(21)
+
+com R2  28,25 a reducao no motor da junta de
+numero 2 e os coeficientes de atrito d0 e d1 . A
+modelagem da forca de atrito como apresentada e
+composta de duas partes. A primeira com d0 q2
+modela com aproximacao de primeira ordem um
+atrito viscoso no sentido contrario de rotacao. O
+segundo termo em (21), modela de forma simplificada um atrito viscoso no atuador dependente
+tambem da variavel de posicao da junta. Tal modelo de torque soma-se ao torque aplicado na junta
+(2 ). Sendo c2 o torque_calculado pela realimentacao_linearizante, tem-se como efeito
+2  c2 + D(q2 ,q2 )
+
+(22)
+
+reproduzindo um erro de estrutura de modelo.
+Para o controlador por torque_calculado, foram escolhidos os seguintes parametros coeficiente de amortecimento de   1 e frequencia natural n  8rads. Portanto, os ganhos proporcional e derivativo sao KP  64 e KD  16, respectivamente. Quanto ao controlador_repetitivo
+
+3588
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+
+T
+com   0 0,75 0 1,5 0 0,9 0 e (t) 
+
+T
+0 sin(2t) 0    0 .
+Deseja-se obter uma movimentacao suave do
+manipulador com uso do vetor de referencias
+acima. A funcao pol5 (t) em r(t) e um polinomio
+de quinto grau para suavizar a trajetoria, partindo de 0 e indo a 1 em 5 segundos pol5 (t) 
+10t3 12515t4625+6t53125  0, 1 t  0, 5s.
+
+Observa-se a diferenca no seguimento da referencia entre os controladores, com o sistema com
+CT com erro no seguimento maior que o sistema
+com controlador RC. O sinal de erro no seguimento de referencia pelo tempo do sistema utilizando os controladores RC e CT estao na figura 3.
+Observa-se a diferenca no erro de seguimento da
+referencia entre os controladores, com o sistema
+com controlador CT tendo maior erro no seguimento de referencia que o sistema com controlador
+RC, em regime_permanente. Na figura 4 sao apresentados os valores do torque 2 pelo tempo do
+sistema utilizando os controladores RC e CT. De
+forma semelhante aos demais experimentos, e evidente que o custo de torque e semelhante quando
+comparado o uso dos dois controladores.
+0.04
+CT
+RC
+
+0.03
+
+0.01
+0
+0.01
+
+0.02
+
+54.5
+
+e(t)rad
+
+com realimentacao_de_estados, partindo do projeto de seus ganhos em 3, optou-se pelos ajustes
+a seguir. A frequencia de corte do filtro passabaixas c  20rads o atraso obtido pela correcao (10) e usado na simulacao foi L  0,984s.
+Para as ponderacoes E e F no custo (16), optouse por E  diag(0, 0, 1) e F  0. Objetiva-se com
+tais ponderacoes que se penalize apenas o estado
+do controlador (xrc ) no sinal de controle, obtendo
+o ganho maximo permitido pela segunda restricao em (19). Foi identificado em experimentos
+previos os limites aceitaveis para os ganhos da realimentacao_de_estados, resultando na escolha de
+c  0 e   5,35(c)  107,00. Atraves da
+solucao do problema (19), com os ajustes apresentados, obtem-se
+o ganho da realimentacao
+de
+
+
+estados Kx  7414,0 485,0 e o ganho do
+controlador_repetitivo Krc  8,30  104 .
+O vetor de referencia r(t) para as variaveis de
+junta utilizado nas simulacoes e dada por
+
+0
+t  0 2)s
+
+
+
+
+t  2 7)s
+  pol5 (t  2)
+
+t  7 12)s (23)
+r(t) 
+
+
+
++
+(t)
+pol
+(t
+
+12)
+t
+ 12 17)s
+
+5
+
+
+ + (t)
+t  17 60)s
+
+55
+
+55.5
+
+56
+
+56.5
+
+57
+
+0.01
+
+0
+
+0.01
+
+5
+
+10
+
+15
+t(s)
+
+20
+
+25
+
+Figura 3 Erro no seguimento de referencia.
+
+10
+
+CT
+RC
+
+5
+
+6
+
+2 (t)N m
+
+0
+
+Resultados
+
+A Tabela 1 estrutura os resultados das simulacoes,
+variando os valores de d0 e d1 , com as integrais do
+sinal de controle e do erro para os controladores
+repetitivo (indicado como RC) e torque_calculado
+(indicado como CT). No segundo e terceiro par de
+colunas, estao as integrais do erro (e2 ) e do sinal
+de controle (u2 ) a partir de 17s de simulacao a
+partir do qual a referencia e periodica.
+Tabela 1 Desempenho dos controladores.
+60s
+60s
+R
+R
+e2 (t)dt
+u2 (t)dt
+17s
+
+d0
+0
+0
+0
+0,01
+0,01
+0,1
+0,1
+
+d1
+0
+0,01
+0,1
+0
+0,01
+0
+0,1
+
+ISSN 2525-8311
+
+RC
+0,0071
+0,0071
+0,0071
+0,0071
+0,0071
+0,0071
+0,0071
+
+17s
+
+TC
+0,0804
+0,2197
+0,2696
+0,2228
+0,2284
+0,3009
+0,3553
+
+RC
+324,54
+324,58
+325,01
+324,60
+324,64
+325,23
+325,85
+
+TC
+322,33
+316,33
+314,76
+316,22
+316,04
+313,82
+312,28
+
+5
+10
+15
+20
+25
+
+28.5
+29
+29.5
+58.2 58.2258.2458.2658.28 58.3
+
+30
+2
+
+4
+
+6
+
+8
+
+10
+
+12
+
+14
+
+16
+
+18
+
+20
+
+t(s)
+
+Figura 4 Sinal de controle.
+
+7
+
+Conclusao
+
+No presente trabalho apresentou-se uma sntese e
+uma forma de implementar o controlador_repetitivo aplicado a manipuladores_roboticos genericos.
+Para o controlador_repetitivo os ganhos foram determinados atraves de um problema de otimizacao
+convexa sujeito a LMIs garantindo estabilidade interna, desempenho conforme custo quadratico e
+com limitacao dos ganhos. As simulacoes no sistema ROS com o Gazebo foram apresentadas. A
+comparacao entre as estrategias_de_controle por
+
+3589
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+torque_calculado e repetitivo serviram para evidenciar possveis diferencas no desempenho. Conforme resultados, e evidente a maior robustez do
+controlador baseado na estrategia_de_controle_repetitivo em comparacao ao controlador baseado
+na estrategia_de_controle torque_calculado.
+Agradecimentos
+A CAPES (bolsa de mestrado - Israel G. de Oliveira) e a FAPERGS (processo 2119-255113- 5,
+Edital PqG 2013 - Walter Fetter Lages).
+Referencias
+Barrett Technology, Inc. (2011). WAM User Manual, Barrett Technology, Inc., Cambridge,
+MA.
+Barros, T. T. T. (2014). Modelagem e implementacao no ROS de um controlador para manipuladores moveis, Dissertacao (mestrado em
+engenharia eletrica), Universidade Federal do
+Rio Grande do Sul, Porto Alegre, RS. Orientador Walter Fetter Lages.
+Bonan, G., Coutinho, D., Pereira, L. F. A., Vieira,
+J. F. and Gomes da Silva Jr., J. M. (2011).
+Repetitive controller design for uninterruptible power supplies An lmi approach, Proceedings of the IECON 2011-37th Annual Conference on IEEE Industrial Electronics Society, IEEE, IEEE, Melbourne, Vic, Australia,
+pp. 704709.
+de Oliveira, I. G. (2016). Comparacao entre as
+estrategias_de_controle_por_torque_calculado
+e controle_repetitivo aplicados a manipuladores_roboticos, Dissertacao (mestrado em engenharia eletrica), Universidade Federal do Rio
+Grande do Sul, Porto Alegre, RS. Orientador Joao Manoel Gomes da Silva Jr. Coorientador Walter Fetter Lages.
+
+Kasac, J., Novakovic, B., Majetic, D. and Brezak, D. (2008). Passive finite-dimensional
+repetitive control of robot manipulators,
+Transactions on Control Systems Technology
+16(3) 570576.
+Koenig, N. and Howard, A. (2004). Design
+and use paradigms for gazebo, an opensource multi-robot simulator, Proceedings of
+the International Conference on Intelligent
+Robots and Systems, IEEERSJ, Sendai, Japan, pp. 21492154.
+Lorenzini, C., Flores, J. V., Pereira, L. F. A., Salton, A. T. and Castro, R. S. (2015). Repetitive controller with low-pass filter compensation applied to uninterruptible power
+supplies (ups), Proceedings of the IECON
+41st Annual Conference of the IEEE Industrial Electronics Society, IEEE, IEEE,
+pp. 003551003556.
+Omata, T., Hara, S. and Nakano, M. (1987). Nonlinear repetitive control with application to
+trajectory control of manipulators, Journal
+of Robotic systems 4(5) 631652.
+Slotine, J. J. E. and Li, W. (1991). Applied Nonlinear Control, Prentice-Hall International
+Editions, Prentice-Hall, Englewood Cliffs,
+NJ.
+Tsai, M. C., Anwar, G. and Tomizuka, M. (1988).
+Discrete time repetitive control for robot
+manipulators, Proceedings of the International Conference on Robotics and Automation,
+IEEE, IEEE, Philadelphia, PA, pp. 1341
+1346 vol.3.
+Wang, P., Li, L., Yan, M., Ru, F. and Ju, Y.
+(2015). Repetitive control for the periodic
+walking training in a gait rehabilitation robot, Artificial Life and Robotics pp. 17.
+
+Francis, B. A. and Wonham, W. M. (1976). The
+internal model principle of control theory,
+Automatica 12(5) 457465.
+Fu, K. S., Gonzalez, R. C. and Lee, C. S. G.
+(1987).
+Robotics control, sensing, vision, and intelligence, McGraw-Hill series in
+CADCAM robotics and computer_vision,
+McGraw-Hill, New York.
+Gu, K., Kharitonov, V. L. and Chen, J. (2012).
+Stability of Time-Delay Systems, Control Engineering, Birkhauser, Boston, MA.
+Hara, S., Yamamoto, Y., Omata, T. and Nakano,
+M. (1988). Repetitive control system a new
+type servo system for periodic exogenous signals, IEEE Transactions on Automatic Control 33(7) 659668.
+
+ISSN 2525-8311
+
+3590

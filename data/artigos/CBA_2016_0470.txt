@@ -1,0 +1,719 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+REGULAÇÃO ÓTIMA DE TENSÃO PARA SISTEMAS DE DISTRIBUIÇÃO COM
+DESBALANCEAMENTO DE CARGAS NA PRESENÇA DE GERAÇÃO DISTRIBUÍDA
+TIAGO S. VÍTOR
+Departamento de Automação, Instituto Federal de São Paulo - IFSP
+Acesso Dr. João Batista Merlin, sn - Jardim Itália, 13872-551, São João da Boa Vista - SP
+E-mail tiagosvitor@ifsp.edu.br
+
+JOSÉ CARLOS M. VIEIRA JR
+Departamento de Engenharia Elétrica e de Computação, Universidade de São Paulo - USP
+Av. Trabalhador São-carlense, 400  Centro, 13566-590, São Carlos - SP
+E-mail jcarlos@sc.usp.br
+Abstract This paper proposes optimal voltage control strategies for distribution systems that have multiple voltage regulator
+devices. The system must operate reaching desirable voltage profiles for scenarios that consider extreme loading (heavy and
+light), load unbalanced and distributed generation connection. The problem is modeled as an optimization problem that ensures
+the attendance of the constraints related to voltage limits, power balance and power rating of the equipment. The decision variables are the taps of the voltage control devices, which play an important role on VoltVar control. A genetic algorithm implemented through a computer interface between Matlab and OpenDSS packages determines the number of control operations. It is
+assumed that the distribution system has a centralized control with all necessary communication infrastructure. To confirm the
+validity of the proposed method, simulations were performed using the IEEE 34 node test feeder. The results showed that the
+strategies contributed to reduce the voltage deviation along the feeder, the voltage unbalance and the total feeder losses.
+Keywords Distributed generation, VoltVar control, coordinated control, centralized control, genetic algorithms.
+Resumo Este artigo propõe estratégias de regulação ótima de tensão em sistemas_de_distribuição que possuam múltiplos dispositivos reguladores_de_tensão e geradores_distribuídos. O sistema deve operar alcançando perfis de tensão desejáveis para cenários que consideram extremos de carregamento (pesado e leve), desbalanceamento de carga e conexão de geração_distribuída.
+O problema é modelado como um problema de otimização que permita assegurar importantes restrições do sistema relacionadas
+aos limites de tensão, balanço de potência e capacidade operativa de equipamentos. As variáveis de decisão são os taps dos dispositivos_de_controle_de_tensão, que desempenham papel importante no controle VoltVar. A quantidade de operação de controle
+é determinada por um algoritmo_genético implementado por meio de uma interface entre os pacotes computacionais Matlab e
+OpenDSS. É admitido que o sistema_de_distribuição possua um controle_centralizado com toda infraestrutura de comunicação
+necessária. Para confirmar a validade do método proposto, simulações foram feitas usando o sistema IEEE 34 barras. Como resultado, foram alcançadas contribuições para a redução dos desvios de tensão ao longo do alimentador, redução do desequilíbrio
+de tensão entre fases devido ao desbalanceamento de cargas e redução nas perdas totais do circuito.
+Palavras-chave .
+
+1
+
+Introdução
+
+Com o crescimento da geração_distribuída nos sistemas_de_distribuição, mudanças nas tensões nodais
+podem se tornar um problema impactando na qualidade_da_energia_elétrica. Neste sentido, os dispositivos reguladores_de_tensão são fundamentais para o
+controle VoltVar (Ranamuka et al., 2014). Os equipamentos convencionais são comutadores de tap sob
+carga em transformadores, autotransformadores reguladores_de_tensão e capacitores chaveados (Bignucolo
+et al., 2008). Muitos pesquisadores têm concentrado
+esforços para investigar como a presença de geradores_distribuídos afeta o controle_de_tensão realizado
+por estes dispositivos (Jenkins et al., 2000).
+A tarefa de manter a tensão do sistema dentro de
+limites permitidos é significante para uma adequada
+operação dos equipamentos conectados na rede pelos
+consumidores (Le et al., 2006). Tais limites são de-
+
+ISSN 2525-8311
+
+terminados por agências reguladoras do sistema elétrico. O controle_de_tensão é um dos tópicos mais
+amplamente estudados, sendo um dos sistemas mais
+amadurecidos em redes_de_distribuição (Isle et al.,
+2014). É comum nos projetos de controle_de_tensão,
+que se analise primeiramente a interação entre os
+dispositivos reguladores_de_tensão para o ajuste da
+coordenação entre os mesmos. Esta coordenação
+permite selecionar uma combinação desses dispositivos de forma ordenada a fim de atingir um fim determinado, como redução_de_perdas, manutenção dos
+níveis de tensão dentro de limites permitidos, minimização de custos de operação, etc. Com a conexão
+de geração_distribuída nas redes_de_distribuição, é
+necessário investigar os seus impactos nos esquemas
+de regulação_de_tensão. Logo, torna-se desejável projetar um esquema de operação para os dispositivos
+reguladores_de_tensão de tal forma que esta integração se torne factível (Padilha, 2008).
+Modelar essa coordenação entre os dispositivos
+reguladores_de_tensão e a geração_distribuída como
+
+1602
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+um problema de otimização é uma maneira de se
+obter as melhores configurações de operação desses
+dispositivos para atender determinados objetivos. O
+problema é geralmente modelado como um problema
+de programação_não-linear inteira mista (Paaso et al.,
+2014), por apresentar funções objetivo não-lineares,
+parte das variáveis inteira e outra parte contínua.
+Também existem modelos que usam programação
+inteira (Borghetti et al., 2015) e, além de métodos de
+otimização clássicos, é possível usar técnicas de algoritmos_evolutivos para determinar a operação do controle (Senjyu et al., 2008). É importante notar que um
+controle_centralizado requer uma infraestrutura de
+comunicação difundida no sistema para que seja possível a implementação de operações otimizadas.
+O principal objetivo deste artigo é formular um
+problema de otimização que minimize desvios de
+tensão ao longo do sistema_de_distribuição atendendo
+aos limites de tensão mesmo diante da variação nas
+condições de carga. Além disso, o problema de otimização deve considerar situações de desbalanceamento de cargas e presença de geração_distribuída.
+As variáveis de decisão a serem otimizadas são as
+posições de tap dos dispositivos reguladores_de_tensão. As restrições compreendem limites de tensão,
+faixa de posição de taps e equações de fluxo_de_potência. Portanto, para problemas com soluções factíveis, espera-se encontrar perfis de tensão otimizados
+que mesmo sob condições adversas de cargas e presença de GD permaneçam dentro de limites permitidos. Algoritmos genéticos são usados para determinar a operação deste controle.
+Este artigo é subdividido nas seguintes seções
+(2) Sistema base para simulações, (3) formulação do
+problema de otimização, (4) algoritmo para regulação
+de tensão ótima, (5) resultados e (6) conclusões.
+
+kV, cargas desequilibradas, 2 (dois) capacitores shunt
+e carga total de 1769 kW + 1044 kVar.
+Devido s características de desbalanceamento
+de cargas e do longo comprimento do alimentador, os
+capacitores shunt nas barras 844 e 848 são considerados por fase para possibilitar um maior controle
+VoltVar.
+3 Formulação do Problema
+3.1 O problema de otimização
+A operação dos dispositivos reguladores_de_tensão é
+determinada pela formulação a seguir
+
+min 1
+
+ V
+
+ref
+
+k B
+
+ Vk
+
+2  2  LVURn
+
+(1)
+
+nT
+
+s.a.
+
+P  Pkesp  Pk  0
+
+(2)
+
+Q  Qkesp  Qk  0
+
+(3)
+
+Vkmin  Vk  Vkmax
+
+(4)
+
+timin  ti  timax , (i  t , r, c)
+
+(5)
+
+em que,
+ B é o conjunto de todas as barras do sistema
+
+T é o conjunto das barras trifásicas
+
+Vref é o valor de tensão de referência
+Vk é o valor de tensão na barra k 
+
+P e Q são os mismatches de potência
+Pkesp e Pk são as potências ativas especificada e
+calculada pelas equações de balanço de potência
+
+2 Sistema Base
+
+Qkesp e Qk são as potências reativas especificada e
+
+O sistema_de_distribuição base para as simulações
+deste artigo é conhecido como IEEE 34 barras (Kersting, 2001). A Figura 1 ilustra o diagrama unifilar.
+Região 1 Região 2
+822
+
+848
+846
+
+820
+864
+
+818
+802 808 814
+850 824
+858
+806 812 Reg.1 816 826
+800
+832
+810
+
+Vkmin e Vkmax são os limites de tensão das barras
+t i é a posição de tap dos dispositivos para controle
+de tensão ( i  t para transformador, i  r para autotransformadores reguladores_de_tensão e i  c para
+capacitores)
+
+844
+
+timin e timax são os valores limites de tap
+
+842
+
+1 e  2 são ponderações
+
+836
+834 860 840
+862
+888 890
+Reg.2
+838
+852
+
+830
+828
+
+calculada pelas equações de balanço de potência
+
+854 856
+
+LVURn é o fator de desequilíbrio_de_tensão (line
+voltage unbalance rate) na barra n .
+De acordo com a definição NEMA (Pillay and
+Manyage, 2001) do fator de desequilíbrio_de_tensão,
+tem-se
+
+LVURn  U U avg
+
+Figura 1. Diagrama unifilar do sistema IEEE 34 barras
+
+Seu alimentador de 24,9 kV é longo e levemente
+carregado, possui 2 (dois) reguladores_de_tensão, 1
+(um) transformador de linha abaixador de 24,9  4,16
+ISSN 2525-8311
+
+(6)
+
+na qual,
+
+1603
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+U avg é a média das tensões de linha das 3 fases da
+barra n 
+U é o máximo desvio de tensão em relação  U avg .
+O problema de otimização modelado em (1) visa
+minimizar desvios das tensões nodais e desequilíbrio
+de tensão. Cada objetivo é ponderado a fim de se
+obter uma regulação_de_tensão desejável. As restrições de balanço de potência em (2) e (3) asseguram a
+operação em regime_permanente. Limites de tensão
+em (4) devem ser atendidos, assim como os limites
+de taps em (5) dos múltiplos dispositivos de regulação_de_tensão, responsáveis pelo controle_de_tensão.
+3.2 Limites de tensão
+A conformidade das tensões nodais está relacionada
+com a comparação do valor de tensão de leitura (TL)
+no ponto de conexão em relação ao nível de tensão
+de referência (TR). As faixas de tensão de atendimento em regime_permanente podem ser classificadas
+em adequada, precária e crítica (ANEEL, 2016). A
+Tabela 1 contém os limites para pontos de conexão
+em tensão nominal superior a 1 kV e inferior a 69
+kV.
+Tabela 1. Faixas de classificação de tensões.
+Classificação
+
+Faixas de Tensão
+
+Adequada
+
+0,93TR  TL  1,05TR
+0,90TR  TL < 0,93TR
+TL < 0,90TR ou TL > 1,05TR
+
+Precária
+Crítica
+
+As variáveis de decisão a serem otimizadas são as
+posições de tap dos dispositivos reguladores_de_tensão. Os valores considerados neste trabalho são
+ Comutador de tap sob carga no transformador da subestação - variação de 0,95 a 1,05
+p.u. em passos de 0,25 p.u. tt  0,950
+0,975 1,000 1,025 1,050
+ Autotransformadores reguladores_de_tensão
+- variação de 0,90 a 1,10 p.u. em passos de
+0,00625 p.u. t r  0,90000 0,90625 ...
+1,00000 ... 1,09375 1,10000
+ Chaveamento de capacitores shunt por fase
+na barra 844 - variação de 0 a 100 kVar em
+passos de 25 kVar t c  0 1 2 3 4
+Chaveamento de capacitores shunt por fase
+na barra 848 - variação de 0 a 150 kVar em
+passos de 25 kVar t c  0 1 2 3 4 5 6.
+
+A potência reativa de cada banco_de_capacitores
+é dada por
+
+Qshn  tc  Qshnmod
+
+ISSN 2525-8311
+
+3.4 Geração Distribuída
+O sistema deve acomodar uma central de geração
+distribuída (trifásica) com capacidade de 1 MVA,
+instalada na barra 830. Sua operação fornece 1 MW
+continuamente com fator_de_potência unitário.
+3.5 Cenários
+Diferentes cenários são considerados. Deseja-se obter
+regulação_de_tensão ótima, na presença ou não de
+GD, que permita a operação do sistema em condições
+extremas de carga pesada e leve, correspondentes a
+90 e 30, respectivamente, da carga total do sistema. Portanto, tem-se
+ Carga pesada 1592 kW + 940 kVar
+ Carga leve 531 kW + 313 kVar.
+Os perfis ótimos de tensão são aqueles em que as
+tensões ao longo do alimentador se mantêm próximas
+da referência de 1 pu. Considera-se a existência de
+cargas sensíveis ao desequilíbrio_de_tensão.
+4 Regulação de Tensão Ótima
+
+3.3 Limites de Tap
+
+
+
+em que Qshn e Qshnmod são, respectivamente, as potências reativas total injetada na barra n e elementar
+de cada módulo na barra n .
+
+(7)
+
+A solução do problema de otimização proposto consiste na implementação de um algoritmo_genético
+(AG) no Matlab com interface para o OpenDSS, cuja
+finalidade é realizar os cálculos de fluxo_de_potência.
+As principais características implementadas são
+ Seleção método do torneio (p jogadores)
+Consiste na seleção aleatória de indivíduos para uma
+competição. Aquele que vencer (melhor fitness) é
+selecionado para aplicação do operador genético.
+ Crossover aritmético
+Dada uma determinada probabilidade, o operador faz
+uma combinação_linear (fator  ) das informações
+genéticas dos pais selecionados ( Pai1 e Pai2 ) gerando filhos ( Filho1 e Filho2 ) que herdam tais informações de seus progenitores.
+
+Filho1    Pai1  1    Pai2
+
+(8)
+
+Filho2  1    Pai1    Pai2
+
+(9)
+
+ Mutação
+Dada uma determinada probabilidade, o operador
+substitui genes dos filhos por valores aleatórios.
+ Elitismo
+Os k melhores indivíduos, i.e., que possuem os melhores valores fitness, são preservados para a próxima
+geração, garantindo que o desempenho do AG sempre cresça com a evolução.
+
+1604
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Os valores dos parâmetros do AG estão na Tabela 2. Eles foram encontrados de forma empírica associada s práticas comuns na literatura de probabilidade alta para crossover e baixa para mutação.
+Tabela 2. Valores dos parâmetros do AG.
+Parâmetros
+
+Valores
+
+Gerações
+
+600
+40
+p2
+k2
+80,0
+0,5
+
+População
+Seleção
+Elitismo
+Probabilidade de Crossover
+Probabilidade de Mutação
+
+A ponderação da função objetivo visa equilibrar
+quantitativamente os termos relacionados ao desvio
+de tensão e desequilíbrio. Os valores usados são
+1  1 e 2  1,3 .
+OpenDSS
+
+Matlab
+
+Fluxo de Potência
+
+Início
+
+Gerar Indivíduo
+Restrições
+Ok?
+
+Não
+
+tensão. Inicialmente, cada um deles é gerado aleatoriamente e o fluxo_de_potência é executado. Caso as
+restrições (limites de tensão, capacidade operativa
+dos dispositivos e balanço de potência) sejam satisfeitas, o indivíduo é adicionado  população inicial.
+Ao atingir o tamanho da população definido, os indivíduos são avaliados pela função objetivo, submetidos s operações genéticas e ao fluxo_de_potência.
+Caso as restrições sejam satisfeitas, os novos indivíduos gerados são adicionados  nova população até
+que esta fique completa. A nova população é avaliada. Se o número de gerações é alcançado, termina-se
+o algoritmo, do contrário, retorna-se s operações
+genéticas.
+5 Resultados
+Para uma melhor visualização dos resultados, o sistema_de_distribuição foi dividido em 2 (duas) regiões
+de acordo com a distância de cada barra em relação 
+Subestação, conforme mostra a Figura 1.
+As Figuras 3 a 6 mostram os resultados para o
+sistema carregado em 90, com e sem GD, para as
+regiões 1 e 2. As Figuras 7 a 10 mostram os resultados para o sistema carregado em 30.
+As Tabelas 3 e 4 resumem os resultados para cada cenário de simulação.
+
+Sim
+Tabela 3. Valores resultantes da regulação ótima de tensão.
+
+Adicionar a População Inicial
+
+Carga 90
+
+Carga 30
+
+Resultados
+PopInicial
+Ok?
+
+Não
+
+Sem GD
+
+Com GD
+
+Sem GD
+
+Com GD
+
+0,1962
+1,0213
+Desvio Padrão pu 0,0276
+7,15
+ LVUR 
+PerdasCarga 
+16,85
+
+0,1552
+1,0182
+0,0235
+6,17
+8,81
+
+0,0437
+1,0061
+0,0100
+2,46
+4,14
+
+0,0325
+0,9997
+0,0081
+2,08
+4,00
+
+Fitness
+
+Sim
+
+Tensão Média pu
+
+Avaliar Indivíduos
+g1
+Seleção, Crossover
+e Mutação
+
+Fluxo de Potência
+
+Restrições
+Ok?
+
+Não
+
+Tabela 4. Valores de tap da subestação, taps por fase dos reguladores e kVar por fase dos capacitores.
+Carga 90
+
+Sim
+Adicionar a Nova
+População
+
+Subestação tap
+Avaliar Indivíduos
+
+Sim
+
+PopNova
+Ok?
+
+Não
+
+gg+1
+Critério
+Parada?
+
+Reg.1.A tap
+Reg.1.B tap
+Reg.1.C tap
+
+Não
+
+Reg.2.A tap
+Reg.2.B tap
+Reg.2.C tap
+
+Sim
+Resultado Final
+
+*g  geração
+
+Cap.844.A kVar
+Cap.844.B kVar
+
+Figura 2. Diagrama de blocos do algoritmo
+
+A Figura 2 ilustra o algoritmo. Na parametrização do problema, o indivíduo carrega informações
+relacionadas aos taps dos dispositivos reguladores de
+
+ISSN 2525-8311
+
+Carga 30
+
+Dispositivos
+
+Cap.844.C kVar
+Cap.848.A kVar
+Cap.848.B kVar
+Cap.848.C kVar
+
+Sem GD
+
+Com GD
+
+Sem GD
+
+Com GD
+
+1,050
+1,09375
+1,05000
+1,05000
+1,08125
+1,08125
+1,08125
+100
+0
+100
+25
+75
+25
+
+1,025
+1,06250
+1,03125
+1,03125
+1,06875
+1,06875
+1,06875
+50
+50
+0
+100
+50
+75
+
+1,025
+1,00625
+1,00000
+1,00000
+1,01875
+1,01875
+1,01875
+100
+0
+0
+75
+100
+125
+
+1,000
+0,98125
+0,98125
+0,97500
+1,00625
+1,00625
+1,00625
+100
+25
+100
+125
+150
+100
+
+1605
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Figura 3. Perfil de tensão carga pesada, sem GD, região 1
+
+Figura 7. Perfil de tensão carga leve, sem GD, região 1
+
+Figura 4. Perfil de tensão carga pesada, sem GD, região 2
+
+Figura 8. Perfil de tensão carga leve, sem GD, região 2
+
+Figura 5. Perfil de tensão carga pesada, com GD, região 1
+
+Figura 9. Perfil de tensão carga leve, com GD, região 1
+
+Figura 6. Perfil de tensão carga pesada, com GD, região 2
+
+Figura 10. Perfil de tensão carga leve, com GD, região 2
+
+ISSN 2525-8311
+
+1606
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Observando as Figuras 3 a 10, todas as tensões
+nas barras estão dentro dos limites considerados adequados pelo PRODIST. Portanto, esta importante
+restrição do problema é alcançada pelo método proposto. As soluções tendem a acomodar o perfil de
+tensão do alimentador em torno do valor de referência de 1 p.u., que é confirmado pelo valor de tensão
+média na Tabela 3 com valores pequenos de desvio
+padrão. Restrições de balanço de potência são garantidas pela simulação do sistema no OpenDSS.
+Resultados interessantes e desejáveis podem ser
+observados com a inserção de GD. Para ambos os
+carregamentos, pesado e leve, desequilíbrio_de_tensão
+e total de perdas são atenuados. Isso reflete na diminuição do fitness da equação objetivo (Tabela 3).
+Observa-se que os 3 (três) valores de potência
+reativa dos capacitores em cada fase, por barra, não
+coincidem. Portanto, o chaveamento independente de
+capacitores por fase tem um papel importante para o
+balanço de tensão ao longo da região 2 (Tabela 4).
+Como esperado, os taps dos autotransformadores
+reguladores_de_tensão diminuem com a inclusão de
+GD e com a diminuição de carregamento.
+O comutador sob carga da subestação desempenha uma importante função para a regulação_de_tensão, sendo a parte central para o ajuste geral do perfil
+de tensão, cabendo aos demais dispositivos o ajuste
+específico em determinadas regiões de influência.
+6 Conclusão
+Neste artigo foi apresentado um método de controle
+coordenado ótimo para a obtenção de perfis desejáveis de tensão de um sistema_de_distribuição. O problema foi modelado, para uma análise estática, como
+um problema de otimização permitindo lidar com
+diferentes cenários de operação, tais como extremos
+de carregamento, desbalanceamento de carga e conexão de GD. A solução do problema assegura importantes restrições relacionadas aos limites de tensão,
+balanço de potência e capacidade operativa de equipamentos. As variáveis de decisão são os taps dos
+dispositivos_de_controle_de_tensão que desempenham
+o controle VoltVar. A quantidade de operação de
+controle é determinada por um algoritmo_genético
+implementado no Matlab com interface para o OpenDSS. O algoritmo garante soluções subótimas.
+Condições de operação_otimizadas para o funcionamento da geração_distribuída foram obtidas. A
+estratégia de regulação ótima de tensão permitiu contribuições para a redução dos desvios de tensão ao
+longo do alimentador, redução do desequilíbrio de
+tensão entre fases devido a desbalanceamento de cargas e redução nas perdas totais do circuito.
+Pretende-se investigar a aplicação do método para a operação diária do sistema_de_distribuição considerando diferentes curvas de demanda. Nestas condições, a minimização do número de chaveamento de
+taps deve ser integrada  formulação do problema.
+
+ISSN 2525-8311
+
+Referências Bibliográficas
+ANEEL - Agência Nacional de Energia Elétrica,
+(2016). Procedimentos de distribuição_de_energia
+elétrica no sistema elétrico nacional (PRODIST),
+Módulo 8  Qualidade da Energia Elétrica.
+Bignucolo, F., Caldon, R. and Prandoni, V. (2008).
+Radial MV networks voltage regulation with
+distribution management system coordinated
+controller. Electric Power Systems Research,
+Vol. 78, No. 4 pp. 634- 645.
+Borghetti, A., Napolitano, F. and Nucci, C. A.
+(2015). Voltvar optimization of unbalanced
+distribution feeders via mixed integer linear
+programming. Electrical Power and Energy
+Systems, Vol. 72 pp. 40 47.
+Isle, D., Vaziri, M., Zarghami, M. and Vadhva, S.
+(2014). Review of concepts to increase
+distributed generation into the distribution
+network. In Sixth Annual IEEE Green
+Technologies Conference (GreenTech). Corpus
+Christ, TX IEEE, pp. 118- 125.
+Jenkins, N., Allan, R., Crossley, P., Kischen, D. and
+Strbac, G. (2000). Embedded generation.
+London The Institute of Electrical Engineers, p.
+292.
+Kersting, W. H. (2001). Radial distribution test
+feeders. In PES Winter Meeting. Columbus,
+OH IEEE, Vol. 2, pp. 908- 912.
+Le, A., Kashem, M., Negnevitsky, M. and Ledwich,
+G. (2006). Distributed generation control using
+protection
+principles.
+In
+Australasian
+Universities Power Engineering Conference.
+Australia QUT, pp.1- 6.
+Padilha, L. N. (2010). Análise comparativa de
+estratégias para regulação_de_tensão em sistemas
+de distribuição_de_energia_elétrica na presença de
+geradores_distribuídos. Dissertação de Mestrado.
+USP São Carlos.
+Paaso, E. A., Liao, Y. and Cramer, A. M. (2014).
+Formulation and solution of distribution system
+voltage and VAR control with distributed
+generation as a mixed integer non-linear
+programming problem. Electric Power Systems
+Research, Vol. 108 pp. 164 169.
+Pillay, P. and Manyage, M. (2001). Definitions of
+voltage unbalance. IEEE Power Engineering
+Review, Vol. 21, pp. 50- 51.
+Ranamuka, D., Agalgaonkar, A. P. and Muttaqi, K.
+M. (2014). Online voltage control in distribution
+systems with multiple voltage regulating devices.
+IEEE Transactions on Sustainable Energy, Vol.
+5, No. 2 pp. 617- 628.
+Senjyu, T., Miyazato, Y., Yona, A., Urasaki, N. and
+Funabashi, T. (2008). Optimal distribution
+voltage control and coordination with distributed
+generation. IEEE Transactions on Power
+Delivery, Vol. 23, No. 2 pp. 1236- 1242.
+
+1607

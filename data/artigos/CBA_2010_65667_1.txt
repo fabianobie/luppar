@@ -1,0 +1,816 @@
+1
+
+IMPLEMENTAÇÃO DE BARRAS PQ , PV E AJUSTE AUTOMÁTICO DE TAP DE TRANSFORMADORES NO ATP
+JOSÉ TAVARES DE OLIVEIRA, MANOEL FIRMINO DE MEDEIROS JR.
+Departamento de Engenharia elétrica, Universidade Federal do Rio Grande do Norte
+59067-340, Nata-RN, Brasil.
+E-mails jtavares@ct.ufrn.br,firmino@dca.ufrn.br
+Abstract
+
+This work presents algorithms and models that were implemented in ATP to simulate the behavior of PQ and PV buses, as well voltage control by LTC transformers. The models are constructed
+converting initially the phase-components of voltages in Park (d-q) components. Then, powers are converted to currents that will assign controlled sources, responsible for modeling nonlinearities, using PID
+controllers. Similarly, voltage control of LTC transformers is modeled. Control tools named TACS, integrated to ATP, are used for this purpose. A test-system belonging to the electrical grid of Companhia
+Energética do Rio Grande do Norte-COSERN is used to verify the performance of the proposed models.
+Keywords Load models, LTC control, Park transform, ATPDraw, TACS.
+Resumo Apresentam-se neste artigo algoritmos e modelos para a implementação no ATP, de barras de cargas com potências
+constantes, conhecidas na literatura como barras PQ, barras com tensão controlada, conhecidas por barras PV e transformador
+com ajuste automático de tap (LTC) usando a interface_gráfica ATPDraw. No modelo de barra PQ, a tensão trifásica em componentes de fase, abc, é convertida para componentes de Park, dq, que em seguida juntamente com as potências ativa e reativa a
+serem injetadas na barra, são convertidas em correntes injetadas na respectiva barra. No modelo de barra PV, para se obter a potência reativa necessária ao controle da tensão se faz necessária a introdução de um controlador PID com entrada de referência
+sendo a tensão desejada na barra e a saída do controlador, a potência reativa a ser injetada na barra. No transformador com ajuste automático de tap é desenvolvido um módulo que simula a atuação do LTC usando um controlador PID responsável pelo controle da tensão no secundário do transformador. Da mesma forma que para a barra PQ, no modelo de barra PV obtêm-se as correntes a serem injetadas na respectiva barra. Em ambos os casos as injeções de corrente são efetuadas através de modelos de fontes de corrente controladas existentes no ATP. Utilizam-se ainda dispositivos_de_controle incorporados ao ATPDraw, mais conhecidos como ferramentas TACS, para implementar a modelagem proposta. As tensões das barras em componentes de fase serão transformadas em componentes de Park no cálculo das correntes. Para aplicação será usado um subsistema do sistema elétrico da Companhia Energética do Rio Grande do Norte - COSERN.
+Palavras-chave .
+
+1
+
+de potência pode permanecer constante, em algumas
+barras 4.
+Para simular esses comportamentos através do
+ATP novos modelos_de_carga com potência constante, barra com tensão controlada e transformador com
+ajuste automático de tap, foram desenvolvidos e incorporados ao software. Simulações foram realizadas
+com redes reais, a fim de demonstrar a influência da
+modelagem mais rigorosa, na amplitude das correntes
+de curto-circuito. Os resultados obtidos através de
+simulações são apresentados neste artigo. Além disso, mostrar-se-á como o software ampliado com os
+modelos desenvolvidos poderá ser utilizado para,
+com o mesmo ambiente de programação, realizar
+cálculos exatos de fluxo_de_carga, permitindo assim a
+especificação precisa de tensões pré-falta. Na implementação desses modelos serão usados dispositivos
+de controle incorporados ao ATPDraw 2 e implementação de técnicas de controle PID, usadas amplamente em equipamentos controlados, cujos modelos para o ATP foram desenvolvidos primeiramente
+em 5 e amplamente testados em 6, 7 e 8.
+
+Introdução
+
+O software ATP tem sido tradicionalmente utilizado
+para simular transitórios_eletromagnéticos em sistemas_de_transmissão e distribuição_de_energia_elétrica.
+Nessas simulações, costuma-se representar as unidades_geradoras por seus circuitos equivalentes de Thévenin, através de uma fonte de tensão em série com a
+impedância de curto-circuito. Para modelar a rede, o
+software dispõe de uma variedade de modelos préprogramados, para linhas_de_transmissão, no entanto
+o mesmo não acontece com as cargas, sendo estas,
+usualmente, modeladas simplesmente através de impedâncias constantes 1. Em muitas aplicações, entretanto, dispositivos_de_controle_de_tensão com resposta rápida, baseados em Eletrônica de Potência,
+como os compensadores estáticos, podem estar presentes nos circuitos de distribuição, principalmente,
+fazendo com que a tensão não afunde tão rapidamente, durante curtos-circuitos e, como conseqência,
+contribuindo para elevar a corrente de curto-circuito.
+Em outras aplicações, dependendo do regime de interesse do curto-circuito, a solicitação ou fornecimento
+
+3412
+
+2
+
+Através de fontes de corrente controladas incorporadas ao ATPDraw e usando os elementos TACS, injetam-se essas correntes na barra. Esse processo encontra-se ilustrado no diagrama_de_blocos da Figura 1
+seguinte, conforme os passos
+
+2 Desenvolvimento dos modelos
+A maior parte das análises realizadas nos sistemas_elétricos, como fluxo_de_carga e curto-circuito,
+adotam o princípio de variações quase-estáticas, considerando os sistemas em regime_permanente. Geralmente nesses estudos os modelos das cargas são caracterizados por potências constantes ou impedâncias constantes. A rede_elétrica por sua vez é
+constituída por linhas_de_transmissão, transformadores, geração e cargas. Os pontos de conexão desses
+elementos, usualmente denominados de barras, classificam-se em barras de cargas ou barras PQ 3, em
+que as potências ativa e reativa injetadas permanecem constantes para uma larga faixa de tensão e barra
+de tensão controlada ou barra PV 3, em que a potência_ativa injetada permanece constante e a tensão é
+mantida constante através de dispositivos_de_controle
+de geração de potência reativa.
+
+1.
+2.
+3.
+
+Definir a potência_ativa P e a potência reativa Q a serem injetadas na barra
+Medir as tensões instantâneas na barra em
+componentes de fase, Vabc 
+Calcular as tensões em componentes de Park
+Vdq 
+
+4.
+
+Calcular as correntes em componentes de
+Park i d e i q 
+
+5.
+
+Calcular as correntes em componentes de
+fase i abc 
+
+6.
+
+Injetar na barra as correntes
+
+iabc com uma
+
+fonte de corrente controlada.
+
+2.1 Barra PQ
+Na barra PQ, a potência_ativa P e a potência reativa Q a se-rem injetadas permanecem constantes,
+para variações de tensão. A implementação desse
+modelo de barra no ATPDraw é feita medindo a tensão em componentes de fase e transformando-as em
+componentes de Park, conforme mostram as equações seguintes
+2
+Vd   Va  cos   Vb  cos(   )  Vc  cos(   )
+3
+(1)
+
+2
+ Va  sen  Vb  sen(   )  Vc  sen(   )
+3
+(2)
+As variáveis das eqs. (1) e (2) são
+Va ,Vb,Vc  tensões de fase
+Vq 
+
+Vd ,Vq  tensões em componentes de Park dq
+
+  2  f  t 
+2
+.
+3
+Conhecidas as tensões em componentes dq e as potências P e Q a serem injetadas na barra, calculam-se
+as correntes em componentes dq pelas equações
+P Vd  Q Vq
+(3)
+id 
+Vd2  Vq2
+
+
+
+iq 
+
+P Vq  Q Vd
+
+Figura 1 Modelagem de barra PQ através de fonte de corrente controlada.
+
+Nesse esquema de controle, é utilizado um controlador PID para controlar a tensão nos terminais do
+gerador Vtg de acordo com um valor de referência Vref
+Utilizou-se, nas simulações, Vref igual a de 1 pu.
+2.2 Barra PV
+A característica da barra PV é manter constante a
+potência_ativa P e o módulo da tensão constante através do controle_de_potência reativa Q. Para obter a
+potência reativa necessária ao controle do módulo da
+tensão, se faz necessária a introdução de um controlador PID, cujas entradas são a tensão de referência
+ou o valor do módulo da tensão que se deseja na barra e o módulo da tensão medida, a cada instante, nessa barra e a saída é a potência reativa Q a ser injetada
+para controlar a tensão. O valor da tensão de entrada
+(valor de referência) é dado em p.u., Vref , e o valor
+
+(4)
+
+Vd2  Vq2
+
+A partir das equações (3) e (4), pode-se verificar que
+as correntes em componentes dq são dadas em função
+de P,Q, Vd ,Vq como id , iq  f Vd ,Vq , P, Q . As cor-
+
+
+
+ 
+
+
+
+rentes em componentes dq são transformadas em
+componentes de fase pelas equações
+(5)
+ia  id  cos   iq  sen
+
+ib  id  cos(   )  iq  sen(   )
+
+(6)
+
+ic  id  cos(   )  iq  sen(   )
+
+(7)
+
+3413
+
+3
+
+da tensão instantânea medida em p.u., V  pu  , é dado
+por
+
+V ( pu ) 
+
+Va2  Vb2  Vc2
+
+2.3 Transformador com ajuste automático de tap
+(LTC)
+Os modelos de transformadores que vêm incorporados ao ATP funcionam com relação de transformação fixa ou tap fixo. Entretanto, atualmente, os
+sistemas_elétricos de distribuição estão fazendo uso
+do transformador de potência com ajuste automático
+de tap, comumente chamado de LTC, para controlar
+tensão no barramento do secundário dos trafos de
+6913.8 kV. Como o ATP não dispõe do modelo de
+LTC, apresenta-se aqui o desenvolvimento de um
+módulo que simula a atuação do LTC, usando um
+controlador PID, responsável pelo controle da tensão
+no secundário do transformador. Para ilustrar o desenvolvimento desse módulo, usaremos o modelo de
+transformador delta-estrela aterrada de tap fixo 11
+do trafo ATP com a saída em série com um enrolamento fictício em cada fase, conforme o diagrama da
+Figura 3. Os enrolamentos fictícios serão os responsáveis pela variação de tensão do LTC.
+
+(8)
+
+Vnom
+
+Na eq. (8), Vnom é a tensão trifásica de base.
+A partir do valor de Q calculado, procede-se da
+mesma forma que na implementação da barra PQ,
+conforme mostra o diagrama_de_blocos da Figura 2,
+que corresponde aos passos a seguir
+1.
+
+Definir a Potência ativa P e a tensão de referência V ref 
+
+2.
+
+Medir as tensões em componentes de fase,
+Vabc , instantânea na barra
+Calcular as tensões em componentes de Park
+Vdq e a tensão V  pu  
+
+3.
+4.
+5.
+
+Calcular a potência reativa Q a ser injetada
+na barra com o controlador PID
+Calcular as correntes em componentes de
+Park i d e i q 
+
+6.
+
+Calcular as correntes em componentes de
+fase i abc .
+
+7.
+
+Injetar na barra as correntes
+
+iabc através de
+
+uma fonte de corrente controlada.
+
+Figura 2 Modelagem de barra PV através de fonte de corrente
+controlada e de controlador PID.
+
+Figura 3 Esquema de controle para implementação
+do LTC.
+
+3414
+
+4
+
+De acordo com diagrama da Figura 3, obtêm-se as
+tensões instantâneas das três fases do secundário do
+LTC, calculando a média do valor eficaz Vrms que,
+comparada com o valor de referência Vref que se deseja obter, é introduzida em um controlador PID em
+malha_fechada que vai produzir o valor percentual t
+das tensões do trafo que, multiplicado através do
+módulo multiplicador do ATP pelas tensões instantâneas Va, Vb e Vc obtidas da saída do trafo ATP, produzirá as tensões t.Va, t.Vb e t.Vc a serem adicionadas
+aos enrolamentos fictícios em série do trafo ATP
+gerando as tensões controladas na saída do secundário do LTC. O tap resultante equivalente do LTC será
+dado pela soma do tap do trafo ATP mais o valor de
+t. A relação de transformação resultante será acrescida do valor t.
+
+Tensão em MCA para um cct em EST de 50 ms considerando a carga em MCA impedância constante.
+
+70
+kV
+40
+
+10
+
+-20
+
+-50
+
+-80
+0,00
+
+0,05
+
+0,10
+
+(f ile RedeBarraPQNEW.pl4 x-v ar t) v MCAA
+
+0,15
+
+v MCAB
+
+0,20
+
+s
+
+0,25
+
+v MCAC
+
+Figura 4 Formas de onda de tensão em MCA, para curtocircuito em EST, com carga em MCA representada por impedância constante.
+Tensão em MCA para um cct em EST de 50 ms considerando a carga em MCA potência constante.
+
+70
+kV
+40
+
+3
+
+Simulações e Resultados
+10
+
+3.1 Sistema elétrico adotado
+
+-20
+
+Para aplicar os modelos foi escolhida parte de
+uma rede real de 69 kV do sistema elétrico da
+COSERN, da regional Açu, composta de 07 barras e
+08 linhas com as cargas refletidas nas barras de 69
+kV conforme o diagrama da Figura seguinte. Nesse
+estudo, a barra MCA foi escolhida para ser analisada
+em duas situações como barra PQ e como barra PV,
+ambas, para um curto-circuito trifásico na barra EST
+com duração de 50 ms. Para a barra PV foi colocado
+um limite de potência reativa de 10 MVAr.
+
+-50
+
+-80
+0,00
+
+0,05
+
+0,10
+
+(f ile RedeBarraPQNEW.pl4 x-v ar t) v MCAA
+
+0,15
+
+v MCAB
+
+s
+
+0,20
+
+0,25
+
+v MCAC
+
+Figura 5 Formas de onda de tensão em MCA, para curtocircuito em EST, com carga em MCA representada por potência
+constante.
+Tensão em MCA para um cct em EST de 50 ms considerando MCA uma barra PV
+
+80
+kV
+46
+
+12
+
+-22
+
+-56
+
+-90
+0,00
+
+0,05
+
+0,10
+
+(f ile RedeBarraPVNEW.pl4 x-v ar t) v MCAA
+
+0,15
+
+v MCAB
+
+s
+
+0,20
+
+0,25
+
+v MCAC
+
+Figura 6 Formas de onda de tensão em MCA, para curtocircuito em EST, com MCA representada como barra PV.
+
+Figura 4 Regional AÇU, pertencente ao sistema elétrico da
+
+Quanto s correntes, a variação é perceptível como
+mostra os gráficos das Figs. 7, 8 e 9.
+
+COSERN.
+
+3.2 Resultados obtidos
+Os resultados obtidos com a simulação no ATP, usando a modelagem proposta aplicada no sistema
+teste serão analisados, tomando por base as tensões e
+as correntes de carga em MCA, bem como as correntes de curto-circuito em EST, para a carga com impedância constante, potência constante e barra PV em
+MCA. Pode-se ver pelos gráficos das Figs. 4, 5 e 6
+que as tensões na barra de MCA praticamente têm a
+mesma forma de onda e amplitude.
+
+Corrente em MCA para um cct em EST de 50 ms considerando a carga em MCA impedância constante.
+
+150
+A
+100
+
+50
+
+0
+
+-50
+
+-100
+
+-150
+0,00
+
+0,05
+
+0,10
+
+(f ile RedeBarraPQNEW.pl4 x-v ar t) cX0084A-MCAA
+
+0,15
+cX0084B-MCAB
+
+0,20
+
+s
+
+cX0084C-MCAC
+
+Figura 7 Formas de onda das correntes em MCA, para curtocircuito em EST, com carga em MCA representada por impedância constante.
+3415
+
+0,25
+
+5
+
+Corrente em MCA para um cct em EST de 50 ms considerando a carga em MCA potência constante.
+
+Corrente de cc em EST para um cct em EST de 50 ms considerando a carga em MCA impedância constante.
+
+400
+A
+
+5000
+A
+
+300
+
+3750
+
+200
+
+2500
+
+100
+
+1250
+
+0
+
+0
+
+-100
+
+-1250
+
+-200
+
+-2500
+
+-300
+
+-3750
+
+-400
+0,00
+
+0,05
+
+0,10
+
+(f ile RedeBarraPQNEW.pl4 x-v ar t) cX0133A-MCAA
+
+0,15
+cX0133B-MCAB
+
+0,20
+
+s
+
+0,25
+
+cX0133C-MCAC
+
+-5000
+0,00
+
+0,05
+
+0,10
+
+(f ile RedeBarraPQNEW.pl4 x-v ar t) cX0129A-ESTA
+
+Figura 8 Formas de onda das correntes em MCA, para curtocircuito em EST, com carga em MCA representada por potência
+constante.
+
+0,15
+cX0129B-ESTB
+
+0,20
+
+s
+
+0,25
+
+cX0129C-ESTC
+
+Figura 10 Formas de onda das correntes de curto-circuito em
+EST, com carga em MCA representada por impedância constante.
+Corrente de cc em EST para um cct em EST de 50 ms considerando a carga em MCA potência constante.
+
+5000
+A
+3750
+2500
+
+400
+A
+
+Corrente em MCA para um cct em EST de 50 ms considerando MCA uma barra PV
+
+1250
+
+300
+
+0
+
+200
+
+-1250
+
+100
+
+-2500
+
+0
+
+-3750
+
+-100
+
+-5000
+0,00
+
+-200
+
+0,10
+
+0,15
+cX0129B-ESTB
+
+0,20
+
+s
+
+0,25
+
+cX0129C-ESTC
+
+Figura 11 Formas de onda das correntes de curto-circuito em
+EST, com carga em MCA representada por potência constante.
+
+-300
+-400
+0,00
+
+0,05
+
+(f ile RedeBarraPQNEW.pl4 x-v ar t) cX0129A-ESTA
+
+0,05
+
+0,10
+
+(f ile RedeBarraPVNEW.pl4 x-v ar t) cX0138A-MCAA
+
+0,15
+cX0138B-MCAB
+
+0,20
+
+s
+
+0,25
+
+cX0138C-MCAC
+
+5000
+A
+
+Figura 09 Formas de onda das correntes em MCA, para curtocircuito em EST, com MCA representada como barra PV.
+
+Corrente de cc em EST para um cct em EST de 50 ms considerando MCA uma barra PV
+
+3750
+2500
+
+Pode-se observar no gráfico da Fig. 7, que a amplitude das correntes de carga em MCA, para a carga com
+impedância constante é menor que as correntes dos
+gráficos das Figs. 8 e 9, em que a barra de MCA é
+considerada PQ e PV, respectivamente. Isso acontece
+porque a carga é de impedância constante e, quando a
+tensão diminui, a corrente também diminui. No caso
+da barra ser considerada PQ ou PV, a corrente aumenta ou diminui para uma faixa de variação de tensão como a tensão em MCA diminui para o curtocircuito em EST a corrente de carga aumenta em
+MCA. Isso fica mais acentuado quando a barra é PV,
+porque há uma injeção de potência reativa para manter a tensão constante pelo controlador PID. Esses
+resultados são compatíveis com casos relatados por
+operadores de sistemas_elétricos de distribuição, em
+que acontecem a saída de uma SE que alimenta indústrias, quando há curtos-circuitos em barras distantes da SE.
+No tocante as correntes de curtos-circuitos em EST
+para as três condições de carga em MCA, pode-se ver
+pelos gráficos da Figura 10, Figura 11 e Figura 12
+que quase não há variação na amplitude e forma de
+onda.
+
+1250
+0
+-1250
+-2500
+-3750
+-5000
+0,00
+
+0,05
+
+0,10
+
+(f ile RedeBarraPVNEW.pl4 x-v ar t) cX0135A-ESTA
+
+0,15
+cX0135B-ESTB
+
+0,20
+
+s
+
+cX0135C-ESTC
+
+Figura 12 Formas de onda das correntes de curto-circuito em
+EST, com MCA representada como barra PV.
+
+Para simular a atuação do LTC considerou-se inicialmente o trafo sem carga com a tensão ajustada
+no secundário no valor de referência, Vref, em 1.0
+p.u. No instante de tempo de 1s a carga foi conectada
+através de um disjuntor no secundário provocando
+um afundamento na tensão para 0.93 p.u. O LTC não
+deve elevar imediatamente a tensão para 1.0 p.u. Para
+isso foi considerado um tempo de espera de 1s. Portanto, no instante de tempo 2s, a tensão foi elevada
+novamente para 1.0 p.u, conforme mostra o gráfico
+da Figura 13.
+
+3416
+
+0,25
+
+6
+
+Tensão em MCA trafo com controle_automático de tensão
+
+1,2
+
+em casos concretos pode ser na análise dinâmica de
+tensão para conexão de parques eólicos na rede_elétrica devido  característica da geração que varia
+consoante as condições do vento. Como, por norma
+técnica, a tensão deve ser mantida constante no ponto
+de acoplamento comum, PAC, se faz uso de um LTC
+para elevar e manter constante a tensão no PAC.
+
+1,0
+
+0,8
+
+0,6
+
+0,4
+
+0,2
+
+Agradecimentos
+
+0,0
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+s
+
+6
+
+(f ile RedeBarraTAPNEW.pl4 x-v ar t) t VS1
+
+Figura 13 Variação do valor eficaz da tensão secundária do LTC
+em MCA, com secundário em vazio.
+
+Os autores agradecem  COSERN pelo fornecimento dos dados de rede do sistema elétrico adotado
+para teste.
+
+Durante o intervalo de tempo de espera entre 1s
+e 2s, o controlador PID atuou produzindo o valor de t
+que deveria ser multiplicado pelas tensões de saída
+do trafo ATP e adicionadas aos enrolamentos fictícios para manter a tensão no valor de referência. O
+valor de t somado ao valor fixo do trafo ATP, produz
+
+Referências Bibliográficas
+1
+
+a tap resultante do LTC, Tap1,1, conforme mostra o
+gráfico da Figura 14.
+
+2
+
+Tap do trafo em MCA com controle_automático de tensão
+
+1,2
+
+3
+4
+
+1,0
+
+0,8
+
+0,6
+
+5
+0,4
+
+0,2
+
+6
+0,0
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+s
+
+6
+
+(f ile RedeBarraTAPNEW.pl4 x-v ar t) t TAP1
+
+Figura 14 Variação da relação de transformação do LTC com o
+tempo.
+
+7
+
+4 Conclusões
+8
+
+A implementação no ATP dos modelos de barra
+PQ e PV, evidencia, a partir dos testes realizados,
+características diferentes das correntes de carga para
+condições de curto-circuito, quando comparados com
+o modelo clássico do próprio ATP, baseado em impedância constante. Esses resultados mostram a importância da representação mais realista das cargas,
+também em estudos de curto-circuito. Apenas com a
+introdução dos modelos desenvolvidos, foi possível
+reproduzir situações observadas na prática, por operadores do sistema elétrico. Com essa modelagem
+pode-se simular no ATP sistemas_elétricos, não apenas para condições transitórias, mas para cálculo de
+curto-circuito em regime_permanente e para cálculo
+de fluxo_de_carga.
+Os resultados apresentados mostram que o modelo de LTC desenvolvido e implementado no ATP
+atende  finalidade a que se propõe. Uma aplicação
+
+3417
+
+Electromagnetic Transients Program (EMTP). Theory Book.
+July,1995.
+ATPDraw Windows Version 3.4. Alternative Transient
+Program. ATP.
+Fluxo de Carga em Redes de Elétrica. Alcir Monticelli.
+Editora Edgard Blcher LTDA.,1983.
+Medeiros Jr, M. F. Câmara, P. C. S. Fluxo de carga trifásico e análise de curtos-circuitos de alta impedância em sistemas_de_distribuição utilizando o método da soma de potências. Congresso Brasileiro de Automática  CBA 2002, Natal, set2002.
+Oliveira, J.T. Pinheiro, R.F. Tavares, F.L. Silva, S.R.
+Nunes, M.V.A. Bezerra, U.H., Medeiros, M.F.Jr. Modelling wind turbines based on doubly fed induction generators
+for transient stability studies using ATP. VI Induscon, 2004.
+Oliveira, J.T. Pinheiro, R.F. Tavares, F.L. Silva, S.R.
+Nunes, M.V.A. Bezerra, U.H., Medeiros, M.F.Jr. Representação de aerogeradores de indução duplamente excitados no
+ATP através do modelo de máquina universal.VII Induscon,
+2006.
+Oliveira, J.T. Silva, S.R. Nunes, M.V.A. Bezerra, U.H.
+C.B. Mendonça F.A.F. Matias Medeiros, M.F.Jr. Modelagem de aerogeradores como fonte de corrente no ATP. XII
+ERIAC - Encontro Regional Ibero-americano do CIGRÉ,
+Foz do Iguaçu, maio2007.
+Matias, F. A. F., Oliveira J. T., Medeiros jr, M. F. Comparação entre modelos equivalentes de aerogeradores_síncronos
+utilizando o programa ATP. CBA 2008. Juiz de Fora MG

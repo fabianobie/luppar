@@ -1,0 +1,658 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ESTRATEGIAS DE ESTIMACAO DE ATITUDE PARA VANTS UMA
+COMPARACAO DE ALGORITMOS PROPOSTOS EM COMUNIDADES DE
+SOFTWARE LIVRE
+Jose L.G. Olavo, Leonardo A.B. Torres
+
+
+Programa de Pos-Graduacao em Engenharia Eletrica - Universidade Federal de Minas Gerais
+Av. Antonio Carlos 6627, 31270-901, Belo Horizonte, MG, Brasil
+
+
+Departamento de Engenharia Eletronica - Universidade Federal de Minas Gerais
+Belo Horizonte, MG, Brasil
+Emails joselucasolavo@ufmg.br, leotorres@ufmg.br
+
+Abstract It has recently become popular in some open source communities low-cost projects to develop
+automatic pilot systems for Unmanned Aerial Vehicles (UAVs). An essential element of such systems is the
+attitude estimation algorithm, which provides the spatial orientation of the vehicle to higher control layers. The
+open source communities, inspired by works in the recent literature, have proposed ad hoc algorithms whose
+performance and stability, in principle, are routinely tested by a large number of people in real experiments. The
+objective of this work is to formally present and compare these algorithms to reveal which one performs better
+in the attitude estimation of a fixed-wing aircraft.
+Keywords
+
+Attitude Estimation, UAV, Sensor Fusion, Ardupilot, Open Source.
+
+Resumo Recentemente tem se popularizado, em algumas comunidades de software_livre, projetos de baixo
+custo para desenvolvimento de sistemas de pilotagem automatica para Veculos Aereos Nao Tripulados (VANTs).
+Um elemento essencial em tais sistemas e o algoritmo de estimacao_de_atitude do robo aereo, o qual prove a
+informacao de orientacao espacial do veculo para camadas superiores de controle. As comunidades de software
+livre, inspiradas em trabalhos da literatura cientfica, tem proposto algoritmos ad-hoc, cujo desempenho e estabilidade, em princpio, sao rotineiramente testados por um grande numero de pessoas, em experimentos reais. O
+objetivo deste trabalho e apresentar formalmente, e comparar tais algoritmos para revelar qual deles apresenta
+melhor desempenho na estimacao_de_atitude de uma aeronave de asa fixa.
+Palavras-chave
+
+.
+
+Introducao
+
+A utilizacao de Veculos Aereos Nao Tripulados
+(VANTs), que sao aeronaves de asas fixas ou rotativas que nao possuem tripulacao e sao capazes
+de realizar voos autonomos ou pilotados remotamente, vem aumentando de maneira significativa,
+tanto em operacoes civis quanto militares na ultima decada. Esses veculos possuem vasta utilizacao, incluindo reconhecimento de areas remotas, inspecao de linhas_de_transmissao e controle
+de instalacoes agrcolas (Sullivan, 2005). Com intuito de realizar as incursivas aereas, e necessario
+um conhecimento acurado do posicionamento espacial da aeronave, de maneira que o controle da
+trajetoria seja realizado satisfatoriamente.
+Esses veculos sao comumente equipados com
+sistemas de medicao que apresentam baixa resolucao e sao constantemente afetados por rudos
+e polarizacao existentes no processo de medicao
+(Park and Gao, 2006). Torna-se, entao, necessario
+o desenvolvimento de algoritmos_de_estimacao de
+atitude implementados em hardware embarcado,
+os quais sejam capazes de prover uma indicacao
+confiavel da orientacao da aeronave, apesar das
+incertezas nas medicoes.
+O processo de estimacao_de_atitude envolve
+medicoes de aceleracao, velocidade_angular e
+campo magnetico local efetuadas no referencial
+
+ISSN 2525-8311
+
+do veculo, bem como a fusao dessas informacoes
+considerando os rudos presentes em tais medicoes
+(Crassidis et al., 2007).
+Atualmente diferentes trabalhos tem comparado diversos algoritmos de fusao_sensorial
+(Mahony et al., 2008 Alam et al., 2014). Uma solucao bastante adotada e o algoritmo do Filtro de
+Kalman, o qual prove estimativas otimas sob certas condicoes (Grewal and Andrews, 2014). Entretanto, a utilizacao desse algoritmo pode conduzir a
+uma complexidade computacional elevada, especialmente quando implementados em hardware embarcado que possui capacidade de processamento
+limitada. Uma alternativa interessante sao os algoritmos desenvolvidos em comunidades de software_livre (Hyyti and Visala, 2015), geralmente
+concebidos para serem executados em arquiteturas
+computacionais de baixo poder de processamento,
+e, em princpio, ostensivamente testados por um
+grande numero de pessoas em experimentos reais.
+O trabalho aqui relatado visa a implementacao e comparacao de algoritmos de baixa complexidade, propostos nas comunidades de software
+livre, para estimacao_de_atitude de VANTs de
+asa fixa. Inicialmente sao apresentados os algoritmos com a exposicao das diretivas de programacao adotadas. Em seguida, apresenta-se resultados experimentais realizados para comparar a
+eficacia dos mesmos.
+
+2654
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+2
+2.1
+
+Algoritmos de Estimacao de Atitude
+
+Dessa forma a estimacao da direcao do campo
+magnetico pode finalmente ser calculada por
+
+Algoritmo ECF
+
+O filtro_complementar explcito (ECF, do ingles
+Explicit Complementary Filter ) de estimacao de
+atitude possui a devida denominacao uma vez que
+o filtro e expresso explicitamente em termos das
+medicoes diretas e nao processadas dos sinais dos
+sensores (Hamel and Mahony, 2006). Esse filtro
+realiza a fusao_sensorial atraves de um filtro passabaixas aplicado aos dados do acelerometro e de um
+filtro passa-altas aplicado a sada do girometro.
+A representacao da atitude e realizada por
+meio de quaternios unitarios, seguindo a restricao
+de norma unitaria. Atraves dessa representacao
+e possvel fazer a inferencia dos angulos de Euler
+atuais da aeronave. O modelo utilizado pelo algoritmo possui um vetor de 4 estados composto pela
+representacao na forma de quaternio, definido da
+seguinte forma x  q0 q1 q2 q3 T , em que
+q0 , q1 , q2 e q3 sao as componentes do quaternio.
+O vetor de entradas e composto pelas medicoes do
+girometro, acelerometro e magnetometro.
+A primeira etapa do filtro e estimar a direcao
+dos campos gravitacionais e magneticos aos quais
+o veculo aereo fica submetido, a fim de posteriormente calcular o erro de tal estimacao em relacao
+aos valores medidos via acelerometro e magnetometro. No que concerne o campo gravitacional, a
+estimacao do mesmo e feita usando a relacao
+
+
+2bx (0.5  q22  q32 ) + 2bz (q1 q3  q0 q2 )
+mt   2bx (q1 q2  q0 q3 ) + 2bz (q0 q1  q2 q3 )  .
+2bx (q0 q2  q1 q3 ) + 2bz (0.5  q12  q22 )
+(2)
+Assim sendo, apos as estimacoes (1) e (2) terem sido feitas, e realizado o calculo do erro da
+estimacao como sendo a soma dos produtos vetoriais entre os valores estimados e medidos dos
+campos gravitacionais e magneticos. Esse calculo
+do erro pode ser computado segundo a relacao
+et  g  g t + m  mt , sendo g e m os vetores
+campo gravitacional e magnetico obtidos a partir
+dos dados do acelerometro e do girometro, respectivamente, g t e mt as projecoes dos mesmos campos obtidos em (1) e (2). Os vetores envolvidos no
+processo de calculo erro sao todos normalizados
+para que se obtenha um resultado adimensional.
+A segunda etapa envolve a correcao do valor de velocidade_angular medido pelo girometro
+com base no erro calculado na etapa precedente.
+A correcao e composta pela aplicacao de ganhos
+proporcionais e integrais sobre o valor do erro que
+posteriormente e adicionado a velocidade_angular
+medida, como descrito na equacao
+X
+ b   + KP et + KI
+et ,
+(3)
+
+
+t
+b
+
+
+
+
+2(q1 q3  q0 q2 )
+.
+2(q0 q1 + q2 q3 )
+g t  
+2(q0 q0 + q3 q3  0.5)
+
+(1)
+
+Por sua vez, para estimar a direcao do campo
+magnetico da Terra e necessario compensar a distorcao magnetica existente. Inicialmente e efetuada a medicao das componentes do campo magnetico e representa-se o resultado na forma de quaternio como M t  0 mx my mz , onde mx ,
+my , mz representam as intensidades normalizadas do campo magnetico. Em seguida, rotacionase o vetor medido no referencial do veculo, aqui
+chamado de ABC1 , de forma a se obter a representacao do mesmo no referencial inercial, aqui
+chamado de NED2 , H t  0 hx hy hz  
+
+, sendo qt1 equivalente ao quaterqt1 M t qt1
+nio normalizado no instante de tempo precedente
+e  o smbolo correspondente a multiplicacao de
+quaternios. Ao realizar essa rotacao, espera-se
+que o vetor resultante aponte para o Norte, com
+alguma componente na direcao z, mas nenhuma
+na direcao y. Assim, elimina-se qualquer resultado espurio, representado por uma componente y
+no referencial NED diferente de
+q zero, escrevendo
+h2x + h2y 0 hz .
+B t  0 bx 0 bz   0
+1 Do
+2 Do
+
+Ingles Aircraft Body Coordinates.
+Ingles North-East-Down.
+
+ISSN 2525-8311
+
+em que  representa o vetor de velocidades angulares apos a fusao_sensorial,  os valores medidos
+pelo sensor, KP e KI os parametros ajustaveis.
+Em seguida, calcula-se a taxa de variacao do
+quaternio no estado atual pela multiplicacao do
+quaternio do estado precedente pelo vetor p( b ) 
+0 xb yb zb , formado pelos valores de velocidades angulares obtidos em (3). Assim sendo, a
+taxa de variacao do quaternio e dada por
+1
+q
+ p( b ),
+(4)
+2 t1
+sendo que q w,t representa a taxa de variacao do
+quaternio no instante atual, q t1 o quaternio unitario estimado no instante anterior.
+A terceira e ultima etapa consiste em atualizar o valor do quaternio por meio da integracao
+numerica da taxa de variacao do mesmo no tempo,
+dada pela equacao
+q ,t 
+
+q w,t  q t1 + q w,t t,
+
+(5)
+
+em que q w,t e o quaternio no estado atual, e t e
+o intervalo de tempo entre as medicoes.
+O diagrama que representa os calculos realizados no processamento do algoritmo ECF e ilustrado na Figura 1. Atraves dessa representacao e
+possvel verificar a progressao do algoritmo e as
+diretivas consideradas a fim de produzir a estimativa da atitude ao final de cada iteracao.
+
+2655
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Figura 1 Diagrama do algoritmo ECF.
+2.2
+
+Algoritmo GDOF
+
+O filtro de orientacao baseado no gradiente_descendente (GDOF, do ingles Gradient Descent based Orientation Filter ) permite utilizar os dados provenientes do acelerometro e magnetometro em um algoritmo_de_otimizacao (Madgwick
+et al., 2011). O gradiente e utilizado como forma
+de calcular os erros nas medicoes provenientes do
+girometro. A representacao da atitude tambem
+e realizada por meio de quaternios unitarios, porem inclui-se no vetor_de_estados os parametros de
+polarizacao dos girometros.
+No contexto do algoritmo de estimacao da
+orientacao, considera-se que com o acelerometro
+pode-se medir somente o campo gravitacional, e
+com o magnetometro somente o campo magnetico
+da Terra. E possvel definir um problema de otimizacao que busca o melhor alinhamento do vetor
+procurado com uma referencia de direcao predefinida do campo (magnetico ou gravitacional) representado no referencial NED, descrito por
+ s)  min (q   d  q  s),
+min f (q, d,
+q QU
+q QU
+
+(6)
+
+sendo q o quaternio normalizado a posteriori, d
+a referencia predefinida de direcao do campo e s
+o campo medido no referencial fixo ao veculo. O
+uso do metodo do Gradiente Descendente para resolver o problema de otimizacao acima implica em
+se atualizar as estimativas de orientacao da forma
+q ,t
+
+ s)
+f (q t1 , d,
+ q t1  t
+,
+ s)k
+kf (q t1 , d,
+
+(7)
+
+sendo q ,t o quaternio resultante q t1 o quaternio estimado no instante anterior  o passo de
+progressao do algoritmo na direcao contraria ao
+gradiente da funcao objetivo e
+ s)  J T (q t1 , d)f
+ (q t1 , d,
+ s),
+f (q t1 , d,
+
+(8)
+
+com f o gradiente da funcao objetivo e J a sua
+matriz Jacobiana correspondente.
+
+ISSN 2525-8311
+
+Dessa forma, para o calculo da parcela da
+funcao objetivo que diz respeito a aceleracao,
+considera-se que o campo gravitacional da Terra
+possui apenas componente vertical. Assim, o vetor de referencia normalizado pode ser descrito
+pelo quaternio d  0 0 0 1, e o vetor que
+contem as medicoes do acelerometro como s 
+0 ax ay az . Por sua vez, no que diz respeito a parcela do campo magnetico considera-se
+que o vetor de referencia e semelhante ao apresentado no caso do ECF (Secao 2.1) e o vetor
+contendo as medicoes do magnetometro equivale
+s  0 mx my mz . O processo de otimizacao consiste em usar os vetores d e s, e realizar a
+composicao da funcao objetivo final como a soma
+dos objetivos considerados.
+O processo de fusao_sensorial consiste em se
+computar a combinacao convexa do quaternio obtido por meio do gradiente_descendente q ,t com
+o quaternio q w,t calculado com base na integracao dos dados providos pelo girometro, i.e. a
+estimacao final da orientacao e dada por q t 
+t q ,t + (1  t )q w,t , em que 0  t  1. O
+resultado deste calculo deve garantir que a convergencia do quaternio calculado por meio do gradiente_descendente seja igual ou superior a taxa
+fsica de mudanca de orientacao, assim o valor de
+t
+ , sendo  a
+t pode ser considerado tal que t
+taxa de divergencia causada pela polarizacao dos
+girometros. Dessa forma, a equacao que calcula
+a taxa de variacao do quaternio pode ser descrita
+f
+por q t  q w,t   kf
+k . Por fim, atualiza-se o valor do quaternio por meio da integracao numerica
+da taxa de variacao do mesmo segundo (5).
+No algoritmo GDOF tambem se calcula a polarizacao dos girometros utilizada para compensar as medicoes desse sensor. Um outro conceito
+relevante e a corretude das componentes da aceleracao lidas dos acelerometros. Uma maneira de
+se tentar minimizar a influencia de componentes
+que nao representam a projecao do campo gravitacional da Terra e usar informacoes provenientes
+do receptor GPS e dos girometros. A Figura 2
+ilustra o processamento dos sinais desse algoritmo
+com o calculo da polarizacao dos girometros e a
+compensacao da aceleracao da gravidade.
+2.3
+
+Algoritmo DCM AHRS
+
+O algoritmo de estimacao_de_atitude baseado na
+Matriz de Cossenos Diretores (DCM AHRS, do
+ingles Direction Cosine Matrix, Attitude and Heading Reference System) utiliza o conceito da representacao espacial de um corpo rgido atraves de
+uma matriz cujos elementos sao cossenos dos angulos de orientacao espacial do corpo (Premerlani
+and Bizard, 2009).
+Neste algoritmo os girometros exercem um papel crucial, uma vez que sao a fonte primaria para
+o calculo das orientacoes. Dado que esses instru-
+
+2656
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Figura 2 Diagrama do algoritmo GDOF.
+mentos apresentam erros de polarizacao, produzindo acumulo de erro ao longo do tempo, os quais
+afetam as restricoes de ortogonalidade da Matriz
+de Cossenos Diretores  DCM, sao necessarios dados suplementares provindos do acelerometro e
+magnetometro. Esses dados adicionais fornecem
+informacoes absolutas, a fim de realizar pequenas
+correcoes nos angulos de orientacao. Uma vez que
+os erros numericos acumulados na DCM podem
+ser verificados com base em vetores de referencia, um controlador com realimentacao negativa
+de acoes proporcional e integral efetuaria as correcoes na velocidade_angular medida.
+De acordo com Kim et al. (2011), a rotacao
+de um vetor r em torno de um eixo com um vetor de velocidade_angular  pode ser representada
+y z T corpor dr
+dt    r, em que   x
+responde as componentes da velocidade_angular.
+Considerando d como a mudanca infinitesimal
+nos angulos de atitude, pode-se considerar sua relacao com  como
+ 
+
+
+x
+d
+d   d    y  dt,
+(9)
+d
+z
+sendo ,  e  os angulos roll, pitch e yaw respectivamente. Assim sendo, a variacao infinitesimal
+de r e dada como
+
+
+
+rz d  ry d
+dr  d  r   rx d  rz d 
+(10)
+ry d  rx d
+
+
+
+0
+d d
+rx
+0
+d   ry   Qr,(11)
+dr   d
+d d
+0
+rz
+onde a matriz antissimetrica Q representa a rotacao espacial infinitesimal. Dessa forma, a transformacao de referenciais em um vetor utilizando o
+conceito da rotacao infinitesimal pode ser descrita
+como rE  R(rA + drA )  R(I + Q)rA , onde rA
+e rE representam os novos vetores no referencial
+ABC e NED respectivamente, R equivale a DCM
+
+ISSN 2525-8311
+
+Figura 3 Diagrama do algoritmo DCM AHRS.
+e I  R33 e a matriz identidade. A componente
+R(I + Q) pode ser vista como a DCM que incorpora a nova rotacao. Um processo de renormalizacao e necessario para manter a ortogonalidade da
+DCM, eventualmente violada por erros numericos.
+A fim de compensar a deriva dos dados provindos do girometro, o acelerometro pode prover
+um vetor de referencia para o eixo Z da aeronave
+que e utilizado para calcular o erro de orientacao
+existente nos angulos de rolamento (roll ) e arfagem (pitch), atraves do produto vetorial com o
+respectivo vetor estimado pela DCM. Por sua vez,
+o magnetometro e utilizado para calcular a proa
+geografica do VANT, utilizada para calcular o erro
+no angulo yaw. Por fim, essas correcoes sao acrescidas as medicoes de velocidade_angular por meio
+de um controlador que faz com que a estimacao
+da orientacao siga os vetores de referencia.
+Os angulos de atitude sao calculados a partir da DCM, fazendo-se   arctan(R32 R33 ),
+  arcsin(R31 ) e   arctan(R21 R11 ), em que
+Rij sao os elementos i, j da matriz. A esquematizacao desse algoritmo e ilustrada na Figura 3,
+com o processamento dos sinais dos sensores, a
+atualizacao da DCM e a correcao da estimacao de
+atitude devido a polarizacao do girometro.
+3
+
+Metodologia
+
+Com intuito de analisar o desempenho dos algoritmos supracitados e de efetuar uma comparacao
+com um algoritmo que utiliza o Filtro de Kalman
+Estendido, chamado de mEKF-7s (Lima, 2013),
+inicialmente foi utilizado um ambiente de simulacao de manobras em voo. A aeronave foi modelada como um corpo rgido com seis_graus_de_liberdade (6DOF) nas simulacoes. Os valores ideais
+das medicoes sao obtidos via modelo_dinamico da
+aeronave, porem acrescidos de imperfeicoes provenientes do modelo dos sensores. Tres diferentes
+tipos de voos foram reproduzidos. O Voo 1 corresponde a trajetoria em linha reta e nivelada, com
+intuito de verificar a capacidade de convergencia
+dos algoritmos. No Voo 2 a aeronave e submetida
+
+2657
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+(a)
+
+(b)
+
+(c)
+
+(d)
+
+Angulo
+Atitude
+1
+1
+1
+2
+2
+2
+3
+3
+3
+
+mEKF-7s
+0.69
+0.62
+0.66
+0.72
+0.85
+0.70
+3.23
+2.42
+3.61
+
+Algoritmo
+ECF GDOF
+0.59
+0.67
+0.47
+0.72
+0.62
+0.69
+0.67
+0.69
+5.47
+0.95
+0.73
+0.71
+6.66
+4.89
+6.43
+2.58
+4.63
+1.03
+
+DCM
+0.60
+0.49
+0.61
+0.60
+1.30
+0.62
+0.92
+1.69
+0.99
+
+Tabela 1 RMSE (em graus) da estimacao em simulacao.
+
+Figura 4 Etapas de processamento das imagens.
+(a) Imagem Original com a Regiao de Interesse
+(b) Imagem com a ROI binarizada (c) Bordas da
+ROI (d) Projecao da linha do horizonte.
+a um comando no profundor, o qual provoca oscilacoes no angulo de arfagem. Por fim, o Voo 3 e
+composto por manobras tpicas de um VANT em
+operacao, como subida, curvas e descidas.
+Os algoritmos foram executados usando um
+Processador Digital de Sinais  DSP, e escritos
+em linguagem C (Lima, 2013). Uma tarefa adicional foi o calculo do tempo de execucao das rotinas de estimacao dos algoritmos que foi de 3,40 ms
+para o caso do mEKF-7s, 0,05 ms no ECF, 0,07 ms
+no GDOF e 0,13 ms no DCM AHRS. Atraves da
+analise dos dados observa-se que os algoritmos desenvolvidos possuem operacoes matematicas relativamente mais simples que contriburam significativamente para reducao do tempo de execucao.
+Com a finalidade de analisar os algoritmos em
+uma situacao mais fidedigna as condicoes de voo,
+foram realizados experimentos em uma aeronave
+real. A aeronave utilizada nos experimentos foi
+o monomotor CEA-310 Curumim II desenvolvido
+na UFMG. Como essa aeronave nao possui um sistema de estimacao_de_atitude comercial, utilizouse o metodo de estimacao por meio da analise de
+imagens de vdeo provenientes de uma camera fixa
+a aeronave (Pereira et al., 2008). A Figura 4 ilustra etapas do processamento da imagem para obtencao da projecao da linha do horizonte utilizada
+para gerar a estimacao de referencia.
+4
+
+Resultados
+
+No experimento dos voos em simulacao calculou-se
+para cada angulo o RMSE (do ingles, Root Mean
+Square Error ), como mostrado na Tabela 1.
+Por sua vez, a Figura 5 ilustra a comparacao dos angulos de atitude no experimento real
+em uma aeronave. No intervalo de tempo de 110 s
+. t . 140 s e perceptvel a existencia de movimentos de rolamento alternados que foram ocasionados por movimentos de comando de aileron. No
+que diz respeito ao angulo de arfagem, percebe-se
+
+ISSN 2525-8311
+
+Figura 5 Atitude estimada do Curumim II.
+
+uma elevacao suave no intervalo de tempo inferior
+a 100 s, condizente com o movimento de decolagem. Apesar do angulo de guinada nao apresentar um valor de referencia, percebe-se claramente
+o movimento no sentido anti-horario em relacao
+ao plano xy. As variacoes abruptas existentes em
+tal angulo sao ocasionadas pela ultrapassagem do
+limite de 180o . O resultado provido pelo algoritmo mEKF-7s nao foi apresentado por indefinicao da estimacao devido a oscilacoes, em contraposicao a estimacao_de_atitude consistente provida
+pelos demais algoritmos desenvolvidos.
+Com intuito de verificar os resultados experimentais, foram calculadas as razes quadradas dos
+erros quadraticos medios dos angulos de atitude
+em relacao a referencia e apresentadas na Tabela
+2. Entretanto, alguns fatores podem ter influenciado nos respectivos valores de erros. O principal
+desses motivos esta associado a distorcoes nos dados digitais medidos do acelerometro que interferiram diretamente na projecao do vetor gravidade.
+A Tabela 3 apresenta os valores dos parametros
+ajustaveis dos algoritmos, usados para se obter o
+resultado observado na Figura 5.
+
+2658
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Angulo
+Atitude
+
+
+
+ECF
+12.28
+4.33
+
+Algoritmo
+GDOF DCM
+12.29
+10.08
+5.05
+6.87
+
+Tabela 2 RMSE (em graus) da estimacao em aeronave real.
+Algoritmo
+ECF
+GDOF
+
+DCM AHRS
+
+Parametro
+Kp
+6, 0  101
+Ki
+1, 0  103
+
+5, 0  102
+
+2, 0  103
+Kp(rollpitch) 1, 0  102
+Ki(rollpitch) 1, 5  106
+Kp(yaw)
+1, 2  100
+Ki(yaw)
+2, 0  105
+
+Tabela 3 Parametros ajustados para voo real.
+5
+
+Conclusoes
+
+Investigou-se as bases teoricas e a implementacao
+de tecnicas de fusao_sensorial propostas em comunidades de software_livre usando algoritmos, em
+princpio, de baixa complexidade computacional,
+capazes de produzir estimativas de atitude a partir
+de dados fornecidos por sensores de baixo_custo.
+O fato dos algoritmos serem usados em comunidades de codigo aberto foi determinante para a
+escolha dos mesmos, pois, partindo da premissa
+de que foram testados ostensivamente na pratica,
+tais algoritmos deveriam ser robustos as imperfeicoes dos sensores de baixo_custo.
+O tempo de processamento computacional
+correspondente a estimacao_de_atitude foi reduzido em pelo menos 26 vezes, para a implementacao dos algoritmos em um prototipo construdo
+na UFMG e apresentado em (Lima, 2013), com
+relacao ao tempo necessario utilizando um algoritmo baseado em Filtro de Kalman. Dessa forma,
+houve um benefcio direto de liberacao de recursos
+do DSP para futuras implementacoes e funcionalidades do sistema_embarcado.
+Experimentos reais objetivaram avaliar o desempenho dos algoritmos na pratica. Os resultados (Secao 4) apontaram para a superioridade do
+algoritmo DCM AHRS (Secao 2.3) em relacao aos
+algoritmos ECF (Secao 2.1) e GDOF (Secao 2.2),
+pelo fato do RMSE ter apresentado os menores valores na simulacao composta por manobras tpicas
+de um VANT, e um menor valor de erro maximo
+no experimento com a aeronave real.
+Agradecimentos
+Agradecemos as agencias de fomento CNPq, FINEP e FAPEMIG pelo auxlio financeiro para execucao do projeto e a assistencia do grupo de pesquisa PDVA. O presente trabalho foi realizado
+com o apoio financeiro da CAPES - Brasil.
+
+ISSN 2525-8311
+
+Referencias
+Alam, F., ZhaiHe, Z. and Jia, H. (2014). A Comparative Analysis of Orientation Estimation
+Filters using MEMS based IMU, Proceedings
+of the ICRS, Engineering and Technology,
+Dubai, UAE, pp. 2122.
+Crassidis, J. L., Markley, F. L. and Cheng, Y.
+(2007). Survey of nonlinear attitude estimation methods, Journal of guidance, control,
+and dynamics 30(1) 1228.
+Grewal, M. and Andrews, A. (2014).
+Kalman Filtering Theory and Practice with
+MATLAB R  Fourth Edition, Wiley-IEEE
+Press.
+Hamel, T. and Mahony, R. (2006). Attitude estimation on SO3 based on direct inertial measurements, Robotics and Automation, 2006,
+IEEE, pp. 21702175.
+Hyyti, H. and Visala, A. (2015). A DCM Based
+Attitude Estimation Algorithm for Low-Cost
+MEMS IMUs, International Journal of Navigation and Observation .
+Kim, Z. H. B., Nguyen, Q., Ou, A., Maharbiz, M.
+and Lee, E. (2011). Berkeley solar_drone.
+Lima, R. R. (2013). Desenvolvimento de uma
+Cabeca Sensora para Veculos Aereos NaoTripulados, Dissertacao de Mestrado. PPGEE, UFMG.
+Madgwick, S. O., Harrison, A. J. and Vaidyanathan, R. (2011). Estimation of IMU and
+MARG orientation using a gradient descent
+algorithm, Rehabilitation Robotics (ICORR),
+IEEE, pp. 17.
+Mahony, R., Hamel, T. and Pflimlin, J.-M. (2008).
+Nonlinear complementary filters on the special orthogonal group, Automatic Control,
+IEEE Transactions on 53(5) 12031218.
+Park, M. and Gao, Y. (2006). Error analysis and
+stochastic modeling of low-cost MEMS accelerometer, JIRS 46(1) 2741.
+Pereira, G. A., Iscold, P. and Torres, L. A. (2008).
+Estimacao da atitude de aeronaves utilizando
+visao_computacional, Anais do XVII CBA .
+Premerlani, W. and Bizard, P. (2009). Direction
+cosine matrix IMU Theory, DIY DRONE
+USA pp. 1315.
+Sullivan, J. M. (2005). Revolution or evolution?
+the rise of the UAVs, Weapons and Wires
+Prevention and Safety in a Time of Fear.,
+IEEE, pp. 94101.
+
+2659

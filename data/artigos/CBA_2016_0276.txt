@@ -1,0 +1,1056 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+FORMACAO LIDER-SEGUIDOR COM QUADRIMOTORES NAVEGANDO EM
+AMBIENTES EXTERIORES
+Lucas Vago Santana, Alexandre Santos Brandao, Mario Sarcinelli-Filho
+
+
+
+Coordenadoria de Automacao Industrial, Instituto Federal do Esprito Santo, Linhares, ES, Brasil
+
+Departamento de Engenharia Eletrica, Universidade Federal de Vicosa - UFV, Vicosa - MG, Brasil
+
+
+Programa de Pos-Graduacao em Engenharia Eletrica, Universidade Federal do Esprito Santo,
+Vitoria, ES, Brasil
+Emails lucas@ifes.edu.br, alexandre.brandao@ufv.br, mario.sarcinelli@ufes.br
+
+Abstract A strategy to autonomously guide two commercial quadrotors when navigating as a leader-follower
+formation in outdoor environments is proposed in this work. The objective is to provide a general view of the
+applied methods, using simplifications and practical considerations about the mathematical models involved in
+the design of the automatic controllers. This way, the contribution of the paper is to enhance the formation of
+the interested readers in terms of the understanding and reproduction of efficient methods, allowing developing
+research with equipments easily accessible. The application here reported is implemented in a computerized
+ground station which allows manual or automatic control of the leader in formation with a follower vehicle.
+Keywords
+
+Leader-Follower, Autonomous Navigation, Outdoor Environments, Formation Control.
+
+Resumo Neste trabalho e apresentada e testada uma estrategia_de_controle_automatico para navegacao
+entre dois quadrimotores comerciais em ambiente exterior em formacao_lder-seguidor. O objetivo e proporcionar
+uma visao geral dos metodos aplicados, usando simplificacoes e interpretacoes praticas dos modelos_matematicos
+envolvidos no projeto dos controladores. Dessa forma, este artigo contribui para formacao dos leitores interessados
+em entender e reproduzir metodos com eficiencia pratica consolidada, permitindo o desenvolvimento de pesquisas
+com equipamentos comerciais de facil acesso. A aplicacao e implementada em uma estacao computadorizada em
+solo que permite o controle manual ou automatico do lder enquanto mantem formacao com o veculo seguidor.
+Palavras-chave
+
+.
+
+Introducao
+
+Neste trabalho, apresenta-se a implementacao de
+uma aplicacao de controle para veculos aereos nao
+tripulados (VANTs) do tipo quadrimotor navegando em formacao_lder-seguidor em ambientes
+exteriores. A tecnica apresentada e baseada em
+uma estrutura virtual (Oh et al., 2015) e contribui, principalmente, para a validacao_experimental dessa arquitetura_de_controle junto a tecnicas
+de simplificacao dos modelos_matematicos para
+quadrimotores. Durante a discussao das proximas secoes, aspectos relevantes do estado da arte
+sao apontados para dar sustentacao teorica aos
+metodos desenvolvidos, assim como voos reais sao
+apresentados para validar a estrutura de controle
+proposta.
+2
+
+Figura 1 O quadrimotor Parrot AR.Drone 2.0
+e os sistemas de coordenadas global (w) e do
+corpo do VANT (b).
+
+O hardware utilizado
+
+O hardware utilizado neste trabalho e composto
+por um computador portatil, funcionando como
+estacao de controle em solo, onde os algoritmos
+sao implementados. A outra parte sao dois quadrimotores comerciais da Parrot, modelo AR.Drone
+2.0, cada um como o da Figura 1. Este equipamento foi escolhido para este trabalho principalmente por ter custo moderado (cerca de US 450)
+e ser de facil aquisicao no mercado. Alem disso,
+este VANT possui caractersticas importantes que
+
+ISSN 2525-8311
+
+facilitam o desenvolvimento de codigos de computador para seu comando, conforme (Bristeau
+et al., 2011) e (Piskorski et al., 2012). Ha no veculo um computador de bordo, que auxilia em manobras importantes, tais como decolagem, pouso
+e controle da atitude (angulos de orientacao).
+
+2.1
+
+Comunicacao do VANT com um computador
+
+Atraves de protocolos de comunicacao detalhados
+em (Piskorski et al., 2012), e possvel criar uma
+rede wi-fi e assim estabelecer a comunicacao entre
+um computador e o VANT. Assim, e possvel requisitar dados dos sensores embarcados no veculo
+e enviar comandos de movimento a ele. Os dados
+sensoriais disponveis ficam organizados como q 
+
+T
+z vx vy vz    lat lng , onde z e
+a altitude (em m) relativa ao referencial global,
+
+905
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+vx , vy e vz sao as velocidades lineares (em ms)
+relativas ao referencial do corpo, e ,  e  sao os
+angulos de Euler (em rad) relativos ao referencial
+global. Os valores lat e lng sao a latitude e a longitude (em  ), relativos a um referencial geografico
+nao representado na Figura 1.
+Para execucao de movimentos, o computador de bordo do AR.Drone recebe quatro sinais
+de controle, normalizados e arranjados como u 
+
+T 
+
+u u uz u  1.0, +1.0 , onde u representa um comando de modificacao da orientacao , u representa um comando de modificacao da orientacao , uz representa um comando de modificacao da altitude z e u representa um comando para modificacao da orientacao
+ (Piskorski et al., 2012).
+3
+
+Os controladores de voo
+
+Nesta secao, os controladores de voo serao propostos a partir do modelo do VANT inspirado no
+trabalho de Castillo et al. (2004), onde o veculo e
+modelado em funcao de sinais de controle de alto
+nvel, gerando as equacoes_diferenciais
+x  F (sin  sin  + cos  cos  sin )m
+y  F ( cos  sin  + sin  cos  sin )m
+
+(1)
+(2)
+
+para a dinamica translacional, e
+  
+
+(3)
+
+  
+
+(4)
+
+para a dinamica rotacional, onde x e y sao as posicoes globais,  e  sao angulos de Euler, e m
+e a massa do veculo. Os sinais de controle de
+alto nvel do modelo sao definidos como F , representando a forca de propulsao total gerada pelos
+motores,  e  , envolvendo os sinais de torque
+produzidos pela combinacao das acoes dos propulsores do veculo (Kendoul et al., 2010).
+Nota 1 Neste modelo, as equacoes referentes ao
+movimento do VANT nos graus de liberdade z e
+ sao omitidas, pois neste trabalho estas variaveis
+serao mantidas em valor constante por um algoritmo PD, semelhante aquele validado por Engel
+et al. (2014) para o AR.Drone. Dessa forma o
+foco sera apenas nos deslocamentos lateral e longitudinal do veculo.
+Aproximando (1) e (2) para pequenos valores
+angulares e assumindo que a propulsao gerada pelos motores e aproximadamente o peso do veculo
+(F  mg), tem-se
+ 
+
+  
+x
+sin 
+cos 
+
+g
+,
+(5)
+y
+ cos  sin 
+
+onde se percebe que as orientacoes  e  modificam as posicoes x e y do veculo, esclarecendo o
+
+ISSN 2525-8311
+
+acoplamento existente entre as dinamicas translacional e rotacional.
+Neste trabalho se propoe considerar que a resposta dinamica do veculo aos comandos de orientacao u e u ja e controlada, e que a representacao matematica deste controlador pode ser
+aproximada pelas equacoes_diferenciais lineares de
+segunda ordem
+   2
+
+ u  2    2 
+
+ 2 
+,
+
+ u  2    2 
+
+(6)
+
+onde  ,  ,  e  sao parametros de desempenho do controlador de atitude implementado no
+computador de bordo do VANT.
+Para controlar a dinamica translacional
+aplica-se uma estrutura hierarquica de controle,
+similar aquelas defendidas por Kendoul et al.
+(2010) e Bertrand et al. (2011). Nesta estrategia
+um loop externo de controle e usado para controlar as posicoes x e y, gerando como resultado
+sinais de orientacoes desejadas, que por sua vez
+representam referencias de angulo para um loop
+interno de controle de  e  (nao transparente ao
+usuario). A Nota 2 formaliza esta ideia.
+Nota 2 (Controladores Independentes)
+Bertrand et al. (2011) comprova que e possvel
+projetar controladores independentes para as
+dinamicas translacional e rotacional de VANTs,
+utilizando um princpio denominado Time-Scale
+Separation, explicando que, em malha-fechada,
+se a convergencia da orientacao for mais rapida
+que a da posicao, o sistema_de_controle anula os
+erros em regime_permanente.
+3.1
+
+Controlador de voo do lder
+
+Aplicando esta proposta de controladores independentes, primeiramente sera projetado um
+controlador util para o VANT lder. Assim,
+estabelece-se o loop externo de controle definindo
+d1 e d1 como sinais auxiliares de controle, representando as orientacoes desejadas para seu loop
+interno. Logo a equacao (5) e reescrita como
+ 
+
+x1
+sin 1
+g
+y1
+ cos 1
+
+cos 1
+sin 1
+
+  
+d1
+,
+d1
+
+(7)
+
+onde o subscrito 1 identifica os dados do veculo
+lder. Reescrevendo em uma notacao compacta,
+usando vetores e matrizes, obtem-se
+X1  gR1 Ud1 ,
+
+(8)
+
+de onde se pode projetar os sinais auxiliares de
+controle como a inversao
+Ud1 
+
+1 1
+ +  X ),
+R (X1d + D1 X
+1
+P1 1
+g 1
+
+(9)
+
+906
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+
+onde X1d  x1d
+
+y1d
+
+T
+
+representa o vetor con
+T
+tendo as posicoes desejadas, X1  x1 y1 representa um vetor contendo as posicoes reais (lidas
+dos sensores), X1  X1d X1 representa um vetor
+contendo os erros de posicao, D1  diag(2.0, 2.0)
+e P1  diag(2.0, 2.0) sao matrizes diagonais representando os ganhos derivativo e proporcional
+do controlador, respectivamente.
+Substituindo (9) em (8), a dinamica do erro
+translacional, em malha-fechada, se torna
+ +  X
+
+X
+1
+D1 1 + P1 X1  0,
+
+(10)
+
+caracterizando o equilbrio 0 como assintoticamente estavel, permitindo concluir que X1  0
+quando t  . Sobre o resultado calculado no
+controlador (9) e aplicada uma delimitacao definida como
+ 
+d1
+ sat, (Ud1 ) ,
+(11)
+d1
+onde
+(
+, se     0.175 rad
+sat, () 
+0.175sign() , de outra forma
+e uma funcao de saturacao, garantindo um limite
+da inclinacao requerida (previne inclinacoes bruscas devido a presenca de grandes erros de controle no sistema) ate a norma de 0.175 rad (valor
+escolhido apos varios experimentos). Nesta condicao, e assumido que o loop interno de controle
+da orientacao e capaz de seguir qualquer referencia dada por (11). O efeito pratico da funcao de
+saturacao (caso seja acionada), e o de truncar a inclinacao desejada do veculo, que por sua vez ira
+assumir momentaneamente uma orientacao limite
+constante, movendo-se em direcao a posicao desejada. Tal comportamento, eventualmente, modifica a regiao de operacao do controlador para
+fora da zona de saturacao, mantendo a estabilidade do sistema garantida teoricamente pela analise de (10), e experimentalmente comprovada nos
+resultados apresentados na Secao 5. Finalmente,
+as referencias das orientacoes sao passadas ao loop
+de controle interno como
+   
+u1
+
+ d1 .
+(12)
+u1
+d1
+Neste caso, substituindo estes sinais em (6), a dinamica rotacional torna-se
+   2
+
+ d1  2  1  2 1
+1
+
+,
+(13)
+1
+2 d1  2  1  2 1
+a qual sugere que o controlador do loop interno
+que esta implementado no computador de bordo
+do AR.Drone sera capaz de seguir uma referencia
+de orientacao desejada, com o desempenho determinado pelos parametros do modelo.
+
+ISSN 2525-8311
+
+3.2
+
+Controlador de voo do seguidor (Formacao)
+
+Nesta secao o controlador usado para guiar o seguidor e projetado, funcionando como um controlador da formacao. Primeiramente, a formacao
+e definida como uma estrutura virtual cartesiana.
+Dessa forma, define-se a estrutura desejada da for
+T
+macao como Xf  X1 X2 , onde X1  x1 y1
+representa um vetor contendo as posicoes x e y
+
+T
+globais do lder no espaco e X2  x2 y2
+as
+do seguidor. Tomando a derivada segunda desta
+estrutura, aparece Xf  X1  X2 , que pode ser reescrita, utilizando a mesma notacao de (8), como
+Xf  gR1 Ud1  gR2 Ud2 ,
+
+(14)
+
+de onde se obtem o controlador da formacao escolhendo a inversao
+Ud2 
+
+1 1
+R ( + gR1 Ud1 ),
+g 2
+
+(15)
+
+ +  X um sinal ausendo   Xfd + Df X
+f
+Pf f
+xiliar de controle, onde Xfd representa um vetor
+contendo a estrutura da formacao desejada, Xf representa um vetor contendo a formacao real (lida
+dos sensores), Xf  Xfd Xf e um vetor que contem o erro de formacao, e Df  diag(2.0, 2.0) e
+Pf  diag(2.0, 2.0) sao matrizes diagonais representando os ganhos derivativo e proporcional do
+controlador de formacao, respectivamente. Substituindo o controlador (15) em (14), obtem-se a
+dinamica do erro de formacao, em malha-fechada,
+como
+ +  X
+
+X
+(16)
+f
+Df f + Pf Xf  0,
+caracterizando o equilbrio 0 como assintoticamente estavel, permitindo concluir que Xf  0
+quando t  . Para finalizar, deve-se lembrar
+que o resultado da equacao do controlador da formacao, (15), representa as orientacoes desejadas
+para o veculo seguidor. Logo,
+   
+u2
+
+ d2  sat, (Ud2 ) .
+(17)
+u2
+d2
+4
+
+Arquitetura desenvolvida para os
+experimentos
+
+Para execucao dos experimentos, na estacao de
+solo foram programados os algoritmos representados por blocos no diagrama da Figura 2. Os veculos sao representados por AR.Drone 1 (Lder) e
+AR.Drone 2 (Seguidor).
+Para o veculo lder, deve-se informar ao sistema se este VANT sera controlado manualmente
+por um operador ou se sera guiado de forma automatica. Em caso manual, os comandos Ud1 sao
+enviados diretamente ao AR.Drone 1 pelo operador. Em caso automatico, no bloco Gerador
+de Trajetoria sao declarados os valores desejados
+para a navegacao deste veculo no espaco, como
+
+907
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+que na pratica significa que o veculo seguidor devera se posicionar na mesma cota global que o
+lder na posicao x e se manter a 4 m de distancia
+na na posicao y, conforme ilustrado na Figura 3.
+
+Figura 2 Arquitetura de software em diagrama
+de blocos.
+
+Figura 3 Estrutura desejada para a formacao nos
+experimentos.
+
+5.1
+xd1 e yd1 , que podem ser fixos ou variar no tempo.
+O controle se da pela estrutura hierarquica da Secao 3.1, implementando as equacoes (9) e (11) no
+bloco Controlador de Posicao. A sada deste bloco
+e enviada ao AR.Drone 1, que executa seu loop interno de controle da orientacao nos codigos implementados no seu computador de bordo, aos quais
+nao se tem acesso.
+O bloco denominado Filtro de Kalman existe
+para ambos os veculos, e se refere a uma implementacao baseada em (Santana et al., 2015).
+Neste trabalho, o codigo de um estimador de estados e detalhado, mostrando um metodo para realimentar dados sensoriais para os controladores,
+tais como posicoes e velocidades do VANT no referencial global. Na implementacao deste bloco,
+os calculos sao realizados atraves da fusao dos dados de um modulo de GPS e dos sensores_inerciais,
+usando as variaveis fornecidas pelo computador de
+bordo do veculo em q.
+Para o seguidor, no bloco Gerador de Formacao se declara a estrutura desejada da formacao Xfd , que e controlada no bloco Controlador
+de Formacao, representando a implementacao das
+equacoes (15) e (17). A sada deste bloco e enviada ao AR.Drone 2. Chama-se atencao que este
+ultimo bloco tambem utiliza em sua implementacao dados do AR.Drone 1, que incluem tanto valores sensoriais do Filtro de Kalman 1 como os sinais de controle do bloco Acao de Controle (Ud1 )
+que sao determinados de acordo com o tipo de
+controle escolhido para o lder (manual ou automatico), fechando assim a representacao completa
+da arquitetura de software implementada.
+5
+
+Resultados experimentais
+
+Nesta Secao sao apresentados dois experimentos
+envolvendo os conceitos discutidos neste trabalho,
+comprovando a eficacia pratica das suposicoes feitas anteriormente. Em ambos os experimentos
+a estrutura desejada para a formacao e definida
+como
+
+  
+x1d  x2d
+0.0
+Xfd 
+
+,
+y1d  y2d
+4.0
+
+ISSN 2525-8311
+
+Navegacao automatica do lder entre pontos
+
+Neste experimento o lder sera controlado de
+forma automatica pelo controlador da Secao 3.1,
+enquanto o controle da formacao e realizado conforme descrito na Secao 3.2. O objetivo e realizar
+uma navegacao entre pontos distintos, definidos
+como os vertices de um quadrado com lado de
+3 m, com os valores de xd1 e yd1 modificados a
+cada t  10 s, de acordo com a sequencia
+
+xd1  0.0 m, yd1  0.0 m
+
+
+
+x  0.0 m, y  3.0 m
+d1
+d1
+
+xd1  3.0 m, yd1  3.0 m
+
+
+
+xd1  3.0 m, yd1  0.0 m.
+Na Figura 4(a) e possvel observar a resposta
+sensorial para as posicoes globais de ambos os veculos. Em relacao a posicao x, observe-se que
+ambos os veculos convergem para o valor desejado xd1 , conforme estabelecido na estrutura desejada para a formacao. Ja em relacao a posicao
+y, note-se que enquanto o lder converge para o
+valor desejado yd1 , o seguidor executa um movimento similar, porem afastado por 4 m, conforme
+o esperado. Na Figura 4(b) ha uma comparacao
+entre os valores desejados para a formacao (que
+sao constantes) e os valores capturados pelos sensores durante o experimento. Note-se que apesar das oscilacoes presentes nesta curva, oriundas,
+principalmente, dos erros numericos inerentes aos
+sensores_inerciais e ao GPS, ha uma convergencia para os valores desejados de formacao durante
+todo o experimento. Estas observacoes indicam
+que os controladores do loop externo do lder e do
+seguidor sao capazes de executar as tarefas requeridas no experimento.
+Em termos da dinamica rotacional, nas Figuras 4(c) e 4(d) estao representadas as orientacoes
+dos veculos durante o experimento. Os valores
+denominados de referencia sao aqueles produzidos
+nas equacoes (11) e (17), que estao comparados
+nas imagens com os valores sensoriais. Observe-se
+que a cada mudanca de xd1 ou yd1 grandes erros
+de posicao sao introduzidos, forcando uma saturacao. Mesmo assim e possvel notar nas curvas
+
+908
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+a capacidade do sistema de recuperar os valores
+de referencia de orientacao. Assim, pode-se confirmar a convergencia das orientacoes, mesmo enfrentando imperfeicoes no seguimento, atribudas,
+principalmente, aos rudos sensoriais. Mesmo assim a resposta real do veculo acompanha o que
+era esperado, a partir da analise das secoes anteriores para o funcionamento do loop interno de
+controle da orientacao, tornando as suposicoes e
+simplificacoes teoricas coerentes com o voo pratico exposto na Figura 4. Por fim, para um melhor entendimento, um video deste experimento
+esta disponvel em httpsyoutu.beWIIqrWnRZEI.
+5.2
+
+Navegacao manual do lder
+
+Neste experimento se executa uma navegacao
+onde um operador envia comandos de movimento
+diretamente ao veculo lder, desde a estacao em
+solo. Na Figura 5(a) estao representadas as posicoes globais executadas por ambos os veculos.
+Conforme o esperado, o perfil realizado para a posicoes x e y e similar para ambos os VANTs, porem
+com um deslocamento de 4 m em y, comprovando
+assim a capacidade do controlador de formacao
+de manter a estrutura desejada nas circunstancias
+deste experimento. Na Figura 5(b) ha uma comparacao entre os valores desejados para a formacao
+(que sao constantes) e os valores capturados pelos
+sensores durante o experimento.
+Nas Figuras 5(c) e 5(d) apresentam-se como
+os VANTs se orientam durante o experimento.
+Para o lder (Figura 5(c)) as orientacoes de referencia sao os comandos exibidos na forma de
+pulso, que foram enviados manualmente pelo operador. Para o seguidor (Figura 5(d)), as orientacoes de referencia sao calculadas pelo sistema de
+controle de acordo com o necessario para manter a
+formacao desejada. Note-se a convergencia entre
+as variaveis nas curvas.
+Como pode ser visto na Figura 5, o sistema desenvolvido tambem apresenta resposta
+pratica coerente com a analise teorica das secoes anteriores. Para um melhor entendimento,
+um video deste experimento esta disponvel em
+httpsyoutu.beVm5T-JMwyQ.
+6
+
+Conclusoes
+
+Neste trabalho apresentou-se uma abordagem
+para modelagem e projeto_de_controladores automaticos de formacao para VANTs do tipo quadrimotor. Os controladores foram testados em
+ambientes_exteriores, utilizando-se realimentacao
+com dados inerciais e de GPS. Verificou-se a possibilidade de dar uma interpretacao mais pratica
+a um equacionamento tradicional da literatura,
+tornando o projeto_de_controladores uma tarefa
+simplificada. Os controladores foram testados em
+voos reais exibidos em vdeo, proporcionando uma
+
+ISSN 2525-8311
+
+melhor interpretacao dos assuntos abordados. As
+suposicoes e simplificacoes feitas sobre o modelo
+do veculo foram validadas nos experimentos, onde
+os comportamentos esperados foram de fato observados durante os voos.
+Agradecimentos
+Os autores agradecem ao CNPq - Conselho Nacional de Desenvolvimento Cientfico e Tecnologico,
+e a FAPES - Fundacao de Amparo a Pesquisa e
+Inovacao do Esprito Santo, pelo apoio financeiro
+para a realizacao desta pesquisa. Eles tambem
+agradecem a UFES, ao IFES, a UFV e a FAPEMIG, por viabilizarem sua participacao neste trabalho.
+Referencias
+Bertrand, S., Guenard, N., Hamel, T., PietLahanier, H. and Eck, L. (2011). A hierarchical controller for miniature VTOL
+uavs Design and stability analysis using singular perturbation theory, Control Engineering Practice 19(10) 1099  1108.
+Bristeau, P.-J., Callou, F., Vissiere, D. and Petit,
+N. (2011). The navigation and control technology inside the ar.drone micro uav, Proceedings of the 18th IFAC World Congress,
+Vol. 18, Milan, Italy.
+Castillo, P., Dzul, A. and Lozano, R. (2004). Realtime stabilization and tracking of a four-rotor
+mini rotorcraft, IEEE Transactions on Control Systems Technology 12(4) 510516.
+Engel, J., Sturm, J. and Cremers, D. (2014).
+Scale-aware navigation of a low-cost quadrocopter with a monocular camera, Robotics
+and Autonomous Systems 62(11) 16461656.
+Kendoul, F., Yu, Z. and Nonami, K. (2010).
+Guidance and nonlinear control system for
+autonomous flight of minirotorcraft unmanned aerial vehicles, Journal of Field Robotics
+27(3) 311334.
+Oh, K.-K., Park, M.-C. and Ahn, H.-S. (2015). A
+survey of multi-agent formation control, Automatica 53 424  440.
+Piskorski, S., Brulez, N., Eline, P. and DHaeyer,
+F. (2012). AR.Drone Developer Guide, Parrot. SDK Version 2.0.
+Santana, L. V., Brandao, A. S. and SarcinelliFilho, M. (2015). An automatic flight control system for the ar.drone quadrotor in outdoor environments, 2015 Workshop on Research, Education and Development of Unmanned Aerial Systems, pp. 401410.
+
+909
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Posições Globais dos Veículos
+
+Comparação das Variáveis da Formação
+
+6
+
+2
+
+0
+Desejada para o líder
+Líder
+Seguidor
+
+2
+4
+6
+
+0
+
+10
+
+0
+1
+
+20
+
+30
+
+40
+
+2
+
+50
+
+6
+
+10
+
+20
+
+30
+
+40
+
+50
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+5
+
+2
+
+y (m)
+
+y (m)
+
+0
+
+6
+
+4
+
+0
+2
+
+4
+3
+
+4
+6
+
+Desejada
+Real (Sensores)
+
+1
+
+2
+
+x (m)
+
+x (m)
+
+4
+
+0
+
+10
+
+20
+
+30
+
+40
+
+2
+
+50
+
+Tempo (seg)
+
+Tempo (seg)
+
+(a)
+
+(b)
+
+Resposta das Orientações(Líder)
+
+Resposta das Orientações(Seguidor)
+0.2
+
+Referência
+Real (Sensores)
+
+0.1
+0
+0.1
+0.2
+
+0
+
+10
+
+20
+
+30
+
+40
+
+2 (rad)
+
+1 (rad)
+
+0.2
+
+0
+0.1
+0.2
+
+50
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+0.2
+
+ 2 (rad)
+
+ 1 (rad)
+
+0.2
+0.1
+0
+0.1
+0.2
+
+Referência
+Real (Sensores)
+
+0.1
+
+0
+
+10
+
+20
+
+30
+
+40
+
+0.1
+0
+0.1
+0.2
+
+50
+
+Tempo (seg)
+
+Tempo (seg)
+
+(c)
+
+(d)
+
+Figura 4 Experimento de navegacao em formacao entre os vertices de um quadrado.
+
+Comparação das Variáveis da Formação
+
+Posições Globais dos Veículos
+2
+
+6
+
+x (m)
+
+4
+2
+0
+2
+
+Desejada
+Real (Sensores)
+
+1
+
+x (m)
+
+Líder
+Seguidor
+
+0
+1
+
+4
+6
+
+0
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+
+35
+
+40
+
+45
+
+50
+
+2
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+
+35
+
+40
+
+45
+
+50
+
+0
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+
+35
+
+40
+
+45
+
+50
+
+6
+
+6
+4
+
+5
+
+2
+
+y (m)
+
+y (m)
+
+0
+
+0
+2
+
+4
+3
+
+4
+6
+
+0
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+
+35
+
+40
+
+45
+
+50
+
+2
+
+Tempo (seg)
+
+Tempo (seg)
+
+(a)
+
+(b)
+
+Resposta das Orientações(Lider)
+
+Resposta das Orientações(Seguidor)
+0.2
+
+Referência
+Real (Sensores)
+
+0.1
+0
+0.1
+0.2
+
+0
+
+10
+
+20
+
+30
+
+40
+
+2 (rad)
+
+1 (rad)
+
+0.2
+
+0
+
+10
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+20
+
+30
+
+40
+
+50
+
+0.2
+
+ 2 (rad)
+
+ 1 (rad)
+
+0.2
+0.1
+0
+0.1
+0.2
+
+0
+0.1
+0.2
+
+50
+
+Referência
+Real (Sensores)
+
+0.1
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+0.1
+0
+0.1
+0.2
+
+Tempo (seg)
+
+Tempo (seg)
+
+(c)
+
+(d)
+
+Figura 5 Experimento de navegacao manual com lder.
+
+ISSN 2525-8311
+
+910

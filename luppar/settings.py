@@ -209,3 +209,7 @@ PATH_TO_DATA = os.path.join(BASE_DIR, 'data')
 N_MAX_FEATURES = 50000
 
 SOURCES_LIST = dict()
+
+MEDIA_URL = '/data/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
+

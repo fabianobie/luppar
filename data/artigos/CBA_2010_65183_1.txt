@@ -1,0 +1,953 @@
+VALIDAÇÃO DE PARÂMETROS DE LINHAS DE TRANSMISSÃO ATRAVÉS DE DIVERSAS AMOSTRAS DE MEDIDAS
+MADELEINE R. M. CASTILLO, JOÃO B. A. LONDON JR., NEWTON G. BRETAS
+
+Laboratório de Análise Computacional em Sistemas Eléticos de Potência - LACO, Depto. de Engenharia
+Elétrica, Escola de Engenharia de São Carlos, Universidade de São Paulo EESCUSP
+Rua Trabalhador São-carlense, 400, 13566-590 São Carlos, SP, Brasil
+E-mails mcastillo29@usp.br, ,jbalj@sc.usp.br, ngbretas@sc.usp.br
+Abstract A practical and efficient off-line approach to detect, identify and correct series and shunt branch parameter errors is
+proposed. The branches suspected to be with parameter errors are identified through a Suspicious Index (SI). The SI of a branch
+is the ratio between the number of measurements incident to that branch, whose normalized residuals are larger than one specified
+threshold value, and the total number of measurement incident to that branch. Using several measurement snapshots, the suspicious branches parameters are estimated, in a sequential form, via an augmented state and parameter estimator which increases
+the V- state vector for the inclusion of suspicious parameters. Several simulation results (with the IEEE 14, 30 and 57 bus systems) have demonstrated the high accuracy and reliability of the proposed approach to deal with single and multiple parameter errors in adjacent and non-adjacent branches.
+Keywords Power Systems, State Estimation, Parameter Error Detection and identification, Parameter Estimation.
+Resumo Neste artigo propõe-se uma metodologia off-line, prática e eficiente, para detectar, identificar e corrigir erros em parâmetros_serie e shunt de linhas_de_transmissão. As linhas_de_transmissão, ou ramos do modelo barra-ramo, suspeitas de estarem
+com erros de parâmetros_são identificados através de um Índice de Suspeita (IS). O IS de um ramo é a relação entre o numero de
+medidas incidentes a esse ramo, cujos resíduos normalizados são maiores que um valor pré-estabelecido, e o número total de medidas incidentes a esse ramo. Usando várias amostras de medidas, os parâmetros dos ramos suspeitos são estimados, de forma seqencial, via um estimador de estado e parâmetros baseado nas equações normais, que aumenta o vetor de variáveis de estado para inclusão dos parâmetros_suspeitos. Resultados numéricos de diversas simulações, com os sistemas de 14, 30 e 57 barras do
+IEEE, têm demonstrado a alta precisão e confiabilidade da metodologia proposta, mesmo na ocorrência de erros múltiplos (em
+mais de um parâmetro) em ramos adjacentes.
+Palavras-chave .
+
+Uma configuração da rede incorreta, erro topológico, normalmente produz grandes erros nas medidas estimadas, e pode ser mais facilmente identificado do que um erro de parâmetro (causado pela informação errada do parâmetro de algum elemento do
+SEP) (Abur e Expósito, 2004).
+A suspeita sobre valores errados de parâmetros
+surge basicamente pelo aparecimento de medidas
+com resíduos normalizados tendenciosamente elevados.
+Parâmetros de elementos da rede, armazenados
+na base de dados, podem estar incorretos em razão
+de dados imprecisos fornecidos por fabricantes alterações de projeto não atualizadas na base de dados
+(por exemplo, seção de linha aérea que se torna subterrânea) etc. A presença de erros em parâmetros
+degrada os resultados do processo de EE, fazendo
+com que medidas analógicas corretas, porém incidentes a tais parâmetros, sejam colocadas como suspeitas de possuir erros_grosseiros.
+Os métodos desenvolvidos para estimação de
+parâmetros podem ser classificados, de uma forma
+geral, em dois amplos grupos (Abur e Expósito,
+2004) (1) Aqueles que se baseiam na análise da sensibilidade dos resíduos (Fletcher e Stadlin, 1983
+Van Cutsem e Quintana, 1988 Liu e Wu, 1992) e
+(2) Aqueles que aumentam o vetor de estado para
+incluírem os parâmetros do sistema suspeitos de estarem com erros, como se eles fossem variáveis de
+estado independentes.
+
+1 Introdução
+O processo de estimação_de_estado (EE) é de
+fundamental importância para operação em temporeal dos sistemas_elétricos_de_potência (SEP). Isto
+porque as variáveis de estado estimadas, ao invés das
+medidas, constituem a base de dados para execução
+de funções relacionadas com a segurança da operação dos SEP.
+A finalidade do processo de EE é fornecer, em
+tempo-real, as variáveis de estado do sistema (tensões complexas nas barras do mesmo) a partir do
+processamento das seguintes informações medidas
+analógicas1, obtidas em tempo_real, provenientes do
+Sistema de Aquisição e Supervisão de Dados
+(SCADA do inglês, Supervisory Control and Data
+Aquisition) parâmetros dos elementos do SEP, disponíveis no banco_de_dados das companhias de energia_elétrica e topologia atual do SEP, obtida previamente pelo configurador de rede. O problema de EE
+em SEP é comumente formulado baseando-se nas
+suposições de que a configuração da rede e os parâmetros usados nos modelos que representam os elementos da rede_elétrica são corretos. Entretanto, essas suposições são freqentemente não verdadeiras.
+1
+
+Usualmente são medidas de fluxo_de_potência_ativa e reativa nas
+linhas, injeção_de_potência_ativa e reativa e algumas magnitudes de
+tensão nas barras.
+
+87
+
+Os métodos do grupo (1) são executados ao final
+do processo de EE e possuem as seguintes vantagens não degradam o nível de redundância e não
+exigem rotinas adicionais s já existentes para implementação do processo convencional de EE. Porém, para alcançar a mesma precisão dos métodos
+que aumentam o vetor de estado, exigem a realização
+de diversos ciclos de estimação_de_estado e parâmetros (Abur e Expósito, 2004).
+Dependendo da forma com que o vetor de estado
+aumentado é estimado, os métodos do grupo (2) podem ser divididos em dois subgrupos (2.1) Métodos
+que utilizam as equações normais (Allam e Laughton, 1974 Clements, Denison, Ringlee, 1973 Zarco
+e Expósito, 1996) e (2.2) Métodos que utilizam a
+teoria do Filtro de Kalman (Clements e Ringlee,
+1974 Debs, 1974 Slutsker e Clements, 1996).
+Os métodos do subgrupo (2.1) sofrem de problemas de observabilidade, pois, raramente o número
+de medidas disponível é suficiente para estimar todas
+as variáveis de estado aumentadas. Essa limitação
+pode ser superada através da utilização de diversas
+amostras de medidas, seja de forma seqencial ou em
+lote. Os métodos do subgrupo (2.2) processam diversas amostras de medidas de forma seqencial, para
+melhorar de forma recursiva as estimativas dos parâmetros. Porém, a necessidade de atualização da
+matriz de covariância dos erros de parâmetros aumenta muito o custo_computacional dos mesmos,
+principalmente quando é grande a quantidade de
+parâmetros_suspeitos.
+Pesquisas recentes têm investigado a possibilidade de melhorar o processo de validação de parâmetros através da utilização de medidas de fasores
+(Zhu e Abur, 2006 Zhum e Abur, 2009 Borda, Olarte, Diaz, 2009), que são obtidas através de Unidades de Medição Fasorial (Phadke, 1993).
+Diversos métodos já foram desenvolvidos para
+validação de parâmetros_de_linhas_de_transmissão.
+Porém, a maioria desses métodos preocupa apenas
+com os parâmetros_série, considerando insignificante
+a influência dos erros nos parâmetros_shunt das linhas_de_transmissão (Liu e Lun, 1992 Coutto Filho
+et al, 2008 Castillo et al, 2009). Entretanto, diversos
+artigos têm demonstrado que essa influência é bem
+significante (Mínguez e Conejo, 2007 Lefebvre et al
+2006 Lefebvre et al, 2008).
+Neste trabalho propõe-se uma metodologia offline, eficiente e prática, para detecção, identificação e
+correção de erros em parâmetros_série e shunt de
+linhas_de_transmissão. A metodologia proposta é uma
+extensão daquela desenvolvida em (Castillo et al,
+2009).
+De acordo com a classificação das metodologias
+para estimação_de_parâmetros_supracitada, a metodologia proposta enquadra-se no grupo (2), subgrupo
+(2.1). Para contornar o problema de observabilidade
+que ocorre em função do aumento do vetor de variáveis de estado, a metodologia proposta é off-line,
+fazendo uso de diversas amostras de medidas.
+
+O artigo está organizado como segue na Seção
+2 recordam-se aspectos básicos do processo de estimação_de_estado a metodologia proposta está na
+Seção 3 na Seção 4 encontram-se simulações nos
+sistemas de 14, 30 e 57 barras do IEEE e, finalmente, na Seção 5 resumem-se as conclusões do trabalho.
+2 Estimação de Estado por Mínimos Quadrados
+Ponderados  Equação Normal
+As medidas analógicas realizadas e as variáveis
+de estado de um SEP estão relacionadas através do
+seguinte modelo de medição
+(1)
+z  h( xe )  w,
+onde z é o vetor de medidas (mx1) xe é o vetor de
+variáveis de estado (2nx1) h(xe) é o vetor de funções
+não_lineares, que relaciona as medidas com as variáveis de estado (mx1) w é o vetor dos erros nas medidas (mx1), que são considerados como variáveis aleatórias independentes, com distribuição Gaussiana de
+média zero e matriz de covariância R sendo m e
+n o número de medidas e o de barras do sistema,
+respectivamente.
+A partir do estimador de estado por mínimos
+quadrados ponderados (MQP), a estimativa do vetor
+de variáveis de estado xe, designado por xe , é obtida
+de forma recursiva, através do cálculo da matriz Jacobiana H ( xe )  h( xe )  xe , e da solução do seguinte
+conjunto de equações (algoritmo iterativo GaussNewton (Schweppe et al, 1970))
+(2)
+G( xek )  ( xek 1  xek )  H T ( xek )  R1   z  h( xek ),
+onde xek é o valor de xe na iteração k, e
+
+G( xek )  H T ( xek )  R1  H ( xek )
+
+(3)
+
+é a matriz Ganho.
+O vetor de resíduos r , definido como sendo a
+diferença entre z e a correspondente quantidade filtrada z , é normalizado e submetido a um teste de
+validação
+r (k ) N 
+
+onde
+
+r (k )
+
+ r (k )
+
+r (k ) N
+
+r (i) , i  1,
+N
+
+  (lim iar de det ecção),
+
+é
+
+o
+
+maior
+
+entre
+
+(4)
+todos
+
+os
+
+, m   r (k )  (k , k ) é o desvio
+
+padrão da k-ésima componente do vetor resíduo e
+ é a matriz de covariância dos resíduos, dada por
+(5)
+  W 1  HG1H t
+De acordo com a literatura, na ocorrência de
+apenas uma medida com erro grosseiro, se
+r (k ) N   , a k-ésima medida é portadora de erro
+grosseiro (usualmente   3 ) (Abur e Expósito,
+2004 Monticelli, 1999).
+
+3 Metodologia Proposta
+
+88
+
+A metodologia off-line que está sendo proposta
+possibilita a detecção, identificação e correção de
+erros em parâmetros_série e shunt de linhas_de_transmissão, sendo uma extensão da metodologia apresentada em (Castillo et al, 2009). Vale lembrar que essa
+última não possibilita a validação dos parâmetros
+shunt de linhas_de_transmissão.
+A metodologia off-line proposta compreende três
+fases Fase 1  Identificação de ramos suspeitos
+Fase 2  Estimação dos parâmetros_suspeitos e Fase
+3  Validação das estimativas dos parâmetros_suspeitos.
+Na Figura 1 ilustra-se o fluxograma da metodologia proposta, sendo LRS uma Lista de Ramos Suspeitos, e LREV uma Lista de Ramos Suspeitos cujos
+parâmetros foram Estimados e validados. Apresentase, a seguir, os principais pontos de cada uma das
+fases da metodologia proposta. Mais detalhes acerca
+de cada uma dessas fases podem ser encontrados em
+(Castillo et al., 2009).
+
+Passo 4 Inicializar o vetor MRE e calcular o IS para
+os ramos do sistema que são incidentes a pelo menos
+uma medida com resíduo normalizado maior que 3,
+em módulo (via equação (6))
+Passo 5 Montar uma lista ordenada de ramos suspeitos (LRS). O ramo que possuir o maior IS será o
+primeiro dessa lista, e assim sucessivamente (em
+caso de empate o ramo incidente a medida com maior resíduo normalizado será o primeiro da lista).
+2.2 Fase 2 Estimação dos Parâmetros Suspeitos
+Nesta fase estimam-se os parâmetros_suspeitos, isto é, a condutância série, a susceptância série e a
+susceptância shunt dos ramos identificados como
+suspeitos na Fase 1. Para isso, utiliza-se um estimador de estado e parâmetros baseado nas equações
+normais, que aumenta o vetor de variáveis de estado
+para inclusão dos parâmetros_suspeitos.
+
+2.1 Fase 1 Identificação de Ramos Suspeitos
+Tendo em vista que a metodologia é off-line, é
+possível selecionar amostras de medidas isentas de
+erros_grosseiros e topológicos. Assim, através do
+processamento de um estimador de estado por MQP
+convencional, determinam-se as medidas que apresentam resíduos normalizados maiores que um valor
+pré-estabelecido utilizado para processamento de
+erros_grosseiros. Em seguida, associam-se tais medidas para os ramos que lhe são incidentes. A partir
+dessas associações, calcula-se o chamado Vetor Índice de Suspeita (IS), para cada um dos nl ramos do
+sistema, através da seguinte expressão
+(6)
+IS (i)  MRE (i)
+TM (i)
+para i  1,...,nl, sendo IS(i) o índice de suspeita (IS)
+de o ramo i estar com erros de parâmetros MRE(i) o
+número de medidas, com resíduos normalizados
+maiores que um valor pré-estabelecido, incidentes ao
+ramo i e TM(i) o número total de medidas disponíveis incidentes ao ramo i.
+Todos os ramos com IS  0 serão considerados
+suspeitos de estarem com erros de parâmetros. Porém, dar-se-á inicio a estimação_de_parâmetros pelos
+ramos com IS  0,5 , pois são os ramos com maior
+probabilidade de estarem com erros.
+O algoritmo proposto fornece uma lista de ramos suspeitos de estarem com erro de parâmetros e
+possui os seguintes passos
+Passo 1 A partir de uma das amostras de medidas
+pré-selecionadas inicialize o vetor TM
+Passo 2 Executar o estimador por MQP e obter os
+resíduos normalizados (serão utilizados os valores
+dos parâmetros disponíveis no banco_de_dados atual)
+Passo 3 Se houver medidas com resíduos normalizados maiores que 3, em módulo, ir para o Passo 4.
+Caso contrário, encerrar o processo (não existe suspeita de existência de erros de parâmetros)
+
+Figura 1 - Fluxograma
+A idéia que norteia a Fase 2 consiste em utilizar
+medidas de diversas amostras e estimar as variáveis
+de estado e os parâmetros_suspeitos de forma seqencial. Lembremo-nos de que estamos considerando a estimação_de_parâmetros que permanecem praticamente constantes por um determinado período de
+tempo (Abur e Expósito, 2004). Em linhas gerais o
+procedimento proposto é o seguinte
+Amostra 1 Inicialize todas as tensões complexas no
+flat start e os parâmetros_suspeitos com os valores
+disponíveis no banco_de_dados. A partir das medidas
+disponíveis nesta amostra ( z1 ), estimam-se as variáveis de estado convencionais (tensões complexas nas
+barras do sistema) ( x1 ) e os parâmetros_suspeitos
+( p1 ), através do estimador de estado e parâmetros
+
+89
+
+supracitado
+Amostra 2 Inicialize todas as tensões complexas no
+flat start, como na Amostra 1, mas os parâmetros
+suspeitos com os valores estimados na Amostra 1
+( p1 ). Através das medidas ora disponíveis, estimamse, via o estimador de estado e parâmetros_supracitado, as variáveis de estado ( x 2 ) e os parâmetros_suspeitos ( p 2 ).
+O critério de parada do procedimento proposto é a
+comparação da magnitude das correções dos parâmetros, obtidas em duas amostras consecutivos
+(k )
+( k 1)
+), com uma tolerância pré(  P  P  P
+
+nuará o mesmo podendo, inclusive, aumentar.
+4. Testes e Análise dos Resultados
+Nesta seção mostram-se alguns testes realizados
+para comprovar a eficiência da metodologia proposta. Foram utilizados os sistemas de 14, 30 e 57 barras
+do IEEE (as topologias e os parâmetros desses sistemas
+estão
+disponíveis
+na
+Internet
+htppwww.ee.washington.eduresearchpstca). Em
+todos os testes consideraram-se sistemas de medições
+altamente redundantes, isto é, com todas as medidas
+de magnitudes de tensão e de potência (injeção e
+fluxo).
+Para executar os testes, as condições iniciais foram construídas da seguinte maneira - Parâmetros
+iniciais adicionaram-se erros de 20 a 30 apenas
+nos parâmetros que serão estimados (condutância
+série, susceptância série e susceptância shunt de linhas_de_transmissão) - Para simular medidas de várias amostras, considerou-se uma evolução temporal
+das variáveis de estado de cada sistema, associada a
+um perfil de carga típico, para um período de tempo
+com intervalos de 5 minutos. A curva_de_carga de
+cada barra do sistema é composta por um percentual
+da carga total do sistema, submetido a uma flutuação
+aleatória, com distribuição normal de média zero e
+desvio padrão de 0,5 do valor do componente do
+fator de participação da carga em cada barra - Valores das medidas de cada amostra esses valores foram
+obtidos adicionando-se, aos valores exatos determinados por um programa de fluxo_de_carga, erros aleatórios de média zero e desvio padrão  dado
+
+estabelecida.  medida que a magnitude da correção
+de um determinado parâmetro, obtido em duas amostras consecutivas (  p i  p (i )  p (i 1) ), for menor que
+0,01, o correspondente parâmetro é removido do
+vetor de variáveis de estado. O procedimento termina
+quando as magnitudes de todas as correções obtidas
+em dois instantes de tempo consecutivos forem menores que 0,01.
+O procedimento proposto pode ser considerado
+um filtro_adaptativo, uma vez que as estimativas
+dos parâmetros melhoram de uma amostra para outra.
+Para melhorar o condicionamento numérico da
+matriz ganho envolvida no processo de estimação de
+estado e parâmetro, o estimador proposto divide cada
+iteração em duas meias iterações. Ou seja, para cada
+amostra de medidas k, as correções das variáveis
+de estado convencionais ( xek ) e a dos parâmetros
+( p k ) são obtidas de forma seqencial e o teste de
+convergência baseia-se na análise das alterações máximas em ambas as correções.
+Observe que o estimador de estado e parâmetro
+proposto será aplicado para cada uma das amostras
+de medidas que foram selecionadas. O algoritmo
+desse estimador é apresentado detalhadamente em
+(Castillo et al., 2009).
+
+por  
+
+pr * z lf
+3
+
+, sendo pr a precisão do medidor
+
+(neste artigo pr  2).  Para aplicar a metodologia
+proposta, vinte conjuntos de medidas foram gerados
+para cada sistema, para simular vinte amostras consecutivas.
+Nass próximas tabelas utilizar-se-á a seguinte
+nomenclatura Pa (Qa)  medida de injeção de potencia ativa (reativa) na barra a Pa-b (Qa-b)  medida
+de fluxo de potencia ativa (reativa) da barra a para
+barra b Ga-b  condutância série do ramo da barra
+a-b Ba-b  susceptância serie do ramo a-b e
+Bshunta-b  susceptância shunt do ramo a-b.
+
+2.3 Fase 3 Validação das estimativas dos parâmetros_suspeitos
+Esta fase é necessária porque, em razão do efeito
+de espalhamento de resíduo, o processo de detecção
+e identificação de ramos suspeitos (Fase 1) pode falhar, isto é, pode classificar erroneamente um ramo
+como suspeito de estar com erro de parâmetro. Assim, em função do ruído das medidas, as estimativas
+para os valores dos parâmetros que foram erroneamente classificados como suspeitos podem ser piores
+que os valores já disponíveis no banco_de_dados.
+Para validar as estimativas dos parâmetros de um
+dado ramo, utiliza-se um estimador de estado convencional, por MQP, que é processado considerando
+o valor estimado daquele ramo, e não o valor disponível no banco_de_dados. Se a estimativa estiver próxima do valor verdadeiro daquele parâmetro, o
+correspondente IS diminuirá. Caso contrário, conti-
+
+4. 1 Testes com o sistema de 14 barras do IEEE
+Teste 1 Simularam-se erros nos parâmetros do ramo
+2-5 (erros de 20 a 30 dos valores corretos). Como resultado da aplicação da metodologia proposta
+temos (ver fluxograma ilustrado na Figura 1)
+Fase 1 Identificação de ramos suspeitos o resultado
+da aplicação desta fase é a lista de ramos suspeitos
+apresentada na Tabela 1. As medidas em cada
+SBV(i), com os maiores resíduos normalizados (rN),
+estão em destaque (Coluna 4). O Ramo 2-5 é sele90
+
+TABELA 3
+RESULTADOS  SISTEMA DE 14 BARRAS DO IEEE- TESTE 2
+ de erro das
+Inicial*
+Estimado
+Correto
+estimativas
+G1-2
+3.8455
+5.0059
+4.9991
+0.1360
+B1-2
+-11.7408
+-15.2827
+-15.2630
+0.1290
+
+cionado para ter seus parâmetros estimados.
+TABELA 1
+LISTA DE RAMOS SUSPEITOS  SISTEMA DE 14 BARRAS DO IEEE TESTE 1
+Ramo
+TM (i)
+MRE (i)
+IS(i)
+Medidas em MRE(i)
+i
+2-5
+6
+4
+0.67
+P5-2, P2-5, Q5-2, Q2-5
+2-4
+6
+3
+0.50
+Q2-4, P4-2, P2-4
+4-5
+6
+0.50
+3
+Q5-4, Q4-5, P4-5
+2-3
+6
+0.33
+2
+Q2-3, Q3-2
+1-5
+6
+1
+0.17
+Q5-1
+3-4
+6
+1
+0.17
+Q4-3
+1-2
+6
+1
+0.17
+Q1-2
+
+G2-5
+B2-5
+
+Correto
+
+ de erro das
+estimativas
+
+1.3086
+-3.8991
+
+1.6937
+-5.1862
+
+1.7011
+-5.1939
+
+0.4350
+0.1482
+
+0.0263
+
+0.0264
+
+0.3787
+
+1.5277
+
+1.9769
+
+1.9860
+
+0.4582
+
+B3-4
+
+-3.8991
+
+-5.0026
+
+-5.0688
+
+1.3060
+
+B3shunt
+4
+
+0.0045
+
+0.0062
+
+0.0064
+
+3.1250
+
+Teste 3 Neste teste foram simulados erros simultâneos nos parâmetros de três ramos (ramos 1-5, 2-3 e
+2-4), sendo dois adjacentes (ramos 2-3 e 2-4). Os
+resultados obtidos encontram-se na Tabela 4.
+4. 2 Teste com o sistema de 30 barras do IEEE
+Neste teste são simulados erros simultâneos nos
+parâmetros de três ramos (ramos 1-2, 2-4 e 8-28).
+Observe que os ramos 1-2 e 2-4 são adjacentes. Os
+resultados obtidos encontram-se na Tabela 5. Importa destacar que os resultados obtidos mostram, mais
+uma vez, que a metodologia proposta consegue boas
+estimativas, principalmente para susceptância serie
+do ramo 8-28 (de um erro relativo de 30 obteve um
+erro de 0.2923).
+TABELA 4
+RESULTADOS  SISTEMA DE 14 BARRAS DO IEEE - TESTE 3
+Inicial*
+
+Estimado
+
+Correto
+
+G1-5
+B1-5
+
+0.71806
+-2.96443
+
+1.0231
+-4.2161
+
+1.0258
+-4.2349
+
+ de erro das
+estimativas
+0.2632
+0.4439
+
+B1shunt
+5
+
+0.01722
+
+0.0245
+
+0.0246
+
+0.4065
+
+G2-3
+
+0.7945
+
+1.1297
+
+1.1350
+
+0.4669
+
+B2-3
+
+-3.34726
+
+-4.7602
+
+-4.7818
+
+0.4517
+
+B2shunt
+3
+
+0.01533
+
+0.0221
+
+0.0219
+
+0.9132
+
+G2-4
+
+1.1802
+
+1.6793
+
+1.6860
+
+0.3974
+
+B2-4
+
+3.58106
+
+-5.0768
+
+-5.1158
+
+0.7623
+
+B2shunt
+4
+
+0.0119
+0.0174
+0.0170
+2.3529
+* Os valores iniciais são contaminados com erros de 20 a 30
+dos valores corretos
+
+TABELA 2
+RESULTADOS  SISTEMA DE 14 BARRAS DO IEEE - TESTE 1
+Estimado
+
+0.0185
+
+G3-4
+
+* Os valores iniciais estão contaminados com erros de 20 a 30
+dos valores corretos
+
+Fase 2 Estimação dos parâmetros_suspeitos estimase o valor 1.6937-j5.1862 pu, para admitância série
+do ramo 2-5 e 0.0171 pu para susceptância shunt.
+Como previamente mencionado, para aplicar a metodologia proposta vinte conjuntos de medidas foram
+gerados para simular 20 amostras consecutivos. Porém, neste teste o critério de parada foi satisfeito na
+quarta amostra.
+Fase 3  Validação das estimativas dos parâmetros
+suspeitos validam-se as estimativas. Em seguida
+realizam-se as seguintes tarefas a base de dados é
+atualizada, isto é, os valores disponíveis dos parâmetros do ramo 2-5 são substituídos pelos valores estimados a lista de ramos suspeitos é esvaziada (LSB 
+) e o ramo 2-5 é armazenado na lista de ramos suspeitos cujos parâmetros já foram estimados e validados (LSBEV 2-5).
+Fase 1 Identificação de ramos suspeitos não existem mais medidas com resíduo normalizado maior
+que 3. Fim da análise.
+Na Tabela 2 apresentam-se os valores disponíveis
+no banco_de_dados (iniciais), os estimados e os corretos dos parâmetros do ramo 2-5. Na coluna quatro da
+Tabela 2 apresentam-se as porcentagens dos erros
+dos valores estimados. Observe que a metodologia
+proposta permitiu a correção do valor dos parâmetros
+de forma significativa, principalmente para susceptância série.
+
+Inicial*
+
+B1shunt
+2
+
+TABELA 5
+RESULTADOS  SISTEMA DE 30 BARRAS DO IEEE
+Inicial*
+
+Estimado
+
+Correto
+
+ de erro das
+estimativas
+
+6.7919
+-20.3407
+
+5.2530
+-15.5596
+
+5.2246
+-15.6467
+
+0.5436
+0.5566
+
+B1shunt
+2
+
+0.0343
+
+0.0263
+
+0.0264
+
+0.3787
+
+G24
+B24
+
+2.21715
+6.75649
+
+1.7001
+-5.2177
+
+1.7055
+-5.1973
+
+0.3166
+0.3925
+
+B2shunt
+4
+
+0.02392
+
+0.0183
+
+0.0184
+
+0.5434
+
+G1-2
+B1-2
+
+1.1560
+0.0121
+0.0171
+0.0173
+* Os valores iniciais estão contaminados com erros de 20 a
+30 dos valores corretos
+B2shunt
+5
+
+Tendo em vista a limitação de espaço, apresentarse-ão, para os próximos testes, apenas os valores
+iniciais, corretos e estimados dos parâmetros.
+
+G8-28
+B8-28
+
+1.8770
+1.4590
+1.4439
+1.0457
+-5.9030
+-4.5570
+-4.5408
+0.2923
+B8shunt
+0.0278
+0.0216
+0.0214
+0.9345
+28
+* Os valores iniciais estão contaminados com erros de 20 a
+30 dos valores corretos
+
+Teste 2 Neste teste são simulados erros simultâneos
+nos parâmetros de dois ramos não adjacentes (ramos
+1-2 e 3-4), ou seja, ramos eletricamente distantes. Os
+resultados obtidos encontram-se na Tabela 3.
+
+4. 3 Teste com o sistema de 57 barras do IEEE
+
+91
+
+Neste teste foram simulados erros simultâneos
+nos parâmetros de três ramos (ramos 7-8, 1-15 e 315), sendo dois adjacentes (ramos 1-15 e 3-15). Conforme apresentado na Tabela 6, os valores de todos
+os parâmetros estimados foram corrigidos, principalmente a susceptância série do ramo 1-15 (de 30
+passou para 0.1029 de erro).
+
+Agradecimentos
+Os autores agradecem  FAPESP pelo suporte financeiro desta pesquisa.
+Referências Bibliográficas
+
+TABELA 6
+RESULTADOS  SISTEMA DE 57 BARRAS DO IEEE
+Inicial*
+
+Estimado
+
+Correto
+
+G7-8
+B7-8
+
+3.4337
+-17.5881
+
+2.6381
+-13.4428
+
+2.6413
+-13.5293
+
+ de erro das
+estimativas
+0.1211
+0.6393
+
+B7shunt
+8
+
+0.0126
+
+0.0093
+
+0.0097
+
+4.1237
+
+G1-15
+B1-15
+
+2.6914
+-13.7593
+
+2.0774
+-10.5950
+
+2.0703
+-10.5841
+
+0.3429
+0.1029
+
+B1shunt
+15
+
+0.0642
+
+0.0490
+
+0.0494
+
+0.8097
+
+G3-15
+B3-15
+
+6.8567
+22.4225
+
+5.1477
+-17.4419
+
+5.2744
+-17.2481
+
+2.4021
+1.1236
+
+B3shunt
+15
+
+0.0354
+
+0.0281
+
+0.0272
+
+3.3088
+
+1
+
+2
+
+3
+
+4
+
+5
+
+* Os valores iniciais são contaminados com erros de 20 a 30
+dos valores corretos
+6
+
+5 Conclusões
+7
+
+Neste artigo desenvolveu-se uma metodologia
+que permite a detecção, identificação e correção de
+erros em parâmetros_série e shunt de linhas_de_transmissão.
+A metodologia proposta pode tratar com erros
+em um ou mais parâmetros, mesmo quando eles ocorrem em ramos adjacentes. Para isso, faz uso de
+medidas de diversas amostras e compreende três fases que possibilitam identificação_de_parâmetros
+suspeitos de estarem com erro (Fase 1) estimação
+dos parâmetros_suspeitos (Fase 2) e validação dos
+valores estimados (Fase 3).
+Emprega-se, na Fase 2, um estimador de estado e
+parâmetros que aumenta o vetor de estado para inclusão dos parâmetros_suspeitos. Para melhorar o
+condicionamento numérico da matriz ganho envolvida no processo de estimação_de_estado e parâmetro,
+tal estimador trabalha de uma forma desacoplada,
+dividindo cada iteração em duas meias iterações.
+Uma para correção das variáveis de estado conven-
+
+8
+
+9
+
+10
+
+11
+
+12
+
+13
+
+cionais ( xek ) e outra para os parâmetros ( p k ).
+
+14
+
+Os testes realizados, alguns dos quais ilustrados
+neste artigo, comprovam a eficiência da metodologia
+proposta, pois, mesmo em condições de erros de parâmetros em ramos adjacentes, a mesma possibilitou
+significativas correções dos valores desses parâmetros, principalmente para susceptância série. As correções para susceptência shunt foi, na sua maioria,
+inferior s obtidas para os demais parâmetros. Acreditamos que isso ocorre em razão de a redundância
+de medidas ser menor para obtenção das estimativas
+de tais parâmetros, uma vez que são apenas as medidas de potência reativa que dão informação sobre
+esse parâmetro.
+
+15
+
+16
+
+17
+
+18
+
+92
+
+Abur, A. Expósito, A. G., Power system state estimation
+Theory and implementation. Marcel  Dekker Publishers,
+Nova York, EUA, 2004.
+Allam, M. Laughton, M. A general algorithm for estimating power system variables and networks parameters, in
+Proc. IEEK PES Summer Meeting, Anaheim, CA, 1974,
+Paper C74 331.5.
+Borda, C. Olarte, A. Diaz, H. PMU-based Line and
+Transformer Parameter Estimation Power and Energy Society General Meeting, Calgary,pages 1-8, July 2009.
+Castillo, M. R. M. London Jr., J. B. A. Bretas, N. G.
+Power System Branch Parameter Error Identification and
+Estimation. Power and Energy Society General Meeting,
+Calgary,pages 1-8, July 2009.
+Clements, K. Denison, O. Ringlee, R. The Effects of
+Measurement Non-Simultaneity, Bias and Parameter Uncertainty on Power System State Estimation. PICA Conference Proceedings, pp. 327-331, June 1973.
+Clements, K. Ringlee, R. Treatment of Parameter Uncertainty in Power System State Estimation. IEEE Transactions on Power Apparatus and Systems, Anaheim, Cal.,
+paper C74 311-7, July 1974.
+Coutto Filho, M. B. do Souza, J. C. S. Meza, E. B. M.
+Off-line validation of power network branch parameters
+IET Generation, Transmission  Distribution, 2008, Vol.
+2, N 6, pp. 892-905.
+Debs, A. Estimation of steady-state power system model
+parameters, IEEE Transactions on power systems, Vol.
+PAS-93, N 5, pp. 1260-1268, Sep.Oct.1974.
+Fletcher, D. Stadlin, W. Transformer tap position estimation, IEEE Transactions on power systems, vol. PAS-102,
+n. 11, pp. 3680-3686, Nov. 1983.
+Lefebvre, S. Prévost, J. Horisberger, H. Lambert, B. On
+the Accuracy of State Estimation. Power Engineering Society Meeting, 2006. IEEE
+Lefebvre, S. Prévost, J. Rizzi, J.C. Ye , P. Lambert, B.
+Horisberger,H. Operacional Experience with State Estimation at Hydro-Québec. Power and Energy Society
+General Meeting - Conversion and Delivery of Electrical
+Energy in the 21st Century, 2008 IEEE, 20-24 July 2008
+Page(s)1  8.
+Liu, W. Wu, F. Lun, S. Estimation of Parameter Errors
+from Measurement Residuals in state estimation IEEE
+Transactions on power systems, Vol. 7, N 1, pp. 81-89,
+Feb. 1992.
+Mínguez, R. Conejo, A. J. State Estimation Sensitivity
+Analysis  IEEE Transactions on power systems, Vol. 22,
+N 3, August 2007.
+Monticelli, A. State estimation in electric power systems. Kluwer Academic Publishers, Massachusetts, USA,
+1999.
+Phadke, A. Synchronized Phasor Measurements IEEE
+Computer Applications in Power, vol. 6. pp. 10-15, Apr.
+1993.
+Schweppe, F.C. et al (1970). Power System Static State
+Estimation, Part I, II, and III, IEEE Transactions on Power
+Apparatus and Systems, Vol. PAS-89, No.1, January, pp.
+120-135.
+Slutsker, I. Clements, K. Real Time recursive parameter
+estimation in energy management systems, IEEE Transactions on power systems, Vol. 11, N 3, pp. 1393-1399,
+Aug. 1996.
+Van Cutsem, T. Quintana, V. Network Parameter Estimation Using Online Data with Application to Transformer Tap Settings, IEE proceeding, vol. 135, pp. 31-40,
+Jan. 1988.
+
+19 Zarco, P. Expósito, A.G. Off-line determination of network parameters in state estimation in Proceeding 12th
+Power System Computation Conference, Dresden, Germany, Aug. 1996, pp. 1207-1213.
+20 Zhu, J. Abur, A.  Identification of network parameter errors, IEEE Trans on Power Systems, vol. 21, no. 2,pp.
+586-592, May 2006.
+21 Zhu, J. Abur, A. Identification of network parameter errors using Phasor Measurements, IEEE proceeding general meeting, Calgary, July. 2009.
+
+93

@@ -1,0 +1,1081 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+UMA HEURISTICA DE REDUCAO DO ESPACO DE BUSCA PARA UMA CLASSE
+DE PROBLEMAS DE SEQUENCIAMENTO DE TAREFAS EM UMA MAQUINA
+Bruno Ferreira Rosa, Marcone Jamilson Freitas Souza, Sergio Ricardo de Souza
+
+
+Centro Federal de Educacao Tecnologica de Minas Gerais
+Avenida Amazonas, 7675, CEP 30.510-000
+Belo Horizonte, Minas Gerais, Brasil
+
+
+Universidade Federal de Ouro Preto
+Departamento de Computacao, Campus Universitario, CEP 35.400-000
+Ouro Preto, Minas Gerais, Brasil
+Emails brunofazmat@dppg.cefetmg.br, marcone@iceb.ufop.br, sergio@dppg.cefetmg.br
+Abstract This work deals with the problem of job scheduling in a single-machine. In the addressed problem,
+the setup times of the machine depends on the production sequence and each job has a processing time and a
+time window within which it should preferably be completed. The aim is to minimize the weighted sum of the
+tardiness and earliness as they are working. In this work, it is proposed a heuristic algorithm composed of two
+phases to solve the problem. First, it generates a solution based on GRASP, Proximate Optimality Principle and
+Variable Neighborhood Descent (VND). Second, post-refinement of this solution is made by the application of
+the another local search based on VND. In order to reduce the computational cost it was also proposed a strategy
+to reduce the search space. The heuristic algorithm proposed here proved to be better than other proposals in
+the literature, having the low computational cost as their major ally. Thus, it was possible to resolve, in feasible
+computing time, problems of greater dimensions than the ones solved until now.
+Keywords
+
+Combinatorial Optimization, Heuristics, Single-machine scheduling.
+
+Resumo Este trabalho trata do problema de sequenciamento_de_tarefas em uma maquina. No problema
+abordado, os tempos de preparacao da maquina sao dependentes da sequencia de producao e cada tarefa esta
+associada a um tempo de processamento e a uma janela de tempo, dentro da qual ela deve ser preferencialmente
+concluda. O objetivo e minimizar a soma_ponderada dos atrasos e das antecipacoes na execucao de tais tarefas.
+Propoe-se, neste trabalho, um algoritmo heurstico composto de duas fases para resolve-lo. Na primeira, gerase uma solucao com base na metaheurstica GRASP, no Princpio da Otimalidade Proxima e na Descida em
+Vizinhanca Variavel (VND). Na segunda, faz-se o pos-refinamento dessa solucao por meio da aplicacao de outra
+busca local baseada em VND. Com o objetivo de reduzir o custo_computacional, adicionalmente e proposta
+uma estrategia de reducao do espaco de busca. O algoritmo heurstico proposto mostrou-se melhor que outras
+propostas apresentadas na literatura, tendo o baixo_custo_computacional como o seu grande aliado. Dessa forma,
+foi possvel resolver, em tempo computacional viavel, problemas de dimensoes maiores que os resolvidos ate entao.
+Palavras-chave
+
+.
+
+Introducao
+
+em uma maquina, com o objetivo de minimizar
+a soma_ponderada das antecipacoes e dos atrasos
+na producao de tais tarefas. Trata-se de um problema NP-difcil (Baker and Scudder, 1990) e com
+muitas aplicacoes praticas em industrias metalurgicas, texteis, de tintas, entre outras.
+
+O planejamento criterioso das atividades produtivas e importante na reducao dos custos de
+producao. Segundo Franca Filho (2007), concluir
+uma tarefa antecipadamente pode resultar em custos financeiros extras pela necessidade de disponibilizacao antecipada de capital, necessidade de
+espaco para armazenamento ou necessidade de outros recursos para manter e gerenciar o estoque.
+Do mesmo modo, concluir uma tarefa com atraso
+pode resultar em multas contratuais, perda de credibilidade da empresa e reducao de vendas. Assim, a reducao desses tempos de antecipacao ou
+atraso pode acarretar em uma significativa diminuicao dos custos do processo.
+
+As datas de entrega das tarefas podem ser comuns ou distintas. Uma abordagem mais generica
+e menos explorada na literatura considera janelas
+de entrega distintas, em que cada tarefa deve ser
+preferencialmente concluda dentro de um respectivo perodo de tempo. De acordo com Koulamas
+(1996), esse ultimo caso ocorre quando existem
+tolerancias em torno das datas desejadas para a
+entrega de cada tarefa. Sendo assim, as tarefas
+concludas dentro de suas respectivas janelas de
+entrega nao incorrem em penalidades, ao contrario daquelas concludas fora dessas janelas.
+
+De acordo com Baker and Scudder (1990), o
+Problema de Sequenciamento em Uma Maquina
+com Penalidades por Antecipacao e Atraso da producao (PSUMAA) modela bem ambientes de producao administrados com o objetivo acima. O
+PSUMAA consiste em sequenciar e determinar o
+momento em que as tarefas devem ser executadas
+
+Nas industrias em que sao produzidos diferentes tipos de produtos e em que existe uma troca
+frequente do tipo de tarefa executada em uma
+maquina, geralmente e necessario, apos a conclusao de uma tarefa, preparar a maquina antes do
+
+3583
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+incio da execucao da tarefa seguinte (Allahverdi
+et al., 1999). Este tempo de preparacao, chamado
+tempo de setup, inclui os tempos gastos para trocar as ferramentas, preparar o material, limpar a
+maquina etc. Muitos trabalhos em problemas de
+sequenciamento assumem que os tempos de preparacao sao independentes da sequencia de producao, isto e, que eles sao desprezveis ou podem ser
+acrescentados aos tempos de processamento das
+tarefas. No entanto, pesquisas mostram que, em
+grande parte das situacoes praticas, tais tempos
+sao dependentes da sequencia de producao e devem ser considerados.
+Consideracoes sobre a continuidade do funcionamento da maquina tambem podem ser impostas ao PSUMAA. Conforme Franca Filho (2007),
+existem situacoes em que a ociosidade das maquinas nao e permitida por implicar em custos mais
+elevados que aqueles decorrentes da conclusao antecipada das tarefas. No entanto, o mesmo autor
+chama a atencao para o fato de que ha casos em
+que manter a maquina inativa e vantajoso, ainda
+que exista uma tarefa disponvel para processamento.
+Este trabalho aborda uma classe generica do
+PSUMAA. No problema abordado, considera-se
+a existencia de janelas de entrega distintas, tempos_de_preparacao_dependentes_da_sequencia de
+producao e sao permitidos tempos ociosos entre
+as execucoes de tarefas consecutivas. Doravante,
+esse problema sera denotado por PSUMAA-JT.
+Dentre os trabalhos da literatura que tratam
+do PSUMAA-JT, destacam-se os de Gomes Junior
+(2007), Penna (2009) e Ribeiro (2009). No primeiro trabalho foi proposto um modelo de programacao matematica para representar o problema.
+Tambem foi proposto um metodo heurstico baseado em GRASP, Iterated Local Search (ILS) e
+Descida em Vizinhanca Variavel (Variable Neighborhood Descent, VND). Para cada sequencia de
+tarefas gerada pela heurstica proposta, e utilizado um algoritmo de complexidade polinomial
+para determinar a data otima de incio de processamento das tarefas daquela sequencia. Foram realizados experimentos computacionais em
+problemas-teste com os tempos de preparacao simetricos e com ate 75 tarefas. O segundo trabalho propoe uma heurstica baseada em GRASP,
+VND, Busca Tabu e Reconexao por Caminhos, enquanto no terceiro trabalho e proposto um Algoritmo Genetico Adaptativo (AGA) para resolver o
+problema. Nos dois ultimos trabalhos foram realizados experimentos nos mesmos problemas-teste
+utilizados por Gomes Junior (2007), sendo mostrada a superioridade dos algoritmos propostos em
+relacao a este ultimo. Ribeiro (2009) tambem realizou testes em outras duas bases de dados em que
+os tempos de preparacao nao sao necessariamente
+simetricos. Foram resolvidos problemas-teste com
+ate 100 tarefas por meio do AGA proposto.
+
+Apesar de ja existirem na literatura trabalhos que utilizam tecnicas heursticas para resolver o PSUMAA-JT, os procedimentos utilizados
+sao genericos, ou seja, nao fazem uso de propriedades ou caractersticas do problema para reduzir o espaco de busca e, consequentemente, reduzir tambem o tempo de processamento. O presente trabalho contribui com um algoritmo heurstico, baseado nos metodos GRASP (Feo and Resende, 1995), Princpio da Otimalidade Proxima
+- POP (Glover and Laguna, 1997) e Descida em
+Vizinhanca Variavel - VND (Mladenovic and Hansen, 1997), para resolver o PSUMAA-JT. Com o
+objetivo de reduzir o custo_computacional, tambem e proposta uma estrategia de reducao do espaco de busca.
+O restante deste trabalho esta organizado
+como segue. Na Secao 2 e feita uma descricao
+detalhada do problema estudado e na Secao 3 e
+descrito o algoritmo heurstico desenvolvido para
+resolve-lo. Na Secao 4 sao apresentados e discutidos os resultados computacionais, enquanto a Secao 5 conclui o trabalho e sugere perspectivas futuras para o melhoramento do algoritmo proposto.
+2
+
+Descricao do problema
+
+O PSUMAA-JT abordado neste trabalho possui as seguintes caractersticas
+ Uma maquina deve processar um conjunto I
+de n tarefas
+ Associado a cada tarefa i  I esta
+ um tempo de processamento Pi 
+ uma janela de entrega Ei , Ti , dentro
+da qual a tarefa i deve ser preferencialmente concluda
+ um custo i por unidade de tempo de
+antecipacao
+ um custo i por unidade de tempo de
+atraso
+ Ha antecipacao de uma tarefa i  I quando
+seu processamento e concludo antes de Ei 
+ Ha atraso de uma tarefa i  I quando seu
+processamento e concludo depois de Ti 
+ As tarefas que forem concludas dentro de
+suas respectivas janelas de entrega nao geram
+penalidades
+ A maquina executa no maximo uma tarefa
+por vez e, uma vez iniciado o processamento
+de uma tarefa, nao e permitida a sua interrupcao
+ Todas as tarefas estao disponveis para processamento na data 0
+ Entre duas tarefas i e j  I consecutivas, e
+necessario um tempo Sij de preparacao da
+maquina. Assume-se que o tempo de preparacao da maquina para o processamento da
+primeira tarefa na sequencia e igual a 0
+
+3584
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+ E permitido tempo ocioso entre a execucao
+de duas tarefas consecutivas.
+O objetivo e determinar uma sequencia de
+producao e as datas de termino de producao das
+tarefas de forma a minimizar a soma_ponderada
+das antecipacoes e atrasos, ou seja, minimizar
+Z
+
+n
+X
+
+(i ei + i ti )
+
+3.3
+
+Para explorar o espaco de solucoes sao usados
+tres tipos de movimentos troca da ordem de processamento de duas tarefas da sequencia de producao, realocacao de uma tarefa para outra posicao
+da sequencia e realocacao de um bloco de tarefas
+para outra posicao da sequencia. Esses movimentos definem, respectivamente, as vizinhancas N T ,
+N R e N RB .
+Na vizinhanca N T , um exemplo de vizinho
+da solucao v  (5, 3, 2, 1, 4, 6) e a solucao
+v 0  (5, 4, 2, 1, 3, 6), pois v 0 e obtida por meio
+da troca da ordem de processamento da segunda
+com a quinta tarefa de v.
+Em uma sequencia com n tarefas, cada uma
+delas pode trocar de posicao com qualquer uma
+das outras n  1 tarefas. Como trocar a ordem de
+processamento da i-esima tarefa da sequencia com
+a j-esima tarefa e equivalente a troca da ordem de
+processamento da j-esima tarefa na sequencia com
+a i-esima tarefa para todo i, j  1, 2,    , n, entao ha n(n  1)2 vizinhos distintos na vizinhanca
+N T.
+A solucao v 0  (5, 2, 1, 4, 3, 6) e um exemplo de vizinho da solucao v  (5, 3, 2, 1, 4,
+6) na vizinhanca N R , pois e obtida pela realocacao da tarefa 3, que esta na segunda posicao em v,
+para a quinta posicao na sequencia de producao.
+Dada uma sequencia de n tarefas, cada uma
+delas pode ser realocada para n  1 posicoes
+distintas. Alem disso, realocar a tarefa da iesima posicao para a posicao i + 1 na sequencia e equivalente a realocar a tarefa da posicao
+i + 1 para a i-esima posicao na sequencia, para
+todo i  1, 2,    , n  1. Sendo assim, ha
+2
+n(n  1)  (n  1)  (n  1) vizinhos distintos na
+vizinhanca N R .
+Ja na vizinhanca N RB , um exemplo de vizinho da solucao v  (5, 3, 2, 1, 4, 6) e a solucao
+v 0  (1, 4, 5, 3, 2, 6), a qual e obtida pela realocacao do bloco de tres tarefas < 5, 3, 2 >, que
+esta sequenciado no incio de v, para depois da
+tarefa 4 na sequencia de producao, ou seja, para
+duas posicoes sucessoras.
+Em uma sequencia com n tarefas existem
+n  k + 1 blocos distintos de k tarefas, para todo
+k  1, 2,    , n, e cada um destes blocos
+pode ser realocado para n  k posicoes distintas da sequencia. Alem disso, realocar um bloco
+de i tarefas para j posicoes sucessoras e equivalente a realocacao de um bloco de j tarefas
+para i posicoes antecessoras, para todo i, j 
+1, 2,    , n e i + j  n. Dessa forma, ha
+
+
+Pn
+Pn
+2
+2
+k1 (nk +1)(nk)
+k1 (n  k) +
+
+
+
+Pn
+2   n (2 n  1) (n  1) 6 +
+k1 (n  k)
+
+n (n  1) 2 2  n (n  1) (n + 1) 6 vizinhos
+
+(1)
+
+i1
+
+para ei  max0, Ei Ci  e ti  max0, Ci Ti ,
+sendo Ci a data de conclusao da tarefa i.
+3
+3.1
+
+Algoritmo proposto
+
+GPV
+
+O algoritmo proposto, denotado por GPV e
+cujo pseudocodigo esta apresentado na Figura 1,
+possui duas fases. Na primeira (linhas 3 a 12
+da Figura 1), constroi-se uma solucao de acordo
+com a fase de construcao do GRASP (Feo and
+Resende, 1995) e com o Princpio da Otimalidade Proxima - POP (Glover and Laguna, 1997),
+usando-se a Descida em Vizinhanca Variavel VND (Mladenovic and Hansen, 1997) como procedimento de busca local do POP. Na segunda fase
+(linha 13 da Figura 1), faz-se o pos-refinamento da
+solucao proveniente da fase anterior, por meio da
+aplicacao de outra busca local baseada em VND.
+Os detalhes do GPV sao discutidos nas subsecoes
+seguintes.
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+
+Algoritmo GPV()
+f ?  +
+Iter  0
+enquanto (Iter < GRASPmax) faca
+Iter  Iter + 1
+v0  ConstroiSolucaoPOP()
+v  VND1 (v0 )
+se (f (v) < f ? ) entao
+v ?  v
+f ?  f (v)
+Iter  0
+fim-se
+fim-enquanto
+v ?  VND2 (v ? )
+Retorne v ? 
+fim GPV 
+Figura 1 Algoritmo GPV
+
+3.2
+
+Vizinhanca de uma solucao
+
+Representacao de uma solucao
+
+Uma solucao (sequencia) para o PSUMAA-JT
+de n tarefas e representada por um vetor v de n
+posicoes, em que cada posicao i  1, 2,    , n indica a ordem de producao da tarefa vi . Por exemplo, na sequencia v  (5, 3, 2, 1, 4, 6), a tarefa
+5 e a primeira a ser executada e a tarefa 6 e a
+ultima.
+
+distintos na vizinhanca N RB .
+Com o objetivo de evitar o retorno a vizinhos
+
+3585
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+ja analisados e, consequentemente, reduzir o custo
+computacional, todas as observacoes mencionadas
+nos paragrafos anteriores foram consideradas na
+implementacao computacional do algoritmo GPV.
+3.4
+
+Para estimar o benefcio da insercao de
+cada tarefa t ainda nao sequenciada na iteracao i, em cada iteracao em que o procedimento
+ConstroiSolucaoPOP e aplicado, sao utilizadas
+seis funcoes adaptativas gulosas. Tais funcoes foram motivadas pelas caractersticas do problema
+e sao apresentadas a seguir
+
+Funcao de Avaliacao
+
+Como os movimentos utilizados nao geram solucoes inviaveis, uma sequencia v e avaliada pela
+funcao f dada pela equacao (1), a qual deve ser
+minimizada. Para determinar os valores de ei e
+ti para uma dada sequencia de tarefas, e utilizado
+o algoritmo de determinacao das datas otimas de
+incio de processamento das tarefas (ADDOIPT),
+proposto por Gomes Junior (2007).
+3.5
+
+2Et
++
+maxEk  k  Fi 
+t
+2Tt
++
+
+maxTk  k  Fi 
+maxk  k  Fi 
+Pt
+t
++
++
+maxk  k  Fi 
+maxPk  k  Fi 
+Si1,t
+
+maxSi1,k  k  Fi 
+
+1. g1 (t)
+
+Construcao de uma Solucao
+
+2Et
++
+maxEk  k  Fi 
+t
+Tt
++
+
+maxTk  k  Fi 
+maxk  k  Fi 
+Pt
+t
++
++
+maxk  k  Fi 
+maxPk  k  Fi 
+Si1,t
+
+maxSi1,k  k  Fi 
+
+2. g2 (t)
+
+Nesta etapa do GPV, uma solucao e formada,
+tarefa por tarefa, de forma parcialmente gulosa,
+seguindo as ideias da fase de construcao do algoritmo GRASP e o POP. Sendo assim, a cada
+iteracao desta etapa as tarefas que ainda nao foram sequenciadas sao avaliadas por meio de uma
+funcao adaptativa gulosa g que estima o benefcio associado a inclusao de cada tarefa na subsequencia corrente. As tarefas t  I tais que
+g(t)  gmin +   (gmax  gmin ), com   0, 1,
+sao inseridas em uma lista restrita de candidatos (LRC). A partir de LRC, escolhe-se, aleatoriamente e com probabilidade uniforme, uma tarefa
+que sera incrementada a solucao parcial corrente.
+O tamanho da LRC e o nvel de gulosidade e
+de aleatoriedade da solucao construda sao determinados por . Quanto mais proximo de 0 estiver
+, maior o nvel de gulosidade e menor o de aleatoriedade. Dessa forma,   0 implica em uma
+solucao completamente gulosa e   1 em uma
+solucao totalmente aleatoria.
+A Figura 2 mostra o pseudocodigo do procedimento proposto para construir uma solucao.
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+
+
+
+
+
+Et
++
+maxEk  k  Fi 
+t
+2Tt
++
+
+maxTk  k  Fi 
+maxk  k  Fi 
+Pt
+t
++
++
+maxk  k  Fi 
+maxPk  k  Fi 
+Si1,t
+
+maxSi1,k  k  Fi 
+
+3. g3 (t)
+
+
+
+4. g4 (t)  Et + Tt 
+5. g5 (t)  Tt 
+6. g6 (t)  Et .
+Nas funcoes g1 , g2 e g3 , Fi representa
+o conjunto das tarefas ainda nao sequenciadas ate a i-esima iteracao.
+Para i  1,
+Si1,t
+, e utilizado
+em lugar de
+maxSi1,k  k Fi 
+mediaSkt  k  I e k 6 t
+
+.
+maxSkl  k, l  I e k 6 l
+Observa-se que as funcoes g1 , g2 e g3 consideram, simultaneamente, todas as caractersticas
+das tarefas, diferenciando-se apenas pelos pesos
+atribudos as datas de incio e de termino das janelas de entrega. A funcao g4 considera, simultaneamente, as datas de incio e de termino das
+janelas de entrega das tarefas. A funcao g5 considera apenas as datas de termino das janelas de entrega, enquanto a funcao g6 leva em consideracao
+apenas as datas de incio das janelas de entrega.
+Tais funcoes sao utilizadas segundo a ordem
+apresentada anteriormente. Nas seis primeiras iteracoes, ou seja, na primeira vez em que cada funcao g e utilizada, faz-se   0.
+
+procedimento ConstroiSolucaoPOP()
+s  
+Inicialize o conjunto C de tarefas
+enquanto (C 6 ) faca
+gmin  ming(t)  t  C
+gmax  maxg(t)  t  C
+LRC  t  C  g(t) 
+gmin +   (gmax  gmin )
+Escolha um elemento t  LRC 
+s  s  t
+s  MDR(s)  * Aplique o POP *
+Atualize o conjunto C de candidatos
+fim-enquanto
+Retorne s
+fim ConstroiSolucaoPOP
+Figura 2 Construcao de solucao com POP
+
+3586
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Ainda na etapa de construcao de uma solucao, e aplicado o POP (vide linha 9 da Figura
+2). Este princpio e baseado na ideia de que boas
+solucoes em um nvel estao proximas de boas solucoes em um nvel adjacente (Glover and Laguna, 1997). Assim, sempre que uma nova tarefa e
+inserida na solucao em formacao, esta e submetida
+a uma busca local. A busca local utilizada consiste em uma descida randomica com a vizinhanca
+N R . Dada uma solucao, aleatoriamente escolhese uma tarefa na sequencia e uma nova posicao
+para ela. Se a nova sequencia produzir uma solucao de melhora, a nova sequencia e aceita e passa
+a ser a solucao corrente caso contrario, e testada
+outra realocacao aleatoria. A busca e interrompida apos MDRMax realocacoes consecutivas sem
+melhora na solucao corrente, sendo MDRMax um
+parametro do procedimento.
+3.6
+
+3.7
+
+VND2
+
+A solucao oriunda da primeira fase do GPV
+(linhas 1 a 12 da Figura 1) nao e necessariamente
+um otimo local em relacao as vizinhancas adotadas, visto que nem toda a vizinhanca e analisada
+em cada passo do VND1 . Por isso, tal solucao e
+submetida a uma busca local mais efetiva, no caso,
+outro VND, denotado por VND2 . Nessa busca local, a exploracao do espaco de solucoes e realizada
+de acordo com os seguintes passos
+1. Descida Primeiro de Melhora usando vizinhanca N T 
+2. Descida completa usando vizinhanca N RB 
+Se no passo 1, nenhum dos vizinhos da vizinhanca N T representar uma melhora na solucao
+global, passa-se para o passo 2.
+No passo 2, inicialmente testam-se todas as
+possveis realocacoes de blocos com apenas uma
+tarefa e, quando nao for mais possvel melhorar a
+solucao com um determinado tamanho de bloco,
+passa-se a explorar movimentos com blocos de tamanho imediatamente superior, ate que o tamanho dos blocos atinja seu valor maximo, dado por
+n  1. Se uma solucao de melhora e encontrada,
+volta-se ao passo 1. O procedimento e interrompido quando um otimo local com relacao as vizinhancas N T e N RB e encontrado. Observa-se
+que a vizinhanca N R corresponde a realocar blocos com apenas uma tarefa. Logo, a vizinhanca
+N R esta contida na vizinhanca N RB e um otimo
+local em relacao a esta ultima tambem e um otimo
+local em relacao a primeira.
+
+VND1
+
+Para refinar as solucoes construdas na primeira fase do GPV (linha 6 da Figura 1), utiliza-se
+um VND, denotado por VND1 . Esta busca local
+consiste de tres passos
+1. Descida randomica usando vizinhanca N T 
+2. Descida randomica usando vizinhanca N R 
+3. Descida randomica usando vizinhanca N RB .
+No passo 1, duas tarefas sao escolhidas aleatoriamente e a ordem de seus processamentos
+na sequencia de producao e trocada. Se a nova
+sequencia produzir uma solucao de melhora, ela e
+aceita e passa a ser a solucao corrente caso contrario, e testada outra troca aleatoria. O passo
+1 termina quando ocorrer VNDmax trocas consecutivas sem melhora na solucao corrente, sendo
+VNDMax um parametro do procedimento. Neste
+ultimo caso, passa-se para o passo 2.
+No passo 2, aleatoriamente escolhe-se uma tarefa na sequencia e uma nova posicao para ela.
+Se a nova sequencia produzir uma solucao de melhora, a nova sequencia passa a ser a solucao corrente e volta-se ao passo 1 caso contrario, e testada outra realocacao aleatoria. O passo 2 e interrompido apos VNDMax realocacoes consecutivas
+sem melhora na solucao corrente. Neste ultimo
+caso, passa-se para o passo 3.
+No passo 3, aleatoriamente escolhe-se um
+bloco de tarefas na sequencia de producao (o tamanho do bloco tambem e escolhido de forma aleatoria no intervalo 1, n  1) e uma nova posicao
+para ele. Se a nova sequencia produzir uma solucao de melhora, ela passa a ser a solucao corrente
+e volta-se ao passo 1 caso contrario, e testada
+outra realocacao de bloco aleatoria. O passo 3 e
+interrompido apos VNDMax realocacoes de blocos consecutivas sem melhora na solucao corrente.
+Neste ultimo caso, o VND1 e encerrado e a melhor
+solucao encontrada e retornada.
+
+3.8
+
+Reducao do Espaco de Busca - GPV-REB
+
+A avaliacao de todos os vizinhos gerados em
+uma busca local requer um grande e muitas vezes injustificavel esforco computacional (Franca
+Filho, 2007). Por isso, e interessante utilizar estrategias que tenham por objetivo evitar a avaliacao de solucoes que apresentam determinadas
+caractersticas julgadas ruins e, dessa forma, reduzir o esforco computacional. Como consequencia, pode-se reduzir o tempo computacional para
+resolver o problema ou, fixado um dado tempo de
+processamento, mais solucoes promissoras podem
+ser exploradas. Esta estrategia permite, assim, resolver problemas de dimensoes maiores.
+Se duas tarefas i, j  I satisfazem as condicoes (2), (3), (4) e (5), espera-se que boas solucoes
+possuam a tarefa i sequenciada antes da tarefa j.
+Ei
+i
+
+ Ej
+ j
+
+(2)
+(3)
+
+Ti
+i
+
+ Tj
+ j
+
+(4)
+(5)
+
+Portanto, se i e sequenciada antes de j na
+sequencia corrente, e proposta a seguinte estrategia de reducao do espaco de busca
+
+3587
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+
+
+
+
+
+VRJ
+VRJ
+ TTP, 1  FA +
+
+2
+2
+TTP, sendo TTP o tempo total de processamento de todas as tarefas, FA o fator de atraso
+e VRJ a variacao relativa da janela de entrega.
+Sao utilizados os valores 0,1 0,3 0,5 e 0,8 para
+FA e 0,4 0,7 1,0 e 1,3 para VRJ. O tamanho
+da janela de entrega de i e um numero inteiro
+selecionado, aleatoriamente
+e com
+ distribuicao
+
+TTP
+, em que n e
+uniforme, no intervalo 0,
+n
+o numero de tarefas de I. Para toda tarefa
+j  I e j 6 i, o tempo de preparacao (Sij ) e um
+inteiro aleatorio pertencente ao intervalo 5, 30.
+Como sao utilizados 4 valores distintos de TTP
+e 4 de VRJ, sao 16 problemas-teste de cada
+tamanho, totalizando 240 problemas-teste.
+Para auxiliar na apresentacao e comparacao
+dos resultados, foram utilizadas duas medidas de
+desempenho, dadas pelas equacoes (6) e (7). Nessas equacoes, para um dado problema-teste i, fi
+e o valor da funcao objetivo da melhor solucao
+?
+X
+conhecida para o problema e fiX e f i sao, respectivamente, o valor da funcao objetivo da melhor solucao encontrada e a media dos valores da
+funcao objetivo aplicada nas solucoes encontradas
+durante todas as execucoes do algoritmo X para
+o problema-teste i.
+?
+fiX  fi?
+(6)
+devbest
+
+i
+fi?
+
+ Durante a exploracao da vizinhanca N T , a
+solucao produzida pela troca das ordens de
+processamento da tarefa i com a tarefa j e
+rejeitada sem ser avaliada
+ Durante a exploracao das vizinhancas N R ou
+N RB , as realocacoes que levam a tarefa i a ser
+sequenciada depois da tarefa j sao descartadas sem serem avaliadas
+
+1  FA 
+
+máquina
+
+A Figura 3 ilustra a situacao em que E3  E2 ,
+3  2 , T3  T2 e 3  2 . Nesse caso, as
+solucoes obtidas pela troca de ordem de processamento da tarefa 3 com a tarefa 2 ou pelas realocacoes, de tarefas ou de blocos, que levam a
+tarefa 3 a ser sequenciada depois da tarefa 2, nao
+sao avaliadas por nao serem consideradas solucoes
+promissoras.
+3  2
+3  2
+
+aa
+aa
+aa Tarefa 3
+
+Tarefa 1
+
+E1
+
+T1
+
+E3
+
+Tarefa 2
+
+T3
+
+E2
+
+T2
+
+tempo
+
+Figura 3 Exemplo de situacao em que a estrategia
+de reducao do espaco de busca e utilizada.
+Essa estrategia de reducao do espaco de busca
+foi incorporada ao algoritmo GPV, e o algoritmo
+resultante foi denotado por GPV-REB. Ele se diferencia do GPV unicamente na aplicacao das buscas locais da primeira fase deste, as quais sao feitas
+pelo metodo de descida randomica usando vizinhanca N R (usado para refinamento das solucoes
+parciais), bem como pelo VND1 (usado para refinamento da solucao construda). A segunda fase
+dos dois algoritmos sao iguais.
+4
+
+X
+
+devavg
+i
+
+
+
+f i  fi?
+fi?
+
+(7)
+
+A primeira equacao calcula o desvio do valor
+da funcao objetivo da melhor solucao encontrada
+pelo algoritmo X em relacao ao valor da funcao
+objetivo da melhor solucao conhecida para o respectivo problema-teste. Ja a segunda equacao calcula a variabilidade media dos valores da funcao
+objetivo das solucoes encontradas pelo algoritmo
+X em relacao ao valor da melhor solucao conhecida para o respectivo problema.
+Os parametros utilizados estao resumidos na
+Tabela 1, na qual n representa o numero de tarefas
+a serem sequenciadas.
+
+Resultados computacionais
+
+Os algoritmos heursticos propostos, GPV
+e GPV-REB, foram implementados em linguagem C, usando-se o compilador Borland C++
+Builder 5.0. Para testa-los, foi utilizado o conjunto de problemas-teste BDNS, disponvel em
+httpwww.iceb.ufop.brdecomprofmarcone
+projectsschedulinginstances.htm.
+Este conjunto envolve grupos de problemas-teste com 6,
+7, 8, 9, 10, 11, 12, 15, 20, 30, 40, 50, 75, 100
+e 150 tarefas e foram gerados de acordo com a
+metodologia apresentada nos trabalhos de Wan
+and Yen (2002) e Rabadi et al. (2004).
+Nesse conjunto, dada uma tarefa i  I,
+o tempo de processamento (Pi ), o custo por
+unidade de atraso (i ) e o custo por unidade de
+antecipacao (i ), sao valores inteiros selecionados, aleatoriamente e com distribuicao uniforme,
+dentro dos intervalos 1, 100, 1, 10 e 1, i ,
+respectivamente. O centro da janela de entrega
+de i e um valor inteiro aleatorio no intervalo
+
+Tabela 1 Parametros utilizados.
+
+Parametros
+
+MDRmax
+VNDmax
+GRASPmax
+
+Valores
+0,12
+7  n, se n  50 e
+5  n, se n > 50
+11  n, se n  50 e
+5  n, se n > 50
+24, se n  50 e
+12, se n > 50
+
+Cada problema foi resolvido 30 vezes, exceto
+aqueles com mais de 50 tarefas, os quais foram resolvidos apenas 10 vezes devido ao maior tempo
+computacional demandado. Os resultados obtidos
+pelos algoritmos GPV e GPV-REB foram comparados apenas com os do Algoritmo Genetico de
+
+3588
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Ribeiro (2009), pois somente esse autor realizou
+experimentos com essa base de dados.
+Uma sntese dos resultados encontrados pelos algoritmos GPV e GPV-REB e pelo algoritmo de Ribeiro (2009) e apresentada na Tabela
+2. Nela, a primeira coluna indica o numero de tarefas dos problemas de cada grupo de problemasteste. Nas colunas Ribeiro (2009), GPV e
+GPV-REB sao apresentados os resultados obtidos pelos respectivos algoritmos. Para um grupo
+de problemas-teste com mesmo numero de tarefas, as colunas Tempo mostram as medias dos
+tempos demandados (em segundos) pelos respecbest
+tivos algoritmos, as colunas dev  apresentam
+best
+as medias dos devi s (em porcentagem) obtidos
+avg
+pelos respectivos algoritmos e as colunas dev 
+avg
+apresentam as medias dos devi s obtidos pelos
+respectivos algoritmos. Os resultados de Ribeiro
+(2009) relativos aos problemas-teste com 150 tarefas nao sao apresentados porque tal autor nao
+resolveu tais problemas.
+De acordo com a Tabela 2, o GPV obteve
+best
+sempre menores ou iguais aos
+valores de dev
+do algoritmo de Ribeiro (2009). Isso significa que
+as solucoes produzidas pelo GPV foram, em media, melhores ou iguais as produzidas pelo algoritmo de tal autor. Ambos os algoritmos enconavg
+traram dev s proximos de zero nos conjuntos de
+problemas-teste com ate 20 tarefas. Ja nos conjuntos de problemas com mais de 20 tarefas, os vaavg
+lores dos dev s obtidos pelo GPV foram sempre
+menores que os do algoritmo de Ribeiro (2009).
+Em relacao aos tempos de processamento, uma
+comparacao justa nao e possvel, uma vez que os
+algoritmos foram testados em maquinas diferentes. No entanto, o algoritmo de Ribeiro (2009)
+demandou um tempo significativamente maior que
+os requeridos pelo GPV para todos os conjuntos de
+problemas-teste. Para os problemas envolvendo
+100 tarefas, por exemplo, o tempo medio demandado pelo Algoritmo Genetico de Ribeiro (2009)
+foi aproximadamente 4,8 vezes maior que aquele
+requerido pelo GPV.
+Na Tabela 2 tambem e possvel observar que
+best
+menoo algoritmo GPV obteve valores de dev
+res que 1 em todos os conjuntos de problemasteste, exceto para o de 75 tarefas. Mesmo asbest
+foi mesim, para este ultimo conjunto, o dev
+nor que aquele obtido pelo algoritmo de Ribeiro
+avg
+(2009). Os dev s foram relativamente baixos,
+sendo o maior valor igual a 6,66 e, para os problemas com 150 tarefas, proximo do valor obtido
+pelo GPV. Os tempos medios demandados tambem foram menores que os demandados pelos outros dois algoritmos. Se comparado aos tempos
+medios requeridos pelo GPV, os demandados pelo
+GPV-REB foram de 34 a 50 menores.
+Finalmente, destaca-se que os tempos computacionais  mesmo os do algoritmo GPV-REB 
+
+ainda sao elevados quando comparados com aqueles encontrados na literatura para resolver problemas de sequenciamento_de_tarefas. O motivo esta
+no fato de que o PSUMAA-JT e uma generalizacao dos problemas de sequenciamento e nele ha a
+necessidade de se determinar as datas otimas de
+incio de processamento para cada tarefa de uma
+sequencia gerada, o que eleva consideravelmente o
+tempo do algoritmo.
+5
+
+Conclusoes
+
+Este trabalho tratou o problema de sequenciamento_de_tarefas em uma maquina com penalidades por antecipacao e atraso da producao, considerando janelas de entrega distintas e tempo de
+preparacao da maquina dependente da sequencia,
+denotado por PSUMAA-JT.
+Propos-se um algoritmo heurstico para determinar a melhor sequencia de producao. Tal algoritmo, denominado GPV, e composto de duas
+fases. Na primeira, constroi-se uma solucao com
+base no procedimento de construcao da metaheurstica GRASP e no Princpio da Otimalidade Proxima (POP), sendo esta solucao posteriormente
+refinada por uma Descida em Vizinhanca Variavel (Variable Neighborhood Descent - VND). Na
+segunda fase, faz-se o pos-refinamento da solucao
+proveniente da fase anterior por meio de outro
+VND. Para cada sequencia gerada pelo algoritmo,
+um procedimento de complexidade polinomial encontrado na literatura e acionado para determinar
+as datas otimas de conclusao das tarefas. Com o
+objetivo de reduzir o custo_computacional, tambem foi proposta uma estrategia de reducao do
+espaco de busca. Essa estrategia foi utilizada durante a primeira fase do GPV, originando, assim,
+o algoritmo denominado GPV-REB.
+Os algoritmos GPV e GPV-REB foram aplicados em um conjunto generico de problemasteste. Os resultados encontrados por esses algoritmos foram comparados com um Algoritmo Genetico Adaptativo proposto em Ribeiro (2009), que
+foi o unico autor a utilizar tambem esta base de
+dados. O GPV mostrou-se mais eficiente que o algoritmo de tal autor, encontrando solucoes de melhor qualidade e em tempo computacional muito
+menor. Por outro lado, os tempos computacionais demandados pelo algoritmo GPV-REB foram sempre significativamente menores que aqueles despendidos pelo GPV. Apesar de as solucoes
+encontradas pelo GPV-REB serem um pouco inferiores aquelas encontradas pelo GPV, esta diferenca diminui a medida em que se aumenta o
+numero de tarefas do problema. Isso sugere que
+vale a pena investir em tecnicas e propriedades
+que permitam reduzir o espaco de busca.
+Como trabalhos futuros, sugere-se (i) comparar o GPV com o GRASP tradicional a fim de
+evidenciar os ganhos (ii) fazer um estudo compa-
+
+3589
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Tabela 2 Comparacao de resultados Ribeiro (2009)  GPV  GPV-REB no conjunto BDNS.
+
+Ribeiro (2009)
+GPV
+GPV-REB
+best
+avg
+best
+avg
+best
+avg
+Tarefas dev
+dev
+Tempo1 dev
+dev
+Tempo2 dev
+dev
+Tempo2
+()
+()
+(s)
+()
+()
+(s)
+()
+()
+(s)
+006
+0,00
+0,00
+0,76
+0,00
+0,00
+0,04
+0,00
+0,00
+0,03
+007
+0,00
+0,00
+0,76
+0,00
+0,00
+0,07
+0,00
+0,00
+0,03
+008
+0,00
+0,00
+1,03
+0,00
+0,00
+0,30
+0,00
+0,76
+0,25
+009
+0,00
+0,00
+1,35
+0,00
+0,00
+0,37
+0,01
+0,18
+0,29
+010
+0,00
+0,00
+1,61
+0,00
+0,20
+0,45
+0,47
+0,86
+0,34
+011
+0,00
+0,00
+2,20
+0,00
+0,01
+0,40
+0,11
+0,16
+0,40
+012
+0,00
+0,00
+3,32
+0,00
+0,00
+0,52
+0,00
+0,43
+0,42
+015
+0,00
+0,01
+7,49
+0,00
+0,01
+1,26
+0,00
+0,54
+0,73
+020
+0,00
+0,30
+23,88
+0,00
+0,10
+4,52
+0,49
+1,83
+2,85
+030
+0,19
+1,40
+172,51
+0,01
+0,58
+36,06
+0,51
+1,99
+18,17
+040
+0,18
+1,17
+801,67
+0,06
+0,79
+132,94
+0,36
+1,51
+67,04
+050
+0,30
+1,45
+1575,11
+0,06
+1,28
+440,49
+0,65
+2,57
+215,60
+075
+5,90
+5,90
+4978,02
+3,10
+5,64
+1187,76
+4,14
+6,66
+636,86
+100
+2,36
+2,62 22299,79 0,21
+2,32
+4612,79
+0,57
+3,79
+3015,16
+150
+0,14
+2,53 49524,76 0,83
+2,62 32833,61
+1 Testes realizados em um PC Pentium Core 2 Duo 2,1 GHz, com 4 GB de memoria RAM.
+2 Testes realizados em um PC Intel Core 2 Duo (E8400) 2.99 GHz, com 2 GB de memoria RAM.
+
+rativo do GPV com e sem o VND2 como estrategia de pos-otimizacao (iii) testar a aplicacao do
+VND2 como busca local do GRASP e nao como
+estrategia de pos-otimizacao (iv ) testar, tambem,
+tal procedimento juntamente com a estrategia de
+reducao do espaco de busca (v ) testar novas estrategias de reducao do espaco de busca e (vi) fazer
+um estudo de qual tamanho de bloco proporciona
+melhores resultados durante a exploracao da vizinhanca N RB .
+
+por antecipacao e atraso Modelagem e resolucao, Dissertacao de mestrado, Programa de
+Pos-Graduacao em Engenharia de Producao,
+UFMG, Belo Horizonte.
+Koulamas, C. (1996). Single-machine scheduling
+with time windows and earlinesstardiness
+penalties, European Journal of Operational
+Research 91 190202.
+Mladenovic, N. and Hansen, P. (1997). Variable
+neighborhood search, Computers and Operations Research 24(11) 10971100.
+
+Agradecimentos
+
+Penna, P. H. V. (2009). Um algoritmo heurstico
+hbrido para minimizar os custos com a antecipacao e o atraso da producao em ambientes
+com janelas de entrega e tempos_de_preparacao_dependentes_da_sequencia, Dissertacao de
+mestrado, Programa de Pos-Graduacao em
+Engenharia Mineral, UFOP, Ouro Preto.
+
+Os autores agradecem a FAPEMIG e ao
+CEFET-MG pelo apoio a esta pesquisa.
+Referencias
+Allahverdi, A., Gupta, J. N. D. and Aldowaisan,
+T. (1999). A review of scheduling research
+involving setup considerations, Omega The
+International Journal of Management Science 27 219239.
+
+Rabadi, G., Mollaghasemi, M. and Anagnostopoulos, G. C. (2004). A branch-and-bound
+algorithm for the earlytardy machine scheduling problem with a common due-date and
+sequence-dependent setup time, Computers
+ Operations Research 31 17271751.
+
+Baker, K. R. and Scudder, G. D. (1990). Sequencing with earliness and tardiness penalties A
+review, Operations Research 38 2236.
+
+Ribeiro, F. F. (2009). Um algoritmo_genetico
+adaptativo para a resolucao do problema de
+sequenciamento_em_uma_maquina com penalizacao por antecipacao e atraso da producao, Dissertacao de mestrado, Programa de
+Pos-Graduacao em Modelagem Matematica
+e Computacional, CEFET-MG, Belo Horizonte.
+
+Feo, T. A. and Resende, M. G. C. (1995). Greedy randomized adaptive search procedures,
+Journal of Global Optimization 6 109133.
+Franca Filho, M. F. (2007). GRASP e Busca Tabu
+aplicados a problemas de programacao_de_tarefas em maquinas_paralelas, Tese de doutorado, Faculdade de Engenharia Eletrica e de
+Computacao, UNICAMP, Campinas.
+
+Wan, G. and Yen, B. P.-C. (2002). Tabu search for
+single machine scheduling with distinct due
+windows and weighted earlinesstardiness penalties, European Journal of Operational Research 142 271281.
+
+Glover, F. and Laguna, M. (1997). Tabu Search,
+Kluwer Academic Publishers, Boston.
+Gomes Junior, A. C. (2007). Problema de sequenciamento_em_uma_maquina com penalidades
+
+3590

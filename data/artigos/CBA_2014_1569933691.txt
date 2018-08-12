@@ -1,0 +1,556 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+SEGMENTAÇÃO E CLASSIFICAÇÃO DE CARACTERES EM PLACAS DE AÇO
+ROGÉRIO E. DE JESUS, DOUGLAS ALMONFREY
+PPGEE, Departamento de Engenharia Elétrica, Institututo Federal do Espirito Santo
+Avenida Vitória, 1729, Jucutuquara, Vitória - ES, CEP 29040-780
+E-mails rogerio.jesus@arcelormittal.com, dalmonfrey@ifes.edu.br
+
+Abstract
+ The concern with the product tracking throughout a production process is in many cases essential. The presence of
+alpha-numeric codes for this purpose, along a production line, is recurrent. In this paper, techniques of digital image processing
+and computational vision will be applied to perform the segmentation and classification of characters of steel slabs in a Hot Strip
+Mill (HSM). Using photos and videos of slabs on a roller table in different lighting conditions, filters are applied to these images
+in order to perform a preliminary object segmentation by gray level analysis and identification of edges, with the main objective
+of prepare the image of the scene to the process of character segmentation. Then it will be shown that the identifiers present in
+slabs have characteristics that allow differentiating it from the rest of the scene. For this, will be applied simple heuristics that
+are based on statistical information of grayscale levels from slab images. Finally, after the segmentation of the characters, will be
+possible perform the classification process using techniques of character recognition.
+Keywords
+ Hot Strip Mill, Tracking, Character classification, Digital image processing, Artificial vision
+Resumo
+ A preocupação com o rastreamento de produtos ao longo de um processo produtivo é, em muitos casos, essencial. A
+presença de códigos identificadores alfanuméricos para este fim, ao longo de uma linha de produção, é recorrente. Neste trabalho, serão aplicadas técnicas de processamento_digital_de_imagens e visão_computacional para realizar a segmentação e classificação de caracteres identificadores presentes em placas de aço em um Laminador de Tiras  Quente (LTQ). Utilizando fotos e
+vídeos de placas sobre uma mesa de rolos e em diferentes condições de iluminação, serão aplicados filtros a essas imagens de
+forma a realizar uma segmentação prévia de objetos, por análise de níveis de cinza e identificação de bordas, com o objetivo
+principal de preparar a imagem da cena para o processo de segmentação dos caracteres. Em seguida, será demonstrado que os
+identificadores presentes nas placas apresentam características que permitem diferenciá-los do restante da cena. Para isso, serão
+utilizadas heurísticas que se baseiam em informações estatísticas de níveis de tons de cinza das imagens das placas. Por fim,
+após a segmentação dos caracteres, será possível realizar o processo de classificação utilizando técnicas de reconhecimento de
+caracteres.
+Palavras-chave
+ 
+
+1
+
+Introdução
+
+O aço faz parte do cotidiano do ser humano sendo essencial na construção civil, indústria automotiva
+e na construção de produtos diversos como utilidades
+domésticas e bens de consumo. Todavia, para chegar
+até ao produto final, em sua fabricação, ele deve passar por uma série de processos em uma indústria siderúrgica, conforme exemplificado na Figura 1.
+Ao realizar um pedido ao fabricante, o cliente informa as características do produto que necessita, por
+exemplo, aplicação, propriedades_mecânicas e dimensões. O pedido entra em uma carteira de produção e o aço é fabricado para atender as especificações
+apresentadas. Durante todo o processo de fabricação,
+é necessário manter o rastreamento do material para
+que, no final, o produto esteja em conformidade com
+as requisições do cliente.
+
+Figura 1. Exemplo de processos produtivos em uma indústria
+siderúrgica.
+
+No caso da ArcelorMittal Tubarão, após o lingotamento contínuo, o aço saindo como placa recebe
+uma marcação alfanumérica que o identifica de maneira única. Nesta forma, ele já pode ser enviado para
+alguns clientes, no entanto, pode receber ainda um
+material mais acabado na forma de bobina. Neste
+caso, o aço em forma de placas, segue para outro
+processo chamado Laminador de Tiras  Quente
+(LTQ).
+Na transferência entre estes processos, muitas
+vezes, inspeções visuais pelos operadores são utilizadas para realizar a leitura da marcação alfanumérica
+
+1254
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+na imagem provocadas pelo sol e baixa luminosidade.
+Alguns trabalhos disponíveis na literatura tratam
+de reconhecimento de placas de carros, sendo um
+exemplo desta categoria apresentado em Barroso et al
+(1997). A solução proposta em Barroso et al (1997)
+possui um bom desempenho para a aplicação em
+questão, mas precisaria de algumas adaptações para
+operar em uma realidade diferente, sendo seu sucesso
+incerto para o caso proposto neste trabalho. Em Choi
+et al (2012) são pontuadas algumas dificuldades em
+se trabalhar com a localização e classificação de
+marcações em placas de aço placas com diferentes
+temperaturas, variações na coloração e intensidade da
+tinta da marcação e reflexões de iluminação, por
+exemplo. Em Choi et al (2012) , o estudo é realizado
+em um ambiente coberto, diferente do caso apresentado neste trabalho, onde a placa se encontra exposta
+ iluminação natural. O método apresentado apresenta um índice de acerto de 94 da região onde o texto
+encontra-se localizado.
+Em Phan, Shivakumara e Tan (2009), um método laplaciano para identificação da região de texto foi
+proposto. Esse método foi implementado e aplicado
+ao caso deste trabalho. Embora o método proposto
+tenha sido eficiente em imagens televisivas, o resultado não foi satisfatório para a localização de caracteres em placas de aço, demonstrando que casos específicos de localização de regiões textuais precisam,
+em muitas situações, serem tratados com uma determinada especificidade.
+Por atuarem em ambientes estruturados ou por
+serem aplicados em casos específicos, os métodos
+existentes na literatura não apresentam soluções passíveis de generalização direta ao caso abordado neste
+trabalho. É importante mencionar que, neste texto, o
+principal objetivo é realizar a localização e segmentação precisa de identificadores de placas de aço presentes em imagens sujeitas a diferentes condições de
+iluminação, capturadas em diferentes dias e em diferentes horários ao longo de um dia. A classificação
+dos caracteres propriamente dita, desde que se possua
+caracteres segmentados com qualidade, é um objetivo
+secundário, pois já se encontra largamente analisada
+na literatura.
+Detecção de textos em imagens, conforme mencionado, continua sendo alvo de constante estudo na
+literatura. Muitos termos têm sido utilizados para se
+referir ao assunto, por exemplo, detecção de texto,
+extração de texto ou localização de texto. Jung,
+Kim e Jain (2004) define estes termos de forma precisa e apresenta uma arquitetura para a extração da
+informação de texto, mais conhecida pelo seu termo
+em inglês TIE (text information extraction). Algumas
+pesquisas assumem que a região de caracteres possuem muitas bordas e utilizam características de gradiente como em Chen e Yuille (2004), outras focam em
+extração_de_características de cores como em Wang e
+Kangas (2003). Adicionalmente alguns trabalhos
+partem do princípio que o texto, em imagens, possui
+
+impressa nas placas e confirmar se uma determinada
+placa corresponde ao indicado nos sistemas de rastreamento e controle. Em função de fatores como
+falhas_de_sensoriamento, falha de comunicação sistêmica ou fator humano, pode haver uma falha no
+rastreamento de uma determinada placa. Esses erros
+implicam em paradas do processo produtivo para
+correção da falha.
+Uma alternativa para aumentar a robustez deste
+rastreamento é a inclusão de uma verificação automática em parte do processo de rastreamento das placas
+de aço. Por meio das imagens geradas por uma câmera fixa localizada no início do processo do LTQ, pode-se aplicar técnicas de processamento digital de
+imagens e visão_computacional para realizar a classificação dos identificadores das placas de aço ou SlabID, que chegam ao LTQ. Para isto, localiza-se a
+região de texto da placa presente na imagem de cada
+quadro do vídeo fornecido pela câmera, e rastreia-se
+esta região ao longo do deslocamento da placa. Em
+seguida, segmenta-se a área de texto e realiza-se o
+processo de classificação dos caracteres. Na Figura 2,
+é exibido um quadro de um dos vídeos empregados
+neste trabalho.
+
+Figura 2. Foto da face de uma placa na mesa de carregamento do
+forno do LTQ.
+
+Geralmente, textos possuem informação sobre o
+contexto da cena presente em uma determinada imagem e, por este motivo, técnicas de extração de textos
+continuam a ser amplamente estudadas. Além disso, a
+localização, segmentação e classificação automática
+de texto em imagens tornam possível a automação de
+muitos processos, por exemplo, monitoramento veicular (Cui e Huang, 1997), busca de cenas específicas em um banco de imagens (Lienhart e Wernicke,
+2002) e pesquisas na Web (Antonacopoulos, Karatzas e Lopes, 2001).
+Atualmente, na literatura, levando-se em conta o
+grande número de trabalhos existentes relacionados 
+localização e classificação de textos presentes em
+imagens, poucos são os estudos aplicados, especificamente, ao caso abordado neste trabalho. Identificar
+e classificar caracteres em placas de aço, em um processo_industrial, muitas vezes, é um desafio. Isso
+ocorre, pois, a baixa qualidade da imagem dos caracteres obtidos por meio da câmera dificulta o processo
+de localização na imagem, segmentação e, consequentemente, classificação desses caracteres. Dentre
+os fatores que afetam a aquisição dos caracteres com
+qualidade estão oxidações existentes na placa de
+aço, diferenças de tonalidades existentes na placa de
+aço, pouco contraste na imagem, marcação dos caracteres com variação de cor ou forma, variações de
+luminosidades no ambiente de operação, saturações
+1255
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+propriedades texturais distintas do resto da imagem e
+utilizam filtros stroke (Jung, Liu e Kim, 2009) ou
+características como wavelet (Ye et al, 2005).
+O presente trabalho encontra-se estruturado em
+quatro seções. Na Seção 2, são abordados os materiais e métodos empregados na solução do problema
+proposto neste trabalho. Na Seção 3, são discutidos
+os resultados obtidos com a implementação proposta
+e na, Seção 4, são apresentadas algumas conclusões
+da realização deste trabalho.
+Figura 4. Descrição do espaço de cores HSV.
+
+2 Materiais e Métodos
+Por ser um espaço de cor mais flexível para se
+realizar filtragem em imagens coloridas, realiza-se a
+conversão do espaço de cores RGB para HSV e o
+resultado presente na Figura 5 é obtido. Em seguida,
+um filtro utilizando o canal V da imagem é aplicado 
+imagem. Os pixeis com valores de canal V superiores
+a 40 do maior valor são descartados da busca por
+região de texto, por meio do ajuste de seus valores
+para a cor preta. O resultado é apresentado na Figura
+6.
+
+A abordagem utilizada neste trabalho considera
+que a região de caracteres, após a binarização da
+imagem, terá uma quantidade de bordas superior se
+comparada com o restante da imagem. No item 2.1,
+descrevem-se as técnicas de processamento digital de
+imagens empregadas cujo resultado é uma imagem
+binária, com as bordas da cena, que é essencial para o
+processo de localização da região de texto na imagem. No item 2.2, descreve-se a etapa de localização
+da região de texto na imagem e, por fim, no item 2.3,
+as etapas finais de segmentação e classificação dos
+identificadores das placas de aço são realizadas. A
+solução do problema proposto neste trabalho foi desenvolvida utilizando-se o software proprietário Matlab da MathWorks.
+
+Figura 5. Imagem em escala de cores HSV.
+
+2.1 Obtenção de Bordas nas Imagens dos Caracteres
+Como a câmera empregada neste trabalho adquire imagens em um ambiente_externo, a variação de
+iluminação torna-se o principal fator complicador na
+solução do problema aqui proposto. Características
+do estado da placa de aço, como carepa, ranhuras
+formadas pelo corte da placa no lingotamento contínuo também influenciam na detecção da região de
+texto na imagem. Para tornar o processo de detecção
+dos identificadores robusto as influências mencionadas, algumas rotinas de filtragem da imagem foram
+realizadas. A câmera obtém imagens coloridas no
+padrão RGB conforme mostrado na Figura 3. Esta
+imagem corresponde a um quadro do vídeo com a
+região de interesse já selecionada.
+
+Figura 6. Imagem pós-filtro aplicado no canal V.
+
+A imagem da Figura 6 é convertida de volta para
+o espaço de cores RGB, conforme apresentado na
+Figura 7, e, então, é convertida para escalas de cinza
+gerando a imagem presente na Figura 8
+
+Figura 7. Imagem RGB.
+
+Figura 3. Imagem original RGB.
+Figura 8. Imagem em escala de cinza.
+
+Analisando a imagem do ponto de vista da escala
+de cores HSV, nesta aplicação, a região de incidência
+de maior saturação tende a apresentar valores maiores de valor (Figura 4).
+
+Percebe-se que regiões com alto valor nas cores
+foram removidas da imagem, contudo, a imagem
+obtida ainda apresenta ruídos que devem ser removidos antes de se aplicar um filtro de borda com o intuito de identificar a região de texto nas placas. Com
+
+1256
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Figura 11. Este gráfico será chamado ao longo do
+texto de soma vertical, obtido a partir de cada linha
+da imagem.
+
+este objetivo, aplica-se, então, uma suavização da
+imagem utilizando um filtro mediana, uma transformação bastante comum para suavizar ruídos do tipo
+impulsivo, ou espigada (Gonzales e Woods,
+2000137-138), ou sal e pimenta, em sinais e imagens
+digitais. A imagem suavizada obtida com a aplicação
+do filtro mediana se encontra na Figura 9.
+
+Figura 11. Imagem com bordas e o gráfico da soma vertical (altura
+pixel x soma pixeis).
+
+Com o perfil da soma da Figura 11, é possível se
+obter os limites verticais da região onde o texto se
+encontra na imagem, ou seja, as linhas superior e
+inferior da matriz imagem. Calcula-se o valor médio
+das somas ajustado por um fator multiplicativo empírico, 0.9 no caso, e varre-se cada posição de altura do
+gráfico, correspondente a soma dos pixeis de cada
+linha da imagem, até que seja encontrado um valor
+maior que a média em uma transição positiva. Ao
+mesmo tempo, verifica-se a ocorrência de uma transição negativa da linha (altura) i para a linha i+1. Caso
+a distância entre a posição da transição positiva e a
+posição da transição negativa esteja dentro de limites
+estabelecidos, considera-se a região encontrada como
+candidata válida. Caso estes limites estejam dentro de
+um intervalo de distância, em relação  mediana encontrada, considera-se que a região de interesse, os
+limites superior e inferior, foram encontrados. Na
+Figura 12, exibem-se os valores de média (linha vermelha horizontal), limites (linhas vermelhas verticais)
+e da mediana (linha verde) obtidos para o gráfico da
+Figura 11, só que agora apresentado na horizontal.
+
+Figura 9. Imagem pós-suavização.
+
+Em seguida, de posse da imagem presente na Figura 9, aplica-se um filtro Sobel para extração de
+bordas, obtendo-se imagens similares a apresentada
+na Figura 10. No Matlab, a função utilizada para a
+realização desta rotina foi a edge(). A sensibilidade
+pode ser ajustada de acordo com algumas características das imagens do banco de imagens utilizado.
+Neste trabalho, após alguns testes, verificou-se que o
+valor 0.006 para a constante de sensibilidade do método de sobel permitia a obtenção de bordas que resultavam em uma boa detecção da região de texto.
+Não se espera que esse ajuste varie substancialmente
+para diferentes bancos de imagens, pois as placas de
+aço do presente trabalho estão sujeitas a diferentes
+condições de iluminação, resultando em uma variedade de imagens para as quais a mesma constante é
+empregada com sucesso.
+
+Figura 12. Gráfico da soma vertical com limites identificados 
+(soma pixel x altura pixel).
+
+Figura 10. Imagem pós-filtro de Sobel.
+
+A partir dos limites verticais obtidos, pode-se selecionar a área de interesse vertical recortando, na
+imagem,  região que contém os caracteres (Figura
+13).
+
+2.2 Localização da Região de Texto na Imagem
+A etapa de localização em conjunto com a segmentação da região de texto tem por objetivo reproduzir, no meio digital e guardadas as devidas proporções, o processo cognitivo sofisticado realizado pelo
+sistema visão e o cérebro humano, de identificar padrões textuais em imagens capturadas pelo sistema de
+visão humano.
+Nesta etapa, a partir da imagem com bordas obtida na Seção 2.1, deve-se adotar uma estratégia para
+identificar a região onde caracteres se encontram na
+imagem. É possível perceber que a ocorrência de
+bordas tende a ser mais intensa na região onde caracteres se encontram. Pode-se medir esta característica
+utilizando, por exemplo, a soma dos pixeis ao longo
+de um conjunto de linhas da imagem. Com este objetivo, para cada linha da imagem, executa-se este cálculo, obtendo-se um gráfico conforme apresentado na
+
+Figura 13. Imagem obtida após a seleção da região de interesse na
+vertical.
+
+Analogamente ao processo realizado para cada
+linha da imagem, para cada coluna da imagem calcula-se a soma dos pixeis obtendo-se o gráfico indicado
+na Figura 14. Chama-se este gráfico, ao longo do
+texto, de soma horizontal obtido a partir de cada coluna da imagem.
+
+1257
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Figura 17. Imagem originada da ROI (Region of Interest).
+
+Observando-se o histograma da imagem transformada para tons de cinza, apresentado na Figura
+18, observa-se uma característica bimodal. Neste
+caso, o método de binarização de Otsu pode ser utilizado com bom resultado. Esta técnica encontra um
+limiar ótimo, aproximando o histograma por duas
+funções gaussianas, de forma a minimizar a variância
+intra-classes. A linha vertical vermelha nesta figura
+representa o limiar encontrado pelo método de binarização.
+
+Figura 14. Imagem com bordas e o gráfico da soma horizontal
+(soma pixeis x largura pixel).
+
+Um algoritmo semelhante ao aplicado ao vetor
+de somas vertical é utilizado. Mas, neste caso, algumas adaptações são necessárias em função da existência de um menor número de bordas por coluna da
+matriz imagem, tornando a análise de somas nas colunas da imagem mais suscetível a ruídos. A varredura é realizada nos dois sentidos. Três diferentes valores são encontrados considerando a comparação com
+a mediana, sendo mantido o menor valor no caso do
+limite inferior e o maior valor no caso do limite superior. O resultado é apresentado na Figura 15. A partir
+dos limites obtidos, pode-se restringir a área de interesse horizontal, caso ela tenha dimensões esperadas
+para os identificadores das placas de aço, completando a localização, na imagem, da região que contém
+os caracteres (Figura 16). Com esta região, é possível
+agora se realizar a segmentação e posterior classificação dos caracteres.
+
+Figura 18. Histograma da imagem ROI em escalas de cinza (no de
+ocorrências x tons de cinza).
+
+A partir do limiar retornado pelo método de
+Otsu, pode-se realizar a binarização da imagem em
+tons de cinza, obtendo-se, assim, a imagem apresentada na Figura 19.
+
+Figura 15. Gráfico de soma horizontal com limites identificados
+(soma pixeis x largura pixel).
+
+Figura 19. Imagem binarizada separando os caracteres.
+
+Com a imagem binarizada obtida, pode-se utilizar um OCR (Optical Character Recognition  Reconhecedor de Caracteres Ótico) disponível na literatura, que seja capaz de reconhecer caracteres a partir
+de um arquivo de imagem. Com isto, o objetivo final
+do trabalho será alcançado, pois, a partir da imagem
+do identificador alfanumérico presente na placa de
+aço, pode-se obter um arquivo de texto com as informações dos caracteres presentes nesse identificador.
+A solução OCR utilizada, neste trabalho, é uma
+aplicação disponível de forma livre pelo Google
+chamada Tesseract. Apresenta-se ao Tesseract uma
+imagem como a da Figura 19 e obtêm-se o resultado
+da classificação da sequência de caracteres presente.
+Para a imagem da Figura 19 o resultado obtido
+foi 8 3272458 53. Pode-se observar que o resultado
+apresentou dois erros, o primeiro caractere foi incorretamente classificado como 8 sendo B, e o sétimo
+caractere foi incorretamente classificado como 5 sendo 6.
+Para melhorar a precisão da tradução obtida, utiliza-se um processo estatístico valendo-se do fato de
+se rastrear a região de interesse ao longo de cada
+quadro de um vídeo (Figura 20). Com isto, quadro a
+
+Figura 16. Região de interesse identificada pelo algoritmo.
+
+2.3 Segmentação e Classificação dos Caracteres.
+Nesta etapa, será realizada a segmentação e a
+classificação dos números presentes nos identificadores das placas de aço. Com os limites horizontais e
+verticais da região de interesse encontrados na Seção
+2.2, separa-se esta região de interesse também na
+imagem RGB capturada pela câmera empregada neste trabalho (Figura 17) e realiza-se um processo de
+limiarização na imagem em tons de cinza obtida a
+partir da imagem de interesse RGB presente na Figura 17. Deseja-se que os caracteres alfanuméricos sejam separados do restante da imagem, sendo esta
+etapa denominada de segmentação dos caracteres.
+
+1258
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+diferentes casos de iluminação e marcação da placa.
+Em dois casos desfavoráveis a região foi identificada
+de forma incorreta. Ainda assim, parte dos caracteres
+são identificados e, como trabalho futuro, isso pode
+ser explorado na tentativa de se resolver esses casos
+particulares de erro. É importante mencionar que
+imagens consideradas como sem interferências severas, na verdade, são imagens com variações bruscas
+de iluminação e de tonalidade dos números. Contudo,
+as variações de iluminação são uniformes ao longo
+dos caracteres e os números possuem modelo de
+marcação não completamente distintos, possuindo
+uma similaridade mínima.
+
+quadro obtêm-se o resultado da classificação e podese comparar o resultado obtido para cada posição do
+campo de caracteres. A primeira posição, sempre
+representada por uma letra, pode ser descartada, e os
+demais caracteres sempre serão numéricos. Desta
+forma, pode-se descartar qualquer caractere que não
+foi reconhecido como número. Feito isto, obtêm-se a
+repetição de caracteres para cada posição (Figura 21)
+reconhecidos pelo Tesseract. Com isto os números
+mais frequentes possuem maior probabilidade de
+estarem corretos e consideram-se estes como corretos. Importante mencionar que a quantidade de caracteres identificados pelo classificador pode variar em
+cada quadro.
+
+Tabela 1. Índice de acerto da ROI.
+Tipo da
+imagem
+
+Número de
+imagens
+
+ROI correta
+
+Índice de
+acerto
+
+boa
+ruim
+total
+
+370
+230
+600
+
+347
+106
+453
+
+93,8
+46,1
+75,5
+
+Figura 20. Resultado de 3 diferentes quadros do vídeo.
+
+Figura 22. Exemplos de obtenção da região de interesse pelo algoritmo.
+
+Conforme mencionado anteriormente, utilizou-se
+o Tesseract como aplicativo OCR para realizar a tarefa de classificação dos caracteres, entretanto, a acurácia deste aplicativo não foi analisada por não ser o
+foco deste trabalho e o desempenho do mesmo já ser
+largamente conhecido no meio empresarial, industrial
+e acadêmico. Entretanto, a técnica da obtenção do
+caractere mais recorrente dentre todos os quadros de
+um vídeo, elegendo um vencedor para cada posição,
+demonstrou ser eficiente na eliminação de falhas do
+classificador, conforme demonstrado na Figura 21.
+
+Figura 21. Número identificado para cada posição e o resultado
+final da classificação.
+
+3 Resultados
+Com base no método apresentado, 600 imagens
+em diferentes condições de horário e clima foram
+utilizadas para avaliação do método. Com base no
+método apresentado, 600 imagens em diferentes condições de horário e clima foram utilizadas para avaliação do método. Deste total, considerou-se 230 imagens em condições muito desfavoráveis incidência
+de sol em apenas metade dos números dos identificadores da placa de aço, marcação não nítida ou manual, marcação com cores diferentes. Na Tabela 1 apresenta-se o resultado obtido pelo algoritmo. Incluindo
+toda a amostragem realizada, sendo alcançado um
+índice de acerto da região de texto de 75,5 (453
+placas). Considerando-se apenas as 370 imagens sem
+interferências severas, 93,8 de acertos foram obtidos. Para as 230 imagens consideradas como muito
+desfavoráveis, o índice de acerto da região de texto
+foi de 46,1. Na Figura 22, alguns resultados são
+apresentados. Nela, pode-se notar que o algoritmo foi
+eficiente para identificar a região de interesse em sete
+
+4 Conclusão
+O campo de processamento_digital_de_imagens e
+visão_computacional tem se desenvolvido muito nos
+últimos anos. As técnicas dessas duas áreas e os
+equipamentos como câmeras e computadores têm
+evoluído a ponto de permitir a inspeção de processos
+produtivos em tempo_real, com menos riscos e falhas
+por parte de operadores humanos. Contudo, mesmo
+com os esforços realizados na última década, ainda
+observa-se uma interferência direta tímida do processamento_digital_de_imagens e da visão_computacional
+dentro dos processos do ambiente industrial, principalmente devido s questões de garantia de segurança
+no trabalho e na execução dos processos. No entanto,
+
+1259
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Jung, K. Kim, K. e Jain, A (2004). Text information
+extraction in images and video A survey. Pattern
+Recognition. 13(1), p.977-997  7
+Jung, C. Liu, Q. e Kim, J (2009). A stroke filter and
+its application to text localization. Pattern
+Recognition Letters. 30(2), 114122.  10
+Lienhart, R. e Wernicke, A (2002). Localizing and
+segmenting text in images and videos. IEEE
+Transactions on Circuits and Systems for Video
+Technology 12, 4 (Apr 2002), 256268. - 2
+Phan, T.Q. Shivakumara, P. e Tan, C.L (2009). A
+Laplacian Method for Video Text Detection.
+School of Computing, National University of
+Singapore.  6
+Wang, K. e Kangas, J (2003). Character location in
+scene images from digital camera. Pattern
+Recognition. 36(10), 22872299. - 9
+Ye, Q. Huang, Q. Gao, W. e Zhao, D (2005). Fast
+and robust text detection in images and video
+frames. Image and Vision Computing. 23(6),
+565576. - 11
+
+não se pode negar que as possibilidades são amplas e
+merecem ser mais bem exploradas na indústria.
+A aplicação de identificação textual em imagens
+ainda é desafiadora em situações específicas e em
+ambientes pouco estruturados, mas apresenta resultados que trazem benefícios ao processo produtivo
+industrial, como no caso abordado neste trabalho.
+Identificar o número da placa de aço presente na entrada do processo do LTQ pode evitar paradas indevidas no processo e auxilia o operador no processo
+de conferência dos identificadores das placas reduzindo seu esforço.
+Um dos maiores problemas de aplicações tais
+como a proposta neste trabalho é a localização de
+regiões de textos nas imagens e, consequentemente,
+sua segmentação com qualidade. Os resultados apresentados neste trabalho demonstraram a eficácia da
+solução proposta mesmo em imagens ruidosas de
+placas. Um índice de 93,8 de acerto foi alcançado
+em imagens sem interferências severas e um percentual de acerto de 46,1 foi alcançado em imagens
+desfavoráveis. Estes casos desfavoráveis podem ainda ser estudados e tratados de forma mais específica
+pelo algoritmo, proporcionando uma elevação da
+correspondente taxa de acerto.
+Por fim, a técnica da obtenção do caractere mais
+recorrente dentre todos os quadros de um vídeo, elegendo um vencedor para cada posição, demonstrou
+ser eficiente ao filtrar falhas de classificação do processo e aumentando sua probabilidade de acerto.
+Referências Bibliográficas
+Antonacopoulos, A. Karatzas, D. e Lopes, J.O
+(2001). Accessing textual information embedded
+in internet images. In SPIE - Internet Imaging II,
+San Jose, USA, p. 198205. - 3
+Barroso, J. Dagless, E.L. Rafael, A. and BulasCruz, J (1997). Number plate reading using
+computer_vision. ISIE.  4
+Cui, Y.T. e Huang, Q (1997). Character extraction of
+license plates from video. In CVPR 97
+Proceedings of the 1997 Conference on
+Computer Vision and Pattern Recognition
+(CVPR 97), Washington, DC, USA, IEEE
+Computer Society, p. 502. - 1
+Chen, X. e Yuille, A.L (2004). Detecting and reading
+text in natural scenes. In Proceedings of the 2004
+IEEE computer society conference on computer
+vision and pattern recognition (Vol. 2, pp. II366II-373). - 8
+Choi, S. Yun, J.P. Koo, K. e Kim, S.W (2012).
+Localizing slab identification numbers in factory
+scene images. Expert Systems with Applications
+397621-7636.  5
+Gonzales, R.C. e Woods, R.E (2000). Processamento
+Digital de Imagens, São Paulo Edgard Blcher.
+p.137-138 - 12
+
+1260

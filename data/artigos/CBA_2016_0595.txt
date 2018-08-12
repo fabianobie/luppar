@@ -1,0 +1,788 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+MODELO ESTATISTICO PARA FILTRAGEM DE EXEMPLOS NEGATIVOS NA
+DETECCAO DE PEDESTRES
+Douglas Almonfrey, Raquel Frizera Vassallo, Evandro Ottoni Teatini Salles,
+Mylene C.Q. Farias
+
+
+
+IFES, Av. Vitoria, 1729, Vitoria, ES, Brasil
+
+UFES, Av. Fernando Ferrari, 514, Vitoria, ES, Brasil
+
+
+UnB, Braslia, DF, Brasil
+
+Emails dalmonfrey@ifes.edu.br, raquel@ele.ufes.br, evandro@ele.ufes.br,
+mylene@ieee.org
+Abstract Methods for automatic pedestrian detection have presented a lot of progress in the last years
+motivated mainly by driver assistance systems, demanded by autonomous cars. Most of the pedestrian detection
+solutions are appearance-based and demand exhaustive sliding windows search over the image. In general, these
+solutions have a high computational cost. As the detection time is critical for real time applications, procedures
+to filter out negatives and generate candidate windows (FENGJC) are often useful to reduce the number of
+evaluations by the detector. Besides that, the elimination of negatives tends to change the distribution of the
+data used by the detector, and, when applied at the end of the detection task, the FENGJC procedure tends also
+to influence in the precision and quality of the detector. In this sense, this work employs a statistical pedestrian
+model based on histograms of oriented gradient to build a novel FENGJC technique.
+Keywords
+
+Pedestrian Detection, Negative Filtering.
+
+Resumo A deteccao automatica de pedestres em imagens tem sido objeto de grande atencao nos ultimos
+anos, principalmente devido ao aumento de pesquisas na area de veculos_autonomos. A maioria das solucoes para
+o problema de deteccao_de_pedestres utilizam modelos baseados em aparencia e a busca exaustiva na imagem
+por meio de janelas deslizantes. Em geral, essas solucoes possuem um alto custo_computacional. Como o tempo
+demandado durante a deteccao e crtico para aplicacoes de tempo_real, a filtragem de exemplos negativos e a
+geracao de janelas candidatas (FENGJC) e importante para se ter uma reducao no numero de inspecoes realizadas
+pelo detector na imagem. Alem disso, os mecanismos de FENGJC tendem a alterar a distribuicao dos dados
+analisados pelo detector de pedestres, e, quando aplicados na sada do detector, impactam tambem na precisao
+e na qualidade da deteccao. Nesse sentido, o presente trabalho desenvolve um modelo estatstico do pedestre,
+baseado em caractersticas extradas de histogramas de gradiente orientado com o objetivo de construir um novo
+procedimento de FENGJC.
+Palavras-chave
+
+.
+
+Introducao
+
+A deteccao_de_pedestres sempre foi um assunto relevante em visao_computacional e processamento
+de imagens e vdeos, devido a importancia da deteccao, identificacao e monitoramento dos seres
+humanos em uma variedade de cenas (Nguyen
+et al., 2016). Contudo, essa area de pesquisa
+tem se tornado cada vez mais importante, principalmente devido ao recente crescimento de pesquisas na area de veculos_autonomos (Geronimo
+et al., 2010).
+Na deteccao_de_pedestres, alem da qualidade,
+o tempo de processamento e fundamental. Embora o tempo demandado no treinamento do detector seja importante, o tempo do processo de
+deteccao e crucial. Desta forma, diferentes solucoes foram propostas na literatura no sentido de
+reduzir a complexidade computacional e o tempo
+do processo de deteccao. Dentre essas solucoes
+destacam-se a utilizacao do conceito de imagem
+integral (Viola et al., 2003), o emprego de classificadores em cascata (Dollar, Appel and Kienzle, 2012), deteccao multiescala utilizando aproximacoes exponenciais (Dollar et al., 2014) e uso
+de unidades graficas de processamento (UGP)
+(Benenson et al., 2012). Detectores em cascata
+estao diretamente relacionados a procedimentos
+
+ISSN 2525-8311
+
+de Filtragem de Exemplos Negativos1 e Geracao
+de Janelas Candidatas (FENGJC). Eles tendem a
+empregar classificadores com alto recall 2 e alto_desempenho computacional, para gerar janelas candidatas para detectores de melhor qualidade e
+maior tempo de deteccao.
+O presente trabalho propoe uma estrategia de
+FENGJC que, ate onde se pode constatar, e diferente das existentes na literatura e que pode ser
+utilizada em uma abordagem em cascata, tanto a
+priori como a posteriori ao processo de deteccao.
+Quando utilizada a priori, o objetivo e eliminar
+exemplos negativos, gerando um conjunto de janelas candidatas para o procedimento de deteccao, reduzindo o numero de avaliacoes necessarias
+por parte do detector de pedestres. Quando utilizado a posteriori, o objetivo e reduzir o numero
+de falsos positivos identificados pelo detector de
+pedestres, melhorando sua precisao.
+Este trabalho possui a seguinte organizacao
+na Secao 2, uma breve revisao da literatura e apresentada e, na Secao 3, o modelo estatstico desen1 Exemplos negativos, no contexto do presente trabalho,
+sao aquelas partes da imagem em que pedestres nao estao
+presentes. Exemplos positivos sao partes da imagem onde
+pedestres estao presentes.
+2 Recall e o termo em ingles que esta relacionado a quantidade de eventos relevantes obtidos dentre todos os eventos
+relevantes existentes.
+
+2097
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+volvido e abordado. Em seguida, na Secao 4, os
+procedimentos experimentais e seus resultados sao
+discutidos e, por fim, na Secao 5, sao feitas as consideracoes finais sobre este artigo.
+2
+
+Trabalhos Relacionados
+
+A maioria das solucoes, existentes na literatura
+para deteccao_de_pedestres, empregam o modelo
+baseado em aparencia (appearance-based ), sendo
+alguns exemplos abordados em (Zhang et al.,
+2015 Dollar et al., 2014 Yang et al., 2015). Esse
+modelo utiliza caractersticas (features) como descritores de partes da imagem e envolve uma etapa
+de treinamento de um classificador, em geral, realizado de maneira supervisionada. A etapa de
+treinamento antecede a de deteccao, que, na maioria dos casos, utiliza um metodo de busca exaustiva pela imagem, conhecido como janela deslizante (JD) (sliding window). A Figura 1 apresenta um fluxograma simplificado de um detector
+de pedestres.
+Não Pedestre
+
+Janela Deslizante
+
+Classificador
+Extração de
+Características
+
+Treinamento
+(offline)
+
+Pedestre
+SNM
+
+Figura 1 Fluxograma de um detector de pedestres. SNM significa supressao de nao maximo.
+O mecanismo de FENGJC, tambem chamado
+de detection proposal na literatura, pode substituir o procedimento de JD na Figura 1, gerando
+janelas candidatas para a etapa de extracao_de_caractersticas. Sendo assim, filtram-se janelas que
+correspondem a exemplos negativos e evita-se a
+busca exaustiva. Se a complexidade computacional do mecanismo de FENGJC for menor que a
+do detector, uma reducao no tempo de processamento pode ser obtida, haja visto que o detector realizara menos avaliacoes. A filtragem_de_negativos pode tambem ser posicionada imediatamente antes ou apos o procedimento de supressao
+de nao maximo (SNM), de maneira a eliminar deteccoes que sao falsos positivos, melhorando a precisao do detector. E valido ressaltar que a SNM
+e uma etapa do detector de pedestres que elimina
+multiplas deteccoes relativas a um mesmo pedestre3 . O metodo de FENGJC influencia tambem
+no processo de treinamento, pois altera a distribuicao dos exemplos negativos com os quais o detector esta trabalhando, principalmente se etapas
+de hard negative mining forem utilizadas.
+Em (Hosang et al., 2014), um estudo sobre os
+metodos de detection proposals existentes na lite3 Como a deteccao_de_pedestres e multiescala, haja visto
+que nao se sabe o tamanho do pedestre na imagem a priori,
+multiplas deteccoes de um mesmo pedestre podem ocorrer
+em diferentes escalas ou em uma unica escala.
+
+ISSN 2525-8311
+
+ratura de deteccao de objetos e realizado. Alem
+disso, uma plataforma de comparacao unificada
+desses metodos e desenvolvida. Dentre as metricas
+dessa plataforma de comparacao estao a repetibilidade, o criterio da area de intercessao sobre uniao
+(intersection over union criteria - IoU), o numero
+de janelas candidatas retornadas e o recall considerando a variacao de cada uma dessas metricas.
+Considerando-se o compromisso entre as metricas
+analisadas, os metodos EdgeBox (Zitnick and Dollar, 2014), que utiliza aprendizado_de_maquina, e
+o Selective Search (Uijlings et al., 2013), que nao
+envolve aprendizado e utiliza superpxeis, foram
+os que apresentaram os melhores resultados.
+Recentemente, em (Hosang et al., 2015), em
+um dos resumos mais completos sobre detection
+proposals da literatura, expande-se o trabalho realizado em (Hosang et al., 2014). Apresentamse as metricas, dentre as avaliadas em (Hosang
+et al., 2014), que resultam em uma melhor predicao da qualidade da deteccao quando utilizando
+detection proposal junto ao detector chamado LMLLDA. Chega-se a conclusao de que nao ha a garantia de que o metodo de FENGJC venha a melhorar o desempenho de um detector de objetos
+em termos da qualidade de deteccao. Espera-se,
+ainda, que um procedimento de deteccao que utilize janelas deslizantes tenha um desempenho no
+mnimo tao bom quanto o que utiliza o detection
+proposal. Contudo, utilizando-se as metricas adequadas, pode-se obter resultados competitivos entre metodos que utilizam e nao utilizam detection
+proposals.
+A solucao proposta neste trabalho para o problema de FENGJC tem como foco a tarefa de deteccao_de_pedestres. A maioria das solucoes atualmente existentes na literatura sao voltadas para a
+deteccao de objetos, da qual a deteccao_de_pedestres e uma instancia. O metodo proposto neste
+trabalho e inspirado na tabela de probabilidade
+e mascara de pre-filtragem de pedestres apresentada em (Liu et al., 2014), um dos poucos trabalhos conhecidos na literatura de deteccao_de_pedestres que emprega diretamente mecanismos de
+FENGJC. Como contribuicoes em relacao ao referido trabalho, destacam-se a alteracao no conjunto
+de caractersticas empregadas para gerar o modelo
+estatstico do pedestre, a modificacao no procedimento de obtencao da mascara de pre-filtragem e
+a realizacao de dezenas de experimentos para validacao dos resultados, utilizando um procedimento
+estatstico consistente.
+E importante salientar que nenhum dos procedimentos apresentados em (Hosang et al., 2015)
+utilizam modelos estatsticos tais quais o desenvolvido neste trabalho para remover negativos e
+gerar janelas candidatas. Em geral, sao utilizados
+procedimentos que empregam classificadores, passando por um processo de aprendizado, ou caractersticas de baixo nvel em um processo de seg-
+
+2098
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+mentacao. Considerando-se ainda a escassez de
+procedimentos de FENGJC na area da deteccao
+de pedestres, a solucao apresentada neste trabalho representa uma proposta diferente da existente
+na literatura.
+
+Algoritmo 3.1 Construcao do modelo estatstico.
+1
+2
+3
+4
+5
+6
+7
+
+3
+
+8
+
+Modelo Estatstico Proposto
+
+9
+10
+
+Nesse trabalho, um modelo estatstico do pedestre e proposto para auxiliar no procedimento
+de FENGJC. Esse modelo estatstico e inspirado na tabela de probabilidade e mascara de
+pre-filtragem de pedestres apresentadas em (Liu
+et al., 2014) e reproduzidas abaixo
+
+11
+12
+13
+14
+15
+16
+17
+18
+19
+
+1
+
+(i)
+
+P (y, x, VC (y, x)) e M (y, x) 
+
+(i)
+
+20
+
+, (1)
+
+sdv(VC (y, x))
+
+onde VC e a caracterstica em questao, i  1...K
+exemplos positivos e sdv o desvio padrao. Essa
+tabela de probabilidade P e um histograma em
+funcao da posicao (y, x), do leiaute padrao do pedestre, e da magnitude ou a orientacao (VC ) da
+imagem de gradiente de Sobel do pedestre.
+Neste artigo, sera utilizado como caracterstica, para a formulacao do modelo probabilstico, o Histograma de Gradiente Orientado - Histogram of Oriented Gradient (HOG) (Dalal and
+Triggs, 2005). A construcao do HOG e baseada
+no histograma do gradiente para diferentes orientacoes e isso o torna um descritor mais completo
+e eficaz que a imagem do gradiente de Sobel. O
+modelo probabilstico da Equacao 1 sera adaptado
+para ser representado em funcao da orientacao e
+da magnitude do gradiente, naquela orientacao,
+conforme apresentado na seguinte equacao
+P (y, x, M , ),
+
+(2)
+
+onde  e M sao a orientacao e sua magnitude
+fornecida pelo descritor HOG.
+O resultado da obtencao do HOG de uma imagem sao canais (imagens) contendo a magnitude
+em cada posicao (y, x) da orientacao representada
+pelo respectivo canal. Neste trabalho, sao consideradas seis orientacoes (1  90o , 2  60o , 3  30o ,
+4  0o , 5  -30o e 6  -60o ), e cada um dos seis
+canais obtidos, possui as mesmas dimensoes vertical e horizontal da imagem original. Alem disso,
+a magnitude do HOG e representada no intervalo
+0,255 e o leiaute padrao do pedestre empregado
+e de 32x16 pixeis4 . Desta forma, a construcao do
+modelo probabilstico do pedestre sera realizada
+conforme apresentado no Algoritmo 3.1. As sadas
+do algoritmo sao 2 histogramas. P e a tabela de
+probabilidade que considera todas as magnitudes
+e orientacoes e M e uma mascara de pre-filtragem
+obtida marginalizando-se P em relacao as orientacoes e magnitudes de interesse. M e, portanto,
+um histograma representado por uma matriz bidimensional.
+4 O leiaute do pedestre possui as mesmas dimensoes da
+janela deslizante utilizada na deteccao.
+
+ISSN 2525-8311
+
+21
+
+entrada 
+K imagens Xi (y, x, canal) RGB de p e d e s t r e s .
+s a d a 
+Tabela de P r o b a b i l i d a d e  P (y, x, M , ) 
+Mascara de Pref i l t r a g e m  M (y, x) .
+i n c i o
+P e M  inicializaZero () 
+para i  1 a t e K
+HOG(y, x, )  calculaHOG ( Xi )
+para u  1 a t e 1 6 , v  1 a t e 3 2 ,
+o  1 a t e 6
+P (v , u , HOG(v , u , o)+1 , o) 
+P (v , u , HOG(v , u , o)+1 , o)+1
+fim
+fim
+o r i   1 , 2 , 3 , 5 , 6   o r i e n t a c o e s do HOG
+minM ag  70
+M (v, u) 
+soma ( soma ( P (  ,  , minMag  2 5 6 , o r i ) , 3 ) , 4 )
+M  normaliza (M )
+fim
+
+Na obtencao de M , a orientacao de 0 e descartada, pois essa orientacao esta geralmente relacionada a elementos que nao sao pedestres. Essa
+afirmacao e de certa forma intuitiva, pois o pedestre, em imagens e na maior parte dos casos,
+aparece em pe, possuindo, portanto, contornos
+com orientacoes proximas a direcao vertical. Alem
+disso, essa decisao tambem se justifica com base
+na anisotropia das imagens naturais, que, segundo
+(Hyvrinen et al., 2009), apresentam uma maior
+correlacao na direcao horizontal. Como o pedestre, em geral, nao ocupa a maior parcela de
+uma imagem natural, essa anisotropia se deve em
+grande parte a regioes da imagem que nao contemplam o pedestre. Dessa forma, eliminar as orientacoes relacionadas a essas regioes torna o modelo estatstico do pedestre mais adequado. Alem
+disso, magnitudes de HOG abaixo de um determinado limiar tambem nao sao consideradas na
+construcao do modelo, pois geralmente estao relacionadas a orientacoes de difcil determinacao, o
+que nao e o caso do pedestre e seus contornos. Repare que um limiar de 70 foi estabelecido de forma
+emprica, embora a solucao seja relativamente estavel para valores proximos a esse limiar.
+Apos obtidos os histogramas P , M , de posse
+de um conjunto de imagens de pedestres, podese realizar a estimativa do limiar de separacao L,
+empregado para classificar janelas de deteccao em
+exemplos positivos e negativos. A estimativa de L
+e apresentada no Algoritmo 3.2.
+Repare que o valor do limiar escolhido no Algoritmo 3.2 e o mnimo valor do produto interno
+(P I) entre P e M . Essa decisao pode ser compreendida por meio da Figura 2(a), onde sao exibidos
+os histogramas (vetorPI) dos exemplos positivos e
+negativos. Assim como no caso dos exemplos positivos, o vetorPI para exemplos negativos pode
+ser obtido por meio do Algoritmo 3.2. Observe,
+por meio da Figura 2(a)5 , que o mnimo valor de
+5 As abscissas dos graficos da Figura 2 sao diferentes, pois as tabelas de probabilidade e mascaras de prefiltragem utilizadas no calculo de PI, pelos dois modelos
+sendo comparados, sao diferentes.
+
+2099
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+P I, para os exemplos positivos, permite filtrar,
+aproximadamente, metade dos exemplos negativos, sem eliminar qualquer exemplo positivo. De
+certo, para os conjuntos de validacao, existe a possibilidade de que alguns exemplos positivos sejam
+descartados.
+Algoritmo 3.2 Estimativa do limiar L.
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+
+entrada 
+K imagens Xi (y, x, canal) RGB de p e d e s t r e s .
+Tabela de P r o b a b i l i d a d e  P (y, x, M , ) 
+Mascara de P r o b a b i l i d a d e  M (y, x) .
+s a d a 
+Limiar  L
+i n c i o
+o r i   1 , 2 , 3 , 5 , 6   o r i e n t a c o e s do HOG
+minM ag  70
+para i  1 a t e K
+HOG(y, x, M , )  calculaHOG ( Xi )
+PI  0
+para u  1 a t e 1 6 , v  1 a t e 32
+o  1 a t e tamanho ( o r i )
+s e ( HOG(u , v , o r i ( o ) ) > minM ag )
+PI  PI +
+P (v , u , HOG(v , u , o r i ( o ) )+1 , o r i ( o ) )M (u , v)
+fim
+fim
+vetorPI ( i )  PI
+fim
+Lminimo ( v e t o r P I )
+fim
+
+Positivos
+Negativos
+Limiar L
+
+
+
+30
+20
+10
+0
+
+0
+
+0.5
+
+1
+
+PI
+(a)
+
+Positivos
+Negativos
+
+
+
+20
+10
+0
+0
+
+20
+
+40
+
+60
+
+80
+
+PI de (Liu et al., 2014)
+(b)
+
+Figura 2 Histograma das ocorrencias de valores
+de P I para exemplos positivos e negativos (a) do
+presente trabalho e (b) de (Liu et al., 2014).
+O metodo apresentado em (Liu et al., 2014)
+necessita de um processo adicional de otimizacao
+usando mnimos_quadrados, para obter um limiar
+adequado de separacao entre os exemplos positivos e negativos. Esse procedimento adicional nao
+e necessario no metodo proposto neste trabalho.
+A Figura 2(b) apresenta o histograma dos exemplos positivos e negativos, quando considerando
+o modelo estatstico de (Liu et al., 2014) sem o
+procedimento de otimizacao. Repare, por meio
+da Figura 2(b), a dificuldade em se encontrar um
+limiar de separacao entre exemplos positivos e negativos. As Figuras 2(a) e 2(b) foram obtidas a
+partir do conjunto de treino do banco_de_dados
+
+ISSN 2525-8311
+
+INRIA. Alem da utilizacao do HOG, ao inves do
+gradiente de Sobel, como caracterstica para obtencao da tabela de probabilidade, a mascara de
+pre-filtragem M deste trabalho e mais adequada
+que a de (Liu et al., 2014) sem o procedimento de
+otimizacao, conforme pode ser visto na Figura 3.
+Conforme apresentado na Equacao 1, a mascara
+de pre-filtragem de (Liu et al., 2014) e baseada
+apenas no desvio padrao das caractersticas.
+
+(a)
+
+(b)
+
+Figura 3 (a)Mascara de probabilidade desenvolvida neste trabalho e em (b) (Liu et al., 2014).
+4
+4.1
+
+Resultados Experimentais
+
+Metodologia dos Experimentos
+
+Para validar os resultados, sao empregadas duas
+bases de dados da literatura de deteccao_de_pedestres INRIA (Dalal and Triggs, 2005) e Caltech
+(Dollar, Wojek, Schiele and Perona, 2012). Como
+metricas para a analise dos resultados, sao utilizados o recall e a taxa de eliminacao de negativos
+(txElimN). Nos experimentos onde o metodo de
+FENGJC e validado isoladamente, as janelas de
+exemplos negativos sao aleatoriamente amostradas das imagens da base de dados, antes de passarem pelo procedimento de FENGJC. Por isso, sao
+realizadas 10 rodadas aleatorias com diferentes sementes (seeds) e como resultado sao apresentados
+a media e o desvio padrao de cada metrica. Esse
+procedimento agrega robustez a validacao e nao foi
+empregado em (Liu et al., 2014). Por fim, um ultimo processo de validacao e o emprego do procedimento de FENGJC junto ao detector de pedestres ACF (Aggregated Channel Features) (Dollar
+et al., 2014), de forma a observar seu impacto na
+qualidade das deteccoes.
+4.2
+
+Experimentos
+
+No primeiro conjunto de testes, o desempenho do
+metodo de FENGJC e analisado em diferentes cenarios. Para realizar a estimativa do limiar L, e
+utilizada a metade dos exemplos positivos dos conjuntos de treino das base de dados. Os exemplos
+positivos sao obtidos por meio das anotacoes existentes nos conjuntos dos bancos de dados. Existem, respectivamente, 1236 e 589 pedestres anotados nos conjuntos de treino e teste da base de
+dados INRIA e 12249 e 998 nos conjuntos de treino
+e teste da base de dados Caltech. Ja os exemplos
+negativos sao obtidos por meio de amostragem aleatoria de 5000 janelas dessas bases. Desta forma,
+
+2100
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+o desvio padrao e exibido apenas para a txElimN.
+A Tabela 1 apresenta os resultados da primeira rodada de experimentos. Para os casos
+onde o limiar foi obtido e testado na mesma base
+de dados, o recall foi muito proximo ou igual
+a 100, enquanto a txElimN ficou em torno de
+50. Se utilizado em um estagio anterior ao processo de deteccao, o procedimento de FENGJC
+reduz em aproximadamente 50 o numero de inspecoes necessarias por parte do detector em janelas de exemplos negativos, nao eliminando qualquer exemplo positivo a priori. Dependendo do
+tempo de deteccao do detector de pedestres, o
+ganho de tempo pode ser consideravel. Em (Liu
+et al., 2014), o recall foi de 99.02 com uma txElimN de 59.54 apos o procedimento de otimizacao, no banco_de_dados INRIA, unico caso avaliado. Embora mais exemplos negativos tenham
+sido descartados em relacao ao presente trabalho,
+procedimentos de FENGJC devem sempre buscar
+o maior recall possvel. Por fim, quando se realiza o treinamento e o teste do procedimento de
+FENGJC em bases de dados diferentes, o desempenho sofre uma reducao, devido as particularidades das distribuicoes dos dados de cada base. Esse
+tipo de teste e desafiador na deteccao_de_pedestres
+e, geralmente, leva a uma reducao de desempenho nos procedimentos sendo avaliados, conforme
+pode ser constatado em (Benenson et al., 2015).
+Tabela 1
+Resultados do procedimento de
+FENGJC nos bancos de dados INRIA e Caltech
+Treino
+INRIA-Treino
+INRIA-Treino
+INRIA-Treino
+INRIA-Treino
+Caltech-Treino
+Caltech-Treino
+Caltech-Treino
+Caltech-Treino
+
+Teste
+INRIA-Treino
+INRIA-Teste
+Caltech-Treino
+Caltech-Teste
+INRIA-Treino
+INRIA-Teste
+Caltech-Treino
+Caltech-Teste
+
+recall ()
+100,00
+100,00
+89,41
+89,36
+100,00
+100,00
+99,98
+100,00
+
+txElimN ()
+55,09  1,92
+52,81  1,55
+73,29  0,87
+71,47  0,84
+39,56  1,58
+38,17  1,51
+50,70  0,54
+49,52  0,62
+
+os valores de orientacao, embora em ambos os casos o desempenho do procedimento de FENGJC
+apresente uma reducao quando analisando o percentual de negativos eliminados. Alem disso, o
+resultado para limiares de magnitude diferentes
+de 70 tambem e analisado nas duas ultimas linhas
+da referida tabela. Por fim, a segunda linha da
+Tabela 2 mostra que a orientacao de 90 e responsavel, sozinha, por grande parte dos negativos
+eliminados.
+Tabela 2 Influencia das magnitudes e orientacoes de interesse do HOG no procedimento de
+FENGJC.
+Magnitude Orientacao
+> 70 90 , 60 , 30 , 0 , -30 , -60 
+> 70 90 
+> 0 90 , 60 , 30 , -30 , -60 
+> 60 90 , 60 , 30 , -30 , -60 
+> 80 90 , 60 , 30 , -30 , -60 
+
+ISSN 2525-8311
+
+txElimN ()
+44,24  1,54
+49,57  1,61
+6,16  0,99
+50,52  1,92
+48,62  1,74
+
+A Tabela 3 contem o recall e a txElimN para
+diferentes tamanhos de leiaute do pedestre. Apenas uma rodada aleatoria e suficiente nesta analise
+e a base de dados INRIA e empregada.
+Tabela 3 Recall e txElimN para diferentes tamanhos de leiautes de pedestres (4  32x16 pixeis).
+Leiaute 16 14 12
+recall
+txElimN
+
+98,06
+44,4
+
+98,54
+46,34
+
+100,00
+33,12
+
+8
+
+4
+
+2
+
+1
+
+100,00
+47,16
+
+100,00
+54,84
+
+100,00
+55,62
+
+100,00
+48,72
+
+A Figura 4 apresenta os limiares L para cada
+tamanho de leiaute da Tabela 3, assim como a interpolacao dos valores de L. Repare que a curva
+de aproximacao possui um comportamento de facil predicao, o que facilita a estimativa de L, reduzindo o custo_computacional em um processo de
+deteccao multiescala.
+0.8
+0.6
+
+Aproximado
+Original
+
+L
+
+Neste ponto, destaca-se a importancia de uma
+das contribuicoes deste artigo, que e a filtragem
+das magnitudes e orientacoes de interesse na construcao do modelo estatstico do pedestre. Caso
+fossem utilizadas todas as magnitudes e orientacoes retornadas pelo HOG na construcao do modelo estatstico, o resultado do procedimento de
+filtragem_de_negativos apresentaria uma reducao
+de desempenho consideravel, conforme apresentado na Tabela 2. Apenas a base de dados INRIATreino foi empregado neste conjunto de experimentos, de forma que os resultados da Tabela 2
+devem ser comparados com a primeira linha da
+Tabela 1. Considerar todas as magnitudes e orientacoes possveis e o mesmo que nao utilizar a mascara de pre-filtragem M , que se mostra fundamental para o sucesso do procedimento de FENGJC.
+Repare, por meio da Tabela 2, que empregar
+todos os valores de magnitude na construcao do
+modelo e mais impactante que considerar todos
+
+recall ()
+100,00
+100,00
+100,00
+100,00
+100,00
+
+0.4
+0.2
+0
+
+12 4 6 8 10121416
+
+Taxa de Amostragem
+Figura 4 Curva do limiar L para diferentes tamanhos de leiaute.
+Por fim, a Tabela 4 contem resultados do emprego do metodo de FENGJC junto ao detector
+ACF em tres casos antes da etapa de SNM, durante (1) treinamento e teste, (2) apenas o teste,
+e (3) apos a SNM. O resultado individual do ACF
+e apresentado no caso (4). As metricas de comparacao utilizadas sao o logaritmo da taxa media
+de perda (log average miss rate - LogAvrMR)6 , a
+6 Quanto
+
+menor o valor da LogAvrMR melhor.
+
+2101
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+precisao media (average precision - AP) e as taxas de eliminacao de positivos (txElimP) e falsos
+positivos (txElimFP), em relacao ao numero de
+deteccoes, apenas no caso (3)7 .
+O caso 1 apresentou uma leve melhoria na
+qualidade, em termos da AP, e, em se tratando
+da LogAvrMR, uma leve depreciacao. Isso indica
+que o detector foi mais preciso em suas deteccoes,
+ao utilizar a FENGJC, contudo, alguns pedestres
+deixaram de ser encontrados. Nos caso 2 e 3, nao
+houve alteracao significativa da qualidade do detector, o que esta de acordo com algumas observacoes de (Hosang et al., 2014), onde, para algumas
+classes de objetos, os melhores metodos de detection proposal, quando associados a detectores de
+objetos, nao apresentaram ganhos ou perdas expressivas em relacao ao detector utilizado de forma
+isolada.
+Em todos os quatro casos acima, avaliou-se
+tambem a pontuacao atribuda pelo classificador
+a deteccao antes de elimina-la. Foram descartadas
+deteccoes com P I menor que o limiar L e pontuacao menor que 60. O objetivo desse limiar de 60
+e evitar que deteccoes com alta pontuacao sejam
+eliminadas pelo metodo de FENGJC, sendo esse
+valor obtido por meio de uma analise das pontuacoes atribudas aos verdadeiros positivos. Por
+fim, ainda no caso 3, um baixo numero de exemplos positivos e negativos, dentre as deteccoes retornadas pelo ACF, foram eliminados, aproximadamente 0, 02 e 2, 38, respectivamente. Isso
+ocorre, pois os exemplos negativos retornados pelo
+ACF sao aqueles que possuem P I proxima aos dos
+exemplos positivos, como ocorre na Figura2(a). A
+maxima pontuacao atribuda pelo detector, dentre
+as deteccoes negativas eliminadas, foi de 48, 67, o
+que mostra que o limiar de 60 e adequado, podendo ate mesmo ser reduzido.
+Tabela 4 Avaliacao do procedimento de FENGJC
+junto ao detector ACF (INRIA).
+Caso
+1
+2
+3
+4
+
+LogAvrMR ()
+18,25  1.06
+18,16  0,98
+18,17  1,01
+18,17  0,98
+
+5
+
+AP ()
+90,55  0,46
+90,41  0,70
+90,40  0,74
+90,40  0,70
+
+txElimP ()
+
+
+0,02  0,06
+
+
+txElimFP ()
+
+
+2,38  0,39
+
+
+Consideracoes Finais
+
+O presente trabalho abordou um procedimento de
+filtragem de exemplos negativos e geracao de janelas candidatas, empregando um modelo estatstico do pedestre que utiliza histograma de gradientes orientados. Foram utilizadas na construcao
+do modelo, com base em um detalhado estudo,
+apenas orientacoes e magnitudes avaliadas como
+caractersticas de imagens de pedestres, o que foi
+7 Na avaliacao de qualidade de um detector, a determinacao sobre o que e uma correta deteccao ou um falso positivo e feita por meio da analise da metrica de pascal entre
+as deteccoes e as anotacoes de pedestres, conforme padronizado em (Dollar, Wojek, Schiele and Perona, 2012).
+
+ISSN 2525-8311
+
+primordial para obtencao de resultados promissores. Foram conduzidas dezenas de experimentos
+para averiguar o recall e o percentual de negativos
+eliminados das bases de dados INRIA e Caltech.
+Observou-se uma taxa de eliminacao de exemplos
+negativos em torno de 50 para um recall maximo, alem de uma boa adaptabilidade do metodo
+quando treinado em uma base e testado em outra.
+Por fim, a utilizacao do metodo na sada de um
+detector de pedestres foi realizada, obtendo-se resultados compatveis com os da literatura.
+Referencias
+Benenson, R., Mathias, M., Timofte, R. and Van
+Gool, L. (2012). Pedestrian detection at 100 frames per second, CVPR.
+Benenson, R., Omran, M., Hosang, J. and Schiele, B.
+(2015). Ten Years of Pedestrian Detection, What
+Have We Learned?, ECCV.
+Dalal, N. and Triggs, B. (2005). Histograms of Oriented Gradients for Human Detection, CVPR.
+Dollar, P., Appel, R., Belongie, S. and Perona, P.
+(2014). Fast Feature Pyramids for Object Detection, TPAMI.
+Dollar, P., Appel, R. and Kienzle, W. (2012). Crosstalk cascades for frame-rate pedestrian detection,
+LNCS.
+Dollar, P., Wojek, C., Schiele, B. and Perona, P.
+(2012). Pedestrian detection An evaluation of
+the state of the art, TPAMI.
+Geronimo, D., Lopez, A. M., Sappa, A. D. and Graf,
+T. (2010). Survey of Pedestrian Detection for
+Advanced Driver Assistance Systems, TPAMI.
+Hosang, J., Benenson, R. and Schiele, B. (2014). How
+good are detection proposals, really?, BMVC.
+Hosang, J. H., Benenson, R., Dollar, P. and Schiele, B.
+(2015). What makes for effective detection proposals?, TPAMI.
+Hyvrinen, A., Hurri, J. and Hoyer, P. O. (2009). Natural Image Statistics A Probabilistic Approach
+to Early Computational Vision., Springer Publishing Company, Incorporated.
+Liu, Y.-F., Guo, J.-M. and Chang, C.-H. (2014). Low
+Resolution Pedestrian Detection Using Light Robust Features and Hierarchical System, Pattern
+Recognition.
+Nguyen, D. T., Li, W. and Ogunbona, P. O. (2016).
+Human Detection from Images and Videos, Pattern Recognition.
+Uijlings, J., van de Sande, K., Gevers, T. and Smeulders, A. (2013). Selective search for object recognition, IJCV.
+Viola, P., Jones, M. J. and Snow, D. (2003). Detecting
+pedestrians using patterns of motion and appearance, IJCV.
+Yang, B., Yan, J., Lei, Z. and Li, S. Z. (2015). Convolutional Channel Features For Pedestrian, Face
+and Edge Detection, ICCV.
+Zhang, S., Benenson, R. and Schiele, B. (2015). Filtered channel features for pedestrian detection,
+CVPR.
+Zitnick, C. L. and Dollar, P. (2014). Edge boxes Locating object proposals from edges, ECCV.
+
+2102

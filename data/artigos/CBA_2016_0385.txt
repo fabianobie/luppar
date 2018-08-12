@@ -1,0 +1,867 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+PROPOSTA DE IMPLEMENTACAO PARALELA DE ALGORITMO GENETICO EM
+FPGA
+Matheus F. Torquato, Marcelo A. C. Fernandes
+
+
+Departamento de Engenharia da Computacao e Automacao - DCA
+Centro de Tecnologia - CT
+Universidade Federal do Rio Grande do Norte - UFRN
+Natal, Brasil
+Emails matheusft@dca.ufrn.br, mfernandes@dca.ufrn.br
+
+Abstract This paper proposes a parallel implementation of a genetic algorithm (GA) on field-programmable
+gate array (FPGA). Results associated with the processing time and area occupancy (in FPGA) for various
+population size are analyzed. Studies concerning the accuracy of the GA response for the optimization problem
+using the square function, were also analyzed for the hardware implementation. The project was developed using
+the System Generator software (Xilinx development platform) and the Virtex-6 xc6vcx240t 1ff1156 FPGA.
+Keywords
+
+FPGA, Genetic Algorithm, Hardware, Embedded system.
+
+Resumo Este artigo possui como objetivo o desenvolvimento de um prototipo associado a uma implementacao paralela de um algoritmo_genetico em FPGA (Field-programmable gate array). Resultados associados com o
+tempo de processamento e a area ocupada para varios tamanhos de populacao foram analisados. Estudos relativos
+a precisao da resposta do algoritmo_genetico para o problema de otimizacao de uma funcao quadratica tambem
+foram analisados para implementacao em hardware. Todo projeto foi desenvolvido utilizando a plataforma de
+desenvolvimento System Generator da Xilinx tendo como FPGA alvo um Virtex 6 xc6vcx240t-1ff1156.
+Palavras-chave
+
+.
+
+Introducao
+
+Nos ultimos anos, a exigencia por velocidades de processamento cada vez maiores e impulsionada pela demanda de aplicacoes que necessitam fornecer solucoes com respostas mais rapidas
+que milissegundos. Uma forma de atacar essas
+demandas de desempenho e utilizando tecnicas de
+paralelizacao de algoritmos. Ao aliar a implementacao em hardware a paralelizacao de algoritmos,
+as duas formas de aceleracao de um algoritmo_genetico segundo (Mengxu and Bin, 2015), tem- se
+uma solucao satisfatoria para aplicacoes de alto
+desempenho que demandam respostas em tempo
+real. Atualmente, estruturas de hardware reconfiguravel e programavel como Field-programmable
+Gate Arrays (FPGAs) apresentam uma solucao
+viavel para essa situacao. Como afirmado em
+(de Souza and Fernandes, 2014), essa arquitetura
+de hardware e considerada uma das mais utilizadas na atualidade pois pode fornecer desempenho
+semelhante aos circuitos integrados de aplicacao
+especfica (Application-Specific Integrated Circuit
+- ASIC) com a vantagem da utilizacao de prototipagem_rapida. Alem disso os FPGAs ainda
+apresentam bons ndices quando se analisa o consumo energetico e ocupacao em area (Hauck and
+DeHon, 2010)
+Algoritmos geneticos sao tecnicas de busca
+direcionadas que procuram solucoes tomando
+como inspiracao o metodo da selecao natural
+(Deliparaschos et al., 2008). Esses algoritmos tem
+se mostrado um eficiente mecanismo de busca e
+sao utilizados para explorar multiplas regioes da
+
+ISSN 2525-8311
+
+solucao de um problema com um significativo ganho em tempo de execucao (Fernando et al., 2008).
+Implementacoes em hardware de AGs ja foram
+descritos por varios autores com a principal finalidade de reduzir o tempo de execucao. Como apresentado em (Zhu et al., 2007), as implementacoes
+em hardware podem reduzir o tempo de processamento por um fator de aproximadamente 50 vezes
+quando comparadas as implementacoes em software (speedup).
+Nos trabalhos apresentados em (Thirer, 2012)
+e (Mengxu and Bin, 2015) uma implementacao de
+AG em FPGA e desenvolvida. Em (Thirer, 2012)
+a implementacao e direcionada para a resolucao
+do jogo Sudoku e em (Mengxu and Bin, 2015) e
+desenvolvida uma implementacao modular do AG.
+Todavia, estes trabalhos nao apresentam detalhes
+de analise de ocupacao e velocidade de processamento associada a construcao do algoritmo em
+FPGA. Nos trabalhos apresentados em (Fernando
+et al., 2008) e (Chen et al., 2008), a implementacao do AG em FPGA e mais generica nas quais,
+os autores geram um modulo de propriedade intelectual (IP Core) de um AG de proposito geral
+com enfase na facilidade para modificacao de parametros, arquitetura e suporte a multiplas funcoes de avaliacao. Por outro lado, as arquiteturas apresentadas em (Fernando et al., 2008) e
+(Chen et al., 2008) comprometem bastante o speedup (apenas em torno de 5 ) devido a serializacao da implementacao do AG. Ja em (Chen
+et al., 2008) foi desenvolvido um soft IP core
+em C++ na construcao do AG. E de conhecimento na literatura que existe um tradeoff en-
+
+1265
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+tre desempenhoflexibilidade e os autores em
+(Fernando et al., 2008) e (Chen et al., 2008) optaram na flexibilizacao da implementacao reduzindo
+o desempenho do IP core em termos de speedup.
+Assim, este trabalho tem como objetivo apresentar o desenvolvimento de uma implementacao
+paralela de um AG em hardware. Todos os detalhes associados a implementacao e uma analise de
+desempenho em hardware para varios tamanhos
+de populacao sao apresentados. E importante observar que a arquitetura proposta neste trabalho
+busca otimizar o desempenho e reduzir o tempo de
+processamento do AG objetivando sua viabilidade
+em aplicacoes de tempo_real como robotica, sistemas com tactile internet, sistemas crticos, entre
+outros.
+2
+
+Algoritmos Geneticos
+
+Os AGs sao utilizados para resolver problemas de busca e otimizacao nos quais, uma solucao
+otima pode ser encontrada utilizando um processo
+iterativo cuja a busca se da a partir de uma populacao inicial, que combinando os melhores representantes, obtem-se uma nova populacao, que
+substitui a anterior (Holland, 1975).
+O AG e um algoritmo iterativo que e iniciado a partir de uma populacao de N indivduos,
+criados aleatoriamente onde N e par para facilitar a implementacao. Em cada k-esima iteracao,
+tambem chamada de geracao, os N indivduos sao
+avaliados, selecionados, recombinados e mutados
+para formar uma nova populacao tambem de N
+indivduos. A nova populacao entao e utilizada
+como entrada para a proxima iteracao (geracao)
+do algoritmo, e esse procedimento de atualizacao
+dos valores da geracao anterior e repetido K vezes,
+onde K e numero de geracoes do algoritmo.
+O Algoritmo 1 apresenta o pseudo-codigo do
+funcionamento do AG. Esse codigo detalha todas
+as variaveis e procedimentos que serao utilizados
+na implementacao a ser apresentada na Secao 3.
+A variavel xj m(k) representa o j-esimo indivduo
+de m bits na k-esima geracao e Xm(k) e um vetor
+que armazena todos os N indivduos, ou seja,
+
+
+x1 m(k)
+
+
+..
+Xm(k)  
+(1)
+.
+.
+xN m(k)
+Apos o processo de inicializacao, a funcao de avaliacao, chamada de FA (Linha 4 do Algoritmo 1),
+calcula a aptidao dos N indivduos xj m(k) da
+populacao. Essa operacao e aplicada para todos
+os indivduos e resulta em um respectivo valor
+yj b(k) para cada j-esimo indivduo, onde b e o
+numero de bits que representa o valor de aptidao. Quanto melhor o valor yj b(k) do indivduo
+xj m(k), maior a probabilidade do mesmo prosseguir nas novas geracoes. Os valores de aptidao
+
+ISSN 2525-8311
+
+de todos os N indivduos sao armazenados em
+
+
+y1 b(k)
+
+
+..
+(2)
+Yb(k)  
+.
+.
+yN b(k)
+Algoritmo 1 Algoritmo Genetico
+1 Inicializa Xm(k) com indivduos aleatorios
+2 para k  1 ate K faca
+3
+para j  1 ate N faca
+4
+yj a(k)  FA (xj m(k))
+5
+fim para
+6
+para j  1 ate N faca
+7
+wj m(k)  FS (Yb(k), Xm(k))
+8
+fim para
+9
+para
+ i  1 ate N2 faca
+
+
+z2i1 m(k)
+w2i1 m(k)
+10
+ FC
+z2i m(k)
+w2i m(k)
+11
+fim para
+12
+para v  1 ate P faca
+13
+xv m(k)  FM (zv m(k))
+14
+fim para
+15 fim para
+Apos o calculo da aptidao de cada j-esimo
+indivduo da k-esima geracao e realizada a operacao de selecao. No AG o proposito da selecao
+e destacar os indivduos xj m(k) com seus respectivos valores de funcao de avaliacao, yj b(k),
+com o intuito de gerar populacoes futuras mais
+aptas. Existe na literatura uma grande variedade
+de metodos de selecao e entre eles podem ser citados metodo da selecao por ranking, torneio, roleta e elitismo. O metodo da selecao por torneio
+que foi utilizado nessa implementacao, e um dos
+mais utilizados (Noraini and Geraghty, 2011) e faz
+uma competicao entre dois ou mais indivduos escolhidos aleatoriamente a partir da populacao armazenada em Xm(k). Essa competicao consiste
+em comparar as aptidoes, yj b(k), dos indivduos
+participantes e o indivduo que possui o melhor
+valor na funcao de avaliacao prossegue no algoritmo para passar o seus genes adiante. O funcao
+de selecao, chamada aqui de FS (Linha 7 do Algoritmo 1), possui como entrada os vetores Yb(k) e
+Xm(k) da k-esima geracao e como sada a variavel wj m(k) que pode assumir o valor de qualquer
+um dos N indivduos armazenados em Xm(k).
+Todos valores de wj m(k) sao agrupados em
+
+
+w1 m(k)
+
+
+..
+Wm(k)  
+(3)
+
+.
+wN m(k)
+para serem utilizados na etapa de cruzamento.
+O processo de cruzamento da k-esima geracao
+ocorre apos a selecao dos indivduos mais aptos da
+populacao (armazenados em Wm(k)) pela funcao de selecao e tem como objetivo originar novos indivduos que apos a etapa de mutacao irao
+
+1266
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+compor a proxima geracao do AG (atualizacao
+do vetor Xm(k)). Existem varias tecnicas de
+cruzamento apresentadas na literatura e a estrategia adotada nesta implementacao foi o cruzamento com um ponto de corte. A operacao de
+cruzamento, chamada aqui de FC (Linha 10 do
+Algoritmo 1), possui como entrada pares de elementos do vetor Wm(k) da k-esima geracao e
+como sada pares do vetor
+
+
+z1 m(k)
+
+
+..
+(4)
+Zm(k)  
+
+.
+
+e armazenado em um registrador de m bits, chamado aqui de RXj onde seu valor e atualizado a
+cada k-esima geracao pela nova populacao de N
+indivduos gerada nos processos de selecao, cruzamento e mutacao.
+Todos os valores aleatorios foram criados por
+geradores de numeros pseudo-aleatorios baseados
+em registradores de deslocamento do tipo Linear
+Feedback Shift Register (LFSR) (Deliparaschos
+et al., 2008) e (Goresky and Klapper, 2006). Foram utilizados LFSRs independentes de 32 bits
+baseados no polinomio r32 + r22 + r2 + 1 (Goresky
+and Klapper, 2006). Cada gerador e caracterizado como LFSRCClj onde CC, l e j sao rotulos
+para sua posicao no circuito. A cada k-esima geracao do AG uma variavel aleatoria de 32 bits,
+chamada aqui de CCrlj 32(k), e produzida. Para
+evitar uma mesma sequencia de valores, cada gerador LFSRCClj possui um valor inicial de 32 bits
+diferente, chamado CCseedlj 32.
+A proposta e formada por quatro modulos
+principais chamados de aqui Modulo da Funcao de
+Avaliacao (MFA), Modulo de Selecao (MS), Modulo de Cruzamento (MC) e Modulo de Mutacao
+(MM). Cada modulo possui implementacoes especficas que serao detalhadas nas secoes seguintes.
+
+zN m(k)
+que armazenam os indivduos apos o cruzamento,
+ou seja, os filhos da k-esima geracao.
+A ultima etapa do AG e caracterizada pela
+operacao de mutacao que altera o valor de um
+grupo P de indivduos, a fim de permitir uma
+maior diversidade na populacao evitando a estabilizacao da solucao em mnimos locais. A taxa de
+mutacao, T M , e o parametro que controla a quantidade de indivduos a sofrerem mutacao. Normalmente, T M varia em torno de 0, 1 e o valor de
+P pode ser facilmente calculado pela expressao
+P  dN  T M e.
+
+(5)
+3.1
+
+A operacao de mutacao, chamada aqui de FM, e
+apresentada na Linha 13 do Algoritmo 1.
+
+Este modulo tem como objetivo calcular o valor da aptidao de cada j-esimo individuo a partir
+de uma funcao de avaliacao f () que e especfica
+para cada tipo de problema. A estrutura proposta
+possui N modulos do tipo MFA e cada j-esimo
+modulo chamado, aqui de MFAj, e associado a
+um individuo xj m(k) e gera como sada em cada
+k-esima geracao um valor de aptidao em ponto
+fixo expresso por
+
+Descricao do Projeto
+
+A Figura 1 apresenta uma arquitetura geral
+da implementacao em hardware do AG proposto.
+Todo o algoritmo foi desenvolvido utilizando uma
+arquitetura paralela com o intuito de acelerar a
+velocidade de processamento, aproveitando os recursos disponveis em hardware, semelhantemente
+a (Nedjah and de Macedo Mourelle, 2007). A estrutura, ilustrada na Figura 1, permite a visualizacao de uma populacao de N indivduos de m
+bits no qual xj m(k) representa o j-esimo indivduo da populacao na k-esima geracao, segundo
+o Algoritmo 1. Cada j-esimo individuo xj m(k)
+
+RX1
+
+x1m(k)
+
+MFA1
+
+y1a.b(k)
+
+yj a.b(k)  MFAj(xj m(k)),
+
+onde a representa o numero total de bits e b o
+tamanho da parte fracionaria (equivalente a linha
+4 do Algoritmo 1). Cada j-esimo MFAj e implementado atraves de uma RAM, chamada aqui
+
+MS1
+
+MFA2
+
+MS2
+
+
+
+
+
+
+
+xjm(k)
+
+w1m(k)
+w2m(k)
+
+x2m(k)
+RX2
+
+RXn
+
+MFAn
+
+yja.b(k)
+
+(6)
+
+wj-1m(k)
+wjm(k)
+
+MC1
+
+z1m(k)
+z2m(k)
+
+MM1
+
+
+
+3
+
+Modulo da Funcao de Avaliacao - MFA
+
+zj-1m(k)
+MCn2
+
+zjm(k)
+
+MSn
+
+Figura 1 Arquitetura geral da proposta de implementacao paralela de algoritmo.
+
+ISSN 2525-8311
+
+1267
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+xjm(k) RAMMFAj yja.b(k)
+>hd
+
+Figura 2 Arquitetura do j-esimo modulo de Funcao de Avaliacao (MFAj).
+
+de RAMMFAj, funcionando como uma lookup table (LUT), de tamanho m  a bits, onde m e a
+profundidade e a e o tamanho de cada palavra armazenada. A Figura 2 detalha o funcionamento
+do j-esimo MFA.
+3.2
+
+Modulo de Selecao - MS
+
+O modulo de selecao (MS) implementa o metodo de selecao por torneio, detalhado na Secao
+2, com competicao entre dois indivduos. Semelhante ao MFA existem N MS responsaveis por
+selecionar um grupo de N indivduos. Como detalhado na Figura 3, cada j-esimo MS, chamado
+aqui de MSj, possui como entrada os N valores
+de aptida, yj a.b(k), e os N indivduos, xj m(k),
+da k-esima geracao (equivalente a linha 7 do Algoritmo 1).
+Cada j-esimo MSj possui dois geradores aleatorios chamados de LFSRMS1j e LFSRMS2j.
+Alem dos geradores aleatorios este modulo e
+formado por tres multiplexadores de N entradas chamados aqui de MUXMS1j, MUXMS2j e
+MUXMS3j, um comparador de m bits, chamado
+de COMPMSj e tres multiplexadores de duas
+entradas, chamados de MUXMS4j, MUXMS5j
+e MUXMS6j. Os multiplexadores MUXMS1j
+e MUXMS2j trabalham na selecao da melhor
+aptidao a partir do sinal de sada dos geradores LFSRMS1j (MSr1j 32(k)) e LFSRMS2j
+(MSr2j 32(k)), respectivamente. Como apresentado na Figura 3 o sinal de sada de cada gera-
+
+dor (MSr1j 32(k) e MSr2j 32(k)) e truncado nos
+dlog2 (N )e bits mais significativos para se ajustar
+ao MUX. Finalmente, o MUXMS3j seleciona o
+indivduo associado a melhor funcao a partir da
+sada do MUXMS6j que seleciona se o objetivo
+e maximizar ou minimizar a funcao de avaliacao
+atraves da variavel MAXMINMSj.
+3.3
+
+Modulo de Cruzamento - MC
+
+A Figura 4 apresenta o circuito responsavel
+pela etapa de cruzamento, chamado aqui de MCi
+(equivalente a linha 10 do Algoritmo 1). Existem
+N2 MCs e cada i-esimo circuito e formado por
+um MUX de m + 1 entradas, chamado aqui de
+MUXMC1i, cujo objetivo e selecionar de forma
+aleatoria um dos m possveis pontos para o corte
+do cruzamento. A selecao de cada MUXMC1i
+e controlada pelo gerador aleatorio LFSRMC1i
+onde seu sinal de sada, MCr1i 32(k), e truncado
+nos dlog2 (m + 1)e bits mais significativos antes de
+entrar no seletor do MUX.
+Em cada k-esima geracao, as duas entradas
+do modulo MCi, os pais w2i1 m(k) e w2i m(k),
+sao divididas em cabeca
+hw2i1 m(k)  si m(k)  w2i1 m(k)
+
+(7)
+
+hw2i m(k)  si m(k)  w2i1 m(k)
+
+(8)
+
+e calda
+tw2i1 m(k)  si m(k)  w2i m(k),
+
+(9)
+
+tw2i m(k)  si m(k)  w2i m(k),
+
+(10)
+
+onde si m(k) e a sada do MUXMC1i. Apos esta
+etapa, o cruzamento sera realizado concatenando
+a cabeca do pai 1, hw2i1 m(k), com a calda do
+pai 2, tw2i m(k), e a cabeca do pai 2, hw2i m(k),
+com a calda do pai 1,tw2i1 m(k), dando origem
+assim, a dois novos filhos da nova populacao, ou
+seja,
+z2i1 m(k)  hw2i1 m(k)  tw2i m(k) (11)
+
+
+
+
+e
+
+D0
+D0
+D1
+
+x1m(k)
+
+MUXMS1j a.b
+
+x2m(k)
+MUXMS4j
+
+
+
+
+yja.b(k)
+
+
+
+
+
+Log2(N)
+
+xjm(k)
+
+A
+
+DN
+
+A>B
+y1a.b(k)
+y2a.b(k)
+
+COMPMSj
+
+D1
+MUXMS2j
+
+
+
+
+B
+
+D0
+
+a.b
+
+
+
+
+yja.b(k)
+
+LFSRMS2j
+
+MUXMS6j
+
+X>>1
+
+D0
+
+X>>2
+
+D1
+
+hw2i-1m(k)
+sim(k)
+
+z2i-1m(k)
+
+tw2im(k)
+MUXMC1i
+
+D1
+MUXMS5j
+
+hw2im(k)
+
+1
+MAXMINMSj
+
+D1
+
+Figura 3 Arquitetura do j-esimo modulo de selecao (MSj).
+
+ISSN 2525-8311
+
+2m-1
+
+Log2(N)
+
+D0
+
+DN
+
+Log2(N)
+
+(12)
+
+MUXMS3j wjm(k)
+
+
+
+
+
+D0
+
+z2i m(k)  hw2i m(k)  tw2i1 m(k).
+
+D1
+
+DN
+D1
+
+LFSRMS1j
+
+D0
+
+
+
+y1a.b(k)
+y2a.b(k)
+
+X>>m
+LFSRMC1i
+
+Dm
+
+Log2(m+1)
+
+w2i-1m(k)
+
+z2im(k)
+
+tw2i-1m(k)
+
+w2im(k)
+
+Figura 4 Arquitetura do i-esimo modulo de cruzamento (MCi).
+
+1268
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+3.4
+
+Modulo de Mutacao - MM
+
+Semelhante ao Algoritmo 1 na Linha 13 a operacao de mutacao sera realizada em um grupo de
+P indivduos (ver Equacao 5), ou seja, existem
+P modulos de mutacao e cada v-esimo modulo,
+MMv, altera o indivduo a ser mutado atraves de
+uma operacao XOR com um numero criado aleatoriamente por um gerador associado chamado
+de LFSRMM1v (Figura 5). A sada do v-esimo,
+MMv, modulo em cada k-esima geracao pode ser
+expressa por
+xv m(k)  (zv m(k)  MMrv m(k))
+ (zv m(k)  MMrv m(k)) (13)
+onde MMr1v m(k) representa os m bits mais significativos do numero gerado por LFSRMM1v
+(MMr1v 32(k)).
+
+zvm(k)
+LFSRMM1v MMr1v32(k)
+
+yKZ
+
+xvm(k)
+
+Figura 5 Arquitetura do v-esimo modulo de selecao (MMv).
+
+4
+
+Resultados
+
+Objetivando validar a proposta de implementacao do AG em FPGA foram realizadas analises de sntese e funcionamento do algoritmo na
+otimizacao da funcao de avaliacao x2 para varios
+tamanhos de populacao. Todos os resultados foram obtidos utilizando a plataforma de desenvolvimento Xlinx - System Generator (Xilinx System
+Generator Users Guide, n.d.) e um FPGA Virtex 6 xc6vcx240t 1ff1156. O FPGA Virtex 6 utilizado possui 37.680 slices que agrupam 301.440
+registradores (flip-flops), 150.720 celulas logicas
+que podem ser utilizados para implementar funcoes logicas ou memorias e 768 celulas de DSP
+com multiplicadores e acumuladores (Xilinx System Generator Users Guide, n.d.). Em todos os
+testes realizados as operacoes do AG sao realizadas a uma taxa de amostragem, Rg  T1g onde Tg
+e o tempo entre cada k-esima geracao.
+A tabela 1 apresenta os resultados de sntese
+no FPGA alvo para varios tamanhos de populacao. Observa-se claramente, em todos os casos, que a taxa de amostragem, Rg , e area ocupada sao parametros muito sensveis ao tamanho
+da populacao. A area ocupada gasta em registradores, apresentada na segunda coluna, e devido ao armazenamento dos valores da populacao e dos geradores de numero pseudo-aleatorio,
+principalmente. Ja a ocupacao de celulas logicas (LUTs), apresentada na terceira coluna, foi
+crescente e nao linear com N . Este crescimento
+
+ISSN 2525-8311
+
+nao linear e causado pelo pelo modulo de selecao (Subsecao 3.2) que para cada j-esimo modulo,
+MSj, possui tres multiplexadores de N entradas
+(MUXMS1j, MUXMS2j e MUXMS3j). Baseado
+em (Chapman, 2014), cada celula logica da Virtex 6 pode construir um MUX de 4 entradas de 1
+bit, assim para montar um MUX de N entradas,
+sao necessarias aproximadamente N4 celulas logicas totalizando um valor de aproximadamente 3N
+4
+celulas para cada MSj (MUXMS4j, MUXMS5j
+e MUXMS6j nao foram contabilizados). Como
+existem N modulos do tipo MS tem-se aproxima2
+damente 3N4 celulas logicas para para cada bit do
+barramento de entrada do MUX. E importante observar que a implementacao com 64 indivduos nao
+atinge a metade das celulas do FPGA (em torno
+de 45 do Virtex 6). Isso e um fato positivo para
+implementacoes com populacoes maiores.
+Finalmente, a quarta coluna mostra as taxas
+de amostragem para cada valor de N e verificase uma reducao da taxa, Tg , com o crescimento
+da populacao. Teoricamente se todos os modulos fossem independentes (especficos para cada
+indivduo) essa reducao nao deveria acontecer, porem, observa-se que nos modulos de selecao, MSj,
+existe uma dependencia entre o N indivduos (devido ao compartilhamento de informacao) causando uma juncao no circuito (join) e com isto
+um aumento no tempo de processamento. Por outro lado, tambem observa-se que a taxa de reducao
+nao e linear o que favorece o circuito. Outro ponto
+importante a ser verificado e que mesmo com a reducao, cada geracao do AG de 64 indivduos pode
+trabalhar a uma velocidade de T g  42 ns, em outra palavras, 24.000 geracoes a cada 1 ms. Este
+resultado tras um impacto bastante significativo e
+viabiliza o AG em varias aplicacoes embarcadas de
+tempo_real como em robotica, telecomunicacoes e
+outras.
+Tabela 1 Resultados da sntese do algoritmo_genetico no FPGA
+N Registradores Celulas Logicas
+Rg
+(flip-flops)
+(LUTs)
+(MHz)
+4
+154
+856(1)
+112.25
+8
+292
+2.045(1)
+86.85
+16
+624
+5.726(3)
+61.34
+32
+1.260
+19.885(13)
+39.29
+64
+2.893
+68.224(45)
+23.63
+As Figuras 6 e 7 apresentam o funcionamento
+do circuito proposto para os casos com N  32 e
+N  64, respectivamente. Em ambas as figuras
+sao mostrados os melhores valores de aptidao da
+populacao para cada k-esima geracao. Observa-se
+que em ambos os casos o algoritmo_genetico convergiu como esperado, validando desta forma a implementacao em hardware. E importante enfatizar que a implementacao proposta pode trabalhar
+
+1269
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+com diferentes funcoes de avaliacao, alterando os
+valores armazenados em cada RAMMFAj associada a cada j-esimo modulo de funcao de avaliacao,
+MFAj.
+
+ya.b(k) (Melhor aptidao)
+
+120
+
+100
+
+80
+
+plementation for a genetic algorithm, Instrumentation and Measurement, IEEE Transactions on 57(4) 699705.
+de Souza, A. C. and Fernandes, M. A. (2014). Parallel fixed point implementation of a radial
+basis function network in an fpga, Sensors
+14(10) 1822318243.
+Deliparaschos, K., Doyamis, G. and Tzafestas, S.
+(2008). A parameterised genetic algorithm
+ip core Fpga design, implementation and
+performance evaluation, International Journal of Electronics 95(11) 11491166.
+
+60
+
+40
+
+20
+
+0
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+90
+
+100
+
+k (Geracao)
+
+Figura 6 Melhor indivduo de cada geracao, N 
+32.
+
+Fernando, P., Sankaran, H., Katkoori, S., Keymeulen, D., Stoica, A., Zebulum, R. and Rajeshuni, R. (2008). A customizable fpga ip
+core implementation of a general purpose genetic algorithm engine, Parallel and Distributed Processing, 2008. IPDPS 2008. IEEE
+International Symposium on, IEEE, pp. 18.
+
+ya.b(k) (Melhor aptidao)
+
+120
+
+Goresky, M. and Klapper, A. (2006). Pseudonoise
+sequences based on algebraic feedback shift
+registers, IEEE Transactions on Information
+Theory 52(4) 16491662.
+
+100
+
+80
+
+60
+
+40
+
+20
+
+0
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+90
+
+100
+
+k (Geracao)
+
+Figura 7 Melhor indivduo de cada geracao, N 
+64.
+
+5
+
+Conclusoes
+
+Este trabalho apresentou uma proposta de implementacao paralela para FPGA de algoritmo_genetico. Todos detalhes de implementacao da proposta foram apresentados e analisados em termos
+de area ocupada e tempo de processamento. A estrutura proposta foi submetida a testes com dois
+tamanhos de populacao na otimizacao de uma funcao de avaliacao quadratica. Os resultados obtidos
+sao bastante significativos e apontam para novas
+possibilidades de utilizacao de algoritmos_geneticos embarcados em hardware para aplicacoes de
+tempo_real.
+Referencias
+Chapman, K. (2014). Multiplexer design techniques for datapath performance with minimized routing resources, Application Note
+Spartan-6 Family, Virtex-6 Family, 7 Series
+FPGAs.
+Chen, P.-Y., Chen, R.-D., Chang, Y.-P., Shieh,
+L.-S. and Malki, H. A. (2008). Hardware im-
+
+ISSN 2525-8311
+
+Hauck, S. and DeHon, A. (2010). Reconfigurable Computing The Theory and Practice of
+FPGA-Based Computation (Systems on Silicon), Morgan Kaufmann.
+Holland, J. H. (1975). Adaptation in natural and
+artificial systems an introductory analysis
+with applications to biology, control, and artificial intelligence., U Michigan Press.
+Mengxu, F. and Bin, T. (2015). Fpga implementation of an adaptive genetic algorithm, Service Systems and Service Management (ICSSSM), 2015 12th International Conference
+on, IEEE, pp. 15.
+Nedjah, N. and de Macedo Mourelle, L. (2007).
+An efficient problem-independent hardware
+implementation of genetic algorithms, Neurocomputing 71(1) 8894.
+Noraini, M. R. and Geraghty, J. (2011). Genetic
+algorithm performance with different selection strategies in solving tsp.
+Thirer, N. (2012). About the fpga implementation of a genetic algorithm for solving sudoku
+puzzles, Electrical  Electronics Engineers in
+Israel (IEEEI), 2012 IEEE 27th Convention
+of, IEEE, pp. 13.
+Xilinx System Generator Users Guide (n.d.).
+www.xilinx.com.
+Zhu,
+
+Z., Mulvaney, D. J. and Chouliaras,
+V. A. (2007). Hardware implementation of
+a novel genetic algorithm, Neurocomputing
+71(1) 95106.
+
+1270

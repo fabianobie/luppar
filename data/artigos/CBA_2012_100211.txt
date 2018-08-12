@@ -1,0 +1,1493 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ALGORITMOS DE CONTROLE CINEMÁTICO COM DESVIO DE OBSTÁCULOS
+APLICADOS A ROBÔS DO TIPO PÓRTICO
+Thiago B. de Almeida-Antonio, Antonio C. Leite, Pl J. From, Liu Hsu, Fernando Lizarralde
+
+
+Programa de Engenharia Elétrica  COPPE
+Universidade Federal do Rio de Janeiro - UFRJ
+Rio de Janeiro, RJ, Brasil
+
+
+Department of Mathematical Sciences and Technology
+Norwegian University of Life Sciences
+s, Norway
+
+Emails braga.thiago@poli.ufrj.br, toni@coep.ufrj.br, pal.johan.from@umb.no, liu@coep.ufrj.br,
+fernando@coep.ufrj.br
+
+Abstract In this work, the problem of kinematic control and obstacle avoidance for a gantry robot is
+considered. The proposed control methods use the concept of artificial potential fields to perform fixed and
+mobile obstacle avoidance, during the execution of reference trajectory tracking tasks. To achieve this aim,
+two obstacle avoidance algorithms are considered the Gradient Projection Method and the Artificial Potential
+Fields Method. Simulation results obtained from the obstacle avoidance algorithms as well as the position and
+orientation kinematic control algorithms illustrate the performance and viability of the presented scheme.
+Keywords
+
+Obstacle Avoidance, Potential Fields, Kinematic Control, Redundant Manipulators.
+
+Resumo Neste trabalho, considera-se o problema de controle_cinemático e desvio_de_obstáculos para robôs
+do tipo pórtico. Os métodos de controle propostos utilizam o conceito de funções potenciais artificiais para
+realizar o desvio_de_obstáculos fixos e móveis, durante a execução de tarefas de rastreamento_de_trajetória.
+Para alcançar esse objetivo dois algoritmos de desvio de obstáculo são considerados o Método da Projeção do
+Gradiente e o Método de Campos Potenciais Artificiais. Resultados de simulação para os algoritmos de desvio de
+obstáculos bem como para os algoritmos de controle_cinemático de posição e orientação ilustram o desempenho
+e a viabilidade do esquema apresentado.
+Palavras-chave
+
+.
+
+Introdução
+
+Em diversas aplicações práticas da robótica geralmente é necessário que os robôs realizem tarefas em
+ambientes pouco estruturados repletos de objetos físicos, que representam obstáculos aos seus movimentos.
+Por exemplo, um AUV (no inglês, autonomous underwater vehicle) realizando missões de inspeção e intervenção submarina em uma estrutura offshore, deve
+navegar entre dutos, válvulas e outros equipamentos
+evitando colisões (Pascoal et al., 1997).
+Planejar uma trajetória a priori pode ser útil para
+o caso onde objetos fixos estão presentes no ambiente,
+mas o planejamento_de_trajetórias para objetos móveis
+não é trivial. O objetivo do planejamento é gerar uma
+trajetória livre de colisões para o sistema_de_controle,
+assegurando a execução bem sucedida da tarefa desejada. Neste caso, é considerado que o modelo do robô
+e o cenário são perfeitamente conhecidos. A vantagem das técnicas de planejamento é que elas fornecem
+soluções globais para o problema. Contudo, quando
+a vizinhança do ambiente é desconhecida e imprevisível, essas técnicas podem falhar (Kavraski and Lavalle, 2008).
+Uma forma complementar para resolver esse problema é utilizar um esquema de desvio_de_obstáculos
+online ou reativo, onde o objetivo é realizar a tarefa
+enquanto o manipulador movimenta-se por um caminho livre de colisões com os obstáculos detectados pelos sensores. A vantagem de usar um algoritmo do tipo
+reativo para desvio_de_obstáculos é computar o movimento do manipulador introduzindo as informações
+
+ISBN 978-85-8001-069-5
+
+dos sensores dentro da malha_de_controle, usada para
+adaptar o movimento para qualquer situação incompatível com o planejamento inicial (Minguez et al., 2008).
+A desvantagem principal em considerar as informações
+do mundo real durante a execução do algoritmo é que
+somente garante resultados locais, uma vez que os obstáculos que estão fora do alcance de leitura dos sensores não serão detectados. Apesar dessa limitação, as
+técnicas de desvio de obstáculo são obrigatórias para
+lidar com o problema de mobilidade de sistemas robóticos em ambientes desconhecidos. Neste contexto, diversos métodos têm sido desenvolvidos para combinar
+soluções globais de planejamento_de_movimento com
+soluções locais de desvio_de_obstáculos. Essas técnicas
+são comumente denominadas de Planejamento de Movimento baseado em Sensores (Minguez et al., 2008).
+Os principais algoritmos projetados podem ser
+divididos em dois grupos, de acordo com o número
+de passos utilizados para computar o movimento livre de colisão (Minguez et al., 2008). Os métodos de
+um passo transformam diretamente a informação dos
+sensores em controle_de_movimento. Em (Lumelsky,
+1987) o desvio_de_obstáculos é realizado utilizando um
+método heurístico, que é derivado de métodos clássicos de planejamento. Em (Singh et al., 1996 Khatib, 1985 Chung et al., 1997) são apresentados métodos baseados em analogias físicas que consideram o
+desvio_de_obstáculos como um problema físico conhecido. Por outro lado, os métodos com mais de um
+passo computam uma informação intermediária que
+é processada em seguida para obter o movimento livre de colisão e são classificados em (i) métodos de
+
+3846
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+subconjuntos de controle, que computam um conjunto
+intermediário de sinais de controle, baseados em direções ou velocidades, escolhendo-se um deles como solução (Borenstein and Koren, 1991 Fox et al., 1997)
+(ii) métodos que computam informações intermediárias de alto nível, que são transformadas em movimento, por exemplo, o método de navegação por diagrama de proximidade (Minguez and Montano, 2004).
+Neste trabalho, considera-se o problema de controle_cinemático e desvio_de_obstáculos para robôs_redundantes do tipo pórtico. Os algoritmos de controle
+propostos1 são baseados nos métodos da Projeção do
+Gradiente e de Campos Potenciais Artificiais para realizar o desvio_de_obstáculos fixos e móveis, durante a
+execução de tarefas de rastreamento_de_trajetória. Um
+estudo comparativo entre ambos os métodos é apresentado, destacando as vantagens e desvantagens de
+cada abordagem. Resultados de simulação ilustram o
+desempenho e a viabilidade do esquema apresentado.
+2
+
+Formulação do Problema
+
+Considere o problema de rastreamento_de_trajetórias
+para robôs do tipo pórtico, na presença de obstáculos
+fixos e móveis (Figura 1). Um robô tipo pórtico possui
+uma estrutura cinemática redundante, composta por
+um manipulador com 6-DoF (no inglês, degrees of freedom) suspenso por um sistema de trilhos (ou grua) que
+permite movimentos em 3-DoF ao longo de um eixo
+vertical z e dois eixos horizontais perpendiculares, x
+e y. Esse mecanismo é também denominado de robô
+cartesiano ou linear, e em geral é um sistema robótico
+de grande porte que realiza aplicações de transporte de
+objetos, mas que pode ser utilizado para outras aplicações como, por exemplo, soldagem, montagem do
+tipo pick-and-place e manipulação de materiais (Han
+et al., 1999).
+A ideia consiste em usar os graus de mobilidade
+extras (ou redundantes) do robô para realizar o desvio
+de obstáculos, enquanto que os graus de mobilidade
+restantes (ou não-redundantes) são usados para realizar a tarefa desejada. Aqui, assume-se que a trajetória de referência é conhecida e previamente planejada
+a partir de um algoritmo de planejamento_de_trajetórias no espaço das juntas ou no espaço operacional.
+
+3
+
+Modelagem e Controle Cinemático
+
+Considere o problema de controle_cinemático para um
+robô manipulador com n-DoF. O movimento do manipulador pode ser descrito por
+i  ui ,
+
+i  1,    , n,
+
+
+zb
+yb
+
+
+xb
+Manipulador
+Obstáculo Fixo
+
+Obstáculo móvel
+
+ye
+
+
+1 Os algoritmos propostos no presente trabalho são classificados como métodos de um passo utilizando analogias
+físicas.
+
+
+xe
+
+ze
+Trajetória
+
+Figura 1 Robô do tipo pórtico realizando o rastreamento de uma trajetória, na presença de obstáculos
+fixos e móveis.
+Seja p  R3 a posição do efetuador do manipulador com respeito a sua base, expresso no sistema
+de coordenadas da base Eb e Rbe a matriz de rotação
+do sistema de coordenadas da ferramenta Ee com respeito ao sistema de coordenadas da base Eb . Agora
+considere que q  qs qvT T é a representação de quaternion unitário para Rbe , onde qs  R e qv  R3 são
+as partes escalar e vetorial do quaternion respectivamente, sujeitas a restrição q T q  1. Nesse contexto,
+a configuração do efetuador x  Rm é obtida pela
+equação de cinemática direta
+
+
+x
+
+p
+q
+
+
+ h(),
+
+(2)
+
+onde   Rn é vetor das variáveis das juntas do manipulador. Em geral, h()  Rn 7 Rm é um mapeamento
+não-linear, descrevendo a relação entre o espaço das
+juntas Q e o espaço operacional O. Note que, considerando um robô do tipo pórtico com nove graus de
+mobilidade (9-DoF), m7 e n9.
+A equação da cinemática diferencial pode ser obtida pela derivada temporal de cinemática direta (2)
+
+
+x 
+
+p
+q
+
+
+ Ja (),
+
+(3)
+
+onde Ja ()  h()
+ Rmn é o Jacobiano analítico.
+
+A velocidade do efetuador v  p T , composta pela
+velocidade linear p e a velocidade_angular  pode ser
+escrita como
+v  J(),
+(4)
+onde J()  Rmn é o Jacobiano do manipulador. A
+relação entre a velocidade_angular  e a derivada do
+quaternion q pode ser expressa por
+
+(1)
+
+onde i é a velocidade_angular da i-ésima junta e ui
+é o sinal de controle_de_velocidade aplicado ao drive
+do motor da i-ésima junta. Essa abordagem pode ser
+aplicada  maioria dos robôs comerciais com altas taxas de redução nas engrenagens ou quando baixas velocidades são empregadas para realizar a tarefa de interesse.
+
+ISBN 978-85-8001-069-5
+
+Grua
+
+  2 Jr (q) q ,
+
+(5)
+
+onde Jr (q)  qv qs I(qv ) é o Jacobiano da representação (Siciliano et al., 2009). Então, considerando
+a abordagem de controle_cinemático (1) e a partir de
+(4), pode-se obter o seguinte sistema_de_controle
+v  J() u .
+
+(6)
+
+Uma lei de controle cartesiana vc pode ser transformada em sinais de controle das juntas utilizando
+
+
+
+
+u  J ()vc  J ()
+
+
+
+vp
+vq
+
+
+,
+
+(7)
+
+3847
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+onde J   J T (J J T )1 é a pseudo-inversa a direita de
+J. Note que, a validade de (7) é restrita a movimentos que não conduzam o robô para uma configuração
+singular. Combinando (6) e (7), tem-se que
+
+
+
+p
+
+
+
+
+
+
+
+vp
+vq
+
+
+,
+
+(8)
+
+e, naturalmente, vp e vq são projetadas para controlar a posição e a orientação do efetuador, respectivamente.
+Note que com os graus de mobilidades extras é
+possível gerar movimentos internos nas juntas do manipulador sem modificar a posição e a orientação do
+efetuador. Isso pode ser alcançado acrescentando em
+(7) um termo de velocidade das juntas arbitrário, que
+deve ser especificado para satisfazer uma restrição adicional (Siciliano et al., 2009 Liégeois, 1977). Então, a
+lei de controle resultante assume a forma
+u  J  ()vc + (I  J  J)0 ,
+
+(9)
+
+onde  é um coeficiente escalar indicando a prioridade
+de realização da restrição adicional especificada por
+através de 0 . A matriz (I  J  J) permite a projeção
+do vetor 0 no espaço nulo do Jacobiano, de modo a
+não violar a restrição cinemática (6). Uma escolha
+típica para o vetor 0 é dada por
+
+
+0 
+
+g()
+
+
+T
+,
+
+(10)
+
+onde g() é uma função objetivo em termos dos ângulos das juntas. Uma função objetivo típica, onde
+objetivo é maximizar a distância mínima a um obstáculo, é dada por
+g()  minp,o p()  o ,
+
+(11)
+
+onde o  R3 é o vetor posição de um ponto localizado
+sobre o obstáculo (e.g., o centro de massa) e p é o
+vetor posição de um ponto genérico na estrutura do
+manipulador (e.g., uma junta ou um elo). Note que,
+outros tipos de funções objetivo podem ser utilizadas
+como, por exemplo, a distância do limite mecânico das
+juntas e a medida de manipulabilidade (Siciliano et al.,
+2009). Neste trabalho, a função objetivo utilizada é
+similar a um campo potencial repulsivo.
+3.1
+
+Controle de Posição
+
+Considerando o problema de controle_cinemático de
+posição para um robô manipulador, assume-se que
+o objetivo de controle para uma determinada tarefa
+seja alcançar uma posição desejada variante no tempo
+pd (t) a partir da posição inicial p. Então, o objetivo
+de controle é descrito por
+p  pd (t),
+
+ep  pd (t)  p  0 ,
+
+(12)
+
+onde ep é o erro de posição. A partir de (8) tem-se
+que p  vp e usando uma lei de controle com ação
+proporcional e feedforward
+vp  Kp ep + pd ,
+
+(13)
+
+onde Kp  kp I e a dinâmica do erro de posição é governada por ep + Kp ep  0. Portanto, a partir de uma
+escolha adequada de kp como uma constante positiva,
+o sistema do erro em malha-fechada é exponencialmente estável e, consequentemente, limt ep (t)  0.
+
+ISBN 978-85-8001-069-5
+
+3.2
+
+Controle de Orientação
+
+Considerando o problema de controle_cinemático de
+orientação para um robô manipulador, assume-se que
+o objetivo de controle para uma determinada tarefa
+seja alcançar uma orientação desejada variante no
+tempo Rd (t) a partir da orientação inicial do efetuador R, usando o quaternion unitário para representar
+a orientação. Então, o objetivo de controle é descrito
+por
+R  Rd (t),
+R  RT Rd  I,
+(14)
+onde R  SO(3) é a matriz do erro de orientação.
+Considere eq  eqs eTqv T a representação de quaternion unitário para R com eq  q 1  qd (t), onde qd é
+a representação de quaternion unitário de Rd e o símbolo  denota o operador produto de quaternion.
+Note que eq  1 0T T se e somente se R e Rd estão
+alinhadas. Então, a partir de (8) tem-se que   vq
+e usando uma lei de controle com ação proporcional e
+feedforward
+vq  d + Ko eqv ,
+(15)
+onde d é a velocidade_angular desejada e Ko é
+uma matriz positiva definida, o ponto de equilíbrio
+(eqs , eqv )  (1, 0T ) é quase-globalmente assintoticamente estável (Wen and Kreutz-Delgado, 1991). Uma
+análise_de_estabilidade e convergência para o esquema
+de controle de orientação é apresentada em (Leite
+et al., 2009).
+4
+
+Algoritmos de Desvio de Obstáculo
+
+Uma abordagem eficiente para planejamento online
+é baseada no uso de campos_potenciais artificiais, que
+consiste em criar potenciais atrativos e repulsivos para
+que o robô realize uma tarefa desejada na presença
+de obstáculos. Essa abordagem é baseada no conceito de que um ponto de interesse P localizado sobre
+o manipulador pode se mover pelo espaço cartesiano
+sob influência de um campo potencial U , obtido pela
+superposição de um potencial atrativo Ua que conduz o ponto P para o objetivo primário (e.g., regulação ou rastreamento), e um potencial repulsivo Ur
+que afasta o ponto P de possíveis obstáculos. Neste
+contexto, dois métodos de desvio_de_obstáculos serão
+investigados no presente trabalho (i) o método da
+Projeção do Gradiente (Chung et al., 1997 Siciliano
+et al., 2009) e (ii) o método de Campos Potenciais
+Artificiais (Siciliano et al., 2009 Khatib, 1985).
+4.1
+
+Método da Projeção do Gradiente
+
+Esse método consiste na projeção de um termo de velocidade arbitrária no espaço nulo do Jacobiano e na
+otimização de uma função objetivo, similar a um potencial repulsivo, para assegurar a execução da tarefa
+com desvio_de_obstáculos (Chung et al., 1997). Então,
+substituindo o termo 0 em (9) por um termo H()
+é possível realizar o controle_de_posição, bem como o
+controle_de_posição e orientação, como será mostrado
+a seguir.
+Para solucionar o problema de controle_de_posição
+com desvio_de_obstáculos adota-se o seguinte sinal de
+controle
+u  Jp vp + (I  Jp Jp )H(),
+
+(16)
+
+3848
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+onde Jp é composto pelas três primeiras linhas do Jacobiano do manipulador,  é um coeficiente escalar
+negativo e H() é a função objetivo baseada em um
+potencial repulsivo, escolhido para evitar a colisão do
+manipulador com obstáculos durante a execução da
+tarefa. Em particular, a ideia é construir uma barreira
+potencial ao redor do obstáculo, repelindo o manipulador dessa região. Para cada obstáculo i, o potencial
+repulsivo associado é
+
+(
+
+kr,i
+
+
+Ur,i () 
+
+
+
+1
+i ()
+
+
+
+1
+0,i
+
+0
+
+
+
+,
+
+i ()  0,i ,
+
+,
+
+i () > 0,i ,
+(17)
+
+onde kr,i > 0, i () é a distância mínima entre o obstáculo e um ponto de interesse no manipulador, 0,i
+é o raio de influência do obstáculo (i.e. a distância
+mínima estipulada para que o manipulador perceba a
+presença do obstáculo) e  é um fator de escalamento.
+Um escolha típica é   2 (Chung et al., 1997). O potencial Ur,i é nulo fora do raio de influência e positivo
+dentro, e tende para infinito conforme a vizinhança
+do obstáculo se aproxima, e mais abruptamente conforme  aumenta. Então, a função objetivo em termos
+da força repulsiva resultante é
+H() 
+
+no
+X
+
+Ur,i () ,
+
+(18)
+
+e pc,k () o ponto de controle localizado no efetuador,
+sujeito a um potencial total Ut  Ua + Ur . Então,
+o sinal de controle u baseado no método de Campos
+Potenciais Artificiais é dado por
+u
+
+k1
+X
+
+T
+T
+Jc,i
+()Ur (pc,i )  Jc,k
+()Ut (pc,k ) , (21)
+
+i1
+
+onde pc,i é utilizado no cálculo de i e Jc,i () é o Jacobiano associado ao ponto de controle pc,i () para
+i  1,    , k. Note que, o Jacobiano Jc,i é calculado
+da mesma forma que o Jacobiano geométrico, considerando o ponto de controle pc,i como o efetuador e
+zerando todas as colunas posteriores
+
+
+Jc,i 
+
+h1  i,1
+h1
+
+
+
+
+1
+1
+
+i ()
+0,i
+
+
+i (),
+
+(19)
+
+onde i () é a derivada da distância que será definida a posteriori. É válido ressaltar que, Ur,i é
+nulo fora do raio de influência, e que os valores dos
+parâmetros kr,i e 0,i são assumidos constantes para
+todos os obstáculos. Note que nessa abordagem mais
+de um ponto de interesse pode ser considerado para
+o mesmo obstáculo, ou seja, Ur,i  Rk1 , onde k é
+o número de pontos de interesse. Agora, para solucionar o problema de controle_de_posição e orientação
+simultaneamente, com desvio_de_obstáculos adota-se
+o seguinte sinal de controle
+uJ
+
+
+
+
+
+vp
+vq
+
+
+
+
+
++ (I  J J)H(),
+
+(20)
+
+onde  é um coeficiente escalar negativo, H() é a
+função objetivo (18), vp e vq são os sinais de controle
+de posição e orientação, definidos por (13) e (15) respectivamente.
+4.2
+
+
+
+
+0
+0
+
+
+,
+
+Ur ()
+
+
+
+no
+X
+
+Ur,i ,
+
+(22)
+
+i1
+
+onde no é o número de obstáculos e o gradiente do
+potencial repulsivo Ur,i dentro do raio de influência
+é dado por
+
+
+
+0
+hi
+
+onde hi é o vetor unitário na direção do eixo de rotação
+da i-ésima junta, i,j  (pc,i  pc,j ) e para o caso onde
+o manipulador possui uma junta prismática, a coluna
+do Jacobiano não se altera. Então, os gradientes dos
+potenciais repulsivo e total são dados por
+
+r,i
+
+kr,i
+Ur,i ()  2
+i ()
+
+hi1  i,i1
+hi1
+
+Ut ()
+
+
+
+Ua () +
+
+no
+X
+
+Ur,i ,
+
+(23)
+
+i1
+
+onde Ua () é o gradiente do potencial atrativo. O
+potencial atrativo é projetado para guiar o manipulador para uma posição desejada e pode ser do tipo
+paraboloide ou cônico
+1. Paraboloide com vértice em pd 
+Ua1 () 
+
+1
+1
+Ka eT
+Ka ep ()2 ,
+p ()ep () 
+2
+2
+
+(24)
+
+onde Ka > 0. Essa função é sempre positiva e possui
+mínimo global em pd , igual a zero. A força atrativa
+resultante, em termos do gradiente de (24), é definida
+por
+Ua1 ()  fa1 ()  Ka ep () ,
+(25)
+e converge linearmente para zero quando o manipulador tende para a posição desejada
+2. Cônico com vértice em pd 
+Ua2 ()  Ka ep () .
+
+(26)
+
+Essa função é sempre positiva e possui mínimo
+global em pd , igual a zero. A força atrativa resultante,
+em termos do gradiente de (26), é descrita por
+
+Método de Campos Potenciais Artificiais
+
+O método de Campos Potenciais Artificiais utiliza um
+sinal de controle dependente de potenciais atrativos e
+repulsivos, para garantir a execução bem sucedida da
+tarefa na presença de obstáculos (Khatib, 1985). A
+partir desse método considera-se apenas o problema
+de controle_de_posição, uma vez que o controle de orientação por meio de campos_potenciais não é uma
+abordagem simples e intuitiva.
+Seja pc,i () para i  1,    , k  1 os pontos de
+controle localizados nos elos ou nas juntas do manipulador sujeitos somente a um potencial repulsivo Ur ,
+
+ISBN 978-85-8001-069-5
+
+Ua2 ()  fa2 ()  Ka
+
+ep ()
+,
+ep ()
+
+(27)
+
+que é constante em módulo. Note que, o gradiente do
+potencial atrativo parabólico tende a crescer indefinitivamente conforme a norma do vetor do erro ep aumenta, enquanto que o gradiente do potencial atrativo
+cônico é indefinido em pd . Uma escolha que combina
+as vantagens de cada um dos potenciais é definir um
+potencial atrativo como uma superfície cônica longe
+da posição desejada e uma superfície paraboloide na
+sua vizinhança. Em particular, colocando a transição
+
+3849
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+entre os dois potenciais onde ep ()  1 (i.e., na superfície da esfera de raio unitário centrada em pd ), o
+gradiente do potencial atrativo, e consequentemente a
+força atrativa, é contínuo para qualquer configuração
+de ângulo das juntas. Então, o gradiente do potencial
+atrativo assume a forma
+
+
+Ua () 
+
+Ka ep
+e
+Ka ep
+ p 
+
+Por outro lado, o potencial repulsivo é definido
+da mesma forma que no método da Projeção do Gradiente, e a constante kr,i é substituída por br,i uma
+vez que elas não são definidas necessariamente com o
+mesmo valor.
+
+
+
+O problema de desvio obstáculos para manipuladores_redundantes pode ser formulado em termos da
+prevenção de colisão do efetuador e dos elos com
+os obstáculos do ambiente. Essa abordagem é validada controlando-se continuamente a posição de
+um ponto do elo localizado mais próximo do obstáculo (Khatib, 1985). A ideia é utilizar os pontos de
+controle previamente escolhidos (as juntas, por exemplo) para localizar em cada elo o ponto mais próximo
+do obstáculo. Na cadeia do manipulador, um elo pode
+ser representado como um segmento de linha definido
+pelas posições cartesianas das suas duas juntas vizinhas. Então, um ponto p do elo ligado ao ponto p1
+da junta anterior e ao ponto p2 da junta posterior é
+descrito, com respeito a um sistema de coordenadas
+de referência, pela seguinte equação paramétrica
+(28)
+
+onde  é uma constante de parametrização a ser definida. A dificuldade para obter a distância mínima de
+um elo a um obstáculo pode ser reduzida ao cálculo do
+ponto do elo mais próximo a um vértice, um lado ou
+uma face. Nesse trabalho, os obstáculos considerados
+foram representados por vértices. Note que um conjunto de vértices pode formar um objeto. Considere
+uma reta parametrizada na forma (28) e um ponto p0 ,
+por exemplo, um ponto localizado no obstáculo. Calculando o quadrado da distância entre um ponto desta
+linha e o ponto p0 e minimizando este valor, pode-se
+obter o parâmetro  por (Weisstein, 2012)
+(p1  p0 )  (p2  p1 )
+
+.
+p2  p1 2
+
+(29)
+
+Então, obtendo-se o parâmetro , pode-se calcular o ponto do elo p mais próximo do obstáculo.
+Para o caso em que   0, p  p1 , enquanto que
+para   1, p  p2  nos demais casos p é obtido
+por (28). Portanto, a distância mínima i é calculada
+por (Khatib, 1985)
+
+i () 
+
+
+
+
+
+(p0 p1 )(p0 p2 )
+p2 p1 
+
+(p0  p1 )
+(p0  p2 )
+
+, 0 <  < 1,
+,   0,
+,   1.
+
+(30)
+
+A derivada parcial da distância mínima é diferente para cada método utilizado. No método da Projeção do Gradiente, deriva-se a distância em relação
+
+ISBN 978-85-8001-069-5
+
+
+
+,
+
+(31)
+
+i ()
+n
+
+i () 
+
+l
+,
+i ()
+
+(32)
+
+onde l definido como
+
+(
+
+Cálculo da Distância Mínima
+
+p  p1 +  (p2  p1 ) ,
+
+..
+.
+
+i ()  
+
+l
+4.3
+
+i ()
+1
+
+
+
+enquanto que no método dos Campos Potenciais Artificiais, deriva-se a distância em relação s coordenadas
+cartesianas obtendo-se
+
+ep  < 1 ,
+ep   1 .
+
+,
+,
+
+as variáveis das juntas do manipulador
+
+4.4
+
+p,
+p1 ,
+p2 ,
+
+0 <  < 1,
+0,
+1.
+
+(33)
+
+Estudo Comparativo entre os Métodos
+
+É válido ressaltar que a utilização da abordagem de
+campos_potenciais artificiais não garante que a tarefa de interesse seja executada satisfatoriamente (Figura 2). Note que, na ilustração da esquerda a execução da tarefa é bem sucedida e permite um movimento sem colisões entre a posição inicial (S) e a
+posição desejada (G). Por outro lado, na ilustração
+da direita ocorre uma condição de falha e por isso o
+manipulador permanece preso em uma configuração
+de equilíbrio de forças. De fato, as diversas forças (ou
+puramente atrativas, ou repulsivas e atrativas) atuando sobre os pontos de controle podem neutralizar
+umas s outras, bloqueando o movimento do manipulador. Como consequência é recomendado utilizar
+métodos de campos_potenciais artificiais no espaço de
+trabalho em conjunto com um algoritmo de ajuste
+randômico (Barraquand and Latombe, 1991 Siciliano
+et al., 2009 Minguez et al., 2008).
+S
+S
+
+G
+
+G
+
+Figura 2 Manipulador planar com 3 juntas de revolução realizando uma tarefa de regulação, com desvio
+de obstáculos (Siciliano, et. al., 2009).
+Por outro lado, utilizando o método da Projeção do Gradiente (Chung et al., 1997) é possível
+implementar uma estratégia de controle_cinemático
+de posição e orientação simultaneamente, enquanto
+que com o método de Campos Potenciais Artificiais (Khatib, 1985) isso não foi possível, uma vez que
+o emprego de um potencial atrativo para modificar
+a orientação não uma abordagem simples e intuitiva.
+Outra vantagem da utilização do método da Projeção
+do Gradiente é que outros tipos de função objetivo
+podem ser otimizadas durante a execução da tarefa,
+por exemplo, a manipulabilidade e o limite mecânico
+das juntas. Contudo, como o método dos Campos Potenciais Artificiais não depende da inversa da matriz
+
+3850
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+(a) Erro de Posição
+
+6
+
+x 10
+
+epx
+
+5
+m
+
+Jacobiana, ele pode ser mais vantajoso quando o manipulador encontra-se na vizinhança de configurações
+singularidades.
+Uma outra característica é que ambos os métodos
+não são robustos  escolha da posição inicial para o efetuador, pois como eles utilizam um potencial repulsivo
+que depende da inversa da distância ao quadrado, a
+presença de obstáculos muito próximos pode produzir
+uma força muito elevada impedindo o movimento do
+efetuador na direção desejada.
+
+epy
+
+epz
+
+0
+
+5
+0
+
+5
+
+10
+
+15
+
+20
+
+(b) Distâncias Mínimas
+0.8
+
+5
+
+Simulações
+
+m
+
+0.6
+0.4
+Obstáculo 1
+Obstáculo 2
+
+0.2
+
+ISBN 978-85-8001-069-5
+
+0
+0
+
+5
+
+10
+s
+
+15
+
+20
+
+Figura 3 Erro de Posição e Menor distância entre os
+obstáculos e o manipulador - Controle de Posição sem
+desvio_de_obstáculos.
+(a) Erro de Posição
+
+6
+
+x 10
+
+e
+
+m
+
+5
+
+e
+
+px
+
+e
+
+py
+
+pz
+
+0
+
+5
+0
+
+5
+
+10
+
+15
+
+20
+
+(b) Distâncias Mínimas
+0.8
+0.6
+m
+
+0.4
+Obstáculo 1
+Obstáculo 2
+
+0.2
+0
+0
+
+5
+
+10
+s
+
+15
+
+20
+
+Figura 4 Erro de Posição e Menor distância entre os
+obstáculos e o manipulador - Método da Projeção do
+Gradiente - Controle de Posição.
+(a) Trajetória sem Desvio
+
+0
+z m
+
+0.2
+0.4
+0.6
+0.2
+0
+0.2
+0.391
+0.4
+0.391 x m
+y m
+(b) Trajetória com Desvio
+
+0.391
+pd
+p
+
+0
+0.2
+z m
+
+Nesta seção, apresentam-se os resultados das simulações obtidos com um robô do tipo pórtico com 9DoF para ilustrar o desempenho e a viabilidade dos
+algoritmos de desvio_de_obstáculos investigados. O
+manipulador utilizado foi o PUMA 560 e a faixa de
+alcance máximo para as juntas prismáticas do pórtico são dadas por x  1, 1 m, y  1, 1 m
+e z  1, 0.3 m. Os parâmetros de controle,
+ajustados empiricamente, são Kp  Ka  70I s1 ,
+Ko  50I rad s1 ,   102 , kr,i  10 e br,i  104 .
+A tarefa de interesse consiste no rastreamento de
+uma trajetória de referência, ao redor posição inicial
+do efetuador e paralela ao plano YZ, descrita por
+pd (t)  0 (r sin(wn t)) (r cos(wn t) + r)T , onde
+
+r  0, 2 m e wn  10
+rad s1 são o raio e a velocidade_angular da trajetória respectivamente.
+Nas simulações, considera-se a presença de um
+obstáculo fixo (objeto 1), localizado na posição
+(x, y, z)  (0.0684, 0.5362, 0.4586) m de tal forma
+que colida com a junta 6 do manipulador quando realizar controle_de_posição sem desvio_de_obstáculos, e
+um obstáculo móvel (objeto 2), começando no ponto
+(x, y, z)  (0.2, 0.2, 0) m e se movimentando arbitrariamente. Nas Figuras 3 a 7, considera-se apenas o
+problema de controle_de_posição, enquanto que a partir da Figura 9 considera-se o problema de controle
+de posição e orientação. Nos gráficos referentes s
+trajetórias do efetuador não são apresentados os obstáculos, uma vez que a presença destes altera somente
+a trajetória das juntas.
+A Figura 3 apresenta a evolução no tempo do erro
+de posição durante a execução da tarefa e a menor
+distância entre os obstáculos e o manipulador, sem
+desvio_de_obstáculos. Note que, durante a execução
+da tarefa o manipulador colide uma vez com o objeto
+1 em t  5 s.
+A Figura 4 apresenta a evolução no tempo do erro
+de posição durante a execução da tarefa e a menor distância entre os obstáculos e o manipulador, para o método da Projeção do Gradiente, onde pode-se concluir
+que os erros de posição são da mesma ordem de grandeza e o desvio do obstáculo é satisfatório. A Figura 5
+ilustra o rastreamento da trajetória de referência pd (t)
+sem desvio (superior) e com o desvio_de_obstáculos utilizando o método da Projeção do Gradiente (inferior),
+onde é possível notar a diferença entre os caminhos
+seguidos pelo efetuador para os dois casos.
+A Figura 6 apresenta a evolução no tempo do erro
+de posição durante a execução da tarefa e a menor
+distância entre os obstáculos e o manipulador, para o
+método dos Campos Potenciais Artificias. Note que,
+neste caso, a ordem de grandeza do erro de posição
+
+0.4
+0.6
+0.2
+0
+0.2
+0.4
+y m
+
+0.391
+0.391
+x m
+
+Figura 5 Comparação entre as Trajetórias - Método
+da Projeção do Gradiente
+
+3851
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+2
+
+x 10
+
+e
+
+m
+
+e
+
+px
+
+1
+
+py
+
+x 10
+
+epx
+
+e
+
+5
+
+10
+(b) Erro de Orientação
+
+5
+
+10
+(c) Distâncias Mínimas
+
+e
+
+15
+
+20
+
+m
+
+1
+10
+
+0.8
+
+m
+
+0.4
+
+10
+s
+
+15
+
+20
+
+Obstáculo 1
+Obstáculo 2
+5
+
+10
+s
+
+15
+
+20
+
+Figura 8 Erro de Posição e orientação e Menor distância entre os obstáculos e o manipulador - Controle
+de Posição e Orientação sem desvio_de_obstáculos.
+
+Obstáculo 1
+Obstáculo 2
+5
+
+oz
+
+15
+
+0.5
+
+0
+0
+
+0.6
+
+0
+0
+
+20
+
+e
+
+oy
+
+(b) Distâncias Mínimas
+
+0.2
+
+15
+
+e
+
+ox
+
+5
+0
+
+5
+
+epz
+
+0
+
+pz
+
+0
+
+2
+0
+
+epy
+
+0
+5
+0
+8
+x 10
+5
+
+(a) Erro de Posição
+
+3
+
+(a) Erro de Posição
+
+6
+
+5
+m
+
+aumenta mas o desvio de obstáculo continua satisfatório. A Figura 7 ilustra o rastreamento da trajetória
+de referência pd (t) sem desvio (superior) e com o desvio_de_obstáculos utilizando o método dos Campos
+Potenciais Artificiais (inferior).
+
+20
+
+Figura 6 Erro de Posição e Menor distância entre
+os obstáculos e o manipulador - Método dos Campos
+Potenciais Artificiais.
+
+obstáculos utilizando o método da Projeção do Gradiente (inferior), onde pode-se notar a diferença entre
+os caminhos seguidos pelo efetuador.
+(a) Erro de Posição
+
+6
+
+x 10
+5
+m
+
+(a) Trajetória sem Desvio
+
+epx
+
+epy
+
+epz
+
+0
+
+0
+
+5
+0
+6
+x 10
+
+z m
+
+0.2
+0.4
+
+5
+
+10
+(b) Erro de Orientação
+
+15
+
+20
+
+0.6
+
+2
+0.2
+0
+0.2
+0.391
+0.4
+0.391 x m
+y m
+(b) Trajetória com Desvio
+
+0.391
+
+0
+
+pd
+
+2
+
+p
+
+e
+
+ox
+
+0
+
+5
+
+10
+(c) Distâncias Mínimas
+
+e
+
+oy
+
+e
+
+oz
+
+15
+
+20
+
+0
+
+m
+
+z m
+
+0.2
+0.4
+
+0.5
+Obstáculo 1
+Obstáculo 2
+
+0.6
+
+0
+0
+
+0.2
+0
+0.2
+0.4
+y m
+
+0.391
+x m
+
+Figura 7 Comparação entre as Trajetórias - Método
+dos Campos Potenciais Artificiais.
+A Figura 8 apresenta a evolução no tempo dos erros de posição e orientação durante a execução da tarefa e a menor distância entre os obstáculos e o manipulador, sem desvio_de_obstáculos, onde pode-se notar
+que para a configuração escolhida não houve colisão.
+Esse fato é devido a presença da malha_de_controle de
+orientação, embora não seja possível garantir o desvio
+de obstáculo em outras configurações.
+A Figura 9 apresenta a evolução no tempo dos
+erros de posição e orientação durante a execução da
+tarefa e a menor distância entre os obstáculos e o manipulador, para o método da Projeção do Gradiente,
+onde pode-se verificar que os erros de posição são da
+mesma ordem de grandeza, enquanto que neste caso
+a ordem de grandeza do erro de orientação aumentou.
+A Figura 10 ilustra o rastreamento da trajetória de referência pd (t) sem desvio (superior) e com o desvio de
+
+ISBN 978-85-8001-069-5
+
+5
+
+0.3912
+
+10
+s
+
+15
+
+20
+
+Figura 9 Erro de Posição e orientação e Menor distância entre os obstáculos e o manipulador - Método
+da Projeção do Gradiente - Controle de Posição e Orientação.
+
+6
+
+Conclusões e Trabalhos Futuros
+
+Neste trabalho, considera-se o problema de controle
+cinemático com desvio_de_obstáculos para robôs_redundantes do tipo pórtico. Dois métodos de controle
+de posição e orientação com desvio_de_obstáculos foram investigados o método da Projeção do Gradiente
+e o método dos Campos Potenciais Artificiais. Ambos os métodos são baseados na utilização de campos
+potenciais repulsivos para desviar de obstáculos fixos
+e móveis. O Método da Projeção do Gradiente utiliza uma estratégia de controle_cinemático baseada na
+inversa da matriz Jacobiana e na projeção de um sinal de controle auxiliar no espaço nulo do Jacobiano
+para realizar objetivos primários (e.g., regulação ou
+
+3852
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+(a) Trajetória sem Desvio
+
+0
+z m
+
+0.2
+0.4
+0.6
+0.2
+0
+0.2
+0.4
+y m
+
+0.391
+0.391
+0.391
+x m
+
+p
+
+d
+
+(b) Trajetória com Desvio
+
+p
+0
+z m
+
+0.2
+0.4
+0.6
+0.2
+
+0
+0.2
+0.4
+y m
+
+0.391
+0.391
+0.391 x m
+
+Figura 10 Comparação entre as Trajetórias - Método
+da Projeção do Gradiente - Controle de Posição e Orientação.
+
+rastreamento_de_trajetória) e secundários (e.g., desvio_de_obstáculos), enquanto que o método dos Campos Potenciais Artificiais utiliza o conceito de campos_potenciais atrativos e repulsivos para alcançar o
+objetivo desejado e desviar de obstáculos simultaneamente. Resultados de simulações para um robô tipo
+pórtico com 9-DoF, ilustram o desempenho e a viabilidade dos métodos propostos.
+A partir dos resultados apresentados pode-se concluir que o método da Projeção do Gradiente apresenta melhores resultados, com erros de posição menores e distâncias mínimas relativas aos obstáculos
+maiores, quando comparados com os resultados obtidos com o método de Campos Potenciais Artificiais.
+Uma outra vantagem é que o método da Projeção do
+Gradiente pode ser utilizado para realizar controle de
+posição e orientação simultaneamente, enquanto que
+a formulação do problema de controle de orientação
+a partir do método de Campos Potenciais Artificiais
+não é trivial.
+Alguns tópicos de pesquisas futuras seguindo as
+ideias apresentadas aqui são considerar o modelo_dinâmico do robô no projeto_de_controle, desenvolver um
+algoritmo de desvio_de_obstáculos usando informação
+visual e fusão sensorial, implementar algoritmos de
+planejamento_de_trajetórias para resolver o problema
+da escolha da posição inicial e da existência de mínimos locais.
+Agradecimentos
+Trabalho financiado pelo CENPESPETROBRAS no
+convênio COPPETEC intitulado "Sistemas de Produção Offshore com Alto Grau de Automação", e pelo
+CNPq, FAPERJ e CAPES.
+Referências
+Barraquand, J. and Latombe, J.-C. (1991). Robot motion planning a distributed representation approach, Int. Jour. of Rob. Res. 10(6) 628649.
+
+ISBN 978-85-8001-069-5
+
+Borenstein, J. and Koren, Y. (1991). The vector field histogram-fast obstacle avoidance for mobile
+robots, IEEE Trans. on Robot. Autom. 7(3) 278
+288.
+Chung, C. Y., Lee, B. H. and Lee, J. H. (1997). Obstacle avoidance for kinematically redundant robots
+using distance algorithm, Proc. IEEERSJ Int.
+Conf. Intel. Rob. Syst., Grenoble, pp. 17871793.
+Fox, D., Burgard, W. and Thrun, S. (1997). The dynamic window approach to collision avoidance,
+IEEE Robot. Autom. Mag. 4(1) 2333.
+Han, S.-S., Choi, S.-B. and Kim, J.-H. (1999). Position control of a flexible gantry robot arm using
+smart material actuators, Jour. of Robot. Syst.
+16(10) 581595.
+Kavraski, L. E. and Lavalle, S. M. (2008). Motion
+planning, in Siciliano and Khatib (eds), Handbook of Robotics, Springer, pp. 109131.
+Khatib, O. (1985). Real-time obstacle avoidance for
+manipulators and mobile robots, Proc. IEEE Int.
+Conf. on Rob.  Autom., St. Louis, MO, pp. 500
+505.
+Leite, A. C., Lizarralde, F. and Hsu, L. (2009). Hybrid adaptive vision-force control for robot manipulators interacting with unknown surfaces, Int.
+Jour. of Rob. Res. 28(7) 911926.
+Liégeois, A. (1977). Automatic supervisory control of
+the configuration and behavior of multibody mechanisms, IEEE Trans. on Syst. Man and Cyber.
+7(12) 868871.
+Lumelsky, V. (1987). Effect of kinematics on motion
+planning for planar robot arms moving amidst
+unknown obstacles, IEEE Jour. of Robot. and
+Autom. 3(3) 207223.
+Minguez, J., Lamiraux, F. and Laumond, J.-P. (2008).
+Motion planning and obstacle avoidance, in Siciliano and Khatib (eds), Handbook of Robotics,
+Springer, pp. 827852.
+Minguez, J. and Montano, L. (2004). Nearness diagram (ND) navigation collision avoidance in
+troublesome scenarios, Proc. IEEE Trans. on Robot. Autom. 20(1) 4559.
+Pascoal, A., Oliveira, P., Silvestre, C., Bjerrum, A.,
+Ishoy, A., Pignon, J.-P., Ayela, G. and Petzelt, C.
+(1997). MARIUS An Autonomous Underwater
+Vehicle for Coastal Oceanography, IEEE Robot.
+Autom. Mag. 4(4) 4659.
+Siciliano, B., Sciavicco, L., Villani, L. and Oriolo, G.
+(2009). Robotics Modeling, Planning and Control, Springer-Verlag London Ltd.
+Singh, L., Stephanou, H. and Wen, J. T. (1996). Realtime robot motion control with circulatory fields,
+Proc. IEEE Int. Conf. on Rob.  Autom., Minneapolis, MN, pp. 27372742.
+Weisstein, E. W. (2012).
+Point-line distance
+3-dimensional,
+MathWorld - A Wolfram
+Web Resource, Last access 23 Jan 2012.
+httpmathworld.wolfram.comPointLineDistance3-Dimensional.html.
+Wen, J. T.-Y. and Kreutz-Delgado, K. (1991). The
+attitude_control problem, IEEE Trans. Autom.
+Contr. 36(10) 11481162.
+
+3853

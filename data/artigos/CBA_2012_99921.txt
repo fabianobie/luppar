@@ -1,0 +1,425 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+UNIDADE DE CONTROLE DE MOTOR AUTOMOTIVO BASEADA EM FPGA
+JONATA APOLINARIO1, CLEITON GILI1, SÉRGIO VIDAL GARCIA OLIVEIRA1,2
+1- Grupo de Processamento Eletrônico de Energia - GPEE, Depto. de Engenharia Elétrica e
+Telecomunicações, Centro de Ciências Tecnológicas  CCT, Universidade Regional de Blumenau - FURB
+Rua São Paulo,3250  CEP 89030-080  Blumenau  SC - Brasil
+2- Núcleo de Processamento de Energia Elétrica  nPEE, Departamento de Engenharia Elétrica  DEE,
+Centro de Ciências Tecnológicas  CCT, Universidade do Estado de Santa Catarina  UDESC, Campus
+Universitário Prof. Avelino Marcante - CEP 89219-710  Joinville - SC - Brasil
+e-mails jonataapolinario@yahoo.com.br, cgilinet@gmail.com,
+sergiovidal@ieee.org
+Abstract
+ This paper presents an implementation of a FPGA based on control unit for automotive engine, which reads the engine sensors and acts on the injection of liquid fuel, the ignition timing and dosage of vehicular natural gas. To carry out the
+monitoring and adjustment of engine parameters in real time, a graphical PC interface using the QT library, written in C++ is
+created. The control unit was implemented in a development platform with a Xilinx Spartan-3E core and a specific board to perform the signal conditioning of the outputs. The FPGA logic blocks are designed to perform special functions such as generation
+of pulse ignition and injection, motor speed monitoring and math routines. The PicoBlaze softcore microcontroller is implemented within FPGA to memory manipulation, management, communication and analog to digital conversions. The tests were
+performed on a bench simulation engine, emulating the signals from the engine, and also in a real engine, installed in a vehicle
+Chevrolet Monza 1994, with an inline four-cylinder engine of 2.0 litres and single point original electronic injection, also with
+the conversion to natural gas vehicles.
+Keywords
+ FPGA, PicoBlaze, internal combustion engine, fuel injection, spark ignition, CNG regulation.
+Resumo
+ Este trabalho apresenta o uso de FPGA na implementação de uma unidade de controle de motor automotivo, a qual
+faz a leitura dos sensores do motor e atua na injeção_de_combustível líquido, na temporização da ignição e na dosagem do gás
+natural veicular. Para realizar o monitoramento e o ajuste dos parâmetros do motor em tempo_real, foi criada uma interface_gráfica em PC utilizando a biblioteca QT, escrita em C++. A unidade de controle foi implementada em uma plataforma de desenvolvimento com um FPGA Xilinx Spartan-3E e uma placa dedicada, que realiza o condicionamento dos sinais das saídas. No
+FPGA, foram criados blocos lógicos dedicados para realizar funções como a geração do pulso de ignição e injeção, leitura da velocidade do motor e cálculos matemáticos. Para a execução de tarefas mais complexas, como a manipulação de memória, gerenciamento da comunicação e conversões analógicas digitais, um núcleo de processamento softcore PicoBlaze foi implementado
+no FPGA. Os testes iniciais foram realizados em uma bancada de simulação de motores, que geravam os sinais provenientes do
+motor. Por último, os testes foram efetuados em um motor real instalado em um veículo Chevrolet Monza ano 1994, com um
+motor quatro cilindros em linha, 2.0 litros, injeção eletrônica mono ponto original e conversão para gás_natural veicular.
+Palavras-chave
+ .
+
+1.
+
+Introdução
+
+Motores de combustão são máquinas capazes de
+converter energia química em energia mecânica, ou
+seja, combustível em movimento. Dos motores de
+combustão interna se destacam os motores com ignição por centelha, os quais fazem uso dessas para iniciar a combustão. Nesses motores existem dois fatores que influenciam diretamente no seu desempenho
+a alimentação de combustível e a centelha_de_ignição.
+A alimentação de combustível é medida pela relação
+entre a massa de ar e massa de combustível que o
+motor processa. Um parâmetro muito importante é a
+relação arcombustível estequiométrica, a qual corresponde  mistura com combustão teoricamente
+completa (DENTON, 2004).
+A centelha_de_ignição ocorre no final da etapa de
+compressão do ciclo termodinâmico, com isso é medida em graus antes do PMS (Ponto Morto Superior),
+e é chamada de ângulo de ponto de ignição. Esta cen-
+
+ISBN 978-85-8001-069-5
+
+telha é gerada tipicamente por uma bobina de ignição, sendo um indutor acoplado com uma alta tensão
+no enrolamento secundário (RIBBENS, 2003).
+A relação ArCombustível e o ponto de ignição afetam diretamente o consumo de combustível, a potência e a emissão de poluentes de um motor, conforme
+pode ser visto na Figura 1 e na Figura 2 (DENTON,
+2004). Na Figura 1 pode-se observar as variações de
+torque (T), consumo específico (BSFC) e emissões
+de poluentes (HC, CO e NOx) pela variação da relação arcombustível (AF). Dois pontos são destacados,
+um no torque máximo (BP) e outro no consumo mínimo de combustível (BE). Já na Figura 2 são apresentas as variáveis em função do ponto de ignição,
+destacando o ponto em que o motor apresenta torque
+máximo (MBT).
+Este trabalho propõe a elaboração de uma unidade de
+controle capaz de atuar no fornecimento de combustível e no ponto de ignição de um motor de combustão interna, fazendo-se o uso de um FPGA (Field
+Programmable Gate Array).
+
+3170
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 1 - Desempenho do motor em função da relação
+ArCombustível
+
+Neste trabalho foi implementado um algoritmo de
+controle simples, que é abordado na seção 0, visto
+que não foi o propósito deste trabalho apresentar
+novos modelos de controle, porém, esta plataforma
+permite a implementação de algoritmos bastante
+complexos e que necessitem alto nível de processamento.
+Os testes foram executados em uma bancada de testes, para simulação dos sinais do motor e em um motor real, originalmente com injeção eletrônica monoponto.
+2.
+
+Plataforma de desenvolvimento
+
+Para a elaboração desse projeto, foi utilizada
+uma plataforma de desenvolvimento de FPGA da
+Xilinx e uma placa de condicionamento_de_sinais
+própria. Para o processo de desenvolvimento e para
+os resultados finais, foi criada também uma placa de
+simulação de sinais do motor.
+2.1. Plataforma Spartan 3E Starter Kit
+
+Figura 2 - Desempenho do motor em função do ponto de ignição
+
+Sistemas de injeção e ignição mais modernos, como a
+injeção direta de combustível (ACDELCO, 2009) e
+ignição por laser (LACKNER, 2004), já são estudados, contudo também possuem seu acionamento através de pulsos, com controle de tempo, o que faz o
+FPGA também aplicável a estas novas tecnologias.
+A unidade de controle foi implementada em uma
+plataforma de desenvolvimento com um FPGA Xilinx Spartan-3E e uma placa de condicionamento de
+sinais, fazendo o tratamento dos sinais do motor e
+amplificando os sinais de saída FPGA.
+Essa unidade de controle é capaz de atuar sobre os
+eletroinjetores, responsáveis pela injeção_de_combustível líquido, sobre a bobina de ignição, que faz a
+geração da centelha e também sobre uma válvula de
+controle de vazão do combustível gasoso, que para
+isso utiliza um motor_de_passo.
+No FPGA foram programados blocos lógicos dedicados para geração do pulso de injeção e ignição, captura do tempo do último período e cálculo da velocidade do motor em RPM.
+A comunicação com a interface_gráfica, gerenciamento das memórias e a conversão digital dos sinais analógicos foram implementados através do softcore
+PicoBlaze que é um processador de 8 bits embarcado
+no próprio FPGA.
+Também foi criada uma interface_gráfica para o monitoramento e ajuste dos parâmetros do motor em
+tempo_real. Esta interface é executada em um computador (PC) que se comunica com a unidade de controle através de uma porta de comunicação serial
+RS232.
+
+ISBN 978-85-8001-069-5
+
+Essa plataforma (Figura 3) possui um FPGA
+XC3S500, com encapsulamento de 320 pinos, sendo
+232 entradas eou saídas e mais de 10,000 células
+lógicas (Xilinks, 2011).
+Alguns periféricos dessa plataforma foram utilizados
+para esse trabalho, dentre eles, a memória Flash SPI
+de 10 Mbits, o display LCD 16x2 caracteres, uma
+porta RS232, o oscilador de 50 MHz e o conversor
+ADC SPI (Xilinks, 2011). A plataforma de desenvolvimento permitiu uma rápida implementação da unidade de controle do motor.
+
+Figura 3. Plataforma de desenvolvimento Spartan 3E.
+
+2.2. Placa de Condicionamento de Sinais
+A placa de condicionamento_de_sinais da Figura
+4 foi projetada para conectar o FPGA aos sinais do
+motor. Nesta placa, foram incluídos conversores de
+
+3171
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+níveis, um conversor_analógico-digital multiplexado,
+um conversor para acionar o motor_de_passo e os
+amplificadores dos sinais de saída do FPGA.
+
+Superior) no comando de válvulas e ignição de alta
+energia com distribuidor.
+
+3.
+
+Hardware descrito no FPGA
+
+No hardware do FPGA foram descritos blocos
+lógicos dedicados e também foi utilizado um softcore
+PicoBlaze, fornecido pela Xilinx.
+A Figura 6 mostra o diagrama da estrutura do hardware implementado no FPGA e o fluxo de informações entre os blocos dedicados e o PicoBlaze.
+
+Figura 4. Placa de condicionamento_de_sinais
+
+2.3. Simulador de Sinais do Motor
+Para facilitar o desenvolvimento e testar a aplicação, foi projetada uma placa de simulação de sinais
+do motor (Figura 5), a qual simula os pulsos de rotação e velocidade do veículo, os sinais dos sensores
+analógicos e, possui as saídas para a injeção, ignição
+e motor_de_passo do sistema de GNV.
+
+Figura 6. Diagrama da estrutura implementada no FPGA
+
+Para gerar os pulsos de saída de injeção e ignição é
+necessário estimar o momento em que o ângulo do
+ponto de ignição e do fim da injeção irá acontecer.
+Isso é feito utilizando o tempo do último ciclo do
+motor por um bloco lógico que captura o tempo entre
+dois pulsos de RPM. Após essa aquisição, os valores
+dos ângulos, fornecidos pela tabela de parâmetros,
+são convertidos em tempo e utilizados pelos blocos
+geradores de pulso de ignição e injeção. O motor de
+passo de controle do GNV também recebe os parâmetros da tabela, que indicam a posição em que este
+deve estar. O tempo do último ciclo do motor também é usado para calcular a velocidade do motor em
+RPM.
+3.1. Softcore PicoBlaze
+
+Figura 5. Placa de simulação de sinais do motor
+
+2.4. Motor para Experimento
+O motor utilizado para experimento é o motor de
+um automóvel Chevrolet Monza ano 1994. É um
+motor de quatro cilindros em linha, com injeção eletrônica mono-ponto, Sensor de PMS (Ponto Morto
+
+ISBN 978-85-8001-069-5
+
+O PicoBlaze é um processador de 8 bits RISC
+totalmente embarcado no FPGA, sem a necessidade
+de qualquer hardware externo. Ele pode executar um
+firmware com até 1024 instruções, que é carregado
+automaticamente durante a configuração do FPGA. A
+integração desse processador com a aplicação se dá
+através de 256 portas de saída, 256 portas de entrada
+e uma interrupção. O firmware é escrito em linguagem assembly com um conjunto de instruções simples. A Figura 7 mostra uma implementação do PicoBlaze, necessitando apenas de um bloco de memória RAM para armazenar as instruções, tendo livre
+para uso suas portas de entrada_e_saída (PicoBlaze,
+2011).
+
+3172
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+no funcionamento do motor e uma sobrecarga na
+bobina de ignição.
+
+Figura 7. Implementação simples do PicoBlaze
+
+O softcore PicoBlaze é responsável pela comunicação com o PC, gerenciamento da memória, conversão
+analógica-digital e gerenciamento do display LCD. A
+Figura 8 mostra o fluxograma simplificado do firmware que é executado pelo PicoBlaze. A rotina principal possui inicialização de periféricos, configuração
+de interrupção e por fim um laço infinito, que realiza
+a troca de informações com o PC e a IHM (Interface
+Homem-Máquina). A rotina de interrupção é acionada toda vez que o softcore recebe o sinal do sensor de
+PMS.
+
+Figura 9. Parâmetros da saída de ignição
+
+3.3. Gerador de pulso de injeção
+O gerador de pulso de injeção é similar ao gerador de pulso de ignição, porém o parâmetro de cálculo é o tempo de injeção. A Figura 10 mostra os parâmetros que são considerados para a saída de injeção.
+O tempo 1 e 2 correspondem ao tempo entre o sinal
+de PMS e início da injeção e o tempo total acionado,
+respectivamente.
+
+Figura 8. Fluxograma simplificado do software executado pelo
+Picoblaze
+
+3.2. Gerador de pulso de ignição
+O gerador de pulso de ignição é responsável por
+gerar o pulso de acionamento da bobina de ignição
+para gerar a centelha, que necessita considerar o ângulo de ignição e o tempo de carga da bobina, conforme a Figura 9. Este bloco lógico possui como entrada o sinal de PMS, para sincronizar com o motor e
+também dois valores de tempo (Figura 9). O tempo 1
+é o intervalo entre o sinal de PMS e o início da carga
+da bobina, enquanto o tempo 2 é o intervalo entre o
+sinal de PMS e o fim da carga da bobina.
+Os tempos 1 e 2 são calculados pelo bloco que converte ângulo para tempo. O tempo 2 corresponde ao
+momento do ponto de ignição e o tempo 1 corresponde ao tempo 2 subtraído do tempo de carga da
+bobina. Esse gerador também utiliza o tempo do último ciclo para prevenir que o tempo de carga seja
+maior que metade do tempo do ciclo, evitando que a
+bobina fique permanentemente acionada. Caso a bobina fique acionada, a centelha não seria gerada e o
+indutor não seria descarregado, causando uma falha
+
+ISBN 978-85-8001-069-5
+
+Figura 10. Parâmetros de saída de injeção
+
+3.4. Interface gráfica
+A interface_gráfica foi criada com dois painéis
+principais, um para visualização dos parâmetros em
+tempo_real e outro para ajuste dos parâmetros. O painel de ajuste_de_parâmetros possui três abas que possibilitam ajustes da injeção, da ignição e do GNV.
+Essa interface foi criada com a biblioteca Qt, que
+pode ser programada em diversas linguagens de programação, nesse caso C++, e é multi-plataforma, podendo ser compilada para diferentes sistemas_operacionais (Qt, 2011).
+A Figura 11 mostra a interface_gráfica. Na parte superior da figura podem ser observados os parâmetros
+de monitoramento, como a velocidade do motor em
+
+3173
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+RPM, o sinal de TPS (Sensor de Posição da Borboleta, Throtle Position Sensor), MAP (Sensor de Pressão Absoluta, Manifold Absolute Pressure), entre
+outros. Na parte inferior desse painel ficam acessíveis
+os parâmetros de ajuste do motor.
+
+4.1. Simulação em Bancada
+Durante o desenvolvimento do projeto, a bancada de simulações foi utilizada para validar gradativamente o funcionamento das funcionalidades na
+unidade de controle.
+Nessa bancada, foi possível inserir os sinais de PMS
+e velocidade, variar os sinais analógicos como TPS,
+MAP, temperatura do motor e também observar os
+sinais de saída, assim como verificar a movimentação
+do motor_de_passo da válvula do sistema de GNV.
+Para os resultados finais, foi utilizado um sinal de
+PMS de 1500 RPM (25 Hz). A Figura 13 e a Figura
+14 mostram a saída de ignição com o ponto de ignição em 0 e 20 graus antes do PMS.
+
+Figura 11. Interface gráfica
+
+3.5. Algoritmo de controle
+Para este projeto, foi implementado um algoritmo de controle simples, que pode ser visto na Figura
+12, levando em consideração apenas a velocidade do
+motor e a abertura da posição da borboleta.
+Por meio desses parâmetros_são buscados em uma
+tabela os parâmetros pré-definidos. Sistemas modernos de controle fazem correção desses parâmetros
+considerando a temperatura, posição da borboleta,
+sensor de oxigênio, entre outros (DENTON, 2004)
+
+Figura 13. Ponto de ignição em 0 antes do PMS
+
+Figura 14. Ponto de ignição em 20 antes do PMS
+
+Figura 12 Diagrama do algoritmo de controle
+
+4.
+
+A Figura 15 mostra a saída de ignição em 0 com
+tempo de carga de 10 ms. O tempo de injeção também foi verificado em 1 ms e 10 ms, conforme a Figura 16 e Figura 17, respectivamente. O ângulo do
+final de injeção também pode ser verificado, estando
+em 0 na Figura 17 e em 55 na Figura 19.
+
+Resultados
+
+A unidade de controle foi aplicada e testada na
+placa de simulação de sinais do motor e também em
+um automóvel.
+ISBN 978-85-8001-069-5
+
+3174
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 15. Saída de ignição com tempo de carga de 10 ms
+
+Figura 19. Ângulo final de injeção
+
+4.2. Testes em um automóvel
+
+Figura 16. Tempo de injeção em 1 ms
+
+A unidade de controle também foi instalada e
+testada em um automóvel real (Figura 20).
+A instalação foi feita utilizando os sensores e o sistema elétrico original do veículo, adicionando apenas
+um sensor de oxigênio e um sensor de temperatura de
+gás de exaustão. Foi utilizado um suporte para notebook para permitir a utilização da interface_gráfica no
+interior do veículo, possibilitando assim o monitoramento e ajuste dos parâmetros. Inicialmente, foram
+feitos ajustes com o veículo parado e posteriormente
+com o veículo em uso, buscando todas as condições
+de operação do motor.
+
+Figura 20 - Unidade de controle instalada
+Figura 17. Tempo de injeção em 3 ms
+
+O motor_de_passo foi testado com um movimento em
+seu eixo de 10 passos, sendo mostrado na Figura 18.
+
+Figura 18. Motor de passo com 10 passos de diferença
+
+ISBN 978-85-8001-069-5
+
+Apesar dos FPGAs serem dispositivos menos estáveis que os processadores baseados em memória Flash, já existem diversas técnicas para proporcionar
+confiabilidade ao sistema, como redundância modular, detecção de erros com redudâncias, detecção de
+erros offline, entre outras técnicas (STOTT, 2008)
+Para o sistema de GNV, foi adaptada uma válvula
+com um motor_de_passo, capaz de regular o fluxo de
+gás que é admitido pelo motor. Com isso, o motor foi
+controlado totalmente pela unidade proposta, sem a
+necessidade da unidade de controle original do veículo.
+
+3175
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+5.
+
+Conclusão
+
+Este trabalho mostrou a implementação de uma unidade de controle de motor automotivo, controlando a
+injeção_de_combustível líquido, o ponto de ignição e
+também o sistema de GNV, utilizando FPGA. O desenvolvimento proposto foi testado em uma bancada
+de simulação e também, experimentalmente, em um
+automóvel.
+O uso da plataforma de desenvolvimento Spartan 3E
+starter kit proporcionou uma grande redução no tempo de desenvolvimento, possuindo todo o hardware
+necessário para o funcionamento e diversos periféricos que integraram a aplicação. Com isso foi necessário apenas uma placa de condicionamento_de_sinais
+para tratar os sinais analógicos e digitais do motor e
+amplificar os sinais gerados pelo FPGA.
+Para as execuções e controles sequenciais, o softcore
+PicoBlaze se mostrou uma solução versátil e de fácil
+uso, permitindo a execução de software internamente
+ao FPGA e aumentando a flexibilidade e agilidade do
+projeto.
+A interface_gráfica para o monitoramento e ajuste dos
+parâmetros em tempo_real trouxe os parâmetros do
+motor para o usuário, porém a forma de ajuste dos
+parâmetros, por necessitarem serem ajustados individualmente, se mostrou ineficiente, necessitando de
+técnicas de entrada de dados mais apropriadas para a
+aplicação. Apesar disso, todos os parâmetros puderam ser ajustados de maneira suficiente.
+
+International Conference on Field Programmable
+Logic and Applications pp. 415  420.
+Lackner M., Winter F., Graf J. et. al. (2004). Laser
+ignition in internal combustion engines - a
+contribution to a sustainable environment. 14th
+IFRF Members Conference "A Sustainable
+Energy Supply for Industry A Challenge for the
+IFRF", Noordwijkerhout, The Netherlands, oral
+presentation.
+ACDelco TECHconnect. JulhoAgosto 2009. Vol.
+16, no. 4.
+
+Referências Bibliográficas
+Ribbens, Williams B. Understanding Automotive
+Electronics. 6th ed. United States of America
+Newnes, 2003.
+Denton, Tom. Automobile electrical and Electronic
+Sysmtems. 3rd ed. Great Britain Elsevier, 2004.
+XILINKS, Spartan 3E Datasheet Disponível em
+<httpwww.xilinx.comsupportdocumentation
+datasheetsds099.pdf> Acessado em 10 de maio
+de 2011.
+XILINKS,
+Spartan-3E
+Starter
+Kit
+em
+<httpwww.xilinx.comproductsboards-andkitsHW-SPAR3E-SK-US-G.htm> Acesso em
+10 de maio de 2011.
+PicoBlaze 8-bit Embedded Microcontroller User
+Guide. Xilinx user guide UG129. janeiro2010.
+Qt - Cross-platform application and UI framework
+em
+<httpqt.nokia.com>
+acessado
+em
+agosto2011.
+Pelliza, Giovani. Análise de Veículos convertidos
+para o suo do combustível Gás Natural.
+Universidade Federal do Rio Grande do Sul.
+Dissertação de Mestrado. Rio Grande do Sul,
+2003.
+Stott, E Sedcole, P and Cheung, P.Y.K (2008). Fault
+tolerant methods for reliability in FPGAs. IEEE
+
+ISBN 978-85-8001-069-5
+
+3176

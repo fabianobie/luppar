@@ -1,0 +1,1456 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+MODELING AND CONTROL OF A TILT-ROTOR UAV WITH IMPROVED
+FORWARD FLIGHT
+Daniel Neri, Guilherme V. Raffo, Sergio Esteban
+
+
+Graduate Program in Electrical Engineering, Federal University of Minas Gerais
+Belo Horizonte, MG, Brazil
+
+
+
+
+Department of Electronic Engineering, Federal University of Minas Gerais
+Belo Horizonte, MG, Brasil
+
+Department of Aerospace Engineering, Universidad de Sevilla, Seville, Spain
+Emails nericardoso@ufmg.br, raffo@ufmg.br, sesteban@us.es
+
+Abstract This work describes the modeling and control of a tilt-rotor UAV with tail controlled surfaces
+for path tracking with improved forward velocity. The dynamic model is obtained using the Euler-Lagrange
+formulation. Mixed H2 H controllers are designed for different operation points, whose feedback gains are
+interpolated by a neural network for online gain-scheduling, performing a smooth transition between them.
+Simulation results show the control strategy efficiency when the UAV is designated to have a forward acceleration
+and do a circular trajectory, subject to wind perturbation.
+Keywords
+
+UAV, Tilt-rotor, Robust control, Neural Network
+
+Resumo Esse trabalho descreve a modelagem_e_controle de um VANT tilt-rotor com superfcies de controle
+na cauda para realizar o seguimento_de_trajetoria com aumento de velocidade de avanco. O modelo_dinamico
+e obtido usando a formulacao de Euler-Lagrange. Atraves do projeto_de_controle H2 H misto sao obtidos
+ganhos de realimentacao para diferentes pontos de operacao, sendo esses interpolados por uma rede_neural, para
+realizar um escalonamento online entre eles, permitindo uma transicao suave. Resultados de simulacao mostram
+a eficiencia da estrategia_de_controle quando o VANT e designado a acelerar e seguir em uma trajetoria circular
+com perturbacao de vento.
+Palavras-chave
+
+
+
+Introduction
+
+A tilt-rotor is a kind of aircraft that can perform vertical take-off and landing (VTOL) like
+rotary-wing airplanes, and at the same time, by
+tilting the rotors, can perform like a fixed-wing
+aircraft in forward flush, which substantially improves both performance and power consumption.
+Examples of tilt-rotors are the XV-15 (Nasa, 1975)
+and V-22 Osprey (Norton, 2004). These vehicles
+are ideal for some situations, since they do not
+need a wide area for take-off and landing. In
+small scale this UAV configuration can be used
+to perform, for example, bridge inspection looking for structural cracks, and search and rescue
+(Ryan and Hedrick, 2005). Moreover, due to its
+reduced number of rotors, these vehicles performing VTOL have the advantage, when compared to
+quad rotor UAVs, of lower energy consumption.
+There are many works that propose control strategies for this class of UAV based on
+helicopter flight-mode model to solve the path
+tracking problem PID (Papachristos, Alexis and
+Tzes, 2011), backstepping technique (Kendoul
+et al., 2005), linear model predictive controller
+(LMPC) (Papachristos, Alexis, Nikolakopoulos
+and Tzes, 2011), H with D  stability (Almeida,
+2014), feedback linearization with PID (Almeida
+and Raffo, 2015) and robust linear mixed H2 H
+optimal controller (Donadel et al., 2014). However, all these works neglected aerodynamic forces.
+To improve the flight performance, tail sur-
+
+ISSN 2525-8311
+
+faces are added to the UAV, since when it is in
+helicopter flight-mode (low velocity) the deflection
+of rudder or elevator do not produce significant effects, as opposed to in forward flights, where low
+deflection in these surfaces can make great difference in forces that act on the vehicle. Although
+the flight performance improvement is achieved
+with vertical tail plane (VTP) and horizontal tail
+plane (HTP), the control design becomes challenging. In this work we present an approach for dealing with this problem, by designing an adaptive
+controller based on online gain-scheduling using
+neural network (NN).
+2
+
+Modeling
+
+This section develops the tilt-rotor UAV dynamic model using the Euler-Lagrange formulation.
+2.1
+
+Forward kinematics
+
+The tilt-rotor UAV considered in this work
+is formed by three bodies. The main body is
+composed by the fuselage, horizontal and vertical stabilizer. The reminder two bodies are each
+of the two thrusters groups (servomotors with rotors) interconnected to the main body by revolute
+joints. In order to obtain the forward kinematics, seven frames are defined, as shown in Figure
+1 the inertial frame I the body frame, B the
+main body center of mass C1  the two thrusters
+group center of mass, C2 and C3 , correspondent to
+
+2473
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+right and left sides, respectively, and the auxiliary
+frames C2aux and C3aux .
+
+I
+wI,i
+ Wi q, is computed. Besides, viI  R31
+is the
+ linear center of mass velocity
+0 vector, and
+q , x y z    R L is the generalized coordinates vector (Spong et al., 2006).
+
+C2
+
+2.2
+
+R
+
+
+C2aux
+
+C1
+
+dB
+C
+
+1
+
+2
+
+
+
+z
+
+The Euler-Lagrange formulation uses total kinetic and potential energy to obtain the systems
+equations of motion in the canonical form
+
+
+dB
+C aux
+
+B
+
+
+
+C3
+
+dB
+aux
+C3
+
+dI
+B
+
+M (q)q + C(q, q)q + g(q)  (q, q, u, w),
+L
+
+
+C3aux
+
+I
+
+x
+
+y
+
+Figure 1 Tilt-rotor UAV frames.
+The homogeneous transformation
+matrix
+
+
+I
+RB
+dIB
+I
+from B to I is expressed as HB 
+,
+013
+1
+
+
+0
+where dIB , x y z
+is the position of the
+I
+origin of frame B with respect to I, and RB
+,
+Rz, Ry, Rx, is the rotation matrix.
+The homogeneous transformation matrices
+HCB1 , HCB2 and HCB3 are defined as
+
+I33 dB
+C1
+,
+
+013
+1
+
+ " 33
+ B
+C aux
+aux
+RC2aux dB
+I
+dC22
+C2
+,
+
+013
+1
+013
+1
+
+"
+ B
+C aux
+aux
+RC3aux dB
+I33 dC33
+C3
+,
+
+013
+1
+013
+1
+HCB1
+
+HCB2
+HCB3
+
+
+
+where RCB2aux , Rx, Ry,R , RCB3aux , Rx, Ry,L ,
+ is a small inside inclination angle introduced
+to each of the propellers in order to improve the
+system controllability (Raffo, 2011), R and L
+are the right and left servomotors rotation angles,
+respectively 1 , Inn  Rnn is an identity matrix,
+and 0nm  Rnm is a matrix of zeros.
+Using HBI , HCB1 , HCB2 and HCB3 , the homogeneous transformation matrices associated to the
+three centers of mass are obtained as HCI1 
+HBI HCB1 , HCI2  HBI HCB2 and HCI3  HBI HCB3 ,
+
+
+RiI pIi
+where HiI 
+, with pI and RiI be013
+1
+ing the position and the rotation matrix of frame
+i  C1 , C2 , C3  with respect to I.
+The Jacobian matrices of linear, Ji , and angular, Wi , velocities, from frame i with respect
+to I, are obtained through the position vector
+time derivative, viI  dpIi dt  Ji q, and the
+I
+rotational matrix one, RiI  S(wI,i
+)RiI , where
+I
+S(wI,i
+) is a skew-symmetric matrix. From the
+latter the angular center of mass velocity vector,
+1 Throughout the article subscripts L and R will be used
+to differentiate between the left and right components of
+the thrusters groups.
+
+ISSN 2525-8311
+
+Euler-Lagrange dynamic model
+
+(1)
+
+where M (q)  R88 and C(q, q)  R88 are the
+inertia and Coriolis matrices, g(q) is the gravitational vector, and (q, q, u, w) are the generalized
+forces that act in the system (Spong et al., 2006).
+The generalized forces are functions of the disturbance vector w
+ and control inputs vector u.
+0
+In this work u  fpR fpL pR pL e r ,
+with fpR and fpL being the forces generated by
+the propellers, pR and pL the torques applied by
+the servomotors, and e and r the elevator and
+rudder deflection.
+The inertia matrix is obtained from the kienergy K  (12)q 0 M (q)q, iwith M (q) 
+hnetic
+P3
+0
+0 I
+I 0
+i1 mi Ji Ji + Wi Ri Ii (Ri ) Wi , where mi 
+R and Ii  R33 represent the i-th body mass
+and inertia tensor matrix, respectively. Using the
+inertia matrix, the Coriolis matrix is obtained by
+the Christofell symbols of first kind as
+Ckj 
+
+
+
+8
+X
+Mkl
+Mlj
+1 Mkj
++
+,
+
+2
+ql
+qj
+qk
+l1
+
+where Ckj is an element of the Coriolis matrix.
+The gravitational force vector
+P3 is obtained by
+g(q)  Uq, where U   i1 mi gr0 pIi , with
+gr0 being the gravity acceleration vector.
+2.3
+
+Generalized forces
+
+The vector of generalized forces   R81 in
+equation (1) is composed by generalized forces applied by the propellers, servomotors and aerodynamic surfaces
+  PR + PL + sR + sL + f + h + v , (2)
+
+where PR and PL are generalized forces generated by propellers, sR and sL are applied by
+servomotors, and f , h and v are generated by
+the fuselage and the horizontal and vertical stabilizers, respectively.
+The forces and torques contributions are
+added using the maps f  (Jp )0 f I and  
+(WF )0  I (Kane and Levinson, 1985), where Jp is
+the linear velocity jacobian associated to the force
+application point, and WF is the angular velocity
+jacobian of the body with attached frame F, to
+which the torque is applied. The terms f I and
+ I are the applied force and torque, represented
+in the inertial frame.
+
+2474
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+The propellers contribution to the generalized
+forces are obtained as
+I
+PR JC0 2 RC
+2
+
+I
+PL JC0 3 RC
+3
+
+
+
+
+
+021
+I
++WC0 2 RC
+2
+fzR
+
+
+
+
+021
+I
++WC0 3 RC
+3
+fzL
+
+"
+
+
+021
+,
+(3)
+k
+fz
+b R
+"
+
+021
+, (4)
+k
+ fzL
+b
+
+in which the applied torque by the propeller is
+approximated assuming the rotor in steady-state
+(Castillo et al., 2005). The terms k and b are
+constants that must be estimated besides, it is
+considered that the propellers forces and torques
+are applied to the centers of mass of the thrusters
+group.
+The generalized torques applied by the servo0
+motors are added as sR  016 PR 0 and
+
+0
+sL  016 0 PL .
+As show in Stevens and Lewis (1992) and
+Beard and Mclain (2012), an airfoil in presence of a free-stream produces two orthogonal forces lift, which is perpendicular to
+the free-stream, and drag, which is parallel to it.
+This work decomposes the windspeed in xz and xy planes.
+Its magnip
+tude p
+is computed as vaxy  (wwa )2 +(uua )2 ,
+vaxz  (v  va )2 +(u  ua )2 , where wua va wa 0
+is the wind-speed components vector, due to environment, represented in the body frame, and
+it is treated as perturbation. Using the angle of attack, a , and side slip angle, a , computed as a tan1 ((w  wa )(u  ua )), a  
+tan1 ((v  va )(u  ua )), it is possible to define the
+wind-speed orientation.
+The aerodynamic forces due to the fuselage,
+represented in the body frame, are calculated as
+B
+f f
+f f
+f f
+f f
+f f R
+xz
+cdxz 0 xz
+clxz 0 +RB xy
+cdxy xy
+clxy 00 ,
+
+B
+, Ry,a and
+where jk , (12)sk va2j , R
+
+RB , Rz,a , the terms ckdj , cklj are drag and lift
+coefficients for k  f, h, v and j  xz, xy, 
+is the air density, and sk is the surface area. The
+coefficients depend of the aerodynamic properties
+and are obtained from flow simulations.
+The aerodynamic forces, represented in the
+body frame, due to the horizontal stabilizer
+are
+ h
+
+h h
+h
+calculated as f h  RB xz
+cdxz 0 xz
+clxz + ce 0 .
+Moreover, the aerodynamic forces acting on the
+aircraft due to the vertical
+stabilizer
+are given by
+h
+i
+v
+B
+v v
+v
+v
+r
+f  R xy cdxy xy clxy + c
+0, where ci for
+i  e, r are the elevator and rudder coefficients.
+The aerodynamic generalized forces are calI
+I
+culated as f  Jf 0 RB
+f f , h  Jh 0 RB
+fh
+0
+I
+fv , where the linear velocand v  Jv RB
+ity jacobians Jf , Jh and Jv are obtained from
+dpIk dt  Jk q, where pIk comes from HkB ,
+
+
+ I
+
+dB
+RB pIk
+I I33
+k
+HB
+
+. The tilt-rotor
+013 1
+013 1
+UAV physical parameters are shown in Table 1.
+
+ISSN 2525-8311
+
+2.4
+
+Mapping of the bodys velocities
+
+To reduce the computational complexity of the Euler-Lagrange model, a mapping of the generalized velocities to the
+bodys velocities is performed as q  1 q,
+where q , u v w p q r r l 0 ,
+I 0
+1
+
+blkdiag (RB
+) , W , I22 ,
+and
+
+
+1
+W  0
+0
+
+ sin()
+cos() sin() .
+cos() cos()
+
+0
+cos()
+ sin()
+
+
+The time derivative is obtained from qq+q.
+Replacing the latter in (1), the model is rewrit
+ten as q+qM
+(q)1 g(q)C(q, q)q ,
+yielding to
+
+
+q
+q
+
+"
+
+
+
+
+
+
+q
+1
+
+h
+
+i
+q + M (q)1 
+
+,
+
+(5)
+
+where  ,   g(q)  C(q, q)q.
+3
+
+Control Strategy
+
+Since the aerodynamic forces are proportional
+to the square of the aerodynamic velocity, during hover flight, the horizontal and vertical stabilizer do not produce significant forces, and both
+the longitudinal and directional control need to
+be performed with the thrusters groups. This
+changes during forward flight, where both longitudinal and directional control is conducted using
+both the horizontal and vertical stabilizer rather
+than using the rotors. This posses a challenge regarding the nonlinearity of control selection that
+is hard to deal using a simple linear controller.
+In this work we propose an adaptive_controller
+based on gain-scheduling to solve the path tracking problem.
+Robust mixed H2 H controllers are developed to stabilize the altitude and attitude for different operation points, providing also disturbance
+rejection with an improved transient response. In
+addition, based on the current state of the system, a neural network is used to schedule the synthesized controllers, by interpolating their gains,
+considering the neural network learn and generalized factor (Haykin, 2001), providing an online
+smooth transition between controllers. Furthermore, a kinematic controller is designed to the
+translational control. The control structure is illustrated in Figure 2.
+Reference
+Trajectory
+
+Neural
+Network
+K
+
+Kinematic
+Controller
+
+Controller
+
+System
+
+Figure 2 Control strategy scheme.
+The system (5) is partitioned, from which the
+following model is considered for control design
+
+2475
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+purposes
+ 
+q
+x    h(q, q, u, w),
+q
+
+(6)
+
+where x  q q0 with q  z    R L 0 .
+Using a first order Taylor series approximation,
+A  hx, Bu  hu, Bw  hw for
+x  xop , u  uop and w  031 are obtained,
+and the linear system around an operation point
+is given by
+x  Ax + Bu u + Bw w,
+
+(7)
+
+where  , (.)  (.)op , and op denotes the operation point.
+The state-space error vector is augmented with integral action for some states
+to provide constant disturbance rejection
+and improve the closed-loop system performance.
+The closed-loop states
+
+0 vector is
+x  q q  z  u  v   .
+
+by a circle of radius ra and center c. Solving the optimization problem, the linear system
+will be asymptotically stable with feedback gain
+K  Y Q1 and
+ with H norm bounded by
+Hwz (s) <   , where   is the optimal value
+obtained from the optimization problem.
+Consider again the system (8) with Dwz  0.
+The H2 norm can be seen
+R as the system impulse response, h(t)2  0 h2 (t)dt for h(t) 
+L1 Hwz (s). Minimizing this norm will provide
+an improved transient response of the system. The
+mixed H2 H controller idea is to find an optimal H index   and use  >   to solve the H2
+problem, maintaining H constraints providing
+the advantage of a small H norm and a better
+transient response.
+To solve the mixed H2 H control problem,
+the following optimization problem must be considered for   .
+min tr(N ), s.t.
+
+
+3.1
+
+N
+Q(Cz + Duz K)0
+
+Robust Control Design
+
+The inner-loop controllers, for the chosen
+operation points, are designed using the mixed
+H2 H control law technique based on the following system (Donadel et al., 2014)
+
+z(t)  Cz x(t) + Duz u(t) + Dwz w(t),
+
+(8)
+
+u(t)  Kx(t),
+
+where Cz , Duz and Dwz are constant matrices
+that must be adjusted.
+The optimal H controller asymptotically
+stabilizes the linear system and minimizes the
+H norm, Hwz (s)  sup(Hwz (jw)), where
+Hwz (s) is the transfer function between the external disturbance w(t) and the cost variables
+z(t). Applying the Parseval theorem results in
+z(t)2  Hwz (s) w(t)2 , in which clearly
+minimizing the H norm minimizes the disturbance effect on the system. In this work, differences between the linear model used for designing
+the controller and the real one is treated as perturbations. To solve the H problem, the following
+optimization problem subject to LMIs is considered
+min , s.t.
+Q>0
+
+
+
+
+
+Bw
+Inw nw
+
+
+
+0
+QCz0 + Y 0 Duz
+0
+<0
+Dwz
+Inz nz
+
+L  Q + M   + M 0  0 < 0,
+
+(9)
+(10)
+(11)
+
+where   (AQ+Bu Y ),   AQ + QA0 +
+Bu Y + Y 0 Bu0 , the * terms are used due to the
+matrix symmetry, and  is the Kronecker
+prod
+
+ra c
+uct. The constraint (11), with L 
+c
+ra
+
+
+0 1
+and M 
+, limits the pole allocation space
+0 0
+
+ISSN 2525-8311
+
+0
+QA0 + AQ + Y 0 Bu0 + Bu Y + Bw Bw
+<0
+
+Constraints (9), (10) and (11)
+
+3.2
+
+
+x(t)
+ Ax(t) + Bu u(t) + Bw w(t),
+
+
+(Cz + Duz K)Q
+>0
+Q
+
+Gain-scheduling using neural network
+
+A neural network called multilayer perceptron
+(MLP) with one hidden layer and one output layer
+is used to interpolate the controllers. To train the
+neural network some considerations are used i)
+if the hidden layer has many neurons, the interpolation can perform curves between gains, which
+is not desired ii) if the number of neurons in the
+hidden layer is not enough, the interpolation is
+not sufficiently adjusted to solve the problem and
+iii) the more operating points are considered more
+controllers are tuned, which leads to an improvement of the neural network adjustment.
+3.3
+
+Kinematic Controller
+
+The kinematic controller is designed to perform path tracking of the x-y motion by using
+a proportional controller with feed-forward term,
+which is given by
+  
+urk
+ku
+ vrk  0
+wrk
+0
+
+
+
+  
+0
+xr x
+ur
+I 0
+0 (RB
+) yr y + vr  ,
+kw
+0
+wr
+
+0
+kv
+0
+
+(12)
+
+where ur , vr , wr , xr , yr and zr are the trajectory
+reference variables.
+4
+
+Results
+
+In this section some results are presented
+to illustrate the controller efficiency. The system was linearized around three operation points
+xop1  0 091 0.0522 0 0.0520 0.0520, uop1 
+9.01 9.01 2.62.105 2.62.105 0 0 xop2 
+
+2476
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+0
+
+0.02
+0.1
+0
+-0.1
+0.5
+0
+-0.5
+-1
+0.5
+
+w
+wr
+
+q
+qr
+
+0
+-0.5
+0
+
+20
+
+40
+60
+Time
+
+80
+
+-0.06
+0.12
+
+0.02
+0.02
+0
+-0.02
+-0.04
+0.2
+0
+
+p
+pr
+
+-0.2
+0.1
+0
+-0.1
+0
+
+r
+rr
+20
+
+40
+60
+Time
+
+Figure 3 Tilt-rotor states.
+
+ISSN 2525-8311
+
+yyr m
+
+xxr m
+
+0
+
+r rad
+
+zzr m
+
+0.01
+0
+-0.01
+-0.02
+0
+
+20
+
+40 60
+Time
+
+0
+
+-0.05
+0
+
+80
+
+20
+
+40 60
+Time
+
+80
+
+z-m
+
+12
+10
+
+Trajectory
+Reference
+
+8
+250
+200
+
+200
+
+150
+
+150
+
+100
+
+100
+50
+
+50
+y-m
+
+0
+
+0
+
+x-m
+
+Newtons
+
+9.5
+
+fpR
+fpL
+
+9
+
+Newton.Metro
+
+Figure 4 Tilt-rotor tracking error and trajectory.
+0.01
+
+p R
+p L
+
+0.005
+0
+
+-0.005
+
+8.5
+
+-0.01
+0.5
+e rad
+
+0.5
+
+0
+
+-0.5
+0
+
+20
+
+40
+60
+Time
+
+80
+
+0
+
+-0.5
+0
+
+20
+
+40
+60
+Time
+
+80
+
+Figure 5 Tilt-rotor control signals.
+ua ms
+
+va ms
+wind - ms
+
+2
+1
+0
+-1
+-2
+2
+1.5
+1
+0.5
+0
+0
+
+wa ms
+
+2
+1
+0
+-1
+-2
+0.2
+0.1
+0
+-0.1
+-0.2
+0
+
+20
+
+40 60
+Time
+
+80
+
+Inertial axis x
+20
+
+40 60
+Time
+
+80
+
+Figure 6 Environment wind disturbance.
+
+5
+
+0.06
+
+vvr ms
+
+0.06
+
+0.5
+
+0.5
+0
+-0.5
+-1
+-1.5
+0.05
+
+
+r
+
+0
+-0.02
+
+rads
+
+l rad
+
+-0.1
+0.1
+
+0.04
+rad
+
+
+r
+
+rads
+
+rads
+
+ms
+
+uur ms
+
+r rad
+
+rad
+
+0.1
+
+1
+
+-0.5
+
+r rad
+
+6 0 0.3123 071 0.0522 0 0.0546 0.0546,
+uop2  9.01 9.01  1.44.104  1.44.104 
+0.158 0 and xop3  12 0  0.6246 071 
+0.0522 0 0.0624 0.0624, uop3  9.02 9.02 
+6.59.104  6.59.104  0.158 0. The H optimization problem was solved using the yalmip
+MATLAB c toolbox, with the solver Lmilab, for
+ra  100, c  0, and Cz , Duz , Dwz adjusted
+as shown in (13), (14) and (15) for the three linear systems. An optimal   was obtained and a
+    + 10 was used to solve the mixed H2 H
+problem. The obtained controller feedback gains
+K1 , K2 , K3  R618 are transformed in vectors k1 , k2 and k3  R1081 and used to train
+the neural network. The neural network inputs
+are the forward velocity operation-points values
+uop1  0 ms, uop2  6 ms and uop3  12 ms.
+A neural network MLP was configured with 4 neurons in the hidden layer with hyperbolic tangent
+activation function, and 108 neurons in the output
+layer with linear activation function. The neural
+network was trained using the Bayesian regularization backpropagation with 100 epochs, which
+produces an interpolation MSE (Mean Square Error) 3.57.108 . The kinematic controller (12) was
+adjusted with ku  0.1, kv  0.04, and kw  0.1.
+By using the adaptive_controller proposed and
+starting with initial conditions over the trajectory, the tilt-rotor UAV was designated to perform a forward acceleration along the path xr (t) 
+0.25t2 , yr  0, zr  10 and r  0 during the
+first twenty seconds, then do a circular trajectory given by xr  rt cos((2(t + 40)80)) + 100,
+yr  rt sin((2(t + 40)80)) + 127.5, zr  10 and
+r  (2(t  20)80), with radius rt  127.5m.
+A perturbation with respect to inertial axis x was
+added at time 10s, as shown in Figure 6.
+The results in Figures 3 and 4 show that the
+tilt-rotor UAV tracks the trajectory x, y, z, 
+maintaining the other states with a small error,
+even under a time-varying disturbance. The control signals, shown in Figure 5, were maintained
+bounded.
+
+80
+
+Conclusions and future works
+
+This works presented the modeling and control of a tilt-rotor UAV with tail control surfaces.
+Linear state feedback mixed H2 H controllers
+were designed for different operation points, and
+a gain-scheduling scheme, using neural network,
+was applied in order to solve the nonlinear control problem. Under numerical simulation it was
+shown the controller efficiency, when the UAV was
+designated to perform a forward acceleration followed by a circular trajectory, with a time wind
+varying perturbation.
+Future works include test the controller under real flight experiments to validate the mod-
+
+2477
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+eling and control efficiency. Furthermore, to improve the energy consumption and, consequently,
+increase the autonomy, the next step is to design
+the tilt-rotor UAV with wings and design a controller using a similar approach to solve the problem.
+1
+1 2 2 2 1 1
+1
+,
+,
+, , , , , ,
+(13)
+0.1 0.1 0.1     
+1 8 8 4 8 8 1
+1
+1
+1
+, , , , , ,
+,
+,
+,
+)
+0.1      0.1 0.1 0.1 0.1
+
+
+0.6 0.6
+6
+6
+0
+0
+0.6 0.6
+6
+6
+0
+0 
+
+
+0.6 0.6
+6
+6
+0
+0 
+
+
+0.3 0.3
+3
+3
+0
+0 
+
+
+0.3 0.3
+3
+3
+3.6
+0 
+
+
+0.3 0.3
+3
+3
+0
+4.8 
+
+
+0
+0
+6
+0
+0
+0 
+
+
+0
+0
+0
+6
+0
+0 
+
+
+0.6 0.6
+6
+6
+0
+0 
+ (14)
+
+0.6 0.6
+6
+6
+0
+0 
+
+
+0.6 0.6
+6
+6
+3.6
+0 
+
+
+0.6 0.6
+6
+6
+0
+10.8 
+
+
+0
+0
+6
+0
+0
+0 
+
+
+0
+0
+0
+6
+0
+0 
+
+
+0.6 0.6
+6
+6
+0
+0 
+
+
+0.6 0.6
+6
+6
+0
+0 
+
+
+0.6 0.6 0.3 0.3
+0
+0 
+
+Cz diag(
+
+Duz
+
+0.6
+
+0.6
+
+
+Dwz  0.2I33
+
+6
+0.5133
+
+6
+
+0
+0.1132
+
+4.8
+0
+0310
+
+Table 1 System Parameters.
+Parameter
+gr0
+
+k
+b
+
+sf , s h , s v
+dB
+c1
+dB
+caux
+
+Ic2 , Ic3
+cfdxz (a )
+cflxz (a )
+cfdxy (a )
+
+Value
+
+0 0 9, 8
+5 degree
+1.7e-7
+9.5e-6
+1.21
+0.0146, 0.01437, 0.013535
+
+0
+0 0 0
+
+0
+0.00498 0.27 0.0595
+
+0
+0 0 0.045
+
+0
+0.00498 0.27 0.0595
+
+0
+0 0 0.045
+
+0
+0.0050 0 0.0326
+
+0
+0.3858 0 0.1194
+
+0
+0.3277 0 0.0288
+1.53116
+0.150
+
+
+6.635
+0
+1.004
+ 0
+7.345
+0  103
+1.004
+0
+8.186
+diag(7.7509, 6.9700, 7.6109).105
+0.45662a  0.0403a + 0.0601
+0.5405a  0.0353
+0.3513a2 + 0.0604
+
+cflxy (a )
+cvlxy (a )
+cvdxy (a )
+cr (r )
+ch
+lxz (a )
+ch
+dxz (a )
+ce (e )
+
+0.3821a  0.0003
+45.392a3 + 0.0011a2 + 6.1126a
+2.2019a2 + 0.0149
+2.1873375r
+35.2163a + 6.5306a
+1.93822a + 0.0088
+2.1873375e
+
+2
+
+caux
+
+dc22
+dB
+caux
+3
+
+caux
+
+dc33
+dB
+f
+dB
+h
+dB
+v
+mc1
+mc2 , mc3
+Ic1
+
+ISSN 2525-8311
+
+(15)
+
+Acknowledgments
+This work was supported by the Brazilian agencies CNPq, CAPES, and FAPEMIG.
+References
+Almeida, M. M. (2014). Control strategies of a tiltrotor uav for load transportation, Masters thesis,
+Universidade Federal de Minas Gerais.
+Almeida, M. M. and Raffo, G. V. (2015). Nonlinear
+control of a tiltrotor uav for load transportation,
+Prof. of the ACNAAV15 IFAC, pp. 232237.
+Beard, R. W. and Mclain, T. W. (2012). Small unmanned aircraft Theory and Practice, Princeton
+University Press.
+Castillo, P., Lozano, R. and Dzul, A. (2005). Stabilization of a mini rotorcraft with four rotors, IEEE
+Control Systems Magazine pp. 4555.
+Donadel, R., Raffo, G. V. and Becker, L. B. (2014).
+Modeling and control of a tiltrotor uav for path
+tracking, Prof. of the 19th IFAC World Congress,
+pp. 38393844.
+Haykin, S. (2001). Redes neurais Princpio e pratica,
+Bookman.
+Kane, T. R. and Levinson, D. A. (1985). Dynamics
+Theory and Applications, Mcgraw-Hill College.
+Kendoul, F., Fantoni, I. and Lozano, R. (2005). Modeling and control of a small autonomous aircraft
+having two tilting rotors, Prof. of the 44th IEEE
+Conference on CDC-ECC05, pp. 81448149.
+Nasa
+
+(1975).
+Tilt rotor research aircraft
+familiarization
+document,
+httpntrs.nasa.govarchivenasa
+casi.ntrs.nasa.gov19750016648.pdf.
+
+Norton, B. (2004). Bell Boeing V-22 Osprey Tiltrotor
+Tactical Transport, Aerofax.
+Papachristos, C., Alexis, K., Nikolakopoulos, G. and
+Tzes, A. (2011). Model predictive attitude_control of an unmanned tilt-rotor aircraft, Prof. of
+the IEEE ISIE 2011, pp. 922927.
+Papachristos, C., Alexis, K. and Tzes, A. (2011). Design and experimental attitude_control of an unmanned tilt-rotor aerial vehicle, Prof. of the 15th
+ICAR 2011, pp. 465470.
+Raffo, G. V. (2011). Robust control strategies for
+a quadrotor helicopter An underactuated mechanical system, Masters thesis, Universidad de
+Sevilla.
+Ryan, A. and Hedrick, J. K. (2005). A mode-switching
+path planner for uav-assisted search and rescue,
+Prof. of the 44th IEEE Conference on CDCECC05, pp. 14711476.
+Spong, M. W., Hutchinson, S. and Vidyasagar, M.
+(2006). Robot Modeling and Control, Jhon Wiley
+ Sons, inc.
+Stevens, B. L. and Lewis, F. L. (1992). Aircraft control
+and simulation, Wiley-Interscience Publication.
+
+2478

@@ -1,0 +1,775 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+IMPLEMENTACAO DO FILTRO DE PARTICULAS PARA A LOCALIZACAO EM
+ROBOTICA MOVEL
+Aurelio T. Salton, Rafael S. Castro, Guilherme A. Pimentel, Jeferson V. Flores
+
+
+
+
+PUCRS - Grupo de Automacao e Controle de Sistemas
+Av. Ipiranga, 6681, 90619-900
+Porto Alegre (RS), Brasil
+
+Departamento de Engenharia Eletrica, Universidade Federal do Rio Grande do Sul, Brazil
+
+Emails aurelio.salton@pucrs.br, rafael.castro@pucrs.br, guilherme.pimentel@pucrs.br,
+jeferson.flores@ufrgs.br
+Abstract This paper presents the use of Particle Filters for the problem of localization of planar vehicles.
+The crucial algorithms necessary for the implementation of the particle filter, model and sensor simulation, and
+resampling are presented in a pseudo-code form, so as to help the reader. The paper also serves the pourpose of
+showing a comprehensive implementation of particle filters to the estimation of nonlinear_systems. Experimental
+results are presented supporting the efficacy of the presented algorithms.
+Keywords
+
+Particle Filters, Localization, Robotics
+
+Resumo Este artigo apresenta um tutorial sobre o uso de Filtros de Partcula (FP) aplicados ao problema
+de localizacao de veculos planares. Os algoritmos mais importantes necessarios para a implementacao do FP,
+simulacao do modelo e sensores, e uma forma eficiente de resampling sao apresentados na forma de pseudo-codigos,
+para facilitar a compreensao do leitor. O artigo tambem tem por proposito apresentar de forma compreensiva
+a implementacao de FP na estimacao de sistemas_nao-lineares. Resultados experimentais sao apresentados para
+demonstrar a eficacia dos algoritmos apresentados.
+Palavras-chave
+
+
+
+Introducao
+
+Certamente a tecnica de estimacao_de_estados de
+sistemas_dinamicos mais conhecida e o chamado
+Filtro de Kalman (FK) (Kalman, 1960). Como
+todo o filtro Bayesiano, o FK separa o problema
+de estimacao_de_estados em duas partes, a predicao  onde o modelo_matematico do sistema e
+utilizado  e a correcao  onde informacoes sobre
+os sensores sao exploradas. Esta tecnica de estimacao ainda pertence ao chamado conjunto de filtros Bayesianos parametricos, por parametrizar as
+incertezas do sistema e dos sensores na forma de
+distribuicoes Gaussianas, descritas por suas medias e covariancias. Ainda hoje este filtro representa o estado-da-arte na estimacao_de_estados de
+sistemas_lineares Gaussianos. Porem, para casos
+nao-lineares e nao-Gaussianos, adaptacoes do FK,
+ou abordagens inteiramente diferentes, devem ser
+utilizadas.
+Dentre as alternativas mais populares para
+estimacao_de_estados de sistemas_nao-lineares
+destaca-se o Filtro de Partculas (FP). Por ser de
+natureza nao parametrica, este filtro fornece uma
+solucao adequada para o processo de estimacao de
+estados de sistemas_nao-lineares e nao-Gaussianos
+(Sanjeev Arulampalam et al., 2002). Particularmente, este metodo de estimacao ganhou notoriedade no meio da localizacao de robotica_movel
+com o sucesso do projeto de Stanford no DARPA
+Urban Challenge. Esta e outras aplicacoes mos-
+
+ISSN 2525-8311
+
+traram que, apesar de serem computacionalmente
+exigentes, hoje, filtros de partcula sao uma ferramenta de cunho pratico na estimacao_de_estados
+de sistemas_nao-lineares. Alem disto, espera-se
+demonstrar que este metodo de estimacao e de
+simples implementacao e robusto a incertezas de
+modelo e rudo de sensores.
+
+O presente artigo descreve de forma completa
+a implementacao de FP na localizacao de veculos
+moveis, e serve como um estudo de caso de cunho
+aplicado para academicos interessados no uso de
+filtros de partcula para a estimacao de sistemas
+nao-lineares. Pseudo-codigos dos principais algoritmos envolvidos no processo de localizacao serao
+apresentados a fim de auxiliar o leitor. O artigo
+esta dividido da seguinte forma alem de apresentar o problema em questao, a Secao II fornecera
+uma breve exposicao dos filtros de partcula e uma
+lista de possveis sistemas que podem ser contemplados com os algoritmos apresentados no restante
+do artigo a Secao III ira descrever em detalhes
+o passo da predicao do filtro atraves do chamado
+modelo Rotacao-Translacao-Rotacao (RTR) a Secao IV apresenta o passo de correcao, focando no
+algoritmo de simulacao de sensores e no passo de
+Resampling do filtro a Secao V apresenta resultados simulados e experimentais e a Secao VI finaliza
+o artigo.
+
+1656
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+2
+
+Preliminares
+
+Esta secao sera utilizada para fornecer uma breve
+explicacao sobre filtros de partculas, definir o problema e exemplificar alguns dos modelos de veculos_autonomos que podem ser contemplados pelo
+algoritmo de localizacao tratado no restante do
+artigo.
+2.1
+
+Definicao do problema
+
+Veculos planares podem ser descritos pelas suas
+coordenadas cartesianas (x, y) e pela direcao  a
+qual estao apontando, normalmente representada
+pelo angulo entre a direcao do veculo e o eixo x.
+Estas tres grandezas determinam a chamada pose
+de um veculo planar. No instante de tempo k,
+esta pose e descrita por,
+ 
+x
+
+pk  y  .
+
+Portanto a tarefa de localizar um veculo em um
+plano e a tarefa de encontrar uma estimativa dos
+valores x, y e , que descrevem sua pose.
+Para realizar esta tarefa supoe-se que duas formas de sensores sao disponveis um sensor que
+descreva o deslocamento do sistema entre dois instantes de tempo, e um sensor que forneca alguma
+informacao sobre o ambiente em que o veculo se
+encontra. Como sera exposto a seguir, filtros de
+partcula apresentam uma maneira sistematica de
+fundir estes dois tipos de sensores a fim de alcancar uma boa estimativa da pose real do sistema.
+
+de que a partcula receba as medicoes que os
+sonares receberam, dado que ela se encontra
+em sua pose.
+4. No ultimo passo o filtro elimina as partculas
+com baixa probabilidade, substituindo-as por
+variacoes das partculas de maior probabilidade, dando origem a novos valores pi .
+Note que o passo 2 representa a predicao, e os
+passos 3 e 4 representam a correcao do filtro. Portanto, os sensores utilizados podem ser de qualquer tipo desde que permitam a iteracao entre estes passos. A estimativa da pose do sistema pk e
+dada pela media ponderada das poses das partculas, i.e., em um dado instante de tempo k,
+
+pk 
+
+Filtro de Partculas
+
+O filtro de partcula e uma forma de filtro de Bayes
+por executar a estimacao em dois passos predicao e correcao. Este artigo supoe que a predicao e
+feita atraves de encoders colocados nas rodas traseiras do veculo, e a correcao e feita atraves de
+sonares alocados na parte da frente e nas laterias
+do mesmo. Neste cenario, a estrategia do filtro
+de partculas pode ser descrita nos quatro passos
+apresentados a seguir.
+
+wi pi ,
+
+i1
+
+2.3
+
+Np
+X
+
+wi  1.
+
+(1)
+
+i1
+
+Modelo do Sistema
+
+Aqui sera considerado o veculo diferencial, onde
+as rodas direita e esquerda sao controladas de
+forma independente. Este modelo determina a dinamica do sistema a partir da velocidade de cada
+roda (vd e ve )
+x
+y
+
+
+2.2
+
+Np
+X
+
+(vd + ve )
+cos(),
+2
+(vd + ve )
+ R
+sen(),
+2
+(vd  ve )
+,
+ R
+l
+
+ R
+
+(2)
+
+onde R representa o raio das rodas e l a distancia
+entre cada roda. Alem de serem de facil construcao, veculos diferencias podem rotacionar em
+cima do proprio eixo, facilitando sua locomocao.
+Por estas razoes, este foi o modelo construdo em
+laboratorio e sera considerado neste artigo.
+
+1. O filtro e inicializado com Np partculas
+que representam possveis condicoes iniciais
+do sistema. Cada uma destas partculas possui uma pose propria pi com valores estimados para xi , yi e i , para i  1, . . . Np .
+2. Para cada partcula, o filtro utiliza os dados
+dos encoders e a pose passada para fazer uma
+predicao da nova pose.
+3. A toda partcula e associado um valor que representa a probabilidade de que ela se encontre na posicao certa. Para isto o filtro usa os
+sonares e o mapa ele calcula a probabilidade
+
+ISSN 2525-8311
+
+Figura 1 Trajetoria do veculo (linha cinza) comparada com as medicoes erroneas da odometria
+(linha tracejada).
+1657
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Predicao
+
+r2
+
+3
+Odometria
+
+A odometria consiste em uma estimativa do deslocamento do veculo a partir da informacao proveniente de seus encoders. Considera-se que a leitura
+dos pulsos seja feita com um perodo de amostragem de T segundos. Dentro destes intervalos de
+tempo pode-se facilmente calcular a distancia percorrida por cada roda. Para encoders de N pulsos
+por rotacao, as distancias percorridas pelas rodas
+direita e esquerda do veculo sao calculadas por,
+dd  2R Nd ,
+
+de  2R Ne ,
+
+(3)
+
+sendo d o numero de pulsos recebidos pelo encoder da roda direita e e da roda esquerda.
+A distancia total percorrida pelo veculo no
+intervalo de T segundos pode ser aproximada por,
+dd + de
+.
+dT 
+2
+
+(4)
+
+O que leva a uma estimativa da pose do sistema
+dada por,
+
+x
+y
+
+dd + de
+,
+L 
+
+ + 
+ x + dT cos
+,
+ 2 
+ + 
+.
+ y + dT sen
+2
+
+(5)
+
+Sendo que x y  compoe a pose do sistema no
+instante anterior. Uma vez que esta e uma aproximacao discreta, e natural que a pose real do sistema seja tal que, pk 6 x y T , e que o erro de
+estimacao esteja associado ao perodo de amostragem T . Alem disto, encoders estao sujeitos a
+perdas de pulsos por deslizamento das rodas e problemas computacionais, levando a graves erros de
+estimacao. Um exemplo das consequencias do uso
+exclusivo de encoders na localizacao esta demonstrado na Fig. 1. Para gerar esta figura, pulsos do
+encoder da roda direita foram perdidos ao longo
+da trajetoria. Note que esta localizacao e em malha_aberta, uma vez que ela nao corrige qualquer
+tipo de erro que aconteca durante a trajetoria do
+veculo.
+Modelo RTR
+
+Como visto na Secao 2.2, o filtro de partculas
+requer que pequenas variacoes sejam adicionadas
+na dinamica de cada partcula, e justamente esta
+a funcao do modelo RTR. Este modelo calcula a
+nova pose de uma partcula traves de uma Rotacao inicial r1 , seguida de uma Translacao tr e
+uma Rotacao final r2 , por esta razao, aqui ele e
+referido como modelo RTR.
+Seu algoritmo e descrito na Tabela 1, ele recebe como entrada a pose anterior pi  x y T
+
+ISSN 2525-8311
+
+Figura 2 Ilustracao do modelo RTR Rotacao inicial r1 , Translacao tr e Rotacao final r2 .
+pi  modelo RTR(pi , x y )
+
+3
+
+r1  atan2(y  y, x  x)  
+p
+tr  (x  x)2 + (y  y)2
+r2      r1
+
+4
+
+2
+2
+r1  rand N (r1 , 1 r1
++ 2 tr
+)
+
+1
+2
+
+
+
+6
+
+
+2
+2
+2
+tr  rand N (tr , 3 tr
++ 4 r1
++ 4 r2
+)
+
+2
+2
+r2  rand N (r2 , 1 r2
++ 2 tr
+)
+
+7
+
+x  x + tr cos( + r1 )
+
+8
+
+y  y + tr sen( + r1 )
+
+9
+
+  r1 + r2
+
+5
+
+10
+
+ +
+
+T
+
+3.2
+
+r1
+
+t
+
+3.1
+
+return pi  x y T
+Tabela 1 Algoritmo do modelo RTR.
+
+e a estimativa da pose atual apos a predicao dos
+encoders pi  x y T (esta estimativa deve
+ser feita para cada partcula), e retorna uma nova
+pose perturbada. As tres primeiras linhas do algoritmo sao responsaveis pela estimativa da rotacao inicial, translacao e rotacao final que o veculo
+teria realizado (Fig. 2). As linhas 4 a 6 geram variacoes destes movimentos de acordo com os parametros 1 . . . 4 . Neste passo, uma rotina de criacao de numeros pseudo-aleatorios e utilizada para
+amostrar a curva normal de media  e variancia
+ 2 , representa por N (,  2 ). As ultimas linhas
+do algoritmo calculam a nova pose da partcula a
+partir destes parametros perturbados.
+Uma simulacao do modelo RTR com 50 partculas repetindo a trajetoria da Fig. 1 pode ser
+visualizada na Fig. 3. A simulacao supoe que a
+condicao inicial do veculo era conhecida, mas permitiu que as partculas se dispersassem ao longo
+da trajetoria. Esta dispersao e controlada pelos
+parametros 1 . . . 4 (linhas 4 a 6).
+4
+
+Correcao
+
+O passo de correcao pode ser divido em duas partes. Primeiro, a cada partcula e associada a probabilidade de que ela se encontre no lugar correto.
+Segundo, as partculas de baixa probabilidade sao
+eliminadas e substitudas por variacoes das partculas de alta probabilidade. A realizacao do pri-
+
+1658
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+meiro passo exige que as medicoes reais dos sonares sejam comparadas com as medicoes que cada
+partcula deveria obter. Ou seja, este passo requer
+a simulacao das medicoes vindas dos sonares.
+4.1
+
+1
+2
+3
+
+Simulando os sonares
+
+4
+
+O metodo discutido aqui, denominado de Ray
+Casting, e comumente utilizado na computacao
+grafica para a solucao de interseccoes entre retas e
+solidos (Roth, 1982). Ele consiste em projetar um
+raio na direcao em que o sensor esta apontando, a
+partir do veculo ate um obstaculo. Obviamente,
+para que este algoritmo possa ser realizado, e necessario que um mapa do ambiente seja disponvel.
+O mapa consiste em uma matriz binaria onde cada
+obstaculo e representado pelo bit 1, e cada espaco
+livre pelo bit 0. Por exemplo, o mapa das figuras
+1 e 3 pode ser dado pela matriz,
+
+
+
+m
+
+1
+11
+
+1
+1
+1
+
+1
+0
+1
+
+1
+0
+0
+0
+0
+0
+1
+0
+1
+
+1
+0
+0
+1
+0
+0
+0
+0
+1
+
+1
+0
+0
+1
+0
+0
+0
+0
+1
+
+1
+0
+0
+1
+1
+1
+1
+1
+1
+
+1
+0
+0
+1
+0
+0
+0
+0
+1
+
+1
+0
+0
+1
+0
+0
+0
+0
+1
+
+1
+0
+0
+0
+0
+0
+1
+0
+1
+
+1
+1
+
+1
+1
+1 .
+
+1
+1
+0
+1
+
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+
+ raycasting(p, z)
+
+if
+
+m(p(1), p(2))  1
+w0
+
+1 Vale lembrar que sonares fazem medicoes conicas, portanto, para um modelo preciso de sonares, inumeros raios
+com angulos ligeiramente diferentes deveriam ser lancados,
+o que gera um custo_computacional elevado.
+
+p 6 m
+
+w1
+for i  1  Nz
+dx  cos( + z (i))
+dy  sin( + z (i))
+x  p(1)
+y  p(2)
+d  dmax
+while d  dmax
+x  x + dx
+y  y + dy
+p
+d  (x  p(1))2 + (y  p(2))2
+if m(x, y)  1
+break
+
+17
+
+end (while)
+
+18
+
+w  w  N (z(i)  d, z2 )
+
+19
+20
+
+end (for)
+return
+
+w
+
+Tabela 2 Algoritmo Ray Casting.
+
+e um vetor z contendo as medicoes de cada sonar.
+Tambem sao utilizadas variaveis representando o
+mapa m em que o veculo esta inserido, o vetor
+z com os angulos em que cada sonar esta apontando, a covariancia z das medicoes e o numero
+de sonares Nz . Na primeira linha do codigo a posicao da partcula e comparada com o mapa, se
+ela se encontra fora do mesmo ou sobre um obstaculo, recebe probabilidade zero (w  0). Se este
+nao e o caso, o algoritmo simula os sonares entre as linhas 5 e 16. Suas condicoes de parada
+para cada sonar se encontram na linha 15, se o sonar chegou a algum obstaculo, ou na linha 11, se
+foi alcancada distancia maxima que o sensor pode
+medir. Na linha 18 uma comparacao entre a distancia calculada d e o valor real medido pelo sonar
+z(i) e realizada atraves da gaussiana de media d
+e covariancia z . Assim, o algoritmo da Tabela
+2 retorna uma medida de confianca (importancia)
+w associada a cada partcula.
+4.2
+
+Figura 3 Dispersao das partculas devido ao
+modelo RTR. Neste caso (1 , 2 , 3 , 4 ) 
+(2, 50, 50, 2).
+
+
+
+else
+
+16
+
+(6)
+
+No processo de simulacao dos sonares, para
+toda a partcula e calculado o numero de pixels
+que separam o veculo do obstaculo mais proximo
+na direcao em que o sonar esta apontando. Normalmente o mapa utilizado deve ser muito maior
+do que (6), mas depende de cada aplicacao. Cada
+pixel pode representar poucos centmetros quadrados, por exemplo.
+O algoritmo raycasting da Tabela 2 e um modelo de sensores de distancia do tipo lasers, mas
+pode ser utilizado para simular sonares1 . O algoritmo recebe como entrada a pose da partcula pi
+
+ISSN 2525-8311
+
+w
+
+Selecionado as melhores partculas
+
+O metodo de selecao das melhores partculas e
+formalmente conhecido por Importance Sampling
+uma vez que amostra cada partcula de acordo
+com sua importancia (Hastings, 1970). Este algoritmo faz com que partculas com alta importancia w nao apenas sobrevivam mas tambem
+
+1659
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+(a)
+
+(b)
+
+(c)
+
+(d)
+
+Figura 4 Evolucao do filtro a partir de uma condicao inicial desconhecida. Neste caso foram utilizadas
+100 partculas e um perodo de amostragem T  0.5 s.
+
+se reproduzam mais vezes que as de baixa importancia. Em termos praticos, devemos criar
+um vetor X com as partculas que serao utilizadas no proximo passo do filtro. Uma forma
+simples de criar este vetor e conhecido por Sampling Wheel (Thrun et al., 2005) e esta descrito
+na Tabela 3. A primeira linha deste algortimo
+inicializa uma variavel de controle , que servira
+como um limiar variante partculas com probabilidade wj > , j  1 . . . Np , serao selecionadas
+para compor o proximo conjunto de partculas,
+ou seja, serao inseridas em X . Para percorrer o
+vetor W  w1 . . . wNp  a variavel j e criada de
+forma aleatoria na segunda linha do algoritmo. A
+terceira linha inicia um laco de repeticao que ira
+selecionar Np partculas e inseri-las no vetor X .
+Para fazer isto, o limiar  tambem e inicializado
+com um valor aleatorio e comparado aos valores
+wj das partculas. Quando um wj for grande o suficiente, i.e., wj > , este e selecionado para compor o vetor X . Do contrario, o limiar e reduzido
+e a comparacao e feita com a proxima partcula
+do vetor W . Note que desta forma partculas com
+
+ISSN 2525-8311
+
+X
+1
+2
+3
+4
+5
+7
+6
+
+ selec
+ao(W
+
+ w1 w2 . . . wNp )
+
+0
+j  int (rand (1 Np ))
+for i  1  Np
+   + rand(0 max(W ))
+while  > wj
+    wj 
+j j+1
+
+8
+
+end (while)
+
+9
+
+Xi  wj
+
+10
+
+end (for)
+
+11
+
+return
+
+X
+
+Tabela 3 Algoritmo de selecao e reproducao das
+melhores partculas.
+baixo valor de w podem ser selecionadas, mas ha
+uma probabilidade proporcionalmente pequena de
+que isto aconteca. Esta e uma maneira eficaz de
+criacao de novas amostras das partculas com base
+
+1660
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+na probabilidade que cada partcula esteja na posicao correta.
+5
+5.1
+
+Implementacao
+
+Resultados Simulados
+
+O filtro descrito ate agora foi simulado no ambiente apresentado nas figuras 1 e 3. Nestas simulacoes o mapa consistiu em uma matriz 300240
+posicoes, representando um espaco fsico de 2.52
+metros. Alem de encoders com medicoes ruidosas, estas simulacoes utilizaram cinco sensores de
+distancia direcionados a -90 , -45 , 0 , 45 e 90
+com relacao a frente do veculo, com covariancia z  0.5 m e alcance maximo dmax  1.0
+m. As simulacoes utilizaram um total de 100 partculas que foram inicializadas de forma aleatoria no mapa, supondo que a posicao inicial do
+veculo era completamente desconhecida. Quatro
+snapshots desta simulacao estao apresentados nos
+graficos da Fig. 4. O perodo de amostragem utilizado foi de 0.5 s e o passo de correcao do filtro
+(importance sampling) ocorreu a cada dez amostras. Alem disto, os coeficientes que determinam a
+variabilidade das partculas foram definidos como
+(1 , 2 , 3 , 4 )  (2, 50, 50, 2).
+Figura 5 Resultados Experimentais.
+5.2
+
+Resultados Experimentais
+
+Este mesmo filtro foi aplicado a um veculo real
+que possui caractersticas similares ao simulado
+mesmo numero e disposicao dos sonares, dois encoders nas rodas traseiras, dimensoes fsicas similares, etc. Nos resultados experimentais o veculo foi exposto ao labirinto da Fig. 5. Alem
+da trajetoria real aproximada do veculo (linha
+tracejada), estao demostradas na figura a trajetoria estimada pela integracao dos encoders (linha cinza) e a trajetoria corrigida pelo filtro de
+partculas (linha escura). Neste experimento o
+filtro utilizou 250 partculas em um mapa dado
+por uma matriz com dimensoes 120166, representando um ambiente de 1.201.66 m. No experimento a dispersao das partculas foi controlada
+por (1 , 2 , 3 , 4 )  (0.001, 200, 50, 0) (o
+ajuste destes parametros requer um bom entendimento do modelo RTR). Um Arduino Mega foi
+utilizado para a comunicacao do veculo com um
+PC externo, onde o processamento do filtro foi
+executado. Para atender o numero de partculas
+utilizadas o perodo de amostragem de T  0.5 s
+se mostrou suficiente.
+6
+
+Conclusao
+
+Este artigo propos uma exposicao sobre o uso de
+Filtros de Partculas no problema de localizacao
+de veculos moveis. Ao mesmo tempo em que os
+principais algoritmos para a solucao do problema
+foram apresentados, o mesmo serviu como uma
+
+ISSN 2525-8311
+
+motivacao e introducao ao uso de FP para a estimacao_de_estados de sistemas_nao-lineares. Resultados simulados e experimentais demonstraram
+que esta classe de algoritmos pode ser facilmente
+implementada, nao estando mais limitada ao seu
+custo_computacional.
+Referencias
+Hastings, W. K. (1970). Monte carlo sampling
+methods using markov chains and their applications, Biometrika 57(1) 97109.
+Kalman, R. E. (1960). A new approach to linear
+filtering and prediction problems, Journal of
+basic Engineering 82(1) 3545.
+Roth, S. D. (1982). Ray casting for modeling solids, Computer Graphics and Image Processing 18(2) 109144.
+Sanjeev Arulampalam, M., Maskell, S., Gordon,
+N. and Clapp, T. (2002). A tutorial on particle filters for online nonlinearnon-gaussian
+bayesian tracking, Signal Processing, IEEE
+Transactions on 50(2) 174188.
+Thrun, S., Burgard, W. and Fox, D. (2005). Probabilistic robotics, MIT press.
+
+1661

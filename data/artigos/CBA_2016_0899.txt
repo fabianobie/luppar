@@ -1,0 +1,1325 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+PROPOSTA DE UM METODO DE EXTRACAO DE CARACTERISTICAS
+APLICADO AO PROBLEMA DA ESTIMACAO DA POSICAO DE UM VANT EM
+NAVEGACAO AUTONOMA
+Juan Camilo Fonseca-Galindo, Andre Paim Lemos
+
+
+Programa de Pos-Graduacao em Engenharia Eletrica - Universidade Federal de Minas Gerais
+Av. Antonio Carlos 6627, 31270-901, Belo Horizonte, MG, Brasil
+Emails juankmilofg@ufmg.br, andrepaim@ufmg.br
+
+Abstract This paper proposes a new feature extraction method with applications in autonomous aerial
+navigation. The proposed method is a modification of the ASIFT algorithm, reducing its time complexity. The
+proposed method is compared with SIFT and ASIFT for registration of aerial images taken from Unmanned aerial
+vehicles. The methods are compared based on the number of matched features and the time complexity. The
+numerical experiments the proposed modification is able to reduce the time complexity of the ASIFT algorithm
+with a similar accuracy.
+Keywords
+
+Autonomous system of air navigation, SIFT, ASIFT, RANSAC and INS.
+
+Resumo Este trabalho propoe um novo metodo de extracao_de_caractersticas com aplicacoes em navegacao
+aerea autonoma. O metodo proposto e uma modificacao do algoritmo ASIFT, para reduzir a seu custo de computacional. O metodo proposto e comparado com SIFT e ASIFT para registo de imagens aereas tomadas a partir
+veculo aereo nao tripulado. Os metodos sao comparadas com base no numero de caractersticas correspondentes
+a o tempo de execucao. Os experimentos numericos mostraram que a modificacao proposta e capaz de reduzir a
+complexidade do algoritmo ASIFT com uma precisao semelhante.
+Palavras-chave
+
+.
+
+INTRODUCAO
+
+Atualmente, a implementacao de plataformas
+autonomas como veculos_aereos_nao_tripulados
+(VANTs), sondas de exploracao espacial e msseis,
+em tarefas nas quais a intervencao direta de um
+ser humano nao seja necessaria ou se mostre inadequada por razoes diversas, representa um grande
+desafio cientfico e tecnologico. A robotica, eletronica e visao_computacional sao areas em que
+tais desafios tem grande impacto. Recentemente,
+tem-se observado um aumento significativo na implementacao de VANTs, em aplicacoes civis e militares, tais como operacoes de vigilancia, reconhecimento, monitoramento ambiental e agrcola,
+aerolevantamento, transporte_de_carga, ataques a
+alvos no solo, etc (Goncalves et al., 2015).
+Um sistema autonomo de navegacao muito
+aplicado em VANTs e dado pela associacao
+de um sistema inercial de navegacao (Inertial
+N avigation System - INS) com dados de um
+sistema de posicionamento (Global N avigation
+Satellite System - GNSS). O unico sistema totalmente operacional em escala mundial e o sistema
+americano Global Positioning System (GPS).
+Existem varios problemas na integridade do GPS.
+Se o sinal de GPS, por algum motivo, se torna indisponvel ou corrompido, a solucao seria estimar
+o deslocamento do VANT atraves do INS. Entretanto, os resultados dessa estimativa divergem rapidamente devido a uma acumulacao da medida
+do vies. O sinal de GPS tambem se torna pouco
+confiavel quando esta operando perto de obstaculos devido as reflexoes multi-caminho. Outros
+
+ISSN 2525-8311
+
+problemas relacionados a confiabilidade do GPS
+consistem na exposicao a interferencias, especialmente quando o GPS estiver funcionando em
+frequencias civis, alem disso, dispositivos bloqueadores de GPS sao encontrados com certa facilidade
+no mercado. Portanto, os VANTs que utilizam
+somente o sinal de GPS sao vulneraveis a acoes
+maliciosas, o que torna necessario a utilizacao de
+um sistema_de_navegacao autonomo capaz de lidar
+com falhas do GPS de curto e longo prazo.
+Uma solucao e empregar um sistema_de_navegacao baseado em visao_computacional que forneca informacao de posicionamento atraves de reconhecimento de marcos em imagens (landmarks),
+odometria, casamento de imagens, dentre outras
+metodologias existentes. Os sistemas_de_navegacao baseados em visao_computacional utilizam
+metodos de extracao_de_caractersticas e metodos
+de casamento de imagens para estimar o posicionamento do VANT. O metodo de extracao de
+caractersticas SIFT (Scale  Invariant F eature
+T ransf orm) tem sido amplamente utilizado em
+aplicacoes em VANTs, foi testado por (Goltz and
+Shiguemori, 2008) em aplicacoes de correspondencia entre imagens aereas que simulam o imageamento de um VANT. Ademais, em (Canhoto
+et al., 2009), propoe-se um sistema_de_navegacao
+baseado em um sistema de visao sem dependencia do GPS. Esse trabalho apresenta um metodo
+para obter uma estimativa de deslocamento de um
+VANT usando imagens aereas sequenciais.
+Um problema presente nas aplicacoes de navegacao_autonoma e a perspectiva da imagem capturada pelo VANT, existe a necessidade de garantir
+
+3139
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+que as duas imagens estejam nos mesmos angulos da transformada homografica e, na pratica nao
+pode-se conseguir capturar todas as imagens em
+visada nadir. O metodo de extracao_de_caractersticas, invariante a transformada afim e ASIFT
+(Af f ine  SIF T ). Esse metodo ja foi aplicado
+em modelagem 3D (Fernandez et al., 2015), casamento de imagens sonar (Ye et al., 2015) e em
+fotogrametria (Gonzalez et al., 2014). No entanto,
+o custo_computacional e muito alto. Este artigo
+expoe uma proposta de um metodo de extracao
+de caractersticas baseado em ASIFT, procurando
+diminuir custo_computacional. Apresenta-se uma
+analise comparativa dos metodos SIFT, ASIFT
+e do metodo proposto, avaliando a robustez e
+o custo_computacional, quando sao apresentadas
+mudancas de perspectiva entre as duas imagens.
+Os metodos sao utilizados para casar imagens de
+voos com imagens georeferenciadas da regiao de
+Sao Jose dos Campos, Brasil. As imagens de
+voo apresentam variacoes de perspectiva, rotacao
+e translacao. Para a calcular a robustez dos metodos, analisa-se a quantidade de pontos obtidos
+pelo casamento das imagens e o custo_computacional, medido atraves do tempo de processamento.
+A secao 2 detalha o problema de navegacao
+baseado em imagens, assim como a proposta e
+os metodos de extracao_de_caractersticas a serem
+comparadas. A seccao 3 os experimentos realizados. Finalmente, a secao 4 apresenta as conclusoes
+e propostas de trabalhos futuros.
+2
+
+Revisao de literatura
+
+Com o objetivo de se fornecer uma visao geral
+de um sistema_de_navegacao baseado em metodos de visao_computacional podemos tomar como
+base o sistema_de_navegacao absoluta ilustrado
+pela Figura 1 (Sanfourche et al., 2012). O sistema tem dois modulos principais, o modulo de
+processamento_de_imagens e o modulo do filtro de
+Kalman estendido. O modulo de processamento
+de imagens usa uma camera optica que captura
+imagens do solo. A imagem e processada utilizando metodos de extracao_de_caractersticas,
+como por exemplo SIFT (Lowe, 2004), SURF (Bay
+et al., 2006) e ASIFT (Morel and Yu, 2009), em
+seguida, e casada com uma imagem satelite georreferenciada do territorio voado pelo VANT para
+indicar seu posicionamento. Tecnica como RANSAC (Fischler and Bolles, 1981) e utilizada para
+remover outliers entre as duas imagens. O sistema possui alguns sensores embarcados, como
+por exemplo, giroscopio, acelerometro e magnetometro que entregam medidas inerciais para determinar o estado em termos de posicao, velocidade e
+altitude. Essas medidas sao utilizadas junto com
+o resultado do modulo de processamento_de_imagens para calcular a posicao final da VANT que
+pode ser calculada usando o filtro Kalman estendido (Anderson and Moore, 1979).
+
+ISSN 2525-8311
+
+Figura 1 Sistema de navegacao baseado em visao_computacional. Adaptada de (Sanfourche et al.,
+2012).
+
+Esta secao apresenta os metodos utilizados no
+estudo comparativo. Sao detalhados os metodos
+de extracao_de_caractersticas SIFT, ASIFT e o
+metodo proposto.
+2.1
+
+SIFT
+
+O metodo SIFT (Lowe, 2004) extrai caractersticas locais ou pontos de interesse de uma imagem.
+Os pontos de interesse sao invariantes a escala,
+translacao e rotacao, alem de parcialmente invariantes a mudancas de iluminacao, afinidade ou
+projecao em 3D. Em (Lowe, 1999) defini-se que os
+pontos de interesse sao criados para permitir deformacoes geometricas locais por representacao de
+gradientes em multiplos planos de orientacao com
+imagens suavizadas em multiplas escalas. Esses
+pontos sao detectados de forma eficiente atraves
+de uma abordagem por etapas de filtragem que
+identifica os pontos estaveis no espaco. O metodo
+SIFT e composto pelas seguintes etapas
+1. Deteccao de extremos no espacoescala realiza uma busca sobre todas as escalas e localizacoes mediante o uso da funcao Diferenca
+de Gaussianas (Lowe, 1999), para identificar
+candidatos a pontos de interesse invariantes
+a escala e orientacao.
+2. Localizacao dos pontos de interesse para
+cada candidato, um modelo e ajustado para
+determinar a localizacao, escala e o radio das
+curvaturas principais (Harris and Stephens,
+1988). Os pontos de interesse sao selecionados baseados nestas medidas de estabilidade,
+rejeitando candidatos com baixo contraste ou
+localizados ao longo de uma borda.
+3. Alocacao de orientacao e atribudo a cada
+ponto de interesse uma direcao de acordo com
+as direcoes do gradiente e a regiao que os rodeia. Todas as operacoes futuras sao realizadas sobre os dados da imagem que foi transformada em relacao a escala, localizacao e a
+orientacao atribuda de cada ponto de interesse, proporcionando assim invariancia a essas transformacoes.
+
+3140
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+4. Descritor dos pontos de interesse os gradientes locais sao medidos na escala selecionada,
+na regiao em torno ao ponto de interesse, permitindo nveis significativos de distorcao de
+forma local e as variacoes de luminosidade.
+2.2 ASIFT
+O metodo ASIFT (Morel and Yu, 2009) aborda
+a deteccao de caractersticas para a comparacao
+de imagens totalmente invariante a transformada
+afim. ASIFT complementa SIFT atraves da simulacao de dois parametros ( e ) do modelo da
+camera optica (Figura 2) que definem a orientacao
+do eixo da camera. Portanto, ASIFT simula tres
+parametros da transformada afim (angulo de longitude (), angulo de latitude () e escala ()) e
+normaliza os outros tres parametros (rotacao ()
+e translacao (x1 , y1 )).
+
+Figura 2 Interpretacao geometrica dos parametros
+do modelo da camera optica e, representacao das simulacoes realizadas pelo metodo ASIFT.
+
+Uma interpretacao geometrica da transformacao afim da imagem capturada pela camera mostrada na Figura 2 e representada pela equacao (1).
+Onde A e a projecao da imagem frontal u0 devido
+ao movimento da camera.
+A  H R1 ()T1 ()R2 () + T2 (x1 , y1 )
+
+(1)
+
+H e a componente de escala da imagem
+capturada pela camera medida pelo parametro 
+( > 0). R1 e R2 pertencem as rotacoes do angulo
+da camera em torno do eixo optico (  0 , 360 )
+e do angulo entre o eixo optico e a normal ao plano
+de imagem (  0 , 180 ) respectivamente, cada
+rotacao e representada por uma matriz de dimensao 2x2. T1 e a o angulo entre o eixo optico e a
+normal ao plano de imagem (  0 , 90 ), a qual
+e uma matriz diagonal com dois autovalores, no
+primeiro t > 1 (  arccos(1t)) e o segundo e 1.
+T2 e o movimento inicial da camera, onde o plano
+da imagem inicial u0 e o plano da imagem capturada pela camera estao em paralelo, representado por uma matriz de dimensao 2x1, o primeiro
+termo e x1 e o segundo e y1 os quais representam o
+deslocamento no eixo x e o eixo y respectivamente.
+A equacao (1) pode ser reescrita pela Equacao (2).
+Os parametros da posicao inicial da camera
+para capturar a vista frontal u0 na equacao (2)
+sao   1, t  1,     0 e x1 , y1  0.
+
+ISSN 2525-8311
+
+
+A
+
+
+cos
+sin
+cos
+sin
+
+
+t 0
+0 1
+
+ 
+x1
+sin
++
+y1
+cos
+
+sin
+cos
+
+
+
+(2)
+
+ASIFT procede da seguinte forma
+1. Cada imagem e transformada pela simulacao
+de distorcoes causadas pela mudanca do eixo
+optico da camera a partir de uma posicao
+frontal, utilizando a equacao (2). Esta distorcao depende dos angulos de longitude e
+latitude. A imagem e submetida a rotacoes
+do angulo longitude seguido pelas inclinacoes
+atraves do parametro t  1cos. (Morel
+and Yu, 2009) determinou 6 amostras do angulo  (n ) para cada uma das imagens casadas, a mudanca de  e associada com a fun
+cao aritmetica 1, a, a2 ..., an 1 , com a  2.
+O numero de amostras do angulo  e diferente para cada valor da serie do angulo ,
+, a fun  n , no qual n  Round(10)
+2
+cao Round retorna um valor inteiro arredondado para o numero inteiro mais proximo do
+valor passado como parametro. Os pontos
+apresentados na Figura 2 representam todas
+as simulacoes dos angulos  e . Para cada
+uma das imagens obtidas implementa-se o algoritmo SIFT com a finalidade de conseguir
+um banco_de_dados dos possveis pontos de
+interesse.
+2. O algoritmo de casamento invariante a similaridade exposto em (Lowe, 2004) fundamentada na medida da distancia City Block descrita em (Everitt et al., 2011) e aplicado ao
+banco_de_dados dos possveis candidatos a
+pontos de interesse de cada uma das duas
+imagens. O casamento de dois pontos de
+interesse de diferentes imagens e encontrado
+atraves da identificacao do ponto de interesse
+mais proximo da segunda imagem referente a
+cada ponto de interesse da primeira.
+3. O algoritmo de casamento invariante a similaridades geralmente deixam falsos casamentos.
+E importante filtrar estes casamentos devido
+ao grande numero de outliers obtidos. O criterio usado e que os casamentos devem ser
+compatveis com uma geometria apipolar.
+2.3
+
+Metodo Proposto
+
+O metodo de extracao_de_caractersticas proposto
+neste artigo e baseado no metodo ASIFT, e utiliza os dados fornecidos pelo INS para diminuir
+a amostragem dos angulos  e , deste modo reduzindo o custo_computacional. O INS descreve
+a orientacao de um corpo rgido, como o VANT,
+girando em um espaco euclidiano tridimensional
+
+3141
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+mediante o uso dos angulos Euler. Os angulos sao
+definidos no sentido positivo dos eixos do sistema
+do corpo da aeronave. Roll () em torno do eixo
+X, P itch () em torno do eixo Y e Y aw () em
+torno do eixo Z, representados na Figura 3. Portanto, o conhecimento a priori dos angulos P itch
+e Roll e utilizado para diminuir a amostragem dos
+angulos de longitude e latitude do metodo ASIFT.
+A imagem territorial so e simulada nos angulos  e
+ mais proximos da orientacao real do VANT no
+momento da captura da imagem. Enquanto, na
+imagem capturada pelo VANT nao e realizada nenhuma simulacao dos angulos  e  com o objetivo
+de se garantir que o casamento seja executado em
+imagens com os mesmos angulos da transformada
+homografica. Na Figura 2 a localizacao da aeronave e interpretada pelo vetor vermelho, e a otimizacao proposta diminui a amostragem de ASIFT a
+simulacao dos angulos mais proximos representados pelos pontos azuis. Alem disto, as simulacoes
+dos angulos  e , e o algoritmo de casamento sao
+paralelizados.
+
+cas nao homogeneas, incluem campos de futebol,
+estadios, armazens, blocos de edifcios, lotes de
+construcao de cimento e de pasto, diferentes tipos de casas e areas verdes incluindo arvores. Finalmente o terceiro bloco foi nomeado Rural1,2,3 ,
+com imagens representativas do setor rural, contem poucas caractersticas, incluem areas verdes
+com pasto, diferentes vegetacoes e algumas ruas
+nao pavimentadas. Rural3 inclui um rio.
+
+(a) U rbano1
+
+(b) U rbano2
+
+(c) U rbano3
+
+(d) Google1
+
+(e) Google2
+
+(f) Google3
+
+(g) Rural1
+
+(h) Rural2
+
+(i) Rural3
+
+Figura 4 Imagens Satelite.
+Figura 3 Conversao dos angulos Euler.
+3
+
+Resultados Experimentais
+
+Para o estudo comparativo foram utilizadas imagens de baixa resolucao da cidade de Sao Jose
+dos Campos, Brasil, sendo esta mesma regiao contida na imagem de satelite, proveniente do satelite
+Quickbird. Utilizaram-se nove cenarios diferentes
+com dimensoes de 800x800 pixels. Para cada cenario, foram simuladas 6 mudancas do angulo de
+latitude, em cada angulo foram recortadas 36 imagens de 200x200 pixels com variacoes na latitude,
+rotacao e translacao. Aplicou-se um filtro gaussiano 3x3 para gerar uma imagem sintetica da captura do VANTs, obtendo um total de 216 imagens
+para o casamento em cada cenario.
+Os cenarios foram divididos em tres blocos,
+apresentados na Figura 4. O primeiro bloco foi
+denominado U rbano1,2,3 , este bloco tem imagens
+representativas do setor urbano caractersticas homogeneas, contem muitas caractersticas, incluem
+quarteiroes de diferentes tipos de casas delimitadas por ruas, trechos de avenidas principais e rodovias, pracas esportivas, e complexos de pontes.
+O segundo bloco foi nomeado Google1,2,3 , em diferenca com o bloco anterior, este bloco tem imagens representativas do setor urbano caractersti-
+
+ISSN 2525-8311
+
+Baseado na equacao 2, utilizou-se o angulo 
+como amostragem da transformada de perspectiva
+de cada um dos ambienteis. A amostragem implementada foi de 0 , 16 , 32 , 48 , 64 e 76 . Os
+valores de rotacao, translacao e escala foram escolhidos aleatoriamente devido a estes serem invariantes ao metodo base SIFT.
+Para o desenvolvimento dos experimentos, foram implementados os metodos SIFT, ASIFT e o
+proposto, utilizando OpenCV e OpenMP. O algoritmo ASIFT e foi paralelizado para as simulacoes
+dos angulos de  e , para a imagem terrestre
+foram implementadas as tres primeiras amostragens do angulo  por ser uma imagem satelital,
+com visada nadir. Ao passo que para as imagens
+capturadas pelo VANT foram implementadas as
+seis amostragens. Adicionalmente, nos tres metodos utilizou-se o metodo RANSAC, para realizar a filtragem dos pontos outliers. As simulacoes foram feitas em um computador com Ubuntu
+14.04, processador intel Xenon(R)CPU X5650 @
+2.67GHzx19 e 80 GB de memoria RAM.
+A Tabela 1 apresenta a media da quantidade
+de pontos obtidos pelos metodos SIFT (1), ASIFT
+(2), e o proposto (3). A quantidade de pontos obtidos e proporcional ao numero de caractersticas
+
+3142
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+presentes nas imagens, como pode ser visto cenarios U rbanos (a, b, c), Google1 (d, e, f ) e Google2
+(g, h, i) nos quais obtiveram-se mais pontos casados. O metodo ASIFT e o metodo proposto
+demostraram serem robustos para imagens com
+perspectivas distintas, dado que esse metodo obteve casamento de pontos em todas as amostragens do angulo de latitude e em todos os cenarios.
+Ja o metodo SIFT conseguiu bons resultados para
+angulos menores a 48 .
+
+(a) SIFT
+
+Tabela 1 Quantidade media dos pontos obtidos pelos
+metodos (M.) no casamento da imagem referente ao
+territorio completo (C.) e das imagens capturadas pelo
+VANT.
+C.
+
+a
+
+b
+
+c
+
+d
+
+e
+
+f
+
+M.
+
+
+0
+
+16
+
+32
+
+48
+
+64
+
+76
+
+1
+
+490
+
+477
+
+465
+
+331
+
+7
+
+7
+
+2
+
+4493
+
+4493
+
+4318
+
+3621
+
+1598
+
+33
+
+3
+
+755
+
+723
+
+953
+
+1020
+
+1037
+
+423
+
+1
+
+294
+
+282
+
+277
+
+218
+
+8
+
+8
+
+2
+3
+
+2646
+
+2559
+
+2490
+
+2337
+
+1342
+
+66
+
+410
+
+391
+
+510
+
+567
+
+648
+
+294
+
+1
+
+299
+
+287
+
+281
+
+207
+
+8
+
+7
+
+2
+
+2732
+
+2702
+
+2611
+
+2132
+
+959
+
+50
+
+3
+
+451
+
+426
+
+569
+
+582
+
+605
+
+309
+
+1
+
+211
+
+206
+
+196
+
+132
+
+6
+
+6
+
+2
+3
+
+1600
+
+1552
+
+1555
+
+1236
+
+606
+
+44
+
+263
+
+254
+
+309
+
+297
+
+326
+
+150
+
+1
+2
+
+237
+
+228
+
+218
+
+142
+
+6
+
+6
+
+1805
+
+1798
+
+1691
+
+1443
+
+840
+
+74
+
+3
+
+290
+
+279
+
+345
+
+349
+
+390
+
+170
+
+1
+
+62
+
+58
+
+60
+
+43
+
+7
+
+6
+
+2
+3
+
+374
+
+348
+
+340
+
+289
+
+181
+
+34
+
+74
+
+70
+
+90
+
+87
+
+94
+
+54
+
+g
+
+1
+2
+3
+
+69
+
+62
+
+170
+
+163
+
+h
+
+1
+2
+3
+
+1283
+
+1220
+
+234
+
+221
+
+1
+2
+3
+
+270
+
+257
+
+256
+
+196
+
+7
+
+7
+
+2116
+
+1948
+
+2055
+
+1870
+
+754
+
+39
+
+384
+
+368
+
+475
+
+524
+
+521
+
+234
+
+i
+
+43
+
+39
+
+38
+
+30
+
+7
+
+6
+
+238
+
+218
+
+216
+
+177
+
+76
+
+48
+
+80
+
+79
+
+64
+
+15
+
+158
+
+110
+
+7
+
+7
+
+1190
+
+910
+
+512
+
+39
+
+288
+
+280
+
+304
+
+132
+
+A Figura 5 apresenta a implementacao de
+SIFT, ASIFT e a proposta para casamento da
+imagem do territorio Google1 com a image tirada
+pelo VANT com angulos   64 ,   0 e   0 .
+As linhas representam a uniao dos pontos casados
+nas duas imagens, ilustrando graficamente os resultados apresentados na Tabela 1.
+A Tabela 2, ao igual que a Tabela 1, apresenta o tempo de processamento da extracao e o
+casamento de pontos de interesse das duas imagens para cada um dos cenarios. O tempo de
+execucao e proporcional ao numero de pontos casados, porem independente em cada metodo. O
+maior tempo foi nos cenarios U rbanos, e menor
+nos Rurais e Google3 devido numero de caracte-
+
+ISSN 2525-8311
+
+(b) ASIFT
+
+(c) Proposta
+
+Figura 5 Casamento da imagem do territorio do
+cenario Google1 com a imagem tirada pelo VANT
+com angulos   64 ,   0 e   0 .
+rsticas presentes nas imagens. O metodo ASIFT
+apresentou o maior tempo de processamento, por
+ter um maior numero de pontos nas duas imagens.
+O tempo de processamento de SIFT e o menor de
+todos os cenarios mas so e eficiente para angulos
+menores de 48 . Analisando os resultados referentes a metodologia proposta, percebe-se que esta
+apresenta uma boa relacao custo-benefcio, para o
+amostragem do angulo .
+4
+
+Conclusoes
+
+A analise apresentada neste artigo demonstrou
+que a eficiencia do metodo SIFT e limitada a imagens com angulos  menores na transformada homografica. Os resultados mostraram a robustez do
+metodo ASIFT e o metodo proposto. Eles foram
+capazes de casar imagens capturadas pelo VANT
+com imagens_georreferenciadas do territorio representado pela quantidade de pontos casados pelas
+imagens em toda a amostragem realizada do angulo , e em todos os cenarios, mesmo que estes tenham poucas caractersticas. Porem, uma
+
+3143
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Tabela 2 Media do tempo total em segundos da extracao de pontos de interesse dos metodos (M.) do
+casamento da imagem referente ao territorio completo
+(C.) e das imagens capturadas pelo VANT.
+
+
+C
+
+M
+1
+
+2,18
+
+2,2
+
+a
+
+2
+
+33
+
+32,8
+
+3
+
+2,44
+
+2,44
+
+1
+
+1,65
+
+1,65
+
+2
+
+11,52
+
+3
+1
+2
+
+b
+
+c
+
+d
+
+e
+
+f
+
+g
+
+h
+
+i
+
+0
+
+16
+
+32
+
+48
+
+64
+
+76
+
+2,21
+
+2,26
+
+2,28
+
+2,22
+
+33,05
+
+34,68
+
+35,5
+
+28,21
+
+2,99
+
+2,71
+
+1,95
+
+1,33
+
+1,67
+
+1,69
+
+1,77
+
+1,72
+
+11,44
+
+11,48
+
+12,25
+
+13,41
+
+11,2
+
+1,73
+
+1,73
+
+2,2
+
+2,02
+
+1,46
+
+1,03
+
+1,68
+
+1,69
+
+1,7
+
+1,72
+
+1,77
+
+1,75
+
+13,52
+
+13,18
+
+13,14
+
+12,95
+
+13,69
+
+13,14
+
+3
+
+1,85
+
+1,85
+
+2,34
+
+2,12
+
+1,48
+
+1,05
+
+1
+
+1,45
+
+1,5
+
+1,49
+
+1,49
+
+1,56
+
+1,53
+
+2
+
+5,54
+
+5,35
+
+5,4
+
+5,19
+
+5,44
+
+4,69
+
+3
+
+1,29
+
+1,3
+
+1,87
+
+1,69
+
+1,18
+
+0,83
+
+1
+
+1,5
+
+1,5
+
+1,51
+
+1,52
+
+1,58
+
+1,57
+
+2
+
+5,89
+
+5,95
+
+5,91
+
+5,75
+
+6,08
+
+4,96
+
+3
+
+1,31
+
+1,3
+
+1,89
+
+1,73
+
+1,21
+
+0,83
+
+1
+2
+
+0,83
+
+0,83
+
+0,84
+
+0,83
+
+0,89
+
+0,89
+
+1,93
+
+1,95
+
+1,97
+
+1,97
+
+1,98
+
+1.99
+
+3
+
+0,76
+
+0,75
+
+1,34
+
+1,27
+
+0,85
+
+0,58
+
+1
+2
+
+0,86
+
+0,86
+
+0,87
+
+0,88
+
+0,91
+
+0,88
+
+1,98
+
+1,99
+
+1,99
+
+1,99
+
+1,99
+
+1,94
+
+3
+
+0,85
+
+0,85
+
+1,43
+
+1,31
+
+0,85
+
+0,57
+
+1
+2
+
+1,26
+
+1,25
+
+1,26
+
+1,27
+
+1,32
+
+1,3
+
+3,84
+
+3,78
+
+3,81
+
+3,76
+
+3,86
+
+3,48
+
+3
+
+1,31
+
+1,31
+
+1,82
+
+1,64
+
+1,11
+
+0,86
+
+1
+2
+
+1,58
+
+1,58
+
+1,6
+
+1,62
+
+1,66
+
+1,63
+
+7,63
+
+7,57
+
+7,69
+
+8,05
+
+8,13
+
+6,62
+
+3
+
+1,64
+
+1,64
+
+2,13
+
+1,93
+
+1,32
+
+0,9
+
+grande desvantagem do metodo ASIFT e o custo
+computacional, os resultados demonstraram que
+o metodo nao pode ser implementado em navegacao_autonoma por possuir um tempo de processamento muito alto. Por outro lado, o metodo
+proposto apresentou um bom custo-benefcio em
+relacao a quantidade de pontos obtidos e o tempo
+computacional. O metodo foi eficiente nos diferentes cenarios e em toda a amostragem do angulo 
+implementada. Entretanto, recomenda-se utilizar
+o metodo SIFT para angulos  menores a 48 por
+ter uma boa quantidade de pontos casados em menor tempo, e o metodo propostos para os angulos
+superiores.
+Como propostas de continuidade deste trabalho, pretende-se implementar a proposta junto
+com tecnicas de odometria para navegacao_autonoma em VANT.
+
+Agradecimentos
+O presente trabalho foi realizado com o apoio financeiro da CAPES - Brasil.
+
+ISSN 2525-8311
+
+Referencias
+Anderson, B. D. and Moore, J. B. (1979). Optimal
+filtering. 1979.
+Bay, H., Tuytelaars, T. and Van Gool, L. (2006). Surf
+Speeded up robust features, Computer vision
+ECCV 2006, Springer, pp. 404417.
+Canhoto, A., Shiguemori, E. and Domiciano, M.
+(2009). Image sequence processing applied to
+autonomous aerial navigation, Signal and Image
+Processing Applications (ICSIPA), 2009 IEEE
+International Conference on, IEEE, pp. 496499.
+Everitt, B. S., Landau, S., Leese, M. and Stahl, D.
+(2011). Hierarchical clustering, Cluster Analysis,
+5th Edition pp. 71110.
+Fernandez, J., Gonzalez, D., Rodrguez, P. and Mancera, J. (2015). Image-based modelling from
+unmanned aerial vehicle (uav) photogrammetry
+An effective, low-cost tool for archaeological applications, Archaeometry 57 128145.
+Fischler, M. and Bolles, R. (1981). Random sample consensus a paradigm for model fitting
+with applications to image analysis and automated cartography, Communications of the ACM
+24(6) 381395.
+Goltz, G. and Shiguemori, E. (2008). Aplicacao do algoritmo sift em imagens de navegacao_autonoma,
+Workshop Anual de Pesquisa e Desenvolvimento
+do IEAv, pp. 3535.
+Goncalves, M., Souza, C. and Shiguemori, E. (2015).
+Uso de coordenadas geograficas para estimacao
+automatica de rumo aplicada a navegacao_aerea autonoma de veculos areos nao tripulados.,
+Simposio Brasileiro de Sensoriamento Remoto
+(SBSR) 17 55985605.
+Gonzalez, H., Puente, I., Roca, D., Martnez, J.,
+Conde, B. and Arias, P. (2014). Uav photogrammetry application to the monitoring of rubble
+mound breakwaters, Journal of Performance of
+Constructed Facilities p. 04014194.
+Harris, C. and Stephens, M. (1988). A combined corner and edge detector., Alvey vision conference,
+Vol. 15, Citeseer, p. 50.
+Lowe, D. (1999). Object recognition from local scaleinvariant features, Computer vision, 1999. The
+proceedings of the seventh IEEE international
+conference on, Vol. 2, Ieee, pp. 11501157.
+Lowe, D. G. (2004). Distinctive image features from
+scale-invariant keypoints, International journal
+of computer_vision 60(2) 91110.
+Morel, J. and Yu, G. (2009). Asift A new framework
+for fully affine invariant image comparison, SIAM
+Journal on Imaging Sciences 2(2) 438469.
+Sanfourche, M., Delaune, J., Le, G., De, H., Israel, J.,
+Cornic, P., Treil, A., Watanabe, Y. and Plyer, A.
+(2012). Perception for uav Vision-based navigation and environment modeling., AerospaceLab
+(4) p1.
+Ye, X., Li, P. and Zhang, J. (2015). Fully affine invariant matching algorithm based on nonlinear
+scale space for side scan sonar image, Mechatronics and Automation (ICMA), 2015 IEEE International Conference on, IEEE, pp. 23872391.
+
+3144

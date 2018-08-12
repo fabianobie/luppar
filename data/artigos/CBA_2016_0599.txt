@@ -1,0 +1,660 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+FUSAO DE ESTIMATIVAS OBTIDAS A PARTIR DE MEDIDAS CONVENCIONAIS
+E FASORIAIS MEDIANTE CRITERIO DE MAXIMA 
+Nastasha Salame da Silva, Antonio Jose Alves Simoes Costa, Vladimiro Miranda
+
+
+Universidade Tecnologica Federal do Parana
+Curitiba, Parana, Brasil
+
+
+
+
+Universidade Federal de Santa Catarina
+Florianopolis, Santa Catarina, Brasil
+
+INESC TEC e Faculdade de Engenharia da Universidade do Porto
+Porto, Portugal
+Emails nssilva@utfpr.edu.br, simoes.costa@ufsc.br,
+vladimiro.miranda@inescbrasil.org.br
+
+Abstract This paper presents an extension to fusion methods applied to state estimation considering that
+the incoming measurements are obtained from SCADA and PMU measurements, whose sampling rates are
+significantly different. To combine the estimates individually produced by the two classes of measurements,
+fusion methods are applied, but in his paper the traditional WLS estimation paradigm is replaced by a Maximum
+Correntropy Criterium. The objective is to attain a more efficient power system state estimation process, based
+on both conventional and phasor measurements, whose main advantage is the resiliency with respect to the
+occurrence of single and multiple bad data.
+Keywords
+
+Power system state estimation, fusion methods, maximum correntropy criterium.
+
+Resumo Este artigo apresenta um aprofundamento e extensao de metodos de fusao a estimacao_de_estados
+envolvendo medidas oriundas de equipamentos com diferentes taxas de amostragem e qualidade de medicao.
+Adicionalmente, aplicam-se os metodos de fusao em um contexto diferente da formulacao classica do mnimos
+quadrados, ou seja, utilizando o Criterio da Maxima  (MCC). Como resultado, obtem-se um algoritmo robusto e eficaz para a estimacao_de_estados para sistemas_de_potencia, com plano de medicao composto por
+medidas convencionais e fasoriais, cuja principal vantagem e a resiliencia face a ocorrencia de erros_grosseiros.
+Palavras-chave
+.
+
+1
+
+Estimacao de estados em sistemas_de_potencia, metodos de fusao, criterio da maxima
+
+Introducao
+
+A Estimacao de Estados em Sistemas de Potencia (EESP) e a ferramenta fundamental utilizada
+nos Centros de Operacao do Sistema (COS) para
+informacoes confiaveis em tempo_real sobre a condicao operativa corrente da rede eletrica. A EESP
+convencional constroi um modelo em tempo_real
+para a rede a partir do processamento de informacoes analogicas coletadas por sistemas de aquisicao_de_dados e controle_supervisorio (sistemas
+SCADA, da sigla em Ingles). Mais recentemente,
+medidas_fasoriais_sincronizadas de tensoes nodais
+e correntes em ramos da rede, resultantes da instalacao de unidades de medicao fasorial (PMUs, da
+sigla em Ingles) em sistemas_eletricos_de_potencia (Phadke e Thorp, 2008) tambem tornaram-se
+disponveis para processamento por parte de Estimadores de Estados (Zhou et al., 2006 Simoes
+Costa et al., 2013).
+Medidas analogicas coletadas pelo sistema
+SCADA e fornecidas ao estimador estao sujeitas
+a erros_grosseiros, isto e, erros de medicao cujo
+grau de inexatidao e muito maior do que o admitido pelo modelo de medicao. O desempenho dos
+estimadores_de_estados baseados nos modelos tradicionais e severamente afetado por estas medidas
+
+ISSN 2525-8311
+
+espurias. Erros de topologia, resultantes de informacoes digitais incorretas sobre os status de chaves e disjuntores, constituem-se em outro tipo de
+anomalia cujo impacto sobre os resultados da estimacao tendem a ser ainda mais graves (Clements
+e Simoes Costa, 1998). Como os algoritmos de
+estimacao convencionais nao apresentam o nvel
+de resiliencia desejavel para expurgar automaticamente os efeitos de anomalias, torna-se necessario dotar os estimadores de procedimentos adicionais, sob a forma de pos-processamento, para
+detecta-las, identifica-las e elimina-las (Monticelli
+e Garcia, 1983 Monticelli et al., 1986 Wu, 1990).
+Uma desvantagem desta arquitetura convencional
+e que, na hipotese de ocorrencia de anomalias,
+os resultados da estimacao recem concluda estao
+comprometidos e todo o processo deve ser refeito
+apos os erros terem sido expurgados. O fato de
+que tudo se passa em ambiente de tempo_real, com
+limites estritos de tempo de execucao para o calculo de estimativas confiaveis, constitui-se em um
+fator agravante e que motiva a busca de solucoes
+menos susceptveis as anomalias descritas.
+O proposito deste artigo e o desenvolvimento
+de uma nova classe de algoritmos_de_estimacao
+de estados dotados de propriedades de resiliencia superiores ao dos estimadores existentes. No
+
+2115
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+contexto deste artigo, o termo resiliencia como
+propriedade de um algoritmo refere-se a capacidade de rejeicao automatica de dados espurios.
+Um algoritmo de estimacao_de_estados resiliente
+e portanto capaz de fornecer estimativas confiaveis mesmo na presenca de medidas portadoras
+de erros_grosseiros. Desta forma, nao necessita
+obrigatoriamente ser secundado por um aparato
+de processamento_de_erros_grosseiros, pois a eliminacao das medidas espurias passa a ocorrer como
+parte do proprio processo de estimacao.
+Para sintetizar esta nova classe de estimadores, torna-se necessario rever o paradigma tradicional da EESP, calcado no metodo dos mnimos_quadrados_ponderados (Monticelli, 1999
+Abur e Exposito, 2004). Os estimadores resilientes baseiam-se em criterios de otimizacao naoquadraticos, tendo por base solidos princpios da
+Teoria da Informacao e de Processamento de Sinais (Principe e Xu, 1999 Liu et al., 2006).
+A utilizacao, por si so, de criterios naoquadraticos na EESP nao e uma novidade. Ja
+na decada de 70, Merrill e Schweppe (1971) e
+Handshin et al. (1975) buscavam contornar a necessidade de pos-processamento mediante metodos heursticos de analise de resduos a cada iteracao. A ausencia de uma base teorica solida prejudicou a aceitacao ampla desta metodologia.
+A abordagem proposta em (Mili et al., 1996
+Pires et al., 1999) utiliza fundamentos de robustez estatstica para a deteccao e identificacao de
+erros_grosseiros, os quais implicam na adocao de
+criterios nao-quadraticos. Os estimadores resultantes apresentam baixo_custo_computacional relativo (Pires et al., 1999 Zhuang e Balasubramanian, 1985 Simoes Costa et al., 1991), mas podem convergir para mnimos locais, dependendo
+da distancia das condicoes iniciais com respeito a
+solucao.
+Mais recentemente, surgiram outras formulacoes embasadas em principios da Teoria da Informacao cuja solucao leva igualmente ao emprego
+de criterios nao-quadraticos, porem sao dotadas
+de mecanismos para contornar o problema de extremos locais. Tais metodos empregam os conceitos da  (Liu et al., 2006 Miranda
+et al., 2009) e de janelas de Parzen (Parzen, 1962).
+O conceito de  esta diretamente relacionado a similaridade entre variaveis aleatorias
+em uma vizinhanca do espaco conjunto, definida
+por uma funcao Gaussiana cuja variancia estabelece uma janela de observacao dentro da qual a
+similaridade e avaliada (Miranda et al., 2009 Wu
+et al., 2011). Sendo ajustavel, esta janela fornece um instrumento para atenuacao ou eliminacao dos efeitos de dados discrepantes (ou outliers). A principal vantagem de estimadores centrados no chamado Criterio de Maxima  (MCC, da sigla em Ingles) e a sua resiliencia, traduzida pela rejeicao automatica dos efei-
+
+ISSN 2525-8311
+
+tos das medidas espurias. A possvel ocorrencia de extremos locais e tambem mitigada mediante a aplicacao das janelas de Parzen (Principe
+e Xu, 1999 Wu et al., 2011).
+A aplicacao do conceito de maxima  a EESP e recente (Krstulovic et al., 2013 Miranda et al., 2009 Wu et al., 2011). Ate o momento, o interesse tem se concentrado no desenvolvimento de algoritmos_de_estimacao e a rejeicao
+de erros_grosseiros em medidas analogicas.
+O objetivo deste artigo e explorar a resiliencia
+dos estimadores MCC, buscando sua insercao em
+arquiteturas de estimacao que contemplam tanto
+o processamento de medidas SCADA quando de
+medidas_fasoriais_sincronizadas. Em particular,
+explora-se a arquitetura de fusao_de_estimativas
+(Simoes Costa et al., 2013), porem aplicada em um
+contexto distinto do originalmente utilizado os
+estimadores individuais que processam cada uma
+das duas classes de medida, passam a ser ambos
+baseados no princpio do MCC, ao inves da classica estrategia dos Mnimos Quadrados Ponderados (Monticelli, 1999 Abur e Exposito, 2004). A
+vantagem almejada e a depuracao automatica de
+erros_grosseiros eventualmente presentes entre as
+medidas SCADA e fasoriais, sem a necessidade de
+pos-processamento para sua eliminacao.
+Na Secao 2 sao apresentados os princpios basicos do MCC. Alguns conceitos de fusao_de_estimativas e a solucao proposta neste artigo sao
+descritos na Secao 3. A Secao 4 apresenta a arquitetura de estimacao proposta, cujos resultados
+para o sistema IEEE 14 barras sao relatados e discutidos na Secao 5. As conclusoes e consideracoes
+finais sao apresentadas na Secao 6.
+2
+
+Criterio da Maxima 
+
+O MCC tem por finalidade extrair o maximo de
+informacao sobre os estados contida nas medidas disponveis. Para tal, o MCC maximiza a
+similaridade entre o vetor de medidas disponveis e o vetor de medidas estimadas. Para tal,
+a seguinte funcao objetivo deve ser maximizada
+(Principe, 2010 Opara, 2013)
+JM CC (x) 
+
+m
+X
+
+exp
+
+(zi hi (x))2
+2 2
+
+(1)
+
+i1
+
+onde zi representa a medida i do vetor z de dimensao m  1, hi (x) representa a equacao que
+relaciona a medida i as variaveis de estado e x e
+o vetor_de_estados a ser estimado, de dimensao
+n  1.
+A solucao do problema MCC baseia-se no metodo de Newton, por apresentar qualidades que
+aproveitam ao maximo as propriedades da funcao
+de MCC (sempre diferenciavel para qualquer ordem), sendo esse metodo rapido, eficiente e de implementacao relativamente simples (Opara, 2013).
+De forma a maximizar o criterio de 
+
+2116
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Eq. (1), deve-se satisfazer as condicoes de otimalidade de primeira ordem, ou seja
+JM CC (x)  gM CC (x)  0
+m
+(zi hi (x))2
+hi (x)
+1 X
+
+2 2
+(zi  hi (x))
+0
+exp
+ 2 i1
+ x
+z 
+
+(2)
+
+H(x)
+
+(zi hi (x))2
+
+CC
+onde DM
+(x)  12 exp 22
+e defiii
+nido como o elemento (i, i) da matriz diagonal
+m  m DM CC (x) e H(x) e a matriz Jacobiana.
+Ponderando-se a matriz DM CC pela matriz de
+covariancia dos erros de medicao R, obtem-se
+uma nova matriz de ponderacao diagonal D 
+R1 DM CC .
+Expandindo-se o termo do lado esquerdo da
+Eq. (2) em serie de Taylor em torno de um dado
+vetor_de_estados xk e negligenciando-se as derivadas de ordem superior, resulta o esquema iterativo
+do metodo de Newton que fornece uma correcao
+do vetor_de_estados a cada iteracao k, conforme
+segue
+
+gM CC (xk )xk
+xk+1
+
+ gM CC (xk )
+ xk + xk
+
+(3)
+(4)
+
+Calculando-se a matriz GW (x)
+
+gM CC (x)  2 JM CC (x), apos terem sido
+desprezadas as derivadas de segunda ordem cujos
+efeitos locais nao sao significativos, obtem-se
+GW (x)  HT W(x)H(x)
+
+(5)
+
+onde W(x) , D(x) (I  RP ) e RP e uma matriz diagonal,
+cujos elementos
+sao calculados como
+
+
+2
+RP,ii  (zi hi2(x)) .
+Por fim, a magnitude do passo a ser dado,
+xk+1 , no processo iterativo para obtencao das
+estimativas, xk+1  xk + xk+1 , e calculado conforme abaixo
+xk+1
+
+
+
+GW (x)k 1 gM CC
+
+3
+
+Fusao de estimativas considerando
+estimadores baseados no criterio da
+maxima 
+
+Para realizar a fusao_de_estimativas obtidas a partir de dados gerados por N classes distintas de
+sensores, primeiramente deve-se considerar a matriz de covariancia dos erros de estimacao P, que
+pode ser escrita como (Mitchell, 2007)
+
+
+P11
+
+..
+P
+.
+PNS 1
+
+...
+..
+.
+
+
+
+P1NS
+
+..
+
+.
+PNS NS
+
+(11)
+
+onde NS representa o numero de sensores. No caso
+particular da fusao_de_estimativas oriundas de sistemas nao correlacionados, como e o caso abordado neste artigo, a matriz P e bloco diagonal, ou
+seja, apenas as submatrizes Pii , onde i representa
+o tipo de sensor, sao nao nulas. Neste trabalho ha
+apenas duas classes de sensores SCADA e PMU,
+ou seja, NS  2. Desta forma, temos que
+Pii
+
+
+
+covxi , xi 
+
+
+
+E(xi  x)(xi  x)T , i  1, 2
+
+(12)
+
+A fusao das estimativas x1 e x2 pode ser formulada como uma combinacao linear cujos coeficientes sao matrizes de ponderacao a serem determinadas (Zhu, 2003). Se x e o vetor otimo
+de estados estimados resultante desta combinacao,
+tem-se (Zhu, 2003 Albuquerque, 2012)
+x  T x
+
+(13)
+
+
+T
+
+
+onde x  xT1 , xT2
+e T  T1 , T2 . As matrizes de ponderacao i , de dimensao n  n, sao
+obtidas como solucao do seguinte problema de
+otimizacao com restricao matricial de igualdade
+(Zhu, 2003 Albuquerque, 2012)
+
+(6)
+
+min E(T x  x)(T x  x)T 
+
+
+Logo, o vetor_de_estados estimados pelo Metodo da Maxima  e dado por
+x  (HT WH)1 HT Dz
+
+(7)
+
+Nota-se que a equacao (7) nao esta exatamente na forma da Equacao Normal convencional,
+o que seria desejavel. Para contornar esta dificuldade, definimos
+z , (I  Rp )1 z
+
+(9)
+
+ou equivalentemente
+GW x  HT Wz
+
+ISSN 2525-8311
+
+(10)
+
+(14)
+
+onde   I IT tem dimensao 2n  n e I e a
+matriz identidade n  n. O criterio utilizado no
+problema de otimizacao acima busca minimizar a
+covariancia do erro (x  x). Pode ser mostrado
+que o problema (14) possui uma unica solucao em
+, sendo que as submatrizes i sao obtidas da
+equacao (Zhu, 2003 Albuquerque, 2012)
+
+(8)
+
+e portanto, utilizando a definicao de W podemos
+re-escrever (7) como
+x  (HT WH)1 HT Wz
+
+T   I
+
+s.a
+
+i 
+
+2
+X
+
+1
+! 2
+X
+
+
+P1
+P1
+ik
+jk
+
+k1
+
+j,k1
+
+(15)
+
+Para o caso de apenas duas classes de sensores
+a Equacao (13) torna-se
+x  T1 x1 + T2 x2
+
+(16)
+
+2117
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+sendo que as matrizes 1 e 2 sao obtidas a partir
+de (15), resultando na seguinte equacao
+x  (P22  P21 )(P11 + P22  P12  P21 )1 x1 +
++(P11  P12 )(P11 + P22  P12  P21 )1 x2 )
+(17)
+
+A Eq. (17) e conhecida como formula de fusao
+de Bar-Shalom-Campo para a fusao de dados no
+caso particular de dois sensores (Zhu, 2003 Albuquerque, 2012). No caso de interesse, em que as
+estimativas x1 e x2 sao nao correlacionadas, ou
+seja, Pij  Pji  0, e realizando algumas manipulacoes matematicas, a formula de fusao (17)
+torna-se
+1 1
+1
+x  (P1
+(P1
+11 + P22 )
+11 x1 + P22 x2 )
+
+(18)
+
+tensao, injecao e fluxo de potencia ativa e reativa de forma convencional. Ja o estimador MCC
+para medidas oriundas de PMUs faz uso de medidas do fasor tensao e corrente, representadas em
+coordenadas_retangulares para permitir o uso de
+um modelo de medicao linear (Zhou et al., 2006).
+Quando a estimacao_de_estados e finalizada nos
+dois estimadores, os elementos necessarios para fusao sao enviadas para o segundo estagio, de onde
+obtem-se as estimativas finais dos estados. Tal
+procedimento e sumarizado na Figura 1.
+1 Estágio
+
+Estimador MCC
+para medidas
+PMUs
+
+Estimador MCC
+para medidas
+SCADA
+
+onde, considerando-se que as estimativas individuais sao obtidas pelo Criterio da Maxima , tem-se x dado pela equacao (10).
+Conforme preconizado pela Eq. (18), o metodo de fusao_de_estimativas faz uso das matrizes de covariancia dos erros de estimacao correspondentes a cada classe de sensores envolvida no
+processo de estimacao. Portanto, para se estender a aplicacao do metodo de fusao descrito em
+(Simoes Costa et al., 2013) a estimadores de maxima , torna-se necessario determinar
+as matrizes de covariancia dos erros de estimacao
+produzidos por estes estimadores. O vetor dos erros de estimacao xx quando x e obtido mediante
+um estimador de maxima  e dado por
+T
+x  x  G1
+w H Wz  x
+1
+ GW (HT Wz  GW x)
+T
+ G1
+W H W(z  Hx)
+
+(19)
+
+ covxi , xi   E(xi  xi )(xi  xi )T 
+ G1
+(20)
+W,i
+
+Finalmente, este resultado permite reescrever (18)
+como
+(GW,1 + GW,2 )xM CC  GW,1 x1 + GW,2 x2 (21)
+onde os ndices 1 e 2 em (21) representam os sensores SCADA e PMU, respectivamente.
+4
+
+Arquitetura de Estimacao Proposta
+
+Tendo em vista o que foi apresentado nas secoes
+anteriores, pode-se propor a arquitetura de estimacao descrita abaixo, tendo como fundamento
+estimadores_de_estados baseados no criterio da
+maxima . Em um primeiro estagio,
+dois estimadores MCC sao implementados. O estimador que processa medidas provenientes do sistema SCADA e nao linear e utiliza medidas de
+
+ISSN 2525-8311
+
+Fusão de
+Estimativas
+MCC
+
+Estimativa
+Final
+
+Figura 1 Algoritmo proposto.
+
+A partir de (19), e possvel mostrar que a matriz
+de covariancia dos erros de estimacao para a classe
+de sensores i e dada simplesmente por
+Pii
+
+2 Estágio
+
+5
+
+Resultados
+
+O algoritmo proposto foi aplicado a diferentes
+sistemas-teste, porem, por limitacoes de espaco,
+apenas os resultados obtidos para o sistema-teste
+IEEE 14 barras (fig. 2) serao aqui apresentados.
+O plano de medicao apresentado nesta figura corresponde a medidas de injecao (fluxo) de potencia tanto ativa quanto reativa e medidas de tensao presentes apenas nas barras com geracao. Nas
+barras onde se tem a presenca de PMUs, ha medicao tanto do fasor tensao naquela barra quanto
+das correntes em todas as linhas conectadas a ela.
+O plano de medicao tanto para medidas SCADA
+como para medidas PMU e redundante o suficiente para permitir a analise de erros_grosseiros. A
+precisao adotada para os medidores e de 1 para
+medidas SCADA e 0,1 para medidas fasoriais.
+Os resultados apresentados nesta secao representam a media obtida apos a realizacao de 50
+simulacoes consecutivas.
+Primeiramente, leva-se em consideracao que
+o conjunto de medidas e completamente isento de
+erros_grosseiros. Com isso, obtem-se os resultados
+apresentados nas Figs. 3 e 4.
+
+2118
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Figura 2 Sistema-teste IEEE 14 barras.
+
+tendem a assumir valores intermediarios em relacao aos obtidos por aqueles, sendo considerados
+satisfatorios.
+Como mencionado na introducao, a maior
+vantagem da proposta deste artigo esta na rejeicao a erros_grosseiros, bem como nao ser necessario um novo processo de estimacao_de_estados
+apos a identificacao e remocao desses erros. Ao
+adotarmos estimadores baseados no MCC, o efeito
+das medidas espurias e eliminado mediante a atribuicao de ponderacao reduzida a essas medidas.
+Sendo assim, diversas simulacoes foram realizadas
+utilizando diversos tipos de erros_grosseiros para
+o conjunto de medidas disponvel, com ordem de
+grandeza entre 10 e 15 desvios-padrao. Devido as
+limitacoes de espaco, apenas uma combinacao sera
+aqui apresentada.
+Considera-se que ha um erro grosseiro no conjunto de medidas SCADA no fluxo de potencia
+ativa entre as barras 10 e 11. Alem disso, o plano
+de medicao fasorial tambem apresenta uma medida espuria, sendo ela presente na medida de corrente entre a barra 2 e 4. Com isso, os resultados
+obtidos para a media das 50 simulacoes podem ser
+vistos nas Figs. 5 e 6.
+
+Figura 3 Erro relativo do modulo da tensao para
+as tres etapas de estimacao em relacao aos valores
+obtidos pelo fluxo de potencia.
+Figura 5 Erro relativo do modulo da tensao para
+as tres etapas de estimacao em relacao aos valores
+obtidos pelo fluxo de potencia.
+
+Figura 4 Erro relativo de angulo para as tres etapas de estimacao em relacao aos valores obtidos
+pelo fluxo de potencia.
+
+Apesar das diferencas de precisao e processamento dos dados entre os sistema SCADA e PMU,
+percebe-se que os resultados obtidos pela fusao
+acompanham o comportamento dos estimadores
+individuais, apresentando erros de estimacao que
+
+ISSN 2525-8311
+
+Figura 6 Erro relativo de angulo para as tres etapas de estimacao em relacao aos valores obtidos
+pelo fluxo de potencia.
+Comparando-se as figuras 5 e 6 com as figuras 3 e 4, podemos perceber que a presenca de er-
+
+2119
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ros grosseiros nao afeta sensivelmente a qualidade
+das estimativas, ja que os resultados sao bastante
+similares aos obtidos na sua ausencia. Estes resultados sao indicadores da aplicabilidade da arquitetura proposta, que portanto se mostra uma
+metodologia de estimacao_de_estados promissora
+e resiliente face a ocorrencia de medidas espurias.
+6
+
+Conclusoes
+
+Este artigo tem por objetivo expandir as estrategias de fusao_de_estimativas de estados mediante a adocao de criterios de maxima 
+para estimadores individuais que processam medidas provenientes de sensores SCADA e PMU.
+Tais criterios, quando aplicado a EESP, mostramse resilientes a ocorrencia de erros_grosseiros, estejam eles presentes em medidas SCADA ou fasoriais. Alem disso, o algoritmo proposto confirma
+os bons resultados da abordagem via fusao_de_estimativas anteriormente apresentado na literatura
+que aborda a inclusao de medidas fasoriais na esitmacao de estados em sistemas_de_potencia.
+Agradecimentos
+Os autores agradecem o apoio financeiro do
+CNPq mediante os projetos 4007992014-6 e
+3120372013-9 (A. Simoes Costa).
+Referencias
+Abur, A. e Exposito, A. G. (2004). Power System
+State Estimation Theory and Implementation,
+Marcel Dekker.
+Albuquerque, A. (2012). Estrategias em dois estagios
+para incorporar medidas_fasoriais_sincronizadas
+na estimacao_de_estados_em_sistemas_de_potencia,
+Masters thesis, UFSC.
+Clements, K. A. e Simoes Costa, A. (1998). Topology
+Error Identification using Normalized Lagrange
+Multipliers, IEEE Transactions on Power Systems 13(2) 347353.
+Krstulovic, J., Miranda, V., Simoes Costa, A. J. A. e
+Pereira, J. (2013). Towards an auto-associative
+topology state estimator, Power Systems, IEEE
+Transactions on 28(3) 33113318.
+Liu, W., Pokharel, P. e Principe, J. (2006). Correntropy A localized similarity measure, Neural
+Networks, 2006. IJCNN 06. International Joint
+Conference on, pp. 49194924.
+Mili, L., Cheniae, M., Vichare, N. e Rousseeuw, P.
+(1996). Robust state estimation based on projection statistics of power systems, Power Systems,
+IEEE Transactions on 11(2) 11181127.
+Miranda, V., Santos, A. e Pereira, J. (2009). State
+estimation based on correntropy A proof of
+concept, Power Systems, IEEE Transactions on
+24(4) 18881889.
+Mitchell, H. B. (2007). Multi-sensor data fusion an
+introduction, Springer.
+
+ISSN 2525-8311
+
+Monticelli, A. (1999). State Estimation in Electric Power Systems A Generalized Approach,
+Kluwers Power Eletronics and Power Systems
+Series, New York.
+Monticelli, A. e Garcia, A. (1983). Reliable bad
+data processing for real-time state estimation,
+IEEE Transactions on Power Systems PAS102(5) 11261139.
+Monticelli, A., Wu, F. F. e Yen, M. S. (1986). Multiple bad data identification for state estimation
+by combinatorial optimization, IEEE Transactions on Power Delivery 1(3) 361369.
+Opara, J. K. (2013). Information Theoretic State Estimation in Power Systems, PhD thesis, Faculdade
+de Engenharia da Universidade do Porto.
+Parzen, E. (1962). On estimation of a probability density function and mode, Annals of Mathematical
+Statistics 3(3) 10651076.
+Phadke, A. e Thorp, J. (2008). Synchronized phasor measurements and their applications, Springer Verlag.
+Pires, R., Costa, A. e Mili, L. (1999). Iteratively reweighted least-squares state estimation through Givens rotations, Power Systems, IEEE
+Transactions on 14(4) 14991507.
+Principe, J. C. (2010). Information theoretic learning
+Renyis Entropy and Kernel Perspectives, Vol. 1,
+1st edn, Springer.
+Principe, J. e Xu, D. (1999). An introduction to information theoretic learning, Neural Networks,
+1999. IJCNN 99. International Joint Conference
+on, Vol. 3, pp. 17831787 vol.3.
+Simoes Costa, A., Albuquerque, A. e Bez, D. (2013).
+An estimation fusion method for including phasor measurements into power system real-time
+modeling, Power Systems, IEEE Transactions on
+28(2) 19101920.
+Simoes Costa, A., Rolim, J. G. e Aitchison, P. W.
+(1991). Iterative bad-data suppression applied
+to state estimators based on the augmented matrix method, Electric Power Systems Research
+20 205  213.
+Wu, F. F. (1990). Power system state estimation
+a survey, Electrical Power  Energy Systems
+12(2) 8087.
+Wu, W., Guo, Y., Zhang, B., Bose, A. e Hongbin, S.
+(2011). Robust state estimation method based on
+maximum exponential square, IET Generation,
+Transmission and Distribution 5 11651172.
+Zhou, M., Centeno, V., Thorp, J. e Phadke, A.
+(2006). An alternative for including phasor measurements in state estimators, Power Systems,
+IEEE Transactions on 21(4) 19301937.
+Zhu, Y. (2003). Multisensor decision and estimation
+fusion, Kluwer Academic Publishers.
+Zhuang, F. e Balasubramanian, R. (1985). Bad
+data suppression in power system state estimation with a variable quadratic-constant criterion,
+Power Apparatus and Systems, IEEE Transactions on PAS-104(4) 857  863.
+
+2120

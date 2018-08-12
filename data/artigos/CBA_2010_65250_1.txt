@@ -1,0 +1,904 @@
+CONTROLE ÓTIMO APLICADO A INVERSORES PWM VALIDAÇÃO EXPERIMENTAL DE
+ACORDO COM A NORMA IEC62040-3 E CERTIFICAÇÃO DE DESEMPENHO USANDO LMIS
+VINÍCIUS F. MONTAGNER* SAMUEL P. RIBAS* HUMBERTO PINHEIRO* RICARDO C. L. F. OLIVEIRA
+*
+
+Grupo de Eletrônica de Potência e Controle
+Universidade Federal de Santa Maria UFSM
+97105-900, Santa Maria, RS, Brasil
+
+
+Faculdade de Engenharia Elétrica e de Computação
+Universidade Estadual de Campinas  UNICAMP
+13083-852, Campinas, SP, Brasil
+
+E-mails vfmontagner@gmail.com samuelpolato@yahoo.com.br
+humberto.ctlab.ufsm.br@gmail.com ricfow@dt.fee.unicamp.br
+Abstract
+This work presents the design and experimental validation of a discrete linear quadratic regulator suitable to control
+single phase PWM inverters with linear and nonlinear loads, with results complying with IEC62040-3 Standard for
+uninterruptible power supplies. The load is modelled here as a disturbance of current, allowing to describe any type of load and
+also to verify the closed-loop performance using standard system norms. The control action is a linear combination of the plant
+states and the states of an internal model principle based controller, allowing to track sinusoidal reference signals in the presence
+of load disturbances with harmonics. The controller is implemented using a fixed point digital signal processor which introduces
+constraints to the design as a delay in the application of the control signal and also limitations on precision and dynamic range of
+data representation. Differently from most works dealing with the same plant, the performance of the closed-loop system is
+certified here by means of convex optimization problems measuring the system capacity of rejection of diturbances. The
+experimental results obtained for a prototype of 0.5kVA with 120V RMS, 60Hz with linear and nonlinear loads prove that the
+output of the system complies with IEC62040-3 Standard.
+Keywords
+ PWM inverters, optimal control, digital control, linear matrix inequalities, convex optimization.
+Resumo
+ Este trabalho apresenta o projeto e a validação experimental de um regulador_linear_quadrático discreto aplicável a
+inversores PWM monofásicos com cargas lineares e não-lineares, com resultados que cumprem requisitos da norma IEC62040-3
+para fontes_ininterruptas_de_energia. A carga é modelada aqui como um distúrbio de corrente, permitindo descrever qualquer tipo
+de carga e também verificar o desempenho em malha_fechada usando normas padrão para sistemas. A ação de controle é uma
+combinação_linear dos estados da planta e de um controlador baseado no princípio do modelo interno, possibilitando rastrear
+sinais de referência sinusoidais na presença de distúrbios de carga com harmônicas. O controlador é implementado usando um
+processador_digital_de_sinais de ponto_fixo, que introduz restrições no projeto como um atraso na aplicação do sinal de controle e
+também limitações de precisão e de faixa dinâmica na representação dos dados. Diferentemente da maioria dos trabalhos sobre a
+mesma planta, o desempenho de malha_fechada é certificado aqui por meio de problemas_de_otimização_convexa que medem a
+capacidade de rejeição_de_distúrbios do sistema. Os resultados experimentais obtidos para um protótipo de 0.5kVA, 120 V RMS,
+60Hz com cargas lineares e não-lineares provam que a saída do sistema cumpre requisitos da norma IEC62040-3.
+Palavras-chave
+ .
+
+destas cargas_não_lineares. Controladores baseados
+no princípio do modelo interno (Francis and
+Wonham, 1976) são úteis neste caso como, por
+exemplo, os controladores_ressonantes múltiplos e
+controladores_repetitivos (Botterón and Pinheiro,
+2006 Rech et al., 2003).
+O objetivo deste artigo é projetar um controlador
+ótimo por realimentação_de_estados, adequado para
+aplicações em sistemas UPS, implementando o
+algoritmo de controle em um processador digital de
+ponto_fixo. O sistema_de_controle proposto utiliza um
+controlador baseado no princípio do modelo interno
+para garantir o rastreamento da referência e rejeitar
+os distúrbios provenientes da carga. Devido 
+limitação da representação dos dados no processador
+de ponto_fixo, é proposta uma modificação no
+controlador baseado no princípio do modelo interno
+para respeitar as restrições de faixa dinâmica e de
+resolução do processador. O atraso imposto pela
+implementação digital também é considerado no
+
+1 Introdução
+Inversores PWM são utilizados em várias aplicações,
+sendo que uma das mais importantes são as fontes
+ininterruptas de energia (Uninterruptible Power
+Supplies - UPS) (Botterón and Pinheiro, 2006
+Erickson and Maksimovic, 2001 Mattavelli, 2005
+Rech et al., 2003). As UPS geralmente são utilizadas
+para alimentar cargas críticas como, por exemplo,
+sistemas de telecomunicações e equipamentos de
+suporte a vida, os quais necessitam de fontes de
+energia com uma forma de onda sinusoidal com baixa
+distorção_harmônica, como está prescrito na norma
+IEC 62040-3. As cargas de UPS muitas vezes têm na
+entrada um retificador não controlado com filtro
+capacitivo (carga não_linear), o que produz uma
+corrente com harmônicas. O controle em malha
+fechada deve ser capaz de garantir que o sistema
+rastreie um sinal de referência sinusoidal na presença
+
+3121
+
+projeto do controle. O controlador ótimo utilizado é
+um regulador_linear_quadrático, que permite impor
+limitações s variáveis de estado e  ação de controle.
+Um protótipo de uma UPS com 0.5 kVA, 120 V
+RMS, 60 Hz é utilizado com o objetivo de verificar o
+desempenho do sistema_de_controle. As simulações e
+os resultados experimentais provam que o sistema em
+malha_fechada tem uma tensão de saída de boa
+qualidade em termos de baixa distorção_harmônica
+para cargas lineares e não-lineares, estando de acordo
+com as especificações de espectro harmônico
+previstas na norma IEC 62040-3. Como outra
+contribuição do artigo, o desempenho é certificado
+por meio das normas H2 e H, calculadas usando
+condições baseadas em desigualdades matriciais
+lineares (Linear Matrix Inequalities - LMIs), que
+comprovam a estabilidade e a capacidade de rejeição
+de distúrbios do sistema em malha_fechada.
+
+1 Cf 
+ 0
+ 0 
+A
+ , B  1 L 
+
+1
+L
+0
+f
+
+
+ f
+(2)
+ 1 C f  ,
+F 
+ C  1 0
+ 0 
+É importante mencionar que a carga é modelada em
+(1) de uma forma bastante geral, permitindo
+representar a carga linear e a não_linear mostradas na
+Figura 1 e também qualquer que seja o tipo da
+corrente requerida por outros tipos de carga. Por
+exemplo, para a carga linear na Figura 1, o distúrbio
+io é dado, em regime_permanente, por uma forma de
+onda sinusoidal com frequência igual a frequência da
+referência. Para a carga não_linear da Figura 1, o
+padrão em regime_permanente de io é a superposição
+de componentes sinusoidais de frequência igual 
+frequência da referência (fundamental) e suas
+múltiplas (harmônicas).
+Para o rastreamento assintótico de um sinal
+sinusoidal de referência r , com frequência angular
+o , um controlador baseado no princípio do modelo
+
+2 Sistema de controle
+Considere o sistema da Figura 1, em que a planta é
+representada pela carga e pelo filtro de saída (Lf e Cf)
+e o sinal de controle u(t) é gerado pelo inversor
+PWM (atuador). Duas cargas típicas são mostradas
+na figura uma carga linear resistiva e uma carga não
+linear composta por um retificador a diodos com
+filtro capacitivo. O objetivo aqui é obter um
+controlador ótimo discreto_no_tempo, a ser
+implementado em um processador de ponto_fixo, tal
+que a tensão de saída vc rastreie uma referência
+sinusoidal, e que o espectro harmônico e a distorção
+harmônica total (Total Harmonic Distortion - THD)
+fiquem dentro dos limites especificados pela norma
+IEC 62040-3 para sistemas UPS.
+
+interno (CBPMI) é utilizado aqui, sendo dado por
+
+    +  e
+
+(3)
+
+O CBPMI em (3) é um controlador que tem sua
+dinâmica definida pelo rastreamento do erro
+ery
+(4)
+com estados internos    conhecidos para fins
+de controle e com
+
+0
+1 
+0
+1 
+
+,
+, 
+
+2
+2
+  (h1o ) 0  (h2o ) 0 
+(5)
+  diag
+
+0
+1
+ ...., 
+
+  ( h  ) 2 0
+
+
+q o
+
+
+
+
+  (0 (h1o ) 0 (h2o ) .... 0 (hq o ) )
+2q
+
+Em (5),  é uma matriz diagonal com blocos na
+diagonal principal dados por
+0
+
+ (h  ) 2
+i o
+
+
+e
+Figura 1. Inversor PWM, filtro de saída, cargas e processador
+digital de ponto_fixo usado para implementar o algoritmo de
+controle.
+
+O modelo da planta em espaço_de_estados é dado
+
+em que x  vC
+
+(1)
+
+5
+
+6
+
+7
+
+8
+
+garante-se um CBPMI com polos nas frequências
+o , 3o , 5o , 7o , 9o , 11o , 13o , 15o ,
+
+iL  é o vetor_de_estados, disponíveis
+
+para realimentação,
+
+ denota a transposta de  . h1 , h2 ,...., hq são
+
+inteiros positivos escolhidos pelo projetista de modo
+a selecionar a ordem das harmônicas presentes no
+distúrbio a serem rejeitadas. Por exemplo,
+escolhendo
+h1  1, h2  3, h3  5, h4  7,
+(6)
+h  9, h  11, h  13, h  15
+
+por
+
+ .
+x  Ax + Bu + Fio
+
+ y  Cx
+
+1
+, i  1,...., q
+0
+
+u é o sinal de controle, io é a
+
+permitindo a rejeição_de_distúrbios nas harmônicas
+ímpares até a 15 harmônica e também garantindo o
+rastreamento assintótico de uma referência sinusoidal
+com frequência  o .
+
+corrente de carga, modelada como um distúrbio
+exógeno, e y é a saída controlada, sendo as matrizes
+deste modelo dadas por
+
+3122
+
+0
+1
+0
+
+
+
+
+ ,   3392.92006587698
+
+11511906.5
+734306
+0
+
+
+
+
+
+2.1 Restrições do processador de ponto_fixo
+Para implementar as equações do CBPMI em um
+processador digital de ponto_fixo, as matrizes do
+modelo em tempo_discreto, dadas por (Astrm and
+Wittenmark, 1997)
+
+e
+
+Ts
+
+,
+
+Ts
+
+
+
+0
+
+Este sistema pode ser discretizado usando um ZOH
+com Ts  1  20160 , resultando nas matrizes discretas
+0.000049369340
+ 0.985871018518
+- 568.335226209954 0.985871018518 ,
+
+
+0.00000416425415
+0.16750622330475
+
+
+
+e d
+
+
+utilizando um amostrador-retentor de ordem zero
+(ZOH) como método de discretização, em que Ts é o
+
+com autovalores
+0.98587101851831  0.16750622330475i
+Percebe-se claramente que um dos elementos das
+matrizes discretas está fora dos limites da faixa
+dinâmica do formato Q22. Além disso, os
+autovalores
+são
+instáveis
+(módulo
+de
+1.00000000000008) devido  limitação da resolução
+no processo de discretização. Uma solução para este
+problema é representar as matrizes do CBPMI como
+e
+com
+em
+(7)-(8),
+com
+  0.0005
+T  diag ( 230, 0.5) , fazendo com que as matrizes
+discretas do CBPMI sejam
+
+período de amostragem, devem ter elementos que
+respeitem as restrições de faixa dinâmica e de
+resolução do processador. Por exemplo, no formato
+Q22 (IQmath Library, 2002), os dados no
+processador são representados em valores que vão de
++511.999999762 até -512 (faixa dinâmica), em
+intervalos de 0.000000238 (resolução). Para respeitar
+tais restrições, o CBPMI pode ser modificado para a
+forma
+(7)
+    +  e
+sendo
+
+  T  T 1 ,   T  ,
+
+
+0
+1
+
+
+
+,
+
+2
+  (h1o )  (2 h1o )
+
+  diag
+
+0
+1
+
+ ...., 
+ (h  ) 2  (2 h  ) 
+
+q o
+q o 
+
+
+
+ 0.98587181074435
+d  
+- 1.23540739912307
+0.00095772475205
+d  
+
+0.08374606424006
+
+(8)
+
+0.02270798533562
+,
+0.98570431861586
+
+Os autovalores de  d são
+0.98578806468010  0.16749210754359i
+com módulo de 0.99991585373727. Nota-se uma
+boa correspondência entre estes autovalores e os
+anteriores. Contudo, diferentemente das matrizes
+discretas anteriores, os autovalores são estáveis e os
+elementos de  d e de d são representáveis dentro
+
+Em (7), T representa a matriz da transformação tal
+que   T . Nota-se que em (8)  é modificado
+em relação a  apresentado em (3), com a introdução
+do fator de amortecimento  . Se  é escolhido
+com um valor próximo a zero (e não igual a zero), os
+polos do CBPMI são alocados no semiplano
+esquerdo do plano complexo, próximos da frequência
+ o e de suas múltiplas (e não exatamente nestas
+
+da faixa dinâmica do formato Q22. A solução
+apresentada neste exemplo pode ser usada para
+outros formatos de representação dos dados.
+2.2 Sistema aumentado e projeto do controlador
+
+frequências,
+sobre
+o
+eixo
+imaginário).
+Consequentemente, na representação discretizada do
+CBPMI, estes polos são mapeados para posições
+dentro do círculo de raio unitário (e não exatamente
+sobre a borda do círculo), de modo que as restrições
+impostas pela resolução do processador digital não
+façam com que a representação discreta do CBPMI
+se torne instável. A matriz de transformação T deve
+ser escolhida de modo que garanta que as matrizes do
+CBPMI discretizado
+(9)
+ (k + 1)    ( k ) +  e( k )
+
+Outra limitação a ser considerada é o atraso
+introduzido devido  implementação digital da lei de
+controle. O sinal de controle calculado no instante
+kTs só poderá ser implementado no instante
+
+dadas por
+
+sendo
+
+d
+
+( k + 1)Ts . Este atraso pode ser levado em
+consideração no modelo acrescentando um estado
+adicional  (k ) , tal que (Astrm and Wittenmark,
+1997)
+(11)
+x(k + 1)  Ad x(k ) + Bd  (k ) + Fd io (k )
+
+ (k + 1)  u (k )
+
+d
+
+Ts
+
+ d  e Ts , d   e  d
+
+Ad  e ATs ,
+
+(10)
+
+0
+
+(12)
+
+Ts
+
+Ts
+
+0
+
+0
+
+Bd   e A Bd , Fd   e A Fd
+
+possuam elementos que sejam representáveis no
+formato disponível na plataforma digital escolhida.
+Como exemplo, considere-se o CBPMI (3) com
+matrizes
+
+as matrizes discretas da planta.
+É possível representar o sistema por um modelo
+aumentado dado por
+(13)
+z (k + 1)  Gz ( k ) + H1u ( k ) + H 2 io ( k ) + H 3r (k )
+
+3123
+
+O processador_digital_de_sinais (DSP) utilizado é
+o TMS320F2812 de 32 bits, com arquitetura de
+ponto_fixo, da Texas Instruments. O formato de
+dados escolhido é o Q22. O CBPMI tem as
+harmônicas compensadas nas frequências mostradas
+em (6), que estão entre as mais significativas
+drenadas pela carga não_linear, o amortecimento
+usado em (8) é   0.0005 e a matriz de
+transformação, também utilizada em (8) é
+T  diag ( 230, 0.5, 230, 0.5,...., 230, 0.5 ) , fazendo
+com que as matrizes discretas do CBPMI (9) sejam
+implementáveis no formato Q22.
+Os pesos das matrizes do regulador linear
+quadrático são
+Q  diag (5000, 1, 5000, 1, 100, 1, 100, 1, 100,
+
+em que
+
+ Ad
+Bd 0 2 x 2 q 
+ x (k ) 
+
+
+
+
+z (k )   (k )  , G   01x 2
+01x1 01x 2 q  ,
+ d C 0 2 qx1  d 
+ (k ) 
+
+
+
+(14)
+ 0 2 x1 
+ Fd 
+0
+ 2 x1 
+
+
+
+
+H 1   1  , H 2   01x1  , H 3   01x1 
+0 2 qx1 
+0 2 qx1 
+ d 
+
+
+
+
+A partir do sistema aumentado, pode ser
+utilizada uma lei de controle por realimentação de
+estados para garantir estabilidade e desempenho,
+respeitando as limitações físicas do sistema e também
+a limitação da representação dos estados e do sinal de
+controle no processador digital de ponto_fixo. Nesse
+sentido, o regulador_linear_quadrático torna-se uma
+boa escolha. Essa técnica de controle_ótimo garante
+que a função custo
+(15)
+1 
+J   z (k ) Qz ( k ) + u ( k ) Ru ( k )
+2 k 0
+
+1, 100, 1, 100, 1, 100, 1, 100, 1, 100 ) , R  1
+resultando nos ganhos do controlador mostrados em
+(19), de forma sequencial, de k1 até k19. Esses ganhos
+foram obtidos por meio da função dlqr no programa
+Matlab e são, respectivamente, os ganhos de
+realimentação dos estados vC (tensão no capacitor),
+
+em que Q é uma matriz semidefinida positiva e R é
+um escalar positivo para o sistema em questão, é
+minimizada por uma lei de controle na forma
+(16)
+u (k )   Kz ( k )
+com ganhos dados por
+(17)
+K  ( H 1  SH 1 + R) 1 ( H 1  SG )
+
+iL (corrente no indutor),  (estado relativo ao atraso
+
+de transporte) e  (estados do CBPMI).
+Os resultados de simulação e os resultados
+experimentais mostrados a seguir foram obtidos
+utilizando os ganhos dados em (19), truncados de
+acordo com as limitações do formato Q22.
+
+obtidos da solução da equação de Riccati discreta
+(18)
+G  SG  S  (G  SH 1 )( H 1  SH 1 + R) 1 ( H 1  SG )
+
++Q 0
+Rotinas especializadas como o dlqr do Matlab
+podem fornecer os ganhos K, a partir do
+conhecimento das matrizes G e H1 e dos pesos das
+matrizes Q e R da função custo. Esse controlador é
+interessante para aplicações com processadores
+digitais de ponto_fixo, uma vez que, escolhendo Q e
+R adequadamente, os valores das variáveis de estado
+e do sinal de controle podem ser mantidos dentro da
+faixa dinâmica do processador e a saturação do
+atuador também pode ser evitada.
+
+Tabela 1. Parâmetros do protótipo.
+
+Parâmetro
+
+Valor
+
+Barramento CC
+Indutância do filtro de
+saída
+Capacitância do filtro de
+saída
+Carga linear
+
+E  230 V
+
+Carga não_linear
+3 Resultados experimentais
+Tensão de saída (RMS)
+Frequência
+Potência de saída
+Frequência de
+amostragem
+Frequência de
+comutação
+
+Um protótipo de uma UPS, como a da Figura 1, foi
+construído em laboratório, de modo a validar o
+controlador projetado e verificar se os resultados
+estão de acordo com especificações da norma IEC
+62040-3. Os parâmetros do protótipo são mostrados
+na Tabela 1.
+A carga linear foi escolhida de modo a se obter
+uma potência de saída de 0.5 kVA, e a carga não
+linear na Figura 1 foi especificada por meio da norma
+IEC 62040-3. Percebe-se que a frequência de
+amostragem é duas vezes a frequência de comutação,
+indicando a existência de duas amostras por período
+de comutação, reduzindo o atraso imposto pela
+implementação digital, melhorando a qualidade dos
+resultados.
+
+Lf  886 H
+Cf  20 F
+RL  30 
+RNL  60 
+CNL  2350 F
+RS  1.2 
+120 V
+60 Hz
+0.5 kVA
+20160 Hz
+10080 Hz
+
+A simulação do sistema em malha_fechada com
+carga linear nominal é mostrada na Figura 2. A boa
+qualidade da forma de onda da tensão de saída e o
+bom rastreamento da referência são prontamente
+observados.
+
+3124
+
+0.03740831522141
+6.88774246386549
+0.37774688855556
+0.01174909082105
+-0.11322726674170
+0.09044965309462
+-0.10722436645870
+0.22223687477349
+-0.09947942077231
+0.39165568140640
+-0.09042145082899
+0.58511577493429
+-0.08091508555514
+0.78753306022980
+-0.07220803466634
+0.97559524720359
+-0.06684958722266
+1.06646194275072
+-0.07322095678014
+
+(19)
+
+Figura 4. Resultado experimental do sistema em malha_fechada
+com carga linear nominal tensão de saída (vc) e corrente de carga
+(io).
+
+As componentes harmônicas de vc da Figura 4
+são dadas na Figura 5, fazendo uma comparação com
+os valores estabelecidos pela norma IEC 62040-3,
+comprovando que o sistema em malha_fechada
+satisfaz os requisitos da norma para todas as
+componentes harmônicas.
+6
+5
+4
+3
+2
+1
+
+Figura 2. Simulação do sistema em malha_fechada com carga
+linear nominal tensão de saída (vc) e sinal de referência (vref).
+Sinal de referência mostrado com deslocamento de -200V.
+
+0
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
+
+Figura 5. Comparação das harmônicas da forma de onda vc da
+Figura 4 (barras da esquerda) com o valor máximo de cada
+componente harmônica especificado pela norma IEC 62040-3
+(barras da direita). Eixo vertical valor percentual da harmônica
+em relação ao valor da fundamental. Eixo horizontal ordem da
+harmônica.
+
+A Figura 3 mostra a tensão de saída e a corrente
+de carga para a mesma situação ilustrada na Figura 2.
+
+Um teste de desempenho mais rigoroso é a
+avaliação da qualidade da tensão de saída do sistema
+para a carga não_linear apresentada na Tabela 1, que
+foi especificada de acordo com a norma IEC 620403. Para esta carga, os resultados de simulação são
+mostrados na Figura 6 e na Figura 7. Assim como no
+teste anterior, os resultados são de boa qualidade.
+Figura 3. Simulação do sistema em malha_fechada com carga
+linear nominal tensão de saída (vc) e corrente de carga (io),
+multiplicada por fator de escala.
+
+A Figura 4 mostra o resultado experimental do
+sistema em malha_fechada com carga linear nominal,
+confirmando o bom desempenho do sistema. A boa
+qualidade da tensão de saída na Figura 4 é
+comprovada pela baixa THD 0.55.
+Figura 6. Simulação do sistema em malha_fechada com carga não
+linear especificada de acordo com a norma IEC 62040-3 tensão
+de saída (vc) e sinal de referência (vref). Sinal de referência
+mostrado com deslocamento de -200V.
+
+3125
+
+A Figura 10 confirma a boa qualidade do
+resultado com carga não_linear quando mais ciclos
+são observados. É interessante mencionar que mais
+harmônicas podem ser compensadas na estratégia de
+controle proposta, a fim de melhorar ainda mais a
+qualidade da forma de onda de saída, ao preço de um
+algoritmo de controle mais complexo. No caso em
+questão, as harmônicas compensadas são as
+apresentadas em (6), pois esta escolha mostrou ser
+suficiente para obter resultados que satisfazem a
+norma IEC 62040-3 em termos de conteúdo
+harmônico nos testes realizados.
+
+Figura 7. Simulação do sistema em malha_fechada com carga não
+linear especificada de acordo com a norma IEC 62040-3 para a
+mesma situação da Figura 6 tensão de saída (vc) e corrente de
+carga (io), multiplicada por fator de escala.
+
+A Figura 8 mostra o resultado experimental do
+sistema em malha_fechada com carga não_linear. A
+tensão de saída da Figura 8 possui THD igual a
+1.43, estando em conformidade com o estabelecido
+pela norma IEC 62040-3.
+
+Figura 10. Resultado experimental do sistema em malha_fechada
+com carga não_linear de acordo com a norma IEC 62040-3 tensão
+de saída (vc) e corrente de carga (io)
+
+4 Certificação de desempenho utilizando LMIs
+Diferentemente de trabalhos de controle aplicado
+encontrados na literatura de eletrônica_de_potência, o
+objetivo agora é certificar a estabilidade e a
+capacidade de rejeitar distúrbios em malha_fechada
+usando duas importantes medidas para sistemas
+dinâmicos as normas H2 e H. Essas normas são
+calculadas para o sistema (13) com os ganhos em
+(19), entrada dada por io e saída dada por vC,
+utilizando os problemas_de_otimização_convexa
+baseados em LMIs de (Palhares et al., 1997).
+Essas condições fornecem uma norma H2 igual a
+4.0807 para o sistema em malha_fechada. A
+interpretação deste resultado é que o sistema em
+malha_fechada é assintoticamente estável (a norma H2
+é finita) e que o valor RMS da saída é igual a 4.0807
+quando na entrada for aplicado um ruído branco.
+Alternativamente, 4.0807 é a energia total (ou ganho
+L2) da saída se um impulso unitário é aplicado na
+entrada.
+A norma H do sistema em malha_fechada
+calculada por meio das LMIs em questão é de
+10.6794. Isso significa que 10.6794 é a máxima
+razão entre a energia total da saída em relação 
+energia total da entrada (que deve ser finita). Além
+disso, 10.6794 é o limite superior para a magnitude
+da resposta em frequência do sistema em malha
+fechada. Uma vez que a entrada considerada é a
+corrente io e a saída é a tensão vC, tem-se que
+
+Figura 8. Resultado experimental do sistema em malha_fechada
+com carga não_linear especificada de acordo com a norma IEC
+62040-3 tensão de saída (vc) e corrente de carga (io).
+
+As componentes harmônicas de vc da Figura 8,
+são dadas na Figura 9, fazendo uma comparação com
+os valores estabelecidos pela norma IEC 62040-3.
+Novamente, o sistema em malha_fechada satisfaz os
+requisitos da norma para todas as componentes
+harmônicas, mostrando a boa capacidade de rejeição
+das harmônicas produzidas pela carga não_linear.
+6
+5
+4
+3
+2
+1
+0
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
+
+Figura 9. Comparação das harmônicas da forma de onda vc da
+Figura 8 (barras da esquerda) com o valor máximo de cada
+componente harmônica especificado pela norma IEC 62040-3
+(barras da direita). Eixo vertical valor percentual da harmônica
+em relação ao valor da fundamental. Eixo horizontal ordem da
+harmônica.
+
+3126
+
+10.6794 é um máximo para a impedância de saída do
+sistema em malha_fechada.
+
+Referências
+Astrm, K. J. and Wittenmark, B. (1997). Computercontrolled systems theory and design. PrenticeHall, Upper Saddle River, NJ.
+Botterón , F. and Pinheiro, H. (2006). Controlador
+discreto de alto_desempenho com base num
+modelo interno em eixos síncronos para UPS
+trifásica que satisfaz a norma IEC62040-3,
+Eletrônica de Potência. 11(2) 135147.
+Erickson, R. and Maksimovic, W. D. (2001).
+Fundamentals of power electronics. Springer,
+New York  NY.
+Francis, B. A. and Wonham, W. M. (1976). The
+internal model principle of control theory, IFAC
+Automatica. 12(5) 135147.
+IEC 62040-3. (1999). Uninterruptible power systems
+(UPS)  part 3 method of specifying the
+performance and test requirements.
+IQmath Library, Module users Guide C28x
+Foundation Software, Version 1.4.1, June 2002,
+Texas Instruments Inc.
+Mattavelli, P. (2005). An improved deadbeat control
+for UPS using disturbance observers, IEEE
+Trans. Power Electron. 52(1) 206212.
+Palhares, R. M., Takahashi, R. H. C. and Peres, P. L.
+D. (1997). H2 and H guaranteed costs
+computation for uncertain linear systems, Int.
+Journal of Systems Science. 28(2)183188.
+Rech, C., Pinheiro, H., Grndling, H. A., Hey, H. L.
+and Pinheiro, J. R. (2003). Comparison of digital
+control techniques with repetitive integral action
+for low cost PWM inverters, IEEE Trans. Power
+Electron. 18(1) 401410.
+
+5 Conclusão
+Este artigo apresentou a aplicação de um regulador
+linear quadrático a um sistema UPS utilizando um
+processador digital de ponto_fixo. O controlador
+emprega os estados da planta e de um CBPMI e é
+projetado respeitando as limitações impostas pela
+representação dos dados em um processador de ponto
+fixo e pelo atraso na aplicação da lei de controle
+proveniente da implementação digital. Os resultados
+de simulação e experimentais demonstram que o
+sistema em malha_fechada satisfaz requisitos da
+norma IEC 62040-3 para sistemas UPS. As normas
+H2 e H certificam a estabilidade e fornecem uma
+medida da capacidade de rejeição_de_distúrbios do
+sistema.
+
+Agradecimentos
+s agências CAPES e CNPq (projeto de pesquisa
+3072322009-3).
+
+3127

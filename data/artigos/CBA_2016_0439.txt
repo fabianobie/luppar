@@ -1,0 +1,613 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+SUPRESSAO DE OSCILACOES EM CONTROLE EXTREMAL VIA REDES NEURAIS
+Renato Borba Teixeira, Tiago Roux Oliveira, Jose Franco Machado do Amaral
+
+
+PEL  Programa de Pos-Graduacao em Engenharia Eletronica, Faculdade de Engenharia,
+Universidade do Estado do Rio de Janeiro - UERJ
+Rio de Janeiro, RJ, 20550-900
+Emails renatoteixeira13@gmail.com, tiagoroux@uerj.br, franco@uerj.br
+
+Abstract This work presents as the main goal to develop an artificial neural network that is able to suppress
+high-frequency oscillations in the output of an extremum seeking control system. High-frequency oscillation
+deteriorates the life of the actuator, excites high frequency modes of the plant and finally degrades the control
+performance in pratical applications. The artificial neural network used is a multilayer perceptron with one input,
+one hidden layer and one output. For the training was utilized only a small sample of the extremum seeking
+output. The results showed that neural networking developed is efficient to suppress the oscillations opening new
+possibilities to practical applications.
+Keywords
+
+extremum seeking control (ESC), artificial neural network (ANN)
+
+Resumo Este trabalho tem como principal objetivo desenvolver uma rede_neural artificial que seja capaz
+de suprimir oscilacoes de alta frequencia existentes na sada de um controlador extremal. A supressao dessas
+oscilacoes e importante pois elas causam deterioracao dos atuadores, excitam modos de alta frequencia da planta e
+prejudicam o desempenho de controle em aplicacoes praticas. A rede_neural artificial utilizada foi uma perceptron
+multicamadas com uma entrada e uma sada, com uma camada escondida, e para o seu treinamento foi utilizada
+uma pequena amostragem obtida da sada oscilatoria do controle_extremal. Os resultados obtidos mostraram
+eficiencia da rede_neural em suprimir as oscilacoes abrindo novas possibilidades para aplicacoes praticas.
+Palavras-chave
+
+
+
+Introducao
+
+O controle_extremal (Extremum Seeking Control
+- ESC) pode ser definido como um metodo em
+tempo_real para busca do extremo de uma funcao
+(maximo ou mnimo) (Aminde et al., 2013). O
+metodo tem se destacado atualmente pelo desenvolvimento de sua teoria e aplicacoes em diversos
+campos da industria (Ariyur and Krstic, 2003), e
+vem sendo aplicado em controle de veculos_autonomos (Zhang et al., 2007), controle de combustao
+(Killingsworth et al., 2009), dentre outros.
+Os algoritmos mais comuns de otimizacao utilizam a derivada ou gradiente dos parametros obtidos, entretanto, em muitos problemas de controle
+nao e possvel obter informacoes de forma online
+da planta, como o gradiente do parametro a ser
+otimizado e ate mesmo a funcao de custo. Alem
+disso, quando sao utilizados sensores para obtencao dos parametros surgem problemas de amplificacao de rudo e instabilidade em altas frequencias
+(Olalla et al., 2007).
+O metodo mais comum de ESC consiste na
+utilizacao de um filtro passa-alta na sada do sistema e aplicacao de uma pequena perturbacao senoidal para estimar o gradiente da funcao de custo
+que se deseja otimizar. Esse metodo e caracterizado pela simplicidade e rapida adaptacao (Ariyur
+and Krstic, 2003).
+Em (Aminde et al., 2013) podemos ver uma
+maneira nova de utilizar o ESC em conjunto com
+funcoes de monitoracao, aplicado para sistemas
+dinamicos nao-lineares com escape em tempo fi-
+
+ISSN 2525-8311
+
+nito (em malha_aberta) e que consegue obter convergencia global, encontrando o ponto extremo
+mesmo na presenca de outros maximos locais. Porem, o problema de oscilacao de alta frequencia em
+torno do ponto extremo encontrado ainda persiste,
+e esse efeito e indesejavel por causar problemas
+como a deterioracao do atuador, excitar modos de
+alta frequencia da planta e prejudicar o desempenho de controle em aplicacoes praticas.
+O objetivo desse artigo e apresentar uma
+forma de eliminar a oscilacao de alta frequencia
+em torno do ponto de extremo encontrado pelo
+ESC. Nesse artigo sera utilizado um ESC em conjunto com funcoes de monitoracao, semelhante ao
+encontrado em (Aminde et al., 2013), porem para
+cancelar a oscilacao de alta frequencia sera utilizada uma rede_neural artificial (RNA), que aprendera o comportamento do sinal indesejado e contribuira para anula-lo.
+Esse artigo esta organizado em quatro outras
+secoes. A segunda secao apresenta uma introducao sobre ESC utilizando funcoes de monitoracao, a terceira aborda redes_neurais artificiais, na
+quarta e apresentado o desenvolvimento, implementacao e aplicacao do ESC em conjunto com a
+RNA desenvolvida e na quinta a conclusao.
+
+2
+
+Controle Extremal
+
+Para otimizacao em tempo_real em sistemas de
+uma dimensao e grau relativo um, foi considerado
+o simples caso de um integrador com uma nao
+
+1494
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+linearidade na sada
+z  u
+
+(1)
+
+y  (z)
+
+(2)
+
+onde u  R e a entrada de controle, z  R e o vetor
+de estado e y  R e o sinal de sada medido. A funcao   R  R e a nao linearidade desconhecida
+que deve ser maximizada (ou minimizada), sendo
+localmente Lipschitz. Assume-se por conveniencia que o instante inicial e t0  0s. Em (1)-(2)
+os sinais de perturbacoes originalmente considerados em (Aminde et al., 2013) foram omitidos para
+simplificar a representacao.
+2.1
+
+Objetivo de Controle e Principal Hipotese
+
+O principal objetivo do ESC e a otimizacao em
+tempo_real, entretanto o ESC pode ser reformulado como um problema de rastreamento_de_trajetoria onde a direcao de controle e desconhecida
+(Oliveira et al., 2012). O objetivo do ESC aplicado e encontrar uma lei de controle u via realimentacao_de_sada, tal que, partindo de qualquer
+condicao inicial, o sistema seja conduzido para o
+ponto de extremo y   (z  ) de (2) e permaneca o
+mais proximo possvel desse ponto. Sem perda de
+generalidade, podemos considerar o problema de
+maximizacao e utilizar as notacoes 0 (z)  d(z)
+dz
+2
+
+(z)
+e 00 (z)  d dz
+, assumindo a seguinte hipotese.
+2
+(H1) (Funcao Objetivo) Existe um unico maximo z   R em que y   (z  ) e um extremo da
+funcao objetivo   R  R, satisfazendo
+
+0 (z  )  0,
+(z  ) > (z),
+
+00 (z  ) < 0
+z  R,
+
+z 6 z 
+
+e para qualquer  > 0, existe uma constante
+L () > 0 tal que
+L ()  0 (z), z 
+   z  z  z   < 2
+
+do estado que muda de sinal proximo do ponto de
+extremo de forma contnua.
+A partir de (4) e (H1), kp satisfaz
+kp (z)  kp > 0,
+
+e(t)  y(t)  ym (t),
+
+(6)
+
+onde ym  R e uma rampa gerada pelo modelo de
+referencia
+ym  rm ,
+(7)
+onde rm > 0 e uma constante. Para evitar que o
+sinal de referencia ym se torne ilimitado, pode-se
+saturar a sada do modelo em um limitante superior conhecido para y  , sem afetar o desempenho
+do sistema.
+A principal ideia em (Aminde et al., 2013) e
+projetar uma lei de controle onde y(t) se aproxime o mais perto possvel de ym , dessa maneira, y e conduzido para a vizinhanca do maximo
+y   (z  ) e permanece proximo do valor otimo
+y  . Para isso, foi proposta uma lei de controle u
+tal que o erro de rastreamento e(t) decaia ate que
+a vizinhanca- seja atingida, ou seja, a vizinhanca
+do maximo z  .
+Entretanto, uma vez que y alcanca a vizinhanca de y  , o HFG ira se aproximar de zero e a
+controlabilidade sera perdida. Consequentemente,
+o rastreamento de ym tambem ira parar. Porem a
+vizinhanca do maximo ja foi atingida, como desejado, e a estrategia_de_controle foi projetada para
+garantir que y ira permanecer proximo de y  .
+A partir de (3), (6) e (7), adicionando e subtraindo m e a equacao da derivada do erro no
+tempo temos
+e  kp u  rm + m e  m e,
+
+(8)
+
+e  e + kp (u + de ),
+
+(9)
+
+onde m > 0 e uma constante arbitraria e
+
+Equacao Basica do Erro
+
+de 
+
+A partir de (1) e (2) e possvel obter a derivada
+primeira do sinal de sada y, dada por
+y  kp (z)u
+
+(5)
+
+onde kp  L e uma constante de limite inferior
+conhecida para o HFG, considerando todas as incertezas em (.).
+O sinal de erro e dado por
+
+onde  e chamado vizinhanca- de z  e  pode
+ser escolhido arbitrariamente pequeno permitindo
+um L pequeno.
+2.2
+
+z 
+  ,
+
+(3)
+
+2.3
+
+1
+rm + m e .
+kp
+
+(10)
+
+Limitante Superior de Erro
+
+onde kp e o ganho de alta frequencia (High Frequency Gain- HFG) e pode ser dado como
+
+Em (Aminde et al., 2013) foi demonstrado que se
+a lei de controle
+
+kp (z)  0 (z) .
+
+u  sgn(kp )(t)sgn(e)
+
+(4)
+
+Da mesma forma que em (Oliveira et al.,
+2012), o sgn(kp ) tambem e chamado de direcao
+de controle. A hipotese (H1) nos leva a considerar
+o sistema_de_controle com um HFG dependente
+
+ISSN 2525-8311
+
+(11)
+
+for usada com uma funcao de modulacao nao negativa  satisfazendo
+  de  + ,
+
+(12)
+
+1495
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+e  > 0 sendo uma constante arbitraria e pequena,
+entao usando o Lema da Comparacao (Filippov,
+1960), tem-se t  ti , tM )
+e(t)  (t), (t)  e(ti )em (tti ) ,
+
+(13)
+
+onde ti  0, tM ).
+O principal problema e que o sgn(kp ) e desconhecido e, portanto, nao pode ser implementado.
+Em (Aminde et al., 2013) e apresentado um esquema de chaveamento, baseado em funcao de monitoracao, desenvolvido para resolver o problema
+do desconhecimento da direcao de controle fora da
+vizinhanca-. Tal lei de controle e apresentada a
+seguir.
+2.4
+
+m (t)  k (t),
+
+e(t)  m (t),
+
+k+m
+
+u  (1)
+
+(t)sgn(e),
+
+(14)
+
+onde k  1, 2, ... e o ndice de chaveamento gerado pela funcao de monitoracao, apresentada na
+proxima subsecao, utilizada para decidir quando
+u chaveia e m  0, 1. Assim, dependendo da
+escolha de m (0 ou 1) escolhemos o valor inicial
+de (1)k+m .
+Em (14), (t) > 0 e uma funcao de modulacao
+contnua designada para satistazer (12). Considerando (1)-(2), o modelo de referencia (7), a lei de
+controle (14) pode ser escolhida atraves da Proposicao 1 em (Aminde et al., 2013)
+
+
+1
+rm + m e + ,
+kp
+
+(15)
+
+onde (15) satisfaz (12) somente fora da regiao  .
+Funcao de Monitoracao
+
+Nessa subsecao e apresentada uma breve explicacao sobre o funcionamento da funcao de monitoracao (Oliveira et al., 2010). Lembrando que a inequacao (13) e garantida quando a direcao de controle e conhecida, e natural usar  em (13) como
+referencia para se decidir quando o chaveamento
+de u em (14) e necessario. Isto e, o chaveamento
+ocorre somente quando (13) e violada. Portanto,
+considerando a seguinte funcao
+k (t)  e(tk )em (ttk ) + r,
+
+(16)
+
+onde tk e o instante de chaveamento e r  0 e
+qualquer constante arbitrariamente pequena. E
+importante ressaltar que caso fosse utilizado um r
+com um valor suficientemente pequeno (da ordem
+de L ou  em (H1)), o problema de oscilacao
+no extremo seria reduzido porem para isso seria
+necessario um sinal de controle demasiadamente
+grande (conservador), o que nao e desejado e em
+alguns casos inviavel.
+
+ISSN 2525-8311
+
+t  tk , tk+1 ).
+
+(17)
+
+Note que de (16) e (17), tem-se e(t) < k (t)
+em t  tk . Dessa forma, tk e definido como o
+instante em que a funcao de monitoracao m (t)
+encontra e(t), isto e,
+(
+mint > tk  e(t)  k (t), se existir,
+tk+1 
++, caso contrario,
+(18)
+onde k  1, 2, ... e t0  0s.
+Para construcao, a seguinte desigualdade e obtida diretamente de (17).
+
+Lei de Controle
+
+No caso apresentado, a lei de controle para plantas
+com HFG desconhecido foi definida como
+
+2.5
+
+A funcao de monitoracao m e definida como
+
+2.6
+
+t  0, +).
+
+(19)
+
+Convergencia Global
+
+O teorema a seguir mostra que o controlador por
+realimentacao_de_sada baseado em funcao de monitoracao conduz z para a regiao  definida em
+(H1) onde encontra-se o valor desconhecido z  que
+maximiza y. Isto nao implica que z(t) permaneca
+em torno de  , t. Entretanto, a amplitude das
+oscilacoes em torno de y  podem ser feitas da ordem de r.
+Teorema 2.1 Considere o sistema (1), com
+sada ou funcao objetivo (2), lei te controle (14),
+modelo de referencia (7), funcao de monitoracao
+(16)-(17) e funcao de modulacao (15). Assumindo
+que (H1) seja satisfeita, entao (i) a regiao 
+em (H1) e globalmente atrativa, sendo alcancada
+em tempo finito e (ii) para L sificientemente pequeno, as oscilacoes de y(t) em torno do valor
+maximo y  podem ser feitas da ordem de r, com r
+definido em (16). Desde que o sinal ym possa ser
+saturado em (7), todos os sinais em malha_fechada
+permanecem uniformemente limitados.
+A prova para este teorema encontra-se em
+(Aminde et al., 2013), Teorema 1.
+Na Figura 1 e apresentado um diagrama de
+blocos basico do funcionamento do ESC, onde o
+sinal de erro e(t) e utilizado pela funcao de monitoracao para decidir a direcao de controle.
+3
+
+Redes Neurais Artificiais
+
+Redes Neurais Artificiais podem ser definidas
+como um conjunto de unidades de processamento
+composto por neuronios artificiais, que foram desenvolvidos utilizando como inspiracao o neuronio
+biologico. Possuem a capacidade de aquisicao e
+manutencao do conhecimento adquirido baseado
+em dados apresentados (Silva et al., 2010).
+As caractersticas mais relevantes relativas as
+aplicacoes de redes_neurais artificiais sao adaptacao por experiencia capacidade de aprendizado habilidade de generalizacao organizacao
+
+1496
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+3.2
+
+Algoritmo de Treinamento
+
+O algoritmo backpropagation utiliza o metodo supervisionado e consiste basicamente em apresentar os dados de entrada, comparar a sada obtida
+com o resultado desejado e essa diferenca ser utilizada para ajustar os pesos das camadas da rede da
+ultima camada ate a primeira. Essas etapas sao
+realizadas ate que o desempenho seja satisfatorio.
+Nesse trabalho foi utilizado o algoritmo backpropagation Levenberg-Marquardt, que e uma variacao do algoritmo backpropagation tradicional,
+porem mais rapido, utilizando matriz Jacobiana.
+4
+Figura 1 Diagrama de Blocos ESC
+
+de dados tolerancia a falhas armazenamento
+distribudo e facilidade de prototipagem (Silva
+et al., 2010).
+
+3.1
+
+Topologia da RNA
+
+Uma rede_neural artificial pode ser dividida basicamente em tres partes camada de entrada, camadas escondidas e camada de sada.
+A camada de entrada e responsavel pelo recebimento das informacoes de entrada, as camadas
+escondidas tem a funcao de realizar o processamento dos dados e a camada de sada de produzir
+e apresentar o resultado final (Silva et al., 2010).
+
+Desenvolvimento
+
+Este trabalho tem como objetivo desenvolver uma
+rede_neural artificial que seja capaz de aprender
+as oscilacoes de alta frequencia do ESC de forma
+que consiga anular tais oscilacoes. Na Figura 3 e
+apresentado o diagrama_de_blocos que mostra o
+funcionamento do sistema. O ESC e inicializado
+e quando atinge a regiao de maximo e realizada
+uma amostragem da sada y para treinamento em
+paralelo da RNA. Apos o treinamento da RNA
+ser concludo, a mesma e utilizada para cancelar
+as oscilacoes de alta frequencia do ESC, de forma
+que a sada se mantenha no ponto de extremo porem sem as oscilacoes indesejadas. Em conjunto
+com a RNA e utilizado um filtro passa-alta (High
+Pass Filter - HPF) com a finalidade de eliminar a
+componente contnua (DC) da sada da RNA.
+
+Nesse trabalho sera utilizada uma rede feedforward de camadas multiplas, como uma aproximadora universal de funcoes, aprendendo a funcao
+da oscilacao de alta frequencia indesejada (presente na sada da planta) e gerando o inverso da
+mesma, para cancela-la.
+A Figura 2 mostra como e a arquitetura da
+rede_neural que foi utilizada, sendo constituda de
+uma entrada, uma camada escondida de neuronios
+e uma sada. Em (Silva et al., 2010) e possvel ver
+de forma mais detalhada o princpio de funcionamento envolvendo o algoritmo backpropagation.
+
+Figura 3 Diagrama de Blocos ESC com RNA
+No sistema simulado a equacao da planta utilizada foi
+(z)  10  (z  5)2
+(20)
+
+Figura 2 Rede Perceptron Multicamadas
+
+ISSN 2525-8311
+
+onde o sistema composto pelo ESC e a RNA ira
+procurar o z   5 e y   10 que satisfazem (H1).
+Os parametros da monitoracao e do ESC foram
+m  0, 5 r  0, 1 tk  0 kp  1 rm  1, 5  
+0, 01. Para a realizacao do projeto foi utilizado o
+
+1497
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ambiente MatlabSimulink com o toolbox de redes
+neurais artificiais.
+Foi projetada uma RNA com uma entrada e
+uma sada, onde a entrada da RNA sera o valor
+do sinal atual de sada da planta (y). A definicao dos parametros da rede_neural desenvolvida,
+como o numero de neuronios na camada escondida
+e a quantidade de dados necessarios para treinamento, foi realizada de forma emprica.
+Em uma primeira etapa os dados para treinamento foram obtidos do sinal de sada da planta
+que esta em operacao. Na segunda etapa os dados foram separados entre 70 para treinamento,
+15 para validacao e 15 para teste. O conjunto
+de treinamento serve para ajustar os pesos dos
+neuronios, o conjunto de validacao para escolha e
+ajuste de parametros e o conjunto de teste serve
+para medir a capacidade de generalizacao da rede
+treinada. Nesse trabalho os parametros ajustados pelo conjunto de validacao foram o numero
+de neuronios na camada escondida e a quantidade
+de dados amostrados para treinamento da rede. A
+terceira etapa esta relacionada a aplicacao da rede
+e verificacao do desempenho.
+4.1
+
+Obtencao e Tratamento dos Dados
+
+Os dados de treinamento da RNA sao obtidos diretamente da sada da planta controlada pelo ESC
+(Figura 4), porem o intervalo de tempo inicial da
+fase transitoria, onde o maximo ainda esta sendo
+procurado, nao e utilizado. Portanto foram amostrados 1000 pontos de treinamento estando a sada
+da planta em torno do maximo (Figura 5).
+
+Figura 5 Dados amostrados para treinamento
+gura 5) pois a media e o desvio padrao foram respectivamente 9,90 e 0,03095, mostrando que nao
+existem grandes variacoes nos valores dos dados
+utilizados.
+4.2
+
+Treinamento e validacao
+
+O numero maximo de epocas nao foi limitado pois
+o algoritmo utiliza os dados da validacao para a
+parada antecipada (ocorre quando ha estagnacao
+do desempenho na validacao). Os neuronios da
+camada escondida utilizam a funcao sigmoide e o
+da camada de sada funcao linear.
+Os dados da validacao foram utilizados para
+definir o numero mnimo de dados para treinamento (D) e o numero de neuronios na camada
+escondida (H). Onde D variou de 100 a 1000 (com
+incrementos de 100) e H de 1 a 10 (com incrementos de 1), sendo que para cada variacao de H foram
+realizados 10 ensaios, resultando em um total de
+1000 redes criadas.
+Como medida de desempenho foram utilizadas a media e o desvio padrao do erro medio quadratico (Mean Square Error - MSE) e do numero
+de epocas referentes aos resultados obtidos atraves
+dos dados de validacao nos 10 ensaios.
+Utilizando a melhor RNA desenvolvida para
+cada quantidade de dados foi gerado o grafico mostrado na Figura 6, onde o eixo das abscissas representa o numero de dados de treinamento.
+
+Figura 4 Sinal de sada da planta com ESC
+Nesse trabalho o numero de dados de treinamento tambem e um parametro procurado, pois
+quanto menor o numero de dados necessarios para
+treinamento da RNA menor sera o tempo de
+amostragem o que implica em uma implementacao e aplicacao mais rapida da RNA no sistema.
+Nas proximas subsecoes e mostrado como esses
+dados foram divididos e avaliados.
+Nao foi necessario utilizar nenhuma normalizacao no conjunto de dados de treinamento (Fi-
+
+ISSN 2525-8311
+
+Figura 6 Numero de dados vs. MSE, Epocas e H
+Pelo grafico da Figura 6 e possvel constatar
+
+1498
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+que mesmo uma quantidade menor de dados, com
+poucos neuronios na camada escondida (H), apresentam um MSE baixo e um numero de epocas
+muito pequeno. Tambem e interessante observar
+que embora um numero maior de dados ocasione
+um MSE ainda menor, tambem implica em um numero maior de epocas de treinamento. Como esse
+trabalho busca encontrar uma RNA que utilize um
+menor numero de dados e epocas com um MSE
+aceitavel, foi utilizada uma RNA com 2 neuronios
+na camada escondida (H) e 100 dados de treinamento (D).
+4.3
+
+Resultados obtidos
+
+Apos a RNA estar pronta e ser acoplada a sada
+da planta, as oscilacoes em torno do maximo sao,
+basicamente, eliminadas, conforme e mostrado na
+Figura 7, onde inicialmente existe uma oscilacao
+em torno do ponto de maximo e a partir do instante t  20s, onde a RNA e acionada, a oscilacao
+e suprimida.
+
+5
+
+Conclusoes
+
+Nesse artigo foi apresentado um metodo de controle utilizando ESC com funcao de monitoracao
+e RNA, onde o ESC garante que a sada da planta
+convirja para uma vizinhanca do extremo e a RNA
+contribui para que a oscilacao em torno do extremo seja suprimida.
+Mesmo utilizando uma rede_neural artificial
+com poucos neuronios na camada escondida e poucos dados de treinamento foi possvel obter resultados motivadores, podendo-se esperar ainda que
+na presenca de perturbacoes de entrada e sada,
+as quais aumentam as oscilacoes que se deseja
+suprimir, as vantagens seriam ainda mais claras.
+Como continuidade desse trabalho planeja-se aplicar tal metodo em um sistema estabilizador, como
+por exemplo uma colher que neutraliza o tremor
+da mao de pessoas com Parkinson, comprovando
+tambem a aplicacao pratica do metodo proposto.
+Referencias
+Aminde, N. O., Oliveira, T. R. and Hsu, L. (2013).
+Global output-feedback extremum seeking control via monitoring functions, Decision and Control (CDC), 2013 IEEE 52nd Annual Conference
+on, IEEE, pp. 10311036.
+Ariyur, K. B. and Krstic, M. (2003). Real-time optimization by extremum-seeking control, John Wiley
+ Sons.
+Filippov, A. F. (1960). Differential equations with
+discontinuous right-hand side, Matematicheskii
+sbornik 93(1) 99128.
+
+Figura 7 Sinal de sada da planta com ESC antes
+e apos o acionamento da RNA em t  20s
+A busca pelo z  que maximiza y tambem se
+torna mais precisa, conforme visto na Figura 8.
+
+Killingsworth, N. J., Aceves, S. M., Flowers, D. L.,
+Espinosa-Loza, F. and Krstic, M. (2009). Hcci
+engine combustion-timing control Optimizing
+gains and fuel consumption via extremum seeking, Control Systems Technology, IEEE Transactions on 17(6) 13501361.
+Olalla, C., Arteaga, M. I., Leyva, R. and El Aroudi,
+A. (2007). Analysis and comparison of extremum
+seeking control techniques, IEEE ISIE Conf,
+pp. 726.
+Oliveira, T. R., Peixoto, A. J. and Hsu, L. (2012). Global real-time optimization by output-feedback
+extremum-seeking control with sliding modes,
+Journal of the Franklin Institute 349(4) 1397
+1415.
+Oliveira, T. R., Peixoto, A. J., Hsu, L. et al. (2010).
+Sliding mode control of uncertain multivariable
+nonlinear_systems with unknown control direction via switching and monitoring function, IEEE
+Transactions on Automatic Control 55(4) 1028.
+Silva, I. d., Spatti, D. H. and Flauzino, R. A. (2010).
+Redes neurais artificiais para engenharia e ciencias aplicadas, Sao Paulo Artliber pp. 33111.
+
+Figura 8 Busca pelo z  antes e apos o acionamento da RNA em t  20s
+
+ISSN 2525-8311
+
+Zhang, C., Siranosian, A. and Krstic, M. (2007).
+Extremum seeking for moderately unstable systems and for autonomous vehicle target tracking without position measurements, Automatica
+43(10) 18321839.
+
+1499

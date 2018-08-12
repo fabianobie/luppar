@@ -1,0 +1,1286 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+FILTRAGEM DE DISTURBIOS ELETRICOS BASEADA NA ANALISE DE
+COMPONENTES INDEPENDENTES DE CANAL UNICO
+Marcelo A. A. Lima , Ricardo A. L. Rabelo, Denis V. Coury, Augusto S. Cerqueira
+
+
+Departamento de Circuitos Eletricos
+Universidade Federal de Juiz de Fora
+Juiz de Fora, Minas Gerais, Brasil
+
+
+
+
+
+Programa de Pos-Graduacao em Ciencia da Computacao
+Universidade Federal do Piau
+Teresina, Piau, Brasil
+
+Departamento de Engenharia Eletrica, Escola de Engenharia de Sao Carlos
+Universidade de Sao Paulo
+Sao Carlos, Sao Paulo, Brasil
+
+Emails marcelo.lima@ufjf.edu.br, ricardoalr@ufpi.edu.br, coury@sc.usp.br,
+augusto.santiago@ufjf.edu.br
+Abstract This paper presents an application of the single channel independent component analysis (SCICA)
+algorithm for performing decomposition of power system waveforms containing multiple power quality (PQ)
+disturbances and acquired from only one PQ monitor. The SCICA uses the standard independent component
+analysis (ICA) applied to vectors of delayed samples from a same signal. It will be shown that as long as the
+multiple PQ independent disturbance waveforms are reasonably spectrally disjoint from each other, the method
+can blindly identify and approximately separate out and reconstruct the individual single disturbance waveforms.
+Keywords Adaptive filtering, Blind source separation, Independent component analysis, Multiple disturbance, Power quality, Single channel independent component analysis.
+Resumo Este artigo apresenta uma aplicacao do algoritmo de analise_de_componentes_independentes de
+canal unico (SCICA - Single-channel Independent Component Analysis) para realizar a decomposicao de formas
+de onda provenientes de um unico dispositivo_de_monitoramento e que contem multiplos_disturbios de qualidade
+da energia eletrica. O algoritmo SCICA utiliza a analise_de_componentes_independentes convencional aplicada em
+vetores de amostras atrasadas de um mesmo sinal. Sera mostrado que uma vez que as formas de onda dos multiplos
+disturbios independentes sejam espectralmente disjuntas entre si, o metodo e capaz de identificar de maneira naosupervisionada e aproximadamente separar e reconstruir as formas de onda dos disturbios individuais.
+Palavras-chave .
+
+1
+
+Introducao
+
+(Lu et al., 2008).
+
+O monitoramento inteligente da Qualidade da
+Energia Eletrica (QEE) e uma area que tem crescido ao longo dos ultimos anos, conforme o aumento da quantidade de dados registrados por
+monitores de QEE nas redes eletricas tem levado
+a necessidade de desenvolvimento de novos metodos que sejam capazes de extrair automaticamente informacoes uteis a partir dos dados medidos (Barrera et al., 2012). Estes metodos podem se beneficiar da combinacao de princpios de
+mineracao_de_dados, sistemas_inteligentes e algoritmos de processamento_de_sinais. Como um
+exemplo, a analise automatica de disturbios de
+QEE consiste em selecionar e extrair caractersticas significativas a partir das formas de onda
+que sejam relacionadas aos fenomenos que estejam sendo abordados. Um dos topicos emergentes
+relacionados a analise de QEE e a possibilidade de
+disturbios multiplos ou combinados ocorrerem ao
+mesmo tempo em uma mesma forma de onda, ja
+que um Sistema Eletrico de Potencia (SEP) e susceptvel a presenca de diversas fontes de disturbios
+
+Dentre os metodos que lidam com a possibilidade de ocorrencia de multiplos_disturbios, a
+maioria propoe resolver o problema de classificacao (Lu et al., 2008 Hooshmand and Enshaee,
+2010 Faisal and Mohamed, 2009), o qual normalmente compreende a extracao de parametros da
+forma de onda contendo multiplos_disturbios, seguida por alguma tecnica de reconhecimento de
+padroes, para identificar quais tipos de disturbios
+estejam ocorrendo simultaneamente. Entretanto,
+se a separacao dos multiplos_disturbios misturados em uma mesma forma de onda e a reconstrucao das formas de onda dos disturbios individuais pudessem ser realizadas, seria possvel um
+processamento e um diagnostico mais preciso e detalhado a respeito de cada disturbio individual que
+esteja ocorrendo. Dentro desse novo paradigma,
+Lima et al. (2012) propoe um metodo baseado
+na Analise de Componentes Independentes (ICA
+- Independent Component Analysis) (Hyvarinen
+et al., 2001) para identificar disturbios independentes em um cenario de multiplos_disturbios.
+
+3931
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+A ICA e uma tecnica originalmente aplicada
+a dados multivariados registrados por multiplos
+sensores dispostos em diferentes posicoes de um
+sistema. Entretanto, Lima et al. (2012) propoe
+a aplicacao da ICA para processar dados obtidos
+de um unico canal, empregando uma etapa de preprocessamento que gera multiplas observacoes (vetores de entrada) para a ICA a partir de um unico
+sinal medido, por meio de sua passagem por um
+banco de filtros_digitais lineares. Em Ferreira et al.
+(2012), as multiplas observacoes para a ICA sao
+geradas por meio da aplicacao de sucessivos atrasos temporais no sinal medido. Desta forma, este
+metodo nao necessita do projeto inicial de filtros.
+Neste artigo, o algoritmo SCICA (Singlechannel independent component analysis) proposto em Davies and James (2007) e utilizado
+como uma outra alternativa para aplicar a ICA no
+processamento_de_sinais de canal unico. O algoritmo SCICA e um caso especial da ICA multidimensional tambem aplicada a vetores de amostras
+atrasadas de um unico sinal. Isto implica que multiplos componentes estimados pela ICA possam
+estar associados a uma mesma fonte independente.
+Diferentemente de Ferreira et al. (2012), neste artigo as escalas dos componentes independentes sao
+recuperadas, superando uma indeterminacao inerente a propria ICA. Alem disso, os componentes
+independentes associados a uma mesma fonte sao
+agrupados juntos dentro de um mesmo subconjunto denominado cluster. Sera demonstrado que
+a aplicacao do algoritmo SCICA resulta em um
+conjunto de filtros_adaptativos lineares, cujos coeficientes sao obtidos de maneira totalmente naosupervisionada pela propria ICA. Uma vez que
+os multiplos_disturbios de QEE sejam suficientemente independentes e disjuntos espectralmente
+entre si, o metodo e capaz de identificar, separar e
+reconstruir as formas de onda dos disturbios individuais a partir de um unico sinal medido (unico
+sensor).
+O trabalho esta organizado como segue a Secao 2 apresenta sucintamente a ICA, a Secao 3
+descreve em mais detalhes o algoritmo SCICA, a
+Secao 4 propoe a aplicacao do algoritmo SCICA
+para decomposicao nao-supervisionada de sinais
+contendo multiplos_disturbios de QEE, e a Secao
+5 apresenta as conclusoes acerca deste trabalho.
+2
+
+Assumindo que os elementos de x sejam modelados como combinacoes lineares dos elementos
+do vetor aleatorio de fontes s  s1 , s2 , . . . , sP T ,
+pode-se escrever na forma matricial
+x  A  s,
+
+(1)
+
+onde os elementos de s sao mutuamente independentes entre si e A corresponde a uma matriz de
+mistura de dimensao M  P .
+Este modelo descreve como os dados observados xm , para m  1, 2, . . . , M , sao gerados a partir de um processo de mistura das fontes sp , para
+p  1, 2, . . . , P . Os componentes independentes
+sp nao sao diretamente observaveis. Alem disso,
+os coeficientes da matriz de mistura A sao assumidos desconhecidos. Portanto, apenas os dados
+observados xm sao conhecidos, e tanto a matriz de
+mistura A quanto os componentes independentes
+sp devem ser estimados a partir de x (Hyvarinen
+et al., 2001).
+A matriz de separacao W e estimada por meio
+da otimizacao de uma funcao objetivo que, direta
+ou indiretamente, mede a independencia estatstica dos elementos de y. Dentre as abordagens
+mais exploradas para tal otimizacao, estao a minimizacao da informacao mutua e a maximizacao
+da nao-gaussianidade (Hyvarinen et al., 2001).
+3
+
+O algoritmo SCICA
+
+O algoritmo SCICA e um caso especial da ICA
+multidimensional (MICA - Multi-dimensional Independent Component Analysis) (Castells et al.,
+2004) aplicada a vetores contendo amostras atrasadas de um mesmo sinal. Isto implica que multiplos componentes estimados pela ICA possam estar associados a uma mesma fonte independente.
+Portanto, alguma forma de pos-processamento se
+faz necessaria para agrupar tais componentes juntos. Conforme demonstrado por Davies and James (2007), ha algumas restricoes para que um
+algoritmo convencional de ICA (tal como o algoritmo FastICA (Hyvarinen et al., 2001)) possa ser
+utilizado para realizar a separacao_cega_de_fontes
+a partir dos dados obtidos por meio de um unico
+sensor. E demonstrado que a estrutura, obtida
+por meio do mapeamento de uma serie_temporal
+em um modelo multidimensional, implica que as
+fontes podem ser separadas e corretamente identificadas pela ICA somente se elas nao apresentarem
+sobreposicao espectral entre si.
+
+Analise de Componentes
+Independentes
+
+A ICA de um vetor aleatorio x
+
+x1 , x2 , . . . , xM T consiste em determinar uma
+transformacao linear y  W  x que maximiza a
+independencia estatstica entre os elementos do
+vetor aleatorio y  y1 , y2 , . . . , yP T (Hyvarinen
+et al., 2001), sendo W definida como a matriz de
+separacao entre os componentes independentes
+do vetor x.
+
+3.1
+
+Operacao do algoritmo
+
+O algoritmo SCICA inicialmente realiza o janelamento do sinal de entrada xn, de comprimento
+original de N amostras, dando origem a uma
+sequencia de M blocos contguos x , cada um de
+comprimento igual a K amostras e determinado
+
+3932
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+por
+
+podem ser mapeados de volta ao domnio das observacoes por meio da seguinte operacao (Davies
+and James, 2007)
+
+x m  xm  xm + 1    xm + K  1 ,
+(2)
+onde m  1, 2, . . . , M e o ndice do bloco,  e
+um atraso de tempo (em numero de amostras) e
+K  N  M  + 1 amostras. De forma a manter
+o comprimento original do sinal de entrada, sao
+acrescidas M   1 amostras iguais a zero antes do
+primeiro elemento de cada bloco x m, obtendo
+T
+
+M  1
+
+z
+
+xm  0 0   
+
+
+0
+
+x mT .
+
+x(p)
+s  A(,p) W(p,) x,
+(p)
+
+onde xs e um vetor de dimensao M  1 correspondente a p-esima fonte no domnio das obser(p)
+vacoes. Cada linha m do vetor xs representa o
+peso original da p-esima fonte no m-esimo sinal
+de observacao. Uma propriedade interessante do
+mapeamento das fontes de volta ao domnio das
+observacoes e que se alcanca uma decomposicao
+com reconstrucao perfeita de x, ou seja
+
+x
+x(p)
+(7)
+s .
+
+(3)
+
+Entao, uma matriz X e construda como
+sendo um conjunto de observacoes xm, da seguinte forma
+X  x1
+
+x2
+
+
+
+T
+
+xM  .
+
+p
+
+(4)
+
+Aplicando (6) para cada estimativa yp n em
+(5) para   1, obtem-se
+
+Cada linha da matriz X correspondera a uma observacao diferente. Em seguida, um algoritmo
+convencional de ICA (tal como o FastICA) e aplicado a matriz X para estimar as matrizes de mistura e separacao A e W, respectivamente.
+Para cada coluna k da matriz Y  WX,
+sendo k  1, . . . , K, e para m  1, . . . , M , obtemse
+ 
+
+m W(1,m) xm + k  1
+
+
+m W(2,m) xm + k  1 
+
+y M  + k  1  
+
+..
+
+
+.
+
+m W(P,m) xm + k  1
+
+x(p)
+s n  A(,p)
+
+W(p,M m) xn  m.
+
+(8)
+
+(p)
+
+Para estimar um escalar xs n a partir do
+(p)
+vetor xs n, Davies and James (2007) propoem
+o uso de uma tecnica denominada cycle-spinning
+(Coifman and Donoho, 1995), pois as estimativas
+das fontes reconstrudas sao dependentes do alinhamento de cada sinal de observacao em relacao
+ao sinal de entrada. Basicamente, para cada linha
+(p)
+do vetor xs n, o sinal yp n e transladado por
+um deslocamento a direita de j amostras, sendo
+j  0, M  1, e a media simples das M estimativas obtidas por esta operacao e calculada de forma
+(p)
+a obter o escalar xs n. Desta forma, a separacao
+sera dada por
+
+
+
+
+,
+
+
+M
+1
+
+m0
+
+Substituindo n  M  + k  1, obtem-se
+ M 1
+m0 W(1,M m) xn  m 
+ M 1 W(2,M m) xn  m 
+m0
+
+y n  
+..
+
+.
+M 1
+m0 W(P,M m) xn  m 
+
+(6)
+
+(5)
+
+x(p)
+s n 
+
+T
+
+onde yn  y1 n, y2 n, . . . , yP n . As estimativas de componentes independentes sao atrasadas
+em M   1 amostras em relacao a xn devido a
+operacao de insercao de M  1 zeros realizada em
+(3). Para   1, cada estimativa de componente
+independente yp n e equivalente a uma versao filtrada de xn, onde yp n  wp n xn e wp n
+e um filtro de resposta ao impulso finita (FIR - Finite Impulse Response) (Mitra, 2006) associado ao
+vetor linha W(p,) .
+A estimacao obtida pela ICA em (5) nao assegura a recuperacao das escalas originais dos componentes independentes. Isto ocorre porque tanto
+a matriz de misturas quanto as fontes sao desconhecidas (Hyvarinen et al., 2001). Entretanto,
+pode ser necessario transformar os sinais separados de volta ao domnio das observacoes, de forma
+a garantir a reconstrucao do sinal xn. Na ICA
+convencional, para cada fonte, os sinais separados
+
+
+
+M
+1
+
+
+M 1
+1 
+A(j+1,p) 
+M j0
+
+W(p,M m) xn  m  j,
+
+(9)
+
+m0
+
+ou seja
+x(p)
+s n 
+
+1
+ap n  wp n  xn,
+M
+
+(10)
+
+onde ap n e um filtro FIR associado ao vetor coluna A(,p) . A operacao acima reverte o efeito de
+translacao a esquerda provocado pelo esquema de
+construcao da matriz X. Pode ser observado que
+(p)
+a estimativa resultante xs n e uma versao filtrada de xn obtida pela cascata de dois filtros
+FIR, cujos coeficientes de resposta ao impulso foram estimados pela ICA de maneira adaptativa e
+nao-supervisionada.
+Representando a decomposicao do sinal xn
+por meio de uma soma de processos estocasticos
+
+3933
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+notch, e obter xn  un  f n. Neste trabalho, e utilizado o filtro_notch proposto em
+Lima et al. (2012).
+
+mutuamente independentes xc n, tem-se
+xn 
+
+C
+
+
+xc n.
+
+(11)
+
+2. Construir a matriz X a partir de xn utilizando, respectivamente, (2), (3) e (4).
+
+c1
+
+Cada processo xc n pode ser decomposto pela
+ICA em vetores-base ap  A(,p) que podem ser
+agrupados em C subconjuntos c , de tal forma
+que se p  c , entao ap se encontra em um mesmo
+sub-espaco Ec dentro do espaco RM (Davies and
+James, 2007). Alem disso, sendo que os vetoresbase dentro de um mesmo sub-espaco Ec tendem
+a ser aproximacoes transladadas de um mesmo
+filtro_hc , todos os vetores-base associados a um
+mesmo subconjunto c geralmente possuem suportes espectrais similares. Portanto, tal caracterstica pode ser util para identificar as estimativas
+de componentes independentes associadas a uma
+mesma fonte. O numero de versoes transladadas
+de um mesmo filtro depende da largura de banda
+de hc . Geralmente, as fontes que possuem espectros de frequencia mais amplos sao associadas a
+um numero maior de componentes independentes.
+Os componentes independentes associados a fontes diferentes devem possuir suportes espectrais
+disjuntos.
+Desta forma, e proposto neste trabalho o
+agrupamento das estimativas de componentes independentes associadas a uma mesma fonte tomando como base as respostas em frequencia dos
+filtros ap n, para p  1, . . . , P . Inicialmente,
+calcula-se as respostas em amplitude quadraticas
+desses filtros, ou seja, Ap ()2 . Os P compo(p)
+nentes xs n sao entao divididos em grupos c ,
+sendo c  1, . . . , C, baseado nas similaridades de
+Ap ()2 . O algoritmo k-means (Haykin, 2008) e
+utilizado como algoritmo de agrupamento (clustering), por ser um metodo de mineracao_de_dados
+nao-supervisionado que objetiva particionar p observacoes dentre c clusters, onde cada observacao
+pertence ao cluster mais proximo da media. Finalmente, os coeficientes do filtro_adaptativo de
+separacaoreconstrucao para cada fonte c sao encontrados utilizando
+fc n 
+
+1 
+ap n  wp n,
+M p
+
+3. Aplicar um algoritmo convencional de ICA
+(por exemplo, o algoritmo FastICA) a matriz
+X para estimar a matriz de mistura A e a
+matriz de separacao W.
+4. Calcular as respostas em amplitude quadraticas dos filtros ap n e classifica-las em grupos
+c , para c  1, . . . , C, utilizando o algoritmo
+k-means.
+5. Calcular os coeficientes dos filtros de separacaoreconstrucao fc n para cada fonte c utilizando (12), e filtrar o sinal xn utilizando tais
+filtros_adaptativos para reconstruir as fontes.
+A seguir, o metodo de decomposicao e testado
+utilizando-se sinais contendo multiplos_disturbios
+de QEE.
+4.1
+
+Os sinais a serem analisados neste trabalho foram gerados sinteticamente utilizando-se o software Matlab, baseado nos modelos parametricos
+de formas de onda de disturbios apresentados em
+Trindade (2005), pois a partir de tais modelos
+consegue-se com facilidade alterar as caractersticas dos disturbios (incio do disturbio, intensidade, etc.) dentro de intervalos pre-definidos. O
+metodo de decomposicao tambem foi implementado e executado no ambiente Matlab.
+A Figura 1(a) mostra um sinal de tensao un
+que modela a ocorrencia simultanea de harmonicos e de um transitorio oscilatorio dentro da
+mesma janela de dados. A Figura 1(b) mostra
+o componente fundamental f n filtrado pelo filtro_notch. A Figura 1(c) mostra o sinal xn a ser
+decomposto pelo algoritmo SCICA. As unidades
+estao em p.u. (por unidade).
+Aplicando-se o algoritmo FastICA1 as versoes
+atrasadas do sinal xn geradas de acordo com (2),
+(3) e (4), para M  7 blocos,   1 amostra e
+N  1024 amostras, obteve-se as estimativas de
+componentes independentes mostradas na Figura
+2. Esses componentes foram obtidos aplicandose em (5) os coeficientes de cada linha p da matriz W estimada pela ICA. Pode ser observado
+que cada estimativa de componente independente
+e uma versao filtrada de xn e que ha multiplas
+estimativas associadas a uma mesma fonte (disturbio). Alem disso, deve tambem ser observado que
+
+(12)
+
+c
+
+onde xc n  fc n  xn.
+4
+
+Resultados de aplicacao do metodo de decomposicao em sinais de QEE
+
+Decomposicao de sinais contendo
+multiplos_disturbios de QEE baseada
+no algoritmo SCICA
+
+A seguir, sao enumeradas as etapas do metodo
+de decomposicao baseado no algoritmo SCICA, o
+qual foi apresentado na secao anterior
+
+1 Neste trabalho, foi utilizado um pacote gratuito
+de funcoes que executam o algoritmo em ambiente
+Matlab, e que pode ser encontrado no endereco
+httpwww.cis.hut.fiprojectsicafastica
+
+1. Separar o componente fundamental f n do
+sinal de entrada un utilizando um filtro
+
+3934
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+(a)
+2
+
+Cluster 2
+1
+0.5
+0
+
+A1(w)
+
+un
+
+2
+
+0
+
+200
+
+400
+
+600
+
+800
+
+1000
+
+A2(w)
+
+-2
+
+1
+0.5
+0
+
+2
+
+2
+
+0
+
+4
+2
+0
+
+(b)
+
+fn
+
+3
+
+A (w)
+
+2
+
+-2
+
+0
+
+200
+
+400
+
+600
+
+800
+
+A4(w)
+
+2
+
+0
+
+1000
+
+(c)
+
+0
+
+2
+
+A5(w)
+
+400
+600
+Índice da amostra (n)
+
+800
+
+2
+
+200
+
+1000
+
+0
+
+200
+
+400
+
+600
+
+800
+
+1000
+
+0
+
+200
+
+400
+
+600
+
+800
+
+1000
+
+0
+
+200
+
+400
+
+600
+
+800
+
+1000
+
+0
+
+200
+
+400
+
+600
+
+800
+
+1000
+
+0
+
+200
+
+400
+
+600
+
+800
+
+1000
+
+0
+
+200
+
+400
+
+600
+
+800
+
+1000
+
+0
+
+200
+
+800
+
+1000
+
+y1n
+y2n
+
+5
+
+0
+
+7
+
+0
+-50
+50
+
+y3n
+
+6000
+
+7000
+
+0
+1000
+-3
+x 10
+
+2000
+
+3000
+
+4000
+Cluster 1
+
+5000
+
+6000
+
+7000
+
+0
+
+1000
+
+2000
+
+3000
+
+4000
+Cluster 1
+
+5000
+
+6000
+
+7000
+
+0
+
+1000
+
+2000
+
+3000
+
+4000
+Cluster 1
+
+5000
+
+6000
+
+7000
+
+0
+
+1000
+
+2000
+
+3000
+
+4000
+Cluster 2
+
+5000
+
+6000
+
+7000
+
+0
+1000
+-3
+x 10
+
+2000
+
+3000
+
+4000
+Cluster 1
+
+5000
+
+6000
+
+7000
+
+0
+
+0
+
+2000
+
+3000
+4000
+5000
+Frequência (Hz)
+
+6000
+
+7000
+
+1000
+
+agrupadas no cluster 2 (ou 2 ). De fato, voltando
+a Figura 2, pode-se observar que as linhas 2, 3,
+4, 5 e 7 da matriz W sao associadas ao transitorio oscilatorio, e as linhas 1 e 6 sao associadas aos
+harmonicos.
+Portanto, dois conjuntos de filtros foram obtidos. Cada um deles encobriu aproximadamente
+uma mesma faixa de frequencias e um sub-espaco
+independente. O primeiro sub-espaco possui dimensao 5 e o segundo possui dimensao 2. A dimensao e uma funcao da largura de banda do componente separado, como previsto da teoria apontada em Davies and James (2007). De forma a
+extrair as fontes, os filtros f1 n e f2 n sao obtidos utilizando (12), e o sinal original xn e filtrado
+por eles. As amplitudes das respostas em frequencia dos filtros obtidos sao mostradas na Figura 4,
+em conjunto com a amplitude da transformada de
+Fourier de xn. Pode ser visto que o filtro f1 n
+rejeita os componentes de frequencia dos harmonicos e passa as frequencias do transitorio oscilatorio. Por outro lado, o filtro f2 n rejeita o transitorio oscilatorio e passa os harmonicos. A Figura
+5 mostra as fontes separadas e reconstrudas, obtidas pela filtragem do sinal xn pelos filtros f1 n e
+f2 n, respectivamente. A partir desses resultados,
+fica bem claro que o algoritmo SCICA separou e
+recuperou adequadamente os dois disturbios misturados em xn.
+O proximo exemplo mostra a aplicacao do metodo de decomposicao em um sinal de tensao que
+modela a ocorrencia de tres disturbios simultaneos harmonicos, notchings e um transitorio oscilatorio. A Figura 6(a) mostra o sinal. A Figura
+6(b) mostra o componente fundamental filtrado
+pelo filtro_notch e a Figura 6(c) mostra o sinal
+
+50
+
+0
+-50
+10
+
+y4n
+
+5000
+
+0
+-5
+
+0
+-10
+10
+
+y5n
+
+4000
+Cluster 1
+
+Figura 3 Respostas em amplitude quadraticas
+dos filtros relacionados as colunas da matriz de
+mistura A estimada pelo algoritmo FastICA.
+
+5
+
+0
+-10
+10
+
+y6n
+
+0.5
+
+A (w)
+
+Figura 1 Sinal de tensao modelando uma ocorrencia simultanea de harmonicos e de um transitorio oscilatorio (a) sinal de entrada un, (b)
+componente fundamental estimado f n e, (c) sinal xn  un  f n.
+
+0
+-10
+20
+
+y7n
+
+0
+
+A6(w)
+
+0
+
+3000
+
+0.05
+
+2
+
+xn
+
+-1
+
+2000
+
+0.05
+
+1
+0
+
+0
+1000
+-3
+x 10
+
+0
+-20
+
+400
+600
+Índice da amostra (n)
+
+Figura 2 Estimativas de componentes independentes.
+as escalas dos componentes independentes ainda
+nao estao recuperadas nesses sinais.
+A Figura 3 mostra as respostas em amplitude
+quadraticas dos filtros cujos coeficientes sao relacionados as colunas da matriz A estimada pelo
+algoritmo FastICA. Utilizando-se o algoritmo kmeans, esses filtros foram agrupados em dois clusters (C  2) baseado nas similaridades espectrais
+das suas respostas em frequencia, ja que e esperada a separacao e a reconstrucao de duas fontes
+(harmonicos e transitorio oscilatorio) pelo algoritmo SCICA. Os resultados do agrupamento obtido sao mostrados na mesma figura. Como pode
+ser visto, as colunas 2, 3, 4, 5 e 7 foram agrupadas no cluster 1 (ou 1 ), e as colunas 1 e 6 foram
+
+3935
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+2
+
+0.2
+
+(a)
+2
+
+2
+
+1
+
+0.1
+
+transitório oscilatório
+
+0
+
+1000
+
+2000
+
+3000
+4000
+5000
+Frequência (Hz)
+
+6000
+
+7000
+
+-2
+
+200
+
+400
+
+600
+
+800
+
+1000
+
+600
+
+800
+
+1000
+
+800
+
+1000
+
+1
+0
+-1
+
+0
+
+200
+
+400
+(c)
+
+1
+
+0
+8000
+
+0
+-1
+
+0
+
+200
+
+400
+600
+Índice da amostra (n)
+
+Figura 6 Sinal de tensao modelando a ocorrencia simultanea de harmonicos, notchings e transitorio oscilatorio (a) sinal de entrada un, (b)
+componente fundamental estimado f n e, (c) sinal xn  un  f n.
+
+(a)
+1
+0.5
+
+2
+
+0
+
+0.1
+X(ejw)
+
+Amplitude da resposta em frequência dos filtros
+
+x1n
+
+0
+
+(b)
+
+Figura 4 Amplitudes das respostas em frequencia
+dos filtros_adaptativos estimados pelo algoritmo
+SCICA (dois disturbios).
+
+-0.5
+-1
+
+0
+
+200
+
+400
+
+600
+
+800
+
+1000
+
+(b)
+0.4
+0.2
+x2n
+
+0
+
+0
+-0.2
+-0.4
+
+0
+
+200
+
+400
+600
+Índice da amostra (n)
+
+800
+
+1000
+
+F1(ejw)
+harmônicos
+
+F3(ejw)
+transitório oscilatório
+
+1
+
+0.05
+notchings
+
+0
+
+Figura 5 Componentes separados e reconstrudos
+pelo algoritmo SCICA.
+
+F2(ejw)
+
+0
+
+1000
+
+2000
+
+3000
+4000
+5000
+Frequência (Hz)
+
+6000
+
+7000
+
+Amplitude da transformada de Fourier de xn
+
+0
+
+un
+
+F (ejw)
+
+fn
+
+F1(ejw)
+
+xn
+
+harmônicos
+
+Amplitude da transformada de Fourier de xn
+
+Amplitude da resposta em frequência dos filtros
+
+X(ejw)
+
+0
+8000
+
+Figura 7 Amplitudes das respostas em frequencia
+dos filtros_adaptativos estimados pelo algoritmo
+SCICA (tres disturbios).
+
+xn a ser decomposto pelo algoritmo SCICA. As
+unidades estao em p.u.
+Para este exemplo, o algoritmo FastICA foi
+aplicado a M  21 versoes atrasadas de xn geradas utilizando, em sequencia, (2), (3) e (4), sendo
+  1 amostra e N  1024 amostras. O algoritmo
+FastICA calculou P  21 estimativas de componentes independentes. Em seguida, utilizou-se o
+algoritmo k-means para realizar a distribuicao das
+estimativas dentre C  3 clusters, baseado em
+suas similaridades espectrais. As dimensoes dos
+clusters estimados 1 , 2 e 3 foram, respectivamente, 2, 17 e 2, onde o cluster 2 esta relacionado a fonte independente que possui o espectro
+de frequencias mais amplo dentre as tres fontes.
+Para extrair as fontes, os filtros f1 n, f2 n
+e f3 n sao construdos utilizando-se (12) e o sinal original xn e filtrado por eles. A Figura 7
+mostra as amplitudes das respostas em frequencia desses filtros, em conjunto com a amplitude
+da transformada de Fourier de xn. Como pode
+ser visto, os tres disturbios misturados sao compo-
+
+nentes razoavelmente distintos espectralmente, de
+forma que o algoritmo SCICA foi capaz de separalos. O filtro f1 n passa os harmonicos e atenua
+o transitorio oscilatorio e os notchings. Por outro lado, o filtro f2 n passa os notchings e atenua
+os harmonicos e o transitorio oscilatorio. Finalmente, o filtro f3 n passa o transitorio oscilatorio
+e atenua os harmonicos e os notchings. A Figura
+8 mostra as versoes de xn obtidas pela aplicacao
+dos filtros f1 n, f2 n e f3 n, respectivamente.
+5
+
+Conclusoes
+
+Este artigo propos uma aplicacao do algoritmo
+SCICA para realizar uma decomposicao de formas
+de onda contendo multiplos_disturbios de QEE baseada na ICA de canal unico. O algoritmo SCICA
+foi descrito em detalhes, e foi mostrado que sua
+operacao corresponde a obtencao de um conjunto
+
+3936
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+(a)
+
+Davies, M. E. and James, C. J. (2007). Source
+Separation Using Single Channel ICA, Signal
+Processing 87(8) 18191832.
+
+x1n
+
+0.5
+0
+-0.5
+
+0
+
+200
+
+400
+
+600
+
+800
+
+1000
+
+600
+
+800
+
+1000
+
+Faisal, M. F. and Mohamed, A. (2009). Identification of multiple power quality disturbances
+using S-transform and rule based classification technique, Journal of Applied Sciences
+9(15) 26882700.
+
+(b)
+
+x2n
+
+0.5
+0
+-0.5
+
+0
+
+200
+
+400
+(c)
+
+Ferreira, D. D., de Seixas, J. M. and Cerqueira,
+A. S. (2012). Single channel ICA-based
+method for power quality disturbance analysis, XIX Congresso Brasileiro de Automatica,
+CBA 2012, pp. 1561 1568.
+
+3
+
+x n
+
+1
+0
+-1
+
+0
+
+200
+
+400
+600
+Índice da amostra (n)
+
+800
+
+1000
+
+Figura 8 Componentes separados e reconstrudos
+utilizando-se o algoritmo SCICA.
+
+Haykin, S. (2008). Neural Networks and Learning
+Machines, 3 edn, Prentice Hall.
+Hooshmand, R. and Enshaee, A. (2010). Detection and classification of single and combined
+power quality distubances using fuzzy systems oriented by particle_swarm_optimization
+algorithm, Electric Power Systems Research
+80(12) 15521561.
+
+de filtros FIR adaptativos cujos coeficientes sao estimados de maneira nao-supervisionada pela ICA.
+Aplicando-se esses filtros, e possvel a separacao
+e reconstrucao dos multiplos_disturbios de QEE,
+dado que os disturbios sejam suficientemente disjuntos espectralmente. A vantagem do metodo
+SCICA quando comparado ao metodo de banco
+de filtros proposto em Lima et al. (2012) e que
+nao ha a necessidade de projeto de um banco de
+filtros pre-definidos para gerar os sinais de observacao para a aplicacao da ICA.
+
+Hyvarinen, A., Karhunen, J. and Oja, E. (2001).
+Independent Component Analysis, John Wiley  Sons.
+Lima, M. A. A., Cerqueira, A. S., Coury, D. V.
+and Duque, C. A. (2012). A novel method for
+power quality multiple disturbance decomposition based on Independent Component
+Analysis, International Journal of Electrical
+Power  Energy Systems 42(1) 593604.
+
+Agradecimentos
+Os autores gostariam de agradecer a CAPES (Coordenacao de Aperfeicoamento de Pessoal de Nvel
+Superior), no ambito do Programa Nacional de
+Pos Doutorado (PNPD), pelo suporte financeiro
+proporcionado durante o desenvolvimento deste
+trabalho.
+
+Lu, Y.-L., Chuang, C.-L., Fahn, C.-S. and Jiang,
+J.-A. (2008). Multiple disturbances classifier
+for electric signals using adaptive structuring
+neural networks, Measurement Science and
+Technology 19 111.
+
+Referencias
+
+Mitra, S. K. (2006). Digital Signal Processing A
+Computer-Based Approach, third edn, Tata
+McGraw-Hill.
+
+Barrera, V., Melendez, J. and Herraiz, S. (2012).
+Waveform segmentation for intelligent monitoring of power events, Electric Power Systems Research 93 6775.
+
+Trindade, R. M. (2005). Sistema Digital de Deteccao e Classificacao de Eventos de Qualidade
+de Energia, Dissertacao de Mestrado, Faculdade de Engenharia da Universidade Federal
+de Juiz de Fora.
+
+Castells, F., Mora, C., Millet, J., Rieta, J. J.,
+Sanchez, C. and Sanchis, J. (2004). Multidimensional ICA for the separation of atrial
+and ventricular activities from single lead
+ECGs in paroxysmal atrial fibrillation episodes, Proceedings of International Conference
+on ICA 2004, Lecture Notes in Computer
+Science, Vol. 3195, pp. 12291234.
+Coifman, R. R. and Donoho, D. L. (1995).
+Translation-invariant denoising, A. Antoniadis, G. Oppenheim (EDs.), Wavelets and
+Statistics, Springer Lecture Notes in Statistics, Vol. 103, pp. 126150.
+
+3937

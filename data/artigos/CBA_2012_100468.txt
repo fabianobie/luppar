@@ -1,0 +1,745 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+IMPLEMENTACAO EM FPGA DE DETECTORES BASEADOS EM FILTRAGEM
+CASADA E REDES NEURAIS EM AMBIENTES DE FISICA EXPERIMENTAL DE
+ALTAS ENERGIAS
+Bernardo Sotto-Maior Peralva, Davis Pereira Barbosa, Augusto Santiago
+Cerqueira, Luciano Manhaes de Andrade Filho
+
+
+Universidade Federal de Juiz de Fora
+Programa de Pos-Graduacao em Engenharia Eletrica
+Laboratorio de Processamento de Sinais e Telecomunicacoes
+Emails bernardo.peralva@ice.ufjf.br, davis.barbosa@engenharia.ufjf.br,
+augusto.cerqueira@ufjf.edu.br, luciano.andrade@ufjf.edu.br
+Abstract This work presents an implementation of two detection algorithms in FPGA in an experimental
+high energy physics environment. It focuses on the design of detectors based on a matched filter and artificial
+neural network. The results showed that the neural detector outperforms the matched filter for the considered
+application.
+Keywords
+
+FPGA, Signal Detection, Matched Filter, Artificial Neural Networks.
+
+Resumo Este trabalho propoe a implementacao de duas tecnicas de deteccao_de_sinais em dispositivos FPGA
+no contexto de experimentos de fsica de alta energia. Foram abordados algoritmos baseados em filtragem casada
+e em rede_neural artificial. Os resultados para o banco_de_dados utilizado mostraram um desempenho superior
+do detector neural.
+Palavras-chave
+
+.
+
+Introducao
+
+Nas areas de instrumentacao_eletronica, processamento_digital_de_sinais, telecomunicacoes, na
+fsica experimental de altas energias, entre outras,
+tecnicas de deteccao tem sido amplamente estudadas, seja atraves de tecnicas baseadas no detector de maxima_verossimilhanca (Trees, 2001) seja
+atraves de tecnicas baseadas em inteligencia_computacional (Haykin, 1998).
+Mais especificamente, no ambiente da fsica
+experimental de altas energias, devido a raridade
+dos fenomenos observados e a elevada quantidade de rudo de fundo, experimentos com elevadssimas taxas de eventos sao desenvolvidos
+(Anjos, 2006 CERN, 2012), requerendo tecnicas
+de deteccao robustas, com elevado desempenho e
+muitas vezes com baixa complexidade computacional que permitam sua aplicacao online.
+Desta forma, visando principalmente a aplicacao em experimentos da fsica de altas energias,
+este trabalho apresenta o estudo e a implementacao de duas tecnicas de deteccao_de_sinais, uma
+baseada no detector de maxima_verossimilhanca,
+o filtro_casado, e outra baseada em inteligencia
+computacional, uma rede perceptron_multicamadas (MLP). As duas tecnicas sao comparadas do
+ponto de vista de desempenho e simplicidade de
+implementacao e, adicionalmente, uma discussao
+sobre as caractersticas principais de cada metodo
+e apresentada.
+A implementacao foi realizada em uma FPGA
+(do ingles Field Programmable Gate Array)
+(Brown, 2000) devido a flexibilidade e a inerente
+
+ISBN 978-85-8001-069-5
+
+capacidade de processamento em paralelo, requisito importante para operar redes_neurais artificiais em alta velocidade. As FPGAs tem sido largamente utilizadas para o processamento de informacoes digitais, ganhando cada vez mais mercado em relacao aos DSPs (do ingles Digital Signal
+Processor ), ja que atualmente muitas ja possuem
+blocos DSPs internos e operam em frequencias de
+clock altssimas (Brown, 2000).
+Na Secao 2, serao descritas as tecnicas de deteccao_de_sinais utilizadas neste trabalho. Na Secao 3, serao introduzidos o contexto do trabalho
+e o banco_de_dados utilizado. A Secao 4, apresentara os algoritmos implementados em dispositivos
+FPGA, e na Secao 5, os resultados e comparacoes
+sao mostrados. Finalmente, a Secao 6 apresentara
+as conclusoes.
+2
+
+Deteccao de Sinais
+
+Nesta secao, a formulacao do problema de deteccao de um sinal em rudo e os conceitos basicos
+sobre o detector de maxima_verossimilhanca e sobre a utilizacao de uma rede MLP para deteccao
+de sinais, serao apresentados.
+2.1
+
+O Problema da Deteccao de um Sinal Imerso
+em Rudo
+
+Dado um sinal discreto sk, transmitido por
+um meio qualquer que introduza rudo aditivo nk
+e o sinal recebido rk  sk + nk, deseja-se determinar, com maxima eficiencia possvel, a presenca do sinal sk em rk. Ou seja, um proces-
+
+4690
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+samento deve ser realizado sobre rk de modo a
+otimizar a decisao entre duas hipotese possveis
+(Trees, 2001 Shanmugan, 1988)
+ Hipotese H0  rk so tem rudo.
+ Hipotese H1  rk contem sinal mais rudo.
+Desta forma, pode-se modelar o problema de
+deteccao atraves da Equacao (1).
+H0  rk  nk
+H1  rk  sk + nk
+
+k  1, 2, ..., N
+k  1, 2, ..., N
+
+(1)
+
+Representando a sequencia rk como um vetor r e sendo R o conjunto de todos os eventos de
+sinais recebidos, pode-se demonstrar que a relacao
+que maximiza a eficiencia de deteccao e dada pela
+razao de maxima_verossimilhanca (Trees, 2001),
+conforme e mostrado na Equacao (2).
+L(r) 
+
+fRH1 (rH1 ) H1
+ 
+fRH0 (rH0 ) H0
+
+(2)
+
+Os termos fRH0 e fRH1 sao as funcoes
+de densidade de probabilidade do sinal recebido,
+dado que H0 (rudo) e H1 (sinal mais rudo) ocorreram, respectivamente e  e o patamar de decisao
+escolhido. Como na maioria dos problemas reais
+de deteccao as funcoes de densidade de probabilidade nao sao conhecidas a priori, o projeto dos
+algoritmos de deteccao consiste basicamente na estimacao de fRH0 e fRH1 a partir de um conjunto
+de dados onde se conhece, previamente, a qual hipotese cada evento pertence.
+
+Desta forma, a Equacao (4) mostra que a decisao entre as duas hipoteses H0 e H1 e otimizada pelo produto interno entre o sinal recebido
+rk e uma replica do sinal determinstico desejado
+sk. Ou seja, podemos otimizar a decisao entre as
+duas hipoteses filtrando o sinal recebido pelo seu
+filtro_casado, cuja resposta ao impulso e dada por
+hk  sk + N  (Trees, 2001).
+Para o projeto do filtro_casado proposto, as
+funcoes de densidade de probabilidade das amostras de rudo foram aproximadas como gaussianas com matriz de covariancia C. Alem disso, o
+sinal de interesse sk foi considerado completamente determinstico de acordo com a forma do
+pulso de referencia utilizados em experimentos da
+fsica de altas energias (Tylmad, 2009), ou seja,
+a estocasticidade referente a amplitude do sinal
+de entrada foi desprezada. Com isso, a razao de
+maxima_verossimilhanca expressa na Equacao (3)
+pode ser generalizada, levando em consideracao a
+matriz de covariancia do rudo. A Equacao resultante e descrita pela Equacao (5).
+
+L(r) 
+
+T
+1
+1
+exp (rs) C2 (rs)  H1
+2 det(C)
+
+
+
+1
+T
+1
+exp r C2 r 
+2 det(C)
+
+ 
+
+H0
+
+(5)
+Novamente, atraves de algumas manipulacoes
+matematicas, o filtro proposto resulta no produto
+interno representado pela Equacao (6).
+H1
+
+rT s  
+
+(6)
+
+H0
+
+2.2
+
+O Filtro Casado
+
+Na Secao 2.1, foi introduzido o conceito de
+deteccao otima de sinais onde a relacao que maximiza a eficiencia de deteccao e dada pela razao
+entre as funcoes de densidade de probabilidade de
+um sinal recebido, dado que H0 (rudo) ou H1 (sinal mais rudo) ocorreu. A expressao que descreve
+este conceito e mostrada na Equacao (2).
+Considerando-se o caso onde as densidades de
+probabilidade das amostras do rudo sao gaussianas e descorrelacionadas e o sinal sk e determinstico, a razao de maxima_verossimilhanca se
+reduz a Equacao (3).
+N
+L(r) 
+
+(rs)2
+1
+k1 2 exp 2 2  H1
+
+N
+r2
+1
+k1 2 exp 2 2  H0
+
+
+
+(3)
+
+Os elementos r e s representam, respectivamente, os vetores sinal de entrada e sinal determinstico de interesse. Aplicando-se o operador
+logaritmo em ambos os lados da Equacao (3), o
+detector otimo resulta em
+N
+H1
+rksk  
+(4)
+k1
+
+ISBN 978-85-8001-069-5
+
+H0
+
+em que s  C1 s.
+Portanto, a Equacao (6) mostra que a decisao entre duas hipoteses H0 e H1 e realizada pelo
+produto interno entre o sinal de entrada r e um
+replica do sinal de referencia s apos uma transformacao linear, ou seja, s. Consequentemente, a
+resposta ao impulso do filtro projetado e dada por
+hk  sk + N  (Trees, 2001).
+Como resultado, a tecnica de filtragem proposta e realizada atraves do uso do sinal de referencia do experimento. Como mostrado na Equacao (6), o filtro linear resultante e composto de
+N coeficientes implementando assim um filtro rapido de Resposta ao Impulso Finita (FIR) (Mitra,
+1998), o qual e apropriado para aplicacoes online
+presentes em experimentos da fsica de altas energias (Calkins, 2011 Arfaoui, 2010).
+2.3
+
+Redes Neurais
+
+Em (Watterson, 1990), e mostrado que
+quando uma rede MLP e corretamente treinada
+de forma supervisionada, visando a deteccao de
+sinal imerso em rudo, seu resultado aproxima o
+detector de maxima_verossimilhanca. Portanto, a
+
+4691
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+3
+
+Deteccao de Sinais em Fsica de
+Partculas
+
+Nesta secao, o problema da deteccao_de_sinais
+em experimentos de fsica de altas energias sera
+discutido brevemente, sendo tambem apresentado
+o banco_de_dados utilizado neste trabalho.
+3.1
+
+Deteccao em Experimentos de Fsica de Altas Energias
+
+Em alguns experimentos da fsica de altas
+energias, como por exemplo, os colisionadores de
+partculas (Edwards, 1992 CERN, 2012), a deteccao_de_sinais e dificultada por alguns fatores como
+pouca deposicao de energia de algumas partculas
+em algumas regioes dos detectores, alto nvel de
+rudo muitas vezes correlacionado e a alta taxa
+de eventos utilizada nestes experimentos devido a
+raridade da fsica a ser observada.
+Os detectores baseados em calorimetria sao
+amplamente empregados em experimentos de fsica de altas energias (Wigmans, 2000). Os calormetros tem como funcao absorver e amostrar a
+energia das partculas geradas na colisao, possibilitando muitas vezes identificar o tipo de partcula depositada atraves das informacoes do perfil
+da deposicao de energia e de sua trajetoria. Estes
+detectores possuem milhares de canais para prover a resolucao necessaria para a identificacao das
+partculas.
+Nos calormetros, o sinal eletrico resultante da
+deposicao da partcula e condicionado (Anderson,
+2005 Junior, 2009) de forma a apresentar forma
+aproximadamente constante e amplitude propor-
+
+ISBN 978-85-8001-069-5
+
+cional a energia da partcula depositada. Estes
+sinais tem a forma de um pulso unipolar e rapido
+(largura a meia altura menor que 100 ns) devido
+a alta taxa de eventos.
+O rudo nestes experimentos nao pode ser negligenciado uma vez que ele pode apresentar componentes da propria eletronica de leitura, da interferencia do ambiente (altssimos campos eletricos e magneticos) e da propria fsica do problema.
+Adicionalmente, o rudo pode ser correlacionado
+e ate mesmo apresentar correlacao entre diferentes canais, dificultando ainda mais a deteccao de
+sinais de baixa energia.
+
+3.2
+
+Banco de Dados
+
+Neste trabalho, de forma a validar o estudo
+dos detectores estudados e implementados em
+FPGA, foi criado um banco_de_dados sintetico,
+com baixa relacao sinal-rudo, que simula as condicoes encontradas em experimentos da fsica de
+altas energias (Anderson, 2005 Anjos, 2006).
+O sinal e um pulso aproximadamente gaussiano, com duracao de aproximadamente 175 ns, digitalizado com uma taxa de 25 ns, conforme pode
+ser visto na Figura 1. A forma do sinal nao muda
+com a energia do evento, apenas sua amplitude
+que foi variada seguindo uma distribuicao de poisson, ja que eventos com energia negativa nao sao
+possveis. O sinal pode tambem apresentar deslocamento temporal dentro da janela utilizada de 7
+amostras seguindo uma distribuicao uniforme.
+O rudo correlacionado, que tambem possui
+7 amostras, foi gerado seguindo uma distribuicao
+laplaciana. Desta forma, dois conjuntos foram gerados, um composto apenas pelo rudo e outro
+composto por sinal mais rudo, ambos com 10.000
+eventos.
+
+1
+0.9
+0.8
+amplitude normalizada
+
+utilizacao de redes_neurais em problemas de deteccao pode levar a resultados proximos aos do
+detector otimo.
+Este resultado e bastante importante na medida em que em problemas praticos, muitas vezes
+nao se conhecem as informacoes a priori necessarias para o desenvolvimento do detector de maxima_verossimilhanca e mesmo quando se conhece,
+sua implementacao pode ser muito complexa. Assim, quando de posse de um conjunto de dados
+conhecidos, ao inves de tentar obter estimativas
+das densidades de probabilidades atraves de tecnicas de estimacao, pode-se treinar uma rede_neural
+MLP.
+Desta forma, em uma rede_neural MLP treinada para deteccao_de_sinal imerso em rudo, as
+estimativas dos pesos sinapticos sao obtidas pelo
+treinamento supervisionado da rede, que e normalmente composta por tres camadas, sendo a
+primeira camada os nos de entrada, uma camada
+oculta com neuronios com funcoes de ativacao
+nao-lineares e a camada de sada composta por
+apenas um neuronio que pode ter funcao de ativacao linear ou nao-linear (Watterson, 1990).
+
+0.7
+0.6
+0.5
+0.4
+0.3
+0.2
+0.1
+0
+100
+
+50
+
+0
+
+50
+
+100
+
+150
+
+tempo (ns)
+
+Figura 1 Pulso de referencia utilizado para a geracao do conjunto de sinais.
+
+4692
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+4
+
+Metodos Propostos para Deteccao de
+Sinais em FPGA
+
+Nesta secao, serao descritos os algoritmos de
+implementacao em dispositivos FPGA dos detectores de sinais por filtro_casado e por redes_neurais,
+apresentados na Secao 2.
+4.1
+
+Deteccao Por Filtro Casado
+
+O detector proposto por filtro_casado pode ser
+representado pelo diagrama_de_blocos mostrado na
+Figura 2. Neste trabalho, o rudo e considerado
+correlacionado e o sinal de interesse sk, determinstico. Alem disso, o sinal de entrada na FPGA e
+o sinal analogico oriundo da eletronica de leitura
+do experimento e digitalizado por um conversor
+analogico-digital (Anderson, 2005), representado
+na Figura 2 pelo bloco ADC.
+
+Figura 3 Sistema de deteccao de pico e validacao
+de sinais
+
+4.2
+
+Figura 2 Sistema Proposto para deteccao_de_sinais utilizando Filtro Casado
+Como descrito na Secao 2.2, os coeficientes
+do filtro_casado sao as amostras do proprio sinal
+de interesse sk, aplicadas na inversa da matriz
+de covariancia do rudo, caso este seja gaussiano.
+Neste trabalho, o rudo e aproximado como gaussiano. Esta aproximacao faz com que o resultado do
+filtro_casado nao seja otimo, mas por outro lado,
+tem um custo_computacional reduzido, o que e
+fundamental em aplicacoes online como a apresentada neste trabalho.
+Uma particularidade das aplicacoes de deteccao_de_sinais em sistemas reais, e o fato de o sinal
+de entrada ser apresentado ao detector de forma
+free-running, ou seja, para cada amostra de entrada (sada do bloco ADC), uma sada do filtro
+e calculada. Assim, o objetivo do bloco Decisor
+da Figura 2 e identificar se a sada do filtro_casado e um pico e se encontra acima de um determinado patamar constante definido no projeto. O
+valor do patamar e calculado a partir das probabilidades de falso alarme e de deteccao baseadas na
+curva ROC (do ingles Receiver Operating Characteristics) (Trees, 2001) caracterstica do sistema
+proposto. A descricao do bloco Decisor e representada e destacada na Figura 3. Como pode ser
+observada, a sada deste bloco e a sada do detector, sendo 1 para sinal detectado e 0 para rudo.
+Como o bloco Decisor acumula 2 sadas do
+filtro_casado para testar a deteccao de pico junto
+com a sada corrente, este detector proposto possui um atraso de, no mnimo, 2 ciclos de clock
+entre a entrada e a sada da FPGA.
+
+ISBN 978-85-8001-069-5
+
+Deteccao por Rede Neural
+
+O projeto do detector neural proposto neste
+trabalho e representado na Figura 4. De forma
+analoga ao detector baseado em filtro_casado, o
+sinal de entrada na FPGA e o sinal analogico proveniente do sistema de aquisicao_de_dados e digitalizado por um conversor analogico-digital, representado na Figura 4 pelo bloco ADC.
+
+Figura 4 Sistema Proposto para deteccao_de_sinais utilizando uma rede_neural
+O numero de neuronios na camada oculta foi
+definido baseado no desempenho do conjunto de
+teste, descrito na Secao 5.1. A configuracao que
+apresenta menor complexidade, sem queda consideravel na eficiencia de deteccao, possui 2 neuronios na camada oculta. Estes neuronios podem
+ser vistos como 2 filtros do tipo FIR (Mitra, 1998)
+implementados de forma transposta em paralelo,
+seguidas de uma transformacao nao-linear, como
+ilustrado na Figura 5.
+Na camada de sada da rede_neural, apenas
+um neuronio foi utilizado. Os blocos BIAS representam os coeficientes de polarizacao dos neuronios e tem seus valores atualizados junto aos pesos sinapticos na fase de treinamento. Ja os blocos
+tansig denotam a funcao de ativacao dos neuronios, no caso funcao nao-linear tangente_hiperbolica. Estes blocos sao memorias que realizam o
+mapeamento entradasada, isto e, existe um valor
+de sada fixo associado para cada valor de entrada.
+Finalmente, o bloco Decisor e semelhante ao
+descrito na Secao 4.1 e ilustrado na Figura 3. As-
+
+4693
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+conjunto de validacao, para verificar a eficiencia
+do detector neural.
+5.2
+
+Projeto dos Parametros dos Detectores
+
+Filtro Casado
+O primeiro passo no projeto do filtro_casado
+foi estimar da matriz de transformacao linear C1
+descrita na Secao 2.2. A Figura 6 mostra a matriz
+C1 estimada utilizando o conjunto de desenvolvimento.
+
+0.4
+
+valor
+
+0.3
+0.2
+0.1
+0
+0.1
+1
+2
+3
+4
+5
+
+Figura 5 Sistema proposto de deteccao_de_sinais
+utilizando redes_neurais
+sim como no caso do detector por filtro_casado,
+este bloco representa o circuito de disparo do detector, sendo a variavel patamar calculado baseado na curva ROC do sistema de deteccao.
+5
+
+Resultados de Projeto e Simulacao
+
+Esta secao apresentara os resultados dos sistemas descritos na Secao 4 e sera dividida em tres
+partes metodologia utilizada, projeto dos parametros dos detectores e simulacao dos detectores
+projetados. Na primeira parte, a descricao dos dados utilizados neste trabalho sera apresentada. A
+segunda parte e dedicada a implementacao, atraves do sof tware MATLAB, e se concentra na fase
+de calculo e determinacao dos coeficientes dos filtros, assim como do valor da constante de patamar de deteccao. Ja a terceira parte, apresenta
+os resultados da simulacao de implementacao em
+FPGA atraves do sof tware ModelSim.
+5.1
+
+Metodologia
+
+Cada classe de dados gerada conforme descrito na Secao 3.2, foi dividida em 3 conjuntos
+desenvolvimento, teste e validacao. No caso do
+filtro_casado, o conjunto de desenvolvimento foi
+utilizado para estimar a matriz C1 e os coeficientes do filtro_casado. Os conjuntos de teste e
+validacao foram utilizados para verificar a eficiencia do detector. Ja para a rede_neural, o conjunto
+de desenvolvimento foi utilizado para treinamento
+da rede, o conjunto de teste para avaliar a generalizacao e criterio_de_parada do treinamento, e o
+
+ISBN 978-85-8001-069-5
+
+6
+amostra
+
+7
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+amostra
+
+Figura 6 Inversa da matriz de covariancia do
+rudo utilizada para estimar os pesos do FC
+O segundo passo foi calcular os coeficientes
+do filtro_casado. Como descrito na Secao 4.1, os
+pesos do filtro_casado sao calculados a partir da
+inversa da matriz de covariancia do rudo aplicada
+no sinal de referencia sk. A Figura 7(a) mostra o
+sinal de referencia sk transformado pela matriz
+C1 .
+No terceiro e ultimo passo, o patamar de corte
+que define a fronteira de separacao linear entre sinal e rudo foi estipulado. Para tal, a curva ROC
+caracterstica dos detectores projetados, mostradas na Figura 8, foi analisada a fim de estipular
+os parametros de falso alarme e deteccao desejados para a aplicacao.
+Em experimentos de fsica de partculas,
+adota-se uma taxa de falso alarme baixa visando
+garantir somente deteccao_de_sinais de interesse.
+Desta forma, foi escolhida uma probabilidade de
+falso alarme de 0,01 o que resulta em uma probabilidade de deteccao de 44,72 para o detector
+baseado em filtragem casada.
+Rede Neural
+Como descrito na Secao 4.2, a rede_neural da
+Figura 7(b) foi configurada e seus pesos foram calculados atraves do conjunto de treinamento.
+Assim como para o filtro_casado, o patamar
+de corte foi definido baseado na curva ROC do
+sistema mostrada na Figura 8. Foi adotada a
+mesma probabilidade de falso alarme utilizada
+
+4694
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+5.3
+
+3
+
+Os algoritmos dos dois detectores foram implementados, em linguagem Verilog, e simulados
+atraves dos softwares Quartus II versao 10.1 e ModelSim versao 6.6c. O chipset EP3C40F484C6 da
+fabricante Altera (ALTERA, 2012), famlia Cyclone III, foi selecionado. Este dispositivo e utilizado em experimentos recentes de fsica de partculas (Junior, 2009) devido a sua capacidade de
+processamento_paralelo e relativo baixo_custo. A
+Tabela 1 mostra a comparacao sobre os recursos
+(elementos logicos, memoria e multiplicadores de
+9 bits) do dispositivo utilizados em ambos projetos.
+
+2.5
+
+amplitude
+
+2
+
+1.5
+
+1
+
+0.5
+
+0
+
+0.5
+
+1
+
+2
+
+3
+
+4
+amostra
+
+5
+
+6
+
+Simulacao dos Detectores Projetados
+
+7
+
+(a)
+
+Tabela 1 Recursos utilizados.
+Elementos Memoria
+Multipl.
+Logicos
+de 9-bits
+Filtro
+<1
+0
+7
+Casado
+Rede
+1
+<1
+16
+Neural
+
+(b)
+
+Figura 7 Sinal de interesse sk estimado pelo conjunto de desenvolvimento (a) e a configuracao da
+rede_neural implementada (b).
+
+1
+0.9
+Filtro Casado
+Rede Neural
+
+Probabilidade de Detecção ()
+
+0.8
+0.7
+0.6
+0.5
+0.4
+0.3
+
+Pode-se observar que o filtro_casado utiliza
+menos recurso, embora sua eficiencia de deteccao
+seja inferior a apresentada pela rede_neural.
+Vale ressaltar que, neste trabalho, somente
+um canal de uma eletronica de leitura de um experimento foi analisado. Normalmente, em experimentos de fsica de altas energias, os detectores
+sao finamente segmentados e possuem centenas ou
+milhares de canais (Anderson, 2005 Junior, 2009).
+Alem disso, os filtros FIR implementados para as
+duas tecnicas utilizam blocos multiplicadores dedicados presentes na arquitetura da Cyclone III
+(em torno de 120 multiplicadores). Como o numero de multiplicadores necessarios para implementar os metodos e menor que o disponvel, as
+duas tecnicas podem operar na frequencia maxima de operacao do dispositivo (em torno de
+200 MHz), embora em aplicacoes de fsica experimental de partculas, a frequencia de operacao e
+em torno de 40 MHz (Poveda, 2007).
+
+0.2
+0.1
+0
+
+6
+0
+
+0.2
+
+0.4
+0.6
+Probabilidade de Falso Alarme ()
+
+0.8
+
+Figura 8 Curva ROC para os detectores implementados.
+
+para o filtro_casado, resultando para este detector, em uma probabilidade de deteccao de 50,06,
+comprovando a superioridade do detector neural
+sobre o filtro_casado quando o rudo possui naogaussianidade.
+
+ISBN 978-85-8001-069-5
+
+Conclusoes
+
+1
+
+Este trabalho apresentou duas implementacoes em FPGA de detectores, um baseado em filtragem casada e outro em uma rede_neural multicamadas diretamente conectada, visando a aplicacao em experimentos da fsica de altas energias.
+Foi gerado um banco_de_dados simulando sinais provenientes de tais experimentos de forma
+a comparar as duas implementacoes. Neste contexto, o detector neural apresentou um desempenho superior ao filtro_casado ja que o rudo nos
+dados e correlacionado e sua funcao de densidade
+de probabilidade nao e gaussiana. Alem disso, o
+
+4695
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+sinal apresenta uma variacao temporal, fazendo
+com que o filtro_casado nao seja otimo neste cenario.
+Desta forma, pode-se concluir que o detector neural implementado se mostra adequado para
+aplicacoes em colisionadores de partculas, onde o
+rudo e muitas vezes correlacionado, com funcao
+de densidade de probabilidade nao-gaussiana, e o
+sinal nao pode ser considerado determinstico.
+
+Poveda, J. (2007). Atlas read-out driver system
+production and initial performance results,
+IEEE Trans. Nucl. Sci. 54 26292636.
+
+Agradecimentos
+
+Trees, H. L. V. (2001). Detection, Estimation
+and Modulation Theory, Vol. Part I, WileyInterscience.
+
+Mitra, S. K. (1998). Digital Signal Processing A
+Computer Based Approach, McGraw-Hill.
+
+Shanmugan, K. S. (1988). Detection, Estimation
+and Data Analysis, John Wiley and Sons.
+
+A Coordenacao de Aperfeicoamento Pessoal
+de Nvel Superior (CAPES), ao Conselho Nacional de Desenvolvimento Cientfico e Tecnologico
+(CNPq) e a Fundacao de Amparo a Pesquisa do
+Estado de Minas Gerais (FAPEMIG) pelo suporte
+financeiro.
+
+Tylmad, M. (2009). Pulse shapes for signal reconstruction in the atlas tile calorimeter, 16th
+IEEE-NPSS pp. 543547.
+
+Referencias
+
+Wigmans, R. (2000). Calorimetry - Energy Measurement in Particle Physics, Oxford University Press.
+
+ALTERA (2012).
+Altera,
+httpwww.altera.com .
+
+disponvel em
+
+Watterson, J. W. (1990). An optimum multilayer
+peceptron neural receiver for signal detection,
+IEEE Transactions on Neural Networks .
+
+Anderson, K. (2005). Design of the front-end analog electronics for the atlas tile calorimeter,
+Nucl. Instrum. Meth. p. A(551)469476.
+Anjos, J. (2006). Angra dos reis reactor neutrino
+oscillation experiment, Brazilian Journal of
+Physics,36 .
+Arfaoui, S. (2010). Performance of the atlas liquid
+argon calorimeter, Nuclear Science Symposium Conference Record (NSSMIC), 2010
+IEEE, pp. 1699 1702.
+Brown, S. (2000). Fundamentals of Digital Logic
+with VHDL Design, McGraw Hill.
+Calkins, R. (2011). The atlas tile calorimeter performance at the lhc, 2011 2nd International Conference on Advancements in Nuclear
+Instrumentation Measurement Methods and
+their Applications (ANIMMA), pp. 1 8.
+CERN (2012).
+European organization
+for nuclear research,
+disponvel em
+httpwww.cern.ch .
+Edwards, D. (1992). An Introduction to the
+Physics of High Energy Accelerators, WileyInterscience.
+Haykin, S. (1998). Neural Networks A Comprehensive Foundation, Prentice Hall.
+Junior, H. P. L. (2009).
+Data acquisition system for the angra project,
+Angra Note 012-2009, disponvel em
+httplsd.cbpf.brneutrinosindex.phpdocumentos
+.
+
+ISBN 978-85-8001-069-5
+
+4696

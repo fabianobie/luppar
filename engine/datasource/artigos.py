@@ -20,7 +20,7 @@ class Artigos(Source):
 
     def read_querys(self):
         if(not self.__querys):
-            files = open(self.local_file_q, 'r').read().split('.I')
+            files = open(self.local_file_q, 'r',encoding="utf-8").read().split('.I')
             self.__querys = dict()
             for line in files:
                 if line:
@@ -30,17 +30,20 @@ class Artigos(Source):
                         self.__querys[int(new_line['id'])] = Query(id=int(new_line['id']),text=str(new_line['text'].strip()))
 
             relevants_resume = dict()
-            relevants = open(self.path+'/artigos.rel', 'r').readlines()
+            relevants = open(self.path+'/ARTIGOS.rel', 'r',encoding="utf-8").readlines()
             for i in relevants:
                 line = np.array(i.split(' ')).tolist()
                 key = int(line[0])
-                self.__querys[key].docs_relevant.append(int(line[2]))
+                try:
+                    self.__querys[key].docs_relevant.append(int(line[2]))
+                except:
+                    continue
 
         return self.__querys.values()
 
 
     def read_doc(self, id):
-        files = open(self.local_file_doc, 'r').read().split('.I')
+        files = open(self.local_file_doc, 'r',encoding="utf-8").read().split('.I')
         for line in files:
             match = re.match(self._pattern, line, re.DOTALL)
             if match:
@@ -48,30 +51,30 @@ class Artigos(Source):
                 if(int(new_line['id'])==id):
                     dc = new_line['text'].strip()
                     with open(self.path+"/"+dc+".txt") as f:
-                        return Document(id=int(new_line['id']),text=f.read())
+                        return Document(id=int(new_line['id']),text=f.read(),name=dc)
 
     def read_docs(self):
         self.__docs = dict()
-        files = open(self.local_file_doc, 'r').read().split('.I')
+        files = open(self.local_file_doc, 'r',encoding="utf-8").read().split('.I')
         for line in files:
             if line:
                 match = re.match(self._pattern, line, re.DOTALL)
                 if match:
                     new_line = match.groupdict()
                     dc = new_line['text'].strip()
-                    with open(self.path + "/" + dc + ".txt") as f:
-                        d = Document(id=int(new_line['id']),text=f.read())
+                    with open(self.path + "/" + dc + ".txt",encoding="utf-8") as f:
+                        d = Document(id=int(new_line['id']),text=f.read(),name=dc)
                     self.__docs[d.id] = d
                     yield d
 
 
     def total_querys(self):
-        files = open(self.local_file_q, 'r').read().split('.I')
-        raise len(files)
+        files = open(self.local_file_q, 'r',encoding="utf-8").read().split('.I')
+        return len(files)
 
     def total_docs(self):
-        files = open(self.local_file_doc, 'r').read().split('.I')
-        raise len(files)
+        files = open(self.local_file_doc, 'r',encoding="utf-8").read().split('.I')
+        return len(files)
 
     def lookup_querys(self,text):
         return [q for q in self.read_querys() if text in q.text]

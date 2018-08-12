@@ -1,0 +1,1053 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ESTRUTURAS PARALELAS BASEADAS EM FPGA PARA IMPLEMENTAÇÃO DE
+COMPENSADORES SELETIVOS DE HARMÔNICAS
+ALEXSANDRO B. LOPES, FÁBIO FAVARIM, EMERSON G. CARATI
+Programa de Pós-Graduação em Engenharia Elétrica  Universidade Tecnológica Federal doParaná
+CEP 85503-390  Pato Branco, PR - BRASIL
+E-mails alexblopes@gmail.com, favarim@utfpr.edu.br, emerson@utfpr.edu.br
+Abstract
+ This paper presents a parallel implementation approach of digital control systems. This approach is based on field
+programmable gate array (FPGAs) in order to reduce the computational time. The control technique used in the proposed implementation can be applied for selective harmonic compensation in active power filters. However, to compensate for even a small
+number of harmonics it requires multiple calculation instructions involving multiplications and additions. Thus, to improve the
+performance of the computer system it is proposed the implementation of a parallel control structure. Experimental results are
+presented to compare the runtime of the proposed parallel approach with the sequential execution time conventionally used in active power filters applications.
+Keywords
+ Digital Control. Parallel Processing. Active Power Filters. FPGA. Selective Harmonic Compensator.
+Resumo  Este trabalho apresenta uma abordagem de implementação paralela de sistemas_de_controle baseada em dispositivos
+lógicos programáveis (FPGAs), com o objetivo de reduzir o tempo computacional. A técnica de controle utilizada pode ser aplicada para compensação seletiva de harmônicas em filtros_ativos de potência. Entretanto, para compensar mesmo um número reduzido de harmônicas se requer múltiplas instruções de cálculo envolvendo multiplicações e adições. Assim, para melhorar o desempenho do sistema computacional, propõe-se a utilização de estruturas paralelas para implementação do controlador. Resultados experimentais são apresentados para comparar o tempo de execução do método paralelo proposto com o tempo de execução
+sequencial convencionalmente utilizado em aplicações de filtros_ativos de potência.
+Palavras Chave  . Processamento Paralelo. Filtros ativos de potência. FPGA. Compensador seletivo de harmônicas.
+
+1 Introdução
+Filtros ativos de potência são comumente utilizados para compensação de correntes harmônicas,
+também como podem ser aplicados para controle de
+potência reativa e de cargas não-lineares cíclicas. O
+padrão IEEE Std 519 (IEEE Std 519-1992, 1992)
+especifica limites de distorção de uma instalação
+elétrica, medindo-se do ponto de conexão com a rede
+de distribuição.
+Técnicas convencionais de  utilizam a
+teoria de potência instantânea para detecção da corrente harmônica e são baseadas na corrente de carga
+(Akagi, Kanazawa and Nabae, 1984). Estas técnicas
+produzem um atraso de atuação que causa compensação_harmônica incorreta, restando harmônicos
+indesejáveis nas correntes de linha (Mattavelli,
+2001). A técnica mais comumente utilizada, o controlador PI, possui dois problemas conhecidos incapacidade de rastrear a referência senoidal com erro
+nulo em regime_permanente e baixa capacidade de
+rejeição_de_distúrbios. Mais ainda, outro problema
+desta implementação é o número elevado de conversões requeridas para transformação DQ em eixos
+estacionários. Outra técnica, o controlador deadbeat
+(Kuo, 1992) possui problemas de atrasos de cálculos
+e sensibilidade a variações paramétricas que ocorrem
+frequentemente em filtros_ativos de potência. De
+maneira a resolver estes problemas, controladores
+Proporcionais-Ressonantes (PR) (Zmood and
+Holmes, 2003) também como modificações destes
+tem sido utilizadas (Mattavelli and Fasolo, 2000).
+Nesta abordagem um controlador síncrono é utilizaISBN 978-85-8001-069-5
+
+do para compensação em frequências pré-definidas,
+não sendo requeridas conversões de eixos. Ainda,
+Mattavelli e Fasolo propõe a utilização da transformada discreta de Fourier para decomposição dos
+compensadores e uso de um número fixo de cálculos
+independente do número de harmônicas selecionadas.
+Em relação as ferramentas computacionais para implementação de sistemas de , atualmente os dispositivos mais utilizados são microcontroladores, processadores digitais de sinais (DSP),
+microprocessadores e, mais recentemente, dispositivos_lógicos_programáveis (FPGA). Devido ao processamento sequencial para cada harmônica, o uso de
+microcontroladores e DSPs para implementação de
+controladores Proporcionais-Ressonantes em filtros
+ativos de potência permite somente a compensação
+de algumas harmônicas sem introduzir atrasos significativos. Por outro lado, um FPGA é composto de
+grupos de blocos lógicos configuráveis (CLB) que
+podem ser arranjados em paralelo sem compartilhar
+recursos em comum. Algumas abordagens
+(Ramachandran, 2007) tem sido utilizadas para implementar filtros_digitais em arquiteturas FPGA, nas
+quais diversas multiplicações e adições são feitas
+simultaneamente. Ainda, a redução do tempo de
+processamento utilizando processamento_paralelo em
+FPGAs em diferentes áreas de pesquisa tem sido
+introduzida em alguns trabalhos recentes (Jensen et
+al., 2008 Sugahara, Oida and Yokoyama, 2009).
+Neste sentido, este trabalho propõe a implementação
+de estruturas paralelas, baseadas em dispositivos
+FPGA, de maneira reduzir o tempo de processamento
+de controladores_digitais. Utilizando esta abordagem
+
+3329
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+de implementação é possível executar algoritmos de
+controle com velocidade suficiente para compensar
+um grande número de harmônicas em filtros_ativos
+de potência. A estratégia de compensação seletiva de
+harmônicas proposta por Mattavelli e Fasolo
+(Mattavelli and Fasolo, 2000) é particularmente interessante para implementações em FPGA uma vez
+que a mesma pode ser totalmente paralelizável. O
+sistema proposto neste artigo emprega FPGAs sem a
+utilização de bibliotecas de ponto_flutuante, as quais
+são utilizadas na síntese de estruturas paralelas em
+diferentes arquiteturas de hardware, com foco na
+redução do tempo computacional de execução de
+malhas_de_controle. Para verificar a abordagem proposta, resultados experimentais considerando tempos
+de processamento são comparados com aqueles apresentados por Mattavelli e Fasolo.
+Este artigo está organizado como segue na Seção 2 a
+modelagem de um filtro_ativo_de_potência é apresentada. O compensador_seletivo_de_harmônicas (SHC) é
+introduzido na Seção 3. Na Seção 4 é detalhada a
+implementação de controladores_digitais em estruturas paralelas baseadas em FPGA. Resultados experimentais são apresentados na Seção 5 e a Seção 6
+conclui o trabalho desenvolvido.
+2 Filtros Ativos de Potência
+O propósito de um filtro_ativo é atenuar harmônicas geradas por cargas elétricas como fontes_chaveadas e retificadores. Filtros passivos de potência
+somente atenuam as frequências para as quais os
+mesmos foram previamente projetados e seria necessário um circuito com um grande número de componentes para filtrar um conjunto significativo de harmônicas. Filtros ativos de potência (FAPs) permitem
+compensação_de_harmônicas de ordem elevada com
+um circuito significativamente reduzido. A Figura 1
+mostra o circuito_equivalente de um filtro_ativo conectado a um sistema de alimentação trifásico. Ainda, FAPs realizam a mesma função básica de filtros
+passivos mas são baseados em dispositivos_semicondutores_de_potência. Os FAPs paralelos são conversores de fonte de tensão acoplados com o sistema
+elétrico através de indutâncias.
+ZL
+
+iL
+
+ZC
+ic
+
+Carga
+
+n
+
+iF
+
+Figura 2. Circuito equivalente monofásico de um FAP conectado a
+um sistema de alimentação (Stefanello, 2010).
+
+O sistema_de_controle_de_corrente do FAP realiza a
+medição da corrente harmônica de carga (iL) e corrente de saída do FAP (iF). Um controlador linear
+pode ser utilizado para comandar a tensão de saída
+do inversor PWM de forma a tornar a corrente do
+filtro igual s componentes poluentes da corrente de
+carga (Mossoba and Lehn, 2003). FAPs com controladores de corrente podem evitar ressonância no
+sistema, e o tamanho dos componentes passivos de
+filtragem podem ser significativamente reduzidos
+comparados aos filtros passivos. FAPs são também
+mais apropriados para compensação de cargas variantes no tempo uma vez que os mesmos podem eliminar uma larga faixa de harmônicas de baixa frequência. O modelo discreto_no_tempo para a corrente
+iF pode ser definido utilizando-se a seguinte equação
+diferença
+
+(
+
+)
+
+()
+
+()
+
+()
+
+iF k + 1  giF k + hvF k + h1vL k + h2 i0
+
+sendo g  e
+
+aTs
+
+,
+
+Ts
+
+hb e
+0
+
+a
+
+d ,
+
+(1)
+
+Ts
+a
+h1  b1  e d  ,
+0
+
+Ts
+a
+h2  b2  e d  , e as constantes a, b, b1, b2 são
+0
+
+obtidas dos parâmetros do filtro (Stefanello, 2010).
+3 Compensador Harmônico para FAPs
+Um compensador harmônico pode ser projetado
+com base em modelos periódicos nas frequências de
+interesse, de forma a eliminar harmônicas selecionadas. Neste sentido, um controlador utilizado para
+compensação de distúrbios periódicos pode ser projetado para atuar como controlador de um filtro_ativo
+de potência.
+3.1 Compensador Seletivo de Harmônicas (SHC)
+
+LF
+
+CF
+
+Filtro Ativo
+
+Figura 1. Circuito equivalente de um filtro_ativo paralelo.
+
+Para facilitar o entendimento do funcionamento de
+filtros_ativos trifásicos podem ser utilizadas simplifi-
+
+ISBN 978-85-8001-069-5
+
+cações aplicando-se uma transformação linear para
+obter o circuito monofásico equivalente, como mostrado na Figura 2.
+
+Uma estrutura de controle baseada em controladores_repetitivos (Gnoatto, Scarmin and Carati,
+2010), projetada para eliminar distúrbios periódicos,
+é apresentada por Von Jouanne (1996). Esta estrutura
+utiliza a transformada discreta de Fourier (DFT Discrete Fourier Transform) para realizar a análise
+das componentes harmônicas e o projeto de compen-
+
+3330
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+sadores integrais. A partir desta abordagem, Mattavelli e Fasolo (Mattavelli and Fasolo, 2000) implementam um compensador_seletivo_de_harmônicas
+(SHC) para frequências selecionadas, que utilizam
+eixos rotativos para as componentes de sequência
+positiva e de sequência negativa das frequências
+selecionadas. Ainda, é sugerido um controlador convencional para compensar as variações de carga e são
+feitas modificações para aplicações de ponto_fixo,
+reduzindo erros de quantização.
+Nesta estrutura de controle as entradas e, e são
+erros na corrente de entrada do sistema, e as saídas
+são referências para o controlador_de_corrente. Todos
+os erros em cada frequência harmônica são compensados pelo regulador Ch(s), o qual garante erro nulo
+em regime_permanente nas componentes de sequência_positiva e negativa. As saídas dos reguladores são
+convertidas novamente para eixos estacionários. Se
+necessário, são adicionados os ângulos de deslocamento h s saídas do regulador, de maneira a compensar atrasos de transporte. A compensação de
+sequências positivas e negativas da harmônica h é
+equivalente  demodulação em componentes 
+mostradas na Figura 3.
+
+i*
+Fh
+
+Para reduzir o erro em regime_permanente um integrador puro é inserido em cada sequência_positiva e
+negativa
+(3)
+K
+C k ( s )  Ik
+s
+Utilizando a transformação (2) e o regulador (3) a
+forma equivalente pode ser reescrita por
+
+ s cos (h )  hs sin (h ) 
+
+2
+2
+
+
+
+s
++
+h
+(
+)
+s
+
+
+
+()
+
+De forma a implementar a solução em uma plataforma de ponto_fixo, Mattavelli e Fasolo (Mattavelli and
+Fasolo, 2000) propuseram modificações, baseadas na
+função_de_transferência desejada para controle das
+harmônicas. Considerando  h  0, tem-se
+
+()
+
+C hA s 
+
+ Fh ( s )
+hN h
+
+2 K Ih s
+
+
+2  KF
+hNh 2
+1
+s + h0
+
+(
+
+)
+
+(5)
+
+ Fh ( s )
+hN h
+
+sendo N o número de amostras por ciclo da fundamental, h o índice da harmônica a ser compensada e
+K F  2 K Ih .
+Considerando Fh(s) como um filtro passa-faixa com
+ganho unitário e fase nula na harmônica h, com boa
+seletividade, pode ser definido como
+Fh ( s ) 
+
+i*
+Fh
+
+(4)
+
+ChA s  2 K Ih 
+
+(6)
+
+s
+2
+
+s + ( 2 h h0  1) s + ( h0 )
+
+2
+
+Escolhendo 2 h h0  1 , o segundo termo do deno-
+
+minador pode ser eliminado, resultado em
+Fh ( s ) 
+i*
+Fh
+
+i*
+Fh
+Figura 3. Demodulação síncrona das componentes  para um
+regulador de eixos estacionários.
+
+A simplificação do regulador da Figura 3 ChA(s) pode
+ser escrita por
+
+()
+
+ (
+
+)
+
+(
+
+C hA s  cos  h C h s  jh0 + Ch s + jh0
+
+ (
+
+)
+
+(
+
+... + j sin  h Ch s  jh0  Ch s + jh0
+
+) ...
+
+(2)
+
+)
+
+Esta técnica elimina o erro de regime_permanente
+para as frequências selecionadas, mas não apresenta
+desempenho_dinâmico requerido para aplicações de
+sistemas_de_potência. Utilizando esta motivação,
+Mattavelli e Fasolo (Mattavelli and Fasolo, 2000)
+propõem um sistema_de_controle em três camadas,
+com um termo proporcional Kp para resposta rápida e
+uma divisão de controladores rotativos para a componente fundamental que foi isolada da regulação das
+componentes harmônicas.
+ISBN 978-85-8001-069-5
+
+s
+s 2 + ( h0 )
+
+2
+
+ Fh (t )  cos ( h0t )
+
+(7)
+
+Substituindo (7) em (5), e de maneira a se obter a
+forma discreta de implementação, pode-se determinar os coeficientes da DFT de cada harmônica
+(8)
+2 N 1
+ 2   i
+Fh ( z ) 
+hi  z 
+ cos 
+N i 0
+N 
+
+  0 +  1z
+
+1
+
++  2z
+
+2
+
++ ... +  N 1 z
+
+ N +1
+
+A soma das funções Fh(z) para diversas harmônicas
+pode ser expressa como uma única função, a qual
+possui o mesmo número de termos N e cada coeficiente é a soma dos coeficientes i de cada harmônica a
+ser compensada. Além disso, é importante notar que
+o tamanho do vetor de coeficientes não depende do
+número de harmônicas selecionadas.
+O ganho KF  2KIh em (5), pode ser definido obtido
+de K Ih  2,2 n phTs (Mattavelli and Fasolo, 2000),
+sendo que nph é o número de ciclos da frequência
+fundamental que se deseja a resposta_dinâmica e Ts é
+o período de amostragem.
+
+3331
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+4 Implementação de SHC em FPGA
+
+No trabalho de Mattavelli e Fasolo (Mattavelli
+and Fasolo, 2000) o compensador_seletivo_de_harmônicas é implementado em um DSP ADMC401, utilizando 200 pontos de amostragem por ciclo. Neste
+caso foram necessários 18,4s para o processamento
+do bloco de compensação_harmônica das fases  e .
+O tempo total de execução para o sistema_de_controle
+considerando as outras operações foi de 36s, ou
+seja, foram necessários aproximadamente 17,6 s
+adicionais.
+O controle de harmônicas do SHC é a etapa que
+consome a maior parte do tempo de processamento.
+O tempo máximo necessário não permite a compensação significativa além da 19a harmônica. Para satisfazer o padrão IEEE Std 519 (IEEE Std 519-1992,
+1992) e realizar compensação até 39a harmônica
+seriam necessários aproximadamente 400 pontos de
+amostragem por ciclo e, portanto, um tempo de execução total menor que 42s (fs  24kHz). Assim, com
+o dobro de pontos de amostragem a abordagem de
+implementação de Mattavelli and Fasolo (Mattavelli
+and Fasolo, 2000) se torna inviável computacionalmente. Uma maneira de reduzir o tempo de processamento do SHC, assim como compensar harmônicas
+de ordem mais elevada é o uso de FPGA e técnicas
+de processamento_paralelo.
+De modo a avaliar a proposta de implementação de
+controladores_digitais em tempo_real usando processamento_paralelo em FPGA, foram implementados
+SHCs, utilizando a abordagem proposta por Mattavelli e Fasolo (Mattavelli and Fasolo, 2000). Os
+compensadores foram projetados com 50 e 100 amostras por ciclo, N50 e N100, respectivamente.
+Ainda, considerou-se como corrente de teste um sinal
+com frequência fundamental de 60 Hz e com 3 e 5
+harmônicas. Para os testes em questão foi utilizado
+um gerador de funções produzindo um sinal de 60Hz
+e adicionadas 3 e 5 harmônicas, ambas com 15 da
+fundamental.
+Neste trabalho, foi utilizado o dispositivo XC3S500E
+com clock de 50 MHz, do fabricante Xilinx, para a
+implementação dos filtros e controladores_digitais em
+FPGAs. Esse dispositivo possui 10.476 células lógicas, 20 multiplicadores dedicados embarcados e 232
+pinos de entrada_e_saída. O dispositivo é montado
+sobre uma plataforma de desenvolvimento Spartan3E Starter Kit, a qual possui conversor AD (Analógico Digital) com precisão de 14 bits e 1,7s de tempo de conversão e comunicação com o FPGA através
+de interface serial (SPI - Serial Peripheral Interface).
+Além disso, possui conversor DA (Digital Analógico) com 12 bits e tempo de conversão de aproximadamente 640 ns, que recebe dados do FPGA através
+de SPI. Para comunicação SPI são utilizados circuitos lógicos roteados no próprio FPGA-XC3S500E.
+De modo a reduzir o tempo de processamento do
+compensador SHC, a implementação paralela proposta utiliza várias ULAs (Unidades Lógicas Aritméticas). Estas ULAs foram alocadas paralelamente em
+
+ISBN 978-85-8001-069-5
+
+cada FPGA (Figura 4), empregando técnicas de pipeline aritmético e de processador (De Rose and
+Navaux, 2008). Além disso, em situações com maior
+número de pontos, dois FPGAs dispostos em paralelo
+permitem praticamente duplicar o número de operações por ciclo de clock, melhorando ainda mais o
+desempenho.
+Para desenvolvimento das estruturas lógicas e aritméticas foi utilizado a linguagem VHDL (VHSIC
+hardware description language) e a interface de
+desenvolvimento (Xilinx IDE - Integrated Development Environment), utilizada também para programar o FPGA.
+
+x(t)
+
+xn
+
+AD
+
+Registrador
+de Entrada
+
+ULA 1
+ULA 2
+ULA 3
+
+y(t)
+
+DA
+
+yn
+
+Registrador
+de Saída
+
+ULA n
+
+FPGA
+
+Figura 4. ULAs em dispostas em paralelo
+
+O diagrama de implementação apresentado na Figura
+5 ilustra as etapas do processamento_paralelo do
+compensador seletivo entre os FPGAs. Na inicialização do sistema os coeficientes, que foram previamente calculados no software MATLAB e armazenados
+em memória, são carregados para registradores dos
+dois FPGAs. No ciclo 1, a nova amostra do sinal de
+entrada xn é inserida no registrador e a amostras
+anteriores deslocadas. Na etapa seguinte, são realizadas 20 multiplicações em cada FPGA. Este limite
+deve-se ao número de multiplicadores dedicados do
+dispositivo utilizado. Em um dispositivo com maior
+quantidade de multiplicadores dedicados, o número
+de multiplicações pode ser maior, visto que neste
+processo os elementos dos vetores não são dependentes um dos outros. Após cada ciclo de multiplicação
+em paralelo, é realizado o seu somatório (ciclos 3, 5,
+e 7). Este procedimento é repetido até concluir as 50
+multiplicações em cada FPGA. Nas etapas 8, 9 e 10,
+são necessários ainda dois ciclos para acumular as
+somas de todas as multiplicações. No ciclo 11 os
+resultados são deslocados reduzindo a precisão para
+14 bits, que é a precisão utilizada pelo conversor
+DA. Nos ciclos 12 e 13 os resultados das multiplicações são subtraídos do sinal de entrada xn. Por fim,
+o resultado é convertido pelo conversor DA.
+Na implementação é também utilizada a técnica
+pipeline dentro de uma operação (STALLINGS,
+2002), a qual permite acesso  informação direto a
+registradores e não a memória principal, melhorando
+a operação do pipeline. Desta forma, os elementos de
+entrada, coeficientes e os resultados são colocados
+em vetores de registradores, de maneira que as operações requerem acesso apenas aos registradores,
+
+3332
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+fazendo acesso  memória principal apenas no início
+e término do processo. Usando esta técnica tem-se
+Coeficientes
+1 - 50
+
+41-50
+
+AD
+
++
+
+21-40
+
+1-20
+20
+Mult.
+
+x(t)
+
+uma única operação aritmética a vetores, com múltiplos elementos sendo processados ao mesmo tempo.
+
+xn
+20
+Mult.
+
+FPGA
+Mestre
+
++
+
+10
+Mult.
+20
+Mult.
+
+51-70
+
+FPGA
+Escravo
+
+20
+Mult.
+71-80
+
++
+
++
+
+3014
+bits
+
+10
+Mult.
+
+-
+
++
+
+y(t)
+DA
+
+-
+
++
+
+2
+3
+4
+5
+6
+7
+89
+10
+Figura 5. Diagrama de processos paralelos entre os dispositivos FPGA
+
+Esta seção apresenta os resultados das simulações computacionais e resultados experimentais dos
+compensadores SHC de ordem 50 e 100, ambos
+implementados utilizando processamento_paralelo.
+5.1 Determinação da velocidade de estruturas aritméticas
+Considerando que a operação de multiplicação é
+uma das mais essenciais e críticas para as rotinas de
+controle, em termos de tempo de processamento, foi
+desenvolvido um multiplicador binário de 4 bits, a
+partir de lógica combinacional usando CLBs, com o
+objetivo de analisar os tempos de execução de circuitos deste tipo na implementação de algoritmos de
+controle em relação a utilização dos multiplicadores
+dedicados embarcados de 18 bits do XC3S500E.
+Foram realizados experimentos executando um agrupamento de três multiplicadores. Os resultados mostraram que as multiplicações em série do multiplicador combinacional necessitam de 54,2ns para serem
+executadas, enquanto a execução do multiplicador
+embarcado necessita 7,8ns e 29,2ns, para a execução
+em série e em paralelo, respectivamente. Comparando-se os tempos de processamento do multiplicador
+combinacional (4 bits) com o dos multiplicadores
+embarcados (18bits) verificou-se que o tempo de
+processamento do primeiro é relativamente elevado.
+Desta forma, neste trabalho foram utilizados multiplicadores embarcados para implementação do SHC.
+5.2 Implementação do SHC
+O propósito da análise experimental apresentada
+nesta seção é verificar a abordagem proposta em
+
+11
+
+1213
+
+condições reais, os tempos de execução e os recursos
+necessários, considerando paralelismo em FPGA,
+para implementação do compensador de harmônicas
+para FAPs, discutidas neste artigo.
+a) Resultados de Simulação
+Para verificar a resposta_dinâmica do filtro_digital FIR apresentado em (8) os coeficientes foram
+determinados para as 3, 5 e 9 harmônicas da fundamental de 60Hz, com N  200. A análise de frequência de (8) é mostrada na Figura 6, que mostra o
+diagrama de Bode de magnitude do filtro FIR descrito acima. Como pode ser visto o filtro possui ganho
+unitário (0dB) na frequências selecionadas e um
+ganho reduzido nas demais frequências harmônicas.
+Diagrama de Bode
+
+50
+
+0
+
+Magnitude (dB)
+
+5 Simulações e Resultados Experimentais
+
+ISBN 978-85-8001-069-5
+
+3014
+bits
+
++
+
++
+91-100
+
+1
+
++
+
++
+
+Coeficientes
+51 - 100
+Cycles (20ns)
+
++
+
+-50
+
+-100
+
+-150
+
+-200
+1
+10
+
+10
+
+2
+
+3
+
+10
+Frequencia (radsec)
+
+4
+
+10
+
+Figura 6. Diagrama de Bode do SHC (N200).
+
+A fim de verificar o desempenho do compensador
+apenas nas frequências de interesse, também foi
+adicionada a 7 harmônica ao sinal de entrada. Foram
+realizadas diversas simulações em Matlab com
+200, 100 e 50 amostras por ciclo. O resultado da
+simulação do SHC, apresentado na Figura 7, mostra
+que o compensador atenua apenas nas harmônicas
+selecionadas, de modo que o sinal de saída apresenta
+a 7 harmônica com amplitude igual a do sinal de
+entrada, assim como ocorre com a frequência funda3333
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+mental. A Figura 8 apresenta a análise_espectral para
+N100, sem a 7 e a 9 harmônicas.
+100
+
+Antes comp.
+Depois comp.
+
+90
+
+ da fundamental (60Hz)
+
+80
+70
+60
+50
+40
+30
+20
+10
+0
+
+0
+
+2
+
+4
+
+6
+
+8
+
+10
+
+12
+
+14
+
+16
+
+18
+
+20
+
+Harmônicas
+
+Figura 7. Análise harmônica de simulação_computacional do SHC
+para N200 antes e após a compensação.
+100
+
+Antes comp.
+Depois comp.
+
+ da fundamental (60Hz)
+
+90
+80
+70
+60
+50
+40
+30
+20
+10
+0
+
+0
+
+2
+
+4
+
+6
+
+8
+
+10
+
+12
+
+14
+
+16
+
+18
+
+20
+
+Harmônicas
+
+Figura 8. Análise harmônica de simulação_computacional do SHC
+para N100 antes e após a compensação.
+
+Na simulação com N100, antes da compensação o
+sinal de entrada possui 15 da frequência fundamental adicionada em ambas harmônicas de 3 e 5 ordem. Após a compensação, estas harmônicas são
+significativamente atenuadas sem alterar significativamente o valor da fundamental. As formas de onda
+dos sinais de entrada, os sinais de saída para 100 e 50
+amostras por ciclo, respectivamente, são apresentadas na Figura 9. Observa-se que com 100 amostras
+por ciclo (Figura 9b) o sinal de saída é significativamente melhorado em comparação com o compensador de 50 amostras (Figura 9c).
+
+(a)
+
+(b)
+
+(c)
+
+Figura 9. Simulação computacional do SHC (a) Sinal de entrada,
+(b) sinal de saída para N100 e (c) sinal de saída para N50.
+
+b) Resultados Experimentais
+
+em FPGA foi realizada utilizando a abordagem de
+controle proposta por Mattavelli e Fasolo (Mattavelli
+and Fasolo, 2000). Dois SHC foram implementados
+com N50 e N100. A implementação com N50 é
+executada em um único FPGA enquanto que a com
+N100 é executada utilizando também um segundo
+FPGA, em paralelo com o primeiro. A verificação
+dos resultados numéricos foi realizada comparando a
+aplicação FPGA com resultados de simulação em
+Matlab. Os resultados para o tempo de execução do
+algoritmo são comparados com os apresentados em
+uma aplicação sequencial com DSP (Mattavelli and
+Fasolo, 2000).
+O SHC com 50 amostras por ciclo é apresentado no
+trabalho de Mattavelli e Fasolo com um tempo de
+execução 3,2 s por fase ( e ) para o bloco de processamento do compensador harmônico, utilizando
+um DSP de ponto_fixo (Analog Devices ADMC401).
+O tempo do mesmo procedimento realizado com a
+arquitetura paralela desenvolvida no FPGA
+XC3S500E da Xilinx, com a mesma ordem de velocidade, foi de apenas 226 ns.
+A implementação do SHC com 100 amostras por
+ciclo, projetado e executado em duas FPGAs paralelas, apresenta um aumento de cerca de 17 no tempo
+de processamento em relação ao SHC com N50,
+embora haja uma duplicação do número de cálculos.
+No filtro com N100 o número total de ciclos de
+hardware necessários para os cálculos de compensação_harmônica foi de 13 ciclos, o equivalente a 260
+ns. A medição do tempo, considerando-se os tempos
+de comunicação foi de 265 ns.
+O ensaio realizado por execução sequencial
+(Mattavelli and Fasolo, 2000) com 200 pontos necessitou de aproximadamente 9,2 s por fase ( e ).
+Proporcionalmente, um filtro sob as mesmas condições utilizando 100 pontos necessitaria de cerca de
+5,2 s. Ainda assim, este resultado é muito mais
+lento do que os 265 ns obtidos com o FPGA e as
+técnicas de paralelismo utilizadas. Os resultados são
+sumarizados na Tabela 1.
+Tabela 1. Comparativo dos tempos de execução do SHC
+em DSP (sequencial) e em FPGA (paralelo).
+Amostras por ciclo do SHC
+
+N50
+N100
+N200
+
+DSP
+
+FPGA
+
+3,2 s
+9,2 s
+
+226 ns
+260 ns
+-
+
+As figuras seguintes mostram as formas de onda de
+entrada (canal 2) e de saída (canal 1). A FFT do sinal
+de entrada (canal M) mostra que a harmônica de 180
+Hz possui amplitude de 57,7 mV (Figura 10) enquanto que a de de 300 Hz possui amplitude de 56,9 mV
+(Figura 11).
+Na FFT da Figura 12, é possível verificar uma redução na harmônica de 180 Hz para 11,1 mV, e na
+Figura 13 a redução da harmônica de 300 Hz para
+17,8 mV.
+
+A validação experimental da execução das estruturas de controle implementadas de forma paralela
+
+ISBN 978-85-8001-069-5
+
+3334
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A Tabela 2 apresenta a comparação entre os valores
+de THD da simulação_computacional e dos resultados experimentais.
+Tabela 2. THD dos sinais simulações e resultados experimentais
+Simulação
+Resultados
+Computacional Experimentais
+
+Sinal de Entrada
+Sinal de Saída (N50)
+Sinal de Saída (N100)
+
+Figura 10. Forma de onde de entrada (2), saída (1) e FFT (M) do
+sinal de entrada, 60 e 180 Hz.
+
+Figura 11. Forma de onde de entrada (2), saída (1) e FFT (M) do
+sinal de entrada , 60 e 300 Hz.
+
+Figura 12. Forma de onda de entrada (2), saída (1) e FFT (M) do
+sinal de saída, 60 e 180 Hz.
+
+Figura 13. Forma de onda de entrada (2), saída (1) e FFT (M) do
+sinal de saída, 60 e 300 Hz.
+
+ISBN 978-85-8001-069-5
+
+21,21
+10,81
+5,46
+
+21,26
+12,92
+6,99
+
+Os resultados das simulações de THD ficaram próximos dos resultados experimentais, mostrando que a
+correta execução das operações realizadas em FPGA.
+As pequenas diferenças entre os mesmos deve-se aos
+erros de quantização da implementação em ponto
+fixo em FPGA e as limitações dos conversores AD e
+DA. Para avaliar o sistema proposto com um número maior de pontos foi realizada uma simulação com
+200 pontos para cada período da fundamental. O
+resultado obtido para o sinal de saída apresentou
+THD  2,74. Considerando que o foco deste trabalho é demonstrar a viabilidade da utilização de estruturas paralelas para implementação acelerar etapas
+críticas de processamento, foram implementados
+apenas casos do SHCs com N50 e N100. A implementação de um SHC para N200, pode ser realizada paralelizando FPGAs adicionais ou incrementando o número de ciclos de execução.
+Atualmente, o TMS320F28335 é o dispositivo mais
+utilizado para implementações de controladores em
+sistemas de acionamentos elétricos, UPSs e filtros
+ativos de potência. O mesmo possui estrutura de
+ponto_flutuante e desempenho de 300MIPs, com
+conversores ADs de 80ns de tempo de conversão. A
+utilização deste dispositivo certamente permite reduzir o tempo computacional da implementação sequencial. Da mesma forma, a implementação em
+dispositivos FPGA de desempenho mais elevado,
+como o Virtex 6 ou Virtex 7, com frequência de
+600MHz, permite também uma significativa redução
+no tempo de processamento da implementação paralela.
+6 Conclusão
+
+Este trabalho utilizou como referência para metodologia de projeto uma implementação sequencial
+do compensador SHC (Mattavelli and Fasolo, 2000)
+o qual serviu também para comparação com os tempos de processamento aqui apresentados. Na execução sequencial, mostrada do artigo citado anteriormente, um compensador que executa a multiplicação
+de 50 coeficientes por 50 amostras em um filtro FIR
+(Finite Impulse Response), foram necessários aproximadamente 3,2 s por fase ( e ) para executar os
+cálculos. O mesmo controlador apresentado neste
+trabalho, implementado em um FPGA e utilizando
+processamento_paralelo, realizou esta tarefa em apenas 226 ns. O tempo de processamento sequencial foi
+de aproximadamente 14 vezes (3,2 s226 ns) maior
+que o paralelo, apesar do FPGA (Xilinx XC3S500E-
+
+3335
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+50 MHz) utilizar velocidade pouco superior ao DSP
+(Analog Devices ADMC401-26MIPS) utilizado no
+processamento sequencial. Atualmente, com o objetivo de reduzir ainda mais o tempo de processamento, estão sendo desenvolvidos trabalhos visando a
+implementação de compensadores em dispositivos de
+maior desempenho, como TMS320F28335 e FPGA
+Virtex 6.
+Os resultados obtidos demonstram a viabilidade de
+implementação de estruturas de controle e compensação em dispositivos_lógicos_programáveis, como
+forma de acelerar a execução da malha_de_controle.
+Desta forma, esta abordagem pode ser expandida
+para implementação de controladores em diversas
+aplicações da área de eletrônica_de_potência que
+aplicam compensadores estáticos, como fontes_ininterruptas_de_energia (UPSs), fontes programáveis e
+filtros_híbridos de potência. O sistema proposto apresentou um tempo de processamento significativamente menor que os tradicionais sistemas sequenciais e sem implicações significativas de custo. Ainda,
+os resultados de desempenho_dinâmico em diversas
+frequências foram semelhantes aos resultados de
+simulações
+computacionais
+realizadas
+em
+MATLAB.
+
+Agradecimentos
+
+Os autores agradecem a FINEP, CAPES, SETI,
+CNPq e Fundação Araucária, pelos financiamentos a
+este trabalho.
+
+IEEE Transactions on Industry Applications, pp.
+81-89.
+Mattavelli, P. and Fasolo, S. (2000) Implementation
+of synchronous frame harmonic control for highperformance AC power supplies, Industry
+Applications Conference, pp. 1988-1995.
+Mossoba, J. and Lehn, P.W. (2003) A controller
+architecture for high bandwidth active power
+filters, IEEE Transactions on Power
+Electronics, pp. 317 - 325.
+Ramachandran, S. (2007) Digital VLSI Systems
+Design A Design Manual for Implementation of
+Projects on FPGAs and ASICs Using Verilog, 1st
+edition, New York Springer.
+Stallings, W. (2002) Arquitetura e Organização de
+Computadores, 5th edition, São Paulo Prentice
+Hall.
+Stefanello, M. (2010) Controle Adaptativo Robusto
+de Estrutura Variável por Modelo de Referência
+Aplicado a Filtros ativos de Potência, PhD
+thesis.
+Sugahara, K., Oida, S. and Yokoyama, T. (2009)
+High Performance FPGA Controller for Digital
+Control of Power Electronics Applications,
+Power Electronics and Motion Control
+Conference, May, pp. 1425 - 1429.
+Zmood, D.N. and Holmes, D.G. (2003) Stationary
+frame current regulation of PWM inverters with
+zero steady-state error, IEEE Trans. on Power,
+pp. 814-822.
+
+Referências
+
+Akagi, H., Kanazawa, Y. and Nabae, A. (1984)
+Instantaneous Reactive Power Compensators
+Comprising Switching Devices without Energy
+Storage Components, IEEE Trans. Ind. Appl.,
+pp. 625-630.
+De Rose, C.A.F. and Navaux, P.O.A. (2008)
+Arquiteturas Paralelas, Porto Alegre Bookman.
+Gnoatto, C.L., Scarmin, A. and Carati, E.G. (2010)
+Repetitive control techniques applied to
+uninterruptible power supplies, 9th IEEEIAS
+International
+Conference
+on
+Industry
+Applications (INDUSCON), Nov, pp. 1 - 6.
+IEEE Std 519-1992 (1992) IEEE Recommended
+practices and requirements for harmonic control
+in electrical power systems, IEEE Std 519-1992.
+Jensen, L.B.W., Kjr-Nielsen, A., Alonso, J.D., Ros,
+E. and Krger, N. (2008) A hybrid
+FPGAcoarse parallel processing architecture for
+multi-modal
+visual
+feature
+descriptors,
+International Conference on Reconfigurable
+Computing and FPGAs, Cancun, 241-246.
+Kuo, B.C. (1992) Digital Control Systems, 2nd
+edition, New York Oxford University Press.
+Mattavelli, P. (2001) A Closed-Loop Selective
+Harmonic Compensation for Active Filters,
+
+ISBN 978-85-8001-069-5
+
+3336

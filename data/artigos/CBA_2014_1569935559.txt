@@ -1,0 +1,1354 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+CONTROLE DE NAVEGACAO MULTI-CAMADAS PARA UMA FORMACAO
+CENTRALIZADA DE VANTS
+Alexandre S. Brandao, Joao Paulo A. Barbosa, Valentn Mendoza,
+Mario Sarcinelli-Filho, Ricardo Carelli
+
+
+
+
+Departamento de Engenharia Eletrica, Centro de Ciencia Exatas e Tecnologicas
+Universidade Federal de Vicosa, Vicosa  MG, Brasil
+
+Programa de Pos-Graduacao em Engenharia Eletrica, Universidade Federal do Esprito Santo
+Vitoria  ES, Brasil
+
+
+Instituto de Automatica, Universidad Nacional de San Juan, San Juan, Argentina
+
+Emails alexandre.brandao@ufv.br, joao.p.amorim@ufv.br, valentin@ufv.br,
+mario.sarcinelli@ufes.br, rcarelli@inaut.unsj.edu.ar
+Abstract This paper presents an application of the multilayer control scheme to guide a formation of three
+unmanned aerial vehicles (UAV) in trajectory tracking missions. Each part of the formation control problem is
+dealt with by an individual layer, which is an independent module dealing with a specific part of the navigation
+problem. These layers are responsible for generating the desired path to the formation, the desired posture of
+the robots, and the control signal of each robot in order to guide it them to reach their desired positions. The
+formation controller here introduced is able to coordinate the robots to establish the desired formation, including
+the possibility of a time-varying position andor shape, while a nonlinear under-actuated controller previously
+proposed is responsible for guiding the UAVs to their desired positions. The stability of the closed-loop control
+system that includes the controller here proposed in the sense of Lyapunov is demonstrated, resulting that the
+formation errors are ultimately bounded. Finally, simulation results for a group of three quadrotors are presented
+and discussed, which validate the proposed model controller.
+UAV, Formation Control, Multi-Layer
+
+Keywords
+
+Resumo Este trabalho apresenta um esquema de controle multi-camadas para guiar uma formacao de tres
+veculos_aereos_nao_tripulados (VANT) em missoes de rastreamento_de_trajetorias. Cada parte do problema de
+controle da formacao e tratada por uma camada individual, a qual e um modulo independente lidando com uma
+parte especfica do problema de navegacao. Essas camadas sao responsaveis por gerar o caminho desejado da
+formacao, por fornecer a postura desejada dos robos e por estabelecer o sinal de controle para cada robo alcancar
+sua posicao desejada. O controlador aqui introduzido e capaz de guiar os robos da formacao para sua posicao
+desejada, incluindo a possibilidade de uma posicao eou forma variando com o tempo, enquanto um controlador
+nao-linear sub-atuado previamente apresentado e responsavel por guiar os VANTs para as posicoes desejadas.
+A estabilidade do sistema em malha_fechada que inclui o controlador proposto e demonstrada no sentido de
+Lyapunov, resultando que os erros de formacao sao, em ultima instancia, limitados. Por fim, resultados de
+simulacoes para um grupo de tres quadrimotores sao apresentados e discutidos, os quais validam o controlador
+proposto.
+Palavras-chave
+
+., 2013) uma tarefa de edificacao
+coletiva, onde uma equipe de VANTs equipados
+com garras deve pegar, transportar e montar elementos estruturais (Lindsey et al., 2012) uma tarefa de vigilancia e cobertura de grandes espacos
+(Zheng-Jei and Wei, 2013) uma manutencao de
+infraestrutura (Rezaee and Abdollahi, 2011) uma
+inspecao de grandes areas em aplicacoes para seguranca publica (Maza et al., 2010), entre outras
+aplicacoes.
+
+Introducao
+
+Na ultima decada as pesquisas em controle_de_navegacao cooperativa de multiplos veculos aereos
+nao tripulados (MVANTs) tem recebido grande
+atencao da comunidade cientfica. O crescente potencial de aplicacoes, tanto civis quanto militares,
+justifica o interesse em pesquisas nessa area. Para
+tarefas que envolvem ambientes com grandes dimensoes sabe-se que um grupo de VANTs trabalhando de forma cooperativa e mais eficiente
+que um unico robo especializado. Podemos citar, como exemplo, uma operacao de busca e resgate, na qual um pelotao deve cobrir uma grande
+area num curto perodo de tempo (Mercado et al.,
+2013) o seguimento de um alvo em movimento
+(Zhu et al., 2013) a realizacao de uma tarefa de
+transporte_de_carga, onde uma equipe de VANTs
+deve mover um objeto cujas dimensoes tornam
+impossvel o seu transporte por um unico robo
+
+Nestes casos, o desafio tem sido o controle de
+formacoes de VANTs, a fim de executar uma tarefa de forma eficiente em termos de custo, erro
+de formacao, tempo gasto, consumo_de_energia,
+entre outros. Ha muitas maneiras de abordar
+o problema de controle_de_formacao. Porem, a
+maior parte pode ser includa em pelo menos uma
+das tres estruturas de formacao seguintes lderseguidor, estrutura virtual ou navegacao comportamental (Yang et al., 2012b). Na estrategia lder-
+
+1458
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+seguidor, o robo denominado lder e responsavel
+por guiar (ou fornecer informacoes importantes
+para) os outros robos, denominados seguidores.
+No caso em que os robos devem estabelecer um padrao geometrico, o qual pode se mover no espaco
+3D, uma estrategia de estrutura virtual e mais razoavel. Finalmente, quando os robos devem se
+mover de acordo com um conjunto de missoes
+predefinidas (que sao selecionadas dependendo do
+cenario atual), uma estrategia comportamental e
+comumente adotada.
+Depois de escolher a estrutura da formacao,
+deve-se definir a arquitetura_de_controle a ser utilizada, a qual pode ser centralizada ou descentralizada. A diferenca entre elas e que, na primeira,
+uma unidade principal e responsavel pode obter
+informacoes sobre toda a formacao e solucionar
+o problema da navegacao. Em contraste, na segunda os robos usam suas proprias informacoes
+para observar o ambiente e reagir de modo a cumprir a missao predefinida.
+Em (Shi and Yang, 2013) uma formacao lderseguidor e implementada, introduzindo o conceito
+de Virtual Body Frame (um triangulo equilatero
+ajustavel) para multiplos VANTs. Nessa oportunidade, resultados de simulacoes destacam como
+um algoritmo de controle de voo nao-linear e capaz de guiar a formacao atraves de obstaculos
+(previamente identificados). Outra aplicacao para
+lder-seguidor pode ser encontrada em (Mercado
+et al., 2013), onde uma estrategia de rastreamento
+de trajetoria para uma formacao de quadrimotores e realizada no plano horizontal. Sliding
+mode e um controlador PD linear sao responsaveis por guiar a dinamica de translacao e a orientacao dos VANTs, respectivamente, e, entao, preservar a formacao desejada durante experimentos
+reais de voo. Alem disso, uma solucao para manter a formacao apos a troca de posicoes de VANTs
+durante a navegacao e apresentada e validada em
+(Luo, Xu, Wu and Ma, 2013). Algumas melhorias
+desse trabalho sao apresentadas em (Luo, Zhou
+and Wu, 2013), onde o foco e o desvio_de_obstaculos por meio de rearranjo (ou reagrupamento)
+dos VANTs, de acordo com uma estrategia lderseguidor.
+O conceito de Cluster, considerando uma formacao de n-robos, e apresentado em (Mas and
+Kitts, 2010). Em tal caso, o deslocamento da formacao depende das caractersticas das variaveis
+do Cluster Space, tais como posicao, orientacao e
+forma. Os resultados experimentais usando robos
+terrestres mostram a navegacao de toda uma formacao, considerando ambas arquiteturas, centralizada e descentralizada. Apesar de se assemelhar a uma estrategia baseada em estrutura virtual,
+esta estrategia tambem pode ser aplicada em formacoes do tipo lder-seguidor.
+Um novo controle_de_formacao descentralizado, chamado Extensao-Decomposicao-
+
+Agregacao (EDA), e introduzindo em (Yang
+et al., 2012b) e validado por simulacoes em (Yang
+et al., 2012a), para executar uma estrategia
+adequada para guiar uma equipe de VANTs
+considerando uma estrutura virtual. Para realizar
+o proposto, as informacoes da equipe sao usadas
+para estabelecer uma relacao entre os robos e o
+sistema_de_controle_de_formacao, para dividi-los
+em possveis subsistemas individualmente controlados, e para estabelecer uma interacao entre os
+subsistemas, os quais definem, respectivamente,
+os processos de extensao, decomposicao e agregacao. Outra estrategia baseada em estrutura
+virtual e implementada em (Rezaee and Abdollahi, 2011) para guiar um conjunto de VANTs
+de asas fixas, com distancias predefinidas de um
+lder virtual (nesse caso, uma estrutura piramidal
+rgida). Os VANTs sao controlados de forma
+descentralizada, tendo uma estrategia_de_controle
+de sincronizacao responsavel por minimizar falhas
+de atuadores e, assim, aumentar a robustez do
+sistema.
+Em nossos trabalhos anteriores relatados em
+(Brandao et al., 2009) e (Rampinelli et al., 2010),
+foi introduzido o Esquema de Controle MultiCamadas (ECMC) para guiar uma formacao de nrobos terrestres durante missoes de rastreamento
+de trajetoria, considerando (ou nao) a ausencia de
+obstaculos no ambiente. Visando aumentar a capacidade do ECMC, o objetivo deste trabalho e
+torna-lo capaz de guiar uma formacao de VANTs
+em tres dimensoes. Para tratar deste tema, este
+trabalho e dividido da seguinte forma a Secao
+2 descreve, em alto-nvel, o modelo_dinamico do
+VANT a Secao 3 apresenta brevemente alguns aspectos relevantes do ECMC a Secao 4 introduz a
+descricao da formacao 3-D, a fim de formalizar a
+camada de controle_de_formacao e, finalmente, as
+Secoes 5 e 6 apresentam, respectivamente, alguns
+resultados de simulacoes que validam a proposta,
+com algumas discussoes relevantes sobre eles, e algumas conclusoes sobre o trabalho.
+2
+
+O Modelo Dinamico do Helicoptero
+
+Esta secao apresenta a modelagem de um helicoptero como um corpo rgido movendo-se no espaco
+3-D. De acordo com (Ahmed et al., 2010), o modelo de um helicopteroquadrimotor pode ser representado por quatro subsistemas_dinamicos interconectados, como mostrado na Figura 1 a dinamica do atuador (responsavel por transformar
+os comandos de um joystick - ou gerados por computador - em atuacao de servo-motor), a dinamica de asas rotativas (a qual envolve os parametros aerodinamicos e a geracao da propulsao
+pelos motores principal e de cauda de um helicoptero ou pelos quatro motores independentes de um
+quadrimotor), o processo de geracao de forcas e
+torques (onde ocorre a decomposicao da forca de
+
+1459
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+VANT durante um voo em tres dimensoes pode ser
+encontrada em nosso trabalho anterior (Brandao
+et al., 2013), onde e apresentado o modelo_dinamico usado para representar o helicoptero, mostrando explicitamente seu carater sub-atuado.
+Em seguida, um controlador baseado em linearizacao por retroalimentacao parcial e projetado
+para a estabilizacao do VANT. Alem disso, a prova
+da estabilidade do sistema_de_controle em malha
+fechada no sentido de Lyapunov e apresentada,
+incluindo disturbios modelados e erros parametricos. A referencia a tal trabalho e porque tal
+controlador sera aqui utilizado por cada VANT da
+formacao para guia-lo para sua posicao desejada.
+
+propulsao), e a dinamica de corpo rgido (que define o deslocamento da aeronave no espaco Cartesiano).
+Os dois primeiros subsistemas, denominados Modelo Dinamico de Baixo-Nvel, podem
+ser representados por uma funcao linear, isto e
+
+T
+
+T
+u u u uz
+  f1 f2 f3 f4 + ,
+com   R4 e   R41 sendo matrizes constantes
+(Kondak et al., 2007). Os blocos restantes representam o Modelo Dinamico de Alto-Nvel. Em termos de notacao de entrada de controle, ui representa as entradas reais (que sao efetivamente aplicadas ao VANT), enquanto fi corresponde as entradas abstratas (que nao podem ser diretamente
+aplicadas ao veculo).
+O modelo_dinamico do VANT assim representado e obtido a partir das equacoes de EulerLagrange, de maneira bem semelhante a (Castillo
+et al., 2005) e (Raffo et al., 2010). No entanto, no
+contexto deste trabalho, ele e necessario apenas
+para definir a postura da aeronave no espaco 3-D,
+
+T
+
+T
+dada por q    , onde   x y z  R3
+corresponde aos deslocamentos longitudinal, lateral e normal no referencial inercial hgi, e  
+
+T
+    R3 corresponde aos angulos de rolagem, arfagem e guinada, com respeito ao referencial do quadrimotor. A Figura 2 ilustra os referenciais e as entradas abstratas de controle fi .
+Note-se que hsi tem a mesma orientacao de hgi, e,
+assim g   s .
+De (Brandao et al., 2013) obtem-se o modelo
+dinamico no referencial inercial hgi, dado por
+   
+  
+
+G
+0 0
+mI3
+0
+
+
++
+
++
+0
+0 Cr 
+0
+Mr 
+   
+f
+Dt
+
+,
+(1)
+
+Dr
+
+3
+
+Esta secao descreve brevemente o Esquema de
+Controle Multi-Camadas (ECMC) previamente
+proposto em (Brandao et al., 2009) e ilustrado na
+Figura 3. Os modulos apresentados no esquema
+trabalham independentemente, e lidam com cada
+parte especifica do problema de controle_de_formacao, como a geracao do caminho desejado da
+formacao, a definicao da postura desejada dos robos, e o estabelecimento do sinal de controle para
+cada robo de forma que ele possa alcancar sua posicao desejada.
+Para dar uma visao geral do ECMC, e importante enfatizar algumas camadas. A primeira e a
+Camada Planejador Off-line, a qual e responsavel
+por definir as condicoes iniciais da formacao, por
+reagrupar (se necessario) os robos da formacao, e
+por gerar a trajetoria (ou caminho) desejada. Na
+sequencia, tem-se a Camada de Controle de Formacao, que e responsavel por fornecer os sinais
+de controle para os robos, levando em conta os
+erros de formacao, a fim de minimiza-los. Essa
+camada controla as estrategias de posicionamento
+
+ou, simplesmente, M(q)q + C(q, q)q    D,
+onde I3  R33 e a matriz identidade, Mr () 
+W T JW   R33 representa a matriz de inercia
+Mr
+1
+ R33 e
+rotacional, Cr (, )  Mr  T
+2
+
+a matriz de Coriolis e forcas centrpetas, e G 
+0 0 mgT e o vetor de forca gravitacional. D representa o vetor de disturbios e forcas de atrito
+agindo sobre a aeronave, como efeitos aerodinamicos da fuselagem, rajadas de vento, efeito solo,
+resistencia do ar, entre outros.
+A descricao completa do controlador de altonvel nao-linear sub-atuado capaz de guiar um
+
+u
+u
+b
+
+u
+
+uz
+
+Dinamica
+do
+Atuador
+
+1
+2
+
+3
+4
+
+Dinamica
+das Pas
+Rotativas
+
+f1
+f2
+
+f3
+f4
+
+Processo de
+Geracao de
+Forcas 
+Torques
+
+O Esquema de Controle
+Multi-Camadas
+
+
+
+
+f
+t
+Dinamica
+de Corpo
+Rgido
+
+Figura 2 Modelo em CAD de um quadrimotor
+com 6 graus de liberdade contendo os referenciais
+e entradas de controle abstratas fi associadas a
+eles. Os referenciais inercial, espacial e corporal
+sao indicados por hgi, hsi, e hbi, respectivamente.
+
+b
+
+
+
+
+Figura 1 Representacao em blocos da Dinamica
+do VANT.
+
+1460
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+e rastreamento_de_trajetorias. Em seguida, a Camada do Robo, na qual sao includas as caractersticas dos robos_moveis, como suas configuracoes cinematicas e dinamicas, bem como suas estrategias de navegacao individuais (se existirem),
+como evasao_de_obstaculos, compensacao dinamica, entre outras. Por fim, a ultima camada e
+o Ambiente, que representa todos os objetos cercando os robos, incluindo as relacoes entre eles,
+como, por exemplo, a distancia entre eles, para
+evitar colisoes internas a formacao.
+
+4
+
+Esta secao apesenta a Camada de Controle para
+uma formacao centralizada, considerando tres
+VANTs descrevendo uma estrutura virtual triangular. As variaveis de estado usadas para representar a formacao sao mostradas na Figura 4.
+A postura da formacao e definida por PF 
+xF yF zF F F F T e a forma da estrutura
+e dada por SF  pF qF F T , que representa a
+distancia entre R1 and R2 , a distancia entre R1
+c1 R3 , respectivamente. E
+and R3 , e o angulo R2 R
+importante mencionar que (xF , yF , zF ) representa
+a posicao do centroide da formacao.
+
+E importante ressaltar que uma Camada Planejador On-line pode ser includa entre a Camada
+Planejador Off-line e a Camada de controle de
+Formacao, o que pode ser util para lidar com a
+evasao_de_obstaculos em formacao, mudando as
+posicoes dos robos ou a forma da formacao, a
+fim de prevenir colisoes. Entretanto, tal abordagem esta fora do escopo deste trabalho. Alguns comentarios sobre o grau de independencia
+das camadas podem ser encontrados em (Brandao
+et al., 2009). Alem disso, vale a pena mencionar que o ECMC e modular tambem no sentido
+horizontal, isto e, a estrutura cresce sempre que
+um novo robo e includo na formacao (alguns
+detalhes podem ser encontrados em (Rampinelli
+et al., 2010) para uma formacao de robos terrestres).
+
+4.1
+
+
+p
+(x1  x2 )2 + (y1  y2 )2 + (z1  z2 )2
+
+p
+
+
+ (x1  x3 )2 + (y1  y3 )2 + (z1  z3 )2 
+SF  
+,
+
+
+2
+2
+2
+
+
+pF + qF  rF
+arccos
+2pF qF
+(3)
+
+Planejador de Formacao Off-line
+qdes , qdes
+q1
+
+Triangulo 1  
+q1
+ref
+J 1 (q)
+
+Transformacoes Cinematicas Direta e Inversa
+
+Antes de introduzir a lei de controle da formacao,
+e necessario expressar a relacao entre a postura da
+formacao e as posicoes dos robos, a saber,
+
+
+x1 + x2 + x3
+
+
+3
+
+
+
+
+y1 + y2 + y3
+
+
+
+
+3
+
+
+
+
+z
++
+z
++
+z
+1
+2
+3
+
+
+
+
+3
+
+
+PF  
+ , (2)
+ arctan 2z1 3  z2 3  z3 3 
+
+
+2y1 3  y2 3  y3 3 
+
+
+
+2z 3  z2 3  z3 3 
+
+ arctan 1
+
+
+2x1 3  x2 3  x3 3 
+
+
+
+2y1 3  y2 3  y3 3 
+arctan
+2x1 3  x2 3  x3 3
+
+Tambem e importante ressaltar que alguns
+blocos adicionais sao necessarios para completar
+o proposito do ECMC, como J() e K, que representam a matriz Jacobiana e o modelo_cinematico
+eou dinamico dos robos, respectivamente.
+
+Controle de Formacao
+
+A Camada de Controle de Formacao
+
+onde rF 
+
+p
+
+(x2  x3 )2 + (y2  y3 )2 + (z2  z3 )2 .
+
+
+
+1
+des
+
+K 1
+
+
+
+u1
+des
+Formacao de Robos
+Formacao 1
+R1
+
+R2
+
+R3  
+
+11 21 31
+Ambiente
+
+1
+
+f ()
+
+Figura 3 Diagrama de fluxo do Esquema de
+Controle Multi-Camadas.
+
+Figura 4 Formacao triangular de VANTs e suas
+variaveis de estado.
+
+1461
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+qd  PF d SF d T e suas variacoes desejadas qd 
+PF d SF d T . Assim sao geradas as referencias de
+variacao de postura e forma qr  PF r SF r T ,
+onde os ndices d e r representam os sinais desejado e de referencia, respectivamente. Definindo
+os erros de formacao como q  qd  q, a lei de
+controle_de_formacao proposta e
+
+Doravante a formacao completa sera representada por q  PF SF T e a posicao do robo por
+  1 2 3 T . E importante ressaltar que a
+orientacao dos robos nao e considerada neste trabalho, e que a formacao pode assumir qualquer
+configuracao triangular (triangulo equilatero, isosceles ou escaleno).
+Por sua vez, a transformacao cinematica inversa e dada por
+
+qr  qd + q,
+
+onde  e uma matriz de ganho diagonal positiva
+definida. Ao considerar v como sendo a diferenca
+entre as variacoes real e desejada da formacao,
+tem-se q  qref + v . A partir da, a equacao do
+sistema em malha_fechada pode ser escrita como
+
+2
+
+  
+
+h1
+xF
+
+
+R  0  +  yF 
+
+
+
+
+0
+z
+F
+
+ 
+
+
+
+
+
+2
+h
+cos(
+)
+x
+
+
+F
+2
+1
+
+  32
+
+
+
+   R 3 h2 sin(1 ) + yF  ,
+
+
+0
+zF 
+
+
+ 
+
+
+
+2
+
+h cos(2 )
+xF 
+
+
+3 3
+R  2 h3 sin(2 ) +  yF 
+
+
+3
+
+(4)
+
+q + q  v .
+
+zF
+
+onde
+p 2
+
+pF + qF2  2pF qF cos(F )
+
+
+q
+
+
+1 2
+1 2
+2
+
+
+
+  
+2 (pF + qF  2 rF )
+
+
+rF
+q
+
+
+1 2
+1 2
+
+ h1  
+2
+
+  
+2 (rF + pF  2 qF )
+
+ h2  
+q
+
+ 
+
+ h3  
+1 2
+1 2
+2
+
+  
+2 (qF + rF  2 pF )
+
+1  
+
+
+2
+2
+2
+
+4(h
++
+h
+)
+
+9p
+2
+1
+2
+F 
+
+ arccos
+
+
+8h1 h2
+
+
+2
+2
+2
+
+4(h1 + h3 )  9qF 
+arccos
+8h1 h3
+
+V 
+
+c c
+R  s c
+s
+
+c s s  s c
+s s s + c c
+c s
+
+V  qT q  qT q  qT v .
+Assumindo a velocidade de rastreamento perfeita, v  0 pode-se concluir que V < 0, o
+que significa que o equilbrio e globalmente assintoticamente estavel, ou seja, q  0 quando
+t  .
+Por outro lado, se v e naonulo, o equilbrio sera assintoticamente estavel se
+qT q > qT v . Uma condicao suficiente para
+isso e kqk > kv kmin (), onde min () representa os autovalores mnimos de . Isso significa
+que o erro de formacao q e finalmente limitado,
+e seu limite depende do erro de rastreamento de
+trajetoria da formacao v . Se uma Camada de
+Compensacao Dinamica e considerada, entao v
+pode ser reduzido, como mostrado em (Brandao
+et al., 2009).
+E importante ressaltar que o controlador naolinear para guiar os VANTs para suas posicoes
+desejadas (calculadas pelo controlador de formacao) e proposto e tem sua analise_de_estabilidade
+demonstrada em (Brandao et al., 2013).
+
+
+c s c + s s
+s s c  c s  .
+c c
+
+Note-se que h1 e a distancia entre R1  e o
+ponto central do segmento R2 R3 , h2 e a distancia entre R2  e o ponto central do segmento
+R1 R3 , e h3 e a distancia entre R3  e o ponto
+central do segmento R1 R2 , todas passando
+por (xF , yF , zF ).
+Tomando a primeira derivada das transformacoes cinematicas direta e inversa, obtem-se a relacao entre  e q, representada pela matriz Jacobiana dada por q  J() no sentido direto, e por
+  J 1 (q)q no sentido inverso, onde
+J() 
+
+qn1
+m1
+
+e
+
+J 1 (q) 
+
+5
+
+ m1
+,
+qn1
+
+Resultados e Discussoes
+
+Esta secao apresenta resultados de duas simulacoes considerando o controlador proposto para
+missoes de rastreamento_de_trajetoria. O objetivo e demonstrar a estabilidade do sistema de
+controle em malha_fechada durante o voo de uma
+formacao de VANTs e checar a efetividade do
+controlador. O modelo_dinamico do quadrimotor
+Ar.Drone Parrot e usado em tais simulacoes.
+
+para m, n  1, 2,    , 9.
+4.2
+
+1 T
+q q > 0,
+2
+
+cuja primeira derivada e
+
+e
+
+
+(6)
+
+Agora, a fim de demonstrar a estabilidade do
+sistema em malha_fechada que inclui o controlador
+proposto, pode-se considerar a funcao candidata
+de Lyapunov
+
+3
+
+0
+
+(5)
+
+O Controlador da Formacao e sua Prova de
+Estabilidade
+
+A Camada de Controle recebe da camada superior a postura e a forma desejadas da formacao
+
+1462
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+A primeira simulacao consiste em uma linha
+reta crescendo na direcao do eixo x e uma funcao
+senoidal na direcao do eixo z, dada por
+
+ 
+
+xF d
+0.1t
+ yF d   
+,
+0
+zF d
+0.5 sin(0.03t) + 2
+
+maiores (menores que 250mm) ocorrem no plano
+xy. Alem disso, um atraso no seguimento pode ser
+observado na evolucao temporal do caminho 3-D
+percorrido, o qual nao compromete a realizacao da
+missao. Sabe-se que reduzindo a frequencia angular da referencia circular, os erros de seguimento
+podem ser menores. Porem, o objetivo aqui e demonstrar a eficacia da proposta nessas situacoes.
+
+e um angulo de arfagem desejado da formacao
+que cresce continuamente de acordo com F d 
+0.02t. O vdeo disponvel no link httpyoutu.
+beJlosdzq1UrM ilustra esta simulacao. A configuracao da formacao adotada durante a navegacao
+e SF d  1 2 4T . O caminho da navegacao 3-D
+e os erros de postura durante a execucao da tarefa
+sao mostrados na Figura 5. Pode-se observar que
+os erros de posicionamento absoluto nos eixos y
+e z sao menores que 50mm. Isto ocorre devido a
+referencia dada a formacao, ou seja, nao ha deslocamento no eixo y, assim, os robos mantem a referencia, uma vez que atingem o valor predefinido.
+Alem disso, considerando que o controlador na direcao z e quase independente das outras variaveis,
+os robos alcancam mais rapidamente a referencia
+e permanecem seguindo-a. Agora, sabendo-se que
+o deslocamento horizontal do VANT depende diretamente do angulo de inclinacao, pode-se notar
+uma maior amplitude nos erros nessas variaveis.
+Na figura pode-se observar que a formacao segue
+o valor desejado com um atraso e apresenta um
+erro de estado estacionario que pode ser minimizado pela adicao de um Modulo Compensador Dinamico no Esquema de Controle Multi-Camadas.
+Na segunda simulacao, a formacao deve seguir
+uma referencia circular com uma altitude fixa, enquanto altera sua referencia de angulo de guinada.
+Em outras palavras, o percurso desejado e dado
+por
+
+ 
+
+xF d
+4 cos(0.01t)
+ yF d   4 sin(0.01t) 
+
+ 
+.
+ zF d   
+
+2
+F d
+0.02t
+
+Outras simulacoes que descrevem uma tarefa de posicionamento e uma referencia em
+forma de oito para rastreamento_de_trajetoria podem ser encontrados respectivamente em http
+youtu.beBUt6XD8ehs e em httpyoutu.
+bel3e7LLPor8k. Vale a pena enfatizar que a
+proposta e capaz de guiar uma formacao durante
+tarefas de posicionamento, dado um conjunto de
+posturas e formas desejadas.
+
+6
+
+Conclusoes
+
+Este trabalho apresenta uma aplicacao do esquema de controle multi-camadas para guiar uma
+formacao de tres veculos_aereos_nao_tripulados
+(VANT) em missoes de rastreamento_de_trajetoria. O controlador de formacao aqui proposto e
+capaz de guiar os robos para suas posicoes desejadas, a fim de estabelecer a estrutura virtual desejada para a formacao. A possibilidade da posicao
+eou forma da formacao variar com o tempo pode
+ser tratada, o que abre a possibilidade de navegar
+considerando estrategias de desvio_de_obstaculos.
+O controlador_nao_linear subatuado previamente proposto e responsavel por guiar cada
+VANT da formacao para a sua posicao desejada.
+A prova_de_estabilidade e demonstrada para a navegacao de um VANT durante missoes de posicionamento, rastreamento_de_trajetoria e seguimento
+de caminho. Neste trabalho, a analise_de_estabilidade do sistema em malha_fechada e feita com
+base na teoria de Lyapunov, resultando em erros
+de formacao finalmente limitados. A eficacia da
+proposta e mostrada atraves de resultados de simulacoes com um grupo de tres quadrimotores,
+que configuram uma estrutura virtual triangular.
+
+A configuracao da formacao e SF d  2 2 3T ,
+definindo um triangulo equilatero. Durante a execucao deste voo, pode-se imaginar uma tarefa de
+escolta, como mostrado no link httpyoutu.
+beeW0ZhAjU2tY. Neste caso, o baricentro da formacao pode ser considerado como o objeto escoltado pelos robos em formacao, os quais circulam
+em torno dele.
+Uma analise similar a da primeira simulacao
+pode ser feita para a segunda. A descricao mais
+importante a ressaltar e a caracterstica passiva
+das variaveis x e y, as quais dependem diretamente
+dos angulos de arfagem e rolagem, respectivamente. Como explicado em (Brandao et al., 2013),
+levando em conta o aspecto sub-atuado do VANT,
+essas variaveis sao classificadas como passivas no
+estagio de modelagem, sendo governadas pelas ativas. Assim, na Figura 6 pode-se notar que erros
+
+O proximo passo deste trabalho pode ser incorporar uma estrategia de desvio_de_obstaculos,
+capaz de guiar com seguranca toda a formacao
+em um ambiente semi-estruturado. Alem disso,
+um modulo de compensacao dinamica pode ser
+adicionado, a fim de reduzir os erros de formacao,
+aumentando, assim, o desempenho do sistema. Finalmente, em trabalhos futuros, pretende-se abordar a escalabilidade do esquema proposto para
+mostrar que ele pode controlar um grupo de nrobos, com diferentes configuracoes de formacao.
+Por fim, almeja-se apresentar resultados com voos
+reais, utilizando tres VANTs.
+
+1463
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+(a) Percurso 3-D navegado.
+
+1
+
+ degrees
+
+0.5
+
+x m
+
+0.25
+0
+0.25
+0.5
+
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+0.5
+0
+0.5
+1
+
+120
+
+y m
+
+0.25
+0
+0.25
+0.5
+
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+40
+
+60
+
+80
+
+100
+
+120
+
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+0
+0.5
+1
+
+120
+
+ degrees
+
+1
+
+0.25
+
+z m
+
+20
+
+0.5
+
+0.5
+
+0
+0.25
+0.5
+
+0
+
+1
+
+ degrees
+
+0.5
+
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+0.5
+0
+0.5
+1
+
+120
+
+Time s
+
+Time s
+
+(b) Erros de posicao.
+
+(c) Erros de angulo.
+
+Figura 5 Erros de rastreamento_de_trajetoria para MVANTs seguindo uma referencia em linha reta,
+usando o Esquema de Controle Multi-Camadas.
+
+1
+
+ degrees
+
+0.5
+
+x m
+
+0.25
+0
+0.25
+0.5
+
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+140
+
+160
+
+180
+
+ degrees
+
+y m
+
+0
+0.25
+
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+140
+
+160
+
+180
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+140
+
+160
+
+180
+
+200
+
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+140
+
+160
+
+180
+
+200
+
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+140
+
+160
+
+180
+
+200
+
+0.5
+0
+0.5
+1
+
+200
+
+1
+
+ degrees
+
+0.5
+0.25
+
+z m
+
+0
+
+1
+
+0.25
+
+0
+0.25
+0.5
+
+0
+0.5
+1
+
+200
+
+0.5
+
+0.5
+
+0.5
+
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+140
+
+160
+
+180
+
+0.5
+0
+0.5
+1
+
+200
+
+Time s
+
+Time s
+
+Figura 6 Erros de rastreamento_de_trajetoria para MVANts seguindo uma referencia circular, usando o
+Esquema de Controle Multi-Camadas.
+
+1464
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Agradecimentos
+
+Maza, I., Caballero, F., Capitan, J., de Dios, J. M. and
+Ollero, A. (2010). Experimental results in multiuav coordination for disaster management and
+civil security applications, Journal of Intelligent
+and Robotic Systems 64(1-4) 563585.
+
+Os autores agradecem ao CNPq  Conselho Nacional de Desenvolvimento Cientfico e Tecnologico
+(concessao 4731852012-1)  pelo apoio financeiro
+concedido. O Dr. Sarcinelli-Filho tambem agradece o apoio financeiro adicional da FAPES  Fundacao de Amparo a Pesquisa e Inovacao do Esprito Santo para o projeto. O Dr. Brandao agradece a Universidade Federal de Vicosa, a FAPEMIG  Fundacao de Amparo a Pesquisa de Minas
+Gerais  e a CAPES  Coordenacao de Aperfeicoamento de Pessoal de Nvel Superior  por apoiar
+a sua participacao neste trabalho.
+
+Mellinger, D., Shomin, M., Michael, N. and Kumar,
+V. (2013). Cooperative grasping and transport
+using multiple quadrotors, Distributed Autonomous Robotic Systems, Vol. 83 of Springer Tracts
+in Advanced Robotics, Springer Berlin Heidelberg, pp. 545558.
+Mercado, D. A., Castro, R. and Lozano, R. (2013).
+Quadrotors flight formation control using a
+leader-follower approach, Proceedings of the 2103
+European Control Conference (ECC), Zurich,
+Switzerland, pp. 38583863.
+
+Referencias
+
+Raffo, G. V., Ortega, M. G. and Rubio, F. R.
+(2010). An integral predictivenonlinear H
+control structure for a quadrotor helicopter, Automatica 46 2939.
+
+Ahmed, B., Pota, H. R. and Garratt, M. (2010). Flight
+control of a rotary wing uav using backstepping,
+International Journal of Robust and Nonlinear
+Control 20 639658.
+
+Rampinelli, V. T. L., Brandao, A. S., Martins, F. N.,
+Sarcinelli-Fillho, M. and Carelli, R. (2010). Embedding obstacle avoidance in the control of a
+flexible multi-robot formation, Proceedings of the
+IEEE Internation Symposium on Industrial Electronics, Bari, Italy.
+
+Brandao, A. S., Martins, F. N., Rampinelli, V. T. L.,
+Sarcinelli-Filho, M., Bastos-Filho, T. F. and Carelli, R. (2009). A multi-layer control scheme for
+multi-robot formations with adaptative dynamic
+compensation, Proceedings of the 5th IEEE International Conference on Mechatronics, IEEE,
+MAlaga, Spain.
+
+Rezaee, H. and Abdollahi, F. (2011). A synchronization strategy for three dimensional decentralized
+formation control of unmanned aircrafts, Proceedings of the 37th Annual Conference on IEEE Industrial Electronics Society (IECON 2011), Melbourne, Australia, pp. 462467.
+
+Brandao, A. S., Sarcinelli-Filho, M. and Carelli,
+R. (2013). High-level underactuated nonlinear
+control for rotorcraft machines, Proceedings of
+the IEEE International Conference on Mechatronics, IEEE, Vicenza, Italia.
+
+Shi, X. and Yang, J. (2013). Design of formation
+flight control based on virtual body frame of
+the team formation, Proceedings of the 25th Chinese Control and Decision Conference (CCDC),
+Guiyang, China, pp. 796800.
+
+Castillo, P., Lozano, R. and Dzul, A. (2005). Modelling
+and Control of Mini-Flying Machines, Springer,
+USA.
+Kondak, K., Bernard, M., Meyer, N. and Hommel, G.
+(2007). Autonomously flying vtol-robots Modeling and control, Proceedings of the IEEE International Conference on Robotics and Automation, Rome, Italy, pp. 736741.
+
+Yang, A., Naeem, W., Irwin, G. W. and Li, K.
+(2012a). A decentralized control strategy for formation flight of unmanned aerial vehicles, Proceedings of the UKACC International Conference
+on Control, Cardiff, UK, pp. 345350.
+
+Lindsey, Q., Mellinger, D. and Kumar, V. (2012).
+Construction with quadrotor teams, Autonomous
+Robots 33(3) 323336.
+
+Yang, A., Naeem, W., Irwin, G. W. and Li, K.
+(2012b). Novel decentralized formation control
+for unmanned vehicles, Proceedings of the 2012
+Intelligent Vehicles Symposium, Alcala de Henares, Spain, pp. 1318.
+
+Luo, D., Xu, W., Wu, S. and Ma, Y. (2013). Uav
+formation flight control and formation switch
+strategy, Proceedings of the 8th International
+Conference on Computer Science and Education
+(ICCSE), Colombo, Sri Lanka, pp. 264269.
+
+Zheng-Jei, W. and Wei, L. (2013). A solution to cooperative area coverage surveillance for a swarm
+of muavs, Internation Journal of Advanced Robotic Systems 10(398) 18.
+
+Luo, D., Zhou, T. and Wu, S. (2013). Obstacle
+avoidance and formation regrouping strategy
+and control for uav formation flight, Proceedings of the 10th IEEE International Conference
+on Control and Automation (ICCA), Hangzhou,
+China, pp. 19211926.
+
+Zhu, S., Wang, D. and Low, C. B. (2013). Cooperative
+control of multiple uavs for moving source seeking, Proceedings of the 2013 Internation Conference on Unmanned Aircraft Systems (ICUAS),
+Atlanta, GA, USA, pp. 193202.
+
+Mas, I. and Kitts, C. (2010). Centralized and decentralized multi-robot control methods using the
+cluster space control framework, Proceedings of
+the 2010 IEEEASME International Conference
+on Advanced Intelligent Mechatronics, Montreal,
+Canada, pp. 115122.
+
+1465

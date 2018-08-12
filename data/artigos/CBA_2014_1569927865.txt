@@ -1,0 +1,783 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+PLATAFORMA DIDATICA DE BAIXO CUSTO PARA EXPERIENCIAS EM
+LABORATORIOS DE CONTROLE
+Rafael M. Moreira, Henrique B. Munhoz, Adriano D. Kairalla, Giscard F. C. Veloso
+, Rodrigo M. A. Almeida
+
+
+IESTI, Universidade Federal de Itajuba
+37500-903, Itajuba, Minas Gerais, Brasil
+Emails rafaelmmoreira@gmail.com, henriquebeltrami@gmail.com, adkairalla@gmail.com,
+gveloso@unifei.edu.br, rodrigomax@unifei.edu.br
+Abstract Operational systems are softwares that manage available hardware resources and provide services
+for the applications. Real time operational systems are operational systems that have resources to ensure that
+required deadlines are met and are employed in several industries where task executions with time restrictions are
+vital. This study adapts a real time operational system to implement a reliable PID digital control system, with
+a desktop application to interact with the end user, allowing visualization in real time of the control response
+through generated plots, as well as modify the transfer function parameters.
+Keywords
+
+Digital control, real time operating system, PID.
+
+Resumo Sistemas operacionais sao softwares que gerenciam os recursos de hardware disponveis e providenciam servicos para as aplicacoes. Sistemas operacionais de tempo_real sao sistemas_operacionais que utilizam
+certos recursos para garantir o cumprimento preciso de prazos e sao empregados em diversas industrias onde a
+execucao de tarefas com restricoes temporais e vital. Este trabalho adapta um sistema_operacional_de_tempo_real
+para implementar um sistema_de_controle_digital PID confiavel, com uma aplicacao para desktop para interagir
+com o usuario, permitindo a ele visualizar em tempo_real o funcionamento do controle atraves de graficos, bem
+como modificar os parametros da funcao de transferencia.
+Palavras-chave
+
+.
+
+tetura permite ao projetista um bom desempenho
+no chaveamento das tarefas a serem executadas
+e ainda assim garantir seguranca (Jahanian and
+Mok, 1986).
+Tais sistemas auxiliam na criacao de maquinas
+que automatizam os processos de fabricacao, regulam e monitoram atividades industriais, alem de
+estarem presentes em inumeros dispostitivos mecanicos e eletronicos como motores e sensores termicos. Para monitorar tais processos, os mesmos
+devem ser modelados em equacoes matematicas
+que determinam o comportamento do sistema de
+acordo com especificacoes pre-determinadas. Posteriormente essas equacoes sao programadas em
+computadores ou sistemas_embarcados para realizar sua funcao.
+O desenvolvimento deste trabalho foi dividido
+em duas frentes distintas, realizadas em paralelo
+o desenvolvimento do software_embarcado que realiza o controle (bem como as devidas adaptacoes no RTOS desenvolvido em trabalhos anteriores (de Moura Moreira, 2013)(Munhoz, 2013)
+para executar o software, como a implementacao
+de drivers que sao necessarios no sistema) e o desenvolvimento do software para desktop que permite a visualizacao de informacoes sobre o funcionamento do sistema_em_tempo_real, bem como a
+alteracao dos parametros de controle. Para garantir a comunicacao_segura entre as diferentes plataformas, foi necessario estabelecer um protocolo
+de comunicacao entre os dois programas.
+Com a finalidade de desenvolver a aplicacao
+
+Introducao
+
+Sistemas embarcados sao sistemas microprocessados onde o computador e completamente dedicado ao dispositivo ou sistema que ele controla.
+Ao contrario dos computadores de proposito geral,
+como PCs de mesa ou laptops, um sistema_embarcado opera apenas um conjunto de tarefas predefinidas, geralmente com pre-requisitos especficos. Isso permite a reducao do projeto e um alto
+grau de personalizacao, reduzindo custos e tempo
+de projeto, bem como facilitando a atualizacao e
+correcao de erros. (Oliveira and Andrade, 2006)
+(Rowe et al., 2002) (Barr, 1999).
+O problema deste tipo de abordagem e a garantia da seguranca, estabilidade e robustez do
+programa desenvolvido(Rushby, 2001). Para garantir que o projeto atinja os nveis necessarios de
+seguranca, o projetista deve utilizar ferramentas
+de gerenciamento de projeto, baterias de testes
+e dispositivos de seguranca desenvolvidos exatamente para este fim (Lutz, 1993).
+No projeto de sistemas dedicados em geral e necessario operar diversas tarefas simultaneamente (Puschner and Koza, 1989)(Chen and
+Lin, 1990). Entre as arquiteturas disponveis para
+multitarefa estao os sistemas_de_tempo_real. Para
+nao violar as restricoes de tempo impostas, um
+sistema_de_tempo_real possui um algoritmo de escalonamento, que garante que nao havera falhas
+na execucao por extrapolar o tempo limite de resposta (Barr and Massa, 2006). Este tipo de arqui-
+
+895
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Codigo 1 Struct do PCB dos Processos
+1 typedef struct
+2 
+3
+v o l a t i l e unsigned i n t StackPoint 
+4
+v o l a t i l e unsigned i n t StackInit 
+5
+v o l a t i l e processState Status 
+6
+v o l a t i l e signed i n t Time 
+7
+v o l a t i l e priorityMode Prio 
+8
+v o l a t i l e procFunc Function 
+9  process 
+
+de teste do sistema_de_tempo_real, foi realizado
+um estudo de uma planta a ser controlada, a modelagem matematica desta e a implementacao de
+algoritmos de controle no software envolvido.
+A ultima etapa foi a realizacao de testes e analise dos resultados obtidos para verificar se o sistema esta funcionando conforme o esperado, bem
+como estudar as possveis falhas caso o funcionamento nao fosse o esperado.
+
+2
+
+RTOS
+
+Os sistemas_operacionais ou nucleos de tempo_real,
+que gerenciam interrupcoes e tarefas e permitem
+a programacao de temporizadores e de timeouts,
+sao, para muitos programadores, suficientes para
+a construcao de sistemas_de_tempo_real (Renaux
+et al., 1999).
+Para nao violar as restricoes de tempo impostas, um sistema_de_tempo_real possui um algoritmo de escalonamento, que garante que nao havera falhas na execucao por extrapolar o tempo
+limite de resposta (Barr and Massa, 2006). Por se
+tratar de um sistema_de_tempo_real, essa restricao
+de tempo e crucial para seu bom funcionamento e
+cumprimento de seus objetivos.
+Foi utilizado um sistema operacional inicialmente desenvolvido para a plataforma PIC18F,
+da Microchip (dos Santos, 2012) e posteriormente
+portado para a plataforma HCS12, da Freescale
+(de Moura Moreira, 2013), bem como a controladora de drivers desenvolvida para ele (Munhoz,
+2013). O sistema em questao sofreu adaptacoes no
+bloco de controle dos processos (PCB) e em seu
+mecanismo de escalonamento de processos para
+garantir seu funcionamento como um sistema de
+tempo_real, bem como drivers para os conversores
+AD e DA.
+2.1
+
+Codigo 2 Earliest Deadline First Scheduler
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+
+i 0
+f o r ( i  0  i<lastTask  i++)
+i f ( pool  i  . Status  READY ) 
+break 
+
+
+next  i 
+f o r ( i  ( next +1)  i < lastTask  i++)
+i f ( ( pool  i  . Status  READY ) 
+( pool  i  . Time < pool  next  . Time ) ) 
+next  i 
+
+
+
+Codigo 3 Round Robin Scheduler
+1 i  ( RRactualTask +1) 
+2 i f ( i>lastTask ) 
+3
+i  0
+4 
+6 while ( ( i ! RRactualTask ) 
+7
+( pool  i  . Status ! READY ) )
+8
+
+9
+i++
+10
+i f ( i>lastTask ) 
+11
+i  0
+12
+
+13 
+
+2.2
+
+Earliest Deadline First Scheduler
+
+O Earliest Deadline First (EDF) e um escalonador
+dinamico com prioridades dinamicas, ou seja, ele
+atribui as prioridades em tempo de execucao e as
+mesmas sao alteradas durante a execucao. As prioridades na realidade sao deadlines (prazos), e a
+proxima tarefa a ser executada sempre sera aquela
+que estiver mais proxima de sua deadline. Este algoritmo e otimizado quando o sistema e preemptivo, possui um unico processador e nao esta sobrecarregado (Kaladevi and Sathiyabama, 2010).
+2.3
+
+Round Robin Scheduler
+
+O Round Robin e um algoritmo de escalonamento
+de tarefas baseado em time-sharing. Cada tarefa
+recebe uma fatia do tempo de processamento (conhecida como quantum). Quando a tarefa atinge
+o tempo de duracao do quantum, ela e interrompida para que a proxima tarefa seja executada.
+Dessa forma, o sistema se alterna entre todas as
+tarefas ciclicamente (Silberschatz et al., 2010).
+
+Process Control Block
+2.4
+
+O PCB no RTOS utilizado e definido no codigo 1.
+
+Processo prioritario
+
+Para garantir que as leituras de dados fossem
+sempre feitas em intervalos constantes de tempo,
+foi desenvolvido um mecanismo de prioridade no
+qual um processo prioritario e executado antes
+
+As variaveis utilizadas pelo escalonador para
+garantir o tempo_real sao a Status, a Time e a
+Prio, segundo os mecanismos explicados a seguir.
+
+896
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+uma aplicacao para desktop com interface grafica
+que permite que o usuario ligue e desligue o sistema_de_controle ou altere seus parametros.
+A aplicacao de controle_digital possui interface semelhante a dos drivers, permitindo que suas
+funcoes sejam acionadas por outros programas que
+precisem obter ou fornecer informacoes a ela. Isso
+e util para que a aplicacao de comunicacao serial
+consiga facilmente executar os comandos recebidos para executar, interromper ou alterar os coeficientes utilizados pelo controle.
+A principal funcao do controle, updatePID
+constantemente le os valores medidos pelo conversor AD, recalcula os valores de sada utilizando
+a equacao de controle e em seguida envia os valores atualizados para o conversor DA. Por conta
+da necessidade de obter amostras em intervalos de
+tempo constantes para garantir o funcionamento
+do controle PID, essa aplicacao deve sempre executar como processo prioritario (tempo_real).
+Para testar a funcionalidade do controle_digital, foram utilizados os equacionamentos desenvolvidos em (de Souza Leal, 2012), visto que o
+objetivo deste trabalho e apenas desenvolver uma
+ferramenta confiavel e de facil utilizacao que possibilite o controle adequado de um sistema.
+A planta utilizada e um circuito RC em serie
+e sua modelagem pode ser formulada relacionando
+a tensao e a corrente no capacitor.
+
+Codigo 4 Funcionamento Basico do Escalonador
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+
+f o r ( i  0  i < lastTask  i++)
+i f ( pool  i  . Status ! EMPTY ) 
+i f ( pool  i  . Time > MINTIME ) 
+pool  i  . Time 
+
+i f ( pool  i  . Time < 0 ) 
+pool  i  . Status  READY 
+
+
+
+
+mesmo dos escalonadores verificarem dentre os outros processos qual ou quais estao prontos para
+executar.
+3
+
+Controle PID
+
+Um sistema_de_controle pode ser definido como
+um conjunto de componentes que altera o comportamento de um sistema para que ele produza
+uma resposta desejada. Chamamos de planta ou
+de processo o sistema que desejamos controlar, e
+ele pode ser modelado e representado matematicamente por uma funcao chamada de funcao de
+transferencia (Phillips and Nagle, 1995). Um sistema_de_controle utiliza controladores e atuadores
+para obter a resposta desejada.
+O controle por malha PID utiliza o desvio do
+valor medido de uma variavel de controle atraves
+de um sensor_em relacao ao seu valor esperado.
+Esse tipo de controle e bastante utilizado por possibilitar baixos erros de offset. Ele combina os
+modos_de_controle proporcional (P), integral (I) e
+derivativo (D).
+A funcao de transferencia do controlador PID
+e representada por
+Gc (s)  Kp + Kd  s +
+
+4.1
+
+A troca de contexto foi medida para analise do
+impacto das tecnicas de correcao no consumo de
+processamento. O processo idle representa a capacidade ociosa do sistema. Os processos normais
+sao processos identicos, gerados a partir da mesma
+funcao, com o intuito de simular a utilizacao do
+sistema. Foi desenvolvida uma funcao que consome aproximadamente 1,8 (ms), cerca de 90 do
+tempo entre trocas de contexto.
+Nesta primeira analise, foi utilizado apenas
+um processo de tempo_real com duas funcoes sincronizar as leituras de consumo pelo osciloscopio,
+alem de permitir um caminho para a adicao e remocao dos processos normais permitindo o levantamento mais rapido dos valores.
+A Figura 1 apresenta uma das medicoes. O
+processo de tempo_real foi agendado para ser executado a cada 51,2 (ms), ou 25 trocas de contexto. A medicao foi feita pelo canal 4, em verde.
+Utilizou-se esta janela, entre os dois pulsos em
+verde, para realizar as medicoes de tempo.
+As trocas de contexto sao medidas pelo canal
+2, em azul. Os processos normais sao lidos pelo
+canal 3, em rosa, e o canal 1, amarelo, apresenta
+o tempo que o processo idle esta em execucao,
+representando o tempo efetivamente livre.
+Utilizou-se de ferramentas internas do osciloscopio para se realizar as medicoes de consumo
+
+Ki
+s
+
+Utilizando metodos matematicos usados em
+sistemas_de_controle,  aplicacao bilinear de Tustin, aplicacao da transformada Z inversa e aplicacao da propriedade de atraso, como desenvolvido
+em (de Souza Leal, 2012) - encontra-se a equacao
+a seguir, que e o equivalente digital para o controlador PID.
+U (n) 
+U (n2)+kp e(n)e(n2)+kd  T2 e(n)2e(n
+1) + e(n  2) + ki  T2 e(n) + 2  e(n  1) + e(n  2)
+Essa e a equacao implementada na programacao do controlador PID utilizado neste trabalho.
+4
+
+Testes do Sistema Operacional
+
+Implementacao
+
+O sistema_de_controle em si consiste de dois programas distintos uma aplicacao embarcada implementando um sistema_de_controle_digital PID
+utilizando os recursos discutidos anteriormente e
+
+897
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Descartando-se estes 12 slots e o slot adicional
+para o processo de tempo_real, tem-se 25121 
+12 slots de execucao de processos idle, perfazendo
+1225, ou 48. No entanto devemos descontar
+a troca de contexto gasta neste perodo. Como
+10,46 sao gastos com a troca de contexto, apenas
+(100-10,46), ou 89,54 podem ser creditados
+como tempo habil. Deste modo o tempo disponvel para processamento e de 48  (89, 54) 
+42, 98. Ja o valor medido por meio do valor medio e (1, 913 + 0, 153)(4, 789 + 0, 153)  41, 80,
+bastante proximo do valor inferido.
+O gasto computacional com a troca de contexto e diretamente dependente do numero de
+processos, principalmente pela necessidade de se
+atualizar os temporizadores internos de cada processo. Este gasto e representado pela linha amarela do grafico da Figura 2. As linhas vermelha e
+azul apresentam o consumo por processo dos dois
+escalonadores implementados.
+
+Figura 1 Medicao de tempos utilizando um osciloscopio
+
+de processamento. Para a troca de contexto, foi
+possvel utilizar o calculo do duty-cycle, ou ciclo
+de trabalho. Este valor indica, em percentagem,
+quanto do tempo de um ciclo o sinal esta em nvel
+alto.
+Esta abordagem, no entanto, nao pode ser
+aplicada a sinais nao periodicos. Por este motivo
+utilizou-se da definicao de valor medio Vavg de um
+sinal eletrico dada pela equacao 1.
+Vavg 
+
+1
+T
+
+Z
+
+T
+
+f (x) dx
+
+(1)
+
+0
+
+Por ser a representacao de um sinal digital, a funcao so assume dois valores V CC e 0.
+Separando-se a integral em duas partes, uma representando a parte positiva do sinal (com duracao t1) e a segunda representando a parte negativa, e possvel reduzir a equacao, que ira depender
+apenas de V CC, t1 e T conforme a equacao 4.1.
+
+Vavg
+
+1
+
+T
+
+Vavg
+
+1
+
+T
+
+Z
+
+t1
+
+Z
+
+Descontando-se o gasto com a atualizacao dos
+processos, pode-se notar que, para o escalonador
+round robin, a variacao com o aumento do numero de processos e praticamente nula. Ja o escalonador do tipo EDF apresenta um incremento
+de 0,21 por processo, indicado pela inclinacao
+superior quando comparada com a linha amarela.
+Por verificar todos os processos correntes, antes de
+optar pelo que possui menor tempo, o EDF acaba
+consumindo um tempo maior que o RR, fato que
+se agrava a medida que a quantidade de processos
+aumenta, chegando a quase dobrar com 25 processos.
+O grafico na Figura 3a apresenta a variacao
+no consumo de processamento com o aumento da
+quantidade de processos escalonados. Estas medidas foram tomadas com o sistema de prioridades
+desligado. Ja nas medidas apresentadas pelo grafico da Figura 3b, o sistema de prioridades estava
+habilitado.
+Nota-se que as curvas de ambos os escalonadores, com o sistema de prioridade habilitado, apresentam uma inclinacao maior. Isto se da pelo consumo extra do sistema de prioridade que acarreta
+num acrescimo entre 0,07 e 0,14 por processo
+
+!
+
+T
+
+f (x) dx +
+0
+
+Figura 2 Comparacao entre o consumo de processamentos dos escalonadores estudados
+
+f (x) dx
+t1
+
+Z
+
+t1
+
+Z
+V CC dx +
+
+0
+
+Vavg 
+
+!
+
+T
+
+0 dx
+t1
+
+V CC  t1
+T
+
+(2)
+
+Dividindo-se por V CC tem-se a razao t1
+T ,
+que e precisamente a razao de tempo do sistema
+no qual aquele sinal permaneceu em valor alto.
+Este valor pode ser interpretado como a porcentagem de tempo consumida pelo evento medido por
+aquele sinal.
+Na Figura 1 sao apresentados os valores medios das ondas. Na configuracao apresentada existem 6 processos normais em execucao. Como a
+troca de contexto consome 10.46, os processos
+normais precisam de dois slots de tempo para terminarem, totalizando um consumo de 12 slots.
+
+898
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+em execucao. Esta variacao se da na busca pelo
+processo de tempo_real, que nem sempre esta na
+mesma posicao no vetor.
+
+parar o resultado teorico com o resultado pratico
+e com a forma de onda obtida pelo software desenvolvido para controle do sistema.
+O primeiro teste foi para verificar a resposta
+do sistema em malha_fechada a um degrau unitario utilizando kp  1, ki  0 e kd  0. A figura
+5a apresenta a simulacao e a figura 5b apresenta
+a forma de onda obtida no circuito real, atraves
+de medicao no osciloscopio. Nota-se que o resultado do experimento foi o esperado para a planta
+utilizada, conforme apresenta a simulacao.
+
+(a) Sistema de prioridade desabilitado
+
+(a) SciLab kp  1, ki  0, (b) Osciloscopio kp 
+kd  0
+1, ki  0, kd  0
+
+Figura 5 Teste 1 Scilab X Osciloscopio
+O segundo teste foi para verificar a resposta
+do sistema em malha_fechada a um degrau unitario
+utilizando kp  10, ki  3 e kd  0. A figura
+6a apresenta a simulacao, a figura 6b apresenta a
+forma de onda obtida no circuito real atraves de
+medicao no osciloscopio. O segundo teste tambem
+apresentou um bom grau de similaridade com o
+valor teorico.
+
+(b) Sistema de prioridade habilitado
+
+Figura 3 Variacao do consumo de processador
+pela quantidade de processos em execucao
+
+4.2
+
+Testes com o Sistema de Controle
+
+Todos os testes foram primeiro modelados utilizando o software Scilab 5.4.1 e em seguida realizados experimentalmente, para que os resultados
+pudessem ser comparados e validados.
+Utilizando o Xcos, ambiente grafico de simulacao do Scilab, foi simulado o circuito da figura
+4. Alem dos componentes tpicos para uma malha
+PID, foi inserida tambem uma saturacao em 0 e
+5V e um bloco de somatorio ao final do circuito.
+A saturacao e necessaria para manter os valores
+da simulacao dentro da faixa de tensao do sistema
+real. O bloco somatorio desloca o eixo do gerador
+de grafico para o valor base utilizado nos testes
+reais.
+
+(a) SciLab kp  10, ki  3, (b) Osciloscopio kp 
+kd  0
+10, ki  3, kd  0
+
+Figura 6 Teste 2 Scilab X Osciloscopio
+O ultimo teste foi para verificar a resposta do
+sistema em malha_fechada a um degrau unitario
+utilizando kp  1, ki  5 e kd  0. A figura
+7a apresenta a simulacao, a figura 7b apresenta a
+forma de onda obtida no circuito real atraves de
+medicao no osciloscopio.
+
+Figura 4 Diagrama de blocos do sistema criado
+para simulacao
+
+(a) SciLab kp  1, ki  5, (b) Osciloscopio kp 
+kd  0
+1, ki  5, kd  0
+
+Figura 7 Teste 3 Scilab X Osciloscopio
+
+Foram realizados 3 testes em malha_fechada
+com valores arbitrarios de kp, ki e kd, para com-
+
+899
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+5
+
+Comunicacao serial e sistema SCALA
+
+do que com as bibliotecas basicas. A biblioteca
+realiza todo o tratamento de recepcao e armazenamento de valores em buffers temporarios, que
+podem ser acessados atraves de objetos de leitura
+de fluxo de dados, codificados no programa como
+Input Streams.
+A aplicacao desenvolvida foi feita de modo que
+a interface fosse a mais simples para facilitar o
+manuseio pela pessoa que ira monitorar e configurar o sistema_de_controle do sistema. A figura
+8 apresenta a tela principal da aplicacao desktop
+desenvolvida.
+
+Para viabilizar a criacao de uma interface grafica
+para desktop onde o usuario pudesse configurar
+o sistema_de_controle foi necessario implementar
+uma aplicacao para monitorar a porta_serial, interpretar e enviar mensagens. Junto com a aplicacao
+foi desenvolvido um protocolo de comunicacao.
+5.1
+
+Comunicacao Serial
+
+Para a comunicacao entre o sistema_embarcado
+e o computador, foi criado um protocolo simples
+de serial utilizando um CRC (Cyclic Redundancy
+Check) de 16 bits para evitar falhas de comunicacao. Quando um comando e reconhecido, as
+funcoes de controle pertinentes sao chamadas e
+executadas.
+5.2
+
+Aplicacao SCALA
+
+A aplicacao para desktop possui controles para iniciar ou parar a execucao da equacao de controle
+na placa, reiniciar os valores de controle para valores basicos previamente programados, receber os
+parametros sendo utilizados pelo sistema naquele
+momento e enviar novos parametros para serem
+utilizados pela equacao de controle. Quando a
+equacao de controle esta sendo executada, o sistema_embarcado envia dados para o desktop e o
+software gera um grafico para visualizar o funcionamento da equacao de controle.
+Essa aplicacao de desktop se comunica com o
+sistema_embarcado atraves da porta de comunicacao serial, sendo utilizado o protocolo de comunicacao explicado anteriormente.
+Inicialmente a aplicacao para gerenciar o
+funcionamento do sistema foi desenvolvida em
+Windows, porem ja foram utilizadas bibliotecas com suporte para Linux para facilidade de portabilidade.
+Nesta aplicacao foram utilizadas duas bibliotecas, a JfreeChart
+(httpwww.jfree.orgjfreechart) e um fork
+da biblioteca Java RXTX (httpmfizz.com
+ossrxtx-for-java).
+A biblioteca JFreeChart foi utilizada para gerar os graficos recebidos pela placa. A biblioteca
+apresenta varias funcionalidades que otimizam a
+geracao de graficos e seu funcionamento e bem
+simples.
+Para realizar a tarefa de plotar os pontos
+no grafico sem prejudicar a recepcao dos dados,
+optou-se por encapsular cada uma destas tarefas
+em threads diferentes, fazendo melhor uso de sistemas multiprocessados. Fixou-se tambem o tamanho do grafico em 1000 pontos, visando economizar tempo de processamento e espaco em memoria.
+Para comunicacao serial a biblioteca Java
+RXTX auxiliou bastante pois o controle de portas
+seriais se torna um pouco mais intuitivo em Java
+
+Figura 8 Aplicacao de Desktop para Controle do
+HCS12
+Para verificar a portabilidade do programa,
+a aplicacao foi testada, alem do windows 8.1, no
+sistema operacional Ubuntu 12.04 com kernel Linux 3.11. O executavel gerado foi executado corretamente em ambos sistemas. A unica diferenca
+esta nas bibliotecas utilizadas. Como estas sao pre
+compiladas e preciso utilizar os arquivos .jar e .dll
+inclusos nos pacotes de bibliotecas Java RXTX e
+JFreeChart que foram compilados para a ambiente
+certo.
+5.3
+
+Testes da Interface
+
+Para observar o comportamento e confiabilidade
+da porta_serial, foi utilizada uma simples funcao
+enviando um sinal linear e crescente para o software pela porta_serial. Pode ser observado na figura 9 que houve perda de alguns pacotes durante
+a comunicacao, observado pela descontinuidade da
+linha no grafico, o que afeta o desempenho e confiabilidade do sistema_de_controle, visto que estas
+falhas podem ser inaceitaveis em aplicacoes dedicadas. O eixo y corresponde ao valor recebido pela
+porta_serial e o eixo x corresponde ao numero de
+sinais recebidos. Houve aproximadamente 4 erros
+em 45 sinais, logo aproximadamente 10 de falha
+na comunicacao.
+Por este motivo foram criados de mecanismos
+de seguranca de forma a melhorara a confiabilidade da comunicacao. Isso foi feito otimizando o
+codigo de envio e recebimento de mensagens atraves de um buffer dinamico ao inves da tentativa
+
+900
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+(a) SciLab kp  1, ki  5, (b) Software kp  1,
+kd  0
+ki  5, kd  0
+
+Figura 9 Software Primeira implementacao de
+comunicacao serial
+
+Figura 12 Teste 3 Scilab X Software
+utilizando-se o CRC16 como checagem de valores,
+nao foram recebidos valores alterados, como foi
+observado na primeira implementacao na figura 9.
+
+de receber o pacote inteiro em apenas uma leitura
+da serial. A segunda melhoria foi a implementacao de um codigo de CRC (Cyclic Redundancy
+Check), discutidos na secao de metodologia deste
+trabalho, para a checagem dos pacotes recebidos.
+Para analise do protocolo e da estabilidade do
+sistema de comunicacao, os mesmos valores utilizados no SciLab e nas medicoes de osciloscopio
+foram introduzidos na placa e testados pela comunicacao serial. No primeiro teste foi realizado
+apenas o ganho Kp. O segundo e terceiro teste
+foram configurados com os ganhos Kp, Ki e Kd
+em 10, 3, 0 e 1, 5, 0 respectivamente.
+
+6
+
+Conclusoes
+
+Este trabalho apresenta todos os conceitos e cumpre os pre-requisitos para implementar um sistema
+de controle_digital.
+A resposta de ambos os escalonadores foi satisfatoria e o sistema foi capaz de responder em
+tempo_real com o sistema de prioridade ativo
+mesmo sob carga total de processamento, respeitada a restricao de que apenas um processo e de
+tempo_real.
+Alem disso, comparando ambos os escalonadores foi observado que o escalonador Round Robin manteve seu desempenho constante independentemente da carga de processos, enquanto o
+Earliest Deadline First possui desempenho proporcional a carga, visto que ele precisa fazer mais
+operacoes de busca antes de executar o processo.
+As medicoes realizadas com osciloscopio na
+planta_de_controle foram consistentes tanto com
+os calculos teoricos quanto com as simulacoes realizadas no programa SciLab, comprovando a confiabilidade do sistema como ferramenta de controle.
+As medicoes tambem comprovam o funcionamento da aplicacao para desktop, que esta corretamente trocando informacoes com o controlador
+e construindo graficos consistentes com as formas
+de onda observadas no osciloscopio.
+As trocas de valor tambem foram bem sucedidas, sendo possvel alterar os parametros do sistema_de_controle mesmo durante sua execucao.
+O trabalho conseguiu atingir os objetivos definidos no incio do projeto, porem existem melhorias e testes adicionais que poderiam ser realizados
+em trabalhos futuros. Dentre eles, podemos destacar
+
+(a) SciLab kp  1, ki  0, (b) Software kp  1,
+kd  0
+ki  0, kd  0
+
+Figura 10 Teste 1 Scilab X Software
+
+(a) Software kp  10, ki  (b) Software kp  10,
+3, kd  0
+ki  3, kd  0
+
+Figura 11 Teste 2 Scilab X Software
+Como podemos observar pelas figuras 10, 11 e
+12 o resultado e na forma que era esperado e possui
+uma notavel semelhanca com o resultado obtido
+pelas medicoes analogicas e testes no SciLab.
+Podemos ver pelas figuras apresentadas que a
+confiabilidade da comunicacao serial foi bem melhor aproveitada e o software se comportou como o
+esperado recebendo os valores da placa e gerando
+o grafico de sada adequado.
+Apos a implementacao do sistema_de_correcao,
+
+1. Testar o escalonador EDF sem o sistema de
+prioridade, para verificar se o sistema continua a se comportar como um sistema de
+tempo_real. O sistema de prioridade garante
+a execucao do processo prioritario em tempo
+real, mas nao foi testado se o escalonador
+por si so conseguiria garantir a execucao em
+tempo_real.
+
+901
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+2. Implementacao de mais metodos de seguranca, como um sistema de login para evitar a
+alteracao dos parametros do sistema por pessoas nao autorizadas, bem como um sistema
+de tratamento automatico de erros na troca
+de mensagens entre o controlador e o desktop
+utilizando confirmacao de recebimento de pacotes.
+
+Nise, N. S. (2008). Control systems engineering,
+Vol. 5, Wiley Hoboken, NJ.
+Oliveira, A. S. and Andrade, F. S. (2006). Sistemas Embarcados - Hardware e Firmware na
+Pratica, Ed. Erica.
+Phillips, C. and Nagle, H. (1995). Digital control
+system analysis and design. prentice-hall, Englewood Cliffs, NJ pp. 413420.
+
+Referencias
+Puschner, P. and Koza, C. (1989). Calculating the
+maximum execution time of real-time programs, Real-Time Systems 1(2) 159176.
+
+Barr, M. (1999). Programming embedded_systems
+in cc++, Inc., Sebastopol, California .
+Barr, M. and Massa, A. J. (2006). Programming
+Embedded Systems With C and GNU Development Tools, 1 edn, OReilly Media, Inc.
+
+Renaux, D. P., Braga, A. and Kawamura, A.
+(1999). Perf Um ambiente para avaliacao temporal de sistemas_em_tempo_real, II
+Workshop de Sistemas em Tempo Real, Salvador. Pag, pp. 7687.
+
+Chen, M.-I. and Lin, K.-J. (1990). Dynamic priority ceilings A concurrency control protocol for real-time systems, Real-Time Systems
+2(4) 325346.
+
+Rowe, A., Rosenberg, C. and Nourbakhsh, I.
+(2002). A low cost embedded color vision system, Intelligent Robots and Systems,
+2002. IEEERSJ International Conference
+on, Vol. 1, IEEE, pp. 208213.
+
+de Moura Moreira, R. (2013). Desenvolvimento de
+um sistema_de_tempo_real para microcontrolador 68HCS12, Trabalho de Iniciacao Cientfica de Engenharia de Computacao da Universidade Federal de Itajuba .
+
+Rushby, J. (2001). Bus architectures for safetycritical embedded_systems, Embedded Software, Springer, pp. 306323.
+
+de Souza Leal, E. (2012). Projeto de uma controladora single loop com arquitetura arm,
+Trabalho de diploma do curso de Engenharia
+de Computacao da Universidade Federal de
+Itajuba .
+
+Silberschatz, A., Galvin, P. B. and Gagne, G.
+(2010). Operating System Concepts, J. Wiley  Sons.
+
+dos Santos, C. A. M. (2012). Estudo e implementacao de sistemas_de_tempo_real para microcontroladores de 8 bits, Trabalho de Iniciacao
+Cientfica de Engenharia de Computacao da
+Universidade Federal de Itajuba .
+Filho, C. S. (2002). Evolucao dos sistemas_de_controle.
+Jahanian, F. and Mok, A. K.-L. (1986). Safety
+analysis of timing properties in real-time systems, Software Engineering, IEEE Transactions on 1(9) 890904.
+Kaladevi, M. and Sathiyabama, S. (2010). A comparative study of scheduling algorithm for
+real time task, International journal of advance in science and technology 1(4).
+Lutz, R. R. (1993). Analyzing software requirements errors in safety-critical, embedded_systems, Requirements Engineering, 1993., Proceedings of IEEE International Symposium
+on, IEEE, pp. 126133.
+Munhoz, H. B. (2013). Projeto de drivers de dispositivo para microcontrolador 68HCS12, Trabalho de Iniciacao Cientfica de Engenharia
+de Computacao da Universidade Federal de
+Itajuba .
+
+902

@@ -1,0 +1,536 @@
+UM SISTEMA DE VISAO ESTEREO PARA NAVEGACAO DE UM CARRO
+AUTONOMO EM AMBIENTES COM OBSTACULOS
+Danilo Alves de Lima, Guilherme A. S. Pereira
+
+
+Grupo de Pesquisa e Desenvolvimento de Veculos Autonomos, Escola de Engenharia,
+Universidade Federal de Minas Gerais, Av. Antonio Carlos, 6626, 31270-901,
+Belo Horizonte, MG, Brasil.
+Emails daniloal@cpdee.ufmg.br, gpereira@ufmg.br
+
+Abstract This work presents an obstacle detection system for an autonomous car using stereo vision. The
+system is based on the V disparity map, which is obtained by a simple transformation of the traditional disparity
+map. With this map, planes in the image are easily detected, classified and used to navigate the vehicle. To
+exemplify the system applicability to obstacle avoidance, it was used together with the vector field histogram
+(VFH) method. Experimental results show that the technique is promising and may be used to safely navigate
+an autonomous car in environments with obstacles.
+autonomous car, stereo vision, obstacle avoidance.
+
+Keywords
+
+Resumo Este artigo apresenta um sistema de deteccao_de_obstaculos e planos trafegaveis para um carro
+autonomo a partir de um sistema de visao_estereo. O sistema e baseado no mapa de disparidade V, que e
+uma transformacao do mapa de disparidade convencional. Com este mapa, planos na imagem sao facilmente
+detectados e classificados, podendo assim ser usados para navegacao do veculo. Para exemplificar como o
+sistema pode ser usado para o desvio_de_obstaculos, foi utilizado um algoritmo baseado no metodo de histograma
+de campos vetoriais (VFH). Resultados experimentais de controle_de_direcao e freio do veculo mostram que a
+tecnica e promissora e pode ser utilizada para navegar o carro_autonomo de forma segura em um ambiente com
+obstaculos.
+Palavras-chave
+
+.
+
+DARPA1 Grand Challenge (DARPA, 2005) e Urban Challenge (DARPA, 2008) entre carros autonomos, por exemplo, praticamente todas utilizaram sensores a laser em seus veculos. A limitacao
+destes sensores esta no fato de, em geral, lerem em
+apenas um plano, o que dificulta o reconhecimento
+de obstaculos abaixo e acima deste plano. Outro
+problema e o custo elevado desses sensores quando
+comparado aos demais sensores de profundidade.
+Por fim, os sistemas de cameras estereo fornecem
+uma perspectiva do ambiente em tres dimensoes,
+simulando a visao humana. Sao frequentemente
+utilizados em problemas de reconstrucao geometrica (Skiena, 2004), quando se quer ter uma percepcao geral do ambiente. Os problemas com relacao a este sistema estao na analise das imagens
+a taxa de quadros e na robustez quanto a variacao
+de iluminacao do ambiente.
+Este trabalho sera focado na deteccao_de_obstaculos por um sistema de visao_estereo. Este se
+baseia na analise da profundidade de cada ponto
+da imagem a partir do mapa de disparidade gerado
+por duas imagens sncronas. Por meio desta analise, uma tecnica foi posta em pratica em 2005 no
+DARPA Grand Challenge. Na ocasiao, a equipe
+Oshkosh Truck Corporation equipou o seu veculo
+TerraMax (Braid et al., 2006) com pares de cameras estereo, possibilitando-o trafegar autonomamente em seguranca por uma trilha no deserto.
+A tecnica utilizada foi um mapa de disparidade
+V para detectar obstaculos no caminho (Broggi
+
+Introducao
+
+A navegacao de robos com seguranca e um desafio para diversos pesquisadores e desenvolvedores
+de robotica_movel. Em sistemas reais, os robos
+moveis tem um espaco de trabalho normalmente
+dinamico com pessoas passando e objetos que mudam de lugar a todo o instante. Perceber estes
+obstaculos ao movimento do robo somente e possvel por meio de sensores. Quando estes obstaculos
+sao reconhecidos corretamente, os robos podem realizar a construcao do seu espaco de configuracoes
+livre e o planejamento de sua trajetoria. Para um
+carro_autonomo, por exemplo, se os obstaculos forem reconhecidos em tempo_real, torna-se possvel
+trafegar por ruas com outros carros e pedestres.
+Dos sensores existentes e mais utilizados para
+a deteccao_de_obstaculos por robos_moveis, tem-se
+os sonares, os lasers e aqueles baseados em visao
+computacional. Os sonares sao os mais limitados
+destes sensores por serem normalmente pontuais,
+percebendo a presenca e distancia do robo a um
+objeto em apenas uma direcao, sendo necessarios
+varios sensores e alguns algoritmos de processamento do seu sinal para se ter uma percepcao razoavel do ambiente. No entanto, atualmente sao
+muito utilizados em veculos comerciais como sensores de estacionamento (Park et al., 2008). Para
+se obter maior precisao, os sensores a laser sao os
+mais comuns, possuindo uma varredura em um
+plano com uma grande precisao e distancia de
+leitura. Das equipes participantes dos desafios
+
+1 Do
+
+224
+
+ingles Defence Advanced Research Projects Agency.
+
+2.1
+
+Captura das imagens
+
+A captura das imagens e o primeiro passo para se
+perceber o ambiente a partir da visao_estereo. Isto
+deve acontecer de forma sncrona pelas duas ou
+mais cameras que compoem o sistema estereo. O
+fato destas imagens serem sncronas garante que a
+informacao contida nas duas imagens sejam temporalmente iguais.
+2.2
+
+A calibracao e uma etapa de extrema importancia
+para se trabalhar com sistemas de visao_estereo.
+Nela sao obtidos os parametros intrnsecos e extrnsecos de cada uma das cameras do conjunto.
+Estes parametros fornecem dados de distancia focal, centro da imagem, posicao e orientacao relativa de cada camera do conjunto. Quanto melhor
+esta calibracao, melhor ficarao os resultados dos
+proximos passos da Figura 1. Considerando um
+sistema de cameras rgido, a calibracao e um processo que pode ser realizado uma unica vez.
+
+Figura 1 Diagrama com a estrutura da solucao
+para a deteccao (I) e desvio (II) de obstaculos.
+
+et al., 2005 Soquet et al., 2007 Labayrade et al.,
+2002). Esta mesma tecnica foi adaptada e aplicada pela mesma equipe no DARPA Urban Challenge de 2008 (Chen et al., 2008), onde veculos
+deveriam trafegar autonomamente em um ambiente urbano.
+
+2.3
+
+Correspondencia entre pixels
+
+Com as cameras calibradas, deve ser realizado um
+processo de busca por correspondencias entre pixels nas imagens. Dada duas imagens  e , o
+problema consiste em encontrar o pixel p em 
+e o pixel correspondente p em  que representem
+a projecao do mesmo ponto no espaco P . Esta
+etapa pode ter um custo_computacional elevado
+dependendo da tecnica utilizada e do tamanho do
+espaco de busca.
+Para diminuir o tempo de processamento, e
+geralmente realizada a retificacao das imagens,
+que consiste em se aplicar uma serie de rotacoes
+em cada uma das imagens de forma que pixels
+correspondentes nas duas imagens estejam situados na mesma linha. Assim, restringe-se a busca
+por correspondencia a uma linha da imagem (ou a
+algumas linhas devido a erros de calibracao). Encontrar os pixels correspondentes p e p permite
+construir o mapa de disparidade, proximo passo
+para a deteccao_de_obstaculos.
+
+O trabalho apresentado neste artigo utiliza
+o mapa de disparidade V para auxiliar na deteccao das regioes da imagem que contem espaco trafegavel ou obstaculo. Com esta informacao, aplica-se uma tecnica baseada no Histograma
+de Campos Vetoriais (Vector Field Histogram 
+VFH) (Borenstein e Koren, 1991) para o desvio de
+obstaculos. A Figura 1 apresenta o diagrama representando a estrutura da solucao adotada para
+detectar e realizar o desvio dos obstaculos. As
+etapas circuladas por I referem-se a deteccao de
+obstaculos e planos trafegaveis e serao apresentadas na Secao 2. A etapa circulada por II refere-se
+a aplicacao do metodo de desvio_de_obstaculos escolhido e sera apresentada na Secao 3. Detalhes de
+implementacao e alguns resultados experimentais
+que validam a solucao sao apresentados na Secao
+4. Finalmente, a secao 5 apresenta algumas consideracoes e perspectivas para trabalhos futuros.
+
+2.4
+2
+
+Calibracao
+
+Construcao do mapa de disparidade
+
+Disparidade e a medida da distancia (medida em
+numero de pixels) entre dois pixels correspondentes p e p quando as imagens  e  retificadas
+sao sobrepostas. Na pratica, como p e p estao
+na mesma linha nas duas imagens, a disparidade
+corresponde a diferenca dos ndices que indicam a
+coluna em que estao cada pixel. O mapa de disparidade, , e o conjunto de disparidades para
+cada par de pixels das imagens, sendo, portanto,
+da mesma dimensao da imagem retificada. Este
+mapa e apresentado como uma imagem em tons
+de cinza. E facil ver que o valor da disparidade
+
+Deteccao de obstaculos por visao
+estereo
+
+Esta secao detalhara as etapas apresentadas na
+Figura 1 para a deteccao_de_obstaculos e planos
+trafegaveis. Os conceitos aqui apresentados sao
+aplicaveis a sistemas de visao_estereo e podem ser
+melhor compreendidos em (Faugeras, 1993). Com
+este sistema torna-se possvel obter informacoes
+tridimensionais a partir de duas ou mais imagens
+de diferentes pontos de vista.
+
+225
+
+varia com o inverso da distancia do ponto no espaco (Faugeras, 1993) e, portanto, esta informacao pode ser utilizada para detectar a distancia
+entre um ponto no espaco e as cameras. A Figura 2 apresenta um exemplo de mapa de disparidade, onde os pontos claros estao mais proximos
+da camera e os escuros mais distantes. Como o
+processo apresentado na Subsecao 2.3 nao e perfeito e algumas regioes da cena sao percebidas por
+apenas uma das cameras, existem pixels em  que
+nao possuem disparidade. Estes sao entao marcados como preto (zero) na imagem.
+
+pixel representa quantos pixels possuem o mesmo
+valor de disparidade na linha correspondente do
+mapa original, sendo assim chamado mapa de disparidade V. A Figura 3 apresenta o resultado
+desta transformacao de  em Iv , a partir das
+imagens mostradas na Figura 2.
+
+Figura 3 Exemplo de mapa de disparidade V.
+
+2.6
+
+Neste trabalho, a regiao trafegavel e os obstaculos
+proximos foram aproximados a planos horizontais
+e verticais. Em uma situacao ideal, isto significaria uma rua sem subidas e descidas e obstaculos
+iguais a objetos achatados e sem forma. De acordo
+com Labayrade et al. (2002), Soquet et al. (2007)
+e Caraffi et al. (2007), ao analisar essas situacoes
+em um mapa de disparidade (), as regioes trafegaveis apresentariam variacoes graduais na disparidade ate o horizonte, com o mesmo valor em
+uma linha. Ja os obstaculos possuiriam a mesma
+disparidade em uma mesma coluna. Esta mesma
+analise em um mapa de disparidade V (Iv ) implicaria em regioes trafegaveis iguais a uma reta
+com inclinacao superior a 90o , devido a variacao
+gradual da disparidade. Enquanto os obstaculos
+seriam iguais a retas com inclinacao de 90o , ou
+seja, elementos com a mesma disparidade.
+Porem, o mundo nao e planar, e o  e o Iv
+sao, na pratica, irregulares, como pode ser observado nas Figuras 2 e 3. Para contornar este problema, neste trabalho a regiao trafegavel foi aproximada a planos trafegaveis e os obstaculos foram
+aproximados por planos nao trafegaveis. No Iv ,
+esta analise implica em planos trafegaveis como
+retas com inclinacoes maiores que 90 e nao trafegaveis como retas com inclinacoes proximas a
+90 . Aplicando este conceito, a deteccao de planos resumiu-se a encontrar retas em Iv .
+Por se tratar de uma imagem, para encontrar
+retas no Iv , tecnicas de analise de imagem foram utilizadas neste trabalho. A imagem do Iv
+foi binarizada e retas foram encontradas com o
+uso de um metodo baseado na Transformada de
+Hough (Duda e Hart, 1972). As retas encontradas foram selecionadas quanto aos parametros de
+tamanho, numero de pixels, largura e inclinacao.
+
+Figura 2 Par estereo para criar o mapa de disparidade (acima) e mapa de disparidade resultante
+(abaixo).
+Se p e p sao projecoes do ponto espacial
+P  (X, Y, Z) em  e , respectivamente, as
+coordenadas de P podem ser encontradas a partir
+da disparidade d entre eles como
+px Z
+,
+f
+py Z
+Y 
+,
+(1)
+f
+fB
+Z
+,
+d
+onde f e a distancia focal da camera, px e py sao
+as coordenadas do ponto p na imagem , B e a
+distancia entre as cameras.
+X
+
+2.5
+
+Deteccao de planos
+
+Construcao do mapa de disparidade V
+
+A criacao do mapa de disparidade V (Iv ) e
+um processo simples se comparado ao necessario
+para se obter o mapa de disparidade (). Basicamente, Iv e uma transformacao do  que conta
+o numero de pixels presentes em cada linha2 que
+possuem o mesmo valor de disparidade. Ao final e
+montada uma figura onde as linhas sao as mesmas
+da imagem real e as colunas representam a intensidade do mapa de disparidade original (normalmente de 0 a 255). Nesta figura, o valor de cada
+2 Em uma imagem as coordenadas das linhas sao geralmente chamadas de v e das colunas de u.
+
+226
+
+Para facilitar o processamento, os planos trafegaveis foram processados primeiro, por serem normalmente maioria em uma imagem. O resultado
+foi entao removido do Iv , para realizar o processamento dos planos nao trafegaveis. A Figura 4
+apresenta um exemplo de deteccao de planos no
+Iv .
+
+Figura 4 Mapa de disparidade V (esquerda),
+retas que definem o plano trafegavel (centro) e
+retas que definem obstaculos (direita).
+O passo final desta analise e o mapeamento
+das retas encontradas nas regioes de interesse da
+imagem original. Este mapeamento foi realizado
+verificando no Iv os pontos marcados como planos trafegaveis (ou nao trafegaveis) e seu valor
+de disparidade correspondente no . O processamento adotado gerou imagens binarias com a
+mesma dimensao da imagem original, onde pixels
+com o valor 0 (preto) representam a ausencia do
+plano trafegavel (ou nao trafegavel) e 255 (branco)
+representam a presenca do plano em questao. No
+caso dos obstaculos, esta marcacao e para todos
+os obstaculos. Porem, como muitas vezes e necessario indicar a distancia do obstaculo a camera,
+ao se verificar no  os pixels que foram marcados
+no Iv , basta utilizar a Equacao (1) para se obter
+a informacao desejada.
+Neste trabalho, a partir das retas encontradas
+em Iv e das distancias obtidas para os obstaculos, foram criadas quatro imagens binarias com as
+seguintes regioes em destaque
+
+Figura 5 Campo de visao da camera e um exemplo de histogramas gerados para analise.
+para algumas destas imagens na tarefa de controlar um carro_autonomo. Para tanto, foram consideradas as imagens de plano trafegavel e obstaculos proximos para realizar os calculos da trajetoria a ser seguida. O metodo proposto foi
+uma adaptacao do histograma de campos vetoriais
+(VFH) (Borenstein e Koren, 1991), o qual analisa
+a distancia entre o carro e os obstaculos proximos
+por meio de um histograma, gerando um vetor direcionado para a regiao mais livre para locomocao.
+Como as cameras estao direcionadas para a
+frente do carro, o histograma foi limitado a esta
+regiao de visao. Outra diferenca para o VFH tradicional e que o histograma gerado nao e de distancia e sim de quantidade de espaco trafegavel
+por coluna da imagem (imagem de plano trafegavel) e quantidade de obstaculo por coluna da imagem (imagem de obstaculos proximos). Na criacao
+do histograma de espaco trafegavel outra consideracao foi tomada as colunas que possuem obstaculos proximos foram invalidadas para garantir
+que o direcionamento nao fosse para os obstaculos. Os histogramas resultantes estao exemplificados na Figura 5.
+Com os histogramas criados, a tarefa final
+foi utilizar a informacao neles contida para atuar
+na direcao e velocidade do carro, controlando-o.
+A orientacao final das rodas foi dimensionada de
+acordo com a diferenca entre o centro da maior
+regiao trafegavel encontrada e o centro do carro.
+A intensidade do freio foi dimensionada com a
+quantidade de obstaculo presente no histograma
+e sua proximidade ao veculo. O sistema final funciona evitando obstaculos, realizando o desvio ou
+reduzindo a velocidade de acordo com a posicao e
+quantidade de obstaculos.
+
+1. Planos trafegaveis (retas no Iv com inclinacao maior que 90o )
+2. Regioes invalidas (disparidade igual a 0 ou
+255)
+3. Obstaculos distantes (pixels correspondentes
+a distancias maiores que 20 metros)
+4. Obstaculos proximos (pixels correspondentes
+a distancias menores que 20 metros).
+A proxima secao mostrara como estas imagens
+podem ser utilizadas para o desvio_de_obstaculos.
+3
+
+Desvio de obstaculos
+
+O processo de deteccao dos obstaculos e planos
+trafegaveis apresentado na Secao 2 gerou 4 imagens binarias com regioes de interesse em destaque. Nesta secao sera mostrada uma aplicacao
+
+227
+
+4
+
+par de imagens original e aquele mostrado na Figura 2. Nesta figura, em amarelo estao os obstaculos distantes e regioes invalidas, em vermelho estao
+os obstaculos proximos (distancia em z menor que
+20 metros) e com as cores reais estao os planos trafegaveis. Percebe-se que grande parte dos obstaculos reais foram detectados, garantindo tambem
+uma boa estimacao dos planos trafegaveis. O processamento de um vdeo completo do experimento
+pode ser visto em httpcoro.cpdee.ufmg.br.
+
+Experimentos
+
+Para a realizacao dos experimentos deste trabalho foram utilizados os recursos de visao_estereo
+fornecidos pela camera Bumblebee2 fabricada pela
+Point Grey Research (PGR)3 e apresentada na Figura 6. Este sistema e constitudo por duas cameras coloridas de 640  480 com lentes de 6mm, que
+sao afixadas a uma estrutura de alumnio e ligadas a um barramento IEEE1394. A camera possui caractersticas importantes, tanto de hardware
+quanto de software, que facilitam a obtencao e o
+tratamento de imagens estereo. Nas caractersticas de hardware destacam-se o fato de o par estereo ter sido calibrado na sua fabricacao e ser sincronizado a partir do barramento IEEE1394. Em
+software sao fornecidas funcoes otimizadas para se
+criar o mapa de disparidade4 , triangular os pontos em 3D e filtrar erros no mapa de disparidade,
+por exemplo. Assim, todos os passos descritos na
+Figura 1, anteriores a construcao do mapa de disparidade V, ja estavam prontos com um bom desempenho computacional e qualidade nos resultados. Os experimentos de controle foram realizados
+no CADU, carro_autonomo que esta em desenvolvimento na Universidade Federal de Minas Gerais
+e que pode ser visto na Figura 7. Detalhes sobre
+o desenvolvimento do veculo podem ser encontrados em (Freitas et al., 2009).
+
+Figura 8 Resultado do reconhecimento de planos
+trafegaveis e obstaculos.
+Na Figura 8 tambem podem ser observadas algumas dificuldades na deteccao de certos elementos. Acostamento e passeio, por exemplo, nao foram considerados obstaculos, principalmente porque a elevacao dos mesmos em relacao a rua e
+muito pequena, estando na regiao de limite de precisao da camera. Constatou-se que a camera para
+distancias maiores que 4 metros, consegue distinguir variacoes de apenas 0,5 metros. Elementos
+com interferencia de iluminacao, como reflexos e
+sombras, tambem sofreram problemas de classificacao. Neste caso, eles foram classificados algumas vezes como regiao sem disparidade ou como
+obstaculo, enquanto na realidade se tratava de
+plano trafegavel. Formas para desconsiderar tais
+atribuicoes estao sendo estudadas. No geral, o ndice de acerto foi total quando os obstaculos respeitavam os preceitos de possurem um tamanho
+mnimo em relacao ao solo e fossem mais verticalizados, como pessoas, carros, postes, cones, etc.,
+obstaculos comuns nas vias de trafego.
+O algoritmo de desvio_de_obstaculos foi testado em um ambiente aberto com alguns obstaculos espalhados. Ele gerou comandos de atuacao no
+freio e direcao do carro, garantindo uma frenagem
+e uma orientacao segura para o veculo. Por se
+tratar de um veculo de cambio automatico, com
+o freio liberado, ele e capaz de gerar um torque
+suficiente para se mover em um plano, nao necessitando atuar na aceleracao ou criar um controle
+de velocidade mais complexo. Os experimentos foram realizados mais de uma vez para o mesmo ambiente com o intuito de se verificar a repetitividade
+do sistema. O resultado final pode ser visualizado
+no mesmo vdeo que esta disponvel no endereco
+
+Figura 6 Camera para visao_estereo Bumblebee2.
+Como foi descrito na Secao 2, o sistema gera 4
+imagens binarias com regioes de interesse em destaque. Na Figura 8 estas imagens foram compostas sobre uma cena adquirida pelo carro com diferentes cores para melhor visualizar o resultado. O
+3 httpwww.ptgrey.com.
+4O
+
+processo de criacao do mapa de disparidade utiliza
+o metodo de correlacao da Soma das Diferencas Absolutas (Hiroshi et al., 1995).
+
+Figura 7 Carro autonomo utilizado para validar
+a metodologia deste trabalho.
+
+228
+
+httpcoro.cpdee.ufmg.br. Na Figura 9 estao algumas imagens deste video, onde pode ser
+observado o processo de reconhecimento dos obstaculos e planos trafegaveis, como tambem os comandos de direcao e frenagem do carro. O sistema
+completo, incluindo processamento das imagens e
+controle do veculo foi realizado em aproximadamente 6 Hz em um computador portatil equipado
+com Intel Pentium Core II Duo de 1.83GHz e 4G
+de memoria RAM rodando Windows Vista.
+
+Agradecimentos
+Este projeto e financiado pela Fundacao de Amparo a Pesquisa do Estado de Minas Gerais
+(FAPEMIG). Danilo A. Lima e bolsista de mestrado da CAPES. Guilherme A. S. Pereira e bolsista do CNPq. Os autores agradecem a Elias Freitas pela ajuda durante os experimentos descritos
+no artigo.
+Referencias
+
+5
+
+Borenstein, J. e Koren, Y. (1991). The vector
+field histogram - fast obstacle avoidance for
+mobile robots, IEEE Journal of Robotics and
+Automation 7(3) 278288.
+
+Consideracoes Finais
+
+Este artigo apresentou um metodo de deteccao e
+desvio_de_obstaculos baseado em visao_estereo.
+O metodo de deteccao, originalmente proposto
+em (Broggi et al., 2005), foi implementado e utilizado juntamente com uma modificacao da tecnica
+VFH para controlar um carro_autonomo em um
+ambiente com obstaculos.
+
+Braid, D., Broggi, A. e Schmiedel, G. (2006). The
+terramax autonomous vehicle Field reports,
+J. Robot. Syst. 23(9) 693708.
+Broggi, A., Caraffi, C., Fedriga, R. I. e
+Grisleri, P. (2005).
+Obstacle detection
+with stereo vision for off-road vehicle navigation, CVPR 05 Proceedings of the
+2005 IEEE Computer Society Conference on
+Computer Vision and Pattern Recognition
+(CVPR05) - Workshops, IEEE Computer
+Society, Washington, DC, USA, p. 65.
+
+O uso do mapa de disparidade V como tecnica basica mostrou-se viavel e retornou bons resultados. A aproximacao do mundo como sendo
+uma composicao de planos foi suficiente para a
+determinacao de planos trafegaveis e obstaculos
+proximos. Um dos problemas encontrados foi a
+dificuldade em se encontrar obstaculos pequenos,
+como calcadas e buracos. Este problema foi, provavelmente, causado pela baixa resolucao da camera utilizada. Sombras e elementos com pouca
+variacao de textura geraram erros no mapa de disparidade que dificultaram a deteccao_de_obstaculos em algumas situacoes, podendo ser utilizada
+uma iluminacao artificial para minimizar este problema. A variacao nao linear da disparidade com
+a profundidade tambem gerou problemas de valores nao contnuos e nao confiaveis para distancias maiores que 20 metros, limitando o alcance
+do sistema. Neste caso, valores consecutivos de
+disparidade podem gerar uma grande variacao na
+distancia (cerca 5 metros ou mais), e com uma
+grande margem de erro inerente a este resultado.
+Assim, para garantir que o carro navegue com seguranca em ambientes urbanos, e aparentemente
+necessaria a combinacao deste sistema com outro
+baseado em sensores a laser.
+
+Caraffi, C., Cattani, S. e Grisleri, P. (2007). Offroad path and obstacle detection using decision networks and stereo vision, IEEE Transactions on Intelligent Transportation Systems 8(4) 607618.
+Chen, Y.-L., Sundareswaran, V., Anderson, C.,
+Broggi, A., Grisleri, P., Porta, P. P., Zani, P.
+e Beck, J. (2008). TerramaxTM Team oshkosh urban robot, Journal of Field Robotics
+25(10) 841860.
+Duda, R. O. e Hart, P. E. (1972). Use of the hough
+transformation to detect lines and curves in
+pictures, Commun. ACM 15(1) 1115.
+Faugeras, O. (1993). Three-dimensional computer
+vision A geometric view point, MIT Press,
+Cambridge.
+Fox, D., Burgard, W. e Thrun, S. (1997). The
+dynamic window approach to collision avoidance, IEEE Robot. Automat. Mag. 4 2333.
+
+Como trabalho futuro, pretende-se aplicar o
+metodo de deteccao_de_obstaculos juntamente
+com algoritmos mais eficientes de controle do
+carro. Uma destas tecnicas seria o metodo da janela dinamica (Dynamic Window Approach) (Fox
+et al., 1997), onde o sistema visual pode ser usado
+para criar um mapa de velocidades permitidas
+para o veculo. Este mapa sera usado para validar as velocidades fornecidas por uma camada
+de controle de mais alto nvel.
+
+Freitas, E. J. R., Vinti, M. N. W., Santos, M. M.,
+Iscold, P., Torres, L. A. B. e Pereira, G. A. S.
+(2009). Desenvolvimento de automacao embarcada para um robo_movel baseado em um
+carro de passeio, Simposio Brasileiro de Automacao Inteligente (SBAI09) .
+Hiroshi, T. K., Kano, H., Kimura, S., Yoshida, A.
+e Oda, K. (1995). Development of a videorate stereo machine, IROS 95 Proceedings
+
+229
+
+of the International Conference on Intelligent
+Robots and Systems-Volume 3, IEEE Computer Society, Washington, DC, USA, p. 3095.
+
+tional Geometry, second edn, Chapman 
+HALLCRC.
+Soquet, N., Aubert, D. e Hautiere, N. (2007).
+Road segmentation supervised by an extended v-disparity algorithm for autonomous navigation, IEEE Intelligent Vehicles Symposium, pp. 160165.
+
+Labayrade, R., Aubert, D. e Tarel, J.-P. (2002).
+Real time obstacle detection in stereovision on non flat road geometry through vdisparity representation, IEEE Intelligent
+Vehicle Symposium, Vol. 2, pp. 646651 vol.2.
+
+DARPA (2005).
+DARPA grand challenge,
+Disponvel em httpwww.darpa.mil
+grandchallenge05. Acesso em 16 Jan.
+2010.
+
+Park, W.-J., Kim, B.-S., Seo, D.-E., Kim, D.-S.
+e Lee, K.-H. (2008). Parking space detection using ultrasonic sensor in parking assistance system, IEEE Intelligent Vehicles Symposium, pp. 10391044.
+
+DARPA (2008).
+DARPA urban challenge,
+Disponvel em httpwww.darpa.mil
+grandchallengeindex.asp. Acesso em 16
+Jan. 2010.
+
+Skiena, S. S. (2004). Geometric reconstruction
+problems, in J. E. Goodman e J. ORourke
+(eds), Handbook of Discrete and Computa-
+
+230
+
+(a)
+
+(b)
+
+(c)
+
+(d)
+
+(e)
+
+(f)
+
+(g)
+
+(h)
+
+Figura 9 Aplicacao da tecnica para o reconhecimento dos planos trafegaveis e obstaculos (a, c, e e g),
+com a correspondente analise no mapa de disparidade V e o resultado do controle do freio e da direcao
+do veculo (b, d, f e h). A inclinacao da linha em vermelho em relacao a vertical representa o angulo das
+rodas e o seu tamanho o quanto o freio esta ou nao liberado.
+
+231

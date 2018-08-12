@@ -1,0 +1,705 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+UMA ABORDAGEM CONVOLUTIVA PARA A FATORACAO DE MATRIZ
+NAO-NEGATIVA EM DADOS AMOSTRADOS IRREGULARMENTE
+Fabio Louvatti do Carmo, Evandro Ottoni Teatini Salles
+Programa de Pos-Graduacao em Engenharia Eletrica
+Universidade Federal do Esprito Santo
+Av. Fernando Ferrari, 514, Predio CT VI, 29075-910
+Vitoria - Esprito Santo, Brasil
+Emails fabio.carmo@aluno.ufes.br, evandro@ele.ufes.br
+Abstract Non-negative Matrix Factorization (NMF) has gained popularity in audio tasks due its easy implementation and parts-based separation properties. Many studies has been adding extensions in order to condition
+the algorithm to the real characteristics of the sound. However, as a matrix-based method, it finds difficult to
+deal with data at non-regular grid, such as constant-Q transform (CQT). It was shown it is possible to adapt
+NMF to treat such data. This paper presents a convolutive NMF approach to work with irregularly-sampled
+data using CQT as spectral representation, here defined as NRCNMF. Two tests were performed and the results
+show the effectiveness of the proposed technique.
+Keywords
+
+Non-negative Matrix Factorization, Monaural separation, Constant-Q Transform.
+
+Resumo Fatoracao de matriz nao-negativa (NMF) ganhou popularidade em tarefas de audio devido a sua
+facil implementacao e propriedades de separacao baseada em partes. Muitos estudos vem adicionando extensoes
+a fim de condicionar o algoritmo as caractersticas reais do som. Entretanto, por ser um metodo baseado em
+matrizes, encontra dificuldade em tratar dados em grade nao-regular, como a transformada Q constante (CQT).
+Foi mostrado que e possvel adaptar a NMF para tratar dados deste tipo. Neste artigo e apresentada uma
+abordagem NMF convolutiva para tratar amostras em grade nao-regular, utilizando a CQT como representacao
+espectral, definida aqui por NRCNMF. Foram realizados dois testes e os resultados obtidos mostram a eficacia
+da tecnica proposta.
+Palavras-chave
+
+.
+
+Introducao
+
+A tarefa de separacao de multiplos sons a partir
+de uma gravacao de audio monaural e um problema difcil que tem sido amplamente abordado
+na literatura. Usualmente, os metodos propostos
+sao baseados na decomposicao matricial do espectrograma do sinal de audio. Um passo importante
+na analise desses dados e buscar uma representacao adequada a fim de encontrar as estruturas
+latentes ali contidas. A Fatoracao de Matriz Naonegativa (NMF - Non-negative Matrix Factorization) e uma tecnica que ganhou popularidade em
+(Lee and Seung, 2001) devido a sua natureza esparsa no seu processo de decomposicao (baseada
+em partes) e pela simplicidade na implementacao
+de suas regras multiplicativas. NMF tem sido utilizada em aplicacoes em audio, como separacao de
+voz monaural (Smaragdis, 2007), identificacao de
+objetos auditivos com espectro variante no tempo
+(Smaragdis, 2004), e transcricao automatica de
+musica (Smaragdis and Brown, 2003).
+A formulacao original da NMF define que uma
+matriz XN M  R+ seja aproximada pelo produto de duas matrizes WN R  R+ e HRM 
+R+ , tal que seja minimizado o erro de reconstrucao. Tal erro pode ser medido atraves de diversas funcoes custo, tais como norma de Frobenius,
+divergencia de Kullback-Leibler (Lee and Seung,
+2001) e divergencia de Itakura-Saito (Fevotte
+et al., 2009). Entretanto, essa formulacao e fraca
+
+ISSN 2525-8311
+
+para tarefas em audio, pois nao considera a informacao temporal dos dados, nao levando em conta
+as posicoes relativas dos espectros ao longo do
+tempo. Em (Smaragdis, 2004) foi introduzido um
+modelo NMF convolutivo, onde a relacao entre
+multiplas observacoes sobre intervalos de tempo
+proximos e descrita por uma sequencia de matrizes de bases Wt que corresponde a matriz de coet
+
+ficientes H variando ao longo do tempo.
+Estes metodos tradicionais utilizam uma representacao matricial do espectrograma, onde e
+imposto um espacamento regular em tempo e
+frequencia. A representacao mais comumente utilizada e a transformada de Fourier de tempo
+curto (STFT - Short Time Fourier Transform).
+Entretanto, a STFT possui um espacamento linear na frequencia, e nao mapeia eficientemente
+as frequencias musicais, que sao espacadas geometricamente. Em contraste, a transformada Q
+constante (CQT - Constant-Q Transform), originalmente introduzido em (Brown, 1991), caracteriza uma resolucao em frequencia dependente das
+frequencias centrais das janelas usadas para cada
+bin de frequencia, e dessa forma, consegue-se um
+espacamento geometrico. A CQT e importante no
+processamento_de_sinais de voz e musica, pois e baseada na percepcao humana do som. Em (M. Dorfler and Velasco, 2011) foi apresentado uma transformada CQT perfeitamente inversvel e eficiente
+baseado em frames de Gabor nao-estacionarios.
+
+3145
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Porem, a transformada retorna os dados amostrados em uma grade nao-regular, nao sendo possvel
+a representacao matricial.
+Em (Smaragdis and Kim, 2013) foi introduzido uma formulacao da NMF que pode ser aplicada em dados com ndices reais, nao tendo mais a
+necessidade de trabalhar apenas com representacao matricial (ndices inteiros). Com isso, e possvel realizar tarefas de decomposicao espectral utilizando representacoes como a CQT.
+Neste artigo sera introduzida uma abordagem
+convolutiva a NMF para dados irregularmente espacados em tempo-frequencia, a fim de considerar
+a dependencia temporal dos dados, que e inerente
+aos sinais de audio. Ademais, utilizando-se a CQT
+baseada em frames de Gabor nao-estacionarios
+como representacao espectral e observando-se as
+caractersticas de espacamento das amostras em
+tempo-frequencia, foi possvel adaptar a formulacao do algoritmo, a fim de melhorar os resultados
+da fatoracao.
+Esse artigo se divide como segue. A secao 2 apresenta brevemente a reformulacao da
+NMF para amostras espacadas irregularmente
+(Smaragdis and Kim, 2013). A secao 3 propoe a
+abordagem convolutiva do algoritmo apresentado
+na secao 2. A secao 4 mostra duas aplicacoes de
+separacao_monaural, comparando o algoritmo da
+secao 2 com o prosposto na secao 3. E a secao 5
+traz as conclusoes.
+2
+
+NMF para amostras espacadas
+irregularmente
+
+(1)
+
+onde XN M  R+ e uma matriz que contem a
+aproximacao do espectrograma do sinal de audio,
+WN R  R+ e HRM  R+ sao as matrizes de
+bases e de coeficientes, respectivamente. A dimensao R e o numero de partes que o espectrograma
+sera fatorado.
+Para dados amostrados irregularmente,
+(Smaragdis and Kim, 2013) propos uma reformulacao em que o espectrograma X e vetorizado1 ,
+x  vec(X)  R+ , e sao criados outros dois
+vetores, t  R+ e f  R+ , da mesma dimensao de
+x, que contem a localizacao em tempo-frequencia
+de cada amostra. Com isso, a fatoracao em (1) se
+torna
+R1
+X
+x 
+vr gr ,
+(2)
+r0
++
+
+onde vr  R e gr  R+ correspondem aos valores de W e H avaliados nas posicoes de tempo
+1 o operador vec() concatena os vetores para cada bin de
+frequencia que a CQT retorna em um unico vetor coluna.
+
+ISSN 2525-8311
+
+V G
+(V G).1RR
+V  Df .(P (x  11R ))
+G  Dt .(P (x  11R )),
+P
+
+(3)
+
+onde P, V e G sao matrizes de dimensao K  R,
+e cada coluna e referente a uma variavel latente r.
+Para o caso de amostras com ndices inteiros, as
+matrizes Dt e Df sao definidas como
+(
+1, f (i)  f (j)
+Df (i, j) 
+0, f (i) 6 f (j)
+(
+1, t(i)  t(j)
+Dt (i, j) 
+(4)
+0, t(i) 6 t(j).
+No caso de ndices reais, os vetores de tempo
+e frequencia tem grandes chances de serem formados por elementos unicos, e dessa forma, a segunda
+e terceira equacao em (3) nao capturarao as correlacoes das posicoes em tempo e frequencia. Para
+amenizar este problema, as matrizes Dt e Df sao
+geradas atraves de kernels gaussianos
+!
+f (i)  f (j)2
+Df (i, j)  exp
+f2
+
+
+t(i)  t(j)2
+Dt (i, j)  exp
+.
+(5)
+t2
+3
+
+A formulacao original da NMF define que a reconstrucao dos dados seja da forma
+X  WH,
+
+e frequencia em t e f , e
+denota o produto matricial de Hadamard. Atraves dessa reformulacao,
+as regras multiplicativas sao
+
+NMF convolutivo para amostras
+espacadas irregularmente
+
+Na NMF tradicional, cada objeto do espectrograma e descrito por seu padrao espectral (colunas
+de W) e sua ativacao correspondente no tempo (linhas de H). No caso da NMF convolutiva, cada
+objeto tem uma sequencia sucessiva de espectros e
+um padrao de ativacao ao longo do tempo. E possvel introduzir uma abordagem convolutiva para
+a NMF com amostras espacadas irregularmente.
+Para isso, o modelo em (2) se torna
+x 
+
+T
+1 R1
+X
+X
+
+vtr
+
+St (gr ),
+
+(6)
+
+t0 r0
+
+onde T e o tamanho da sequencia de espectros e
+a funcao St () realiza o deslocamento relativo dos
+coeficientes, onde S0 (gr )  gr , t > 0 denota deslocamento para a direita e t < 0 para a esquerda,
+preenchendo com zero. A Figura 1 mostra um
+exemplo de grade irregular em tempo-frequencia,
+e pode-se notar que o deslocamento no tempo deve
+ser realizado de forma que as amostras em baixa
+frequencia se desloquem de forma mais lenta que
+as de alta frequencia, ou seja, para um deslocamento de uma amostra em baixa frequencia, e preciso realizar varios em alta frequencia para nao deformar o espectrograma. A Figura 2 mostra um
+
+3146
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+exemplo do deslocamento relativo realizado pela
+funcao St ().
+
+Figura 1 Exemplo de grade irregular no plano
+tempo-frequencia para a CQT utilizando frames
+de Gabor nao-estacionarios.
+
+Para o calculo de Dt , nota-se que as posicoes das amostras no tempo nao sao bem definidas, como pode ser visto na Figura 1. Na
+CQT, o tamanho do atom em tempo-frequencia
+e adaptativa. Os parametros de deslocamento do
+atom no tempo dependem da largura de banda de
+sua posicao em frequencia. Com isso, em baixas
+frequencias, consegue-se uma maior resolucao em
+frequencia e menor resolucao no tempo, e para altas frequencias, maior resolucao no tempo e menor
+resolucao em frequencia. Esse fenomeno e conhecido como incerteza de Heisenberg. Sabendo disso,
+e conveniente usar o kernel gaussiano em (5) para
+o calculo de Dt . Entretanto, (5) define um valor de variancia fixo para todas as amostras em t.
+Devido ao problema da incerteza de Heisenberg,
+a variancia fixa pode provocar um borramento
+espectral no resultado do algoritmo, pois nao e
+possvel encontrar um valor fixo de variancia que
+atenda satisfatoriamente as amostras em baixa e
+alta frequencias. Com isso, e introduzido em (5)
+uma variancia que depende do bin de frequencia
+que a amostra se encontra. Entao o valor de t2
+em (5) passa a ser
+2
+t,bin
+
+
+Figura 2 Exemplo de deslocamento de 0.5 segundos em um espectrograma da CQT.
+
+d2bin
+,
+ln 
+
+0 <  < 1,
+
+(8)
+
+onde dbin e a distancia entre amostras vizinhas
+para cada bin de frequencia, e  e o valor do kernel
+gaussiano avaliado na amostra vizinha. A Figura 3
+exemplifica a projecao dos kernels gaussianos de
+cada amostra em cada bin.
+
+As novas regras multiplicativas da fatoracao
+em (6) podem ser vistas como um conjunto de
+T operacoes NMF em (3) que sao somadas ao final. Com isso, o algoritmo precisa atualizar T + 1
+matrizes a cada iteracao. Entao as regras mulitplicativas se tornam
+Pt  T 1
+P
+
+Vt
+Vt
+
+St (G)
+
+St (G) .1RR
+
+Figura 3 Exemplo de projecao de amostras com
+kernels gaussianos utilizando variancias diferentes
+para cada bin de frequencia. (  103 )
+
+t0
+
+Vt  Df .St (Pt (x  11R ))
+G  Dt .St (Pt (x  11R )).
+
+(7)
+
+A cada iteracao, todos Vt e G sao atualizados,
+onde G e calculado como a media de suas atualizacoes para cada Vt . Nota-se que para o caso
+T  1, o algoritmo em (7) se torna (3).
+Para utilizar NMF convolutiva para dados
+espacados irregularmente em amostras obtidas a
+partir da CQT baseada em frames de Gabor naoestacionarios, e possvel perceber algumas caractersticas e fazer algumas consideracoes sobre as
+matrizes Dt e Df . Apesar dos bins de frequencias serem espacados geometricamente, seus valores sao bem definidos. Sendo assim, pode-se utilizar o kernel binario em (4) para calcular Df , ou
+seja, os ndices de frequencia sao valores inteiros.
+
+ISSN 2525-8311
+
+Em Figura 4 e Figura 5 estao os pseudocodigos da tecnica proposta e da funcao de deslocamento temporal.
+4
+
+Resultados experimentais
+
+Esta secao destaca as vantagens da abordagem
+NMF convolutiva proposta para dados amostrados irregularmente (NRCNMF). Desta forma,
+usa-se dois exemplos de aplicacao em espectro
+de audio utilizando a CQT baseada em frames
+de Gabor nao-estacionarios como representacao
+espectral. Em seguida, faz-se uma comparacao
+com o algoritmo apresentado em (Smaragdis and
+Kim, 2013), aqui chamado de NRNMF.
+
+3147
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+1
+2
+
+3
+
+4
+
+5
+
+Entrada x, t, f  RK1 - vetores
+contendo as amostras e as
+posicoes em tempo e frequencia,
+R, itermax  Z - o numero de
+partes a fatorar e o numero
+maximo de iteracoes, ts  R deslocamento temporal em
+segundos.
+Sada As matrizes Vt , G  RKR .
+incio
+Calcula o numero de deslocamentos
+T  Z para ts em segundos.
+Inicializa aleatoriamente as T matrizes
+Vt e a matriz
+( G.
+1, f (i)  f (j)
+Df (i, j) 
+0, f (i) 6 f (j)
+
+
+2
+Dt (i, j)  exp t(i)t(j)
+2
+
+t,bin
+
+6
+7
+
+para cada i de 1 ate itermax faca
+Calcula a reconstrucao
+R
+
+T
+1
+X
+
+9
+10
+11
+12
+
+13
+14
+15
+16
+17
+18
+19
+
+2
+3
+4
+5
+
+6
+
+7
+8
+9
+10
+11
+
+!
+Vt
+
+St (G) .1RR
+
+t0
+8
+
+1
+
+para cada t de 1 ate T faca
+St (G)
+Pt  Vt R
+Gt  Dt .St (Pt (x  11R ))
+fim
+Atualiza G como a media de todos
+Gt .
+Calcula a reconstrucao R.
+para cada t de 1 ate T faca
+St (G)
+Pt  Vt R
+Vt  Df .St (Pt (x  11R ))
+fim
+fim
+fim
+
+12
+13
+
+Entrada M - matriz K  R a ser
+deslocada, L - vetor contendo o
+numero de amostras em cada
+bin de frequencia, t - tamanho
+do deslocamento.
+Sada Ms - matriz com as amostras
+deslocadas no tempo.
+incio
+td  ts   tT
+Calcula Lc  1, cumsum(L)
+para cada j de 1 ate tamanho(L) faca
+O deslocamento para o j-esimo bin
+de frequencia d(j)  0
+para cada k de Lc (j) ate
+Lc (j) + L(j) faca
+se t(k) < td  entao
+Incrementa d(j).
+fim
+fim
+Desloca M(Lc (j)  Lc (j) + L(j), )
+nas linhas de d(j) posicoes na
+direcao do sinal de td , preenchendo
+com zeros.
+fim
+fim
+Figura 5 Deslocamento St ()
+
+suavidade no tempo, que e tpico para sinais de
+audio. No caso da NRNMF, para alcancar uma
+reconstrucao mais fiel, e necessario fatorar o espectrograma em mais partes (R  2). Com isso, a
+matriz V, formada pelos vetores vr em (2), aprendera mais padroes espectrais, a fim de refinar a
+reconstrucao.
+
+Figura 4 NRCNMF
+4.1
+
+Aplicacao em espectro de audio
+
+No primeiro exemplo, o sinal de audio utilizado e
+composto de dois sinais do tipo chirp exponencial
+de 0, 5 segundo, um crescente e outro descrescente,
+entre as frequencias 1, 5kHz e 2, 5kHz. O sinal
+possui taxa de amostragem de 8kHz. A CQT foi
+realizada com frequencia mnima fmin  1kHz
+
+frequencia maxima fmax  4kHz e resolucao de
+48 bins por oitava (ou 14 de tom). Foram utilizados os algoritmos NRNMF e NRCNMF a fim de
+separar o espectro em Figura 6(a) em duas partes
+(R  2).
+Utilizando NRNMF, e possvel notar na Figura 6 que o algoritmo nao consegue reconstruir
+o espectrograma original. Isso ocorre porque o
+modelo do algoritmo nao considera nenhuma caracterstica das amostras, como por exemplo, a
+
+ISSN 2525-8311
+
+(a)
+
+(b)
+
+(c)
+
+(d)
+
+Figura 6 Exemplo de aplicacao da NRNMF
+(Smaragdis and Kim, 2013). (a) Espectrograma
+do sinal. (b) Espectrograma do sinal reconstrudo.
+(c) Parte 1. (d) Parte 2.
+Para o algoritmo NRCNMF proposto, foi utilizado um deslocamento temporal de 0, 55 segundo
+e o parametro   104 em (8). Nota-se na Figura 7 que o espectrograma foi reconstrudo com
+fidelidade, e foi fatorado em duas partes, que correspondem aos sinais chirp decrescente e cres-
+
+3148
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+cente.
+
+tocadas por um piano sintetizado, como mostra
+a Figura 9, com taxa de amostragem de 16kHz.
+As frequencias fundamentais das notas musicais
+utilizadas sao 523, 25Hz (C5), 659, 255Hz (E5) e
+783, 99Hz (G5).
+(a)
+
+(b)
+
+Figura 9 Partitura do audio tocado pelo piano.
+
+(c)
+
+(d)
+
+Figura 7 Exemplo de aplicacao da NRCNMF. (a)
+Espectrograma do sinal. (b) Espectrograma do
+sinal reconstrudo. (c) Parte 1. (d) Parte 2.
+No caso da NRCNMF, as matrizes Vt , formadas pelos vetores vtr em (6), aprenderao sequencias de T padroes espectrais ao longo do tempo.
+Como a CQT e construda com bins de frequencias em posicoes bem definidas, e possvel fazer
+um mapeamento das matrizes Vt para matrizes
+no formato de W em (1), e dessa forma, visualizar
+os padroes espectrais aprendidos. O mapeamento
+e
+wr (m)  vr (i), i  f (i)  m,
+(9)
+onde wr sao as colunas de W, m  1, . . . , M 
+e um ndice inteiro uniforme, e M e o numero de
+bins de frequencias.
+A Figura 8 mostra as duas sequencias de padroes espectrais obtidas a partir de (9). Nota-se
+que cada sequencia forma objetos referentes a cada
+uma das partes do espectrograma fatorado.
+
+A CQT foi realizada com frequencia mnima
+fmin  220Hz, frequencia maxima fmax  8kHz e
+resolucao de 48 bins por oitava. Para o algoritmo
+proposto, foi utilizado um deslocamento temporal
+de 0.55 segundo, parametro   104 e R  3.
+Para uma melhor percepcao da fatoracao, a Figura 10(a) mostra os sinais no tempo das partes
+encontradas pelo algoritmo, assim como a soma
+das tres partes, que e o sinal reconstrudo.
+Original
+
+1
+0
+1
+
+Parte 1 (do)
+
+1
+0
+1
+
+Parte 2 (mi)
+
+1
+0
+1
+
+Parte 3 (sol)
+
+1
+0
+1
+
+Soma das 3 partes
+
+1
+0
+1
+
+0
+
+1
+
+2
+
+3
+
+4
+
+(a) Sinais no tempo.
+
+(b) Original.
+
+(c) Soma das 3 partes.
+
+(d) Parte 1 (do). (e) Parte 2 (mi). (f) Parte 3 (sol).
+
+Figura 10 Sinais no tempo e espectrogramas relacionado a aplicacao com musica.
+
+(a)
+
+(b)
+
+Figura 8 As sequencias dos padroes espectrais
+relativas a separacao do sinal Fig.7(a) utilizando
+a NRCNMF.
+
+4.2
+
+Aplicacao em musica
+
+O segundo exemplo consiste de uma aplicacao simples num contexto mais realista, a fim de ver o
+comportamento do algoritmo proposto. O audio
+a ser fatorado e composto pela sequencia de notas
+
+ISSN 2525-8311
+
+Como pode-se notar, os espectrogramas da Figura 10 se aproximam mais de um som do mundo
+real, em que ha a presenca de componentes harmonicas de cada nota e do timbre do piano. Cada
+nota foi isolada, como se ve na Figura 10, e as
+sequencias de padroes espectrais de cada nota fatorada sao mostradas na Figura 11. Importante
+notar que as sequencias de padroes espectrais se
+repetem ao longo do espectrograma, e os vetores
+gr em (6) possuem os coeficientes que regem as
+posicoes e intensidades que esses padroes se repetem.
+Atraves desses experimentos, pode-se mostrar
+as vantagens da introducao do modelo convolutivo
+
+3149
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+construcao espectral.
+Referencias
+Brown, J. (1991). Calculation of a constant q spectral transform, Journal of the Acoustical Society of America 89(1) 425434.
+
+(a)
+
+(b)
+
+(c)
+
+Figura 11 As sequencias dos padroes espectrais relativas a separacao ao espectrograma em
+Fig.10(b) utilizando a NRCNMF.
+a NMF para amostras espacadas irregularmente
+aqui apresentado. Para um R pequeno, a separacao espectral com NRNMF nao retorna o espectrograma fiel ao original, pois o modelo aprende
+padroes espectrais isolados temporalmente. Enquanto que o NRCNMF aprende uma sequencia
+consecutiva de padroes espectrais no tempo, sendo
+possvel usar um R pequeno, e dessa forma, explicar melhor os objetos a serem fatorados. Para fins
+de implementacao, o tamanho das matrizes ficam
+menores, precisando de menos espaco em memoria.
+O uso da CQT baseada em frames de Gabor
+nao-estacionarios tambem e vantajoso pelo fato de
+ser uma representacao que possui transformacao
+inversa eficiente, baseada na percepcao humana
+do som e mais apropriada para tratar musica do
+que a STFT. No caso da CQT, ao escolher uma
+frequencia mnima igual a frequencia de uma nota
+musical (por exemplo, fmin  220Hz, que corresponde a nota musical A3), os demais bins de
+frequencia tambem corresponderao a frequencias
+de notas musicais.
+Os resultados em audio presentes nesse artigo se encontram hospedados no website https
+sites.google.comsitenrcnmfcba2016.
+5
+
+Conclusao
+
+Nesse artigo foi apresentada uma abordagem convolutiva para o algoritmo de fatoracao de matriz
+nao-negativa para dados amostrados irregularmente, como e o caso da transformada Q constante
+utilizando frames de Gabor nao-estacionarios,
+onde nao e possvel representacao matricial dos
+dados. A abordagem convolutiva considera uma
+caracterstica inerente aos sinais de audio, que e
+a dependencia temporal. Atraves de experimentos, foi possvel mostrar que tal abordagem torna
+o processo de separacao espectral mais apropriado para aplicacoes de separacao espectral em audio. Observando algumas caractersticas proprias
+da CQT, tambem foi possvel fazer adaptacoes no
+algoritmo a fim de evitar alguns problemas na re-
+
+ISSN 2525-8311
+
+Fevotte, C., Bertin, N. and Durrieu, J. (2009).
+Nonnegative matrix factorization with the
+itakura-saito divergence
+With application to music analysis, Neural Computation
+21(3) 793830.
+Lee, D. D. and Seung, H. S. (2001). Algorithms for
+non-negative matrix factorization, In NIPS,
+MIT Press, pp. 556562.
+M. Dorfler, N. Holighaus, T. G. and Velasco, G.
+(2011). Constructing an invertible constant-q
+transform with nonstationary gabor frames,
+In Proceedings of the 14th International Conference on Digital Audio Effects (DAFx 11),
+Paris, France, 2011.
+Smaragdis, P. (2004). Non-negative Matrix Factor
+Deconvolution Extraction of Multiple Sound
+Sources from Monophonic Inputs, Springer
+Berlin Heidelberg, Berlin, Heidelberg, chapter Independent Component Analysis and
+Blind Signal Separation Fifth International
+Conference, ICA 2004, Granada, Spain, September 22-24, 2004. Proceedings, pp. 494
+499.
+Smaragdis, P. (2007). Convolutive speech bases
+and their application to supervised speech
+separation, Trans. Audio, Speech and Lang.
+Proc. 15(1) 112.
+Smaragdis, P. and Brown, J. C. (2003). Nonnegative matrix factorization for polyphonic music transcription, Applications of Signal Processing to Audio and Acoustics, 2003
+IEEE Workshop on., pp. 177180.
+Smaragdis, P. and Kim, M. (2013). Non-negative
+matrix factorization for irregularly-spaced
+transforms., WASPAA, IEEE, pp. 14.
+
+3150

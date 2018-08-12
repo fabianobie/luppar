@@ -1,0 +1,754 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+INTERFACE DE COMUNICAÇÃO ENTRE CPNTOOLS E PROCESSOS EXTERNOS
+CARLOS ARIAS FERNÁNDEZ
+Business Development Engineer, Aerospace Valley
+E-mails cararias@gmail.com, arias@aerospace-valley.com
+CARLOS WALDECIR DE SOUZA
+Waldecir.souza@unifei.edu.br
+LUIZ EDIVAL DE SOUZA
+edival@unifei.edu.br
+Instituto de Engenharia de Sistemas e Tecnologias da Informação, Universidade Federal de Itajubá,
+Itajubá, MG, BRASIL
+
+Abstract
+ Since the launch of CPN Tools in 2001, more than 9987 organizations worldwide, and particularly more than 548 in
+Brazil are currently using it. Due to its high potential to edit, simulate, state space analysis and performance analysis of CPN
+models, it seems to be useful to implement an interface to integrate CPN Tools within a manufacturing cell. In order to do that,
+this project consists in an interface that manages connections between CPN Tools and external nodes through TCPIP network
+protocol. Although CPN Tools provides a communication set of instructions which operates using TCPIP, the possibilities were
+quite limited, therefore it was necessary to develop a protocol which extends the communications capabilities by adding headers
+with communication related information in similar way as a fieldbus does. In addition, network monitoring features were
+incorporated, as well as the possibility of choosing any of the developed protocols to perform the transfer of data. Apart from
+provide a multiple connections either as server or as client, additional features not conceived at the beginning were later
+incorporated to prepare and adapt the CPN files for the communication. These features range from the automatic addition of the
+communication libraries to the CPN, to offering remote monitoring of the CPN and the edition of the communication
+instructions directly from the developed application.
+Keywords
+ CPN Tools, communications interface, TCP communications, COMMSCPN Tools
+Resumo
+ Depois do surgimento de CPN Tools em 2001, hoje é utilizada por mais de 9987 organizações no exterior e no Brasil
+por mais de 548. Devido ao seu alto potencial para analisar, modelar, simular e caracterizar sistemas, o CRTi achou fundamental
+implementar uma interface para integrar a ferramenta CPN Tools em um ambiente industrial de manufatura e para isso era
+preciso desenvolver uma interface que centralizasse e controlasse as comunicações mediante o uso protocolo TCPIP. As CPN já
+possuem a capacidade de comunicar-se entre si, porém era preciso desenvolver um protocolo que possibilitasse a identificação
+entre os elementos que compõem a rede do sistema além de outras informações relativas  comunicação de uma maneira análoga
+ao funcionamento de um fieldbus. Cabe salientar as amplas capacidades de monitoramento das conexões, assim como, a opção
+de escolha de diferentes protocolos desenvolvidos para efetuar as transações. Além de possibilitar a comunicação múltipla tanto
+como servidor quanto como cliente, foram acrescentadas além das características de comunicação inicialmente concebidas,
+outras para facilitar a preparação dos arquivos próprios das CPN para adaptá-los  comunicação. Estas características
+compreendem desde a inserção das bibliotecas automaticamente até o monitoramento do andamento da CPN remotamente,
+passando pela inclusão das instruções de comunicação na CPN diretamente desde a aplicação.
+Palavras-chave
+ 
+
+1
+
+Introdução
+
+CPN Tools é uma ferramenta gráfica desenvolvida
+para editar, simular e analisar modelos de Rede de
+Petri Coloridas  CPNs (Jensen, 2009). Devido ao
+alto potencial do uso de Redes de Petri Coloridas
+para a modelagem_de_sistemas_dinâmicos a eventos
+discretos, apresenta-se neste artigo uma proposta de
+interfaces de comunicação entre modelos CPN que
+complementa as interfaces disponíveis na versão
+original do CPN Tools (Home Page CPN Tools, n.d).
+O uso da CPN Tools é bem difundido tanto no meio
+industrial como no meio acadêmico e é utilizado para
+ISBN 978-85-8001-069-5
+
+modelar diversos tipos de sistemas compreendendo
+software, hardware, protocolos_de_comunicação,
+sistemas de workflow de processos de negócio,
+controle_de_sistemas, sistemas de indústria militar e
+aeronáutica entre outros. A CPN Tools já possui
+instruções que tornam possível a comunicação com o
+protocolo TCPIP (Gallasch, 2001). Porém, as
+instruções foram desenvolvidas de uma maneira
+simples, além disso, as instruções foram
+desenvolvidas para uma versão antiga denominada
+DESIGNCPN. Estas foram concebidas para fornecer
+unicamente uma comunicação pontual e síncrona,
+obrigando a personalizar a aplicação conectada 
+CPN Tools. Para aplicações mais complexas é
+
+3039
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+necessária informação adicional da comunicação,
+como por exemplo, o tipo de dado enviado ou a
+informação da origem e do destino.
+Em (Westergaad, 2011) é apresentada uma
+estrutura de comunicação, chamada AccessCPN 2.0,
+que representa uma evolução de trabalho anterior do
+autor onde a integração entre modelos CPN e
+programas externos é facilitada. Nesta estrutura, são
+definidas primitivas de comunicação de alto nível que
+permite a interação de modelos CPN com programas
+escritos em Java. O foco é na simulação pois o
+interesse do autor é no uso de modelos CPN como
+parte de um programa Java.
+Neste artigo, o interesse é utilizar modelos CPN
+com facilidades de interação com o exterior de forma
+a facilitar a implementação de um protótipo para
+controle e monitoração de sistemas automatizados a
+partir da especificação formal. É necessário
+desenvolver uma aplicação que centralize as
+comunicações entre modelos CPN, permita interagir
+com os lugares e transições do modelo e com outros
+elementos exteriores ao modelo, podendo ser entrada
+ou saída de dados. Com isso desenvolveu-se uma
+interface que possibilita ligar um modelo CPN,
+desenvolvido em CPN Tools, a outros modelos
+similares utilizando o protocolo TCPIP. Com essa
+finalidade, foi necessário definir um protocolo que
+complementasse
+ao
+TCPIP
+já
+existente
+acrescentando maior flexibilidade de uso e
+capacidade de comunicar tipos de dados na
+mensagem.
+Na seção 2 introduz-se a estrutura e a
+funcionalidade de comunicação da CPN Tools.
+Deseja-se focar somente na ferramenta e não será
+oferecida ao leitor os conceitos envolvendo a
+modelagem baseada em Rede de Petri Coloridas. Na
+seção 3, o desenvolvimento das novas funções de
+comunicação é apresentado e finalmente na seção 4 é
+feita uma analise dos resultados dos testes de
+comunicação realizados.
+
+2.1 Biblioteca CommsCPN
+A biblioteca desenvolvida por (Gallasch, 2001) foi
+projetada originalmente para permitir a interação
+entre o DESIGNCPN e aplicações externas mediante
+o protocolo TCPIP. Esta biblioteca cumpre os
+seguintes requisitos
+ Iniciar conexões de saída com aplicações
+externas.
+ Aceitar conexões de entrada com aplicações
+externas.
+ Enviar e receber dados de qualquer tipo
+(polimórficos) a uma aplicação externa.
+ Fechar conexões com aplicações externas.
+ Ser capaz de tratar com conexões múltiplas
+e simultâneas.
+ Transmitir sem erros de comunicação.
+A arquitetura desta biblioteca é ilustrada na
+Figura 1 e baseia-se em três camadas uma que utiliza
+o método de comunicação básico e implementa um
+interface TCPIP, outra que trabalha com a
+transmissão_de_dados, e outra que gerencia as
+diferentes conexões que houver. São fornecidas duas
+opções de comunicação entre modelos CPN e
+processos externos uma TCP pura que conecta
+diretamente a aplicação DesignCPN através de
+funções da biblioteca de comunicação e outra opção
+de comunicação tipo Messenger através de
+subprocessos escrito em Java. O subprocesso Java
+utiliza o protocolo TCPIP para se comunicar com os
+processos externos. Este último oferece identificador
+da conexão, controle sobre o sucesso da transferência
+e segmentação das transferências em pacotes de
+dados de tamanho e codificação customizáveis. No
+projeto da biblioteca CommsCPN foi escolhida a
+primeira opção por compatibilidade com a linguagem
+de programação utilizada no DesignCPN.
+
+2 Estrutura de comunicação do CPN Tools
+CPN Tools é uma ferramenta desenvolvida pelo
+departamento de ciências de computação da
+Universidade de Aarhus na Dinamarca que consiste
+em uma interface que permite a edição, simulação e
+análise das CPN utilizando um ambiente gráfico do
+tipo post-WIMP (Beaudouin-Lafon, 2000). Surge
+como redesenho da aplicação anterior desenvolvida
+pelos próprios autores chamada DesignCPN. A
+ferramenta pode ser obtida, gratuitamente, em (Home
+Page CPN Tools, n.d). Nesta seção, o interesse será
+somente na interface de comunicação conforme
+disponibilizada na versão original.
+
+ISBN 978-85-8001-069-5
+
+Figura 1 Arquitetura da biblioteca CommsCPN
+
+A camada de comunicação (Communication
+Layer) fornece as primitivas de comunicação básica
+com o protocolo TCPIP. Estas primitivas são
+utilizadas
+pela
+camada
+de
+gerenciamento
+(Connection Management Layer) para interação com
+o processo externo. Estas primitivas são conectar,
+aceitar, enviar, receber e desconectar. Cumpre os
+requisitos previamente mencionados além de ser
+capaz de permitir múltiplas conexões porém não
+identifica o tipo de dado que está sendo transferido
+(unicamente transmite bytes).
+
+3040
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A camada de mensagem (Messaging Layer)
+fornece uma abstração para a troca de mensagens de
+forma fidedigna, já que a fornecida pelo TCPIP não
+é suficiente, pois considera os dados devem ser
+transmitidos na forma de uma sequencia de bytes.
+Quando se tem diferentes tipos de dados, é necessário
+segmentar o envio destes para poder diferenciá-los e
+controlá-los corretamente. Sendo assim uma
+codificaçãodecodificação
+é
+necessária.
+As
+mensagens são segmentos de no máximo 128 bytes, e
+o mais significativo é utilizado como byte de
+controle. O bit mais significativo deste byte de
+controle estabelece se a transmissão compreende
+mais de uma mensagem ou não. O resto dos bits deste
+byte mais significativo mostra o tamanho em bytes da
+mensagem (máximo 127 bytes de dados). Assim
+pacotes de dados são formados e enviados para o
+processo externo através da função send da camada
+de comunicação. Na recepção, a função receive da
+camada de comunicação le o primeiro byte (header)
+e identifica quantos bytes deverão ser lidos no
+segmento.
+A Figura 2 ilustra o formato da mensagem.
+
+Figura 3  Arquitetura Genérica para ilustrar as interações
+possíveis
+
+Na Figura 3 tem-se 2 modelos CPN, 3 processos
+externos ( sensor, motor e ferramenta software). Um
+exemplo de uso pode ser iniciado com o processo
+sensor enviando um sinal ao modelo CPN1, que será
+executado e retornará um sinal para o processo
+motor, por exemplo, para ligar o motor. O número
+em cada bloco é o identificador para as
+comunicações.
+Um visual gráfico da interface foi desenvolvido
+para que o usuário possa acompanhar as interações.
+A Figura 4 ilustra a tela ao iniciar a interface.
+
+Figura 2  Quadro de mensagem
+
+A camada de gerência de comunicação
+(Connection Management Layer) , junto com a
+camada de mensagem, possibilita a execução dos
+requisitos previamente expostos (em Biblioteca
+CommsCPN). Esta camada possui as seguintes
+características identificação da conexão mediante
+uma string característica, transmissão_de_dados
+polimórficos e codificaçãodecodificação adaptável
+aos distintos tipos de dados considerados. Existe um
+conjunto de funções que permite abertura, aceite,
+fechamento, envio, recepção de mensagens. Estas
+funções se comportam de maneira síncrona, ou seja,
+bloqueiam o programa até que seja concluída sua
+finalidade (até receber uma mensagem do exterior ou
+até receber uma conexão de entrada por exemplo) ou
+até que uma exceção seja ativada. Para maiores
+detalhes destas funções recomenda-se a leitura de
+(Gallasch, 2001).
+3 Desenvolvimento da Interface com CPN Tools
+A comunicação entre o CPN Tools e o processo
+externo será demonstrada através de uma aplicação
+chamada Interface que permite a visualização das
+informações de forma que o usuário possa entender a
+interação entre os processos. Uma arquitetura
+genérica para ilustrar as possíveis interações é
+mostrada na Figura 3.
+
+ISBN 978-85-8001-069-5
+
+Figura 4  Tela ilustrativa das interações entre os processos
+
+Resumidamente, a tela mostra os endereços IP
+dos processos envolvidos, funções de conexão e
+desconexão, definição protocolo (protocolo original raw, protocolo desenvolvido - enabled e um variante
+deste ultimo utilizado para depuração de erros e
+testes - debug) e as mensagens trocadas. Outras
+funções mostradas na tela não tem interesse para este
+artigo.
+Esta interface foi desenvolvida baseada nos
+seguintes requisitos de projeto
+ Comunicação através de sockets
+TCPIP.
+ Possibilitar múltiplas conexões com o
+mesmo servidor e mesmo cliente
+utilizando a mesma porta.
+ Adaptar o formato de mensagem
+conforme a definido na COMMSCPN.
+ Facilitar o uso da interface pelo usuário
+
+3041
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A linguagem utilizada foi a C e as funções de
+comunicação são complementares as disponíveis em
+COMMSCPN. O protocolo definido inclui no
+quadro de mensagem da Figura 2, o byte de controle
+e os endereços de fonte e destino, conforme visto na
+Figura 5.
+
+Figura 5  Alteração no quadro de mensagem
+
+O byte de controle de controle possui a estrutura
+conforme a Figura 6.
+
+processo externo e o Servidor o modelo no CPN
+Tools.
+
+Figura 7  Tipos de Comunicação
+
+Esta comunicação é criada através de um modelo
+CPN com 3 lugares e 3 transições. A Figura 8 ilustra
+o modelo onde o CPN Tools é o servidor, assumindo
+as funções de conectar, enviar e desconectar.
+
+Figura 6  Estrutura do byte de controle
+
+Os bits têm os seguintes significados
+ First Packet Se este bit estiver ativado, indica
+que é o primeiro dos pacotes a serem transmitidos.
+Além de isso, indica que o byte de Controle e o de
+SrcDst estão habilitados, ou seja, que o protocolo
+adaptado está habilitado. Os seguintes pacotes (no
+caso de uma transmissão fragmentada) não possuirão
+nem byte de Controle nem de SrcDst. Como os
+dados a transmitir são normalmente codificados em
+ASCII, nenhum deles supera o número 127 e
+conseqentemente não é ativado o primeiro bit do
+byte de Controle.
+ Src  Dst Extended A ativação deste bit
+denota que a origem e o destino da transmissão
+tenham 1 byte cada (até 256 destinações) ou 4 bits
+cada (até 16 destinações).
+ Monitor A ativação deste bit serve para
+indicar que o pacote transmitido tem o objetivo de
+monitorar a atividade da CPN. Estes dados não
+precisam ser enviados a outro destino, já que
+meramente tem como propósito monitorar.
+ Connection info Quando habilitado, indica
+que os dados contêm informação da rede recém
+conectada (número de rede e nome). Essa informação
+só é transmitida após a conexão ser efetuada.
+ O resto dos bits são provisoriamente
+reservados para um eventual uso futuro. Poderiam ser
+utilizados para identificar o tipo de dados
+transferidos (string, inteiro ou outros) ou para outros
+usos.
+
+Figura 8  Modelo CPN para o envio de dados
+
+O modelo CPN ilustrado na Figura 8 mostra o
+instante em que o servidor está pronto para executar a
+função de conexão, observe que a transição Connect
+esta habilitada (envoltória sombreada nas linhas da
+caixa) e, portanto pronta para ser executada. Para
+ilustrar a comunicação foi desenvolvida uma
+interface para o usuário que contem informações
+relevantes para entender a comunicação sendo
+realizada. Em uma aplicação especifica esta interface
+deverá ser desenvolvida de acordo com o interesse do
+usuário. A interface é mostrada na Figura 9 onde
+pode ser identificadas informações do tipo porta
+usada 9001 e a mensagem string do send que foi
+enviada pelo modelo CPN.
+
+3.1 Comunicação Simples
+A comunicação simples estabelece uma conexão
+entre o processo externo, mostrado na Figura 7 como
+sendo a interface, e o CPN Tools. A relação entre
+eles pode ser do tipo Servidor-Cliente, ClienteServidor e Servidor-Cliente-Servidor. Entende-se
+como Cliente a aplicação desenvolvida como
+
+ISBN 978-85-8001-069-5
+
+Figura 9  Interface ilustrando a recepção de dados
+
+3.2 Comunicação múltipla
+Para efetuar a comunicação entre várias CPN ao
+mesmo tempo é necessário identificar as mesmas. O
+CPN Tools, através da biblioteca COMMSCPN é
+capaz de identificar distintas conexões internamente
+3042
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+em uma CPN mediante a string da conexão. Porém
+devido s instruções de comunicação que são feitas
+de maneira pontual e síncrona, bloqueando todo o
+sistema até terminar com cada instrução, ocorre uma
+queda de desempenho. Portanto, a melhor opção é
+construir uma ferramenta que centralize as
+comunicações entre as distintas CPN (e outros
+elementos) e que consiga trabalhar de maneira
+assíncrona e permitindo a multitarefa simultânea.
+Para isto foi desenvolvida novas funções de
+comunicação para codificar e decodificar as
+mensagens.
+As
+seguintes
+funções
+foram
+desenvolvidas
+ connect Estabelece e envia a informação da
+CPN e da conexão.
+ connectEncode Constrói e codifica o pacote
+a enviar para validar a conexão.
+ sendEncode Constrói o pacote a enviar se
+adaptando ao protocolo.
+ monitorEncode Similar a sendEncode
+particularizada para a monitoração do modelo.
+ receiveDecode Decodifica e separa os
+elementos dos pacotes recebidos.
+Para cada modelo CPN desenvolvido deverá ter
+um identificador que será reconhecido por todos
+processos envolvidos. Em cada modelo CPN deverá
+ser definida uma variável global, por exemplo como
+segue abaixo
+globref NetNumber  5
+Além deste identificador será definido um
+identificador interno da conexão, que é uma string e
+permite diferenciar várias conexões com o exterior
+dentro de uma mesma CPN (mesmo identificador
+numérico). No protocolo implementado, a string
+identificadora da conexão, será usada unicamente
+com caráter informativo para o usuário.
+Função Connect
+Esta função inicia a conexão, como cliente ou
+como servidor, dependendo da opção escolhida pelo
+usuário. Além disso, envia uma série de dados com
+informação relativa  conexão. Primeiramente, abrese uma conexão como servidor (CPNTools). Quando
+a conexão cliente (Interface) se conecta a ele,
+procede-se a enviar a informação do servidor (CPN
+Tools)  conexão de entrada.
+fun connect(ConnNamestring,portint) 
+let
+val Netnum  !NetNumber
+val connection  acceptConnection(ConnName,port)
+val dosend  send(ConnName, (ConnName,Netnum),
+connectEncode)
+in
+(dosend)
+end
+
+Esta função recebe como parâmetros de entrada
+o identificador interno da conexão ConnName e a
+porta da conexão. Primeiramente atribui a Netnum o
+valor da variável global (NetNumber). Depois abre
+
+ISBN 978-85-8001-069-5
+
+uma conexão como servidor na porta indicada e com
+o identificador interno da conexão em forma de
+string. Após receber uma conexão satisfatória,
+acontece a função de envio, efetuada sob a conexão
+referenciada como ConnName, e envia o colset* de
+tipo product composto do identificador interno da
+rede ConnName e do número identificador da rede
+externo. Para possibilitar o envio de um colset deste
+tipo específico é preciso definir a função de
+codificação correspondente cuja descrição se
+apresenta a seguir.
+Funcão connectEncode
+Esta função agrupará e identificará o string
+(identificador da conexão interna) e identificador
+numérico da CPN em um colset composto.
+Inicialmente é necessário declarar o tipo de dado da
+seguinte forma
+Colset SendData  product STRING * INT
+A função é definida por
+fun connectEncode(data2sendSendData) 
+let
+val Data  1 data2send
+val Destination  2 data2send
+val stringVector Byte.stringToBytes(Data)
+val extended if Destination>15 orelse
+String.size(Data)>15 then 1 else 0
+val Control  Word8.fromInt(128+64*extended+16)
+val SrcDst  if extended<1 then
+Word8.fromInt(!NetNumber*16 +
+String.size(Data)) else Word8.fromInt(!NetNumber)
+val Dst  if extended>0 then
+Word8.fromInt(String.size(Data)) else SrcDst
+in
+Word8Vector.tabulate(Word8Vector.length(stringVector)
++2, fn 0 > Control  1> SrcDst  n> Word8Vector.sub
+(stringVector, n - 2))
+end
+
+Primeiramente, os dois elementos do colset são
+separados. Depois, constrói-se a camada de controle
+de acordo com a Figura 6 onde se habilita o bit do
+primeiro pacote de dados (First Packet) e o da
+informação da conexão (Connection Info). No
+cabeçalho que indica a origem, codifica-se o número
+da rede e no de destino, indica-se o tamanho do nome
+da String. Portanto, se o número for maior do que 15
+ou se o tamanho do nome em caracteres for maior do
+que 15 caracteres, automaticamente será habilitado o
+bit de Src  Dst Extended (no cabeçalho de
+controle), alocando então um byte (máximo 255) para
+a origem e outro para indicar o tamanho da string.
+Cabe destacar que a aplicação não deixará alocar um
+identificador interno para a rede cujo conteúdo
+precise enviar mais de um pacote, tendo no máximo
+124 caracteres.
+Função SendEncode
+Equivalente ao caso anterior, trata-se de uma função
+de codificação. O parâmetro de entrada é um colset
+do tipo product já definido anteriormente e
+denominado SendData. Posteriormente, são extraídos
+os dois elementos o referente ao destino e colocado
+na segunda parte do byte Src  Dst e na primeira, o
+número da rede. No byte de controle é habilitado o
+bit First Packet e o Src  Dst Extended dependendo
+
+3043
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+se algum dos dois números referentes  origem ou ao
+destino fossem maiores de 15.
+fun sendEncode(data2sendSendData) 
+let
+val Data  1 data2send
+val Destination  2 data2send
+val stringVector Byte.stringToBytes(Data)
+val extended  if Destination>15 orelse !NetNumber>15
+then 1 else 0
+val Control  Word8.fromInt(128+64*extended)
+val
+SrcDst
+
+if
+extended<1
+then
+Word8.fromInt
+(!NetNumber*16+Destination)
+else Word8.fromInt(!NetNumber)
+val
+Dst
+
+if
+extended>0
+then
+Word8.fromInt
+(Destination) else SrcDst
+in
+Word8Vector.tabulate(Word8Vector.length(stringVector)
++2, fn 0 > Control  1> SrcDst  n> Word8Vector.sub
+(stringVector, n - 2))
+end
+
+Função receiveDecode
+Esta função, que não é estritamente necessária para
+garantir a comunicação, permite, no entanto,
+aumentar as possibilidades da mesma. O objetivo
+desta função é identificar a origem do envio e
+comprovar que o destino foi correto, mediante ao
+envio dos cabeçalhos definidos no protocolo. Isto
+permite, por exemplo, seguir caminhos diferentes na
+CPN receptora segundo a origem dos dados
+recebidos. Para possibilitar a segmentação dos
+cabeçalhos que contêm a origem, o destino e para
+detectar se foram enviadas com formato estendido
+foram desenvolvidas funções que permitem a
+manipulação de vectores e listas de números inteiros
+em SML.
+fun bin(n)  if n0 then 0 else n mod 2 bin(n div 2)
+fun check(n)  if List.last(n)  0 andalso length(n)>1 then
+List.take(n,length(n)-1) else n
+fun addZeros(n)  if length(n)<8 then addZeros(n0) else
+n
+fun pow(,0)  1  pow(x,n)  x*pow(x,n-1)
+fun
+bit2Int(l,0)
+
+List.nth(l,0)
+
+bit2Int(l,n)
+
+List.nth(l,n)*pow(2,n) +
+bit2Int(l,n-1)
+
+A função bin(n) devolve uma lista de uns e zeros
+mostrando o valor em binário do número introduzido.
+A função check(n) elimina o zero restante adicionado
+na função anterior no inicio da lista. A função
+addZeros(n) adiciona zeros até completar um byte (8
+elementos). A função pow(x,n) calcula o número x 
+potência n. A função bit2Int(l,n) converte a lista l
+binária criada anteriormente em um número inteiro.
+A função receiveDecode foi desenvolvida e
+apresenta o seguinte código
+fun receiveDecode(received) 
+let
+val
+ControladdZeros(check(bin(Word8.toInt(Word8Vector.sub(rece
+ived,0)))))
+val SecByte  Word8.toInt(Word8Vector.sub(received,1))
+val SrcDst  addZeros(check(bin(SecByte)))
+val extended  List.nth(Control,6)
+val
+Src
+
+if
+extended1
+then
+SecByte
+else
+bit2Int(List.drop(SrcDst,4),3)
+val
+Dst
+
+if
+extended1
+then
+Word8.toInt(Word8Vector.sub(received,2)) else
+bit2Int(SrcDst,3)
+val Data  Byte.bytesToString(Word8Vector.tabulate (
+Word8Vector.length ( received) - 2-extended, fn n
+> Word8Vector.sub
+(received, n+2+extended)))
+in
+(Src,Dst,Data)
+end
+
+ISBN 978-85-8001-069-5
+
+Estas funções são incluídas na biblioteca de
+comunicações do CPN Tools quando se roda a
+Interface.
+4 Testes e Resultados
+Foram realizados vários testes de comunicação
+para comprovar os resultados. Uma série de provas
+foi definida e demonstrou o correto funcionamento
+das comunicações. Após a verificação correta do
+software em relação s comunicações foi realizada
+uma fase de testes de uma maneira convencional,
+para avaliar formalmente o correto funcionamento
+das comunicações. Nestas provas, foram utilizadas
+conexões do tipo Rede A envia um dado  rede B
+gerida pela interface ou para monitorar utilizando-se
+os dois protocolos desenvolvidos (Debug e Enabled).
+A seguir detalham-se estas provas
+Prova A As CPN utilizadas são similares s
+de envio e recepção já mostradas na Figura
+7, mas utilizam funções de codificação e
+decodificação apropriadas para a correta
+utilização do protocolo. Sendo esta a
+primeira das provas, foi feita em modo
+Debug, para observar lentamente o
+funcionamento.
+ Prova B Similar  prova A, porém esta vez,
+é o servidor quem envia a informação, além
+de agir com formato de numeração das redes
+reduzido.
+ Prova C Aqui se testou o monitoramento,
+em modo debug, utilizando uma rede similar
+s dos filósofos (Gallasch, 2001)
+ Prova D Utilizando desta vez a CPN
+hierárquica que modela uma célula de
+manufatura, com um número elevado de
+lugares monitorados e com carga de dados
+maior, testou-se em modo Enabled
+(automática) para certificar o correto
+funcionamento.
+Os resultados obtidos demonstraram o sucesso e
+a eficiência do protocolo desenvolvido. Porém como
+trata-se de um protocolo ainda em desenvolvimento
+será necessário sua utilização em outras aplicações
+mais especificas, por exemplo, na interação com
+processos externos de sensoriamento e atuação. Este
+é um campo de investigação de interesse dos autores
+e encontra-se em desenvolvimento.
+
+
+5 Conclusão
+Este artigo apresentou o desenvolvimento de um
+protocolo de comunicação entre CPN Tools e
+processo externos. O objetivo deste protocolo é
+estabelecer a capacidade de comunicação entre
+diferentes módulos que formam parte de um sistema
+que seja modelado por uma CPN. Desta maneira,
+pode-se analisá-lo, monitorar o andamento, e até
+
+3044
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+mesmo, remotamente, atuar no mesmo. Enfim,
+aparecem numerosas possibilidades.
+Em relação aos aspectos da comunicação, o
+aprofundamento para conhecer a dinâmica do
+protocolo TCPIP foi muito produtivo, não
+unicamente para conhecer suas características e
+propriedades, mas também para solucionar alguns
+problemas surgidos durante o desenvolvimento do
+projeto. Dificuldades estas que normalmente são
+ignoradas no dia a dia apesar de que este protocolo é
+usado por bilhões de pessoas diariamente. A solução
+implementada, em relação  capacidade de
+comunicação, tem a intenção de oferecer uma
+solução genérica com o menor número de limitações
+possíveis por parte da aplicação. A intenção consiste
+em conseguir adaptar-se aos elementos com os quais
+estabelece comunicação e não que estes precisem
+adaptar-se  aplicação. Assim, o protocolo
+desenvolvido proporciona espaço para incluir novas
+informações sem alterar substancialmente o protocolo
+nem os cabeçalhos.
+Agradecimentos
+O primeiro autor agradece  Universidade Carlos
+III de Madri, ao Banco Santander e a bolsa da
+fundação Ramón Areces pelo suporte financeiro que
+possibilitou
+o
+intercâmbio
+com
+UNIFEI
+(Universidade Federal de Itajubá) onde desenvolveu
+seu projeto final de graduação, além de outras
+disciplinas e atividades.
+Referências Bibliográficas
+Beaudouin-Lafon, M., et al. CPNTools A PostWIMP Interface for Editing and Simulating
+Coloured Petri Nets. Coloured Petri Nets,
+Application and Theory of Petri Nets 2001,
+Proceedings of the 22nd International
+Conference, ICATPN 2001 Newcastle upon
+Tyne. s.l.  Springer-Verlag, 2000, pp. 71-80.
+Gallasch, G and Kristensen, L.M. CommsCPN A
+communication Infrastructure for External
+Commnication with DesignCPN (2001). Third
+Workshop and Tutorial on Practical User of
+Coloured Petri Nets and the CPN Tools, pp. 7591.
+Home Page CPN Tools (n.d), disponível em
+httpwww.cpntools.org
+acessado
+em
+16042012
+Jensen, K. and Kristensen, L. M. (2009). Coloured
+Petri Nets. Springer, July 2009.
+Westergaard, M. (2011). AccessCPN 2.0 A
+Highlevel Interface to Coloured Petri Net
+Models, , L. M. Kristensen and L. Petrucci, Ed.,
+Springer Berlin  Heidelberg, 2011, vol. 6709,
+pp. 328-337.
+
+ISBN 978-85-8001-069-5
+
+3045

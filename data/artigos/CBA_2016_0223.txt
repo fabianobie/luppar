@@ -1,0 +1,1085 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ESTIMACAO DE FORCAS DE INTERACAO PNEU-SOLO USANDO
+OBSERVADORES UKF EM CASCATA COM INTERCONEXOES EM ATRASO
+Rafael A. Cordeiro, Alessandro C. Victorino, Paulo A. V. Ferreira, Ely C. de Paiva,
+Samuel S. Bueno
+
+
+
+
+Universidade Estadual de Campinas  FEECUNICAMP
+Av. Albert Einstein, 400  13083-852
+Campinas  SP  Brasil
+
+Universite de Technologie de Compiegne  HEUDIASYCUMR CNRS 7253UTC
+57 avenue de Landshut  60203
+Compiegne  France
+
+
+
+
+Universidade Estadual de Campinas  FEMUNICAMP
+Rua Mendeleiev, 200  13083-970
+Campinas  SP  Brasil
+
+Centro de Tecnologia da Informacao Renato Archer  DRVCCTI
+Rod. D. Pedro I, km 143,6  13081-970
+Campinas  SP  Brasil
+
+Emails rcordeir@dt.fee.unicamp.br, Alessandro.Victorino@utc.fr,
+valente@dt.fee.unicamp.br, elypaiva@fem.unicamp.br, samuel.bueno@cti.gov.br
+Abstract The knowledge of tire-ground interaction forces is interesting for development of intelligent vehicles. However, tire forces transducers are expensive and not suitable for ordinary passengers cars. An alternative
+is to estimate these forces using standard sensors. This paper proposes the use of observers synthesized by the
+Unscented Kalman Filters algorithm in a delayed interconnected cascade-observer structure to reconstruct tireground interaction forces in all directions. The estimator is validated with an experimental test and compared
+with previous results obtained with Extended Kalman Filter observers.
+Keywords
+vehicles.
+
+Tire-ground forces estimation, State observers, Kalman filters, Vehicle dynamics, Intelligent
+
+Resumo O conhecimento das forcas_de_interacao_pneu-solo e interessante para o desenvolvimento de veculos
+inteligentes. Entretanto, sensores que mecam essas forcas sao caros e, portanto, nao sao apropriados para o uso
+em veculos comerciais. Uma alternativa consiste na estimacao dessas forcas utilizando sensores comuns. Esse
+artigo propoe o uso de observadores sintetizados pelo algoritmo do Filtro de Kalman Unscented em uma estrutura
+de estimacao em cascata com interconexoes em atraso capaz de reconstruir as forcas_de_interacao_pneu-solo em
+cada pneu. O estimador e validado a partir de um ensaio experimental e seus resultados sao comparados aos
+obtidos previamente utilizando Filtros de Kalman Estendidos.
+Palavras-chave .
+
+Nomenclatura
+Indice i 
+Indice j 
+Fxij ,Fyij ,Fzij 
+V  u v wT 
+  p q rT 
+    T 
+g
+m
+Jxx ,Jyy ,Jzz 
+Li 
+E
+ks ,cs 
+ij 
+ij ,Cij 
+ij ,Cij 
+xij ,yij 
+ij 
+rwij 
+hzij 
+
+ISSN 2525-8311
+
+< 1 (Dianteira)  2 (Traseira) >
+< 1 (Esquerda)  2 (Direita) >
+Forcas no pneu
+Velocidade linear do veculo
+Velocidade angular do veculo
+Posicao angular do veculo
+Aceleracao da gravidade
+Massa do veculo
+Momentos principais de inercia
+Distancia entre o CG e a diant.tras.
+Distancia entre o CG e a lateral
+Parametros da suspensao
+Angulo de estercamento do pneu
+Angulo, e rigidez, de derrapagem
+Taxa, e rigidez, de escorregamento
+Comprimento de relaxacao do pneu
+Velocidade de rotacao do pneu
+Raio do conjunto rodapneu
+Comprimento da suspensao
+
+1
+
+Introducao
+
+Para aumentar seguranca e conforto em veculos, a
+industria automotiva busca desenvolver novas tecnologias. Hoje em dia, com a evolucao dos computadores, os avancos tecnologicos sao cada vez
+mais frequentes na, assim chamada, inteligencia
+do veculo. Estes avancos tem se dado em duas
+grandes areas Os sistemas de auxlio ao condutor
+(ADAS Advanced Driver Assistance Systems) e
+os veculos_autonomos (AVs Autonomous Vehicles).
+Nos ADAS, o principal objetivo e auxiliar o
+motorista durante a conducao. Estes sistemas podem atuar de maneira indireta, informando possveis riscos e recomendando acoes, ou de forma
+direta, onde o sistema atua no veculo para evitar
+situacoes de perigo como, por exemplo, os freios
+anti-blocantes (ABS) ou os controles eletronicos
+
+707
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+de estabilidade (ESC).
+Por sua vez, AVs desejam eliminar a necessidade de um condutor humano. Excluindo o motorista, o veculo e pilotado automaticamente, objetivando aumentar seguranca, diminuir o transito
+e, inclusive, reduzir emissoes de poluentes. O AV
+mais conhecido atualmente consiste no carro da
+Google, que vem sendo testado nas ruas dos EUA.
+Tanto ADAS como AVs precisam ter acesso a
+diversas informacoes sobre o veculo e, portanto,
+devem ser capazes de medir parametros relacionados ao ambiente e a dinamica do veculo.
+Diversos sensores sao usados para o desenvolvimento de sistemas automotivos inteligentes.
+Dentre os mais comuns estao acelerometros, girometros, GPS, etc. Entretanto, algumas variaveis
+sao difceis de serem mensuradas e alguns sensores, dado seu alto custo, nao podem ser usados
+em veculos comerciais. Dentre as variaveis difceis de medir estao as Forcas de Interacao PneuSolo (FIPS). Estas forcas podem ser usadas tanto
+em ADAS  por exemplo na previsao de capotamento do veculo (Bouton et al., 2008)  como em
+AVs, fornecendo informacoes fundamentais sobre
+a dinamica do veculo.
+Para evitar o uso de sensores caros, estimadores tem sido tratados na literatura. Trabalhos
+como (Ray, 1997) e (Doumiati et al., 2011) propoem estimadores para as FIPS. Todavia, muitos
+destes trabalhos nao tratam da estimacao de forcas longitudinais e alguns fazem uso de sensores
+inviaveis para veculos convencionais.
+Em (Cordeiro et al., 2016), um novo estimador para FIPS foi proposto usando o Filtro de Kalman Estendido (EKF) em uma estrutura de estimacao em cascata com interconexoes em atraso.
+Em sequencia, este trabalho propoe como alternativa ao EKF, o uso do Filtro de Kalman Unscented
+(UKF) como algoritmo de estimacao.
+Este artigo esta organizado da seguinte forma
+primeiramente, a estrutura de estimacao e apresentada na secao 2. Em seguida, na secao 3, os
+modelos_dinamicos usados para a estimacao sao
+desenvolvidos. A secao 4 introduz os observadores UKF usados na estrutura de estimacao. A
+validacao_experimental da proposta de estimacao
+encontra-se na secao 5. Por fim, os autores apresentam suas conclusoes finais na secao 6.
+2
+
+Estrutura de Estimacao
+
+As componentes lateral e longitudinal das FIPS
+sao forcas de atrito e, consequentemente, sao
+dependentes da componente vertical atuante no
+pneu. Ademais, ambas sao geridas pela dinamica
+do veculo, o que torna as componentes das FIPS
+fortemente acopladas, interferindo diretamente na
+observabilidade de modelos que as utilizem.
+Para garantir a observabilidade do estimador,
+uma alternativa consiste em desacoplar as FIPS e
+
+ISSN 2525-8311
+
+usa-las em uma estrutura em cascata. Ray (1997)
+e Doumiati et al. (2011) propuseram o desacoplamento utilizando modelos de dinamicas randomicas, conhecidos como modelos random-walk.
+Para evitar a perda de informacoes em considerar modelos randomicos, aqui sera utilizada a
+proposta apresentada em (Cordeiro et al., 2016),
+onde o desacoplamento e obtido por interconexoes
+em atraso na estrutura em cascata. Como pode
+ser visto na Figura 1, o estimador das forcas verticais recebe, como entrada, as forcas estimadas
+pelos observadores lateral e longitudinal, mas com
+um atraso de uma amostra no tempo. A sada do
+observador vertical alimenta os demais estimadores. O estimador lateral tambem recebe a estimacao da forca longitudinal com atraso de uma
+amostra, e vice-versa.
+k1
+
+Fx
+Medidas
+Diretas
+a x ,a y , az
+ , , 
+h z , ij , 
+
+Estimador 3D
+Fz
+
+z
+
+1
+
+ij
+
+k
+Estimador 2D F x
+Fx
+
+k
+
+Fz
+
+ij
+
+ij
+
+Estimador 2D
+k
+Fy
+Fy
+
+ij
+
+ij
+
+k1
+
+Fy
+
+ij
+
+z
+
+1
+
+Figura 1 Estrutura de estimacao em cascata com
+interconexoes em atraso.
+Esta estrutura so e possvel se as dinamicas
+das variaveis a serem estimadas forem lentas com
+relacao a taxa de amostragem do estimador, o que
+e verdade para as FIPS. Alem disso, as condicoes
+iniciais necessarias para a estimacao podem ser facilmente obtidas dado que o veculo supostamente
+inicia em repouso.
+3
+
+Modelos Matematicos
+
+A estrutura de estimacao apresentada utiliza tres
+observadores baseado em modelos em espaco de
+estados, os quais sao apresentados a seguir.
+3.1
+
+Modelo vertical
+
+O observador de forcas verticais e sintetizado a
+partir de um modelo 3D simplificado do veculo
+inspirado no apresentado em (Cordeiro, 2013).
+Tal modelo, ilustrado na Figura 2, consiste em
+um veculo planar com quatro suspensoes (molaamortecedor) independentes e perpendiculares ao
+veculo.
+Aplicando as equacoes de Newton-Euler,
+chega-se as seguintes equacoes
+u  vr  wq  g sen  + 1m
+
+X
+
+Fx0 ij
+
+X
+
+Fy0 ij
+X
+w  uq  vp + g cos  cos  + 1m
+Fzij
+
+v  wp  ur + g sen  cos  + 1m
+
+(1)
+(2)
+(3)
+
+708
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+L1
+L2
+
+p
+r
+
+hz
+
+w ,az
+
+3.2
+
+2E
+u ,ax
+q
+v ,ay
+
+O modelo lateral deriva do modelo 2D apresentado
+em (Doumiati et al., 2011) considerando estercamento Ackerman, como na Figura 3.
+
+hz
+
+11
+
+Fx
+Fz Fy h
+z
+11
+
+11
+
+11
+
+12
+
+Fx
+
+21
+
+Fx
+
+Fz Fy
+
+21
+
+F z F y hz
+21
+
+21
+
+Modelo lateral
+
+12
+
+F x
+
+12
+
+L1
+
+12
+
+11
+
+11
+
+2E
+
+Fx
+
+22
+
+11
+
+Fx
+Fz Fy
+22
+
+Fy
+
+L2
+
+22
+
+22
+
+Fy
+
+q 1Jyy (Jzz  Jxx ) pr  L1 (Fz11 + Fz12 )
+X
+hzij Fx0 ij 
++ L2 (Fz21 + Fz22 ) +
+
+onde
+Fxij
+Fyij
+
+
+
+Ademais, as relacoes entre as velocidades angulares e as taxas de variacao dos angulos de rolagem e arfagem sao dadas por
+  p + (q sen  + r cos cos ) tg 
+
+(7)
+
+  q cos   r sen 
+
+(8)
+
+Analisando o sistema de suspensao, pode-se
+obter as forcas atuando sobre ele
+Fzij  ks (hzij  hzij )  cs hzij
+
+(9)
+
+onde hzij e o comprimento da suspensao em repouso.
+Considerando o solo localmente planar em
+cada pneu, a taxa de variacao do comprimento
+de cada suspensao pode ser aproximada pela velocidade vertical nas extremidades do veculo.
+hzij  w + (1)i qLi + (1)j pE
+
+(10)
+
+Utilizando (1) a (8) e (10), obtem-se um modelo_nao_linear de 12 estados
+X  f (X, U )
+
+Fx
+
+v
+
+12
+
+Fy
+
+12
+
+F
+
+
+y 12
+
+22
+
+(5)
+
+(6)
+
+
+
+
+Fy
+
++ Fy0 22 )  E(Fx0 11 + Fx0 21 ) + E(Fx0 12 + Fx0 22 )
+
+ sen ij
+cos ij
+
+21
+
+12
+
+12
+
+(4)
+
+0
+0 )  L2 (Fy
+r 1Jzz (Jxx  Jyy ) pq + L1 (Fy0 11 + Fy12
+21
+
+ 0  
+Fxij
+cos ij
+
+Fy0 ij
+sen ij
+
+F x
+
+u
+
+Figura 2 Modelo tridimensional proposto.
+p 1Jxx (Jyy  Jzz ) qr  E(Fz11 + Fz21 )
+X
++ E(Fz12 + Fz22 ) 
+hzij Fy0 ij 
+
+F
+11
+
+
+y 11
+
+(11)
+
+Figura 3 Modelo bidimensional de guinada.
+Aplicando novamente as equacoes de NewtonEuler, obtem-se
+X
+u  v  + 1m
+Fx0 ij
+(13)
+X
+v  u + 1m
+Fy0 ij
+(14)
+
+ 1Jzz L1 Fy0 11 + Fy0 12  L2 Fy0 21
+(15)
+
+
++Fy0 22 + E Fx0 11  Fx0 12 
+O comportamento dinamico das forcas laterais e obtido a partir do Modelo Transiente de
+Unico Ponto de Contato  MTUPC, cujos detalhes sao apresentado em (Pacejka, 2002).
+Fyij 
+
+
+u  (1)j 
+Fyij  Fyij
+Eyij
+
+(16)
+
+onde Fyij e o valor instantaneo da forca lateral e
+o comprimento de relaxacao (yij ) e constante.
+Existem diversos modelos_matematicos na literatura para o calculo das FIPS instantaneas
+(Pacejka, 2002). Alguns destes modelos sao muito
+complexos, com grande quantidade de parametros
+e alto custo_computacional. Assim, opta-se aqui
+pelo modelo de Dugoff (Dugoff et al., 1969), que
+consiste em um modelo semi-emprico, nao linear e
+de baixa complexidade, regido pela seguinte equacao
+
+Fyij  Cij 
+tg ij 2  yij yij
+Fzij
+(17)
+yij  min 1,
+2Cij  tg ij 
+
+onde X  u v w p q r   hzij T e U 
+Fxij Fyij 1j T .
+Note que as forcas verticais nao sao estados
+do modelo, mas podem ser reconstrudas pelos estados substituindo (10) em (9)
+
+sendo o angulo de derrapagem obtido por
+!
+v  (1)i Li
+1
+ij  tg
+ ij
+u  (1)j E
+
+Fzij  ks (hzij hzij )cs (w+(1)i qLi +(1)j pE)
+(12)
+
+Um modelo de 7 estados como (11) pode ser
+construdo a partir de (13) a (16), onde X 
+u v  Fyij T e U  Fxij Fzij 1j T .
+
+ISSN 2525-8311
+
+(18)
+
+709
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+3.3
+
+Modelo longitudinal
+
+O modelo longitudinal baseia-se no mesmo modelo bidimensional mostrado na Figura 3. Assim,
+possui as mesmas equacoes de movimentos  (13)
+a (15). Ademais, a dinamica das forcas tambem e
+regida pelo MTUPC, resultando em
+Fxij
+
+
+u  (1)j 
+Fxij  Fxij
+
+Exij
+
+(19)
+
+onde Fxij e fornecida pelo modelo de Dugoff
+
+Fxij  Cij 
+ij 2  xij xij
+Fzij
+(20)
+xij  min 1,
+2Cij ij 
+Para o modelo de forca longitudinal, utilizase a taxa de escorregamento ao inves do angulo de
+derrapagem, dada por
+(u  (1)j E) + ij rwij
+
+
+ij 
+max u  (1)j E , ij rwij
+
+Xk  f (Xk1 , Uk ) e Yk  f (Xk , Uk )
+X k  EXk  e Y k  EYk 
+P k  EXk XTk  + Q e S k  EYk YTk  + R
+C k  EXk YTk 
+Assim, pode-se estimar os estados e a matriz
+de covariancia
+Xk  X k + Kk (Yk  Y k )
+
+(24)
+
+Pk  P k  Kk S k KkT
+
+(25)
+
+1
+
+onde Kk  C k S k e o ganho de Kalman.
+Para os modelos propostos na secao 3, o vetor
+de sadas e as matrizes Q e R sao determinadas
+como segue
+ Observador de forcas verticais
+
+(21)
+
+ Y  ax ay az p q r   hzij T
+ Q  0.001 diag (10 10 10 1 1 1 10 10 1 1 1 1)
+
+Logo, utilizando (13) a (15) e (19), um novo
+modelo (11) com 7 estados pode ser obtido, onde
+X  u v  Fxij T e U  Fyij Fzij ij 1j T .
+4
+
+Os pontos-sigma sao propagados por (22) e
+usados para as predicoes dos estados, sadas e matrizes de covariancia
+
+ R  0.01 diag (1 1 1 5 5 5 10 10 10 10 10 10)
+
+ Observador de forcas laterais
+ Y  ax ay r uT
+ Q  diag (0.01 0.01 0.001 1 1 1 1)
+
+Sntese de observadores UKF
+
+ R  diag (1 1 0.5 1)
+
+Os modelos_matematicos determinados na secao 3
+serao utilizados na sntese de observadores. Cordeiro et al. (2016) utilizam o EKF para a sntese. Por ser baseado em linearizacoes, observadores EKF podem apresentar problemas ao serem
+aplicados em sistemas fortemente nao lineares.
+Para tais sistemas, uma alternativa consiste
+na utilizacao do Filtro de Kalman Unscented. O
+UKF, ao inves de linearizar o modelo, usa uma
+abordagem estatstica para o algoritmo de Kalman. Para a aplicacao do algoritmo, os modelos
+na forma (11) devem ser discretizados e tratados
+como estocasticos
+Xk  f (Xk1 , Uk1 ) + Wk1
+Yk  h(Xk , Uk ) + Vk
+
+ Y  ax ay r uT
+ Q  diag (0.01 0.01 0.001 1 1 1 1)
+ R  diag (1 1 0.5 1)
+
+As sadas ax , ay , az , p, q, r e hzij sao medicoes dos sensores do veculo, enquanto  e  sao
+pseudo-medidas, obtidas a partir da deformacao
+da suspensao
+  (hz11  hz12 + hz21  hz22 )(4E)
+
+(26)
+
+  (hz11  hz21 + hz12  hz22 )(2L1 + 2L2 ) (27)
+(22)
+
+onde W e V sao, respectivamente, os rudos de
+processo e medicao, considerados Gaussianos, independentes, de media nula e com matrizes de covariancia Q  EW W T  e R  EV V T 
+Define-se pontos-sigma como
+p
+Xk  Xk  (N + )Pk
+(23)
+sendo Pk a matriz de covariancia dos estados, N
+o numero de estados e  um parametro de ajuste
+do algoritmo. Para evitar problemas numericos
+no calculo de razes de matrizes decorrentes da
+fatoracao de Cholesky, e utilizado o metodo de
+decomposicao em valores singulares apresentado
+em (Ma et al., 2010).
+
+ISSN 2525-8311
+
+ Observador de forcas longitudinais
+
+5
+
+Validacao Experimental
+
+Para validar os observadores, dados reais foram
+obtidos com o veculo DYNA do laboratorio frances HEUDIASYC. A Figura 4 apresenta a plataforma e seus sensores. Um sistema de ground-truth
+e utilizado, composto por transdutores de FIPS
+acoplados em cada uma das rodas. Cada transdutor de forcas custa 150.000 e, o que evidencia a
+importancia no desenvolvimento de estimadores.
+Uma missao foi realizada na cidade de Compiegne, Franca, onde dados foram adquiridos
+pela plataforma, com taxa de amostragem de
+100Hz, e usados offline em ambiente MATLABSIMULINK para a validacao do estimador. Os valores obtidos foram comparados com os
+
+710
+
+Camera
+Frontal
+
+Receptor GPS
+centimétrico
+Acesso  rede
+CAN do veículo
+Rotação das rodas,
+Taxa de guinada,
+aceleração,
+esterçamento, ...
+
+4 Sensores de
+Altura Corrsys
+Datron HT500
+Transdutores de
+forças pneusolo
+(Ground Truth)
+4 Kistler RoaDyn
+S625
+
+Fz12 N
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+2 000
+4 000
+6 000
+300
+
+320
+
+340
+
+360
+
+340
+
+360
+
+340
+
+360
+
+340
+
+360
+
+340
+
+360
+
+340
+
+360
+
+FOG IMU
+Crossbow
+VG700AB
+
+Sensor de ângulos
+de derrapagem
+Correvit S400
+
+Fz
+N
+21
+
+t s
+
+Aquisição em
+tempo_real @4kHz
+Linux Xenomai
+
+2 000
+4 000
+6 000
+300
+
+320
+t s
+
+Figura 4 Plataforma DYNA.
+
+u kmh
+
+100
+80
+60
+
+0
+2 000
+320
+t s
+2 000
+0
+2 000
+300
+
+40
+300
+
+2 000
+
+300
+
+Fy21 N
+
+resultados utilizando observadores EKF (Cordeiro
+et al., 2016).
+A Figura 5 apresenta a velocidade longitudinal e o angulo de estercamento do veculo para o
+intervalo de analise.
+
+Fy
+N
+12
+
+(a) Forcas verticais.
+
+320
+
+340
+
+320
+t s
+
+360
+
+t s
+
+(b) Forcas laterais.
+
+4
+Fx
+N
+12
+
+ graus
+
+6
+2
+0
+2
+4
+300
+
+320
+
+340
+
+360
+
+2 000
+0
+2 000
+300
+
+t s
+
+320
+
+Figura 5 Velocidade e angulo de estercamento
+durante o ensaio.
+Os resultados obtidos para as rodas dianteiradireita (ij  12) e traseira-esquerda (ij  21)
+podem ser vistos na Figura 6. Nelas, ve-se que
+ambos os estimadores sao capazes de reconstruir
+as FIPS. Ademais, nota-se que a diferenca entre a
+utilizacao dos algoritmos EKF e UKF e pequena,
+sugerindo que as FIPS encontram-se proximas de
+sua regiao linear, tornando a solucao por linearizacao do EKF uma solucao viavel.
+Para melhor avaliar os resultados obtidos,
+duas metricas sao propostas
+1. Erro RMS (Root Mean-Squared )
+s
+2
+X
+erms  1N
+Fk  Fk
+
+(28)
+
+k
+
+2. Maximo erro absoluto
+mea  max Fk  Fk
+k
+
+(29)
+
+As metricas sao computadas no mesmo intervalo de tempo das Figuras 5 e 6, onde garante-se
+a condicao estacionaria de estimacao. A Tabela 1
+apresenta os resultados obtidos por ambos os estimadores e o ganhoperda () obtido pelo UKF
+com relacao ao EKF (em percentual), destacandose, em azul, as metricas em que o UKF supera
+
+ISSN 2525-8311
+
+Fx
+N
+21
+
+t s
+2 000
+0
+2 000
+300
+
+320
+t s
+
+(c) Forcas longitudinais.
+
+Medida
+
+UKF
+
+EKF
+
+Figura 6 Estimacao das FIPS dianteira-direita e
+traseira-esquerda.
+
+o EKF. Os valores marcados com  sao imprecisos devido a um erro de tendencia inesperado na
+aquisicao do conjunto de dados das forcas longitudinais no pneu traseiro-direito.
+A tabela comprova que a diferenca entre ambos e pequena, principalmente para as forcas verticais, onde as nao linearidades no modelo de suspensao sao fracas. No entanto, os resultados sugerem um melhor desempenho do UKF na estimacao das forcas laterais e das forcas longitudinais
+nas rodas motorizadas, onde as forcas sao mais
+elevadas e, portanto, mais proximas da zona nao
+lineares da curva de FIPS, corroborando as expectativas do algoritmo UKF. Em contrapartida,
+o estimador UKF apresenta maior custo_computacional devido a necessidade de propagacao dos
+pontos-sigma pelo modelo, sendo cerca de 20
+mais lento que o algoritmo usando EKF.
+
+711
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Tabela 1 Comparacao entre EKF e UKF.
+
+Fz
+
+Fy
+
+Fx
+
+Fz
+
+Fy
+
+Fx
+
+EKF
+UKF
+
+EKF
+UKF
+
+EKF
+UKF
+
+
+EKF
+UKF
+
+EKF
+UKF
+
+EKF
+UKF
+
+
+Erro RMS (N)
+F11
+F12
+F21
+568.2
+439.0
+549.8
+553.6
+567.3
+433.0
++0.7
+-0.2
+-1.4
+336.8
+331.7
+202.4
+321.2
+329.6
+186.4
+-4.6
+-0.6
+-7.9
+426.4
+339.2
+411.8
+349.6
+436.3
+361.2
+-15.1
++2.3
++6.5
+Maximo erro absoluto (N)
+F11
+F12
+F21
+4624.1 3720.9 3316.0
+4662.5 3734.6 3302.9
++0.8
++0.4
+-0.4
+1565.2 1484.8 1300.7
+1208.5 1390.7 1186.8
+-22.8
+-6.3
+-8.8
+2004.5 2187.6 1906.4
+1869.0 2004.4 2098.4
+-6.8
+-8.3
++10.1
+
+6
+
+F22
+432.4
+430.7
+-0.4
+182.1
+176.3
+-3.2
+1025.7
+1028.0
++0.2
+F22
+2852.7
+2915.2
++2.2
+1669.1
+1315.0
+-21.2
+2542.7
+2575.3
++1.3
+
+Conclusoes
+
+O presente artigo apresentou um estimador de
+FIPS utilizando uma estrutura em cascata com
+interconexoes em atraso, evitando os modelos
+random-walk. Modelos em espaco_de_estados foram desenvolvidos e utilizados na sntese de observadores UKF. Os resultados foram validados com
+resultados experimentais e comparados aos resultados obtidos pelo algoritmo EKF.
+Ambos os estimadores foram capazes de estimar as FIPS, apresentando respostas similares.
+Comparacoes metricas de performance sugerem
+que o algoritmo UKF apresenta melhores resultados para a estimacao das forcas laterais e das
+forcas longitudinais nas rodas motorizadas, onde
+as FIPS se encontram mais proximas de sua zona
+nao linear. Todavia, o algoritmo UKF apresenta
+um maior custo_computacional.
+Portanto, a utilizacao do algoritmo UKF e recomendada se o veculo trabalhar nos limites de
+estabilidade, onde as forcas sao constantemente
+nao lineares, como acontece em veculos fora de
+estrada e de corrida. Caso contrario, o uso do algoritmo EKF e mais apropriado dado o seu menor
+custo_computacional.
+Trabalhos futuros devem analisar condicoes
+de estabilidade da estrutura de estimacao em cascata com interconexoes em atraso. Ademais, o
+modelo da dinamica de rotacao das rodas pode ser
+introduzido para melhorar a estimacao de forcas
+longitudinais.
+
+ISSN 2525-8311
+
+Agradecimentos
+Os autores agradecem os fomentos DR FAPESP
+201406610-8, BEPEs FAPESP 201427240-4
+e 201600693-4, e Auxlio Regular FAPESP
+201402672-9 (Projeto VERDE). Este trabalho
+foi desenvolvido com auxlio da estrutura Equipex ROBOTEX (Referencia ANR-10-EQPX-4401) Heudiasyc UMR CNRS UTC 7253.
+Referencias
+Bouton, N., Lenain, R., Thuilot, B. and Martinet,
+P. (2008). A rollover indicator based on a tire
+stiffness backstepping observer Application
+to an all-terrain vehicle, Intelligent Robots
+and Systems, 2008. IROS 2008. IEEERSJ
+International Conference on, pp. 27262731.
+Cordeiro, R. A. (2013). Modelagem e controle de
+trajetoria de um veculo robotico terrestre de
+exterior, Masters thesis, Faculdade de Engenharia Mecanica, UNICAMP, Campinas,
+Brasil.
+Cordeiro, R. A., Victorino, A. C., Ferreira,
+P. A., de Paiva, E. C. and Bueno, S. S.
+(2016). Tire-ground forces estimation in
+a 4-wheel vehicle using a delayed interconnected cascade-observer structure*, IFACPapersOnLine 49(15) 139  144. 9th IFAC
+Symposium on Intelligent Autonomous Vehicles IAV 2016, Leipzig, Germany, 29 June
+- 1 July 2016.
+Doumiati, M., Victorino, A., Charara, A. and Lechner, D. (2011). Onboard real-time estimation of vehicle lateral tire-road forces and
+sideslip angle, Mechatronics, IEEEASME
+Transactions on 16(4) 601614.
+Dugoff, H., Fancher, P. S. and Segal, L. (1969).
+Tire performance characteristics affecting
+vehicle response to steering and braking control inputs, Technical Report Contract CST460 (Final), Office of Vehicle Systems Research, US National Bureau of Standards,
+Washington, DC.
+Ma, Y., Wang, Z., Zhao, X., Han, J. and He, Y.
+(2010). A ukf algorithm based on the singular
+value decomposition of state covariance, Intelligent Control and Automation (WCICA),
+2010 8th World Congress on, pp. 58305835.
+Pacejka, H. B. (2002). Tire and Vehicle Dynamics,
+Butterworth-Heinemann, Oxford. 697p.
+Ray, L. R. (1997). Nonlinear tire force estimation and road friction identification Simulation and experiments1,2, Automatica
+33(10) 1819  1833.
+
+712

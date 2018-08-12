@@ -72,11 +72,11 @@ class NPL(Source):
 
     def total_querys(self):
         files = open(self.local_file_q, 'r').read().split('/')
-        raise len(files)-1
+        return len(files)-1
 
     def total_docs(self):
         files = open(self.local_file_doc, 'r').read().split('/')
-        raise len(files)-1
+        return len(files)-1
 
     def lookup_querys(self,text):
         return [q for q in self.read_querys() if text.lower() in q.text.lower()]

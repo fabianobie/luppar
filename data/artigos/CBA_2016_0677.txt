@@ -1,0 +1,926 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+CONTROLE A ESTRUTURA VARIAVEL DA VAZAO DE UMA
+BOMBA PERISTALTICA
+Gabriel Tavares de Melo, Jose Paulo V. S. da Cunha, Jose Franco M. do Amaral
+
+
+Departamento de Eletronica e Telecomunicacoes  Faculdade de Engenharia
+Universidade do Estado do Rio de Janeiro  Rua Sao Francisco Xavier 524, sala 5001E  20550-900
+Emails gabrieltmelo@yahoo.com.br, jpaulo@ieee.org, franco@uerj.br
+Abstract Two algorithms are developed for the accurate control of the flow rate of a peristaltic pump
+proportional and variable structure. The objetive is to improve the infusion of drugs. The totalized number of
+drops is feedback in order to achieve closed-loop control. Variable structure control achieves better performance,
+which is verifyed theoretically and in simulation results. Experimental results obtained with a microcontroller
+based prototype are also presented.
+Flow control, Peristaltic pump, Infusion pump, Variable structure control, Computer control.
+
+Keywords
+
+Resumo Sao desenvolvidas duas estrategias para o controle preciso da vazao de uma bomba_peristaltica
+proporcional e a estrutura variavel. O objetivo e melhorar a infusao de medicamentos em pacientes. Para realizar
+o controle em malha_fechada, realimenta-se a totalizacao das gotas detetadas por um dosador. O controle a
+estrutura variavel produz um desempenho melhor, o que e verificado teoricamente e por meio de simulacoes.
+Tambem sao apresentados resultados experimentais de um prototipo implementado com um microcontrolador.
+Palavras-chave .
+
+1
+
+As bombas para a infusao de medicamentos em
+pacientes sao adotadas em terapias em que a infusao por gravidade nao proporciona resultados satisfatorios em consequencia da irregularidade da
+quantidade infundida e da pouca uniformidade da
+taxa de infusao. O controle preciso da vazao e
+importante, por exemplo, na infusao de medicamentos vasoativos potentes, que seriam difceis ou
+perigosos de se ministrar pela infusao por gravidade.
+Usualmente sao empregadas bombas peristalticas (Klespitz and Kovacs, 2014) que geram uma
+vazao proprocional a velocidade de rotacao de seu
+motor. A Figura 1 apresenta um tipo de bomba
+peristaltica em que tres roletes, montados sobre
+um disco giratorio, comprimem um tubo flexvel.
+O movimento dos roletes por fora do tubo bombeia o lquido que esta bloqueado entre dois desses
+roletes.
+Boa parte das bombas de infusao opera em
+malha_aberta, o que e feito ajustando-se a velocidade do motor para gerar a vazao desejada
+(Kommu et al., 2014). Para que a vazao seja adequada, e necessario que as caractersticas dos diversos componentes da bomba (e.g., diametro e
+flexibilidade do tubo) sejam precisas (Klespitz and
+Kovacs, 2014). Seria desejavel aliviar o requisito
+de precisao, especialmente porque o tubo e descartado apos cada operacao, portanto, e importante
+reduzir seu custo.
+Diferentes tecnicas de medicao e controle de
+vazao de bombas peristalticas podem ser encontradas na literatura. Em (de Mare et al., 2001),
+e utilizado o balanco de massa do recipiente que
+
+ISSN 2525-8311
+
+
+
+Introducao
+
+Sentido da rotacao
+
+
+b
+z
+b
+
+
+
+
+z u
+
+
+Entrada
+
+6
+
+
+
+
+
+
+?
+
+z
+
+Tubo Flexvel
+
+Rolete
+
+OC
+C
+
+
+
+
+Sada
+
+?
+
+Fixacoes
+
+Figura 1 Bomba peristaltica.
+
+contem o fluido utilizado na infusao. Atraves da
+taxa de variacao da massa no recipiente, e possvel estimar-se a vazao de sada. Este metodo, alem
+de necessitar do uso de balancas de alta precisao,
+requer tratamentos para mitigar o efeito de perturbacoes e vibracoes na medida. Outros exemplos sao o uso de controle_preditivo em (Hu and
+Chen, 2013) e controle_repetitivo em (Hillerstrom
+and Sternby, 1994).
+Varias bombas de infusao ja utilizam um dosador que mede a vazao a partir da contagem de
+gotas detetadas por um fototransistor, conforme
+a Figura 2. Geralmente a contagem de gotas e
+utilizada apenas para monitorar a operacao do
+equipamento (Yubin et al., 2010), o que e feito
+verificando se a vazao esta dentro de limites toleraveis. Riscala e Moreira (1997) propuseram a
+utilizacao da contagem de gotas para o controle de
+vazao em malha_fechada. A partir dessa concep-
+
+2390
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Recipiente
+Bomba Peristaltica
+
+@
+@
+
+LED
+
+? 
++
+
+s
+l
+l
+?
+
+Dosador
+
+Fototransistor
+
+-
+
+u
+
+r
+
+u
+u
+6
+
+Sada de Lquido
+
+?
+
+(para o paciente)
+
+-
+
+-
+
+Figura 2 Bomba de infusao com seus elementos basicos.
+cao, neste artigo modela-se a dinamica da bomba
+de infusao na secao 2 para permitir o estudo de
+tres estrategias_de_controle (secao 3) (i) malha
+aberta, (ii) proporcional e (iii) estrutura variavel.
+Na secao 4 avalia-se o efeito da natureza quantizada da contagem de gotas no desempenho das
+duas estrategias_de_controle em malha_fechada.
+Na secao 5 sao apresentados resultados de simulacao que auxiliam a avaliacao do desempenho de
+cada estrategia. Na secao 6 relatam-se os resultados alcancados com um prototipo implementado
+com um microcontrolador.
+2
+
+Modelo da Dinamica
+
+O principal componente desta bomba_de_infusao e
+uma bomba_peristaltica que retira lquido de um
+recipiente pela compressao de um tubo flexvel. O
+tubo e comprimido por roletes acionados por um
+motor_de_passo. Uma grande vantagem da utilizacao do motor_de_passo e que a sua velocidade
+(t) (em rads) pode ser controlada com precisao, mesmo em malha_aberta, pela frequencia dos
+pulsos de acionamento u(t) (em Hz), que sera adotada como variavel de controle. Assumindo-se que
+o movimento de rotacao e contnuo, tem-se
+(t)  Km u(t) ,
+
+(1)
+
+na qual Km (rad) e o angulo de rotacao de um
+passo do motor. O refluxo do lquido deve ser evitado para nao comprometer a saude do paciente.
+Por isto, a rotacao do motor deve ser unidirecional
+e o controle deve ser limitado (u(t)  0, t  0).
+Antes de circular pela bomba, o lquido passa
+por um dosador que pinga gotas que sao contadas
+para a medicao da vazao. A vazao da bomba,
+proporcional a velocidade de rotacao, e integrada,
+resultando no numero de gotas (ng (t)) que passam
+pelo dosador
+ng (t)  vg (t)  Kb (t) (t) ,
+
+t  0,
+
+(2)
+
+na qual vg (t) (gotas) e a vazao de sada da bomba
+peristaltica e Kb (t) (gotarad) e o coeficiente de
+
+ISSN 2525-8311
+
+vazao da bomba. O modelo da dinamica da bomba
+de infusao e representado pelo diagrama na Fig. 3.
+A variavel medida e o numero total de gotas (ngq ). Apesar de se considerar em boa parte
+da analise dos controladores que este e um sistema linear, o numero total de gotas e uma medida quantizada (ngq (t)  N), o que o torna nao
+linear. No entanto, a simplificacao linear e justificada pois o numero de gotas que passam pelo
+dosador ao longo de um grande intervalo de tempo
+e muito grande, entao ngq (t)  ng (t)  R+ . Na secao 4 analisa-se o efeito da quantizacao da medida.
+Assume-se que o coeficiente Kb (t) e uma funcao contnua por partes. Usualmente nao e conhecido precisamente, mas e limitado por constantes
+conhecidas (Kb min , Kb max )
+0 < Kb min < Kb (t) < Kb max ,
+3
+3.1
+
+t  0 .
+
+(3)
+
+Controle de Vazao
+
+Controle em malha_aberta
+
+Usualmente o controle_de_vazao de bombas peristalticas e realizado ajustando-se a velocidade de
+rotacao do motor (Kommu et al., 2014). Nesta
+estrategia tipo feedforward assume-se que o coeficiente de vazao da bomba e o nominal Kb (i.e.,
+Kb (t)  Kb ) e o volume de cada gota e constante e
+conhecido. Calcula-se a frequencia de controle do
+motor para a vazao desejada (vgref em gotas)
+u(t) 
+3.2
+
+vgref (t)
+.
+Km Kb
+
+(4)
+
+Controle proporcional
+
+O coeficiente de vazao Kb (t) e bastante dependente dos seguintes fatores diametro e flexibilidade do tubo da bomba_peristaltica volume
+de cada gota temperatura, viscosidade e densidade do lquido pressao na sada e na entrada da
+bomba. Para tornar o sistema menos sensvel a variacoes do coeficiente de vazao Kb (t), acrescentase a acao em malha_aberta (4) um termo de reali-
+
+2391
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+Motor de passo
+
+u(t)
+
+Bomba peristaltica
+
+(t)
+
+-
+
+Km
+
+-
+
+Kb (t)
+
+Dosador
+
+vg (t)
+
+-
+
+R
+
+ng (t)
+
+-
+
+6
+
+ngq (t)
+
+-
+
+-
+
+Figura 3 Diagrama de blocos do modelo da dinamica da bomba_de_infusao.
+mentacao proporcional
+u(t) 
+
+vgref (t)
++ Kp e(t) ,
+Km Kb
+
+(5)
+
+na qual Kp > 0 e o ganho proporcional. Escolheuse o erro das gotas totalizadas dado por
+e(t) 
+
+Z
+
+t
+
+vgref ( )d  ng (t) ,
+
+(6)
+
+0
+
+por ser menos sensvel a erros de quantizacao do
+que a diferenciacao numerica que seria necessaria
+para estimar o erro de vazao (vgref (t)  ng (t)).
+Para analisar a estabilidade do controle proporcional em malha_fechada, lembra-se a equacao
+dinamica da malha_aberta (vide (1) e (2))
+ng (t)  vg (t)  Km Kb (t)u(t) .
+
+V (e)  e(t)e(t)  e(t) vgref (t)  ng (t) 
+ e(t) vgref (t)  Km Kb (t)u(t) .
+(13)
+
+(7)
+
+Derivando-se (6) obtem-se
+e(t)  vgref (t)  ng (t) .
+
+variavel (Utkin et al., 1999)
+(
+(Kb min  )Km 1 vgref (t), e(t) > 0 ,
+u(t) 
+(Kb max + )Km 1 vgref (t), e(t) < 0 ,
+(11)
+na qual  > 0 e uma constante arbitrada. Para
+se evitar que o sinal de controle seja negativo e
+necessario que  < Kb min .
+Para se mostrar a estabilidade e o desempenho desta lei de controle, utiliza-se a funcao de
+Lyapunov
+e2
+,
+(12)
+V (e) 
+2
+cuja derivada em relacao ao tempo, obtida a partir
+de (7) e (8), e
+
+(8)
+
+Substituindo-se (7) e (5) em (8), obtem-se a
+equacao dinamica do erro
+
+
+Kb  Kb (t)
+.
+e(t)  Km Kb (t)Kp e(t)+vgref (t)
+Kb
+(9)
+Analisando-se (9), conclui-se que se Kb (t) 
+Kb , uma vez que Km Kb Kp > 0, entao e(t)  0
+exponencialmente a medida que t  +. Caso
+Kb (t) difira do valor nominal, o erro e limitado
+por (conforme e demonstrado no Apendice A)
+
+Substituindo-se a lei de controle (11) em (13)
+
+
+(
+b (t)
+e(t)vgref (t) 1  KK
+, e(t) > 0 ,
+b min 
+
+
+V (e) 
+b (t)
+e(t)vgref (t) 1  KbKmax
+, e(t) < 0 ,
++
+(14)
+concluindo-se que V < 0 (e 6 0), logo o erro
+tende para a superfcie de deslizamento e  0. Se
+adicionalmente vgref (t) > vgref min > 0, t  0,
+(vgref min e uma constante arbitraria) o erro alcancara a superfcie de deslizamento em tempo finito
+e permanecera nesta a partir de entao.
+4
+
+Efeitos da Natureza Quantizada da
+Contagem de Gotas
+
+e(t)  e(0) exp (Km Kb min Kp t) +
+supt0 (vgref (t)) supt0 Kb  Kb (t)
++
+.
+Km Kb min Kp Kb
+(10)
+
+A contagem de gotas e uma medicao quantizada
+por truncamento que acarreta um erro na medicao
+do volume bombeado ng de ate uma gota, isto e
+ng (t)  ngq (t) + (t) ,
+
+(15)
+
+Avaliando-se este majorante, percebe-se que
+a influencia do erro inicial (e(0)) e eliminada a
+medida que t  +. Alem disso, o erro maximo
+pode ser reduzido escolhendo-se um valor grande
+para Kp , como seria de se esperar.
+
+na qual o erro de truncamento e 0  (t) < 1
+(Franklin et al., 1990). Nesta secao e analisado o
+efeito desta quantizacao no desempenho dos controladores proporcional e a estrutura variavel.
+
+3.3
+
+4.1
+
+Controle a estrutura variavel
+
+Para se obter um melhor desempenho na rejeicao
+de perturbacoes e robustez a variacoes parametricas, propoe-se o uso da lei de controle a estrutura
+
+ISSN 2525-8311
+
+Efeito no controlador proporcional
+
+O ganho proporcional Kp amplifica o erro de truncamento (t), o que causa um desvio no sinal de
+controle u(t) igual a Kp (t). Uma vez que o erro
+
+2392
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+4
+3
+2
+1
+0
+0
+
+5
+
+Efeito no controlador a estrutura variavel
+
+5
+
+Resultados de Simulacoes
+
+Nesta secao sao apresentados resultados de simulacoes para possibilitar a comparacao de desempenho do controlador proporcional (Figs. 4 e 6)
+com o controlador a estrutura variavel (Figs. 5
+e 7). Os parametros do controlador proporcional sao Kp  20 e Kb  1, 768 gotarad.
+Os parametros do controlador a estrutura variavel sao Kb min    1, 5 gotarad e Kb max +
+  2, 5 gotarad. O passo do motor e Km 
+0, 01571 rad (0, 9 ). O coeficiente de vazao da
+bomba Kb (t)  1, 55 gotarad difere do nominal
+em aproximadamente 12.
+Em baixa vazao (vgref  0, 25 gotas) e evidente que a amplitude das oscilacoes do sinal de
+controle_a_estrutura_variavel (Fig. 5) e menor que
+a resultante do controle proporcional (Fig. 4).
+Se a vazao de referencia for grande (vgref 
+4, 0 gotass), a amplitude das oscilacoes do sinal
+de controle_a_estrutura_variavel (Fig. 7) e um
+pouco maior que a amplitude das oscilacoes do
+
+ISSN 2525-8311
+
+15
+
+20
+
+15
+
+20
+
+25
+
+u (Hz)
+
+20
+15
+10
+5
+0
+0
+
+5
+
+10
+tempo (s)
+
+Figura 4 Simulacao do controlador proporcional
+com vazao de referencia vgref  0, 25 gotas. Sinal
+de referencia tracejado.
+
+5
+ngq (gotas)
+
+No controlador a estrutura variavel (11) a amplitude da oscilacao do sinal de controle,
+
+
+1
+1
+u 
+
+vgref ,
+(Kb min )Km
+(Kb max +)Km
+(16)
+e independente do erro de truncamento se a vazao
+de referencia vgref for mantida constante. Se a
+faixa de variacao do parametro Kb for pequena,
+pode-se escolher valores proximos para Kb min e
+Kb max , o que reduz a amplitude das oscilacoes e
+melhora a uniformidade da vazao de sada, o que
+se conclui da eq. (16). Essa amplitude tambem
+sera pequena se a vazao desejada for baixa, o que
+e uma vantagem do controlador a estrutura variavel sobre o controlador proporcional, pois este ultimo gera oscilacoes com amplitudes independentes da vazao desejada, relativamente grandes para
+pequenas vazoes. Por outro lado, o erro de rastreamento do controlador proporcional aumenta
+para vazoes grandes se os parametros da bomba
+nao forem os nominais (vide eq. (10)), enquanto
+que o erro sera mantido bastante pequeno pelo
+controlador a estrutura variavel.
+
+10
+tempo (s)
+
+4
+3
+2
+1
+0
+0
+
+5
+
+10
+
+15
+
+20
+
+15
+
+20
+
+tempo (s)
+
+u (Hz)
+
+4.2
+
+5
+ngq (gotas)
+
+de truncamento maximo e uma gota, a cada totalizacao de gota e gerado um salto no sinal de
+controle com amplitude u  Kp . Portanto, a
+velocidade de rotacao do motor e, consequentemente, a vazao de sada da bomba sofrerao oscilacoes com amplitudes proporcionais ao ganho do
+controlador. Para que o erro de rastreamento seja
+pequeno, e necessario escolher um valor grande
+para Kp (vide eq. (10)), o que requer um compromisso de projeto entre o erro de rastreamento
+toleravel e a uniformidade desejada para a vazao.
+
+14
+12
+10
+8
+6
+4
+2
+0
+0
+
+5
+
+10
+tempo (s)
+
+Figura 5 Simulacao do controlador a estrutura variavel com vazao de referencia vgref 
+0, 25 gotas. Sinal de referencia tracejado.
+
+2393
+
+20
+
+20
+
+15
+
+15
+
+ngq (gotas)
+
+ngq (gotas)
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+10
+5
+
+10
+5
+
+0
+
+0
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+0
+
+1
+
+200
+
+200
+
+180
+
+180
+
+160
+140
+120
+
+4
+
+5
+
+4
+
+5
+
+160
+140
+120
+
+100
+
+100
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+0
+
+1
+
+tempo (s)
+
+controle proporcional (Fig. 6). Outro problema
+e que o controlador proprocional permite que o
+erro de rastreamento nas gotas totalizadas (ngq
+na Fig. 6) aumente na medida que a vazao aumenta. Para reduz-lo foi necessario o uso de um
+ganho proporcional grande.
+O controlador a estrutura variavel e o mais
+adequado a bomba_de_infusao, pois o erro de rastremento e inferior a uma gota independentemente
+da vazao de referencia. Alem disso, a relacao entre a amplitude da oscilacao do sinal de controle e
+o seu valor medio se mantem para qualquer valor
+da vazao de referencia, o que indica sua adequacao
+em diversas condicoes de operacao.
+Resultados Experimentais
+
+O controlador foi implementado em um microcontrolador Atmel 89C52, da famlia 8051, com
+clock de 7, 3728 MHz (Riscala e Moreira, 1997).
+A elaboracao do software foi facilitada pela simplicidade do algoritmo a estrutura variavel e pela
+baixa velocidade do processo controlado. O pulso
+gerado pelo fototransistor do dosador, apos devidamente condicionado, e aplicado a uma entrada
+de interrupcao que ativa a rotina de contagem de
+gotas. O microcontrolador gera diretamente os
+pulsos de excitacao dos transistores que acionam
+o motor_de_passo na frequencia determinada pelo
+algoritmo de controle.
+A Figura 8 apresenta um resultado obtido
+com vgref  0, 15 gotas. No controlador foram
+usados os seguintes parametros Km  0, 0314 rad
+
+ISSN 2525-8311
+
+2
+
+3
+
+tempo (s)
+
+Figura 7 Simulacao do controlador a estrutura variavel com vazao de referencia vgref 
+4, 0 gotass. Sinal de referencia tracejado.
+
+Erro (gota)
+
+Figura 6 Simulacao do controlador proporcional
+com vazao de referencia vgref  4, 0 gotass. Sinal
+de referencia tracejado.
+
+6
+
+3
+
+tempo (s)
+
+u (Hz)
+
+u (Hz)
+
+tempo (s)
+
+2
+
+0
+-1
+
+0
+
+50
+
+100
+
+150
+
+200
+
+tempo (s)
+
+Figura 8 Experimento realizado com o prototipo.
+Resposta do erro de rastreamento para vazao de
+referencia vgref  0, 15 gotas.
+(1, 8 ), Kb min    1, 41 gotarad e Kb max +  
+2, 36 gotarad. O erro de rastreamento obtido experimentalmente foi semelhante ao esperado, no
+maximo uma gota. Entretanto, noutras sequencias de testes foi observado o gotejamento em
+alguns instantes irregulares (e.g., imediatamente
+apos a queda de outra gota), acarretando erros de
+rastreamento de ate duas gotas. Acredita-se que
+isto seja consequencia de deficiencias na montagem, provavelmente o desalinhamento do eixo de
+rotacao da bomba.
+7
+
+Conclusao
+
+Foram apresentados alguns resultados sobre o controle_de_vazao de uma bomba_peristaltica tendo
+em vista sua aplicacao em bombas de infusao uti-
+
+2394
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+lizadas na administracao de medicamentos.
+As estrategias_de_controle proporcional e a estrutura variavel foram comparadas teoricamente
+e com auxlio de simulacoes. O controle_a_estrutura_variavel resultou no melhor desempenho pois
+produz vazoes mais uniformes que o controle proporcional. O controle proporcional gera oscilacoes
+que podem ser intoleraveis no sinal de controle
+da bomba e na vazao, especialmente se a vazao
+desejada for pequena. Isto e causado pela quantizacao da medicao feita pelo contador de gotas em
+conjunto com o alto ganho do controlador, que e
+necessario para reduzir o erro de rastreamento.
+A implementacao de ambos algoritmos e simples, o que favorece o uso de microcontroladores
+com pouca capacidade de processamento.
+Agradecimentos
+Os autores gostariam de agradecer a fabricante
+de equipamentos biomedicos Braun (Sao Goncalo,
+RJ), que cedeu alguns componentes para a construcao do prototipo. Este trabalho foi parcialmente financiado pelo CNPq, CAPES e FAPERJ.
+Referencias
+de Mare, L., Velut, S., Hagander, P. and Akesson,
+M. (2001). Feedback control of flow rate from
+a peristaltic pump using balance measurements, Proc. European Contr. Conf., Porto,
+pp. 21642168.
+Franklin, G. F., Powell, J. D. and Workman, M. L.
+(1990). Digital Control of Dynamic Systems,
+2nd edn, Addison-Wesley.
+Hillerstrom, G. and Sternby, J. (1994). Application of repetitive control to a peristaltic
+pump, ASME J. of Dynamics Systems Measurem. and Contr. 116(4) 786789.
+Hu, G.-F. and Chen, L.-G. (2013). Application
+of generalized predictive control to a peristaltic pump, Applied Mechanics and Mechanical
+Engineering III, Vol. 249 of Applied Mechanics and Materials, Trans. Tech. Publications, pp. 572576.
+
+Riscala, A. G. e Moreira, F. (1997). Prototipo
+microprocessado de uma bomba_de_infusao,
+Projeto de Graduacao em Engenharia Eletronica  UERJ, Rio de Janeiro.
+Utkin, V., Guldner, J. and Shi, J. (1999). Sliding
+Mode Control in Electromechanical Systems,
+Taylor  Francis Ltd., London.
+Vidyasagar, M. (1978). Nonlinear Systems Analysis, Prentice-Hall, Englewood Cliffs, NJ.
+Yubin, Z., Yunping, Y., Zhengang, W., Wenbin, Z., Yu, C. and Hao, L. (2010). Research on intelligent infusion device control
+system based on chip microcomputer, Proc.
+Int. Forum Information Technology and Applications (IFITA), Vol. 1, Kunming, China,
+pp. 301304.
+A
+
+Majorante do Erro para o Controlador
+Proporcional
+
+Seguindo (Vidyasagar, 1978, p. 93), a seguinte desigualdade e valida para a equacao do erro (9)
+Z t
+
+e(t)  exp
+Km Kb ( )Kp d e(0)+
+0
+Z t
+
+Z t
++
+exp
+Km Kb (s)Kp ds 
+0
+
+
+
+Kb  Kb ( )
+d ,
+ vgref ( )
+Kb
+
+da qual decorre a sequencia de majorantes
+Z t
+
+e(t)  exp
+Km Kbmin Kp d e(0)+
+0
+Z t
+
+Z t
++
+exp
+Km Kbmin Kp ds 
+0
+
+
+
+ sup vgref (t)
+t0
+
+Kb  Kb (t)
+d
+Kb
+
+ exp (Km Kbmin Kp t) e(0)
+Z t
++
+exp Km Kbmin Kp (t   ) 
+0
+
+ sup vgref (t)
+t0
+
+Kb  Kb (t)
+d
+Kb
+
+ exp (Km Kbmin Kp t) e(0)
+
+Klespitz, J. and Kovacs, L. (2014). Peristaltic
+pumps  A review on working and control
+possibilities, Proc. IEEE 12th Int. Symp. Applied Machine Intelligence and Informatics
+(SAMI), Herlany, Slovakia, pp. 191194.
+
++ sup (vgref (t)) sup
+
+Kommu, A., Kanchi, R. R. and Uttarkar, N. K.
+(2014). Design and development of microcontroller based peristaltic pump for automatic potentiometric titration, Int. Conf. Communications and Signal Processing (ICCSP),
+Melmaruvathur, India, pp. 157161.
+
++ sup(vgref (t)) sup
+
+ISSN 2525-8311
+
+(17)
+
+t0
+
+
+
+Z
+
+t0
+
+Kb  Kb (t)
+
+Kb
+
+t
+
+exp Km Kbmin Kp (t   ) d
+
+0
+
+ exp (Km Kbmin Kp t) e(0)
+t0
+
+t0
+
+Kb  Kb (t)
+
+Kb
+
+1  exp (Km Kbmin Kp t)
+
+,
+Km Kbmin Kp
+
+(18)
+
+que resulta no majorante (10).
+
+2395

@@ -1,0 +1,1024 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+ATUALIZACAO DE HARDWARE E SOFTWARE DE UM ROBO INDUSTRIAL
+Aurelio de Lima e Silva, Leonardo Poubel Orenstein, Fernando Lizarralde
+Antonio C. Leite, Gabriel Gleizer
+
+
+Programa de Engenharia Eletrica  COPPE
+Universidade Federal do Rio de Janeiro
+Rio de Janeiro, RJ, Brasil
+
+Email aurelio@coep.ufrj.br, orenstein@peq.coppe.ufrj.br, fernando@coep.ufrj.br,
+toni@coep.ufrj.br, ggleizer@coep.ufrj.br
+
+Abstract This paper addresses the modernization process of an ABB IRB2000 industrial robot, describing
+the hardware and software retrofitting procedures, the wiring revision and the assembly of a new control panel.
+The motors, brakes and sensors are linked with servo drives, which are connected to a personal computer through a
+CAN-Bus network. The control algorithm is implemented over a SimulinkMatlab platform, with the development
+of a communication library and a man-machine interface. Experimental results are presented to validate the
+developed control architecture.
+Keywords
+
+Robotics, Retrofitting, CAN Networks, Kinematic Control
+
+Resumo Este artigo descreve o processo de modernizacao de um robo industrial IRB2000, apresentando os
+procedimentos de atualizacao de hardware e software, a revisao do cabeamento e a construcao de um novo painel
+de controle. Os motores, freios e sensores sao ligados a servoconversores comerciais, que sao conectados a um PC
+atraves de uma rede CAN-Bus de dados. O algoritmo de controle e implementado atraves de uma plataforma SimulinkMatlab, a partir do desenvolvimento de uma biblioteca de comunicacao e uma interface homem-maquina.
+Resultados experimentais sao apresentados para validar a arquitetura_de_controle desenvolvida.
+Palavras-chave
+
+. Em (Becerra et al., 2004),
+apresenta-se o retrofitting de um robo PUMA 560, juntamente com a interface de software e a aplicacao de
+um controle por torque_computado. Uma proposta
+de arquitetura aberta para controle_de_velocidade e
+forca de um robo industrial REIS-RV15 e descrita em
+(de Oliveira and Guenther, 2007), onde a comunicacao
+entre computador e robo e feita via USB e o software
+e desenvolvido em linguagem de programacao C++.
+Em (Becerra et al., 2004), a comunicacao e feita atraves de uma placa Q8 com interface PCI, e a lei de
+controle e implementada em SimulinkMatlab.
+No presente trabalho descreve-se os procedimentos de engenharia reversa utilizados para realizar o
+retrofitting de um robo industrial IRB2000 (ABB Robotics), bem como a atualizacao do hardware e o desenvolvimento do software para comunicacao, configuracao on-the-fly, controle e gerenciamento da interface com o usuario. Para verificar o funcionamento
+da arquitetura_de_controle proposta, uma lei de controle_cinematico de posicao e orientacao para o robo
+e implementada. Resultados experimentais sao apresentados para ilustrar o desempenho e a viabilidade
+do esquema de atualizacao proposto.
+Uma vez que o robo IRB2000 e acionado por motores sncronos de corrente alternada (CA) trifasicos,
+o processo de retrofitting torna-se uma tarefa desafiadora, pois estes motores necessitam de controladores mais complexos, quando comparados aos empregados em motores de corrente contnua (CC) (Lages
+et al., 2003 Becerra et al., 2004).
+
+Introducao
+
+Uma maquina ou equipamento com tecnologia obsoleta podem ser atualizados ou reformados atraves
+da aplicacao de tecnicas modernas de automacao e da
+utilizacao de componentes e dispositivos sofisticados.
+Este processo, conhecido como retrofitting ou modernizacao, e muitas vezes uma solucao para empresas que
+desejam aumentar a vida util das maquinas, mantendo
+suas caractersticas perifericas com perfeito estado de
+conservacao mecanica (Ribeiro et al., 2007).
+Em grandes industrias automatizadas e comum
+a substituicao de robos antigos por novos modelos a
+fim de tornar o sistema mais confiavel, aumentando
+a produtividade e reduzindo os perodos de inatividade e os riscos operacionais. Devido ao baixo_custo,
+os robos descartados tornam-se uma alternativa viavel para universidades, laboratorios e centros de pesquisa, que atuam na area de robotica aplicada. Porem, como estes robos utilizam tecnologia obsoleta,
+alguns benefcios associados ao seu emprego para execucao de tarefas podem nao ser alcancados. Felizmente, as caractersticas mecanicas de robos industriais nao vem sofrendo mudancas significativas ao longo
+do tempo. As principais diferencas entre os modelos
+antigos e os novos estao relacionadas ao acionamento
+eletrico das juntas e ao sistema_de_controle (Lages
+et al., 2003 Lima II et al., 2004). Neste contexto, atraves de um processo de modernizacao tecnologica e possvel agregar novas funcionalidades ao sistema robotico
+tornando a sua arquitetura_de_controle mais aberta e
+flexvel (Bruyninckx, 2001 Lippiello et al., 2007).
+Recentemente, diversos trabalhos foram publicados considerando o problema de atualizacao tecnologica de robos industriais obsoletos. Em (Lages
+et al., 2003), detalha-se o processo de retrofitting de
+um manipulador ASEA-IRB6, compreendendo revi-
+
+2
+
+Metodologia Proposta
+
+O robo IRB2000 operava originalmente atraves
+de algoritmos de controle fornecidos pelo fabricante
+
+4403
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+(ABB Robotics), cuja caracterstica fechada nao permitia o desenvolvimento e a implementacao de aplicacoes livres para usuarios. Entao, para solucionar
+este problema primeiramente foi realizada a especificacao tecnica de equipamentos comerciais para acionamento eletrico e controle de motores, a partir do
+conhecimento dos torques e das correntes maximas de
+acionamento dos motores do robo. Estes dispositivos
+sao comumente denominados de servoconversores. Os
+servoconversores escolhidos foram instalados em um
+quadro de comando, juntamente com dispositivos de
+partida e protecao necessarios para o acionamento dos
+motores (e.g., disjuntores e contatores).
+Em seguida foi realizado um estudo das principais caractersticas eletromecanicas dos motores, para
+configurar os servoconversores corretamente, a fim de
+substituir o sistema_de_controle original por uma malha externa de controle de posicao ou velocidade, em
+serie com uma malha interna de controle_de_corrente
+(Fitzgerald et al., 2003). Isto permitiu realizar ensaios experimentais e estudar todas as possibilidades
+de operacao do robo, sobretudo no que diz respeito a
+calibracao de parametros e a flexibilidade de sua integracao com outros sistemas de atuacao ou de medicao.
+Desta forma, foi possvel substituir a plataforma proprietaria por uma arquitetura_de_controle aberta, de
+facil intervencao e intercambiabilidade. Alem disso,
+uma interface com o usuario foi desenvolvida no ambiente de programacao Matlab (The MathWorks, Inc.)
+para facilitar a comunicacao entre o sistema_de_controle e o operador. Esta interface foi instalada em
+um computador, que foi conectado ao sistema de acionamento do robo atraves de uma rede CAN-Bus de
+dados.
+3
+
+A arquitetura_de_controle original do sistema e
+composta por uma placa de processamento central,
+responsavel pelo controle do manipulador, de onde e
+enviado o sinal de controle para ser amplificado pela
+eletronica de potencia e entao transmitido para os motores. A realimentacao da posicao_angular e realizada atraves dos resolvers instalados nos eixos de cada
+motor. O sinal analogico proveniente dos resolvers
+e transmitido ate uma placa de conversao analogicodigital (SMB, do ingles Serial Measurement Board )
+instalada na estrutura do robo, que gera um sinal digital transmitido por uma conexao serial ao controlador. Esta arquitetura foi modificada, para fornecer um
+maior grau de abertura e flexibilidade ao sistema robotico. O novo esquema utiliza servoconversores SCA-05
+(WEG S.A.), que sao responsaveis pela leitura dos resolvers e pelo acionamento e controle_de_velocidade dos
+motores. Estes servoconversores sao conectados a um
+computador atraves de uma rede CAN-Bus de dados e
+neste computador sao calculados os sinais de controle
+do robo, atraves de uma interface SimulinkMatlab
+(vide Figura 2).
+
+Retrofitting do Manipulador
+
+Originalmente, a arquitetura_de_controle do robo
+IRB2000 permitia apenas algumas funcionalidades
+como, por exemplo, a especificacao de trajetorias de
+referencia, calibracao de parametros do robo e utilizacao de programas pre-existentes. O sistema robotico
+original e composto por dois componentes_principais
+uma gabinete de controle e um robo manipulador. Durante o processo de retrofitting foi desenvolvido um
+novo painel de controle, moderno, compacto e mais
+leve, para substituir o painel original (Figura 1).
+
+Figura 2 Diagrama em blocos da arquitetura_de_controle
+desenvolvida.
+
+3.1
+
+(a)
+
+Painel de Controle
+
+O servoconversor possui um driver de potencia necessario para o acionamento do motor e sao responsaveis
+por algumas das verificacoes de seguranca efetuadas
+pelo sistema, alem de liberar o freio e fazer a leitura
+do resolver. De acordo com os motores utilizados pelo
+robo, foram especificados os seguintes servoconversores o modelo SCA05 0008, com corrente nominal de
+sada de 8 A para a junta 2, e o modelo SCA05 0004,
+com corrente nominal de sada de 4 A para as demais
+juntas. A alimentacao de entrada do servoconversor
+e trifasica e a faixa de tensao de alimentacao e de
+220V 230V .
+Um circuito de seguranca foi desenvolvido para
+garantir que o robo seja desabilitado atraves de um botao de emergencia quando algum problema de mal fun-
+
+(b)
+
+Figura 1 (a) Gabinete de controle original e (b) novo painel de controle.
+
+4404
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+cionamento for detectado pelo usuario. Entao, o desligamento acontece automaticamente, quando ocorre
+um erro em alguma junta, ou via software quando
+for necessario. Este mecanismo foi implementando
+associando-se uma sada a rele do servoconversores
+ao seu estado atual, onde estes reles estao conectados em serie com o botao de emergencia criando uma
+logica and entre todos os sinais habilitadores do sistema. Esta logica e conectada a uma entrada digital
+de cada servoconversor, e caso um servoconversor entre no estado desabilitado, ou o botao de emergencia
+seja ativado, todos os servoconversores sao desabilitados simultaneamente. Alem disso, outros equipamentos eletricos sao utilizados para assegurar o funcionamento do robo como, por exemplo, uma fonte
+de alimentacao 24V CC  10 A (Conexel), um contator CW07-10E (WEG S.A.) disjuntores MDW-C4 e
+MDW-C32 (WEG S.A) e uma sinaleira para indicar o
+estado do sistema. Quando o servoconversor esta habilitado e enviado um sinal de liberacao para os freios
+e uma luz vermelha e acesa na sinaleira.
+3.2
+
+Figura 4 Desenho esquematico do robo IRB2000.
+
+Manipulador
+
+Tabela 1 (ABB Robotics Products AB, 1993). Essas
+informacoes sao importantes para determinar a relacao entre a leitura dos resolvers e os angulos das juntas. O peso do manipulador e 350 kg e capacidade de
+carga maxima ou payload e 10 kg.
+
+O manipulador e composto por seis juntas de revolucao, interligadas por elos e possui seis graus de
+mobilidade, similar a um braco humano. A estrutura
+completa forma uma cadeia cinematica aberta e esta
+estrutura e denominada braco antropomorfico com punho esferico, onde as tres primeiras juntas sao responsaveis pelo movimento do braco, enquanto que as tres
+ultimas juntas realizam o movimento do punho.
+
+Eixo
+1
+2
+3
+4
+5
+6
+
+Posicao grau
+ 179.9
+-110 a 100
+ 60
+ 200
+ 120
+ 300
+
+Velocidade graus
+115
+115
+115
+280
+300
+300
+
+Tabela 1 Limites de posicao e velocidade das juntas.
+
+3.2.1
+
+Motores
+
+O manipulador possui seis motores de corrente
+alternada trifasicos do tipo PMSM (do ingles, permanent magnet synchronous motor), que sao utilizados
+para movimentar as juntas. Os modelos dos motores, fabricados pela ELMO MC, o torque e a corrente
+nominais sao apresentados na Tabela 2. De acordo
+com o catalogo do fabricante a seguinte designacao
+para o modelo do motor e utilizada nome da serie
+(PS), tamanho do motor (130), numero de polos (6 ou
+4) e comprimento ativo (30, 50 ou 75). Este tipo de
+motor apresenta algumas vantagens quando comparado com o motor assncrono como, por exemplo, rapida resposta dinamica, alta relacao torque e potencia
+por volume, relacao linear de torque versus corrente,
+alto fator de potencia e maior eficiencia (Fitzgerald
+et al., 2003).
+Para controlar os motores, o servoconversor utiliza a estrategia de Controle Vetorial ou Controle Orientado pelo Campo (FOC, do ingles field orientated
+control). A estrategia_de_controle_vetorial e uma tecnica adotada para simplificar o controle de motores
+CA (sncronos ou de inducao), que permite o desacoplamento entre o conjugado eletromagnetico (torque)
+e o fluxo, semelhante a maquina CC com excitacao
+em separado, melhorando as suas caractersticas dinamicas quando comparadas com a resposta dos aciona-
+
+Figura 3 Vista lateral do robo IRB2000.
+
+O movimento do robo e comandado por motores
+sncronos CA trifasicos equipados com freios eletromagneticos, e a posicao das juntas e obtida atraves da
+leitura de resolvers acoplados aos eixos dos motores.
+Atualmente, o robo encontra-se instalado de forma invertida, ou seja, a sua base esta fixada a um suporte
+acima do solo e o manipulador esta suspenso (vide
+Figura 3). Uma representacao esquematica do robo,
+juntamente com a localizacao dos motores e os seus
+respectivos eixos, e apresentada na Figura 4 (ABB
+Robotics Products AB, 1993).
+O robo possui limitacoes de velocidade e restricoes fsicas para os angulos das juntas, de acordo com
+seu projeto estrutural, que podem ser consultadas na
+
+4405
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Modelo
+PS 1306-30-P 3278
+PS 1306-50-P 3279
+PS 1304-75-P 3294
+
+Junta
+1, 3
+2
+4, 5, 6
+
+Torque (N m)
+4.0
+4.0
+1.1
+
+Corrente (A)
+4.0
+7.0
+1.5
+
+Tabela 2 Identificacao dos motores do robo IRB2000.
+
+de construcao, um resolver e considerado como uma
+pequena maquina eletrica com um rotor e um estator
+a bobina esta no rotor, enquanto que o estator possui
+dois enrolamentos separados de 90 graus eletricos um
+do outro (SIN e COS). Excitando a bobina do rotor
+com uma tensao senoidal enviada pelo servoconversor
+(OSC), uma tensao e induzida nos enrolamentos do
+estator cuja magnitude depende do angulo de rotacao
+do eixo do motor (Sciavicco and Siciliano, 2000).
+Os servoconversores utilizados trabalham apenas
+com o sinal analogico do resolver. Por isso, a estrutura de cabeamento original, que conduzia o sinal analogico dos resolvers para a SMB, foi modificada para
+uma nova configuracao, onde agora os sinais analogicos sao obtidos diretamente pelos servoconversores.
+Para garantir uma alta relacao sinalrudo, as conexoes ja existentes no sistema foram utilizadas na estrutura de cabeamento, e novos cabos foram criados
+apenas quando necessario.
+
+mentos convencionais (Fitzgerald et al., 2003). Para
+utilizar o controle_vetorial, a partir dos servoconversores, e necessario obter os parametros eletromecanicos
+(e.g., constante de torque, momento de inercia, resistencias e indutancias) e o offset de comutacao de cada
+motor (Bose, 1996 Pizzino, 2008). Geralmente, os
+parametros dos motores sao disponibilizados na folha
+de dados dos motores, enquanto que o offset de comutacao e uma parametro especfico da instalacao do
+resolver no eixo do motor, e sao fornecidos pelo fabricante do robo. Finalmente, e necessario realimentar a
+malha_de_controle com a posicao_angular obtida pelos
+resolvers.
+Durante a realizacao de testes com o robo, foi
+observado um acoplamento nas duas ultimas juntas
+do braco. Este acoplamento e devido a construcao
+mecanica das reducoes que conectam os motores as
+juntas e pode ser representado por
+  A m m ,
+
+(1)
+
+onde   R6 e a posicao_angular das juntas, m  R6 e
+a posicao_angular dos eixos dos motores, obtida atraves da leitura do resolver e Am  R66 e a matriz de
+acoplamento, onde o elemento aij e a relacao entre
+a posicao_angular do eixo do motor i para a posicao
+angular da junta j. Os seguintes valores foram obtidos experimentalmente calculando-se a razao entre as
+posicoes limites definidas na Tabela 1 e a leitura da
+posicao obtida do servoconversor nos mesmos pontos,
+para cada junta
+3
+21
+0
+0
+0
+0
+0
+74
+1
+60
+0
+0
+0
+07
+43
+7
+6
+1
+7
+60
+0
+0
+0
+0
+75
+7.
+(2)
+Am  6
+1
+7
+60
+0
+0
+0
+0
+40
+7
+6
+1
+40
+0
+0
+0
+05
+35
+1
+1
+0
+0
+0
+0
+35
+35
+
+4
+
+Nesta secao apresenta-se o projeto de uma lei de
+controle_cinematico de posicao e orientacao para o
+robo, a fim de avaliar o funcionamento da arquitetura
+de controle desenvolvida. Considerando o problema
+de controle_cinematico, o movimento do robo pode ser
+descrito por
+i  ui
+
+, i  1,    , n ,
+
+(3)
+
+onde i e i sao a posicao_angular e a velocidade_angular da i-esima junta respectivamente, e ui e o sinal
+de controle_de_velocidade aplicado ao i-esimo drive do
+motor da junta.
+Neste projeto, utiliza-se a convencao standard de
+Denavit-Hartenberg (DH) para determinar a funcao
+de cinematica direta do robo (Sciavicco and Siciliano, 2000). Os angulos das juntas sao obtidos atraves
+da leitura dos resolvers e os parametros DH sao calculados a partir do conhecimento da estrutura geometrica do robo (ABB Robotics Products AB, 1993).
+
+O motor possui tambem um freio eletromagnetico
+em cada uma de suas juntas, que sao desabilitados em
+conjunto por uma placa instalada no manipulador, denominada Unidade de Liberacao do Freio (BRU, do
+ingles Brake Release Unit). Estes freios sao acionados atraves de solenoides individuais que operam sob
+uma tensao de 24 V CC e consomem aproximadamente
+17 W cada. Para executar este acionamento, o novo
+painel de controle utiliza uma fonte de alimentacao
+24 V CC e um contator na configuracao normalmente
+aberta.
+
+3.2.2
+
+Projeto do Controlador
+
+4.1
+
+Cinematica direta e cinematica diferencial
+
+Considere p  R3 a posicao do efetuador com respeito a base do robo, expresso no sistema de coordenadas da base B. Agora, considere R a matriz de
+rotacao do sistema de coordenadas do efetuador E
+em relacao ao sistema de coordenadas da base B e
+q   qs qv T  R4 a representacao de quaternion unitario para R, onde qs  R e qv  R3 sao a parte escalar
+e vetorial do quaternion respectivamente, sujeitas a
+restricao q  1. Neste contexto, a postura do robo e
+dada pelo mapeamento de cinematica direta
+
+Resolvers
+
+Para obter a leitura da posicao_angular dos motores, o robo IRB2000 possui seis resolvers, acoplados
+no eixo de cada motor. Os resolvers sao do modelo 11BHW-48WDF754, trabalham com uma frequencia de
+4 kHz e sao digitalizados pelo servoconversor com uma
+quantizacao de 14 bits, de forma que a leitura da posicao varia entre 0 e 16383 pulsos. Do ponto de vista
+
+X
+
+4406
+
+
+
+p
+q
+
+
+
+ k(),
+
+(4)
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+onde k() e uma funcao vetorial, em geral nao linear,
+que permite a computacao das variaveis no espaco
+operacional a partir do conhecimento das variaveis no
+espaco das juntas.
+A equacao de cinematica diferencial pode ser obtida como a derivada temporal da equacao de cinematica direta em (4), isto e,
+
+
+k()
+p
+X 
+ JA ()  , JA () 
+, (5)
+q
+
+
+A partir da abordagem de controle_cinematico (3),
+a seguinte lei de controle e proposta
+
+onde v  R3 e a velocidade linear,   R3 e a velocidade
+angular e JR e o Jacobiano da representacao.
+A partir de (5) e (6), a relacao entre a velocidade
+do efetuador e a velocidade das juntas e dada por
+
+ 
+
+
+b
+v
+J11 ()
+0
+
+(7)
+
+J21 () J22 ()
+p
+
+z
+
+(8)
+
+5.1
+
+onde J()  R66 e o Jacobiano do manipulador,
+J11 , J21 , J22  R33 sao submatrizes_jacobianas, b 
+R3 e o vetor de velocidade das juntas 1, 2 e 3, correspondentes ao braco, e p  R3 e o vetor de velocidade
+das juntas 4, 5 e 6, correspondentes ao punho.
+Entao, a partir de (8) e considerando  como a
+entrada de controle u, obtem-se o seguinte sistema de
+controle
+
+
+up
+V  J() u ,
+u
+,
+(9)
+uo
+
+Comunicacao
+
+No modulo de comunicacao, um PC funciona como
+mestre da rede, requisitando dados relacionados ao
+controle do robo como, por exemplo, fracao de volta,
+numero de voltas e velocidade do motor, enviando os
+valores de referencia de velocidade e gerenciando os
+estados dos dispositivos na rede.
+Para realizar a operacao do sistema e necessario
+enviar a cada tempo de amostragem um pacote de sincronizacao (11 bits), seis pacotes de guarda (66 bits),
+6 Objetos de Dados do Protocolo (PDOs, do ingles
+Protocol Data Objects) de transmissao com 8 bytes de
+dados (450 bits) e 6 PDOs de recepcao com 2 bytes
+de dados (162 bits). Somando os tamanhos dos pacotes e multiplicando pela taxa de amostragem utilizada
+de 1 kHz obtemos uma taxa de transferencia mnima
+de 689 kbits. Como a rede CAN permite taxas de
+transmissao de 500 kbits ou 1 Mbits, a taxa utilizada foi de 1 Mbits. Por medida de seguranca, se
+a comunicacao entre o PC e os servoconversores for
+interrompida por mais de 10 ms os servoconversores
+sao desabilitados e os freios sao acionados. O tempo
+de guarda foi escolhido de modo que as juntas nao se
+movessem mais de 3 graus no caso de falha de comunicacao. Para conectar o PC ao barramento CAN foi
+utilizado o adaptador CANUSB (Lawicel AB). A partir da biblioteca para comunicacao via CAN fornecida
+pelo fabricante foi criada uma biblioteca para realizar
+a comunicacao utilizando o protocolo CANopen.
+O modulo de comunicacao realiza a conexao entre os servoconversores e a camada superior responsavel pelo controle. Inicialmente os servoconversores
+sao configurados para atuar na rede. Apos a etapa de
+configuracao o aplicativo de comunicacao espera por
+conexoes do modulo de controle. Uma vez finalizada a
+operacao do sistema o aplicativo de comunicacao volta
+a esperar por conexoes do modulo de controle.
+
+onde up  R3 e o sinal de controle de posicao e uo  R3
+e o sinal de controle de orientacao.
+Controle cinematico
+
+Seja pd (t) a posicao desejada variante no tempo
+e Rd a orientacao desejada constante para o efetuador
+do robo. A partir das equacoes de cinematica direta
+e cinematica diferencial, pode-se projetar uma lei de
+controle_cinematico para alcancar simultaneamente o
+seguinte objetivo de controle de posicao
+ep  pd  p  0 ,
+
+e de orientacao
+R  Rd ,
+
+Projeto do Software
+
+O projeto do software para comunicacao, controle,
+configuracao e interface com o usuario foi desenvolvido
+baseado em uma arquitetura de processamento centralizada (vide Figura 2). Os servoconversores responsaveis pelo acionamento dos motores, leitura dos resolvers e outras funcionalidades sao conectados a uma
+rede CAN-Bus de dados e comunicam-se atraves do
+protocolo CANopen (Pfeiffer et al., 2008).
+
+ou, em uma forma mais compacta por
+
+p  pd (t) ,
+
+(11)
+
+5
+
+JR (q) JA ()
+
+4.2
+
+(10)
+
+1
+uo  J22
+(Ko eqv  J21 b ) ,
+
+onde Kp  R33 e a matriz de ganho de posicao,
+Ko  R33 e a matriz de ganho de orientacao e vd  R3
+e a velocidade linear desejada. Entao, a partir de uma
+escolha apropriada de Kp e Ko como matrizes definidas positivas, pode-se mostrar que as leis de controle
+(10) e (11) garantem a estabilidade assintotica do erro
+de posicao e de orientacao do robo, respectivamente
+(Sciavicco and Siciliano, 2000).
+
+onde JA e o Jacobiano analtico. A velocidade do efetuador V e relacionada com X por
+
+
+v
+V 
+ JR (q) X ,
+(6)
+
+
+V  J()  ,
+
+1
+up  J11
+(Kp ep + vd ) ,
+
+Rq  R RdT  I ,
+
+onde ep  R3 e o erro de posicao e Rq  SO(3) e
+o erro de orientacao, ambos expressos com respeito
+ao sistema de coordenadas da base B. Considere
+eq   eqs eTqv T a representacao de quaternion unitario para Rq , tal que eq  q  qd1 onde qd e a representacao de quaternion unitario para Rd e    denota o
+operador de multiplicacao de quaternions. Note que,
+eq   1 0T T se e somente se as matrizes de rotacao R
+e Rd estao alinhadas (Wen and Kreutz-Delgado, 1991).
+
+4407
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Figura 5 Diagrama em blocos do esquema de controle_cinematico.
+
+5.2
+
+Modulo de controle
+
+O modulo de controle foi desenvolvido em SimulinkMatlab (The MathWorks Inc.) pois nesta plataforma e possvel projetar algoritmos de controle rapidamente atraves de scripts e blocos de suas bibliotecas. Para executar os modelos em tempo_real foi
+utilizado o QuaRC (Quanser Inc.) por ser totalmente
+integrado ao Simulink e possuir uma biblioteca com
+diversas ferramentas como, por exemplo, funcoes para
+comunicacao entre processos utilizando Universal Resource Identifier (URI) e blocos para a aquisicao do
+sinal de orientacao de um Wiimote (ou Wii Remote),
+o controlador do Nintendo Wii (Nintendo Co. Ltd.).
+O protocolo utilizado para realizar a comunicacao entre processos foi o de Memoria Compartilhada por ter
+o menor tempo de execucao.
+Para executar o controle do robo foi desenvolvida
+uma biblioteca no Simulink com blocos personalizados
+para modularizar a implementacao das leis de controle
+(Figura 6). Estes blocos consideram as caractersticas
+do robo como, por exemplo, a sua regiao de trabalho,
+a limitacao de velocidade das juntas e a reducao dos
+motores. Foram criados tambem blocos para calcular
+as cinematicas direta e diferencial do robo IRB2000
+e blocos das juntas, que sao responsaveis por receber
+os dados dos motores e enviar as referencias para a
+camada de comunicacao. Os detalhes dessa biblioteca
+estao registrados em (de Lima e Silva Jr, 2010).
+5.3
+
+Interface com o usuario
+
+A interface homem-maquina (IHM), desenvolvida no
+Matlab, permite ao usuario realizar tarefas simples
+com o robo como, por exemplo, o controle independente das juntas, o controle da posicao e orientacao do
+efetuador e calibracao de parametros (vide Figura 7).
+A IHM foi projetada para ser amigavel ao usuario
+e permite a visualizacao de informacoes importantes
+para a operacao do robo como, por exemplo, posicao
+e velocidade das juntas, corrente dos motores, orientacao e posicao do efetuador e estado do sistema. A
+taxa de atualizacao dos dados da IHM e de 0.1 Hz
+para nao comprometer o desempenho do algoritmo de
+controle.
+Uma das novas funcionalidades que foi implementada devido a abertura da arquitetura_de_controle e
+o controle da orientacao do punho do robo, por um
+dispositivo Wiimote. O Wiimote comunica-se com
+o computador via protocolo Bluetooth e o bloco do
+
+Figura 6 Biblioteca do Simulink para o robo IRB2000.
+
+QuaRC responsavel pela aquisicao de sinal retorna o
+estado de todos os botoes e a aceleracao da gravidade
+no referencial do controle. O sinal da gravidade e medido atraves de acelerometros e o sinal obtido somente
+permite calcular o angulos de roll e pitch do joystick.
+O angulo de yaw e gerado pelas setas direcionais para
+a esquerda e direita.
+6
+
+Resultados Experimentais
+
+Os experimentos foram realizados atraves de
+uma interface desenvolvida em SimulinkMatlab, utilizando a comunicacao descrita na secao 5 e metodo
+de integracao de Euler com frequencia de amostragem
+
+4408
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+(a) erro de posição, e
+
+p
+
+mm
+
+2
+1
+
+epx
+
+0
+
+e
+
+e
+
+py
+pz
+
+1
+2
+3
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+(b) erro de orientação, e
+
+q
+
+1.5
+e
+
+qs
+
+1
+
+e
+
+qv
+
+x
+
+0.5
+
+e
+
+qv
+
+y
+
+0
+
+e
+
+qv
+
+z
+
+0.5
+1
+
+0
+
+Figura 7 Interface Grafica
+
+20
+
+30
+s
+
+40
+
+50
+
+60
+
+Figura 8 Erros de posicao e de orientacao.
+ângulos de Euler, ZYZ
+
+de 1 kHz. Esta frequencia de amostragem foi escolhida de forma a ser dez vezes mais rapida (Astrom
+and Wittenmark, 1996) que a constante de tempo
+da malha_fechada de posicao do motor mais rapido
+(Orenstein, 2010). Para facilitar a visualizacao do movimento do robo, a representacao de angulos de Euler
+ZYZ (Sciavicco and Siciliano, 2000) foi utilizada para
+descrever a referencia de orientacao do efetuador.
+O experimento consiste na regulacao da orientacao       T para d    2 2 2 T rad
+com o efetuador realizando uma trajetoria circular
+de raio 300 mm, no plano Y Z centrado no ponto
+p0   850 0 1585 T mm e com uma frequencia de
+0.05 Hz. A posicao inicial para os angulos de todas as
+juntas do robo foi zero. A trajetoria a ser seguida foi
+definida de forma a maximizar o movimento das juntas
+do punho. Os ganhos dos controladores foram Kp 
+10 I mm s1 e Ko  diag0.4, 0.066, 0.6 rad s1 .
+Devido as restricoes no espaco fsico onde o robo
+esta instalado, nao foi possvel realizar experimentos com seguranca atuando nas tres primeiras juntas. Para contornar esta limitacao, estas juntas foram simuladas em uma estrategia similar a tecnica
+Hardware In the Loop (HIL) (Godoy et al., 2008 Isermann, 2008). Na simulacao as tres primeiras juntas
+foram representadas como integradores puros. Para
+implementar o controlador foram utilizadas as malhas
+de controle_de_velocidade e de corrente, internas do
+servoconversor. Os resultados obtidos podem ser observados nas Figuras 811, respectivamente.
+A posicao e a orientacao do efetuador foram obtidas a partir dos angulos das juntas, simulados e medidos atraves da cinematica direta do robo. Analisando
+a Figura 8(a), observa-se que o erro maximo de posicao foi em torno de 1 mm. O controle de orientacao
+apresentou resultados satisfatorios e a parte vetorial
+do quaternion do erro convergiu para um valor proximo de zero, conforme ilustrado na Figura 8(b). A
+Figura 9 ilustra a convergencia dos angulos de Euler
+para os valores desejados. A regulacao de posicao no
+eixo X e o rastreamento da trajetoria no plano Y Z sao
+apresentadas nas Figuras 10 e 11 respectivamente.
+7
+
+10
+
+4
+
+
+
+
+3
+
+rad
+
+2
+
+1
+
+0
+
+1
+
+2
+
+0
+
+10
+
+20
+
+30
+s
+
+40
+
+50
+
+60
+
+Figura 9 Angulos de euler ZYZ.
+posição do efetuador, eixo X
+852
+px
+pxd
+
+851.5
+
+851
+
+mm
+
+850.5
+
+850
+
+849.5
+
+849
+
+848.5
+
+0
+
+10
+
+20
+
+30
+s
+
+40
+
+50
+
+60
+
+Figura 10 Posicao do efetuador no eixo X.
+
+trofitting) de um robo industrial, bem como o hardware e o software desenvolvidos para controle, configuracao e comunicacao com um PC executando SimulinkMatlab. O retrofitting mostrou-se uma alternativa viavel para laboratorios e centros de pesquisa,
+uma vez que foi possvel reutilizar a estrutura mecanica, os sensores e os atuadores do robo para o desenvolvimento de uma arquitetura_de_controle totalmente
+aberta.
+
+Conclusoes e Trabalhos Futuros
+
+Este trabalho descreve os procedimentos utilizados no processo de atualizacao tecnologica (ou re-
+
+4409
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+de Lima e Silva Jr, A. (2010). Desenvolvimento de
+um sistema_de_controle em rede utilizando CAN
+e uma interface homem-maquina para um robo
+industrial, Projeto final de graduacao, Departamento de Engenharia de Controle e Automacao,
+UFRJ.
+
+rastreamento_de_trajetória, plano YZ
+1200
+p
+
+d
+
+p
+
+1300
+1400
+
+eixo Z mm
+
+1500
+
+de Oliveira, A. S. and Guenther, R. (2007). Uma proposta de arquitetura aberta para o controle de
+posicao e forca em robos_manipuladores, 8th Simposio Brasileiro de Automacao Inteligente, Florianopolis, SC.
+
+1600
+1700
+1800
+
+Fitzgerald, A. E., Kingsley Jr, C. and Umans, S. D.
+(2003). Electric Machinery, 6th edn, McGrawHill, Inc.
+
+1900
+2000
+400
+
+300
+
+200
+
+100
+
+0
+100
+eixo Y mm
+
+200
+
+300
+
+400
+
+Godoy, E. P., Inamasu, R. Y. and Porto, A. J. V.
+(2008). Proposta de Utilizacao de Hardwarein-the-Loop no Desenvolvimento de Sistemas de
+Controle via Redes CAN, VIII Conferencia Internacional de Aplicacoes Industriais, Pocos de
+Caldas, MG.
+
+Figura 11 Rastreamento de trajetoria no plano YZ
+
+Servoconversores comerciais foram utilizados
+para realizar a leitura dos resolvers e comandar os motores que atuam nas juntas do robo atraves da estrategia_de_controle_vetorial. Um algoritmo de controle
+cinematico foi implementado para a regulacao da posicao e da orientacao do efetuador do robo. Resultados
+experimentais foram apresentados para validar a arquitetura_de_controle desenvolvida.
+As propostas de trabalhos futuros de acordo com
+as ideias apresentadas aqui sao (i) a construcao de
+uma rede_de_sensores fotoeletricos acoplada aos freios
+dos motores para a estabelecer um permetro de seguranca em torno da regiao de trabalho do robo (ii)
+reestruturacao do espaco fsico onde robo esta localizado para possibilitar a atuacao em todas as juntas (iii) desenvolver um modulo de comunicacao que
+envie os dados dos servoconversores atraves de uma
+porta TCPIP, possibilitando o controle do robo remotamente via internet.
+
+Isermann, R. (2008). Mechatronic systems  Innovative products with embedded control, Control
+Engineering Practice 16(1) 1429.
+Lages, W. F., Henriques, R. V. B. and Bracarense,
+A. Q. (2003). Arquitetura aberta para retrofitting de robos, Manet Notes Workshop, Braganca
+Paulista, SP.
+Lima II, E. J., Torres, G. C. F., Castro, C. A. C.,
+Bracarense, A. Q., Henriques, R. V. B. and Lages, W. F. (2004). Sensoring for retrofitting of an
+industrial robot, 11th IFAC Symposium on Information Control Problems in Manufacturing, Salvador, BA.
+Lippiello, V., Villani, L. and Siciliano, B. (2007). An
+open architecture for sensory feedback control of
+a dual-arm industrial robotic cell, Industrial Robot An International Journal 34(1) 4653.
+Orenstein, L. P. (2010). Atualizacao de hardware e
+software de um manipulador industrial, Projeto
+final de graduacao, Departamento de Engenharia
+de Controle e Automacao, UFRJ.
+
+Agradecimentos
+Este trabalho foi parcialmente financiado pelo CNPq.
+
+Pfeiffer, O., Ayre, A. and Keydel, C. (2008). Embedded Networking with CAN and CANopen, 2nd
+edn, Copperhill Technologies Corporation, RTC
+Books.
+
+Referencias
+ABB Robotics Products AB (1993). Product Manual
+IRB 2000 M93A.
+
+Pizzino, C. A. (2008). Controle nao-linear adaptativo
+sensorless de um motor_de_inducao baseado na
+corrente rotorica, Masters thesis, Programa de
+Engenharia Eletrica - COPPEUFRJ.
+
+Astrom, K. J. and Wittenmark, B. (1996). ComputerControlled Systems Theory and Design, 3rd edn,
+Prentice Hall.
+
+Ribeiro, A. S., Almeida, A. G. S., de Souza, M. B. and
+Lima II, E. J. (2007). Metodologia para implementacao de retroffiting de controladores de equipamentos de automacao_de_processos, 8th Congresso Iberoamericano de Ingeniera Mecanica,
+Cusco, Peru.
+
+Becerra, V. M., Cage, C. N. J., Harwin, W. S. and
+Sharkey, P. M. (2004). Hardware retrofit and
+computed torque control of a puma 560 robot updating an industrial manipulator, IEEE Control
+Systems Magazine 24(5) 7882.
+Bose, B. K. (1996). Power Eletronics and Variable
+Frequency Drives - Technology and Applications,
+1st edn, Wiley-IEEE Press.
+
+Sciavicco, L. and Siciliano, B. (2000). Modelling
+and Control of Robot Manipulators, 2nd edn,
+Springer-Verlag Inc.
+
+Bruyninckx, H. (2001). Open robot control software
+the OROCOS project, IEEE International Conference on Robotics  Automation, Piscataway,
+NJ, pp. 25232528.
+
+Wen, J. T. and Kreutz-Delgado, K. (1991). The attitude_control problem, IEEE Transactions on Automatic Control 36(10) 11481162.
+
+4410

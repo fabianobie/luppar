@@ -1,0 +1,1125 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+CONTROL ARCHITECTURE FROM PEGASUS AUTOPILOT DESIGN AND SOFTWARE-IN-THE-LOOP
+SIMULATION
+ADRIANO BITTAR, NEUSA M.F. OLIVEIRA, DIEGO A. CARVALHO
+Instituto Tecnológico de Aeronáutica
+Pça Mal. Eduardo Gomes, 12.228-900, São José dos Campos, SP.
+E-mails bittar@ita.br, neusa@ita.br, diegoac@ita.br.
+Abstract This paper describes a detailed autopilots control block design of a small fixed-wing unmanned air vehicle. The
+block is composed of feed-backs and feed-forwards controls. The feedback control guarantees attitude stabilization, including
+pitch and roll, and maintains the aircraft in a desired heading, altitude, and airspeed. The feed-forward control compensates two
+coupling effects, the first one between the lateral-directional and longitudinal motion, and the second one between airspeed and
+altitude hold. The proposed approach follows the standard practice of Software-In-the-Loop implementation, where the control
+is developed on MATLABSIMULINK and the airplane response is simulated in the flight simulator X-Plane. In order to make
+the system seem more real, the target aircraft Piper J3 Cub 16 scale was modeled in Plane-Maker and was used to verify,
+validate, and optimize the controllers implemented on MATLABSIMULINK.
+Keywords UAVs, Control, SIL, X-Plane, Matlab.
+Resumo Este artigo descreve detalhadamente o projeto do bloco de controle do piloto_automático de um pequeno veículo
+aéreo não tripulado de asa fixa. O bloco é composto por malhas de feedback e feed-forward. O controle de feedback garante o
+controle_de_atitude, incluindo o angulo de arfagem e rolagem, e mantém a aeronave em uma posição desejada, velocidade,
+altitude. O controle feed-forward compensa dois efeitos de acoplamento, entre o movimento lateral-direcional e longitudinal, e
+entre velocidade e controle_de_altitude. A abordagem proposta segue a prática padrão de implementação em Software-In-theLoop , onde o controle é desenvolvido em MATLAB  SIMULINK e a resposta avião é simulada no simulador de voo X-Plane.
+A fim de tornar o sistema similar ao real, a aeronave alvo, um Piper J3 Cub escala 16, foi modelada no Plane-Maker e foi
+utilizado para verificar, validar e otimizar os controladores implementados em MATLAB  SIMULINK
+Palavras Chaves  .
+
+1 Introduction
+An autopilot is an electrical, mechanic, or
+hydraulic system used to guide a vehicle without
+human assistance. It can be coupled to any
+autonomous, land, water, or air vehicle.
+A Small Unmanned Aerial Vehicle (SUAV), which
+is the focus of this work, must use an autopilot to
+perform its missions. Due to great responsibilities
+involved, a common practice is to test and evaluate
+the autopilot by using a flight simulator, reducing the
+risk of project failure (Chao, 2010)
+The Pegasus AutoPilot has been developed to create
+an efficient, complete, and low cost autopilot to be
+used for all kinds of missions, especially in fixedwing unmanned aircrafts.
+This paper will describe the architecture and design
+of the control block used in the implementation of
+Pegasus. The PID (proportional, integral, and
+derivative) controllers were used, although not all
+three gains are always present. The variables
+controlled by feed-back closed-loop control are pitch,
+roll, heading angles, climb rate, forward speed, and
+altitude. In addition, the feed-forward control
+establishes a connection between the forward speed
+and altitude, the heading and altitude, and the
+heading using both aileron and rudder.
+The designed control is validated thought a SoftwareIn-the-Loop (SIL) simulation, using MatlabSimulink
+and the flight simulator X-Plane, where a target
+aircraft was modeled. The navigation system, the
+aircraft response, and visual are presented by the
+
+ISBN 978-85-8001-069-5
+
+flight simulator, whereas the control runs on Matlab.
+X-Plane has the built-in capability of transmitting
+flight parameters and receiving command for aircraft
+flight control surfaces over Ethernet using the User
+Datagram Protocol (UDP). This capability is also
+available on MatlabSimulink, which facilitated the
+implementation.
+2 Autopilot
+An autopilot consists of four main blocks
+guidance, navigation, control, and ground station
+(Kendoul, 2009). Fig. (1) shows the block diagram of
+the systems embedded in the aircraft and the
+interaction between these systems.
+The navigation block is responsible for providing the
+current state (position, forward speed, and attitude)
+of the aircraft and making them available for use by
+guidance and control blocks (Jang, 2006). The data is
+obtained through appropriate sensors. In SUAVs, the
+most commonly sensors used are the Instrument
+Measurement
+Unit
+(IMU),
+composed
+of
+accelerometers, gyros, and magnetometers on the
+three axes a Global Positioning System (GPS) a
+static pressure sensor and a dynamic pressure sensor
+(Yu,2007). The Pegasus AutoPilot uses all these
+sensors.
+The guidance block is responsible for generating
+reference commands to the control block. It
+interprets the data path to be followed, and generates
+the desired values of heading, altitude, and airspeed
+for the aircraft (Santos, 2011).
+
+4146
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Fig. 2a. Real Aircraft
+
+Figure 1. Blocks of an autopilot
+
+The control block is responsible for reading the
+reference values given by the block of guidance.
+Using data from the navigation block, it operates in
+the servos of the aircraft in order to reach the
+reference values (Chen, 2011).
+The control block is also responsible for maintaining
+a constant attitude. It is called "Hold Autopilot"
+when it also controls and keeps constant the heading,
+altitude, and airspeed (Nelson, 1998).
+3 The Aircraft
+The model airplane chosen was a Piper J-3 CUB
+48S, manufactured by "The World Models." The
+main features of the aircraft are found in the
+manufacturers manual model, as follow
+1. Wingspan (Standard) 1.800mm 71.0 in
+2. Wing Area (Standard) 45.0 dm2 698 sq in
+3. Weight 2500g 5.5lbs
+4. Length 1.200 mm 47 in
+5. Brushless Engine 540W
+6. Propeller 12x7
+The main factors for choosing this aircraft were the
+easy acquisition, the stability of aircraft flight and for
+having an experienced human pilot used to fly the
+real aircraft.
+The flight simulator model was performed using
+Plane-Maker (v 9.22), which is a program bundled
+with X-Plane. This tool allows the user to design any
+imaginable aircraft. Plane-Maker provides an
+interface to design a vehicle based on the physical
+specifications of the airplane (weight, wing span,
+control deflections, engine power, airfoil sections,
+etc.), while the X-Plane simulator predicts how that
+built plane flies. Fig. (2a) illustrates the real model,
+whereas Fig. (2b) shows the model built in PlaneMaker.
+The position of the surfaces on X-plane varies
+linearly between -1 and +1, and the engine between 0
+and +1. The real deflection of the surface on the
+aircraft model is configured in Plane-Maker. For this
+model X-Planes deflection of -1 corresponds to a
+deflection of -20 degrees on the airplane models
+surface and the +1 to a deflection of +20 degrees. For
+the engine, the deflection of +1 means an output of
+540 watts of power to the airplane, and 0 turns off
+the engine.
+
+ISBN 978-85-8001-069-5
+
+Fig. 2b. X-Plane Model Aircraft
+
+4 Feed-Back Control
+The feed-back closed-loop is constituted from the
+longitudinal, the lateral-directional, and the airspeed
+control, which together performs six hold controls.
+All six closed-loops were implemented on
+MatlabSimulink, which communicates with X-Plane
+through the UDP, the native communication interface
+of this simulator (Ernest, 2007). The system operates
+at a sample rate of 20Hz configurable on the flight
+simulator.
+4.1 The Lateral-Directional Control
+The main problem with yaw control is that the
+heading adjusted directly by aileron produces a very
+unstable airplane behavior. This occurs because only
+the aileron deflection cannot control the roll angle.
+Using only the aileron deflection and not being
+careful in control the roll angle, there is a risk that
+the roll angle becomes excessive and it can cause
+loss of air lift on the wings. Therefore we have to
+consider the roll limits of the airplane in the heading
+loop system to avoid this problem. Then it was
+implemented inside the yaw outer loop control an
+inner loop that controls the roll angle.
+The outer control loop provides a roll reference angle
+as the input signal to the inner loop. This roll
+reference signal (
+) is the input signal to the inner
+loop.
+The inner loop, receives the roll reference signal
+(
+), as it inputs. It generates the appropriate
+command signal to the ailerons in order to the
+aircrafts behaves as desired, respecting the roll limits
+of the airplane and avoiding loss of air lift.
+However, this nested loop structure brings more
+difficulties to tune the controllers parameters. The
+outer loop, the heading hold loop, uses a PID
+controller, which makes necessary to set three
+parameters. The inner loop, the roll hold loop, uses a
+PD controller, with two parameters to be set. The
+appropriate tuning of all parameters was done by
+
+4147
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+dividing the task in two steps, which allowed dealing
+with single loop system in each step. First the roll
+controller was tuned and then the heading controller.
+1) Roll Hold Controller The roll hold, illustrated in
+Fig. 3, is responsible for changing and keeping the
+aircrafts roll stable according to the input value, the
+reference roll value (
+). It presents three feedback
+lines the current roll (
+) and the angular
+velocity (p), feed the P-D controller (
+and
+gains), and the current aileron position (
+),
+calculates the exact amount of deflection that must
+be applied on the aircrafts ailerons. The P-D control
+also guarantees the stable angular velocity.
+The feedback from the current position of the servo
+comes from the fact that this closed-loop generates a
+increment on the deflection (
+), as in (1), to be
+imposed on the aileron. However, on X-Plane, it is
+necessary to set the position of the servo (as in a real
+servo).
+Hence, the current position is added to the deflection
+calculated by the control generating the next servos
+position ( ), accordingly to (2).
+The feedback from the current position of the servo
+comes from the fact that this closed-loop generates a
+increment on the deflection (
+), as in (1), to be
+imposed on the aileron, however, on X-Plane, it is
+necessary to set the position of the servo (as in a real
+servo). Hence, the current position is added to the
+deflection calculated by the control generating the
+next servos position ( ), accordingly to (2).
+(
+
+)
+
+(1)
+(2)
+
+Two saturators are used the first is used to restrict
+the maximum amount of variation that the servo of
+the aileron may have, preventing the plane from
+making rude movements when a new reference roll is
+imposed. The second is to limit the maximum servo
+position, which limits (by software) how many
+degrees the aileron can deflect. This prevents the
+case of a very high value being imposed to the
+aileron, causing a loss of lift on the wings. The
+references and the values of X-Plane are given in
+degrees, but the Matlab has been configured to work
+in radians, so it is necessarily to convert these
+quantities properly.
+
+ref
+
+e
++
+
+-
+
+Aircraft
+
+ a
+Kpa
+
+current
+
++
+
+-
+
+SAT
+
++
+
+SAT
+
++
+
+acurrent
+Kd a
+
+a
+
+
+p
+
+acurrent
+
+p
+
+Figure 3. Roll Hold Control System Inner Loop
+
+ISBN 978-85-8001-069-5
+
+
+
+2) Heading Hold Controller This controller
+changes the aircrafts heading and holds it in the
+assigned reference value. It generates the roll
+reference (
+) to the roll hold system. Fig. (4)
+shows the heading hold control system. This system
+has two control loops, an inner and an outer loop.
+The inner loop is the roll hold control system
+presented previously.
+The outer loop controls the heading indirectly by
+ailerons through roll angle, controlled by the inner
+loop.
+The choice of this kind of scheme is motivated
+by the necessity to obtain an efficient yaw axis
+control by aileron actuation.
+The error (
+) between the desired heading
+(
+) and the current heading (
+) is
+calculated as in (3).
+(
+
+)
+
+(3)
+
+The roll reference is given by (4).
+
+
+(4)
+
+4.2 The Longitudinal Control
+The longitudinal control consists on hold the
+altitude. The control implemented in this paper
+works as a chain where the only input is the altitude
+reference. The altitude hold generates the reference
+for the climb rate, which generates the reference for
+the pitch hold. The pitch hold then generates the
+elevators servo position. This architecture makes
+sure that all these variables (altitude, climb rate, and
+pitch) are controlled, improving the UAV stability.
+This controller has two PIDs (altitude hold and climb
+rate hold) and one P-D (pitch hold), which are
+necessary to configure individually.
+The terms climb rate and vertical velocity will be
+used indistinctly along the text. Also the terms
+horizontal speed, airspeed and forward speed.
+1) Pitch Hold Controller The pitch hold control
+loop was implemented as illustrated in Fig. (5) and
+is responsible for maintaining the pitch of the aircraft
+according to the desired reference pitch (
+).
+Similar to the roll hold system, it uses a P-D
+controller and three feedback lines.
+The airplanes current pitch (current) and its angular
+velocity (q) on the y axis, the pitch rate, are used to
+feed the P-D controller, generating the elevator
+deflection (e) as in (5).
+
+ref
+
+e
++
+
+PID
+
+Inner Loop
+
+Kp
+Ki
+
+-
+
+SAT
+
+ref
+
+a
+
+Aircraft
+a
+
+
+
+
+
+Kd
+
+ current
+
+Roll Control
+HOLD
+
+Figure 4. Heading Hold Control System Outer Loop
+
+4148
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+(
+
+)
+
+(5)
+
+The current position of the elevator servo
+is used to calculate the new elevators position (
+as in (6).
+
+)
+),
+
+ ref e
++
+
+
+
+(7)
+
+Then, pitch deflection is added to the current pitch of
+the airplane to generate the reference pitch,
+accordingly to (8).
+
+ e
+
+Kpe
+
++
+
++
+
+SAT
+
+-
+
+SAT
+
++
+
+e
+
+ecurrent
+
+current
+
+(6)
+Just like the roll hold controller, this loop requires
+two saturators. The first one restricts the maximum
+amount of variation that the servo of the elevator
+may have, and the second one is used to limit the
+maximum and minimum values of the elevator
+position.
+2) Climb Rate Hold Controller The climb rate
+loop, illustrated in Fig. (6), has two feedback lines.
+The current climb rate (VVcurrent) feedback feeds the
+PID controller and the other one, the current pitch
+(
+), is used to calculate the new reference
+pitch value. This control loop calculates the climb
+rate error ( ), which is the difference between the
+climb rate reference (VVref) and the current climb rate
+(VVcurrent). Furthermore, this error is used to generate
+a pitch deflection, as in (7).
+
+-
+
+Aircraft
+
+Kd e
+
+
+
+
+q
+
+ecurrent
+
+q
+
+Figure 5. Pitch Hold Control System Inner Loop
+
+VVref eVV
++
+
+PID
+Kp
+Ki
+
+Kd
+
+VVcurrent
+
+Inner Loop
+
+
+SAT
+
++
+
+SAT
+
++
+
+current
+
+ref
+
+e
+
+Aircraft
+
+e
+
+VV
+
+VV
+
+
+
+Pitch Control
+HOLD
+
+Figure 6. Climb Rate Hold Control
+
+This closed-loop incorporates the climb rate hold
+system, and consequently the pitch hold system, as
+illustrated by Fig. (7). The error altitude ( ), which
+is the difference between the reference altitude
+(
+) and current altitude (
+), as in (9), is
+used to feed the PID controller. The reference climb
+rate is given by (10).
+(
+
+)
+
+(9)
+
+(8)
+Then the reference pitch value, is used by the inner
+loop, the pitch hold control explained before, to
+generate the appropriate elevator servo position
+which makes the aircraft reaches the desired climb
+rate.
+The addition of the current pitch smoothies the
+movement of the airplane. Without this feedback the
+airplane would shake, making it impossible to
+control the climb rate within acceptable response.
+As in the pitch hold loop, two saturators are needed.
+The first one limits the maximum pitch variation that
+the controller could generate and the second one is
+used to limit the minimum and maximum pitch
+reference value. These two saturators are essential to
+avoid sudden changes in the airplanes attitude. A
+high pitch reference, if reached by the airplane, could
+make the airplane to become unstable.
+3) Altitude Hold Controller This controller is on the
+top of the longitudinal control chain. It is based on
+the same concept of the heading controller and its
+work is to follow a desired altitude (
+) given by
+a guidance block. It generates the climb rate
+reference (
+) for the climb rate hold system,
+controlling indirectly the aircrafts altitude.
+
+ISBN 978-85-8001-069-5
+
+
+
+(10)
+
+In this controller, the feedback of the climb rate is
+not needed due to the fact that when the altitude
+reaches the desired altitude, the error generated is
+zero, which means the climb rate should also be zero.
+The altitude hold requires only a saturator to limit
+maximum and minimum vertical velocity that the
+aircraft can reach, avoiding great changes in the
+attitude.
+The reference climb rate is then used by the pitch
+hold control to properly actuate on the elevator, so
+the airplane can reach the desired altitude.
+This loop also provides the error between the current
+and desired altitude, to be used to calculate
+corrections caused by coupling error between the
+longitudinal movement and the airspeed control.
+4.3 The Forward Speed Control
+The forward speed control is composed of a
+single loop which controls the power applied to the
+engine, as showed in Fig. 8. Two feedback lines are
+used to feed the system.
+
+4149
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ealt
+
+Altref
+
+Inner Loop
+
+Kp
+
++
+
+Aircraft
+
+Inner Loop
+
+PID
+Ki
+
+-
+
+VVref ref ref
+
+SAT
+
+Kd
+
+e
+
+e
+
+Alt
+
+Alt
+
+general, a turn down of aircraft muzzle (Wu, 2003)
+The tendency to tilt the planes nose down losing
+altitude must be compensated by increasing the
+elevator from a value proportionally to the reference
+roll, as in (13).
+
+
+Pitch Control
+HOLD
+
+Climb rate Control
+HOLD
+
+Altcurrent
+
+
+
+(13)
+
+Where
+Elevator is the value applied on the elevator
+surface
+
+Fig. 7. Altitude Hold Control
+
+Vref
+
+PID
++
+
+e
+
+ thr
+
+Kp
+Ki
+
+-
+
+Aircraft
+
+SAT
+
+Kd
+
++
+
+SAT
+
++
+
+ thr current
+
+Vcurrent
+
+ thr
+
+Airspeed
+
+V
+
+ thr current
+
+Fig. 8. Forward Speed Hold Control
+
+The PID controller uses the error (ev) between the
+desired forward speed (Vref ) and the current forward
+speed (Vcurrent), which is the first feedback line, to
+calculate the increase or decrease in amount of power
+(
+) that is needed to maintain the airspeed in the
+desired value, as in (11).
+
+
+(11)
+
+The second feedback line is the current power
+(
+) applied on the engine. This power is
+added to the calculated change of power (
+),
+resulting in the new power value to be applied in the
+engine, (
+), as in (12).
+
+is the value calculated in (6)
+Kp(e-r) is the coupling gain between the
+lateral and longitudinal control
+ref  is the absolute value of the roll
+reference
+The term feed-forward stands for the fact that the
+coupling errors are corrected before they happen,
+such as in the example above, the pitch and altitude
+would remain constant in a turn movement.
+In addition to the coupled movement already
+mentioned, there are two others. The forward speed
+decreases, if the airplane increases its altitude, hence
+it is necessary to increase the power applied to the
+engine proportionally to the error between the
+derived altitude and the current altitude, as in (14).
+(14)
+Where
+is the value applied on airplane.
+is the value calculated in (12)
+is the coupling gain between the
+forward speed and longitudinal control
+The last effect to compensate is the airplanes side
+slip as the roll reference command is applied. To
+compensate this effect a feed-forward control is used
+to command the rudder surface, as in (15).
+(15)
+
+(12)
+Where
+As the airspeed control is a very sensitive system, a
+regulator is necessary to divide the airspeed error, in
+this case by 105, to minimize the power variation,
+reaching a stable airspeed output.
+Despite the plane having an electric motor, the term
+throttle is used to designate the power applied to
+the motor, because the equations and closed-loop
+established can be also used in an airplane that uses a
+combustion engine (Glow).
+
+Rudder is the value applied on airplane.
+is the coupling gain between the
+lateral and directional control
+The ailerons surface is not used to correct any
+coupling gains, the value calculated in (2) on the
+ailerons is applied, as in (16)
+
+(16)
+Where
+
+5 Feed-Forward Control
+The feed-forward closed loops are used to
+correct errors caused by coupling movements
+(Andrievsky, 2002), such as undesirable pitch effects
+when aircraft turns left or right producing a loss of
+lift that involves a diminution of pitch angle, or in
+
+ISBN 978-85-8001-069-5
+
+Ailerons is the value applied on the ailerons
+surface.
+is the value calculated by (2)
+Fig. 9 shows the three feed-forward controllers, using
+only proportional controllers.
+
+4150
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Feed-Back
+Control
+
+Feed-Forward
+Control
+
+Airspeed
+Thr
+Hold
+Control
+Altitude
+Hold
+Control
+
++
+
+ealt
+
++
+
+Aircraft
+
+Throttle
+
+Kpthr
+
+Elev
+
++
+
++
+
+Elevator
+
+Fig. 10. Graphical User Interface
+
+Heading
+Hold
+Control
+
+ref
+
+Kpe-r
+
+ref
+
+Kpr-r
+
+Ailrn
+
+Rudder
+
+Ailerons
+
+Fig. 9. Feed-Forward Controllers
+
+6 Implementation
+The control law used in the proposed framework
+was developed in the MatlabSimulink environment.
+This experimental framework employs the
+MatlabSimulink running the autopilot controller to
+be tested, and another PC running the X-Plane flight
+simulator contained the unmanned aircraft to be
+commanded (Ribeiro, 2011).
+In order to facilitate the operation and change of
+controller characteristics and desired references, a
+reliable ground station software was developed using
+the Graphics User Interface (GUI) tool available in
+Matlab. This ground station software is used to
+upload the reference values of altitude, heading, and
+also define the desired UAV airspeed. Fig. 10 shows
+the User Interface developed.
+The parameters and control loop gains can be tuned
+or changed through of User Interface, and they are
+instantly modified in the control algorithm. The user
+interfaces also allows the user to turn on or off any of
+the hold controls individually. This means that it is
+possible to evaluate the altitude hold control with the
+airspeed hold control turned off or contrariwise.
+To guarantee the airplane stability more than one
+control law presented before are functioning in the
+system. However, the tests done to validate the
+designed control laws were applied individually. This
+mean that although more than one control law was
+working at the same time, only the loop in analysis is
+submitted to a change in the reference value. It is
+necessary to operate more than one law at the same
+time to guarantee the airplanes stability.
+
+ISBN 978-85-8001-069-5
+
+Therefore, when tuning the pitch hold control gains,
+the roll hold control must be turned on with zero
+degrees of reference to avoid changes in the lateral
+movement that could affect the study of the
+longitudinal control. In this way when selecting the
+altitude hold control, automatically the pitch hold
+control and the climb rate control are turned on. The
+same occurs selecting the heading hold control, when
+the roll hold control starts to work instantly.
+The communication between MatlabSimulink and
+X-Plane, performing a SIL simulation, is very
+common in a situation where it is necessary to save
+time and efforts to evaluate the control architecture
+(Garcia, 2009). It allows a pre-test of the system
+before a flight.
+7 Results
+The results reached in this works show the behavior of the airplanes model created on PlaneMaker when running the control laws described before.
+In the test in which the airspeed hold control was not
+the focus, the throttle was fixed at 70 of the
+maximum value (540W) that can be applied on the
+airplanes engine.
+The roll hold control must be the first control loop
+validated to guarantee a minimum level of attitude
+stabilization. This initial stabilization is essential to
+validate the other controls otherwise the airplane can
+reach an undesirable roll that interferes during the
+other control test. To evaluate this loop, the
+airplanes roll angle was fixed at zero degrees and
+then a step input of 12 degree was applied. All the
+other controls were turned off and the gains were
+tuned by using the user interface, until a acceptable
+response was reached, as shown in Fig. 11.
+The pitch control was evaluated applying a reference
+of 10 degrees and had the behavior shown in Fig. 12.
+Even though the roll and pitch control response
+present overshoot, approximately 50 and 30
+respectively, it is worth to be noticed that those
+values are not a problem, because the target vehicle
+
+4151
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+is an unmanned aircraft, so comfort issues are not
+considered.
+With the attitude of the airplane controlled, it was
+possible to start testing the other control loops. The
+heading was tested by changing the reference from 0
+to 81 degrees, and was reached without any
+overshoot in the response shown in Fig. 13.
+The climb rate control law was validated by applying
+a step of 50 ftmin, which made the airplane change
+its vertical velocity from 102.5 ftmin to 152.5
+ftmin. Fig. 14 shows the vertical velocity response.
+The altitude hold control could only be tested after
+the pitch and climb rate validation, because it
+depends on them. Fig. 15 shows a step input of 400
+feet on the altitude hold control.
+Similar to the other test, evaluation of the horizontal
+speed was done by applying a reference of 36 knots
+on the airspeed hold control input. Unlike in other
+tests where the throttle was fixed, in this test the
+throttle was commanded by the control law presented
+in (12) and (14). Fig. 16 shows the response of the
+airplane airspeed.
+The performance parameters obtained for each loop
+is shown in Table 1.
+
+Fig. 14. Climb Rate Response
+
+Fig. 15. Altitude Response
+
+Fig. 16. Forward Speed Response
+
+Fig. 11. Roll Response
+
+TABLE 1. PERFORMANCE PARAMETERS
+
+Fig. 12. Pitch Response
+
+Roll
+Pitch
+Heading
+Climb
+Rate
+Altitude
+Airspeed
+
+Over
+shoot
+()
+48.26
+28.71
+---
+
+0.29
+0.36
+0.14
+
+Rise
+Time
+(s)
+0.046
+0.08
+0.068
+
+49.3
+
+0.308
+
+0.02
+
+0.0
+
+--5.9
+
+0.4375
+7.7
+
+0.185
+2.36
+
+0.00
+0.9
+
+Settling
+Time (s)
+
+Error
+()
+0.0
+0.0
+0.44
+
+In order to illustrate the airplane in a
+controlled situation, Fig. 17 (a) shows the Piper J3
+Cub modeled on Plane-Maker during a climb, Fig. 17
+(b) and (c) show straight level flight after the aircraft
+has reached the desired altitude, heading, and
+forward speed, which are the main values given by a
+guide block (in this case by the user interface).
+Fig. 13. Heading Response
+
+ISBN 978-85-8001-069-5
+
+4152
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+7 CONCLUSION
+The architecture of the control block from
+Pegasus Autopilot was deeply detailed, explaining
+each feedback line and detailing completely the feedforward control.
+
+Fig. 17(a). The aircraft climbing
+
+Fig. 17(b). Straight level (Side View)
+
+Fig. 17(c). Straight level (Front View)
+
+The feed-back control was used to individually
+control the movements of the airplane, but it proved
+to be incomplete, and it was necessary to create
+corrections due to the coupling errors between these
+movements. The feed-forward control was, then,
+established in order to guarantee that the aircraft
+reaches or maintains a determined action in a
+situation that a desired maneuver implies in a
+coupled undesired airplane behaviour, such as
+climbing movement results also in velocity decrease.
+This allowed, in advance, correction of the coupling
+error, attaining a high level of safety for the airplane
+and robust control for SUAV.
+The system, tested and implemented through a SIL
+Simulation, was controlled using PID controllers
+only. The great advantage of using PID, compared
+with other controllers, is its easy implementation in
+an embedded system. The early test of controllers in
+a SIL allows evaluation of the system before a flight,
+saving time and money, because tuning the
+controllers from zero on a flight increases the chance
+of a possible plane crash. With the controllers tested
+and evaluated in this type of simulation, only a fine
+adjustment is necessary when flying. The creation of
+a model in Plane-Maker has increased the credibility
+
+ISBN 978-85-8001-069-5
+
+of the controllers. The same program will be used in
+future work where the autopilot will be implemented
+in the hardware to be embedded in the airplane.
+REFERENCES
+Andrievsky, B., Fradkov, A. (2002), .Combined
+Adaptive Autopilot for an UAV Flight Control,
+In 2002 IEEE International Conference on
+Control Applications, pp. 290  291.
+Chao,H., Cao Y., and Chen, Y., (2010). Autopilots
+for Small Unmanned Aerial Vehicles A
+Survey., Int. J. Control, Automation and
+Systems, vol. 8, pp. 36-44.
+Chen, J., Wang. Y.,(2011).The Guidance and Control
+of Small Net-recovery UAV. Seventh
+International Conference on Computational
+Intelligence and Security, Sanya, Hainan, China.
+Ernst, D., Valavanis, K., Garcia, R., and Craighead,
+J., (2007).Unmanned Vehicle Controller Design,
+Evaluationand Implementation From MATLAB
+to Printed Circuit Board, IEEE J. Intelligent 
+Robotic Systems, vol. 49, Number 1, pp. 85108.
+Garcia R., and Barnes L., (2009) Multi-UAV
+Simulator Utilizing X-Plane, IEEE J. Intelligent
+ Robotic Systems, vol. 57, pp. 393-406.
+Jang, J. S. Liccardo, D.(2006). Automation of
+Small UAVs using a Low Cost Mems Sensor and
+Embedded Computing Platform. IEEEAIAA 25th
+Digital Avionics Systems Conference, San Jose,
+CA.
+Kendoul, F. Zhenyu, Y., Nonami, K., (2009).
+Embedded autopilot for accurate waypoint
+navigation and trajectory tracking Application to
+miniature rotorcraft UAVs. In IEEE International
+Conference on Robotics and Automation, Kobe,
+Japan.
+Nelson, R. C. (1998). Flight Stability and Automatic
+Control. McGraw-Hill, Second Edition.
+Ribeiro L. R., and Oliveira, N. M. F., (2010). UAV
+(Unmanned
+Aerial
+Vehicle)
+Autopilot
+Controllers Test Platform using MatlabSimulink
+and X-Plane. Proccedings of ASEEIEEE
+Frontiers in Education Conference, Washington
+DC.
+Santos S. R. B., Nascimento Jr. C. L., Givigi Jr. S.
+N., Bittar A., and Oliveira. N. M. F., (2011).
+Experimental Framework For Evaluation Of
+Guidance And Control Algorithms For UAVs.
+Proceedings of 21th International Congress of
+Mechanical Engineering, Natal, Brazil.
+Yu, Z.,
+Choe, R.,(2007). Development 
+Verification of a Low-Cost IMU for Vehicle
+Attitude Determination. Aerospace Technology
+Seminar Singapore, Marc.
+Wu, H. Y., Zhou , Z. Y., Sun, D. (2003),
+Autonomous Hovering Control and Test for
+Micro Air Vehicle. In Proceedings of the
+International Conference on Robotics and
+Automation, pp.528-533, Taiwan, 2003.
+
+4153

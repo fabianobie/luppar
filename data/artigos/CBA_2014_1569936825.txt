@@ -1,0 +1,1665 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+MODELAGEM E CONTROLE ADAPTATIVO ROBUSTO DE UM SISTEMA DE
+NANOPOSICIONAMENTO
+A LEXANDRE S. S OARES, I GOR F. A LBUQUERQUE, J OSÉ PAULO V. S.
+
+DA
+
+C UNHA, L IU H SU
+
+ Programa
+
+de Engenharia Elétrica
+COPPEUFRJ, Cx.P. 68504  21945-970
+Rio de Janeiro, RJ, Brasil
+ Departamento
+
+de Eletrônica e Telecomunicações  Faculdade de Engenharia
+Universidade do Estado do Rio de Janeiro  Rua São Francisco Xavier, 524, sala 5001E  20559-900
+Emails alexandress@petrobras.com.br, igorfonseca83@gmail.com, jpaulo@ieee.org,
+liu@coep.ufrj.br
+Abstract The development of a position controller for piezoelectric actuators capable of performing movements in the
+nanometer range with high resolution and wide bandwidth is described. Applications in various areas such as medicine, optics,
+precision mechanics, microelectronics and atomic force microscopy are foreseen. Precise control of these actuators is hampered by
+resonant modes, hysteresis, the creep phenomenon and delays caused by the piezoelectric actuators motion command and position
+measurement electronic circuits. To overcome these difficulties a robust adaptive_control strategy was developed. This controller
+was able to perform precise tracking of relatively high frequency reference trajectories, as verified by experiments. To enable the
+implementation and tuning of the controller by realistic simulation, dynamic modeling and identification of the nanopositioning
+system was performed. The dynamic model includes various linear and nonlinear phenomena, in accordance with experiments.
+Keywords
+
+Nanopositioning, Adaptive control, Dynamic modeling, Hysteresis, Parametric projection.
+
+Resumo Descreve-se o desenvolvimento de um controlador de posição para atuadores piezoelétricos capaz de realizar movimentos em escala nanométrica com alta resolução e ampla banda passante. Tem-se em vista, sua aplicação em diversas áreas, tais
+como medicina, óptica, mecânica de precisão, microeletrônica e microscopia de força atômica. O controle preciso desses atuadores
+é dificultado por modos ressonantes, histerese, o fenômeno de creep e atrasos causados pelos circuitos eletrônicos de comando de
+movimento e de medição de posição o atuador piezoelétrico. Para superar essas dificuldades foi desenvolvida uma estratégia de
+controle_adaptativo_robusto. Esse controlador foi capaz de realizar o rastreamento preciso de trajetórias de referência com frequências relativamente altas, o que foi verificado por experimentos. Para possibilitar a implementação e a sintonia do controlador por
+meio de simulação realista, foi realizada a modelagem e a identificação da dinâmica do sistema de nanoposicionamento. O modelo
+dinâmico utilizado inclui diversos fenômenos lineares e não-lineares, em conformidade com experimentos.
+Palavras-chave .
+
+1
+
+não-lineares e variantes no tempo (Moheimani and
+Eleftheriou, 2013). Altas velocidades de rastreamento
+são pré-requisito para o posicionamento de uma sonda
+no plano XY para a geração de imagens com o AFM.
+Nesse equipamento, o substrato da amostra é mapeado por uma sonda que se movimenta no eixo Z, cujo
+controle não é tratado neste artigo. AFMs disponíveis
+comercialmente geram um quadro de imagem por segundo, contudo o objetivo estudado no estado da arte
+em nanoposicionamento é a obtenção de taxas de geração de quadros compatíveis com as de vídeo (minimamente 24 quadros por segundo). Essa aplicação é
+motivada principalmente pelo estudo de amostras biológicas cujos processos dinâmicos ocorrem com constantes de tempo de milisegundos. Por essa razão, neste
+artigo são previstos os seguimentos de trajetórias com
+frequência de até 200 Hz. Cabe ressaltar que para
+compatibilizar as varreduras de AFMs para a aplicação em geração de vídeo serão também necessárias
+inovações mecânicas em seu projeto. Os sinais de referência utilizados são senoidais e se encontram inseridos no contexto de controle dos eixos de um nanoposicionador lateral do AFM. A forma senoidal foi
+escolhida por ser suave e possuir derivadas suaves, o
+que facilita o rastreamento. Tal proposta é adotada em
+dois tipos de escaneamento de amostras, o ciclóide e
+
+Introdução
+
+Para alcançar a precisão e a acurácia exigidas na operação de equipamentos com atuação em dimensão atômica são utilizados nanoposicionadores normalmente
+acionados por atuadores piezoelétricos, por exemplo
+num microscópio de força atômica (atomic force microcope  AFM). Esses sistemas são mecanicamente
+projetados para atingir um controle ultrapreciso de
+movimento e são empregados principalmente em microscopia e nanofabricação. Os principais objetivos
+do controle_de_posição do nanoatuador são a alta
+banda passante, resposta rápida, alta resolução e estabilidade, a fim de garantir a exatidão e a repetibilidade de operação em escala nanométrica (Devasia
+et al., 2007).
+O nanoposicionamento possui uma vasta gama de
+aplicações, dentre as quais destacam-se tecnologia de
+semicondutores, biotecnologia, microscopia, automação, instrumentação, aeronáutica, processamento de
+imagens, astronomia, óptica adaptativa, metrologia,
+sistemas a laser, usinagem de precisão, torneamento
+de diamantes, óptica integrada, fotônica, telecomunicações e nanorobótica (Devasia et al., 2007).
+A motivação para a implementação estratégias de
+controle_adaptativo advém das incertezas dos modelos dinâmicos dos nanoposicionadores, que podem ser
+
+2778
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+o Lissajous. Na primeira modalidade de rastreamento,
+um dos eixos do nanoposicionador lateral (Y) rastreia
+uma trajetória senoidal de referência e o outro eixo (X)
+segue uma senóide cuja amplitude cresce linearmente
+com o tempo. Já na segunda, ambos os eixos do nanoposicionador lateral rastreiam trajetórias senoidais de
+referência (Tuma et al., 2013).
+Este artigo trata da implementação de um controlador_adaptativo robusto, comparando o seu desempenho com o PI (proporcional e integral) para operações rápidas e precisas. As métricas utilizadas na
+comparação entre as estratégias citadas possuem como
+base os erros de rastreamento experimentais obtidos,
+sem o acoplamento de carga ao piezoelétrico. A proposta deste trabalho é avaliar as melhorias advindas do
+emprego de um algoritmo de controle_avançado (e.g.,
+controle_adaptativo, controle_robusto), na presença de
+dinâmicas não_lineares como a histerese e o creep, que
+contribuem para a degradação do desempenho do sistema. Para isto, outro objetivo é realizar a modelagem
+da dinâmica de um sistema de nanoposicionamento,
+tendo-se em vista o projeto e a simulação do sistema
+de controle.
+
+não-lineares envolvidos, estimando os parâmetros referentes a cada parte de maneira independente. Este é
+representado no diagrama_de_blocos na Figura 2, conforme apresentado em (1761987  IEEE Standard on
+Piezoelectricity, 1987).
+
+Histerese
+
++
+
+Sinal de
+Referência
+
+r
+
+Sistema de
+Acionamento do
+Nanoposicionador
+
+DA
+
+Filtro Notch
+
+Sinal de
+Saída
+
+y
+
+AD
+
+Atuador
+
+Condicionador
+de Sinal
+
+Sensor
+Capacitivo
+
++
+Tensão
+de Saída
+Proporcional
+ Posição
+
+
+ky  yk
+ 100,
+Melhor ajuste  1 
+ky  yk
+
+
+(1)
+
+em que y é a sequência de saída medida, y é a sequência de saída do modelo simulado e y é a média dos
+valores de y. Um indicador de melhor ajuste igual a
+100 corresponde a um ajuste perfeito, ao passo que
+o valor de 0 indica que o ajuste desse modelo não
+é melhor que a hipótese de manter a saída constante
+(y  y) (The Math Works Inc., 2010, System Identification Toolbox).
+
+Nanoatuador
+Piezoelétrico
+Amplificador
+de potência
+(x 10)
+
++
+
+Pode-se observar que a histerese é incluída no
+modelo como um distúrbio de entrada dependente do
+sinal de controle aplicado. A dinâmica linear é identificada por meio de um método de estimação. Já o
+fenômeno de creep, que será explicado na seção 3.4, é
+incluído como um distúrbio na saída do sistema.
+Os resultados experimentais e de simulação são
+comparados por meio do seguinte indicador de acerto
+do modelo em relação ao sistema experimental
+
+u
+Controlador
+
+1k0
+
+Figura 2 Diagrama de blocos da dinâmica do sistema
+de nanoposicionamento.
+
+O sistema experimental utilizado neste trabalho consiste de um atuador piezoelétrico da Physik Instrumente P-753.1CD, um amplificador de potência do
+mesmo fabricante E-665.CR, uma placa de aquisição
+de dados da Quanser Q8 e um microcomputador com
+processador Intel Core 2 Quad, com 3 GB de memória RAM, espaço físico em disco rígido de 300 GB e
+sistema operacional Windows XP. As conexões deste
+sistema são apresentadas na Figura 1.
+Sistema de Aquisição
+de Dados
+
+Dinâmica
+Linear
+
+Sinal de
+Controle
+
+2 Configuração Experimental
+
+Microcomputador
+
+Distúrbios
+Externos
+
+Creep
+
+3.1
+
+Identificação pela resposta ao degrau
+
+A dinâmica da parte linear do modelo é estimada
+pela sua resposta ao degrau (Ljung, 1987, p. 142)
+(Albuquerque et al., 2010). O trem de pulsos retangulares empregado na estimação, por ter muitos
+harmônicos, é capaz de excitar todos os modos naturais do sistema. Ao se observar a resposta do sistema a um degrau (detalhe na Fig. 3), é possível notar
+que aproxima-se satisfatoriamente da resposta de um
+sistema de primeira ordem, pois não apresenta sobrepasso e oscilações. O problema de vibração do nanoatuador piezoelétrico pode ser resolvido pela utilização
+de um filtro_notch (rejeita faixa) ajustado na faixa da
+frequência de ressonância do sistema. O ponto de inflexão durante o transiente não é considerado, a fim de
+se manter a simplicidade do processo de modelagem.
+Em conjunção ao que foi exposto, ainda observa-se
+
+Figura 1 Diagrama de blocos da configuração experimental, no qual r é o sinal de referência, u é o sinal de
+controle e y é o sinal de saída medido pelo sensor de
+posição.
+Nominalmente, cada 1 V aplicado na entrada do
+amplificador de potência que aciona o nanoatuador piezoelétrico resulta num deslocamento de 1  m.
+3 Modelo Dinâmico
+O modelo_dinâmico adotado baseia-se em estruturar separadamente os principais fenômenos lineares e
+
+2779
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+que durante 0,2 ms após a aplicação do degrau, o sistema não responde  entrada, fenômeno caracterizado
+como um atraso.
+O modelo obtido para a dinâmica linear do sistema de nanoposicionamento é representado pela função_de_transferência
+
+Entretanto, para frequências maiores que alguns quilohertz, os resultados experimentais se tornam mais
+ruidosos devido  piora da relação_sinal-ruído.
+
+Y (s)
+1420
+ P(s)  e0,000238 s
+,
+U(s)
+s + 3815
+
+Os critérios considerados na escolha de um modelo
+matemático para representar a histerese do piezoatuador são a simplicidade, a facilidade de implementação e a representatividade, pois na literatura é atestado
+que o nanoposicionador sofre significativa influência
+dessa não-linearidade (Zhong and Yao, 2008 Esbrook
+et al., 2010 Zhou et al., 2012). O modelo de BoucWen foi escolhido para representar o bloco de histerese
+(Ismail et al., 2009).
+O modelo de histerese de Bouc-Wen faz uso de
+uma representação da histerese por meio de uma equação diferencial não-linear. Esse modelo teve sua proposição feita por R. Bouc em 1971 e foi generalizado
+por Y. K. Wen e outros pesquisadores em 1976 (Ismail
+et al., 2009, p. 161). O modelo generalizado de histerese de Bouc-Wen que aproxima a histerese BW (u)
+segundo (Ismail et al., 2009, p. 163) é
+
+3.3
+
+(2)
+
+na qual Y (s) é a transformada de Laplace do sinal de
+tensão que é obtido do sensor_de_posição, U(s) é a
+transformada de Laplace do sinal de tensão que é aplicado na entrada do amplificador de potência que aciona o atuador piezoelétrico e s é a variável complexa
+de Laplace.
+A função_de_transferência P(s) pode ser realizada
+pela equação de estado
+y(t)  a p y(t) + b p u(t   ) ,
+
+t  t0 ,
+
+(3)
+
+associada  função de estado inicial da entrada
+u(t)  u (t) ,
+
+t0    t  t0 ,
+
+(4)
+
+na qual a função u é contínua no intervalo t0   ,t0 ,
+em que t0 é o tempo a partir do qual o sistema é submetido  excitação.
+A Figura 3 apresenta a resposta ao degrau do modelo completo identificado em comparação  obtida
+experimentalmente.
+
+Histerese
+
+BW (u, z,t)   ku(t) + (1   )Dkz(t),
+
+(5)
+
+com z(t) obedecendo  seguinte equação diferencial
+z  D1 (Au   uzn1 z   uzn ),
+
+(6)
+
+em que D e k são parâmetros que ponderam a influência da histerese sobre o sinal u(t), A é o parâmetro de
+controle da amplitude da histerese,  ,  , n são parâmetros de controle da forma de curva da histerese (n > 1),
+ é a constante elástica da força de amortecimento e
+z(t) é a variável de histerese do modelo de Bouc-Wen.
+Por meio da comparação dos sinais de saída de simulações com aqueles medidos em experimentos nos
+quais sinais senoidais foram aplicados no atuador, os
+parâmetros do modelo de histerese foram ajustados e
+seus valores são apresentados na Tabela 1.
+Figura 3 Resposta ao degrau no domínio_do_tempo.
+3.2
+
+Tabela 1 Parâmetros do modelo da histerese.
+Parâmetro
+Valor
+k
+4, 2151
+D
+1
+A
+0, 0815
+
+0, 3036
+
+31, 1777
+
+19, 5540
+n
+2
+
+Resposta frequencial
+
+De posse do modelo identificado para a parte linear da
+dinâmica do nanoposicionador, a resposta em frequência experimental estimada, excitando-se o nanoposicionador com um sinal de controle chirp de acordo
+com (Ogata, 2003), é comparada com a resposta em
+frequência da parte linear identificada (vide Fig. 4).
+No presente trabalho, o sinal chirp é aplicado de maneira segmentada, considerando a faixa de frequência
+total a ser analisada subdividida em diversas janelas
+(intervalos).
+Sabendo que a frequência de amostragem utilizada no experimento é 20 kHz para todas as janelas,
+a partir do módulo e do ângulo de fase fornecidos
+pela transformada discreta de Fourier, seria possível
+reconstruir a resposta em frequência até quase 10 kHz.
+
+O objetivo da identificação dos parâmetros foi
+minimizar o erro de modelagem, ou seja, a diferença entre o sinal de saída experimental e o simulado
+com os valores atribuídos aos parâmetros (The Math
+Works Inc., 2010, Parameter Estimation). Para efetuar a análise é considerado o indicador de erro médio quadrático (Root-mean-square error  RMSE)
+
+2780
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+(Aguirre, 2007, p. 491), calculado a partir da equação
+!
+p
+(yn  yn)2
+p
+RMSE 
+,
+(7)
+(yn  y)2
+
+Resposta Frequencial
+Módulo em dB
+
+0
+
+30
+
+Experimental
+Modelo Completo
+2
+
+3
+
+10
+
+10
+
+Frequência em Hz
+Fase em graus
+
+0
+100
+200
+300
+400 1
+10
+
+2
+
+3
+
+10
+
+10
+
+Frequência em Hz
+
+Figura 4 Respostas frequenciais experimental e do
+modelo_dinâmico completo.
+
+Tabela 2 Erro médio quadrático do sinal de saída do
+modelo da histerese de Bouc-Wen generalizado comparado com o resultado experimental.
+Sinal de controle senoidal
+RMSE
+0,1 V de amplitude e 10 Hz de frequência 0,2181
+0,3 V de amplitude e 10 Hz de frequência 0,0868
+0,5 V de amplitude e 10 Hz de frequência 0,0467
+1,0 V de amplitude e 10 Hz de frequência 0,0195
+1,5 V de amplitude e 10 Hz de frequência 0,0132
+2,0 V de amplitude e 10 Hz de frequência 0,0362
+
+A Figura 3 apresenta a resposta ao degrau experimental comparada  do modelo. Percebe-se na
+Figura 3 que durante 0,238 ms o nanoatuador não
+responde ao degrau aplicado, tal característica é a
+manifestação do atraso. A consistência do modelo
+completo é comprovada, não somente no domínio da
+frequência, Figura 4, como também no domínio do
+tempo, com erro máximo em regime da ordem de
+0,98 em relação ao valor da resposta ao degrau considerada. Durante o transitório de subida na resposta
+ao degrau, o erro máximo é de 8,72.
+
+Creep
+4
+
+O creep ou rastejamento piezoelétrico é um efeito decorrente da tensão aplicada que gera uma polarização
+residual no nanoatuador. Se a tensão de operação do
+atuador piezoelétrico aumenta, a polarização restante
+continua a aumentar. Tal fenômeno se manifesta como
+um creep ou rastejamento lento após a ocorrência da
+mudança de tensão (Devasia et al., 2007, p. 810).
+A partir da modelagem do efeito do creep como
+uma associação de molas e amortecedores (Devasia
+et al., 2007), a representação matemática natural se
+apresenta de maneira compacta pela função_de_transferência
+nc
+1
+1
+,
+(8)
+Gc (s)  + 
+k0 i1 ci s + ki
+
+Controlador Proporcional e Integral
+
+As motivações para o uso do controlador com ações
+proporcional e integral são a sua simplicidade de implementação e adequação ao controle_de_sistemas de
+primeira ordem. Contudo é relevante mencionar que
+para o rastreamento tratado, de sinais senoidais, o controlador por meio da técnica backstepping se apresenta
+como opção mais adequada (Zhou et al., 2012). A
+ação proporcional reduz o erro de rastreamento, ao
+passo que a ação integral elimina o erro de regime
+permanente para sinais de referência constantes, além
+de reduzir o efeito do drift. Por estas razões, o fabricante Physik Instrumente o incluiu no sistema de
+acionamento do nanoposicionador E-665.CR, dentre
+outros.
+A dinâmica linear identificada para o sistema,
+dada pela função_de_transferência (2), é utilizada para
+o projeto do controlador.
+
+em que nc  3, k0  1, 2607 modela o comportamento
+elástico do atuador em baixas frequências, k1  k2 
+k3  132, 91 são as constantes de mola, e c1  c2 
+c3  23, 232 s são as constantes de amortecimento. Foi
+utilizado um modelo de terceira ordem (nc  3), suficiente para representar o efeito do creep ou rastejamento com razoável acurácia, conforme já citado em
+(Devasia et al., 2007). O creep é o transitório mais
+lento observado na Fig. 3.
+3.5
+
+20
+
+40 1
+10
+
+em que y é a sequência de saída atual, medida experimentalmente, y é a sequência predita pela simulação e
+y é o valor médio de y.
+A Tabela 2 apresenta os indicadores RMSE dos
+erros do modelo de histerese estimado. Cabe mencionar que um indicativo de uma boa predição é a obtenção de RMSE < 1.
+
+3.4
+
+10
+
+4.1
+
+Lei de controle
+
+A lei de controle PI é representada pela sua função de
+transferência
+u(s)  K
+
+Validação do modelo_dinâmico completo
+
+s + ap
+e(s) ,
+s
+
+(9)
+
+na qual o sinal de erro é e(s)  yd (s)  y(s) e yd é a
+referência.
+Para ajustar os parâmetros do controlador
+utilizou-se o princípio do modelo interno, o zero
+do controlador é posicionado de maneira a ocupar a
+mesma frequência do polo da função_de_transferência
+do nanoposicionador (2). Assim, o único parâmetro
+
+No tocante  análise frequencial do modelo completo,
+a Figura 4 apresenta o resultado experimental em contraposição ao obtido por simulação que inclui a dinâmica linear, a histerese e o creep. Observa-se uma
+boa aproximação dos resultados, embora seja percebida uma discrepância mais acentuada para frequências superiores a 1 kHz.
+
+2781
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+do compensador a ser sintonizado é o ganho proporcional. Esse valor é aproximado, num primeiro momento, para fazer com que o sistema composto pela
+parte linear do modelo e pelo controlador tenha uma
+margem de fase de 60 , seguido por um ajuste fino
+que fornece um ganho K  2, 5.
+4.2
+
+Por essa razão, foi eliminado do presente projeto o
+termo de transferência direta proposto por (Zhong and
+Yao, 2008) para aproximar a dinâmica mais rápida encontrada, pois o mesmo não foi identificado no nanoposicionador aqui utilizado. Sem esse termo de transferência direta, a lei de controle pode ser sintetizada
+de maneira direta sem a necessidade de utilizar uma
+entrada virtual, conforme considerado em (Zhong and
+Yao, 2008). Não obstante  essa diferença, no projeto
+apresentado, apenas três parâmetros_são adaptados em
+vez de quatro como na referência anteriormente citada.
+Tais fatos decorrem das diferenças entre os modelos
+dinâmicos dos nanoposicionadores considerados nos
+projetos de controle.
+Em termos gerais, esta estratégia de controle usa
+a adaptação paramétrica com projeção apresentada em
+(Hsu and Costa, 1991 Hsu and Costa, 1994) e os
+termos robusto e de realimentação proporcional incorporados ao controle por (Zhong and Yao, 2008).
+É importante destacar que a modificação da estratégia de controle presente em (Zhong and Yao, 2008)
+baseou-se nos trabalhos (Hsu and Costa, 1991 Hsu
+and Costa, 1994), que são anteriores e utilizam a
+mesma ideia de (Zhong and Yao, 2008), exceto pelo
+termo robusto e pela realimentação proporcional.
+
+Resultados Experimentais
+
+Sinais de saída e de referência 10 Hz
+1.2
+1
+0.8
+0.6
+0.4
+0.2
+0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+Erro de rastreamento 10 Hz
+0.1
+0.05
+0
+0.05
+0
+
+Sinais de saída e de referência 50 Hz
+1.2
+1
+0.8
+0.6
+0.4
+0.2
+1
+0
+Sinal de Saída
+Sinal de Referência
+
+Tensão em volts
+Tensão em volts
+
+1.2
+1
+0.8
+0.6
+0.4
+0.2
+0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+1
+
+0
+
+0.2
+
+0.4
+0.6
+0.8
+Tempo em segundos
+
+0.02
+
+0.04
+
+0.06
+
+0.08
+
+Erro de rastreamento 100 Hz
+
+0.05
+
+1
+
+2.5
+2
+1.5
+1
+0.5
+0
+
+0.15
+
+0.1
+
+0.15
+
+0.05
+0.1
+0.15
+Tempo em segundos
+
+0.2
+
+0.2
+
+0.2
+
+Sinais de saída e de referência 200 Hz
+1.2
+1
+0.8
+0.6
+0.4
+0.2
+0.1
+0
+Sinal de Saída
+Sinal de Referência
+
+5.1
+0.01
+
+0.02
+
+0.03
+
+0.04
+
+0.02
+
+0.04
+
+0.06
+
+0.08
+
+0.1
+
+0
+
+0.02
+
+0.04
+0.06
+0.08
+Tempo em segundos
+
+0.01
+
+0.02
+
+0.03
+
+0.04
+
+Lei de controle
+
+Uma lei de controle que resultaria na convergência da
+posição do nanoposicionador para a trajetória desejada
+é
+1
+u  K1 e + a p b1
+(10)
+p y + b p yd  d,
+
+0.05
+
+Erro de rastreamento 200 Hz
+
+0.1
+0
+0.1
+
+Sinal de Controle 100 Hz
+2.5
+2
+1.5
+1
+0.5
+0
+
+0.1
+
+Sinal de Controle 50 Hz
+
+Sinais de saída e de referência 100 Hz
+
+0.1
+0.05
+0
+0.05
+0
+
+0.05
+
+Erro de rastreamento 50 Hz
+
+0.1
+0.05
+0
+
+Sinal de Controle 10 Hz
+2.5
+2
+1.5
+1
+0.5
+0
+
+Tensão em volts
+
+Tensão em volts
+
+Tensão em volts
+
+Tensão em volts
+
+A Figura 5 apresenta o sinal de controle, o sinal de
+erro e a saída medida em comparação com o sinal de
+referência. Nota-se que quão maior é a frequência da
+referência senoidal, maior é o erro de rastreamento do
+controlador PI.
+
+0.05
+
+Sinal de Controle 200 Hz
+
+0.1
+
+2.5
+2
+1.5
+1
+0.5
+0
+
+0.01
+
+0.02
+0.03
+0.04
+Tempo em segundos
+
+em que K1 é o ganho proporcional, a p é a frequência
+do polo e b p é o ganho da parte linear da dinâmica do
+nanoposicionador, d representa os distúrbios a serem
+cancelados, yd é a trajetória de referência e o erro de
+rastreamento é dado por e  y  yd .
+O modelo_dinâmico do nanoposicionador é reescrito como
+
+0.05
+
+Figura 5 Resultados experimentais para referências
+senoidais com 1 V de amplitude e 10, 50, 100 e 200 Hz
+de frequência.
+
+x(t)  a p x(t) + b p (ku u(t) + dg (t)) ,
+5 Controlador Adaptativo Robusto
+
+y(t)  c p x(t),
+
+A estratégia de controle utilizada nesta seção consiste
+da adaptação de uma lei de controle proporcional com
+feedforward a qual é adicionado um termo robusto dependente da adaptação. A fim de compensar o efeito
+de perturbações constantes, a adaptação paramétrica
+adotada possui um termo integral devido a um parâmetro constante incluído no vetor regressor. Já o
+termo de realimentação robusta, cujo efeito é atenuar
+a incerteza, atua principalmente durante o transiente,
+permitindo que o ganho proporcional ao erro seja elevado até certo ponto, conforme será discutido a frente,
+sem causar oscilações na ação de controle (Zhong and
+Yao, 2008).
+No tocante  comparação com a referência utilizada para este projeto_de_controle (Zhong and Yao,
+2008), os modelos utilizados para representar a dinâmica do sistema de nanoposicionamento são distintos.
+
+(11)
+
+em que x(t) é a variável de estado que representa a tensão medida que é proporcional ao deslocamento (adotando c p  1 tem-se y(t)  x(t)), ku é a inclinação da
+curva de histerese, u é o sinal de controle, dg (t) representa a discrepância entre a função linear ku u(t) e
+o efeito real da histerese que é limitado pela máxima
+medida da diferença entre as excursões de subida e
+descida no experimento cuja amplitude é utilizada na
+faixa de operação (1 V pico a pico).
+A partir da equação (10) e do modelo do sistema
+sem atraso adotando para a histerese um modelo_linear
+com um termo de discrepância dg (t) da equação (11),
+é possível definir o vetor regressor  . O valor inicial
+dos parâmetros a serem adaptados é escolhido a partir dos valores encontrados em (3). Dessa maneira, o
+vetor regressor ( ) e os valores iniciais para a estimação dos parâmetros (0T ), calculados com parâmetros
+
+2782
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+nominais do sistema, são dados por
+
+
+ T  y yd 1 ,
+h a
+i
+p
+0T  c p ku b p c p k1u b p 1ku .
+
+A arquitetura do controlador_adaptativo robusto é
+desenvolvida como segue, com base no na dinâmica
+do erro de rastreamento dada por
+e  c p ku b p  T   c p ku b p u + c p ku b p  .
+
+(12)
+
+Reescrevendo a lei de controle em função do vetor
+regressor e dos parâmetros estimados, a dinâmica do
+erro obtida é
+
+Em adição a esse desenvolvimento, um termo robusto (vs ) dependente do método de adaptação adotado também é considerado. A lei de controle proposta
+é definida por
+
+e  c p ku b p  T  + c p ku b p ( T   K1 e + vs )
++ c p ku b p .
+(20)
+
+u  K1 e + a p (c p ku b p )1 y + (c p ku b p )1 yd + vs ,
+
+Reorganizando a expressão anterior em termos do
+erro de estimação, tem-se
+
+que pode ser reorganizada como
+u   T   K1 e + vs ,
+
+(13)
+
+e  c p ku b p  T  c p ku b p K1 e+c p ku b p vs +c p ku b p  .
+(21)
+Diante da lei de controle expressa em (13), duas
+condições devem ser obedecidas
+
+em que vs é a parcela de controle_robusto e  é o vetor de parâmetros estimados. Os efeitos de parâmetros
+desconhecidos e distúrbios limitados de variação lenta
+são compensados pela estratégia de controle_adaptativo_robusto. Utiliza-se a projeção descontínua baseada no método de estimação_de_parâmetros em tempo
+real, como ferramenta para a realização da adaptação
+(Yao, 1997). A dinâmica do sistema é expressa por
+y(t)  a p y(t) + b p c p (ku u(t) + dg (t)) ,
+
+(C1) e  T  + vs    ,
+(C2) e vs  0 ,
+
+
+
+(14)
+
+(15)
+
+
+
+      kk   ,
+
+vs  
+
+são satisfeitas para min , max e  conhecidos.
+Considerando a estimativa de  , ou seja  , então o
+erro de estimação é      . O parâmetro estimado
+ é atualizado segundo a lei de adaptação paramétrica
+
+  Pro j ( e ) ,
+
+1 2
+h e,
+4
+
+(23)
+
+em que h deve satisfazer
+h  kmax  min k k k +  ,
+
+(24)
+
+que é satisfeita pelo parâmetro de projeto hc  1 e
+p
+h  hc (kmax  min k k k +  ) .
+(25)
+
+(16)
+
+na qual  é a matriz positiva definida simétrica da taxa
+de adaptação (assumida como diagonal neste projeto)
+e e é a função de adaptação. O operador de projeção
+é definido da maneira descrita a seguir
+
+
+
+ i  i max e i > 0
+
+
+ou
+0 , se
+Pro ji (i ) 
+.
+
+
+i  i min e i < 0
+
+
+i , nos demais casos
+(17)
+
+Tendo em vista que a função  (x,t) é o limite sud (t)
+perior da função   gku , que por sua vez depende da
+discrepância variante no tempo da relação linear adotada como modelo de histerese, basta se conhecer o
+valor máximo de dg e o valor de ku para que seja determinado um  (x,t) constante que possa ser aplicado
+na equação (24),   dgmax ku .
+O controlador desenvolvido fornece o seguinte
+desempenho
+A. Comumente, a magnitude do erro de rastreamento é limitada superiormente por
+
+Conforme apresentado em (Yao, 1997), tal projeção possui as seguintes propriedades
+
+(P1)       min <  < max ,
+(P2)  T (1 Pro j ( )  )  0 ,   .
+
+(22)
+
+na qual  é igual ao parâmetro positivo que representa
+o nível de atenuação das incertezas do modelo. Na
+condição (C2) está presente o fato de que o parâmetro vs deve ser sintetizado para dominar as incertezas
+do modelo, sejam essas de origem paramétrica ou das
+não-linearidades. Esse parâmetro garante que o nível
+de atenuação  seja atingido. A condição (C2) é imposta a fim de assegurar que vs é um termo dissipativo
+e não interfere na convergência do processo de adaptação paramétrica.
+Diversas formas específicas de vs satisfazem as
+condições impostas. Dentre essas, uma das formas
+mais simples do ponto de vista da implementação
+computacional é dada por
+
+adotando-se as definições apresentadas na equação
+d (t)
+(11). Define-se   gku , que é a discrepância variante entre a aproximação linear da histerese e o sinal
+de histerese gt (u) escalado por k1u .
+Assume-se que as incertezas_paramétricas possuem limites conhecidos tais que as desigualdades
+
+      min <  < max ,
+
+(19)
+
+e2  exp (2c p ku b p K1 t) 2 c p ku b p K1 e(0)2 +
+
++
+1  exp (2c p ku b p K1 t) . (26)
+2 c p ku b p K1
+
+(18)
+
+2783
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+A taxa de convergência exponencial é (2 c p ku b p K1 )
+epo tamanho do erro de rastreamento final (e() 
+( 2 c p ku b p K1 )) pode ser livremente ajustado pelos
+parâmetros do controlador  e b p K1 .
+B. Se após um tempo finito, somente existir incertezas_paramétricas (ex.,   0, t  t0 ), então em adição aos resultados da propriedade A, o erro de rastreamento é alcançado (ex., e  0 ao passo que t  +),
+conforme demonstrado em (Soares, 2014).
+
+Tensão em volts
+
+Tensão em volts
+
+de referência é inicialmente 200 Hz com a comutação
+posterior da frequência do sinal de referência. O uso
+da frequência inicial mais alta tem o intuito de acelerar
+a adaptação paramétrica inicial.
+
+então a lei de adaptação de parâmetros garante as
+propriedades A e B.
+
+0.1
+0
+0.1
+0.2
+0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+0.4
+
+0.6
+
+0.8
+
+Sinais de saída e de referência 50 Hz
+1.2
+1
+0.8
+0.6
+0.4
+0.2
+1
+0
+Sinal de Saída
+Sinal de Referência
+
+1
+
+0.1
+
+0.15
+
+0.2
+
+0.25
+
+Erro de rastreamento 50 Hz
+
+0.05
+
+0.1
+
+0.15
+
+0.2
+
+0.25
+
+Sinal de Controle 50 Hz
+3
+
+3
+
+2
+
+2
+
+1
+
+1
+0
+
+0.2
+
+0.4
+0.6
+0.8
+Tempo em segundos
+
+1
+
+0
+
+Sinais de saída e de referência 100 Hz
+
+0.05
+
+0.1
+
+Erro de rastreamento 100 Hz
+0.1
+0
+0.1
+0.2
+0
+
+0.05
+
+0.1
+0.15
+0.2
+Tempo em segundos
+
+0.25
+
+Sinais de saída e de referência 200 Hz
+1.2
+1
+0.8
+0.6
+0.4
+0.2
+0.15
+0
+Sinal de Saída
+Sinal de Referência
+0.1
+
+0.01
+
+0.02
+
+0.03
+
+0.04
+
+0.05
+
+Erro de rastreamento 200 Hz
+
+0
+0.05
+
+0.1
+
+0.15
+
+0.1
+0
+
+0.01
+
+Sinal de Controle 100 Hz
+3
+2
+1
+0
+
+0.05
+0.1
+Tempo em segundos
+
+0.02
+
+0.03
+
+0.04
+
+0.05
+
+Sinal de Controle 200 Hz
+
+0.15
+
+Parâmetros do BMRAC para a referência de 10 Hz
+2.1
+
+2.5
+2
+1.5
+1
+0.5
+0
+
+0.01
+
+0.02
+0.03
+0.04
+Tempo em segundos
+
+0.05
+
+Parâmetros do BMRAC para a referência de 50 Hz
+
+1
+
+2.2
+2
+0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+1
+
+2
+0
+
+3
+
+2
+
+3
+
+3
+
+3
+
+0.2
+
+0.3
+0.2
+0.1
+0
+0.1
+0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+1
+
+2.15
+2.1
+2.05
+2
+1.95
+0
+
+2
+
+0.25
+
+0.1
+
+0.15
+
+0.2
+
+0.25
+
+0.4
+0.6
+0.8
+Tempo em segundos
+
+0.1
+0.15
+0.2
+Tempo em segundos
+
+0.25
+
+0.05
+
+1
+
+0.3
+0.2
+0.1
+0
+0
+
+0.05
+
+2
+0.1
+
+0.15
+
+0
+
+0.01
+
+0.02
+
+0.03
+
+0.04
+
+0.05
+
+0.15
+
+1.3
+1.2
+1.1
+1
+0.9
+0
+
+0.01
+
+0.02
+
+0.03
+
+0.04
+
+0.05
+
+0.15
+
+0.2
+0.1
+0
+0.1
+0
+
+0.01
+
+0.02
+0.03
+0.04
+Tempo em segundos
+
+0.05
+
+3
+
+x 10
+
+2
+
+0.3
+0.2
+0.1
+0
+0
+
+Parâmetros do BMRAC para a referência de 200 Hz
+2.2
+2.1
+
+0.05
+
+x 10
+
+0
+
+3
+
+0.2
+
+0
+
+3
+
+e
+
+0.15
+
+1
+
+Parâmetros do BMRAC para a referência de 100 Hz
+
+e   e
+e  y  yd
+vs   41 h2 e
+
+h  hc (kmax  min k k k +  )
+
+0.1
+
+x 10
+
+2
+
+2
+
+3
+
+0.05
+3
+
+x 10
+
+0
+
+Tabela 4 Descrição do controlador_adaptativo.
+u   T   K1 e + vs
+   y yd 1 
+  Pro j (  )
+
+5.2
+
+0.05
+
+Figura 6 Resultados experimentais para referências
+senoidais com comutação da frequência, com 1 V de
+amplitude e 10, 50, 100 e 200 Hz de frequência.
+
+Tabela 3 Parâmetros do controlador_adaptativo.
+Parâmetros
+Valores
+
+diag0, 5  103  0, 01 1  103 
+K1
+6,5
+hc
+8
+0
+ 2 3  103 0, 3 T
+min
+ 0 5  105 1 T
+max
+ 5 5  102 1 T
+
+8  108
+
+2
+ku
+0,37
+dgmax (t)
+0,32
+
+
+
+0.1
+0
+0.1
+0.2
+0
+
+Sinal de Controle 10 Hz
+
+1.2
+1
+0.8
+0.6
+0.4
+0.2
+0
+
+Tensão em volts
+
+Tensão em volts
+
+Tensão em volts
+
+Mais detalhes sobre as provas de convergência e
+estabilidade são apresentados em (Soares, 2014).
+A sintonia dos ganhos de adaptação e dos demais
+parâmetros do controlador_adaptativo robusto é realizada por meio de aproximações sucessivas. Inicialmente, a sintonia é realizada por simulações com o sistema identificado e, posteriormente, reajustada de maneira fina por meio dos experimentos. Os parâmetros
+que são utilizados pelo controlador_adaptativo robusto
+são apresentados na Tabela 3. A Tabela 4 apresenta
+resumidamente as equações da estratégia de controle
+desenvolvida nesta seção.
+
+0.2
+
+Erro de rastreamento 10 Hz
+
+Tensão em volts
+
+Teorema 1 Se a função de adaptação em (16) é escolhida como
+e   e ,
+(27)
+
+Sinais de saída e de referência 10 Hz
+1.2
+1
+0.8
+0.6
+0.4
+0.2
+0
+
+0.05
+
+0.1
+
+0.05
+0.1
+Tempo em segundos
+
+Figura 7 Resultados experimentais dos parâmetros
+adaptados para referências senoidais com comutação
+da frequência, com 1 V de amplitude e 10, 50, 100 e
+200 Hz de frequência.
+
+Resultados Experimentais
+
+Resultados experimentais são apresentados nas Figuras 6 e 7. Nestes experimentos, a frequência do sinal
+
+2784
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+6 Avaliação dos Erros de Rastreamento
+
+Aguirre, L. A. (2007). Introdução  Identificação de Sistemas - Técnicas Lineares e Não-Lineares Aplicadas a
+Sistemas Reais, Editora UFMG.
+
+A fim de avaliar o desempenho de forma mais consistente e quantitativa, três métricas do erro percentual
+(e (t)  e(t)VPP (yd )) são consideradas
+s
+L2 
+
+(1T f )
+
+Z Tf
+
+e (t)2 dt
+
+t
+
+max
+
+T f 2T tT f
+
+(28)
+
+0
+
+eM  max e (t)
+eF 
+
+Albuquerque, I. F., Soares, A. S., Cunha, J. P. V. S. and Hsu,
+L. (2010). Controle adaptativo robusto de nanoposicionadores piezoelétricos com dinâmica de fase nãomínima, Anais do XVIII Congresso Brasileiro de Automática, Bonito  MS, pp. 35003507.
+
+e (t),
+
+Devasia, S., Eleftheriou, E. and Moheimani, S. O. R. (2007).
+A survey of control issues in nanopositioning, IEEE
+Control Systems Technology 15(5) 802823.
+
+(29)
+(30)
+
+Esbrook, A., Guibord, M., Tan, X. and Khalil, H. K. (2010).
+Control of systems with hysteresis via servocompensation and its application to nanopositioning, Proc. American Control Conf., Vol. 2, pp. 65316536.
+
+em que T f é o tempo final do experimento, e(t) é o erro
+de rastreamento, t é o tempo corrente do experimento
+em segundos e T é o período do sinal de referência
+senoidal. Os resultados obtidos para cada controlador com a métrica L2, denominada indicador de erro
+médio, a métrica eM , denominada indicador de erro
+máximo e a métrica eF denominada indicador de erro
+final, são apresentados na Tabela 5. Percebe-se que o
+erro final do controlador_adaptativo é bem menor que
+o do controlador PI, exceto para a frequência menor
+(10 Hz), na qual o PI tem o melhor desempenho.
+
+Hsu, L. and Costa, R. R. (1991). Unmodeled dynamics in
+adaptive_control systems revisited, Systems  Control
+Letters 16(5) 341348.
+Hsu, L. and Costa, R. R. (1994). B-mrac Global exponential
+stabilitywith a new model reference adaptive_controller based on binary control theory, Control-Theory and
+Advanced Technology 10(4) 649668.
+Ismail, M., Ikhouane, F. and Rodellar, J. (2009). The hysteresis bouc-wen model, a survey, Arch Comput Methods
+Eng 16 161188.
+
+Tabela 5 Indicadores do erro de rastreamento.
+Controlador PI
+f (Hz)
+10
+50
+100
+200
+L2
+0, 65
+2, 97
+6, 00 12, 66
+eM
+14, 74 14, 31 14, 47 19, 57
+eF
+1, 09
+4, 39
+8, 73 19, 28
+Controlador Adaptativo
+f (Hz)
+10
+50
+100
+200
+L2
+0, 72
+1, 07
+0, 94
+1, 93
+eM
+4, 53
+4, 05
+3, 20 12, 77
+eF
+1, 50
+1, 59
+1, 85
+0, 89
+7
+
+Ljung, L. (1987). System Identification theory for the user,
+Prentice-Hall.
+Moheimani, S. O. R. and Eleftheriou, E. (2013). Dynamics
+and control of micro-and nanosnano systems, IEEE
+Control Systems Magazine 33(6) 4245.
+Ogata, K. (2003). Engenharia de Controle Moderno, 4 edn,
+Person Education do Brasil.
+Soares, A. S. (2014). Modelagem e controle de alto_desempenho de um nanoposicionador, Masters thesis, Programa de Engenharia Elétrica, COPPE-UFRJ.
+The Math Works Inc. (2010). MATLAB for Windows Users
+Guide.
+Tuma, T., A., S., Lygeros, J. and Pantazi, A. (2013). The four
+pillars of nanopositioning for scanning probe microscopy, IEEE Control Systems Magazine 33(6) 6885.
+
+Conclusões
+
+Neste trabalho foi descrita a modelagem das partes
+linear e não-linear (creep e histerese) de um sistema
+piezoatuado, tendo-se em vista o desenvolvimento de
+controladores de posição.
+Também foram implementadas e avaliadas duas
+estratégias de controle para o posicionamento preciso
+e rápido desse atuador PI e adaptativo robusto. A lei
+de controle_adaptativo obtém o melhor desempenho
+em alta_frequência (50 Hz a 200 Hz), embora a lei de
+controle PI, mais simples, resultou num bom desempenho em baixa frequência (10Hz).
+
+Yao, B. (1997). High performance adaptive robust control
+of nonlinear_systems a general framework and new
+schemes, Proc. 36th IEEE Conf. Decision and Control,
+Vol. 3, pp. 24892494.
+Zhong, J. and Yao, B. (2008). Adaptive robust precision motion control of a piezoelectric positioning stage, IEEE
+Trans. Control Systems Technology 16 10391046.
+Zhou, J., Wen, C. and Li, T. (2012). Adaptive output feedback control of uncertain nonlinear_systems with hysteresis nonlinearity, IEEE Trans. Automatic Control
+57(10) 2627  2633.
+
+Agradecimentos
+Este trabalho foi parcialmente financiado pela Faperj,
+CNPq e CAPES.
+Referências
+1761987  IEEE Standard on Piezoelectricity (1987).
+
+2785

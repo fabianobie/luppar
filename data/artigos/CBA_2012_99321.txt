@@ -1,0 +1,524 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+DIREÇÃO AUTÔNOMA DE UM VEÍCULO BASEADA EM VISÃO COMPUTACIONAL
+VIVACQUA, RAFAEL P. D., MARTINS, FELIPE N.
+NERA  Núcleo de Estudos em Robótica e Automação,
+Instituto Federal de Educação, Ciência e Tecnologia do Espírito Santo  Campus Serra
+Rod. ES-010, km 6,5, Manguinhos, Serra, ES - 29173-087
+E-mails rafsat@ifes.edu.br, felipemartins@ifes.edu.br
+
+VASSALLO, RAQUEL F.
+LAI - Laboratório de Automação Inteligente,
+Depto. de Engenharia Elétrica, Universidade Federal do Espírito Santo  Campus Goiabeiras
+Av. Fernando Ferrari, 514, Goiabeiras, Vitória, ES - 29075-910
+E-mails raquel@ele.ufes.br
+Abstract This paper presents the design and experimental tests of a computer_vision system developed to guide a robotic car
+through a paved road at a fixed speed. The system detects the road tracks with good tolerance to failures and is capable of guiding the car through sharp curves. Initially, the paper presents the proposed image processing technique used to track the road and
+explains the procedure for reconstructing the road model. Then, it shows how the model is used to represent the road and how it
+is updated based on the vision system information. Finally, the paper presents experimental results obtained in a real self-driving
+car (direction control) that uses the proposed system.
+Keywords Autonomous vehicle, lane tracker, machine vision, image process
+Resumo Este artigo apresenta um sistema visão_computacional projetado para guiar um carro robótico por uma estrada pavimentada dirigindo com velocidade fixa. O sistema utiliza as faixas de sinalização horizontal para se localizar e tem boa tolerância a falhas na sinalização e curvas acentuadas. Inicialmente é apresentada a técnica de processamento_de_imagem rápida usada
+para localização das faixas de sinalização e o procedimento para reconstruí-las, quando necessário, de forma robusta. Na sequência é descrito o modelo utilizado para representar a estrada e o modo como é atualizado baseando-se nas informações do
+sistema de visão. Por último, o artigo apresenta resultados dos testes feitos com um carro protótipo dirigindo de forma autônoma
+(controle_de_direção) usando apenas a informação do modelo interno como guia.
+Palavras-chave 
+
+1
+
+Introdução
+
+A tarefa de dirigir um carro de forma autônoma é
+certamente um dos maiores desafios da automação
+moderna. Por um lado já existe uma consolidada tecnologia de pilotagem automática operando em aviões
+e navios, enquanto para automóveis e caminhões esta
+tecnologia está apenas começando. No seu extremo
+de desenvolvimento, a direção autônoma deve ser
+capaz de conduzir de forma completamente automática um veículo do endereço A ao B com a mesma
+segurança de um experiente motorista humano. Nessas condições, o usuário torna-se apenas um passageiro.
+O requisito fundamental de um sistema de direção autônoma é a capacidade de se localizar dentro
+da via de transporte e manter-se dirigindo no centro
+da mesma. Para isso é necessário o mapeamento do
+ambiente ao redor usando as informações geradas
+pelos sensores instalados no carro, tais como câmera,
+sensor de varredura LASER, GPS e unidade inercial.
+Projetos como (Nashman, 1992), (Schneiderman,
+1994), (Pomerleau, 1996), (Broggi, 1999), e (Lu,
+2002) usam exclusivamente as informações geradas
+ISBN 978-85-8001-069-5
+
+por uma câmera monocromática para detectar a posição da estrada e estimar sua curvatura. Em (Chrisman, 1988) e (Sales, 2010) a imagem colorida de
+uma câmera foi usada para classificar as regiões pertencentes  estrada ou não. Esta ideia também foi
+aplicada em (Dahlkamp, 2006) de forma a estender o
+alcance de percepção do veículo autônomo para além
+do alcance dos sensores LASER (laser range finder 
+LRF). Um sistema binocular de visão foi usado em
+(Broggi, 2010) e (Lima, 2010) para detecção de obstáculos. Os sistemas de visão estéreo permitem que a
+informação de profundidade seja calculada, mas
+apresentam o inconveniente de serem computacionalmente pesados e normalmente necessitam de um
+computador exclusivo para essa tarefa.
+A competição de veículos robóticos DARPA
+2005 (Gibbs, (2005) Acesso em nov2011), que
+constitui um marco na evolução dos veículos_autônomos, revelou o grande potencial do sensor LRF.
+Esse tipo de sensor funciona como um radar de alta
+resolução e mede diretamente a distância até os objetos ao seu redor (considerando a versão de múltiplos
+feixes) e, portanto, a tarefa de detecção de obstáculos
+fica bastante simplificada. Os cinco primeiros colocados na competição usavam esse tipo de sensor.
+Projetos como (Guizzo, Acesso em nov2011) e
+1430
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+(Autonomos LABS, Acesso em fev2012) usam o
+sensor LRF em conjunto com câmeras, GPS, IMU e
+informação de mapas para levar a direção autônoma a
+um nível sem precedentes. Missões de navegação
+autônoma em ambiente urbano real já foram completadas com sucesso por ambas.
+No Brasil este campo de pesquisa esta começando a se desenvolver e podemos destacar algum projetos que já foram desenvolvidos Driving 4 You, desenvolvido na UNIFEI (Veermas et al., 2010),
+CADU desenvolvido na UFMG (Lima, 2010),
+VERO, desenvolvido no CTICampinas (Vero,
+2012), SENA (Sistema Embarcado para Navegação
+Autônoma) (Sena, 2012) desenvolvido na EESCUSP
+e CARINA (Carro Robótico Inteligente para Navegação Autônoma) (Carina, 2010), desenvolvido no
+ICMCUSP.
+O presente trabalho propõe uma abordagem baseada em visão_computacional onde os requisitos
+mínimos de informação e comportamento foram inspirados no modo humano de dirigir. Suas principais
+contribuições são a proposta de uma técnica para
+detecção de faixas de rolamento e atualização do
+modelo de estrada e a demonstração experimental da
+viabilidade do sistema, através de testes em um veículo convencional adaptado. Na Seção 2 é apresentado o sistema de visão_computacional desenvolvido
+para localizar as faixas de sinalização. A Seção 3
+descreve como essa informação é usada para atualizar o estado do modelo interno de estrada que foi
+adotado. A Seção 4 apresenta os resultados obtidos
+em testes feitos com o sistema controlando um veículo protótipo.
+
+nar suas medidas principais. O algoritmo se baseia na
+diferença de intensidade entre a faixa (mais clara) e o
+asfalto (mais escuro). Cada região encontrada (aglomerado de 8 pixels conectados) é transformada numa
+estrutura chamada fragmento, que representa sua
+linha média (Figura 2-C). Por operar em todos os
+pixels dentro do campo de imagem, o algoritmo foi
+desenvolvido procurando ser computacionalmente o
+mais leve possível para não comprometer o tempo de
+processamento. Optou-se, então, por um sistema de
+visão monocular monocromático.
+Em testes preliminares percebeu-se que a transformação normal de RGB para monocromática não apresentou bons resultados no caso de faixas de cor laranja (muito comuns em estradas brasileiras). Para contornar esse problema, na conversão adotada procurou-se destacar a cor laranja mantendo-se alta a velocidade de conversão. O algoritmo proposto calcula o
+valor de intensidade como sendo a média das duas
+componentes de cor mais intensas da cor laranja
+(vermelha - R e verde - G). Pela sua simplicidade,
+este cálculo, descrito pela equação (1), é mais rápido
+do que a própria conversão padrão RGB para monocromático.
+(1)
+V  0,5R  0,5G
+A Figura 1 apresenta o resultado comparativo dos
+dois tipos de conversão. Com a conversão proposta, o
+nível de intensidade da região laranja aumentou em
+9 e isso contribuiu para melhorar a capacidade de
+detecção desse tipo de faixa.
+
+2 Sistema de visão_computacional
+O sistema de visão_computacional funciona como os olhos do carro e compõe o sistema principal de
+sensoriamento capaz de gerar informação suficiente
+para o carro se manter na estrada de forma autônoma.
+As imagens (Figura 1-A) fornecidas ao sistema de
+visão são geradas por uma câmera montada sobre o
+espelho retrovisor do veículo e alinhada para frente.
+Estas imagens são processadas na taxa de 25 fps com
+o objetivo de identificar e localizar as duas faixas
+laterais que delimitam a estrada. Este processamento
+é dividido em três etapas
+ Detecção dos pixels pertencentes s faixas e
+construção dos fragmentos
+ Projeção perspectiva inversa dos fragmentos e
+ Construção da melhor representação.
+2.1 Detecção dos pixels pertencentes s faixas e
+construção dos fragmentos
+Esta etapa de processamento tem o objetivo de encontrar na imagem as regiões de maior probabilidade
+de pertencerem a uma faixa de sinalização e determi-
+
+ISBN 978-85-8001-069-5
+
+Figura 1. Transformação para monocromático (A) imagem original (B) conversão padrão (C) conversão proposta, com ênfase na
+cor laranja.
+
+Após a conversão para monocromático é feita a classificação dos pixels mais prováveis de pertencerem a
+uma faixa. A ideia adotada é que toda faixa de sinalização é caracterizada por ser uma região clara cercada lateralmente por uma região mais escura (Broggi,
+1999). Um pixel é marcado como pertencente a uma
+1431
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+faixa se ambas as diferenças de intensidade entre ele
+e seus dois vizinhos de interesse (esquerdo e direito)
+for maior que um valor de limiar. A distância horizontal que define os vizinhos de interesse é aproximadamente igual  largura de uma faixa padrão, sendo maior na região próxima e diminuindo em direção
+ao ponto de fuga.
+O resultado desse processamento (Figura 2-B) é uma
+imagem binária onde os fragmentos de faixas aparecem como regiões claras de pixels conectados. Cada
+região tem a sua linha média calculada e a informação armazenada em um vetor de pontos (x, y), chamado de fragmento. O resultado desse processo esta
+apresentado na Figura 2-C.
+
+restante é descartado. Cada região de validação está
+centralizada com a posição esperada das faixas, mantida na memória (detalhado na Seção 3). Esta restrição não admite que haja uma mudança brusca da
+informação de vídeo entre frames consecutivos.
+
+2.2 Projeção perspectiva inversa
+Cada fragmento é mapeado ponto-a-ponto usando
+Projeção Perspectiva Inversa (PPI), como se a imagem fosse vista do céu (birds eye view) e o resultado
+é convertido em um polinômio de 2 grau. O mapeamento considera que a estrada é plana e tem alcance
+limitado em 25 metros por questão de resolução ótica.
+Figura 3. Visão da perspectiva inversa e regiões de validação em
+cinza.
+
+2.3 Construção da melhor representação
+
+Figura 2. Construção dos fragmentos de faixa (A) Imagem monocromática (B) Pixels classificados (C) Fragmentos de faixa (esqueleto)
+
+Diferente de (Broggi, 1999) onde primeiro é feita a
+projeção PPI da imagem monocromática e em seguida a extração das features, aqui utiliza-se a ordem
+inversa, o que apresenta a vantagem de reduzir a
+quantidade de dados a serem processados.
+A Figura 3 apresenta a janela de visão perspectiva
+inversa correspondente aos dados da Figura 2C.
+Existem duas regiões de validação (em cinza), uma
+para cada faixa lateral. Apenas os fragmentos que
+caem dentro dessas regiões são considerados úteis, o
+ISBN 978-85-8001-069-5
+
+Uma vez que se tem os dois conjuntos de fragmentos
+projetados (um para cada faixa) é feita a conexão
+desses fragmentos e selecionada a combinação que
+tem a maior probabilidade de melhor representar as
+faixas presentes na estrada. Dois fragmentos só podem ser conectados se todas as seguintes condições
+forem satisfeitas
+ Não haja sobreposição entre eles
+ O menor fragmento tenha um tamanho maior que um mínimo determinado
+ A distância entre os fragmentos (z) seja
+menor que soma de seus comprimentos
+ A diferença angular entre suas extremidades
+seja menor que 10 e
+ O teste de alinhamento esquematizado na
+Figura 4 seja atendido.
+No teste de alinhamento os fragmentos são prolongados até a linha de projeção Zp localizada proporcionalmente mais próximo do fragmento mais curto. Se
+a distância horizontal entre os pontos de interseção
+() for menor que um valor de limiar, a conexão é
+estabelecida. Após o estabelecimento de todas as
+conexões possíveis, os caminhos resultantes são verificados e um valor de qualidade (Q) é atribuído a
+cada um. A qualidade de cada caminho é calculada
+de forma proporcional ao seu comprimento e ao grau
+
+1432
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+de centralização dentro das regiões de validação (posição esperada). A qualidade Q é determinada como
+n
+
+Q
+i 1
+
+Li
+(1 
+
+xi
+x
+
+)(1 
+
+ i
+
+
+)
+
+,
+
+(2)
+
+onde
+n é o número de fragmentos
+Li é o comprimento do i-ésimo fragmento
+xi representa o desvio horizontal
+i é a diferença angular
+x é a sensibilidade do desvio horizontal e
+ é a sensibilidade do desvio angular.
+
+x( z )  a2 z 2  a1z  a0 ,
+
+(3)
+
+que armazena de forma compacta as características
+geométricas fundamentais da curva real. Na Equação
+3, x representa a coordenada transversal, z a longitudinal (Figura 3), e os parâmetros a2, a1 e a0 definem a
+forma dessa linha (cujo cálculo é descrito na Seção
+3.2). Portanto, oito variáveis descrevem o estado do
+modelo.
+A medida de largura é gerada a partir da distância
+entre as linhas guias, avaliada junto ao carro. Caso
+apenas uma faixa seja detectada, a largura gradativamente converge para o valor padrão de 3,50m.
+A medida de confiabilidade é gerada a partir da qualidade das medidas feitas pelo sistema de visão. Nos
+momentos em que o sistema de visão gera um fluxo
+de medidas de alta qualidade, a confiabilidade aumenta. Caso contrário, a confiabilidade diminui. A
+confiabilidade é o indicador fundamental utilizado
+para determinar a velocidade máxima permitida para
+o carro. Se a confiabilidade cair abaixo de um valor
+mínimo, um alarme soa indicando ao motorista que
+ele deve reassumir a direção.
+3.2 Atualização do modelo
+
+Figura 4. Teste de alinhamento entre dois fragmentos (A) Conexão estabelecida ( < min) (B) Conexão não estabelecida ( >
+min).
+
+As constantes x e  definem a intensidade com que
+um fragmento é penalizado ao se afastar do centro da
+região de validação. Seus valores foram arbitrados
+em 0,50m e 20 respectivamente. Os caminhos, esquerdo e direito, que apresentarem os maiores valores de qualidade são eleitos como melhor representação de cada faixa e considerados como medida instantânea da posição das faixas.
+3 Modelo de estrada
+O modelo de estrada é responsável por manter o estado atual da estrada, ou seja, a posição onde o carro
+acredita que a estrada está em relação a ele. Este modelo incorpora as características geométricas fundamentais da estrada (desvio lateral, direção e curvatura) e muda de estado de acordo com a informação
+recebida do sistema de visão.
+3.1 Detalhes do modelo
+O modelo elaborado contém duas linhas guias para
+representarem as faixas laterais, uma medida de largura (W) e uma medida de confiabilidade (Cnf). Cada
+linha guia é descrita por um polinômio do 2 grau da
+forma
+
+ISBN 978-85-8001-069-5
+
+A atualização das oito variáveis que compõem o modelo é feita por um banco de filtros passa-baixas IIR
+(Infinite Impulse Response) de 1 ordem, cada um
+com valor de constante de tempo (kj) adequada  sua
+dinâmica. A expressão do filtro é dada por (4) com j
+variando de 1 a 8.
+(4)
+1
+1
+pi , j  (1  ) pi 1, j  ui , j ,
+
+kj
+
+kj
+
+onde ui,j corresponde ao valor da entrada j fornecido
+pelo sistema de visão no instante i e pi,j é o valor de
+saída atribuído a cada parâmetro do modelo (a2e, a1e,
+a0e, a2d, a1d, a0d, W, Cnf). Os sub-índices e e d referem-se aos polinômios que caracterizam as linhas
+esquerda e direita da estrada, respectivamente.
+A ação passa-baixas ameniza o efeito das esporádicas
+medidas errôneas e permite que o modelo acompanhe
+suavemente a tendência das medidas. Os valores de kj
+foram inicialmente arbitrados com base nas seguintes
+considerações
+ A largura de uma estrada varia de forma
+bem mais lenta do que as mudanças de direção devido a curvas
+ A direção (a1) e a curvatura (a2) variam de
+forma mais lenta que a mudança de offset
+(a0) e
+ Quando o sistema de visão não captar nenhuma faixa durante 1,5 segundo, a confiabilidade deve cair para um terço.
+Os valores exatos são mostrados na Tabela 1 e foram
+determinados experimentalmente até que um equilíbrio entre robustez (imunidade a ruído) e velocidade
+de resposta fosse alcançado.
+
+1433
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Tabela 1. Valores ajustados para o banco de filtros.
+Variável
+a2
+a1
+a0
+L
+Cnf
+
+Valor de k
+6
+6
+2
+100
+34
+
+Representa
+Curvatura
+Direção
+Offset lateral
+Largura da pista
+Confiabilidade
+
+4 Resultados
+
+4.2 Direção semi-autônoma
+Na segunda etapa de testes, foi montada sobre o volante do carro uma vareta indicadora de direção acionada por servomotor (Figura 6), com a função de
+apontar a posição que o motorista deve posicionar o
+volante. Neste teste, o sistema de visão localiza a
+posição da estrada, calcula o ângulo de direção de
+forma proporcional ao offset lateral do carro em relação ao centro e envia ao dispositivo indicador. O
+motorista deve apenas mover o volante de modo a
+seguir a indicação.
+
+Os testes do sistema de visão foram feitos em
+três etapas (A) Processando um vídeo gravado (B)
+Testes de direção semi-autônoma (C) Teste de direção autônoma. O tempo total gasto para processar
+cada quadro foi de 5 ms em um notebook com processador Intel Celeron 32 bits de 1,86 GHz.
+4.1 Processando vídeo gravado
+O programa foi inicialmente testado usando uma
+série de vídeos gravados pela câmera do carro em
+trechos de 200m, na velocidade de 60kmh e condições de sinalização e curvatura variadas. Estes vídeos
+foram usados para ajustar experimentalmente o valor
+do banco de filtros até que o modelo fosse capaz de
+acompanhar com sucesso os trechos gravados.
+
+Figura 6. Indicador de direção.
+
+O ângulo de indicação é enviado via porta USB para
+o microcontrolador responsável pelo controle do servomotor. Os resultados positivos obtidos após mais
+de 100km de testes, realizados em condições de sinalização e iluminação variadas, serviram de preparação para o teste de direção autônoma. Um trecho
+deste teste pode ser visto em (Teste semi-autônomo,
+Acesso em abr2012)
+4.2 Direção Autônoma
+Na última etapa de testes, o servomotor foi substituído por um dispositivo eletro-mecânico acoplado diretamente ao volante (Figura 7). Neste trabalho, direção autônoma refere-se ao controle_automático da
+direção (ângulo de giro do volante).
+
+Figura 5. Teste processando vídeo (A) Imagem da câmera (B)
+Localização da estrada.
+
+A Figura 5 mostra o sistema operando com sucesso
+num trecho de vídeo onde o raio de curvatura da estrada é de apenas 68m.
+
+ISBN 978-85-8001-069-5
+
+Figura 7. Dispositivo eletromecânico de movimentação do volante.
+
+Os primeiros testes de pilotagem autônoma foram
+realizados em uma estrada do interior do ES, bem
+sinalizada, em horários de baixo tráfego de veículos.
+Foram selecionados trechos e agrupados de acordo
+com a curvatura. Nos trechos retos (total de 15km) o
+
+1434
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+carro se manteve perfeitamente centralizado na pista,
+não havendo nenhuma falha. O desempenho nas curvas foi medido como sendo o percentual de curvas
+completadas com sucesso, num total de 30. Os testes
+foram feitos em duas velocidades e o resultado é
+apresentado na Tabela 2.
+Tabela 2. Percentual de sucesso em modo autônomo.
+Tipo
+
+40kmh
+
+Trecho reto
+200m<R<400m
+100m<R<200m
+
+100,0
+100,0
+70,0
+
+60kmh
+100,0
+73,3
+16,6
+
+Em outro teste, foi verificada a capacidade do sistema dirigir continuamente em modo autônomo. O
+melhor resultado foi 3,8km a 40kmh por um trecho
+incluindo retas e diversas curvas. Este teste pode ser
+visto em (Teste autônomo, Acesso em abr2012)
+5 Conclusão e trabalhos futuros
+O sistema de visão_computacional monocular monocromática desenvolvido mostrou-se computacionalmente rápido e capaz de gerar informação de localização com qualidade suficiente para manter um carro
+dirigindo em modo autônomo continuamente em trechos retos de estrada com velocidade de até 60 kmh.
+Em condições de curvatura média o sistema foi capaz
+de realizar com sucesso todas as curvas na velocidade de 40 kmh. Porém, a 60 kmh o sistema encontrou
+certa dificuldade. Estas dificuldades ficaram ainda
+mais evidentes nos testes em curvas acentuadas, o
+que era de se esperar.
+A dificuldade do sistema em acompanhar curvas
+acentuadas em velocidades mais altas, deve-se em
+parte,  estratégia de controle adotada, onde a regra
+de controle considera o veículo operando com velocidade fixa de 50 kmh. Como trabalho futuro, está
+sendo estudada uma nova abordagem de controle que
+se adapte  velocidade do carro (medida com um
+encoder) e permita que a trajetória da estrada seja
+acompanhada com maior taxa de sucesso numa faixa
+maior de velocidades.
+Referências Bibliográficas
+Autonomos LABS. MadeInGermany drives through
+Berlins traffic in the city center. Acesso em fev2012.
+Disponível
+em
+httpwww.autonomos.inf.fuberlin.de
+Broggi, A Bertozzi, M Bianco, A. F. C. G Piazzi, A
+(1999). The Argo Autonomous Vehicles Vision and
+Control Systems. International Journal of Intelligent
+Control and Systems, Vol. 3, No. 4, pp. 409-441.
+Broggi, A Cappalunga, A Caraffi, C Cattani, F Ghidoni,
+S Grisleri, P Porta, P. P Posterli, M Zani, P.
+(2010) TerraMax Vision at the Urban Challenge
+2007. IEEE Transactions on Intelligent Transportation
+Systems, Vol. 11, No. 1, March 2010.
+
+ISBN 978-85-8001-069-5
+
+Carina (2010). Projeto CARINA. Acesso em jul2012.
+Disponível em httpwww.lrm.icmc.usp.brcarina
+Chrisman, J. D. and Thorpe, C. E. (1998). Color Vision for
+Road Following. Proceedings of SPIE conference on
+Mobile Robots.
+Dahlkamp, H Kaehler, A Stavens, D Thrun, S. (2006).
+Self-supervised Monocular Road Detection in Desert
+Terrain.
+Guizzo, E. (2011). How Googles Self-Driving Car Works.
+Acesso
+em
+nov2011.
+Disponível
+em
+httpspectrum.ieee.orgautomatonroboticsartificialintelligencehow-google-self-driving-car-works
+Gibbs, W. (2005). Innovations from a Robot Rally.
+Scientific American. Acesso em nov2011.
+Disponível
+em
+httpwww.scientificamerican.comarticle.cfm?idinn
+ovations-from-a-robot-2006-01scI100322
+Lima, D. A. (2010). Navegação Segura de um Carro
+Autônomo Utilizando Campos Vetoriais e o Método
+da Janela Dinâmica. Dissertação de Mestrado No.
+643, UFMG, PPGEE.
+Lu, J Yang, M Wang, H and Zhang, B. (2002). Visionbased Real-time Road Detection in Urban Traffic.
+Proceedings of SPIE, Vol. 4666.
+Nashman, M. and Schneiderman, H (1992). Real-Time
+Visual Processing for Autonomous Driving.
+Pomerleau, D. and Jochem, T. (1996). Rapidly Adapting
+Machine Vision for Automated Vehicle Steering.
+Journal IEEE Expert Intelligent Systems and Their
+Applications, Vol 11, Issue 2.
+Sales, D Shinzato, P Pessin, G Wolf, D Osório, F.
+(2010). Vision-Based Autonomous Navigation
+System Using ANN and FSM Control. Latin
+American Robotics Symposium and Intelligent
+Robotics Meeting
+Schneiderman, H. and Nashman, M. (1994). A
+Discriminating Feature Tracker for Vision-Based
+Autonomous Driving. IEEE Transactions on Robotics
+and Automation, Vol. 10, No. 6, pp. 769-775.
+Sena (2012). Projeto sena. Acesso em jan2012.
+Disponível
+em
+httpwww.eesc.usp.brsenaurlptindex.php
+Teste semi-autônomo. Acesso em abr2012. Disponível
+em
+httpwww.youtube.comwatch?vuKTMlb3tmH8
+Teste autônomo. Acesso em abr2012. Disponível em
+httpwww.youtube.comwatch?v0lQLl5wfPN0
+Veermas, L. L. G., Honório, L. M., and Vidigal, M. C. A.
+C. F. (2010). Uma metodologia para aprendizado
+supervisionado aplicada em veículos_inteligentes. In
+Congresso Brasileiro de Automática - CBA, pages 1
+6.
+Vero (2012). Projeto vero - veículo robótico. Acesso em
+jul2012.
+Disponível
+em
+httpwww.cti.gov.brindex.phpdrvc-projetosveroveiculo-robotico.html
+
+1435

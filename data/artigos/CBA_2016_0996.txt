@@ -1,0 +1,1293 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+PROJETO DE UM CONTROLADOR LONGITUDINAL PARA VEICULO
+AUTONOMO BASEADO EM SISTEMAS LINEARES SUJEITOS A SALTOS
+MARKOVIANOS
+Lucas Barbosa Marcos, Marco Henrique Terra
+
+
+Av. Trabalhador Sao-Carlense, 400
+Universidade de Sao Paulo
+Sao Carlos, Sao Paulo, Brasil
+
+Emails lucasbmarcos@usp.br, terra@sc.usp.br
+Abstract In this paper we present the modeling and control of the longitudinal dynamics of an autonomous
+truck. The controller is designed according to Markov-jump linear systems control theory. System parameters
+have been identified via gradient descent algorithm. Simulation results are presented. The performance of the
+controller is further discussed.
+Keywords
+
+Markov chain, Autonomous control, Vehicle modeling.
+
+Resumo Neste artigo apresentamos a modelagem e o controle da dinamica longitudinal de um caminhao
+autonomo. O controlador e projetado de acordo com a teoria de sistemas_lineares sujeitos a saltos Markovianos. Os parametros do sistema foram identificados por um algoritmo de gradiente_descendente. Apresentam-se
+resultados de simulacoes. O desempenho do controlador e discutido.
+Palavras-chave
+
+.
+
+Introducao
+
+O controle_autonomo de veiculos tem sido pesquisado por diversos autores devido as muitas vantagens esperadas para aumentar a seguranca da mobilidade urbana. Por exemplo, um veculo_autonomo tem potencial para diminuir acidentes e facilitar o deslocamento de idosos e pessoas com
+necessidades especiais (Wu et al., 2015), alem de
+fornecer meios de transporte mais lucrativos para
+industrias e procedimentos de transporte mais eficientes para o meio militar (Fu et al., 2015).
+Varios metodos distintos tem sido usados para
+resolver o problema do controle veicular autonomo, como controladores_fuzzy em (Shen and
+Wang, 2015), Proporcional Integral Derivativo em
+(Levinson et al., 2011) e (Dias et al., 2015), adaptativos em (Wu et al., 2015) etc.
+Neste artigo, nos propomos uma estrategia alternativa para tratar deste problema com relacao
+ao controle longitudinal de veculos_autonomos. E
+proposta uma abordagem baseada em reguladores
+robustos recursivos de sistemas_lineares sujeitos
+a saltos Markovianos (SLSM) (Terra et al., 2014).
+Descreve-se o sistema como sendo formado por diversos modos Markovianos de operacao, que estao
+relacionados com cada marcha do veculo_autonomo. Os modos variam entre si de acordo com
+probabilidades conhecidas. Os parametros dos
+respectivos modos Markovianos sao identificados
+atraves do gradiente_descendente (Ioannou and Fidan, 2006). Os dados para modelagem sao obtidos
+de um caminhao semi-reboque.
+O artigo esta organizado da seguinte maneira
+a Secao 2 mostra a modelagem longitudinal do
+automovel em espaco de estado, identificando pa-
+
+ISSN 2525-8311
+
+rametros, entradas e cada uma das variaveis de
+estado a Secao 3 apresenta o algoritmo de identificacao do sistema utilizado para obter a representacao em espaco de estado de cada modelo a Secao 4 apresenta a teoria de sistemas_lineares sujeitos a saltos Markovianos (Cerri and Terra, 2012),
+(Cerri et al., 2010b), (Cerri et al., 2010a), (Terra
+et al., 2014) a Secao 5 mostra os resultados das
+aplicacoes do metodo de identificacao e da estrategia_de_controle a Secao 6 traz as conclusoes.
+2
+
+Modelagem longitudinal do veculo
+
+Em (Kiencke and Nielsen, 2005) e feita uma deducao passo-a-passo do modelo_matematico em espaco de estado do drivetrain (a cadeia cinematica
+do veculo, ou seja, o conjunto que vai desde o
+motor ate as rodas) quando esta acelerando.
+2.1
+
+O modelo de espaco de estado
+
+O modelo de espaco de estado (1) considera a flexibilidade nos semieixos, desprezando a diferenca
+de velocidade entre os pneus do lado esquerdo e
+do lado direito
+x  Ax + Bu + Hl
+ 
+
+x1
+CS it if  w
+,
+CS
+x   x2   
+x3
+w
+
+(1)
+
+
+
+l  rstat mCoG (cr1 + gsin(road )),
+
+
+
+1i
+1
+,
+(d1 + di2 )J1
+diJ1
+diJ2
+(d + d2 )J2
+
+
+
+0
+0
+,
+0
+B   1J1  , H  
+0
+1J2
+
+0
+A   kiJ1
+kJ2
+
+
+i  it i f ,
+
+3452
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+J1  Je + Jt i2t + Jf i2t i2f ,
+d1  dt i2t + df i2t i2f ,
+
+2
+J2  Jw + mCoG rstat
+,
+
+2
+d2  dw + mCoG cr2 rstat
+,
+
+sendo que CS e o angulo do eixo de manivelas
+rad, obtido por meio da integral da velocidade
+do motor CS rads it e a relacao de transmissao correspondente a cada uma das marchas if e
+a relacao de diferencial w e o angulo das rodas
+em rad, obtido por meio da integral da velocidade das rodas w rads rstat e o raio da roda
+do veiculo m mCoG e a massa do veculo kg
+cr1 ms2  e cr2 s1  sao constantes caractersticas
+da resistencia de rolagem dos pneus do veiculo g
+e a aceleracao da gravidade ms road e a inclinacao da pista rad k e a rigidez do semieixo
+N  mrad d e o coeficiente de amortecimento do
+semieixo N  m  srad Je e a inercia do motor
+N  m2  Jt e a inercia da transmissao N  m2 , Jf
+e a inercia do diferencial N  m2  Jw e a inercia
+das rodas N  m2  dt e o amortecimento da transmissao N  m  srad, df e o amortecimento do
+diferencial N  m  srad e Dw e o amortecimento
+das rodas N  m  srad.
+A entrada u refere-se ao torque de saida do
+motor N  m.
+2.2
+
+Tabela 1 Algoritmo de identificacao via gradiente
+descendente
+Condicoes iniciais Defina
+1  T1 > 0,
+max (1 ) < 2min (1 ),
+0 e  > 0.
+Loop Para cada k-esima amostra no instante
+kT , k  1, ..., N 
+m2s (k)  1 + (k)T (k),
+m2 (k)  m2s (k) + (k)1 T (k),
+(k) 
+
+z(k)(k1)(k)
+,
+m2 (k)
+
+(k)  (k  1) + 1 (k)(k).
+
+seus parametros nao inclui um operador diferencial.
+Seja T o tempo de amostragem do sistema
+com N amostras. Como descrito em (Ioannou and
+Fidan, 2006), um algoritmo de identificacao baseado em gradiente_descendente e mostrado na Tabela 1. A identificacao do Modelo (1) sera realizada segundo o seguinte SPM
+
+Freios
+
+De acordo com (Kiencke and Nielsen, 2005), o torque de frenagem na base dos pneus e uma funcao
+da pressao de freio aplicada
+TBr  FBr rstat  rBr Br ABr pBr  rstat kbr pBr .
+(2)
+em que FBr e a forca aplicada nos freios N , rBr
+e o raio do disco de freio m, Br e o coeficiente
+de atrito nos freios, ABr e a area da superficie do
+disco de freio m2 , pBr e a pressao aplicada sobre
+o freio Nm2  e kBr e uma constante caracterstica do sistema de frenagem.
+3
+
+Metodo de identificacao
+
+Considere um modelo em espaco de estado generico
+x  Ap x + Bp u,
+(3)
+em que x  Rn e o estado, u  Rm e o vetor
+de entrada e Ap  Rnn , Bp  Rnm sao matrizes constantes desconhecidas. Suponha que x, u
+estao disponveis para medicao. Pode-se estimar
+os elementos de Ap , Bp escrevendo (3) como um
+conjunto de n equacoes_diferenciais escalares e entao gerar n modelos parametricos, que de forma
+compacta podem ser escritos como
+
+x  Ax + Bu
+
+ 
+
+x1
+A1
+x1
+b1
+ x2    A2   x2  +  b2  u,
+x3
+A3
+x3
+b3
+
+
+
+
+
+
+
+
+xi 
+
+
+
+Ai
+
+
+x1
+  x2 
+
+bi 
+ x3  , i  1, 2, 3,
+u
+
+(5)
+
+(6)
+
+em que A1 , A2 e A3 representam, respectivmante,
+a primeira, a segunda e a terceira linhas da matriz
+A. Tambem, b1 , b2 e b3 representam a primeira, a
+segunda e a terceira linhas da matriz B.
+Note que e possvel fazer uma comparacao direta entre (6) e o modelo SPM definido em (4),
+entao e possvel identificar T . Uma vez identificado o sistema em tempo contnuo, aplica-se um
+metodo de discretizacao (Chen, 2006) para encontrar o sistema discretizado.
+4
+
+Controle de sistemas_lineares sujeitos a
+saltos Markovianos
+
+(4)
+
+Considere o seguinte SLSM incerto (Cerri and
+Terra, 2012), (Cerri et al., 2010b), (Cerri et al.,
+2010a), (Terra et al., 2014)
+
+em que   Rn e um vetor com todos os parametros desconhecidos, z  R,   Rn sao sinais
+disponveis para medicao. Este e um modelo parametrico estatico (SPM), porque a correlacao entre
+
+xk+1  (Fk ,k + Fk ,k )xk + (Gk ,k + Gk ,k )uk ,
+(7)
+sendo xk  Rn o vetor de estado, uk  Rm o
+vetor de entrada de controle e Fk ,k  Rnn e
+
+z  T ,
+
+ISSN 2525-8311
+
+3453
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Gk ,k  Rnm as matrizes de parametros nominais, com k  0, 1, ..., N  1. As matrizes de
+incertezas Fk ,k  Rnn e Gk ,k  Rnm sao
+modeladas da seguinte forma
+
+Tabela 2 Algoritmo do Regulador Robusto Recursivo para SLSM
+Condicoes iniciais
+Defina x0 , 0 , P e Pi (N )  0, i  1, . . . , s.
+
+
+Fk ,k
+
+
+
+Gk ,k  Hk ,k k ,k EFk ,k
+
+
+EGk ,k
+(8)
+para todo k  0, ..., N  1, no qual Hk ,k  Rnk
+(matriz nao-nula), EFk ,k  Rln , EGk ,k  Rlm
+sao todas consideradas conhecidas e k ,k  Rkl
+e uma matriz de contracao arbitraria, kk ,k k 
+1. Ainda, k corresponde ao parametro de salto
+admitindo valores a cada instante k no conjunto
+finito   1, . . . , s. O processo k N
+k0 e modelado como um processo de Markov com matriz
+de probabilidade de transicao de estados definida
+por P  pij   Rss , com suas entradas satisfazendo
+P rob k+1  j  k  i  pij , P rob 0  i  i ,
+s
+X
+
+pij  1,
+
+Passo 1 (Para tras)
+Calcule para todo k  N  1, . . . , 0
+i,k+1 
+
+s
+X
+
+Pj,k+1 pij ,
+
+j1
+
+
+
+0
+ 
+0
+r
+
+Li,k
+0
+ r  
+Ki,k   
+
+0
+Pi,k
+
+I
+0
+
+
+T
+
+0 0
+
+0 0 
+ 
+ 
+
+0 I 
+ 
+
+bi,k 
+0F
+ 
+ 
+0 0  
+I 0
+
+1
+i,k+1
+0
+
+0
+
+0
+
+I
+
+0
+
+1
+Ri,k
+0
+
+0
+
+0
+
+0
+
+I
+
+0
+
+0
+
+0
+I
+0
+
+0
+0
+I
+
+1
+
+
+
+
+Q1
+0 0 0 
+i,k
+
+bi,k 
+0
+0 IbG
+
+
+T
+b
+0
+I
+0 0 
+T
+b 0 0
+0 G
+i,k
+
+
+0
+ 0 
+
+
+
+
+ I 
+.
+
+
+F
+ bi,k 
+
+
+ 0 
+0
+
+Passo 2 (Para frente)
+Obtenha para cada k  0, ..., N  1
+"
+ "
+
+x (k + 1)
+Lrk (k) 
+
+x (k).
+Krk (k)
+u (k)
+
+0  pij  1.
+
+j1
+
+Suponha as condicoes iniciais x0 e 0 conhecidas e xk e k observados a cada instante k.
+Em razao da natureza incerta do modelo (7)-(8),
+o projeto do regulador robusto consistira na obtencao da melhor sequencia de acoes de controle
+Ur  u0 ,    , uN 1 em contrapartida a maxima
+influencia de incertezas.
+O problema de controle_robusto e definido
+com base em um problema de minimizacao irrestrita
+Problema de Controle Robusto Para
+cada  > 0 fixado, determinar a sequencia otima
+1
+(x,k+1 , u,k )N
+k0 segundo o problema de otimizacao min-max
+
+
+min
+max
+Jk (xk+1 , uk , Fi,k , Gi,k ) ,
+
+
+N 1
+Teorema 1 A sequencia otima (xk+1 , uk ) k0
+derivada do problema de otimizacao min-max (9)(10) e dada por
+ 
+xk+1
+I
+
+  0
+uk
+0
+Jk (xk+1 , uk )
+
+
+Jk (xk+1 , uk , Fi,k , Gi,k ) 
+
+T 
+
+
+xk+1
+i,k+1
+0
+xk+1
++
+uk
+0
+Ri,k
+uk
+
+
+0
+I
+
+0
+Gi,k
+
+(12)
+com k  i   e Li,k , Ki,k e Pi,k dados por
+
+
+s
+X
+Pj,k+1 pij  ,
+(13)
+i,k+1  
+j1
+
+(10)
+
+
+ 
+ T
+I
+xk+1
+Qi,k
+xk
+
+
+Fi,k
+uk
+0
+
+ 
+0
+
+I
+(11)
+ (Gi,k + Gi,k ),
+
+j1
+
+Solucao do Problema RLQ
+
+A solucao otima robusta recursiva e estabelecida
+no resultado a seguir.
+
+ISSN 2525-8311
+
+T
+00 0
+0 0 0 
+
+
+Li,k
+
+
+Ki,k   0 0 I 
+0 0 Fi,k 
+
+
+Pi,k
+I 0 0 
+0I 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1 
+
+1
+0
+0 I 0
+i,k+1 0
+0
+1
+0 Ri,k
+0
+0 0 I 
+
+  0 
+
+
+I 
+0
+0 Q1
+0 0 0  
+i,k
+,
+ 
+
+
+
+F
+i,k 
+0
+0
+0
+0 I Gi,k 
+ 
+ 0 
+T
+
+
+I
+0
+0
+I
+0 0
+0
+0
+0
+I
+0 GT
+i,k 0
+
+(14)
+
+
+com Fi,k
+ (Fi,k + Fi,k ), Gi,k
+s
+X
+i,k+1 
+Pj,k+1 pij , Ri,k  0 e Qi,k  0.
+
+4.1
+
+T 
+
+0
+Lk ,k
+0  Kk ,k  xk ,
+xk
+Pk ,k
+
+k 0, . . . , N  1,
+
+xk+1 , uk Fi,k , Gi,k
+
+(9)
+para cada k  N  1, ..., 0 e k  i  , sendo
+Jk (xk+1 , uk , Fi,k , Gi,k ) o funcional quadratico
+regularizado penalizado incerto definido por
+
+0
+I
+0
+
+
+e (14) para todo k  N  1, . . . , 0 e os blocos I,
+Fi,k e Gi,k definidos em
+ 
+
+
+
+
+I
+Fi,k
+Gi,k
+I 
+, Fi,k 
+, Gi,k 
+.
+0
+EFi,k
+EGi,k
+(15)
+O custo total otimo e J (0 , x0 , u )  xT0 P0 ,0 x0 .
+O regulador robusto recursivo projetado para
+SLSM incertos e proposto na Tabela 2.
+5
+
+Resultados
+
+Os ensaios de captura de dados correspondem as
+voltas dadas pelo caminhao em um circuito fechado definido nas ruas do Campus II da USP
+- Sao Carlos. Para cada volta, foram gravados
+
+3454
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Note que a descricao do Modelo (1) considera
+a entrada u como sendo o torque de sada do motor. No procedimento de identificacao dos modelos, considera-se a entrada u como sendo o curso
+do pedal de aceleracao (de 0 a 100). Assim, as
+matrizes A e B encontradas na modelagem incorporam os efeitos das relacoes nao-lineares entre o
+curso do acelerador e o torque de sada do motor.
+Para a modelagem do caminhao durante a frenagem, e adotado um procedimento analogo. Por
+(2), percebe-se que a acao do pedal do freio corresponde a uma entrada de torque no veculo. Por
+consequencia, pode-se usar o Modelo (1), com a
+entrada u sendo o curso do pedal de freio (0-100)
+para descrever os modos em que o veculo esta freando, uma vez que as matrizes A e B encontradas
+na modelagem pelo modelo SPM acabam incorporando os efeitos dos parametros de frenagem.
+
+40
+
+1000
+
+20
+
+0
+0
+
+Velocidade do motor rpm
+
+Velocidade do veículo kmh
+
+Velocidade do veículo e velocidade do motor comparadas
+
+50
+
+100
+150
+Tempo (s)
+Relação de marchas
+
+200
+
+500
+250
+
+50
+
+100
+150
+Tempo (s)
+
+200
+
+250
+
+4
+it
+
+3
+2
+1
+0
+
+Figura 1 Organizacao no MATLAB dos dados
+amostrados - valores de velocidades e de relacao
+de marcha
+Utilizando estes dados para identificacao e definindo 1  1000  I (em que I e a matriz identidade) e   1, com 0 medido no instante t  0, os
+resultados encontrados para cada modo i de (1),
+xk+1  Fi xk + Gi uk referente ao controle longitu-
+
+ISSN 2525-8311
+
+50
+
+50
+
+0
+0
+
+50
+
+100
+150
+Tempo (s)
+
+Posição do pedal de aceleração 
+
+Os dados do CAN foram pre-processados e
+rearranjados de maneira a se tornarem trataveis
+pelo software MATLAB. Tais pre-processamentos
+foram feitos com auxlio de scripts em linguagem
+Python. Por exemplo, as figuras 1 e 2 mostram
+como ficam alguns dos dados relevantes para a
+identificacao do modelo longitudinal quando arranjados em MATLAB na forma de graficos.
+
+Posições dos pedais de aceleração e de freio comparadas
+100
+100
+
+Posição do pedal de freio 
+
+os dados do barramento CAN (Controller Area
+Network ) que serviram de entrada para o algoritmo de identificacao ja apresentado. Os modos
+Markovianos do sistema foram modelados em funcao de cada marcha do caminhao.
+
+0
+250
+
+200
+
+Figura 2 Organizacao no MATLAB dos dados
+amostrados - valores das entradas
+dinal foram
+
+
+
+0, 9998
+0, 0014 0, 0218
+F1  0, 0053 1, 0181 0, 3213 ,
+0, 0023
+0, 0063
+0, 9008
+
+
+1, 0000 0, 0016 0, 0204
+F2  0, 0033 1, 0149 0, 2098 ,
+0, 0013 0, 0090
+0, 8844
+
+
+0, 9998
+F3  0, 0011
+0, 0019
+
+1, 0000
+F4   0, 0093
+0, 0008
+
+1, 0001
+F5  0, 0214
+0, 0024
+
+1, 0000
+F6  0, 0043
+0, 0004
+
+1, 0001
+F7  0, 0235
+0, 0014
+
+1, 0006
+F8  0, 0639
+0, 0037
+
+1, 0000
+F9  0, 0162
+0, 0011
+
+1, 0000
+F10  0, 0181
+0, 0011
+
+
+0, 0006
+0, 1717 ,
+0, 9108
+
+0, 0001 0, 0008
+0, 9826
+0, 1319 ,
+0, 0037
+0, 9695
+
+0, 0006
+0, 0041
+0, 8863
+0, 7586  ,
+0, 0148
+1, 0984
+
+0, 0012 0, 0191
+0, 9961
+0, 0413  ,
+0, 0036
+0, 9422
+
+0, 0020 0, 0254
+1, 0014 0, 0288 ,
+0, 0064
+0, 9163
+
+0, 0024 0, 0252
+1, 0244 0, 2521 ,
+0, 0085
+0, 9096
+
+0, 0024 0, 0203
+1, 0095 0, 0855 ,
+0, 0024
+0, 9786
+
+0, 0029 0, 0196
+0, 9891
+0, 0498  ,
+0, 0005
+0, 9936
+0, 0000
+1, 0155
+0, 0086
+
+
+
+0, 0000
+G1   0, 0116  ,
+0, 0007
+
+
+0, 0000
+G2   0, 0090  ,
+0, 0008
+
+
+
+0, 0000
+G3   0, 0063  ,
+0, 0003
+
+
+0, 0000
+G4  0, 0065 ,
+0, 0003
+
+
+0, 0000
+
+G5  0, 0098  ,
+0, 0013
+
+
+0, 0000
+
+G6  0, 0034 ,
+0, 0001
+
+
+0, 0000
+G7  0, 0045 ,
+0, 0003
+
+
+0, 0000
+G8  0, 0041 ,
+0, 0003
+
+
+0, 0000
+G9  0, 0054 ,
+0, 0001
+
+
+0, 0000
+G10  0, 0034 .
+0, 0002
+
+A Tabela 3 mostra como identificar em qual
+modo i o caminhao esta operando.
+A Figura 3 compara o resutado das medicoes
+feitas diretamente no caminhao com o resultado
+estimado com uso do modelo encontrado pelo modelo de identificacao SPM. O caso em questao
+refere-se a 6a marcha, caminhao acelerando.
+Para a aplicacao do algoritmo para o regulador robusto recursivo para SLSM, adotaram-se
+
+3455
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Tabela 3 Identificacao dos modos
+Marcha
+Acelerando
+6a ou inferior
+Modo 1
+7a
+Modo 2
+8a
+Modo 3
+9a
+Modo 4
+10a ou superior Modo 5
+
+Estados do modelo do caminhão
+
+do caminhao
+Freando
+Modo 6
+Modo 7
+Modo 8
+Modo 9
+Modo 10
+
+100
+0
+100
+200
+
+x1  torção do eixo de transmissão
+x2  velocidade do motor rads
+x3  velocidade dos pneusrads
+
+300
+400
+0
+
+Comparação de velocidade_angular dos pneus do veículo (x3)
+
+0.5
+
+18
+Variável medida
+Estimativa do modelo
+
+Velocidade rads
+
+14
+
+1.5
+Iteração
+Entrada
+
+2
+
+2.5
+4
+x 10
+
+200
+Atuador
+
+16
+
+1
+
+100
+0
+
+12
+100
+0
+10
+
+0.5
+
+1
+Iteração
+
+1.5
+
+2
+4
+
+x 10
+
+8
+
+Figura 4 Atuacao do regulador na planta simulada do caminhao
+
+6
+4
+
+os seguintes erros_de_modelagem EFi e EGi para
+cada modo i
+
+a descricao de um sistema linear sujeito a saltos
+Markovianos, sendo bem identificaveis a caracterstica linear dos modos, bem como as mudancas
+na dinamica. Melhoras no modelo podem ser feitas a partir da investigacao de metodos analticos.
+A estimativa dos parametros do modelo, no entanto, se mostrou satisfatoria e apropriada para
+este tipo de aplicacao. A eficacia do regulador robusto Markoviano sera testada em um caminhao
+autonomo, como trabalho futuro.
+
+EFi  0, 01max(Fi ), EGi  10max(Gi ),
+
+Agradecimentos
+
+2
+0
+
+50
+
+100
+
+150
+200
+Tempo(s)
+
+250
+
+300
+
+Figura 3 Comparacao das velocidades dos pneus
+- modo 1 (6a marcha, acelerando)
+
+com EFi  R1n e EGi  R1p .
+As matrizes de ponderacao sao Qi  100In e
+Ri  0, 1266, i  1, 2, ...10. A matriz de probabilidade de transicao de estados e dada por (16)
+Encontram-se entao os seguintes ganhos do
+controlador para cada um dos modos
+K1  0, 0860  0, 0876  0, 0775,
+K2  0, 1106  0, 1122  0, 0978,
+K3  0, 1590  0, 1615  0, 1449,
+K4  0, 1538  0, 1512  0, 1491,
+K5  0, 1022  0, 0905  0, 1122,
+K6  0, 2940  0, 2929  0, 2770,
+K7  0, 2207  0, 2210  0, 2022,
+K8  0, 2428  0, 2486  0, 2207,
+K9  0, 1850  0, 1868  0, 1810,
+K10  0, 2975  0, 2943  0, 2956.
+
+A Figura 4 mostra a atuacao do controlador para
+regulacao da planta.
+6
+
+Conclusoes
+
+As equacoes dinamicas do veculo mostram que
+existe uma boa correspondencia entre as caractersticas longitudinais da dinamica do caminhao e
+
+ISSN 2525-8311
+
+Os autores agradecem o apoio recebido da Fundacao de Amparo a Pesquisa do Estado de Sao
+Paulo (FAPESP) via processo 201505228-5, alem
+do edital e-Science 201408432-0 .
+Referencias
+Cerri, J. P. and Terra, M. H. (2012). Control
+of discrete-time Markovian jump linear systems subject to known and unknown chains,
+2012 American Control Conference - Montreal, Canada .
+Cerri, J. P., Terra, M. H. and Ishihara, J. Y.
+(2010a). Controle otimo de sistemas_lineares discretos sujeitos a saltos Markovianos,
+Congresso Brasileiro de Automatica- Bonito,
+MS .
+Cerri, J. P., Terra, M. H. and Ishihara,
+J. Y. (2010b). Recursive robust regulator for discrete-time Markovian jump linear systemsvia penalty game approach, 49th
+IEEE Conference on Decision and Control Atlanta, USA .
+
+3456
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+0, 9985
+ 0
+ 0
+
+ 0
+
+ 0
+P
+0, 0118
+
+ 0
+
+ 0
+
+0
+0
+
+0, 0004
+0, 9946
+0
+0
+0
+0
+0
+0
+0
+0
+
+0, 0004
+0
+0, 9969
+0
+0
+0
+0
+0, 0014
+0
+0
+
+0
+0, 0027
+0, 0008
+0, 9958
+0
+0
+0
+0
+0
+0
+
+0
+0
+0, 0015
+0, 0042
+0, 9967
+0
+0
+0
+0
+0
+
+0, 0007
+0
+0
+0
+0
+0, 9882
+0, 0043
+0, 0028
+0
+0
+
+0
+0, 0027
+0
+0
+0
+0
+0, 9957
+0, 0014
+0, 0016
+0
+
+0
+0
+0, 0008
+0
+0
+0
+0
+0, 9945
+0, 0032
+0, 0006
+
+0
+0
+0
+0
+0
+0
+0
+0
+0, 9952
+0, 0011
+
+0 
+0 
+0 
+
+0 
+
+0, 0033
+
+0 
+
+0 
+
+0 
+
+0
+0, 9983
+
+(16)
+
+Chen, C.-T. (2006). Linear Systems Theory and
+Design., 3rd edn, Oxford University Press.
+Dias, J. E., Pereira, G. A. S. and Palhares, R. M.
+(2015). Longitudinal model identification
+and velocity control of an autonomous car.,
+IEEE Transactions on Intelligent Transportation Systems, vol. 16, no. 2, April .
+Fu, M., Zhang, K., Yang, Y., Zhu, H. and
+Wang, M. (2015). Collision-free and kinematically feasible path planning along a reference path for autonomous control, IEEE
+Intelligent Vehicles Symposium .
+Ioannou, P. and Fidan, B. (2006). Adaptive Control Tutorial., 1st edn, SIAM Society for Industrial and Applied Mathematics.
+Kiencke, U. and Nielsen, L. (2005). Automotive
+Control Systems. For Engine, Driveline, and
+Vehicle., 2nd edn, Springer-Verlag, Berlin.
+Levinson, J., Askeland, J., Becker, J., Dolson, J.,
+Held, D., Kammel, S., Kolter, J. Z., Langer,
+D., Pink, O., Pratt, V., Sokolski, M., Stanek, G., Stavens, D., Teichman, A., Werling,
+M. and Thrun, S. (2011). Towards fully autonomous driving Systems and algorithms.,
+IEEE Intelligent Vehicles Symposium (IV),
+Baden-Baden,Germany .
+Shen, H. and Wang, W. (2015). A T-S fuzzy logic design to lateral control of autonomous
+vehicles, International Conference on Mechanic Automation and Control Engineering
+(MACE) .
+Terra, M. H., Cerri, J. P. and Ishihara, J. Y.
+(2014). Optimal robust linear quadratic regulator for systems subject to uncertainties,
+IEEE Transactions on Automatic Control
+59 25862591.
+Wu, N., Huang, W., Song, Z., Wu, X., Zhang, Q.
+and Yao, S. (2015). Adaptive dynamic preview control for autonomous vehicle trajectory following with ddp based path planner,
+IEEE Intelligent Vehicles Symposium .
+
+ISSN 2525-8311
+
+3457

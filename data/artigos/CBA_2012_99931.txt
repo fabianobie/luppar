@@ -1,0 +1,996 @@
+Paper identifier 1832864684
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+1
+
+SEGMENTAÇÃO DE MASSSAS EM MAMOGRAFIAS DIGITALIZADAS
+TIAGO T. WIRTTI, EVANDRO O. T. SALLES
+Laboratório de Computação e Sistemas Neurais  LabCISNE, Programa de Pós-graduação em Engenharia
+Elétrica  PPGEE, Universidade Federal do Espírito Santo  UFES
+Av. Fernando Ferrari, Goiabeiras, Vitória, CEP 29075-910
+E-mails tiago.wirtti@gmail.com, evandro@ele.ufes.br
+Abstract This paper suggests a methodology for segmentation of masses in digital mammograms. The masses are distinguished from the other breast tissue by its homogeneous and differentiated density, and its peculiar shape rounded, spiculated or
+undefined. The segmentation strategy is based on slicing the mammography by ranges of pixel intensity and on the assessment of
+each slice density using multiscale wavelet transform. The density data obtained by processing with wavelet are used to train
+multilayer perceptron network with one hidden layer with error back-propagation algorithm. After the training phase, any mammography, except those used in the training phase, may be submitted to the trained neural network. Each image slice resulting
+from processing handled by the neural network has evidenced the relevant characteristics of the original image. The findings in
+each slice are evaluated by a gradient filter, generating slices containing relevant information on the gradient accumulated for
+each finding. The accumulated gradients that appear in the same position in subsequent slices are analyzed heuristically resulting
+in the selection of the masses. After processing 31 images from mini-MIAS database of mammograms (two images for training
+and the other for testing the classifier) it was obtained the following results TPR (sensitivity) of 75.00, 23.91 of FPR, and
+specificity of 76.09.
+Keywords Biomedical image processing, image segmentation, artificial neural network, mammography, wavelet transforms,
+circumscribed masses, spiculated masses.
+Resumo O presente trabalho sugere uma metodologia para segmentação de massas em mamografias digitalizadas. A massa se
+destaca dos demais tecidos da mama por apresentar densidade parcialmente homogênea e formato arredondado, espiculado ou
+indefinido. A estratégia de segmentação baseia-se na separação da mamografia digital em fatias por faixa de intensidade e avaliação da densidade de cada fatia usando transformada_wavelet multiescala. Os dados de densidade obtidos através do processamento com wavelets são usados para treinar rede perceptron_multicamadas com uma camada oculta com retropropagação de erro.
+Após a fase de treinamento, qualquer mamografia, exceto aquelas utilizadas na fase de treinamento, pode ser submetida  rede
+neural treinada. O processamento resultante, realizado sobre cada fatia da imagem investigada, evidencia achados de densidade
+relevante. Os achados em cada fatia são avaliados por um filtro de gradiente, gerando fatias contendo informação relevante sobre
+o gradiente acumulado de cada achado. Os gradientes acumulados que aparecem na mesma posição em fatias subsequentes são
+analisados de forma eurística resultando na seleção das massas. Foram utilizadas 31 imagens da base de mamografias miniMIAS, sendo duas imagens para treinamento e as demais para teste do classificador. Obteve-se TPR (sensibilidade) de 75,00 ,
+FPR de 23,91 , especificidade de 76,09 .
+Palavras-chave .
+
+1
+
+Introdução
+
+O câncer de mama é o segundo tipo mais comum
+no mundo, sendo mais frequente entre mulheres e
+respondendo por 22 dos casos novos de câncer a
+cada ano. Estima-se que em 2012 surjam cerca de 50
+mil novos casos no Brasil (Instituto Nacional do
+Câncer, 2012). A realização anual do exame de mamografia em mulheres acima de 40 anos pode reduzir
+as mortes por câncer de mama entre 30 e 50.
+Além disso, estima-se que a detecção antecipada de
+possíveis lesões cancerosas possa reduzir de 30 a
+100 o custo do tratamento (Feig, 2010). A utilização de sistemas CAD (Computer Aided Diagnosis)
+pode melhorar significativamente a detecção de câncer de mama, embora sejam necessárias melhorias
+nesses sistemas, de forma a reduzir a taxa de falsos
+positivos e aumentar a especificidade (Gómez, et al.,
+2011).
+De acordo com o padrão BI-RADS (Breast
+Imaging Reporting and Data System)(Riedl, et al.,
+s.d.), o câncer da mama pode estar associado  presença de um ou mais dos seguintes achados massa,
+distorção arquitetural, assimetria de densidade e
+calcificação. As massas, que são de interesse especíISBN 978-85-8001-069-5
+
+fico do presente trabalho, podem se apresentar na
+forma arredondada, indefinida ou espiculada (estrelada). As massas arredondadas possuem margens
+fortemente demarcadas com transição abrupta entre a
+lesão e o tecido no entorno. Não há infiltrações. O
+risco de câncer para esse tipo de lesão é muito baixo
+ou inexistente. As massas espiculadas se caracterizam por apresentar linhas (infiltrações) se irradiando
+de sua borda. Nesse caso, o risco de câncer é elevado. Massas indistintas, ou indefinidas, se caracterizam por uma pobre separação entre o seu conteúdo e
+o tecido externo. Deve-se considerar a possibilidade
+de a baixa definição da borda resultar da presença de
+infiltrações, ao invés da superposição de tecidos
+saudáveis (Riedl, et al., s.d.).
+Segundo Rangayyan (2005), a proposição de um
+critério genérico que permita identificar de forma
+precisa bordas de qualquer massa em mamografias
+digitalizadas é uma tarefa difícil. Muitos esforços
+vêm sendo realizados com o objetivo de detectar
+massas em mamografias. Domíngez e Nandi (2008)
+propuseram um método automático de detecção de
+massas em mamografias que, após uma etapa inicial
+de melhoria de contraste, realiza a segmentação de
+regiões por limiarização em múltiplos níveis obtendo
+5405
+
+Paper identifier 1832864684
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+em seguida um conjunto de características para cada
+região segmentada. Em seguida, as regiões são classificadas de forma a se enfatizar aquelas que apresentam maior probabilidade de anormalidade de acordo
+com o conjunto de características levantadas. Essa
+abordagem obteve 80 de sensibilidade, analisando
+57 imagens do banco de mamografias mini-MIAS
+(Suckling, et al., 1994). O método proposto utiliza o
+princípio de selecionar todas as possíveis regiões e
+depois separar aquelas que representam massas. Essa
+abordagem tem a desvantagem produzir uma quantidade grande de regiões que devem ser processadas,
+mas, por essa mesma razão, tem a vantagem de apresentar sensibilidade inicial elevada (Domínguez e
+Nandi, 2008).
+Brahim Belhaouari, et. al. (2011), propuseram
+um método para diagnosticar mamografias através da
+extração_de_características por métodos estatísticos,
+gerando um vetor de características pré-classificado.
+Após a etapa de extração_de_características, um conjunto de contendo 70 das mamografias é utilizado
+no treinamento de uma SVM (support_vector_machine). Na fase de classificação, as imagens restantes
+(30) são classificas pela SVM treinada. A base
+utilizada é mini-MIAS (Suckling, et al., 1994). A
+acurácia obtida na identificação entre normal e
+anormal atingiu 94,79. O experimento utilizou
+todas as 322 imagens da base.
+Javadi e Faez (2012) propuseram uma metodologia para diagnóstico de tumores em mamografias
+(benigno  maligno) que consiste em extração de
+características por wavelet, utilização de PSO (particle swarm algorithm) para selecionar as características mais relevantes e, finalmente, criação de regras
+Fuzzy para classificar e diagnosticar as imagens. Foi
+obtida acurácia de 93,41 no diagnóstico de tumores
+benignos e malignos usando a base de mamografias
+mini-MIAS (Suckling, et al., 1994).
+Em trabalho anterior, (Wirtti e Salles, 2011)
+propuseram uma estratégia de segmentação de massas em mamografias digitalizadas baseada na investigação da intensidade da imagem. Nesse trabalho,
+foi empregada a transformada_wavelet para treinar
+uma rede perceptron_multicamadas (MLP) com uma
+camada oculta com algoritmo de retropropagação de
+erro. Após a fase de treinamento, uma mamografia
+com possíveis massas pode ser submetida  rede
+neural treinada. Neste trabalho foram utilizadas imagens de uma base levantada por médicos especialistas. As imagens possuem resolução entre 50 e 100
+mícrons. O resultado do processamento é uma imagem com características relevantes evidenciadas.
+Neste trabalho, 19 imagens foram processadas, obtendo-se um resultado de 68,2 de sensibilidade. A
+metodologia proposta funciona adequadamente para
+imagens de intensidade média baixa, correspondentes
+a mamas pouco densas. Entretanto, o método é sensível ao valor de limiarização utilizado para evidenciar achados suspeitos, após o processamento pela
+rede_neural artificial (RNA) (Wirtti e Salles, 2011).
+O presente trabalho propõe uma alternativa ao
+método proposto por Domínguez e Nandi (2008). Ao
+ISBN 978-85-8001-069-5
+
+2
+
+invés de investir na melhoria de constraste da
+imagem (Domínguez e Nandi, 2008), o presente
+trabalho sugere a separação da imagem original em
+lâminas ou fatias com faixas de intensidade prédefinidas. Cada lâmina será processada por um extrator de características de intensidade compatível
+com a sua faixa de intensidade. As características são
+obtidas por transformada_de_wavelet e a extração de
+características de intensiade é automatizada por
+RNA.As lâminas processadas pelas respectivas
+RNAs são submetidas a um filtro de gradiente acumulado (FGA) que seleciona os achados mais compatíveis com massas. Por último, as lâminas resultantes do processamento filtro de gradiente acumulado
+são analisadas de acordo com critérios heurísticos,
+resultando na seleção das possíveis massas na mamografia. O objetivo do processamento pelo FGA e
+da análise heurística é diminuir, em parte, a
+complexa análise de características proposta por
+Domínguez e Nandi (2008) e, ao mesmo tempo,
+manter a qualidade do classificador quanto 
+densidade das imagens analisadas (resiliência 
+densidade), objetivo que não foi atingido por Wirtti e
+Salles (2011) em trabalho anterior. As imagens disponíveis utilizadas neste trabalho são provenientes da
+base de mamografias mini-MIAS (Suckling, et al.,
+1994). As imagens possuem resolução de 200 mícrons, ou seja, aproximadamente 127 dpi (pontos por
+polegadas). A profundidade de bit é igual a 8.
+O resto deste trabalho se divide em na seção 2 é
+apresentada a metodologia empregada, na seção 3 é
+apresentada a classificação heurística, na seção 4
+discutem-se os resultados e possíveis melhorias e,
+finalmente, na seção 5 são apresentadas as conclusões.
+2 Metodologia
+A visão geral da metodologia é apresentada na
+Figura 1. A primeira etapa do método é o treinamento da RNA com extração_de_características por transformada_de_wavelet. Nesta etapa, as imagens designadas para treinamento (aprendizagem da RNA) são
+divididas em subimagens, cada subimagem contendo
+um intervalo (faixa) de níveis de cinza da imagem
+original. As subimagens contendo as faixas de nível
+de cinza são denominadas lâminas. Cada lâmina é
+marcada por um especialista (pontos de baixa intensidade e de alta intensidade) com o objetivo de treinar uma rede_neural como sugerido no trabalho anterior (Wirtti e Salles, 2011). A capacidade de generalização é a justificativa para aplicar RNA, pois as
+imagens de mamografias digitais apresentam intensidades diversificadas. A RNA, quando adequadamente treinada e alimentada por um bom extrator de
+características, é capaz de produzir bons resultados
+na separação de regiões de alta e baixa intensidade.
+No presente trabalho, utilizou-se a transformada
+de wavelet como ferramenta de extração_de_características de intensidade nas mamografias estudadas. A
+transformada_de_wavelet viabiliza a obtenção de
+características de intensidade em diferentes escalas
+
+5406
+
+Paper identifier 1832864684
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+espaciais de uma imagem e, por essa razão, possibilita avaliar as características de densidade da mamografia em multiescala. A avaliação em diferentes
+escalas é importante, pois determinadas características de densidade se manifestam apenas escalas específicas.
+Na segunda etapa ocorre a extração_de_características de intensidade pela RNA. Qualquer imagem
+não utilizada na fase de treinamento pode ser submetida  rede_neural. Para isso, a imagem deve ser separada em lâminas por faixa de intensidade, assim
+como na fase de treinamento. Cada lâmina é processada pela sua respectiva rede_neural. Ao final do
+processo, cada lâmina contém informações de intensidade bastante evidenciadas.
+Na terceira etapa ocorre, para cada lâmina resultante da etapa 2, a análise do comportamento do
+gradiente. Essa tarefa é realizada aplicando-se a cada
+lâmina o filtro de gradiente acumulado. Tal filtro tem
+como objetivo evidenciar elementos da imagem que
+possuem gradientes mais altos (regiões de alta intensidade) em comparação com suas vizinhanças. O
+filtro atua somando as intensidades de cada posição
+interceptada pela direção do gradiente. Essa operação
+é realizada para todos os pixels de intensidade não
+nula da imagem.
+
+3
+
+estão contidas no intervalo especificado, , e atribuindo-se zero a todos os pixels fora do referido intervalo. Cada intervalo é obtido pela equação a seguir
+
+
+(
+
+)
+
+,
+
+(1)
+
+onde
+é o número de intervalos pretendidos. As
+imagens utilizadas na fase de treinamento são subdivididas em
+lâminas. Pela eq. (1), quanto
+maior , menor é a faixa de bits no intervalo . As
+intensidades no intervalo continuam sendo números
+de 8 bits. Quanto menor a faixa de valores assumidos
+por mais estável se mostra a resposta da RNA na
+fase de classificação (razão pela qual se optou pela
+subdivisão da imagem original em
+lâminas).
+Após a subdivisão da imagem de treino em lâminas,
+cada lâmina é submetida ao especialista que realiza a
+aquisição de pontos de alta e baixa intensidade, Figura 2 (bloco 2). O especialista marca acima de 100
+pontos em regiões de alta intensidade e acima de 100
+pontos em regiões de baixa intensidade, gerando
+vetores de pares ordenados de pixels cujas intensidades serão processadas por transformada_de_wavelet
+(extração_de_características de intensidade). Para
+cada par ordenado do vetor (que representa uma
+intensidade) é gerada uma janela de 32  32 pixels
+centrada no referido par ordenado. Sobre cada janela
+é aplicada a transformada_de_wavelet do tipo symlet
+(Mallat, 2009) nas escalas 16, 8 e 4, gerando um
+vetor de características de densidade
+para
+cada linha do vetor de entrada (pontos marcados pelo
+especialista).
+
+Figura 1. Visão geral da metodologia proposta.
+
+Na quarta etapa, os elementos de cada lâmina
+(resultantes do processamento por gradiente acumulado) são submetidas a critérios estatísticos e heurísticos cujo resultado é a detecção de possíveis massas.
+As seções seguintes apresentam cada etapa da metodologia.
+2.1 Treinamento da RNA
+O treinamento do extrator de características de
+intensidade, correspondente  primeira etapa da Figura 1, é ilustrado com detalhes na Figura 2. A primeira
+tarefa realizada pelo algoritmo, Figura 2 (bloco 1), é
+a subdivisão das imagens de treino em faixas de
+intensidade de nível de cinza. Antes de ser subdividida a imagem é normalizada para o intervalo 0, 1,
+onde 0 corresponde ao nível mais baixo da escala
+(preto) e 1 corresponde ao nível mais alto (branco).
+Cada imagem resultante da subdivisão é denominada
+lâmina. A lâmina é obtida mantendo-se os valores de
+todos os pixels da imagem original cujas intensidades
+
+ISBN 978-85-8001-069-5
+
+Figura 2. Algoritmo de treinamento da RNA.
+
+A possibilidade de obter informação de densidade em multiescala faz da transformada_de_wavelet
+uma escolha plausível para o extrator de características de densidade. A symlet é originaria da wavelet de
+Daubechies que possui a interessante propriedade de
+ser ortogonal (Mallat, 2009). A ortogonalidade garante que não há redundância na informação repre-
+
+5407
+
+Paper identifier 1832864684
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+sentada pelos coeficientes da wavelet, resultando em
+uma representação mais eficiente da imagem.
+Segundo Brahim Belhaouari, et al., (2011), a
+transformada_de_wavelet pode ser implementada
+como um banco de filtros passa baixa (pb) e passa
+alta (pa), Figura 3. Essa composição de filtros
+representados pela transformada_de_wavelet pode ser
+usada para decompor sinais bidimensionais
+(imagens, por exemplo) em sub-bandas de frequencia
+obtidas através do processamento de linhas e colunas
+da matriz, Mo, que representa janela de 32  32
+pixels, como ilustra a Figura 3. A transformada de
+wavelet decompõe a imagem digital em sub-bandas
+com componentes de frequencia LL (low-low, baixabaixa), LH (low-high, baixa-alta), HL (high-low, altabaixa) e HH (high-high, alta-alta). A sub-banda LL
+corresponde  matriz de coeficientes de aproximação,
+A a sub-banda LH corresponde  matriz de frequências altas verticais (que ressalta bordas horizontais),
+Dh a sub-banda HL corresponde  matriz de frequências altas horizontais (que ressalta bordas verticais),
+Dv e HH corresponde s altas frequências em ambas
+as direções, Dd, (Mallat, 2009), observadas na Fig. 3.
+Voltando ao extrator de características, optou-se
+por escolher as matrizes de aproximação
+ ,
+e
+,
+que
+correspondem,
+respectivamente,
+s
+
+
+aproximações da janela original (32  32 pixels) nas
+escalas 16, 8 e 4 para representar cada janela
+selecionada pelo especialista na fase de treinamento.
+Assim, o vetor de características,
+para uma janela
+específica é representado pela equação a seguir
+
+Pd 
+
+1
+nd  nd
+
+nd
+
+nd
+
+ x i, j 
+i 1 j 1
+
+2
+
+d
+
+, d  1,2,3 ,
+
+(2)
+
+onde ,
+, representa, respectivamente, as
+matrizes de aproximação
+ ,
+ e
+.
+Os
+valores
+,
+,
+são,
+respecti
+vamente, as escalas
+,
+e
+.
+
+Tab.1. Avaliação de
+Subimagem
+1
+2
+
+P1
+0,1245
+0,0478
+
+4
+para as janelas 1e 2 da Fig.3.
+P2
+0,4979
+0,1746
+
+P3
+1,9915
+0,6009
+
+Tr
+1
+0
+
+O término do processamento de extração_de_características de intensidade via wavelet, Figura 2
+(bloco 2), resulta em um conjunto de vetores de características,
+, de dimensões 3
+,
+onde é o número de pontos relecionados pelo especialista. Cada coluna de contém um vetor de características obtido pela eq. (2). O próximo passo é
+treinar a RNA, Figura 2 (bloco 3). A rede_neural
+escolhida para a tarefa proposta é a perceptron_multicamadas (MLP) com uma camada oculta e algoritmo de retropropagação de erro resiliente. A configuração proposta tem a propriedade de realimentar o
+erro de processamento, resultando em uma convergência mais rápida na fase de treinamento (se comparada com uma rede sem realimentação). O termo
+resiliente significa que apenas o sinal do erro é
+levado em consideração para corrigir a realimentação
+da rede, contribuindo para um desempenho ainda
+melhor. A arquitetura proposta para a RNA é a seguinte 4 entradas dadas por , eq. (2) 4 neurônios
+na camada oculta, com log-sigmoidal como função
+transferência, 1 neurônio na camada de saída com
+função transferência log-sigmoidal
+O treinamento é realizado fornecendo-se , e o
+vetor de alvos,
+(de dimensão 1
+, onde é o
+número de pontos selecionados pelo especialista na
+fase de treinamento),  RNA descrita anteriormente.
+O resultado do algoritmo de treinamento do extrator
+de características de intensidade, Figura 2, é um
+vetor de RNA com N25 redes, cada uma delas especializada em mapear níveis de cinza de uma faixa
+de intensidade , definida pela eq. (1), para o intervalo 0 1.
+2.2 Escolha do conjunto de treinamento da RNA
+
+Figura 3. Decomposição wavelet.
+
+A Tabela 1 mostra o resultado do processamento
+de duas janelas. A janela 1 corresponde a um pixel
+centrado em uma região de alta intensidade, a janela
+2 corresponde a um pixels centrado em uma janela de
+baixa intensidade. É notável a diferença de ordem de
+grandeza entre os valores da janela 1 e janela 2. A
+coluna Tr (target) é o parâmetro para o treinamento
+da RNA. O valor 1 se aplica ao caso em que o ponto
+de treino está dentro da área de alta intensidade e o
+valor 0 se aplica ao caso em que o ponto de treino
+está fora da área de alta intensidade.
+
+ISBN 978-85-8001-069-5
+
+Um ponto importante para o sucesso deste método é a escolha adequada dos conjuntos de treinamento da RNA. Visto que a RNA classifica pixels por
+intensidade, é desejável que a imagem utilizada na
+fase de treinamento seja semelhante em intensidade
+quelas que se pretende processar. Então, criou-se o
+seguinte procedimento para escolher as imagens
+utilizadas na fase de treinamento
+Passo 1 obter média, desvio padrão, mediana, moda,
+momentos de terceira e quarta ordens de todas as
+imagens para os pixels de intensidade maior que
+0,01
+Passo 2 ordenar todas as imagens por (
+(
+)) e média, nesta ordem, supondo que essas duas características separem as imagens
+em dois grupos (alta intensidade e baixa intensidade)
+Passo 3 aplicar PCA (principal component analisys), (Bishop, 2006), considerando todos os atributos mencionados no passo 1
+
+5408
+
+Paper identifier 1832864684
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Passo 4 Observar a separação dos conjuntos depois
+da aplicação do PCA, Figura 4. Caso a separação seja
+satisfatória, escolher duas imagens centrais na
+Figura 4. Tais imagens são boas representantes das
+classes alta intensidade e baixa intensidade,
+sendo, por esta razão, ideais para os conjuntos de
+treino.
+Pela análise da Figura 4 observa-se que as imagens 148 (baixa intensidade) e 270 (alta intensidade)
+são boas escolhas, pois ambas são centrais em seus
+grupos. Tal escolha pode ser realizada automaticamente adotando-se como elementos centrais as imagens associadas  mediana da primeira componente
+principal, obtida no passo 3 do algoritmo anterior.
+
+5
+
+funcionamento do filtro é descrito brevemente a
+seguir
+Passo 1 Separar a lâmina em quadrículas. Cada
+quadrícula tem como intensidade a média das intensidades de todos os seus pixels. Salvar cada valor de
+intensidade em outra estrutura, E
+Passo 2 Calcular o gradiente para cada quadrícula
+Passo 3 Obter, para todas as quadrículas com gradientes não nulos, segmentos de reta que têm como
+origem o centro da quadrícula, direção do vetor gradiente desta quadrícula e tamanho em quadrículas
+igual a t
+Passo 4 Realizar, para cada quadrícula contida no
+segmento de reta, o acúmulo (soma) das intensidades
+das quadrículas de todos os segmentos de reta que
+passam por aquela posição, armazenando-as em uma
+nova matriz na posição correspondente  da quadrícula atual.
+
+Figura 4. Separação das imagens após a aplicar o método PCA.
+
+2.2 Extração de características pela RNA
+A extração_de_características pela RNA é ilustrada pela Figura 5. Assim como no processo de treinamento, a primeira tarefa é a subdivisão da imagem
+de entrada em N25 subimagens, tal como descrito
+pela eq. (1). Obtidas as lâminas, cada pixel de cada
+lâmina é processado conforme eq. (2), resultando em
+um conjunto de vetores de características,
+, para cada lâmina. Cada vetor de características do conjunto, , é classificado pela RNA
+adequada. Vale ressaltar que para cada faixa de intensidade, , eq. (1), foi treinada uma RNA capaz de
+classificar pixels nesta faixa. Ou seja, a lâmina correspondente ao intervalo , eq. (1), será processada
+pela RNA treinada pelas k-ésimas fatias das imagens
+de treino. Após a classificação dos pixels pela RNA,
+o resultado é um vetor de intensidades no intervalo
+0, 1. Quanto mais próximo de 1, maior é a intensidade do pixel classificado. A partir do vetor de intensidades é construída a lâmina segmentada que contém informações de intensidade úteis para as próximas etapas de processamento. O processamento da
+Figura 5 (bloco 2) é repetido para todas as lâminas da
+imagem de entrada.
+
+Figura 5. Extração de características de intensidade automatizada por RNA.
+
+No passo 1 cada lâmina , de dimensões
+,
+é subdividida em quadrículas
+. A média de
+cada quadrícula de é obtida e armazenada em uma
+nova matriz,
+
+2.3 Aplicação do filtro de gradiente acumulado
+A próxima etapa do processo de segmentação de
+massas em mamografias digitalizadas é o processamento das lâminas pré-processadas pela RNA (extração_de_características) por um filtro de gradiente
+acumulado, Figura 1 (terceira etapa). O objetivo da
+aplicação do filtro de gradiente é evidenciar regiões
+de grande variação de intensidade. O princípio de
+
+ISBN 978-85-8001-069-5
+
+, de dimensões
+
+(
+
+)
+
+( ) represen(
+), onde o operador
+ta o arredondamento (se a parte fracionária for menor
+do que 0,5, deve-se atribuir o menor inteiro mais
+próximo caso contrário, atribui o maior inteiro mais
+próximo). Assim, cada quadrícula é representada
+pela sua intensidade média, armazenada em . Essa
+estratégia diminui o custo_computacional da aplicação do filtro de gradiente acumulado. Deve-se escolher um valor para que seja suficientemente bom
+
+5409
+
+Paper identifier 1832864684
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+6
+
+para diminuir o custo_computacional, mas sem comprometer o resultado. Um valor adequado obtido
+experimentalmente foi
+.
+No passo 2 realiza-se o cálculo do gradiente. Se)
+ja (
+)a uma função real para (
+. Então
+o gradiente de (
+) é dado por
+(
+)
+( )
+( (
+))
+
+,
+(3)
+onde  e  são, respectivamente, os vetores unitários
+nas direções e do sistema cartesiano. Seja (
+)
+uma função bivariada e discreta de domínio
+e
+, e imagem
+.
+O gradiente discreto da função é dado por
+))  (
+)
+(
+) 
+( (
+ (
+)
+(
+) 
+(4).
+Assim, o cálculo do gradiente de cada quadrícula é
+dado por  ( (
+)), onde o par (
+) é o centro da quadrícula .
+O terceiro passo, obter os segmentos de reta que
+representam os vetores gradiente, requer algumas
+definições. Seja
+um conjunto de pares ordenados
+(
+) que representam um conjunto de quadrículas
+de intensidade média não nula na lâmina  (
+)a
+função que define a intensidade do referido conjunto
+(
+) um par ordenado pertencente a   o segmento de reta discreto, obtido pelo algoritmo MLA (Midpoint Line Algorithm) (Foley, et al., 1996), com iní)) e tamanho 
+cio em (
+), orientação ( (
+o conjunto de pares ordenados de . Assim, temse ( ) como o conjunto de todas as intensidades do
+segmento .
+O passo 4 realiza a soma das intensidades de
+todos os conjuntos,
+, para cada posição. Então,
+define-se
+
+, o operador gradiente direcional, como o
+operador que copia ( ) para ( )
+( )  ( ),
+(5)
+onde ( ) é uma nova estrutura idêntica a ( ).
+
+ representa o conjunto
+
+de todos os conjuntos de pares ordenados,
+obtidos pelo processamento de cada segmento  .
+
+(função gradiente acumulado), sobre o conjunto como
+( )
+
+
+
+( ( )
+
+( )). (6)
+
+A Figura 6(a) mostra uma lâmina (processada
+pela RNA) e com as quadrículas
+que
+correspondem a gradientes relevantes. A Figura 6(b)
+mostra os gradientes obtidos pela eq. (4) para o valor
+médio de cada quadrícula da Figura 6(a). A Figura
+6(c) mostra uma porção da Figura 6(a), mas com os
+gradientes calculados na Figura 6(b) representados
+graficamente como setas.
+
+(a)
+
+(b)
+
+(b)
+
+Figura 6. (a) lâmina 23 da imagem mdb015 processada (b) imagem com os gradientes processados e (c) quadrículas em destaque.
+
+A Figura 6(c) mostra em destaque as quadrículas
+(sob a linha tracejada) que compõem um segmento
+de reta discreto  , iniciado no par ordenado (
+),
+)) e tamanho .
+com orientação ( (
+é o espaço de coordenadas formado por todas as quadrículas
+em destaque e ( ) é a função que mapeia cada
+intensidade de (
+) em . O conjunto é formado
+por todas as quadrículas da Figura 6(c). Obtendo-se
+( ), conforme eq. (5), para todos os pares ordena( ).
+dos de , e aplicando a eq. (6), tem-se a
+Vale ressaltar que cada lâmina pode ter nenhuma, uma ou muitas
+. Por exemplo, a lâmina da
+Figura 6(a) apresenta cinco
+. Na próxima seção
+serão apresentados critérios heurísticos para a classificação das
+como possíveis massas.
+2.3 Classificação heurística
+Partindo do ponto em que todas as lâminas da
+imagem estejam processadas conforme descrito na
+seção 2.3, será apresentado nesta seção o algoritmo
+que classifica as
+de forma a apontar os achados que representam massas. Por experimentação,
+observou-se que as
+assumem um formato
+semelhante a uma função de densidade de probabilidade gaussiana bivariada. Assim, antes de apresentar
+o algoritmo, fazem-se necessárias algumas definições. Assim, seja , de dimensões
+, a estrutura que contém todas as ocorrências de cada par orde)
+nado (
+, contribuindo para a formação
+da
+na eq. (6). Logo,
+tem magnitude igual 
+somatória dos tamanhos de todos os espaços
+que
+compõe o conjunto  , de dimensões
+, a
+primeira coluna de
+, uma variável aleatória do
+processo de geração da
+, com média
+e desvio
+padrão  , de dimensão
+, a segunda coluna
+de , uma variável aleatória do processo de geração
+da
+, com média
+e desvio padrão 
+, o
+coeficiente_de_correlação de , dado por
+(
+
+)
+
+,
+
+(7)
+
+(
+) é a covariância entre e . Então,
+onde
+supondo que
+é uma distribuição gaussiana conjunta das variáveis aleatórias e , a sua descrição
+matemática tem a forma (Leon-Garcia, 2007)
+
+
+(
+
+)
+
+(
+
+
+
+ISBN 978-85-8001-069-5
+
+)
+
+
+
+,
+
+(8)
+
+5410
+
+Paper identifier 1832864684
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+(
+
+)
+
+(
+
+)
+
+.
+
+(
+)é centrada em (
+), possuindo
+A
+formato de sino, Figura 7, que depende dos valores
+(
+)é constante para valores de e
+e .A
+para os quais o argumento do expoente é constante,
+como estabelece a eq. 9 (Leon-Garcia, 2007), a seguir
+(
+
+)
+
+.
+
+(9)
+
+( ) e sua projeção para a estrutura
+Figura 7. O gráfico de
+da Figura 6(c). A setas indicam os autovetores de
+.
+
+A eq. 9 representa contornos elípticos centrados
+), conforme mostrado na Figura 7. Se
+em (
+e  são, respectivamente, os autovalores_e_autovetores de
+, então as elipsoides representadas pela
+eq. 9 possuem eixos nas direções
+ Ou
+
+seja, a orientação dos contornos elípticos é obtida
+calculando-se os autovetores,  , da matriz de coeficiente_de_correlação,
+, ilustrados no plano inferior da Figura 7. Os autovalores, , são proporcionais
+aos módulos dos respectivos autovetores,  . Os conceitos apresentados aqui serão importantes na definição do algoritmo supondo uma imagem já processada pelas etapas descritas nas seções 2.1 e 2.2, ou seja,
+as etapas de treinamento da RNA, extração_de_características pela RNA com transformada_de_wavelet e
+aplicação do filtro de gradiente acumulado, o algoritmo consiste em cinco passos, que são apresentados
+a seguir
+Passo 1 Para as lâminas de 11 a 25 (constatou-se
+experimentalmente de que as massas quase nunca se
+localizam em regiões de baixa intensidade da mamografia, lâminas de 1 a 10), eliminar as estruturas
+correspondentes s
+cujos autovalores de (7) 7,
+apresentem diferença de magnitude da ordem de
+quatro vezes, um em relação ao outro. Essas estruturas alongadas e de alta densidade são, na grande
+maioria das vezes, tecido muscular, que aparecem ou
+no canto superior direito ou esquerdo de mamografias MLO, médio-lateral oblíqua (Maierhofer, 2008),
+como se pode observar na Figura 2(f) (estrutura
+alongada marcada por Mc). Observe que a modelagem, ainda que não exata, das FGAs pela eq. 8
+mostra-se útil no intuito de ou se aceitar ou se eliminar a região candidata a massa (representada por Nr)
+a partir da diferença de magnitude entre os autovalores de (7).
+Passo 2 Excluir todas as estruturas correspondentes
+s
+que apresentem mais de cinco máximos
+locais acima de sua média. Essa estratégia se justifica
+pela observação experimental segundo a qual as
+que apresentam poucos máximos locais tendem a representar massas mais frequentemente do
+que as
+que possuem muitos máximos locais.
+ISBN 978-85-8001-069-5
+
+7
+
+Passo 3 Para todas as
+restantes, definir caixas
+de contorno. As caixas são obtidas encontrando-se os
+mínimos e máximos entre as ordenadas e abscissas
+da estrutura . As caixas de contorno servirão para
+definir se há interseção entre as
+Passo 4 Para cada caixa de contorno (representante
+da cada
+) de cada lâmina, procurar nas lâminas
+subsequentes se há interseção entre as caixas cuja
+área seja igual ou superior a 50. Essas interseções
+subsequentes são denominadas coincidências. Define-se como
+a
+que apresenta coincidência
+com outras
+em lâminas subsequentes. Por
+exemplo, se uma
+é classificada como , então
+ela não apresenta coincidências se uma
+é classificada como
+, então ela apresenta coincidência
+com
+da lâmina subsequente se uma
+é classificada como
+, então ela apresenta coincidência
+com
+das lâminas subsequentes.
+Passo 5 Todas as coincidências
+,
+são armazenadas em uma estrutura e contabilizadas
+da seguinte forma se só há
+do tipo , então
+todas as
+representarão massas
+se há, no máximo,
+do tipo
+, então apenas
+essas
+são consideradas como estruturas que
+representam massas se há, no máximo,
+do
+tipo , então estas e as
+do tipo , representarão massas se há, no máximo,
+do tipo
+,
+, então estas e as
+do tipo
+até
+representarão massas.
+3 Resultados
+A análise de 29 imagens da base mini-MIAS
+(Suckling, et al., 1994) usando a metodologia proposta neste trabalho resultou na matriz de confusão
+da Tabela 2. A coluna p representa as classes positivas verdadeiras, a coluna n as negativas verdadeiras,
+a linha Y representas as classificações corretas e a
+linha N as incorretas.
+Tabela 2. Matriz de confusão.
+Classes verdadeiras
+pos
+neg
+Classes hipotéticas
+Y
+21
+55
+N
+7
+175
+Total
+28
+230
+
+A taxa de verdadeiro positivo (TPR) de detecção
+de massas foi de 75,00, com especificidade de
+76,09, acurácia de 75,97 e taxa de falso positivo
+(FPR) de 23,91. A separação dos grupos de treinamento proposta na seção 2.1 via PCA sistematizou
+a solução do problema de escolha de imagens para
+compor o grupo de treinamento. Com as imagens
+mdb148 e mdb270, escolhidas pelo critério da seção
+2.1 via PCA, obteve-se os resultados de sensibilidade
+de 75,00 e FPR de 23,91. Com a imagem
+mdb021, escolhida ao acaso, os resultados são TPR
+de 56,67 e FPR de 20,15, inferiores aos obtidos
+utilizando-se PCA. Outro ponto importante nesta
+discussão é a exclusão do músculo peitoral, característico das mamografias MLO, passo 1 do algoritmo
+da seção 2.3. Apenas para efeito de comparação,
+
+5411
+
+Paper identifier 1832864684
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+executou-se o procedimento de detecção de massas
+proposto neste trabalho, mas sem considerar a exclusão do músculo peitoral. Os resultados foram TPR de
+75,86 e FPR de 27,24. Observa-se que a TPR
+ficou praticamente constante, mas a FPR aumentou
+mais de 3 sem a detecção do músculo peitoral. Por
+isso a detecção de músculo peitoral é importante.
+Apesar do ganho obtido com a detecção do músculo
+peitoral (diminuição da FPR), mais esforços devem
+ser realizados para diminuir a FPR. Em comparação
+com o trabalho anterior, (Wirtti e Salles, 2011), obteve-se neste trabalho um TPR de 75,00, contra um
+TPR de 68,2. Vale ressaltar que o método proposto
+no presente trabalho funciona para mamografias de
+mamas densas, ou seja, mamografias de intensidade
+média elevada, além de funcionar também para mamas não densas. O método proposto no trabalho
+anterior funciona adequadamente apenas para mamografias de mamas densas. A abordagem utilizada
+no presente trabalho sugere a possibilidade de tratar
+o problema de detecção de massas em mamografias
+digitalizadas como um problema de teste_de_hipótese.
+O suporte para essa ideia está na maneira como a
+é construída, ou seja, como uma soma de intensidades em direções privilegiadas pelos gradientes.
+Observou-se experimentalmente que quanto mais
+arredondada é a massa, mais a
+se parece com
+uma gaussiana. Essa percepção foi utilizada para
+estabelecer o critério do passo 3 do algoritmo da
+seção 2.3. Por outro lado, Domíngez e Nandi (2008)
+sugerem um complexo sistema de classificação que
+envolve a organização de 18 características da mamografia para diagnosticar se um achado préclassificado pelo seu método é uma massa. Portanto,
+a solução de Domíngez e Nandi (2008) apresenta
+uma abordagem mais complexa do que a proposta
+neste trabalho. O desempenho do algoritmo é de
+80, em comparação com 75,00 obtido neste trabalho, ambos utilizando a base pública mini-MIAS.
+4 Conclusão
+Apresentou-se uma metodologia para a detecção
+de massas em mamografias digitais. Um desempenho
+(TPR) de 75,00 foi obtido para 29 imagens com
+vários tipos diferentes de massas em uma base pública (mini-MIAS). Algum esforço deve ser direcionado
+na diminuição do FPR. A metodologia apresentada
+pode ser útil na construção de um sistema BIRADS. A detecção de massas proposta aqui pode
+contribuir para a criação de um sistema classificador
+BI-RADS (Riedl, et al., s.d.), ao passo que as propostas de Javadi e Faez (2012) e Brahim Belhaouari,
+et al., (2012) apostam na ideia de oferecer apenas o
+diagnóstico de benigno ou maligno, mas com TPRs
+superiores a 90. Como trabalho, sugere-se a transformação do teste de detecção de massas em um teste
+de hipótese.
+Referências Bibliográficas
+
+8
+
+International Journal of Computer Science 
+Information Technology (IJCSIT), 3(1), pp. 199-211.
+Bishop, C. M., 2006. Pattern Recognition and Machine
+Learning. 2nd ed. Cambridge Springer Science.
+Brahim Belhaouari, S., Ibrahima, F.  Mohamed, M.,
+2011. A Statistical Based Feature Extraction Method for
+Breast Cancer Diagnosis in Digital Mammogram Using
+Multiresolution
+Representation.
+Available
+at
+httpeprints.utp.edu.my2720
+Domínguez, A. R.  Nandi, A. K., 2008. Detection of
+masses in mammograms via statistically based
+enhancement, multilevel-thresholding segmentation, and
+region selection. Computerized Medical Imaging and
+Graphics, Volume 38, pp. 304-315.
+Feig, S., 2010. Cost-Effectiveness of Mammography,
+MRI, and Ultrasonography for Breast Cancer Screening.
+Radiologic clinics of North America, Volume 48, pp.
+879-891.
+Feig, S., 2011. Comparison of Costs and Benefits of
+Breast Cancer Screening with Mammography,
+Ultrasonography, and MRI. Obstetrics and Gynecology
+Clinics of North America, 38(1), p. 179196.
+Foley, J. D., van Dan, A.  Feiner, S. K., 1996.
+Computer Graphics Principle and Practice. 2nd ed.
+s.l.Addision Wesley,
+Gómez, S. S. et al., 2011. Impact of a CAD system in a
+screenfilm mammography screening program A
+prospective study. European Journal of Radiology, pp.
+317-321.
+Haykin, S., 1998. Neural Networks a comprehensive
+foundation. 2 edition ed. New Jersey Prentice-Hall.
+Instituto Nacional do Câncer, 2012. INCA-Instituto
+Nacional
+do
+Câncer.
+Available
+at
+httpwww2.inca.gov.brwpswcmconnecttiposdecancer
+sitehomemamacancermama++
+Javadi, S.  Faez, K., 2012. Finding Suspicious Masses
+of Breast Cancer in Mammography Images using Particle
+Swarm Algorithm and its Classification using Fuzzy
+Methods. IEEExplore Digital Library, 10 01, pp. 1-5.
+Kim, S. et al., 2010. Comparison of two software
+versions of a commercially available computer-aided
+detection (CAD) system for detecting breast cancer. Acta
+radiologica, 51(5), pp. 482-490.
+Leon-Garcia, A., 2007. Probability, Statistics, and
+Random Processes for Electrical Engineering. 3th
+edition ed. Upper Saddle River PearsonPrentice Hall.
+Maierhofer, L., 2008. Guia Prático em Diagonóstico
+por Imagem da Mama. 1 edição ed. São Caetano do Sul
+Difusão Editora.
+Mallat, S., 2009. A Wavelet Tour of Signal Processing
+The Sparse Way. 3 Edição ed. Academic Press.
+Rangayyan, R. M., 2005. Biomedical image analysis.
+1 ed. Bocca Raton CRC Press LLC.
+Riedl, C. C., Pfarl, G.  Helbich, T., s.d. BI-RADS Breast Imaging Reporting and Data System. Available
+at httpwww.birads.atindex.html
+Sadaf, A., Crystal, P., Anabel, S.  Helbich, T., 2011.
+Performance of computer-aided detection applied to fullfield digital mammography in detection of breast
+cancers. European Journal of Radiology, 77(3), pp. 457461.
+Suckling, J. et al., 1994. The mini-MIAS database of
+mammograms.
+Available
+at
+httppeipa.essex.ac.ukinfomias.html.
+Wirtti, T. T.  Salles, E. O. T., 2011. Segmentation of
+Masses in Digital Mammograms. IEEE Xplore Digital
+Library, 05 04, pp. 1-7.
+
+Ahirwar, A.  Jadon, R. S., 2011. Segmentation and
+Characterization of Breast Tumor im Mammograms.
+
+ISBN 978-85-8001-069-5
+
+5412

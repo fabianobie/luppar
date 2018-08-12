@@ -1,0 +1,698 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+IMPLEMENTACAO DE TECNICAS DE MEDICAO DE ESPESSURAS POR
+ULTRA-SOM UTILIZANDO PLATAFORMA DE FPGA
+Vander T. Prado, Ricardo T. Higuti
+
+
+Laboratorio de Ultra-Som, Departamento de Engenharia Eletrica, Faculdade de Engenharia de
+Ilha Solteira, Universidade Estadual Paulista
+Avenida Brasil, 56. Centro. 15385-000
+Ilha Solteira, Sao Paulo, Brasil
+Emails vander@mail.com, tokio@dee.feis.unesp.br
+
+Abstract Ultrasonic techniques for nondestructive testing are extensively used in industry because of several
+aspects do not produce changes in the inspected materials, simplicity and testing speed, high sensitivity and
+possibility to propagate in several types of media solid, liquid and gaseous. In this work, some ultrasonic
+techniques for thickness measurement are implemented in hardware, using simulated and experimental signals.
+The processing is made on an FPGA (Spartan-3E, Xilinx), allowing fast processing and ease of programming.
+The algorithms implemented are conventional methods, such as peak and threshold detection, and also signal
+processing methods using cross-correlation and the Hilbert transform. Several characteristics are evaluated, such
+as signal center frequency, sampling frequency, signal-to-noise ratio, resolution (bits per sample in processing),
+which influence the measurement accuracy and implementation costs. The fixed-point results obtained with the
+FPGA are compared to floating-point results from MATLAB, using the same algorithms.
+Keywords
+
+ultrasound, FPGA, nondestructive testing.
+
+Resumo As tecnicas de ensaios_nao_destrutivos por ultra-som para medicao de propriedades fsicas de materiais tem sido cada vez mais utilizadas pela industria devido a nao produzir alteracoes nos materiais inspecionados,
+facilidade e rapidez na execucao dos ensaios, alta sensibilidade e propagacao em diversos meios. Neste trabalho
+algumas tecnicas de medicao de espessuras por ultra-som sao implementadas em hardwar e, aplicadas a sinais
+simulados em MATLAB e experimentais, provenientes de um transdutor de ultra-som em modo pulso-eco. Para
+o processamento dos sinais em ponto-fixo e utilizado um FPGA da linha Spartan-3E, da Xilinx, devido a rapida
+execucao e flexibilidade de programacao. Ja para o processamento em ponto-flutuante e utilizado o software
+MATLAB. Sao aplicados metodos convencionais, como a deteccao de pico e limiar, e tecnicas de processamento
+de sinais, como correlacao cruzada e transformada de Hilbert. Alem da variacao de algumas caractersticas dos
+sinais, como frequencia e relacao sinal-rudo, sao avaliados pontos como numero de bits na representacao dos
+sinais e dos registradores internos, que terao influencia na acuracia, na medicao do intervalo de tempo e no custo
+de implementacao.
+Palavras-chave
+
+.
+
+Introducao
+
+ves de informacoes como o tempo de propagacao
+da onda e de sua amplitude, pode-se estimar a
+localizacao e o tamanho do defeito.
+
+Atualmente o ultra-som vem sendo utilizado
+em varias areas do conhecimento na medicina,
+tanto nos tradicionais sistemas de visualizacao de
+imagens como na determinacao de fluxo sanguneo, elastografia (Viola and Walker, 2003) e na
+medicao da espessura central corneana (Maimone
+et al., 2007) na agropecuaria, com a estimacao da
+camada de gordura da carcaca (EGSC) de bovinos
+no momento do abate, com o objetivo de buscar
+o ponto ideal de abate e assim uma melhor eficiencia na producao de carne (Silva et al., 2004)
+engenharia de alimentos, farmaceutica e industrias em geral.
+Um dos princpios de funcionamento de ensaios nao-destrutivos pelo metodo acustico esta
+ilustrado na Figura 1. Trata-se de um transdutor
+de ultra-som que emite uma onda acustica que
+se propaga pelo material. Essa onda, ao encontrar interfaces com diferentes impedancias acusticas, por exemplo, uma bolha de ar num material
+metalico, sofre reflexao, que pode ser detectada
+pelo mesmo transdutor emissor. Neste caso o
+modo de operacao e chamado de pulso-eco. Atra-
+
+Figura 1 Princpio de operacao do metodo acustico em ensaios_nao_destrutivos.
+A espessura da peca tambem pode ser determinada a partir dos sinais de eco de suas superfcies e do conhecimento da velocidade de propagacao do som no material c. Para tanto, deve-se medir o intervalo de tempo entre os sinais de eco t.
+Com operacao em modo pulso-eco, o pulso se propaga duas vezes pela amostra (entre a 1a e 2a in-
+
+4979
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+terfaces), e a espessura L e dada por L  c.t2.
+A implementacao de tecnicas de processamento_de_sinais em hardware tem sido muito estudada e e de grande interesse, devido as suas
+aplicacoes praticas. Assim, o computador e substitudo por sistemas digitais de processamento
+de sinais compactos, como DSPs (Digital Signal
+Processors), microcontroladores e FPGAs (Field
+Programmable Gate Arrays).
+Lima (2003) propos um sistema acustico de
+posicionamento modular e reconfiguravel para uso
+em navegacao de veculos_submarinos. Para a estimacao de tempos com precisao, sugeriu o uso de sinais modulados e processamento digital dos sinais
+totalmente paralelo e em tempo_real num FPGA.
+Lewandowski e Nowicki (2008) usaram transmissao codificada para resolver o compromisso entre
+penetracao e resolucao requerido em aplicacoes de
+imagens com ultra-som. O modulo codificadordigitalizador programavel foi baseado em FPGA.
+O uso de FPGAs para processamento_de_sinais
+tambem e feito por Mukthavaram (1999), que implementa demoduladores digitais para uso em comunicacao.
+Para medicao do intervalo de tempo entre dois
+sinais de ecos sao implementados metodos convencionais, como a deteccao de pico e limiar, e tecnicas de processamento_de_sinais, como correlacao
+cruzada e transformada de Hilbert, usando uma
+plataforma de FPGA.
+O objetivo principal e comparar as implementacoes em ponto-fixo (FPGA) e ponto-flutuante
+(MATLAB). A comparacao de desempenho das
+tecnicas entre si nao e o objetivo de estudo
+deste trabalho, que ja foi realizado em outros
+(Higuti, 1994), (Martinhon, 2007).
+2
+
+em que cada sinal atinge o valor maximo de sua
+magnitude. Pode-se utilizar o sinal de eco, o sinal
+retificado ou a envoltoria do sinal.
+A deteccao por limiar consiste em determinar
+o intervalo t a partir dos instantes em que o sinal ultrapassa um certo nvel de tensao de limiar.
+Assim como na deteccao por limiar, pode-se utilizar o sinal de eco, o sinal retificado ou a envoltoria
+do sinal.
+Tecnicas mais sofisticadas de processamento
+de sinais, como correlacao cruzada e transformada de Hilbert, tambem sao implementadas.
+A correlacao cruzada e um metodo matematico
+que verifica o grau de similaridade entre dois sinais. Comparando com os metodos convencionais, possui maior complexidade, ja que envolve
+os sinais de eco por completo, contudo, melhora
+significativamente a estimacao do tempo entre eles
+(Adamowski et al., 1995). A correlacao entre dois
+sinais de eco v1 n e v2 n  kv1n  D e
+
+c12 m 
+
+N
+1
+X
+
+v1 nkv1 n  m  D  kc11 m  D,
+
+n0
+
+para
+
+ (N  1)  m  N  1
+
+(1)
+
+Ou seja, a correlacao entre v1 n e v2 n, nestas
+condicoes, e igual a funcao de autocorrelacao do
+sinal v1n atrasado de D amostras. Usando as
+propriedades da funcao de autocorrelacao, tem-se
+que esta e simetrica em torno do zero e possui
+valor maximo na origem (Proakis and Manolakis,
+1996). Dessa forma, o valor maximo da funcao de
+correlacao cruzada indica o ndice do atraso entre
+os sinais m  D, sendo possvel determinar a
+espessura da peca atraves da deteccao desse ponto
+de maximo.
+O metodo da correlacao cruzada tem como
+desvantagem a carga_computacional elevada, uma
+vez que deve-se calcular um numero muito grande
+de pontos. Assim, para otimizar o processo, como
+observado por Martinhon (2007), pode-se utilizar
+a Transformada Discreta de Fourier (DFT), aproveitando a eficiencia computacional do algoritmo
+da FFT (Fast Fourier Transform) (Oppenheim
+et al., 1999). Assim
+
+Metodos de medicao de intervalo de
+tempo
+
+A espessura da peca e determinada a partir
+da medicao do intervalo de tempo entre sinais de
+eco de suas superfcies e do conhecimento da velocidade de propagacao do som no material, como
+mostrado na Figura 1. Os metodos mais simples
+de medicao de intervalo de tempo, que podem ser
+implementados por tecnicas analogicas, ou tambem conhecidas como metodos convencionais sao
+a partir dos instantes de tempo que os sinais passam por determinado limiar de tensao, e pelos instantes de pico dos sinais muito comuns e muito
+utilizados, tendo como vantagens o baixo_custo e
+facilidade de implementacao, porem utilizado em
+aplicacoes que nao exigem grandes acuracias, funcionando bem quando as espessuras a serem medidas sao algumas vezes maiores que o comprimento de onda utilizado e nao havendo sobreposicao dos sinais de eco das paredes da peca. A
+deteccao de pico consiste em determinar o intervalo t  t2  t1 a partir dos instantes de tempo
+
+C12 k  V1 k  V2 k.
+
+(2)
+
+Calculando-se a DFT inversa de C12 k,
+chega-se a sequencia de correlacao cruzada no
+tempo.
+A transformada de Hilbert da funcao de correlacao cruzada e uma funcao que cruza o zero
+no instante de pico da correlacao (Cabot, 1981),
+como ilustrado na Figura 2. Dessa forma, podese trocar a determinacao do instante de pico da
+correlacao pela determinacao do cruzamento com
+zero da sua transformada de Hilbert, o que pode
+ser mais adequado em determinadas situacoes de
+
+4980
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+relacao sinal-rudo, por exemplo, que poderiam dificultar a deteccao mais exata do pico.
+
+(IFFT), utilizados no metodo de correlacao cruzada, e que sera utilizado tambem na transformada de Hilbert e no calculo da envoltoria do sinal analtico, utilizada nos metodos convencionais
+para a estimacao do tempo entre os ecos.
+3
+
+Materiais
+
+O FPGA e um dispositivo largamente utilizado para o processamento de
+informacoes digitais cujas funcionalidades sao
+definidas exclusivamente pelos usuarios. Contem
+um numero na ordem de milhares de unidades
+logicas identicas que podem ser configuradas independentemente e interconectadas de maneira que
+permitem o desenvolvedor focar no algoritmo que
+se deseja, nao se preocupando com os circuitos
+que serao implementados. Utiliza-se um kit da
+Opal Kelly, o XEM3005 (Figura 4), baseado na
+linha Spartan-3E, da Xilinx. Pode-se programa-lo
+atraves das linguagens VHDL e Verilog.
+
+(a) Correlacao cruzada e transformada de Hilbert correspondente
+
+(b) Zoom na regiao de interesse.
+
+Figura 2 (a) Correlacao cruzada (linha cheia) e
+transformada de Hilbert (linha pontilhada) (b)
+detalhe na regiao de interesse dos dois metodos.
+A resposta_em_frequencia do transformador de
+Hilbert ideal, e dada pela equacao 3 (Proakis and
+Manolakis, 1996)
+
+j, 0 <  < 
+(3)
+Hd (ejw ) 
+j,  <  < 0
+
+Figura 4 FPGA XEM3005.
+Como o kit de desenvolvimento nao possui
+circuitos de conversao analogico-digital, os sinais
+a serem processados sao provenientes de simulacoes no MATLAB e da aquisicao de sinais reais
+no laboratorio de ultra-som, que sao armazenados
+e transferidos ao FPGA.
+Sao gerados sinais como em Simon (1993) ou
+Martinhon (2007), que podem representar bem
+sinais experimentais de ultra-som, gerando um
+pulso de referencia e outro pulso atrasado, para
+que seja determinado o atraso de tempo entre
+os dois. Martinhon (2007) gera um pulso de
+radio-frequencia (RF) com envoltoria Gaussiana,
+podendo-se variar sua largura, frequencia do sinal,
+frequencia de amostragem, atenuacao do meio e
+relacao sinal-rudo.
+Para aquisicao de sinais e utilizado um sistema conforme a Figura 5. O transdutor (3.5,
+5 ou 10 MHz de frequencia central) pode trabalhar em modo pulso-eco, em contato direto com
+a peca ou usando um tanque com agua, em imersao. Um pulsadorreceptor de ultra-som excita o
+transdutor com um pulso estreito e amplifica os
+sinais de eco, que sao visualizados em um osciloscopio digital. Os dados sao entao transferidos ao
+computador, por meio de um programa escrito em
+
+Pode-se implementar a expressao 3 atraves de
+filtros como Martinhon (2007), ou zerar as componentes espectrais de frequencias negativas, dobrando a magnitude das positivas, como pode ser
+observado na Figura 3. Assim, gera-se o sinal analtico de x(t), cuja parte real e o proprio sinal x(t)
+e a parte imaginaria sua transformada de Hilbert.
+A envoltoria do sinal, utilizada nos metodos convencionais, e determinada pela magnitude do sinal
+analtico.
+
+Figura 3 Transformada de Hilbert a esquerda e o
+sistema implementado a direita.
+Todos os metodos sao aplicados tanto no
+MATLAB como no FPGA. Sao necessarios alguns
+calculos auxiliares para a implementacao dos metodos aqui mencionados, como o calculo da transformada de Fourier, atraves da FFT e sua inversa
+
+4981
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+MATLAB, atraves de uma interface serial
+(RS-232) ou GPIB (General Purpose Interface
+Bus). Tem-se disponvel um manipulador cartesiano no qual pode-se posicionar o transdutor e
+fazer uma varredura sobre a peca.
+Pulsadorreceptor
+
+por limiar busca-se o primeiro elemento de cada
+vetor cuja magnitude e maior que um limiar para
+cada um dos sinais, sendo o mesmo limiar para
+ambos. O limiar e determinado de acordo com a
+relacao sinal-rudo. Ja a deteccao de pico consiste
+em encontrar o ndice do elemento cuja magnitude e maxima entre todos os elementos do vetor
+(sinal). Em ambos os casos sao utilizados os sinais
+retificados e a envoltoria dos mesmos. Nao sao utilizados os sinais em si de maneira a simplificar o
+algoritmo em encontrar um valor maximo e nao
+o elemento que possui maior magnitude, mesmo
+sendo negativo. Tambem, caso o sinal de eco apresente inversao de fase, nao e necessario trabalhar
+com limiares negativos.
+
+Osciloscópio digital
+
+Sinal
+TxRx
+
+trigger
+
+GPIB
+
+computador
+
+RS-232
+USB
+transdutor
+kit FPGA
+peça
+
+Figura 5 Diagrama em blocos do sistema de aquisicao.
+
+4
+
+Implementou-se o algoritmo da correlacao
+cruzada conforme Martinhon (2007), no domnio
+da frequencia, em razao da eficiencia computacional do algoritmo da FFT. De maneira a encontrar um valor mais exato para o instante de pico
+da correlacao cruzada, assim como o instante de
+cruzamento com o zero da transformada de Hilbert do sinal de correlacao, implementaram-se interpolacoes para cada uma dessas tecnicas. De
+acordo com Martinhon (2007), uma das interpolacoes mais simples e utilizadas para o pico do
+sinal de correlacao e atraves de um polinomio de
+2o grau, isto e, uma parabola. No instante de pico
+da correlacao, sua transformada de Hilbert cruza
+o zero e e aproximadamente linear nessa regiao,
+permitindo a aproximacao por uma reta, atraves
+de uma interpolacao linear.
+
+Implementacao dos Metodos e
+Resultados experimentais
+
+O atraso de tempo entre os sinais e medido
+em segundos. Entretanto, o instante de tempo do
+elemento de um vetor correspondente a um sinal
+amostrado e o ndice do mesmo multiplicado pelo
+perodo de amostragem (dt  1fs ) somado ao
+valor do tempo inicial (ni ). O atraso de tempo
+entre dois elementos pode ser a medido a partir da
+diferenca no tempo dos mesmos ou a diferenca dos
+ndices multiplicada pelo perodo de amostragem.
+Assim, de modo a reduzir os erros correspondentes
+aos calculos de soma e multiplicacao, os metodos
+implementados buscarao os ndices dos elementos.
+O atraso e, consequentemente a espessura da peca
+e proporcional ou funcao desta medicao
+
+Decidiu-se por implementar todos os algoritmos em 16 bits e, posteriormente, de acordo com
+os resultados, diminu-los de maneira a reduzir o
+custo de implementacao. A mudanca do numero
+de bits (b) da implementacao em FPGA dos algoritmos de 16 para 12 ou para qualquer outro numero nao apresenta grandes dificuldades, uma vez
+implementado um deles. Para tanto basta variar
+o numero de bits na quantizacao dos sinais a serem transferidos ao FPGA e variar numero de bits
+na declaracao das variaveis no desenvolvimento do
+algoritmo.
+
+dt(n2  n1 )
+t
+c
+,
+(4)
+2
+2
+sendo c a velocidade de propagacao do som no
+material, dt o perodo de amostragem do sinal e
+nj a j-esima amostra do vetor do sinal de eco (por
+exemplo o instante de pico).
+Os sinais a serem processados sao gravados
+em arquivos ou simulados no MATLAB. Ainda
+atraves deste software os sinais sao quantizados
+e transferidos ao FPGA. Na maioria dos casos
+que envolvem processamento, principalmente com
+o calculo da FFT, o sinal a ser transferido deve
+ser escalonado (multiplicado por uma constante
+com valor entre 0 e 1), de maneira a reduzir sua
+amplitude para que no resultado final ou em algum resultado parcial de algum calculo o valor
+nao seja maior que a capacidade de um registro
+(estouro ou overflow ). Entretanto, o escalonamento do sinal esta diretamente relacionado a resolucao e aproveitamento do numero de bits dos
+registros utilizados.
+A deteccao por limiar e de pico consiste na
+varredura dos vetores correspondentes aos sinais
+de ecos, isto e encontrar dois ndices. Na deteccao
+Lc
+
+A Figura 6 ilustra uma aquisicao de um sinal
+de eco para b  12 bits e b  16 bits e constante
+de escalonamento k  0,005.
+O FPGA utilizado possui 32 MB de SDRAM.
+A tabela 1 apresenta uma comparacao da porcentagem de memoria utilizada para a implementacao de cada tecnica em 16 e 12 bits. Em todas as
+tabelas, cada coluna indica um metodo diferente1 
+
+1 Tecnicas mais simples como deteccao de pico e de limiar dos sinais puros e filtrados tambem foram implementadas em FPGA, entretanto nao apresentam grande carga
+computacional, utilizando pouca porcentagem da memoria e apresentando resultados iguais aos encontrados em
+MATLAB.
+
+4982
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+baixo, uma vez que o nvel de rudo e reduzido
+significativamente com o calculo da envoltoria do
+sinal.
+4.1
+
+Sinais sintetizados
+
+Simularam-se 3 ecos, conforme ilustrado na
+Figura 7.
+Tais sinais foram gerados como
+Martinhon (2007) pulsos de radio-frequencia
+(RF) com envoltoria Gaussiana, podendo-se variar largura, frequencia dos sinais, frequencia de
+amostragem e atraso entre os ecos de acordo com
+a equacao (5)
+
+(a) b  16 bits  k  0, 005.
+
+vn  Ae
+
+
+
+(n(M c+D))2
+2
+
+
+cos
+
+2
+
+
+fo
+(n  (M c + D)) , (5)
+fs
+
+sendo A o valor de pico do sinal, M c o ponto central do pulso, D o atraso do eco (0 para o primeiro),  o desvio padrao da envoltoria Gaussiana
+(determinador da largura de banda), fo a frequencia do pulso Hz e fs a frequencia de amostragem
+Hz.
+Utilizou-se uma amostragem de 100 MHz,
+sendo os pulsos de 4 MHz. O atraso entre os 1o e
+o 2o ecos assim como entre o 1o e o 3o foi de 435
+amostras. Nota-se que o segundo e uma replica
+atenuada e atrasada do primeiro, enquanto o terceiro apresenta um formato diferente, possuindo
+maior duracao. O terceiro eco foi obtido atraves
+da soma de varios ecos com diferentes atrasos e
+amplitudes.
+Simularam-se tambem sinais com D  434,7,
+isto e, os ecos estao atrasados de 434,7 amostras.
+Isso porque na pratica, dificilmente se encontrara
+um caso cujo intervalo de tempo entre os ecos seja
+inteiro, ou seja, o atraso entre os sinais simulados
+e fracionario.
+Pode-se perceber que os metodos de correlacao cruzada e tranformada de Hilbert permitem
+encontrar sub-amostras, devido as interpolacoes
+aplicadas a cada metodo, permitindo uma melhor
+exatidao no resultado. Entretanto, o resultado
+diferenciou-se muito dos encontrados com as demais tecnicas quando o segundo eco nao possui
+um formato semelhante ao primeiro. Percebeuse tambem que os resultados obtidos tanto com o
+FPGA como em MATLAB foram bem parecidos.
+O erros existiram nos casos que envolvem bastante
+quantidade de processamento, como a correlacao
+cruzada e a transformada de Hilbert do sinal de
+correlacao, embora as tecnicas que utilizam a envoltoria do sinal, que tambem envolvem grande
+carga_computacional, nao apresentaram erros.
+
+(b) b  12 bits  k  0, 005.
+
+Figura 6 Sinais de eco da primeira parede da peca
+3 para diferentes numeros de bits da implementacao em FPGA (b) e constantes de escalonamento
+(k).
+I deteccao de pico da envoltoria do sinal
+II deteccao por limiar da envoltoria do sinal
+III correlacao cruzada entre os sinais de eco
+com interpolacao parabolica
+IV transformada de Hilbert da correlacao cruzada com interpolacao linear.
+
+Tabela 1 Porcentagem da memoria utilizada na
+implementacao de cada tecnica em FPGA para
+b  16 bits e b  12 bits.
+I
+II
+III
+IV
+16 bits
+7,43 6,18 6,87 5,62
+6,05 5,18 5,71 4,91
+12 bits
+diferenca 0,48 1,00 1,16 0,71
+Nota-se que foi necessaria pouca quantidade
+de memoria para a implementacao de cada uma
+das tecnicas, considerando toda a capacidade disponvel no kit FPGA , utilizando, no pior dos casos, apenas 7,43 do total. Da implementacao em
+16 bits para a implementacao em 12 bits, nao se
+reduziu significativamente a quantidade de memoria utilizada, assim, tal substituicao so e valida se
+os resultados obtidos com a aplicacao das tecnicas
+nao apresentarem erros significativos.
+O nvel de limiar utilizado foi de 5 para o
+sinal puro e 0,5 para a envoltoria do sinal. Para
+o segundo caso pode-se utilizar um limiar mais
+
+4.2
+
+Sinais praticos
+
+Utilizaram-se 3 pecas, de materiais e formas
+diferentes para realizar os ensaios. Uma de acrlico, uma de plastico e uma de aco. As pecas de
+
+4983
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+de rudo de -60 dB. A partir desta, variaram-se
+parametros, analisando os resultados.
+Tabela 2 Espessura da peca mm - ft  3,5 MHz
+fs  1 GHz b  16 bits nvel de rudo de -60 dB.
+I
+II
+III
+IV
+MATLAB 8,02 7,99 7,96 7,98
+FPGA
+8,24 7,99 7,99 7,99
+diferenca 0,22
+0
+0,03 0,01
+
+(a) 1o eco.
+
+As tabelas 3 e 4 apresentam os resultados para
+a variacao da relacao sinal-rudo e da frequencia
+de amostragem, respectivamente.
+
+(b)
+
+2o
+
+Tabela 3 Espessura da peca mm - ft  3,5 MHz
+fs  1 GHz b  16 bits nvel de rudo de -25 dB.
+I
+II
+III
+IV
+MATLAB 8,02 7,78 7,96 7,98
+FPGA
+8,21 7,78 7,96 7,95
+diferenca 0,19
+0
+0
+0,03
+
+eco.
+
+Tabela 4 Espessura da peca mm - ft  3,5 MHz
+fs  50 MHz b  16 bits nvel de rudo de -60 dB.
+I
+II
+III
+IV
+MATLAB 8,03 7,96 8,03 8,04
+FPGA
+8,18 7,98 8,03 8,03
+diferenca 0,15 0,02
+0
+0,01
+
+(c) 3o eco.
+
+Figura 7 Pulsos ultra-sonicos sintetizados.
+acrlico e plastico foram utilizadas apenas para verificar que o ensaio pode ser realizado para diferentes materiaisformatos e que em todos os casos a implementacao pode ser feita tanto em um
+computador, com o auxlio do MATLAB como
+em um FPGA, atingindo resultados muito proximos do real. Entretanto, na pratica, seja em
+tubos de transporte de petroleo, seja em caldeiras e demais reservatorios, ou seja, na industria
+em geral, a maior parte destes ensaios sao realizados em metais. Assim, modificaram-se parametros
+dos sinais de ecos da peca de aco, a qual possui
+uma espessura de 8 mm, medida com um paqumetro digital, para observar as influencias sobre as
+tecnicas, sendo modificado um parametro por vez,
+mantendo todos os outros inalterados. Mantevese o mesmo nvel de limiar para a deteccao por limiar do sinal e da envoltoria do sinal, assim como
+as constantes de escalonamento para cada tecnica.
+As pecas utilizadas possuem dimensoes na
+ordem de grandeza de milmetros. O maior
+desvio padrao encontrado, foi da ordem de 0, 1 m
+e por isso os resultados sao apresentados apenas
+por seus valores medios.
+A tabela 2 apresenta os resultados para
+frequencia central do transdutor (ft ) de 3,5 MHz,
+frequencia de amostragem (fs ) de 1 GHz, b 
+16 bits na implementacao em ponto-fixo e nvel
+
+Diminuindo-se a relacao sinal-rudo, as tecnicas mais influenciadas sao as de deteccao de pico
+e por limiar, pois um rudo proximo da regiao de
+interesse pode ultrapassar o valor de maximo ou
+limiar em um instante diferente do real. Entre as
+implementacoes em ponto-fixo e ponto-flutuante,
+a deteccao de pico da envoltoria do sinal e a transformada de Hilbert do sinal de corelacao apresentaram as maiores diferencas devido a maior carga
+computacional aplicada aos sinais com nvel de
+rudo consideravel.
+Reduzindo a taxa de amostragem, a tecnica
+de deteccao de pico apresentou maiores diferencas
+com relacao ao valor real da espessura da peca.
+A tabela 5 apresenta os resultados para a variacao da frequencia de central do transdutor. Com
+o aumento da frequencia do transdutor, de maneira geral os resultados foram melhores, com uma
+pequena variacao na diferenca entre os resultados
+obtidos com o metodo de deteccao por limiar da
+envoltoria do sinal.
+A tabela 6 apresenta os resultados para a variacao do numero de bits na implementacao em
+ponto-fixo.
+Nota-se que, com a diinuicao de 16 para
+12 bits, todas as tecnicas que envolvem calculos
+apresentaram piores resultados, embora com diferencas inferiores a 5,00 e as tecnicas de deteccao
+
+4984
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Agradecimentos
+
+Tabela 5 Espessura da peca mm - ft  5 MHz
+fs  1 GHz b  16 bits nvel de rudo de -60 dB.
+I
+II
+III
+IV
+MATLAB 8,03 8,08 8,02 8,02
+FPGA
+8,19 8,05 8,02 8,02
+diferenca 0,16 0,03
+0
+0
+
+Este trabalho contou com o apoio do Prof.
+Dr. Julio Cezar Adamowski do Departamento de
+Engenharia Mecanica da USP que forneceu o kit
+FPGA para a pesquisa, assim como a a agencia
+de fomento FAPESP (processo no 200808378-4).
+Referencias
+
+Tabela 6 Espessura da peca mm - ft  3,5 MHz
+fs  1 GHz b  12 bits nvel de rudo de -60 dB.
+I
+II
+III
+IV
+MATLAB 8,02 7,99 7,96 7,98
+FPGA
+8,23 8.11 8.29 8,16
+diferenca 0,21 0,12 0,33 0,18
+
+Adamowski, J. C., Buiochi, F., Simon, C., Silva,
+E. C. N. and Sigelmann, R. A. (1995). Ultrasonic measurement of density of liquids,
+Journal of the Acoustical Society of America
+97(7) 354361.
+Cabot, R. C. (1981). A note on the application of
+the hilbert transformer to time-delay estimation, IEEE Transactions on Acoustics, Speech, and Signal Processing 29(3) 607609.
+
+de pico e por limiar nao apresentaram diferencas,
+uma vez que os metodos consistem nas varreduras dos vetores, em busca de um ndice de maximo ou igual a um determinado valor (limiar),
+nao inserindo assim erros com relacao a arredondamento e armazenamento de resultados de calculos e nao havendo a necessidade de grande escalonamento, minimizando os erros devido a quantizacao. Levando em consideracao nao apenas os
+resultados, mas tambem o custo da implementacao, nao houve significativa reducao da memoria utilizada, com relacao ao acrescimo dos erros
+obtidos, nao compensando a substituicao de 16
+para 12 bits na implementacao das tecnicas em
+questao.
+
+5
+
+Higuti, R. T. (1994). Ensaios nao-destrutivos por
+ultra-som para inspecao de corrosao em tubulacoes, Masters thesis, Escola Politecnica,
+Universidade de Sao Paulo, Sao Paulo.
+Lewandowski, M. and Nowicki, A. (2008). High
+frequency coded imaging system with rf software signal processing, IEEE Transaction
+on Ultrasonics, Ferroelectrics, and Frequency
+Control 55(8) 18781882.
+Lima, F. V. F. (2003). Desenvolvimento de um sistema acustico de posicionamento submarino,
+Masters thesis, Escola Politecnica, Universidade de Sao Paulo, Sao Paulo.
+Maimone, A. L., Maimone, N. and Rossi, R. M.
+(2007). Comparacao entre as medidas da espessura central corneana usando a paquimetria optica e a ultra-sonica, Revista Brasileira
+de Oftalmologia 66(5) 30914.
+
+Comentarios e Conclusoes
+
+A implementacao das tecnicas mais simples,
+como deteccao de pico e de limiar dos sinais puros e filtrados, nao apresenta carga_computacional significativa, utilizando pouca porcentagem
+da memoria e apresentando resultados identicos
+aos encontrados em MATLAB. Com a variacao
+da frequencia central do transdutor, assim como
+da frequencia de amostragem e do nvel de rudo,
+nota-se que o valor encontrado com cada tecnica modifica-se com relacao ao valor original (tabela 2), entretanto os resultados das implementacoes em FPGA e MATLAB foram bem proximos.
+Diminuindo-se o numero de bits na implementacao em ponto-fixo, obteve-se uma significativa mudanca nos resultados, com diferencas a serem consideradas (tabela 6), nao compensando a substituicao de 16 para 12 bits. Contudo, para 16 bits,
+os resultados obtidos com FPGA foram bem proximos do real e do obtido com ponto-flutuante,
+validando a substituicao do computador (software
+MATLAB) pelo FPGA.
+
+Martinhon, G. (2007). Avaliacao e implementacao de metodos de estimacao de tempo de
+atraso de sinais de ultra-som, Masters thesis,
+Universidade Estadual Paulista Julio de Mesquita Filho, Campus de Ilha Solteira, Ilha
+Solteira.
+Mukthavaram, S. (1999). Design and implementation of an adaptive demodulator, Masters
+thesis, Universiy of Kansas, EUA.
+Oppenheim, A. V., Schafer, R. W. and Buck, J. R.
+(1999). Discrete-Time Signal Processing, Upper Saddle River, New Jersey.
+Proakis, J. G. and Manolakis, D. G. (1996). Digital Time Signal Processing Principles, Algorithms, and Applications, Upper Saddle River, New Jersey.
+
+4985
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Silva, S. L., Leme, P. R. and Putrino, S. M. (2004).
+Estimativa da gordura de cobertura ao abate,
+por ultra-som, em tourinhos brangus e nelore,
+Revista Brasileira de Zootecnia 33(2) 511
+517.
+Simon, C. (1993). Tecnicas de processamento de
+sinais aplicadas a ensaios_nao_destrutivos por
+ultra-som, Masters thesis, Escola Politecnica, Universidade de Sao Paulo, Sao Paulo.
+Viola, F. and Walker, F. M. (2003). A comparison of the performance fo time-delay estimation in medical ultrasound., IEEE Transaction on Ultrasonics, Ferroelectrics, and Frequency Control 50(4) 392401.
+
+4986

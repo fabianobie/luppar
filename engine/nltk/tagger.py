@@ -1,3 +1,5 @@
+#-*- coding: utf8 -*-
+
 import nltk
 import pickle
 from string import punctuation
@@ -5,51 +7,51 @@ from random import shuffle
 
 def convert_to_universal_tag(t, reverse=False):
     tagdict = {
-        'n': "NOUN",
+        'n': "NN",
         'num': "NUM",
-        'v-fin': "VERB",
-        'v-inf': "VERB",
-        'v-ger': "VERB",
-        'v-pcp': "VERB",
+        'v-fin': "VB",
+        'v-inf': "VB",
+        'v-ger': "VB",
+        'v-pcp': "VB",
         'pron-det': "PRON",
         'pron-indp': "PRON",
         'pron-pers': "PRON",
         'art': "DET",
-        'adv': "ADV",
+        'adv': "JJ",
         'conj-s': "CONJ",
         'conj-c': "CONJ",
         'conj-p': "CONJ",
-        'adj': "ADJ",
+        'adj': "RB",
         'ec': "PRT",
         'pp': "ADP",
         'prp': "ADP",
-        'prop': "NOUN",
+        'prop': "NN",
         'pro-ks-rel': "PRON",
         'proadj': "PRON",
         'prep': "ADP",
-        'nprop': "NOUN",
-        'vaux': "VERB",
+        'nprop': "NN",
+        'vaux': "VB",
         'propess': "PRON",
-        'v': "VERB",
-        'vp': "VERB",
+        'v': "VB",
+        'vp': "VB",
         'in': "X",
         'prp-': "ADP",
-        'adv-ks': "ADV",
+        'adv-ks': "JJ",
         'dad': "NUM",
         'prosub': "PRON",
         'tel': "NUM",
         'ap': "NUM",
-        'est': "NOUN",
+        'est': "NN",
         'cur': "X",
-        'pcp': "VERB",
+        'pcp': "VB",
         'pro-ks': "PRON",
         'hor': "NUM",
-        'pden': "ADV",
+        'pden': "JJ",
         'dat': "NUM",
         'kc': "ADP",
         'ks': "ADP",
-        'adv-ks-rel': "ADV",
-        'npro': "NOUN",
+        'adv-ks-rel': "JJ",
+        'npro': "NN",
     }
     if t in ["N|AP","N|DAD","N|DAT","N|HOR","N|TEL"]:
         t = "NUM"
@@ -87,7 +89,7 @@ tagger = nltk.BigramTagger(
             traindata, backoff=nltk.RegexpTagger(
                 regex_patterns, backoff=nltk.UnigramTagger(
                     traindata2, backoff=nltk.AffixTagger(
-                        traindata2, backoff=nltk.DefaultTagger('NOUN')
+                        traindata2, backoff=nltk.DefaultTagger('NN')
                     )
                 )
             )

@@ -1,0 +1,771 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+DESENVOLVIMENTO DE UM CONTROLADOR PID-FUZZY APLICADO A UM CONVERSOR
+FORWARD PARA UTILIZAÇÃO EM FONTES ININTERRUPTAS DE ENERGIA
+MARCOS B. KETZER, CURSINO B. JACOBINA.
+Laboratório de Eletrônica Industrial e Acionamento de Máquinas, Departamento de Engenharia Elétrica,
+Universidade Federal de Campina Grande (UFCG)
+Caixa Postal 10053, 58.429-970, Campina Grande, Paraíba, Brasil.
+E-mails marcos.ketzer@ee.ufcg.edu.br, jacobina@dee.ufcg.edu.br
+
+HERIBERTO B. NOMACHER, MAURÍCIO CAMPOS.
+Grupo de Automação Industrial e Controle, Depto. de Ciências Exatas e Engenharias, Universidade Regional
+do Noroeste do Estado do Rio Grande do Sul (UNIJUÍ)
+Rua Lulu Ilgenfritz  480, CEP 98700-000, Ijuí, Rio Grande do Sul, Brasil.
+E-mails heriberto.nonemacher@unijui.edu.br, campos@unijui.edu.br
+
+FABIANO SALVADORI.
+Departament de Engenharia Elétrica, Universidade Federal da Paraíba (UFPB)
+Campus Universitário I, Bairro Universitário, CEP 58051-900, João Pessoa, Paraíba, Brasil.
+E-mails salvadori.fabiano@gmail.com
+Abstract Uninterruptible power supplies are essential in many areas where electricity is necessary. In these systems, static
+converters require complex designs because they characterize as non-linear systems and require a fast dynamic response of the
+control system. Fuzzy controllers, in turn, adopt a design methodology that does not require a priori knowledge of the plant, being characterized as adaptive, nonlinear and robust controllers. This article presents the implementation of a PID-Fuzzy controller applied in a forward converter inserted in uninterruptible power supplies, considering theoretical and practical aspects. For the
+simulation and design of the controller gains it was used an optimization algorithm implemented in MATLAB . The PID-Fuzzy
+controller implemented in a digital signal processor compensates for variations in the quiescent point, maintaining the desired
+characteristics response.
+Keywords UPS, Fuzzy, Non-linear control, Power Electronics.
+Resumo Fontes ininterruptas de energia são indispensáveis nas mais diversas áreas onde a energia_elétrica é necessária. Nestes
+sistemas, os conversores_estáticos pressupõem projetos complexos, pois se caracterizam como sistemas_não_lineares e exigem
+uma rápida resposta_dinâmica do sistema_de_controle. Os controladores Fuzzy, por sua vez, adotam uma metodologia de projeto
+que não exige conhecimento a priori da planta, se caracterizando como controladores adaptativos, não_lineares e robustos. Este
+artigo apresenta a implementação de um controlador PID Fuzzy aplicado em um conversor_forward inserido em fontes_ininterruptas_de_energia, considerando aspectos teóricos e práticos. Para simulação, assim como projeto dos ganhos do controlador foi
+utilizando um algoritmo de otimização implementado no MATLAB. O controlador PID-Fuzzy implementado em um processador_digital_de_sinais permite compensar as variações no ponto quiescente, mantendo as características de resposta desejadas.
+Palavras-chave .
+
+1 Introdução
+Fontes ininterruptas de energia são indispensáveis em diversos setores, principalmente no setor
+médico-hospitalar, mais especificamente em sistemas
+de suporte a vida e centros cirúrgicos. O projeto de
+conversores de energia_elétrica de potência não é
+uma tarefa trivial, pois além de consistirem em modelos não-lineares, variantes no tempo e com modelagem usualmente imprecisa, exigem como requisitos
+uma respostas dinâmica rápida sobre ponto de vista
+de implementação, considerando a tecnologia de
+processamento existente. (Mattavelli, 1995).
+Diversas técnicas_de_modelagem e estratégias de
+controle foram desenvolvidas com ênfase na aplicação em conversores chaveados, dentre as quais as
+ISBN 978-85-8001-069-5
+
+mais difundidas são aquelas que linearizam a planta
+num ponto de operação e criam um compensador
+com realimentação utilizando técnicas de projeto
+clássicas para sistemas_lineares (Erickson, 2001).
+Entretanto, existem condições especiais em que o
+ponto de operação não é previsível, ou ainda, varia
+conforme o funcionamento do conversor, tornando
+necessária a utilização de técnicas de controle nãolineares, ou ainda, se adaptem aos novos parâmetros
+da planta (Bose, 1997 Viswanathan, 2002).
+Todavia, as técnicas de adaptação paramétrica
+pressupõem um conhecimento detalhado do modelo
+matemático da planta. O sucesso do projeto do controlador é suscetível a qualidade do modelo_matemático disponível (Mattavelli, 1995).
+
+2706
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+De outra forma, para o projeto do controlador
+utilizando a logica Fuzzy não é necessário o conhecimento a priori do modelo_matemático da planta. .
+Segundo Bose (Bose, 1997), o controle Fuzzy é basicamente adaptativo, não-linear e com desempenho
+robusto. Sendo assim, a aplicação de controladores
+Fuzzy é uma alternativa atraente para conversores de
+energia_elétrica.
+Um aspecto crítico do controle Fuzzy é o maior
+esforço computacional se comparado as técnicas de
+controle_lineares. Este aspecto negativo é relevante,
+pois, encarece a implementação do mesmo.
+Em sistemas SISO, o controle PD oferece melhor aproximação para as regras Fuzzy. A obtenção
+do controle PID-Fuzzy (PIDF) pode ser então facilmente obtida através do controle PD-Fuzzy com um
+integrador. Os controles PIDF têm sido interesse de
+várias pesquisas, resultando em diversas topologias
+conforme Karasakal (Karasakal, 2005).
+Existem várias estratégias para projeto do controlador Fuzzy, tais como mostrado em Lee (Lee,
+1990) e Zadeh (Zadesh, 1973). A maior parte destas
+estratégias exige o uso de simuladores ou a própria
+planta para o projeto. De fato, o controle PIDF é
+considerado um controle PID com ganhos variáveis
+que dependem das regras da lógica Fuzzy.
+O objetivo deste trabalho é detalhar a implementação e os resultados obtidos de um controlador PIDFuzzy aplicado a um conversor_forward, inserido em
+uma Fonte Ininterrupta de Energia (Uninterruptible
+Power Supply  UPS).
+2 Desenvolvimento do Controlador
+2.1 Fonte Ininterrupta de Energia (UPS)
+
+transformador. Devido a adição do transformador,
+este consegue operar com tensões de saída menores e
+também maiores que as de entrada, diferente da sua
+versão não-isolada.
+L
+
+D1
+
+Transf.
+
+C
+
+D2
+
+Carga
+
+Vbateria
+D3
+S1
+
+Figura 2. Conversor forward.
+
+Em regime, considerando a condução ideal, a
+tensão média no enrolamento primário é dada em (1),
+e no secundário é dado em (2).
+ 
+
+ 
+
+(
+
+(
+
+)
+
+)
+
+(1)
+(
+
+)
+
+(2)
+
+Onde   média da tensão primária do transformador   média da tensão secundária
+
+razão cíclica dos instantes iguais a , ou
+e
+ relações de expiras do transformador
+ tensão terminal da bateria
+ tensão na carga.
+Através da manipulação algébrica do circuito e
+das equações (1) e (2), obtém-se, idealmente, a saída
+dada na equação (3). Maiores detalhes desta topologia são discutidos em Erickson (Erickson, 2001).
+
+A figura 1 apresenta o diagrama_de_blocos da
+UPS para a qual foi projetado o controlador PIDF.
+(3)
+CA
+
+RETIFICADOR
+REGULADOR
+
+CC-CC
+
+FORWARD
+
+CC
+
+
+
+Bateria
+
+Figura 1. Topologia da UPS.
+
+A UPS tem topologia on-line, com uma entrada
+retificadora e saída em corrente contínua. O interesse
+da aplicação do controlador Fuzzy é na energia de
+entrega, onde há um conversor_forward. O circuito
+elétrico do conversor_forward é apresentado na figura
+2. A energia de entrada do conversor Forward são as
+baterias componentes do conversor UPS. As baterias
+por sua vez tem a tensão variada em função do estado de carga. Neste caso, o conversor_forward atua
+como regulador.
+Originalmente o conversor_forward é concebido
+como um conversor_buck isolado através de um
+
+ISBN 978-85-8001-069-5
+
+Para síntese do controle normalmente o conversor é bem aproximado através de um modelo equivalente do conversor_buck, ou ainda, admitido o transformador linear e a carga representada por uma resistência . Nessas condições, o conversor_buck equivalente é modelado, e resulta num modelo_não-linear,
+cuja linearização pode ser realizada pela análise de
+perturbação. O modelo resultante usualmente consiste numa função de segunda ordem, tal como apresentado em (4).
+
+
+
+(4)
+
+Este modelo, entretanto, representa mal em diversos aspectos este conversor, sendo os mais relevantes associados aos elementos eletromagnéticos. O
+transformador, assim como o indutor, possuem com-
+
+2707
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+portamento acentuadamente não-linear, dado que
+operam com corrente relativamente alta em relação 
+tensão, sendo a primeira até mesmo maior em módulo que a segunda. De fato, o efeito histerese acaba
+tornando a analise complexa, dificultando o projeto
+de controle.
+O interesse da aplicação do controlador Fuzzy é
+seu emprego no conversor utilizado para regulação
+da alimentação das cargas. A UPS recebe comando,
+pelo usuário ou sistema_de_controle geral, que muda
+a referência para a saída de tensão, sendo este limitado ao intervalo de 2,5 a 5,0 V.
+A UPS em questão alimenta cargas sensíveis e
+necessita ser robusto  variações nos pontos de operação de entrada causadas pelo curso de descarga da
+bateria, assim como tolerâncias as não_linearidades
+do circuito. É previsto em projeto que há variações
+de 100 na saída e aproximadamente 50 na entrada. Estas variações mudam de forma significativa o
+ponto de operação do conversor, assim também como os parâmetros da planta linearizada em função
+das não-linearidades. Neste contexto, as técnicas de
+controle clássicas são limitadas para o tratamento
+necessário.
+A UPS desenvolvida encontra aplicações em
+equipamentos eletrônicos que não possuem reguladores lineares internos, ou com variações significativamente limitadas, e podem inclusive, serem danificadas em condições fora das especificadas para sua
+operação. As especificações do conversor_forward
+utilizado na UPS são mostradas na tabela 1.
+A frequência de comutação do conversor, taxa
+de amostragem bem como a máxima de iteração do
+controle é estipulada em 30KHz. O algoritmo de
+controle
+é
+implementado em
+um
+DSP
+TMS320F28335. Assim como as técnicas de controle
+clássicas, a frequência de iteração de controle deve
+ser fixa, tendo em vista as operações de integração e
+derivação depende do tempo entre amostras.
+Tabela 1. Caracterização do conversor_forward.
+Tensão de
+entrada
+10-15 V
+
+Tensão
+saída
+3-5 V
+
+de
+
+L
+
+C
+
+Potência
+
+100 uH
+
+1000 uF
+
+12 W
+
+2.2 Controlador Fuzzy
+A lógica Fuzzy foi proposta por Zadeh (Zadeh ,
+1965). Sua principal característica é utilização de
+variáveis lingísticas em substituição as variáveis
+numéricas. Variáveis lingísticas significam que os
+valores estão associados  linguagem natural, tal
+como pequeno ou grande. Estas variáveis compõem
+o conjunto Fuzzy. Para a aplicação da lógica Fuzzy
+em controle, esta qualificação é aplicada aos sinais
+dos modelos controlados.
+O controlador PD-Fuzzy é um caso específico
+dos controladores em malha_fechada onde o sinal de
+erro e sua derivada são utilizados como entrada para
+operação das regras Fuzzy. Entretanto, a saída tem
+erro em regime, semelhante aos controles PD. Para a
+eliminação do erro em regime é adicionado o termo
+ISBN 978-85-8001-069-5
+
+integrador na saída de controle. Este termo integrador, entretanto, deteriora o desempenho do controlador. Para solução deste problema utiliza-se um termo
+proporcional e um termo integral, em paralelo, como
+mostrado na figura 3.
+
+e
+
+
+
+Ke
+Controlador
+Fuzzy
+
+dedt
+
++
+
+U
+
+Kd
+
+u
+
+
+
+
++
+
+Figura 3. Topologia PID-Fuzzy.
+
+Onde  erro
+ derivada do erro
+ Ganho proporcional de entrada
+ Ganho derivativo
+de entrada  Ganho proporcional de saída  Ganho integral de saída  Ação de saída das regras
+Fuzzy  Ação de saída do controlador.
+A união das estruturas PD e PI, na précompensação e pós-compensação do algoritmo Fuzzy, permitem estabelecer uma equivalência ao controlador PI-PD, ou, simplificando, PID.
+Para esta análise, considera-se ação do controlador é expressa por (5).
+(5)
+
+
+
+Como apresentado em Qiao (Qiao, 1996), o controlador Fuzzy com funções de pertinência triangulares, uniformemente distribuídas, com defuzzificação
+pelo centro de gravidade, tem a saída aproximada por
+(6).
+(6)
+Onde , e são variáveis do controlador Fuzzy. Logo, a saída do controlador é dada por (7).
+
+
+
+(
+
+)
+
+(7)
+
+Logo, o controlador PID-Fuzzy aproximado é
+equivalente ao controle PID com os seguintes ganhos
+Ganho Proporcional
+Ganho Integral
+Ganho Derivativo
+A estrutura em malha_fechada necessita considerar a realimentação da planta. A topologia de controle PID-Fuzzy é mostrada na figura 4.
+
+2708
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Derivação
+
+dedt
+
+Controlador
+Fuzzy
+Kd
+
++
+
+U
+
+
+
+
+u
+
+G(s)
+
+y
+
++
+
+Figura 4. Topologia do controlador PID-Fuzzy em malha_fechada.
+
+Segundo Bose (Bose, 1997), os passos essenciais
+para o projeto do controle Fuzzy são
+ Definição das variáveis Fuzzy para o controlador, que para a estrutura PIDF é o sinal de
+erro e sua derivada.
+ Escolha das funções de pertinência (critério
+de projeto), o qual normalmente depende da
+experiência do projetista e seu conhecimento da planta.
+ Formulação da tabela de regras Fuzzy.
+ Simulação, se possível, para ajustes nos ganhos do controlador.
+ Implementação e ajuste fino do controlador.
+Outras estratégias também envolvem algoritmos
+de otimização das variáveis do controlador, onde este
+é projetado de forma iterativa. O que define a convergência da otimização é a escolha das variáveis de
+ajuste. Especificamente, para o controlador PIDF
+com funções de pertinência triangulares e defuzzificação pelo centro de gravidade, esta tarefa é mais
+simples, pois maior parte dos elementos do controlador já é pré-definido. Portanto, para o projeto do
+PIDF é necessário a escolha da quantidade de funções de pertinência, assim como a implementação da
+tabela de regras. Posteriormente são sintonizados os
+ganhos
+,
+, e através de um algoritmo de
+otimização.
+2.3 Projeto de Controlador Fuzzy
+Na determinação dos conjuntos Fuzzy, a utilização de um número elevado de funções de pertinência
+também aumenta o esforço computacional de controle. Sendo assim, foram escolhidas três funções para
+cada entrada (proporcional e derivativa), e cinco para
+a saída (tabela 2), objetivando um equilíbrio na relação desempenho e esforço computacional.
+
+cia para avaliar o controlador_fuzzy para a alimentação do sinal proporcional, entretanto esta escolha
+aumenta o esforço computacional.
+A tabela 3 mostra os operadores utilizados na
+qualificação das variáveis da tabela 1. A saída da
+tabela é composta por nove condições, sendo que
+existem somente cinco funções de pertinência. O
+valor de cada função de pertinência de saída é definido pela operação OR, lembrando que as operações
+AND () e OR para a lógica_fuzzy são diferentes
+daqueles da lógica booleana.
+
+Erro Negativo
+1
+
+Valor da função de pertinência
+
+-
+
+
+
+Ke
+
+Erro Nulo
+
+Erro Positivo
+
+0.8
+0.6
+0.4
+0.2
+0
+-1
+
+-0.5
+
+0
+Entrada
+
+0.5
+
+1
+
+Figura 5. Funções Fuzzy para a entrada do Erro.
+
+U Neg. Ext.
+1
+
+Valor da funçãode pertinência
+
+e
+r +
+
+U Neg.
+
+U Nula
+
+U Pos.
+
+U Pos. Ext.
+
+-0.5
+
+0
+Saída
+
+0.5
+
+1
+
+0.8
+0.6
+0.4
+0.2
+0
+-1
+
+Figura 6. Funções de saída do controlador.
+
+Tabela 3. Operações Fuzzy do controlador.
+Tabela 2. Tabela de regras Fuzzy.
+Variáveis Fuzzy
+neg.
+
+neg.
+U neg. ext.
+
+nulo
+U neg.
+
+pos.
+U nulo.
+
+nulo
+
+U neg.
+
+U nulo
+
+U pos.
+
+pos.
+
+U nulo
+
+U pos.
+
+U pos. ext.
+
+As figuras 5 e 6 representam as funções de entrada_e_saída do controlador Fuzzy. Em geral, a simetria destas funções é alterada visando melhorar a
+sensibilidade no ponto nulo. Este aumento melhora o
+desempenho em regime do controlador, entretanto
+deve ser levado em consideração o aumento do ruído.
+Uma alternativa é utilizar outras funções de pertinên-
+
+ISBN 978-85-8001-069-5
+
+Se
+( é neg.)  (
+( é nulo)  (
+( é pos.)  (
+( é neg.)  (
+( é nulo)  (
+( é pos.)  (
+( é neg.)  (
+( é nulo)  (
+( é pos.)  (
+
+é neg.)
+é neg.)
+é neg.)
+é nulo)
+é nulo)
+é nulo)
+é pos.)
+é pos.)
+é pos.)
+
+Então
+é negativo extremo.
+é negativo.
+é nulo.
+é negativo.
+é nulo.
+é positivo.
+é nulo.
+é positivo.
+é positivo extremo.
+
+A figura 7 mostra como são avaliadas as regras
+para uma entrada com erro igual a -0,5 e sua derivada
+igual a -0,1. Cada uma das nove operações das entradas é avaliada pelas funções de pertinência e condi-
+
+2709
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ções AND. Posteriormente, a operação OR avalia os
+valores finais de cada conjunto de saída, onde então é
+realizado o cálculo do centro de gravidade que resulta na saída. A superfície de saída para as diversas
+entradas no intervalo normalizado pode ser vista na
+figura 8.
+
+(
+
+)
+
+(8)
+
+Onde consiste na matriz que contem as restrições, formulados pelo máximo erro em relação aos
+critérios determinados, conforme expresso em (9). E
+( ) é uma função por partes, que corresponde
+aos limites desejados, dada por (10).
+(
+
+)
+(
+(
+(
+
+
+
+(
+(
+(
+
+)
+)
+)
+
+( ))
+( )) 
+( ))
+
+(9)
+
+( )
+( )
+
+()
+
+Figura 7. Saída da inferência fuzzy para uma dada entrada.
+
+( )
+
+
+
+(10)
+
+A formulação é genérica, e pode ser desenvolvida em qualquer instante de operação do conversor.
+Um cuidado, entretanto, deve ser tomado no desenvolvimento dos critérios, assim como na seleção do
+algoritmo de otimização, pois a convergência pode
+não ocorrer.
+Também é interessante, adicionar restrições aos
+ganhos, expressa por (11), para que não haja problemas de precisão numérica do controlador em sua
+implementação, ou ainda, ocasionalmente gere saturação indesejada.
+(11)
+Onde x é ,
+é o limite superior.
+
+,
+
+e .
+
+é o limite inferior e
+
+Figura 8. Superfície de entradas e saídas das operações fuzzy.
+
+3 Resultados de Simulação
+
+O ajuste dos ganhos é realizado através de algoritmos de otimização e o modelo simulado do conversor. Os parâmetros de ajuste são os ganhos
+,
+, e . Os objetivos do controle é assegurar a que
+o sobre-sinal assim como o tempo de acomodação
+seja mínimo, evitando ultrapassar os limites especificados pelos equipamentos, e consequentemente,
+eliminando o risco de danificação das cargas.
+Considerando que o transformador utilizado possui uma relação de 11,2, e está limitado ao duty
+cycle de 0,5, este assume valores teóricos estacionários na faixa de 0,167 até 0,417 resultando numa
+variação de mais de 300.
+O problema de otimização tem restrições. Entretanto, na aplicação em sinais de sistemas_dinâmicos,
+ainda é interessante encontrar o ponto mais próximo
+ solução, caso essa não exista. Enfim, a formulação
+do problema de consiste em (8).
+
+Para simulação, assim como projeto dos ganhos
+utilizando o algoritmo de otimização, foi utilizado o
+software MATLAB. O algoritmo de otimização
+simula a perturbação frente a um degrau e avalia a
+resposta do controlador. Através dos resultados os
+parâmetros_são recalculados até a convergência da
+função objetivo.
+O critério de projeto foi manter o sobreamortecimento com um tempo de acomodação do controlador de 20 milissegundos, considerando este igual a
+4 do sinal de regime. Estes critérios foram determinados em função das cargas utilizadas na aplicação, que exigem uma resposta rápida do conversor,
+mantendo a tensão de saída constante mesmo na
+presença de variações de carga ou tensão da bateria.
+Para a sintonia dos ganhos do controlador proposto
+foi utilizada uma carga de 5 . A Figura 9 mostra a
+resposta ao distúrbio de grau, para referência variando de 3 a 5 V.
+
+ISBN 978-85-8001-069-5
+
+2710
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+5
+
+Tensão (V)
+
+4.5
+4
+3.5
+
+Tensão na Carga
+
+3
+2.5
+0.06
+
+0.08
+
+0.1
+
+0.12
+Tempo (s)
+
+0.14
+
+três cenários é verificado que a mudança da resposta
+característica é pouca, gerando apenas um pequeno
+sobre-sinal para o último cenário.
+Durante o desenvolvimento do protótipo foi verificado que o controlador proposto tem grande sensibilidade ao ruído de entrada na medição. Algumas
+técnicas com filtragem e estimação podem ser realizadas para minimizar este problema, entretanto, tem
+custos de processamento. Como alternativa, os ganhos e
+do controlador podem ser reduzidos,
+aumentando a robustez ao ruído, mas diminuindo o
+desempenho do transitório. Para o caso em estudo
+essa ultima metodologia foi adotada por satisfazer os
+requisitos do projeto.
+
+0.16
+
+Figura 9. Resultados de simulação.
+
+4 Resultados experimentais
+Foram definidos três cenários com comutação de
+carga. Os cenários exploram os extremos de relação
+de tensão na faixa de operação do conversor.
+
+Figura 11. Cenário 2 - Resultados de tensão e corrente.
+
+Figura 10. Cenário 1 - Resultados de tensão e corrente.
+
+No primeiro cenário, a comutação é realizada
+considerando a referência de entrada em 5 V, e a
+tensão de entrada do conversor em 10 V. Para o segundo cenários a tensão de entrada é 10 V e a tensão
+de saída é 3 V. Para o terceiro cenário a tensão de
+entrada é 15 V e a tensão de saída é 3 V. Os resultados para a comutação de carga nos três cenários
+realizados são apresentados nas figuras 10, 11 e 12.
+Os sinais verificados em cada figura, são a tensão de
+saída e corrente de carga.
+Durante o transitório de chaveamento de carga,
+em cada caso, é verificado um afundamento_de_tensão momentâneo, que esta conforme o previsto no
+projeto. Imediatamente, o controlador PID-Fuzzy
+regula a razão cíclica, e a tensão de saída volta 
+magnitude de referência.
+A mudança dos valores de referência é realizados através da comunicação USB com o DSP. Nos
+
+ISBN 978-85-8001-069-5
+
+Figura 12. Cenário 3 - Resultados de tensão e corrente.
+
+5 Conclusão
+Um controlador PID-Fuzzy foi implementado
+em uma UPS utilizando um processador digital de
+sinais. Este controlador apesar de exigir um maior
+esforço computacional comparativamente aos controladores clássicos é uma alternativa interessante por
+não ser necessário conhecimento a priori do modelo
+matemático do sistema o que o torna o projeto simples. Ainda, foi verificado que o controlador é suficientemente imune a variações paramétricas, operando
+sobre diversas condições diferenciadas de tensão de
+entrada_e_saída, para um mesmo conversor.
+
+2711
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+As respostas transitória nos três cenários implementados foram satisfatórias apresentando as condições necessárias para o funcionamento adequado da
+UPS. Ainda, através das estruturas PID-Fuzzi, existem graus de liberdade adicionais, podendo estas
+adaptar comportamentos não-lineares, o que pode ser
+obtido com êxito através de algoritmos de otimização. Estas características, o torna mais indicado que
+as estruturas clássicas variantes do PID, e encorajam
+seu contínuo estudo e desenvolvimento.
+Agradecimentos
+Os autores agradecem ao apoio e do CNPq.
+Referências Bibliográficas
+Bose, B. K. (1997). Power Electronics and Variable
+Frequency Drives technology and applications.
+IEEE PRESS. Vol1. pp. 138-250.
+Erickson, R. W, Maksimovic D., 2001, Fundamentals of Power Electronics, Second Edition,
+Kluwer Academic Publisher, pp 185-258.
+Mattavelli, P. (1995). General-purpose fuzzy controller for DCDC converters. APEC 95, Conference Proceedings 1995, Vol. 2, pp. 723-730.
+Viswanathan, K. (2002). A universal fuzzy controller
+for a non-linear power electronic converter.
+FUZZ-IEEE02, Proceedings of the 2002 IEEE
+International Conference, pp. 46-51.
+Zadeh, L.A. (1973). Outline of a New Approach of
+the Analysis of Complex System and Decision
+Processes, IEEE Trans. on System, Man and
+Cybernetics, Vol. SMC-3, No.1, pp. 28-44.
+Lee, C.C. (1990). Fuzzy Logic in Control System
+Fuzzy Logic Controller - Part I, IEEE Trans. On
+System, Man and Cybernetics, Vol.20, No. 2,
+pp. 404-418.
+Karasakal, O. (2005). Implementation of a New SelfTuning Fuzzy PID Controller on PLC, Turk J.
+Elec. Engin., Vol 13, No. 2, pp. 287-286.
+Qiao, W. Z. (1996). PID type fuzzy controller and
+parameters adaptive method, Fuzzy Sets and
+Systems, Vol. 78, pp. 23-35, 1996.
+
+ISBN 978-85-8001-069-5
+
+2712

@@ -1,0 +1,914 @@
+MODELAGEM E CONTROLE DE UM HELIMODELO EM AMBIENTES INTERNOS
+Marco Aurelio G. Moreira, Elias J. R. Freitas, Guilherme A. S. Pereira,
+Leonardo A. B. Torres, Paulo Iscold
+
+
+Grupo de Pesquisa e Desenvolvimento de Veculos Autonomos, Escola de Engenharia,
+Universidade Federal de Minas Gerais, Av. Antonio Carlos, 6627, 31270-901,
+Belo Horizonte, MG, Brasil.
+Emails magm@ufmg.br, eliasjof@yahoo.com.br, gpereira@ufmg.br,
+torres@cpdee.ufmg.br, iscold@ufmg.br
+
+Abstract This work addresses the problem of modeling and controlling an indoor small-scale helicopter.
+The choice of indoor environments makes it easier to get the vehicle states and send data to it, and thus speeds
+up the experimental tests. The combination of stereo vision data and information from inertial sensors using
+Kalman Filtering provides the vehicle localization. The estimated states, which are linear and angular positions
+and velocities, along with commands from a human pilot are used to estimate, through system identification
+methods, the parameters of a gray box model. Once the helicopter model is known, the controllers are designed.
+Experimental results show stabilization of all the helicopter degrees of freedom using traditional PID cascade
+control.
+Aerial Robotics, autonomous helicopters, unmanned aerial vehicles.
+
+Keywords
+
+Resumo Este trabalho trata o problema de modelagem_e_controle de um helimodelo operando em ambientes
+internos. A opcao por ambientes internos facilita a obtencao dos estados do veculo e o envio de informacoes para
+o mesmo e, dessa forma, acelera a avaliacao_experimental dos sistemas de modelagem_e_controle. A localizacao
+e fornecida pela fusao de informacoes provenientes de um sistema de visao_estereo e de sensores_inerciais via
+Filtragem de Kalman. Os estados estimados, posicoes e velocidades lineares e angulares, sao usados em conjunto
+com os sinais de comando de um piloto humano para estimar, por meio de metodos de identificacao, os parametros de um modelo caixa-cinza. De posse do modelo_dinamico do helimodelo, sao projetados os controladores.
+Resultados experimentais mostram a estabilizacao de todos os graus de liberdade do helicoptero utilizando-se
+controladores PID classicos em cascata.
+Palavras-chave
+
+.
+
+tero de forma automatica foi encontrada na literatura. O maior empreendimento documentado
+foi o projeto HELIX (Gyron, 1998), na decada de
+1990, conduzido pela empresa Gyron em parceria com a Universidade Federal de Santa Catarina
+(UFSC) e o Centro de Pesquisas Renato Archer
+(CenPRA), cujo objetivo era o desenvolvimento
+de um helicoptero autonomo para aplicacoes civis. Resultados de destaque tambem tem sido alcancados em projeto da Universidade de Braslia
+(UnB) (Martins et al., 2007).
+
+Introducao
+
+Durante os ultimos 20 anos, a pesquisa no desenvolvimento de helicopteros_autonomos tem se
+mostrado bastante ativa. Em 1991, foi criada
+a IARC (International Aerial Robotics Competition). Organizada anualmente, a competicao
+constitui-se de missoes que exigem de seus competidores comportamentos roboticos nao demonstrados ate entao por nenhum veculo aereo conhecido (IARC, 2010). Os desafios da IARC
+motivaram o aparecimento de diversos grupos
+de pesquisa em VANTs, muitos dos quais utilizando helicopteros como plataforma (CastilloEffen et al., 2007).
+Muito alem de simplesmente atender aos requisitos da IARC, a pesquisa em helicopteros
+autonomos tem sido bastante diversificada. O uso
+desses veculos tem sido estudado para pulverizacao de lavouras, inspecao de sistemas de transmissao de energia, monitoracao de atividade vulcanica, fotografia aerea, entre outras (NONAMI,
+2007).
+Apesar de no contexto mundial a pesquisa em
+helicopteros_autonomos estar bastante avancada,
+chegando inclusive ao estagio de acrobacias autonomas (Coates et al., 2008), poucos resultados efetivos foram demonstrados em territorio brasileiro.
+Nenhuma publicacao registrando a estabilizacao
+de todos os graus de liberdade de um helicop-
+
+Pela complexidade das etapas necessarias a
+um voo autonomo, muitos projetos sao encerrados precocemente. No projeto em que se insere
+este trabalho, busca-se uma forma de facilitar e
+acelerar os testes de controle_automatico de um
+mini-helicoptero. Para tanto, e feita a opcao por
+se trabalhar em ambientes internos. Essa escolha
+tem como vantagens, entre outras, a eliminacao
+de perturbacoes por vento e o fato de nao requerer deslocamento de pessoal e equipamento para
+a realizacao de experimentos. Embora possa ser
+menos util do ponto de vista de aplicacoes, essa
+opcao facilita o estudo do veculo. Em (Moreira
+et al., 2009) foi apresentado um sistema de localizacao para o helicoptero que utiliza informacoes de
+sensores_inerciais embarcados e de um sistema de
+visao_estereo externo ao veculo. No presente trabalho sao apresentadas as etapas de modelagem e
+
+3217
+
+controle. Os estados estimados pelo sistema de localizacao, em conjunto com os sinais de comando
+do piloto, sao utilizados para identificacao de um
+modelo_matematico para o helimodelo, com base
+no qual e feito o projeto_de_controladores. Resultados experimentais validam a metodologia utilizada.
+O restante deste artigo esta dividido da seguinte forma a Secao 2 trata da modelagem matematica do helimodelo as estrategias_de_controle
+sao delineadas na Secao 3 resultados experimentais sao mostrados na Secao 4 e, por fim, na Secao 5, sao feitas as consideracoes finais e propostas
+para trabalhos futuros.
+2
+
+seja projeto_de_controladores sao geralmente simples. Nessa linha, um dos trabalhos mais importantes e citados na literatura e apresentado
+em (Mettler et al., 1999). O merito dos autores esta em encontrar um modelo_linear, com representacao em espaco_de_estados, parametrizado
+e reduzido que representa as caractersticas mais
+importantes da dinamica de helicopteros em escala miniaturizada.
+Com o objetivo de gerar modelos ainda mais
+simples, alguns autores propoem mapeamentos algebricos entre as entradas u e as forcas e torques
+que atuam sobre o veculo. Essa e a estrategia
+utilizada em (Kondak et al., 2007), trabalho que
+tenta aproveitar as similaridades entre modelos de
+veculos da classe VTOL (Vertical Take-Off and
+Landing) para construir um modelo geral. O mapeamento algebrico e tambem a solucao proposta
+em (Abbeel et al., 2006). Esse modelo se diferencia dos demais por fazer predicao das aceleracoes
+do helicoptero, as quais sao utilizadas posteriormente para atualizacao de velocidades. Pela simplicidade de suas equacoes, o modelo talvez nao
+recebesse muita atencao nao fossem os resultados
+publicados em (Coates et al., 2008). Neste, manobras acrobaticas sao conduzidas por controladores
+automaticos sintonizados com base na linearizacao
+local do modelo de Abbeel et al. (2006). Essas
+manobras exploram uma propriedade importante
+do modelo ele e valido para atitudes arbitrarias.
+Pela simplicidade e por sua demonstrada capacidade de representar suficientemente bem a dinamica de helicopteros no projeto_de_controladores,
+decidiu-se por adotar o modelo de Abbeel na modelagem do helicoptero deste trabalho. O modelo
+e descrito pelas equacoes
+
+Modelagem Matematica
+
+Para conduzir o helicoptero, o piloto dispoe de um
+conjunto u de 4 comandos ulat , que controla principalmente a taxa de rolamento e movimenta o
+helicoptero lateralmente ulon , que controla principalmente a taxa de arfagem e produz deslocamentos no eixo longitudinal uped , que atua no movimento de guinada e ucol , responsavel pelo movimento vertical. A modelagem consiste em encontrar equacoes matematicas que expliquem como u
+influencia a evolucao temporal dos estados. Frequentemente, o helicoptero e tratado como um
+corpo rgido (Bejar et al., 2007), cujas entradas
+sao forcas e torques e cujas sadas sao posicoes
+lineares no referencial inercial N ED1 , pNED 
+pN , pE , pD T  velocidades lineares medidas no referencial do veculo ABC 2 , vABC  U, V, W T 
+angulos de Euler,   , , T  e velocidades angulares,  ABC  P, Q, RT . As equacoes_diferenciais que regem a evolucao das posicoes lineares e
+angulares, apesar de nao-lineares, sao bem conhecidas e nao dependem de parametros. Assim, a
+modelagem se resume em encontrar uma relacao
+representativa entre as entradas de fato controladas pelo piloto, u  ulat , ulon , uped , ucol T , e as
+velocidades lineares e angulares.
+Dada a grande quantidade de variaveis de entrada e de sada, e imprescindvel que se use algum
+conhecimento do processo na modelagem. No entanto, o modelo completo, incluindo a flexibilidade
+dos rotores e fuselagem, escoamento do ar atraves
+das pas, dinamica dos atuadores etc., e extremamente complexo. Assim, comumente tenta-se representar o comportamento dos helicopteros por
+modelos caixa-cinza.
+A completude do modelo depende do proposito a que ele se destina. Modelos cuja finalidade
+
+(x )k
+
+ CP Pk + C1 (ulat )k + D1 ,
+
+(y )k
+(z )k
+
+ CQ Qk + C2 (ulon )k + D2 ,
+ CR Rk + C3 (uped )k + D3 ,
+
+(ax )k
+(ay )k
+(az )k
+
+ Cx Uk + (gx )k ,
+ Cy Vk + (gy )k + D0 ,
+ Cz Wk + (gz )k + C4 (ucol )k + D4
+
+(1)
+
+e
+vABC k+1  Rkk+1 (vABC k + aABC k Ts ) ,
+ ABC k+1  Rkk+1 ( ABC k + ABC k Ts ) .
+
+(2)
+
+Nas Equacoes (1), (gx )k , (gy )k e (gz )k sao a
+projecao da aceleracao da gravidade em cada um
+dos eixos da aeronave no instante k x  P ,
+y  Q e z  R denotam aceleracoes angulares
+ax  U , ay  V e az  W sao aceleracoes lineares Ts e o tempo de amostragem e C e D sao
+parametros do modelo. Nas Equacoes (2), Rkk+1 e
+a matriz que indica a rotacao da aeronave entre os
+instantes de tempo k e k + 1, aABC  ax , ay , az T
+e ABC  x , y , z T .
+
+1 Referencial onde o eixo x aponta para norte (North),
+o eixo y aponta para leste (East) e o eixo z aponta para
+baixo (Down).
+2 Do ingles Aircraft Body Coordinate. Neste referencial,
+cuja origem e presa ao centro de massa do helicoptero, o
+eixo x aponta para frente, o eixo y aponta para a direita e
+o eixo z aponta para baixo.
+
+3218
+
+O modelo anterior e uma representacao matematica parametrizada e linear nos parametros.
+A essa classe de modelos podem ser aplicados o
+metodo de Mnimos Quadrados (MQ) e suas variacoes. Neste trabalho, foram testadas as estensoes
+Mnimos Quadrados Ponderados (MQP) e LearnLagged-Acceleration (LLA). A utilizacao do MQP
+foi pensada para se aproveitar a covariancia estimada das medicoes de velocidades lineares, fornecida pelo Filtro de Kalman. O algoritmo LLA
+e uma extensao do MQ especfica para as equacoes (1) e (2). O algoritmo mimiza o erro_de_predicao num horizonte de H iteracoes, em que H e
+um parametro (Abbeel et al., 2006).
+O helicoptero utilizado neste trabalho e um
+sistema instavel em malha_aberta. Dessa forma, a
+estimacao_de_parametros deve ser feita em malha
+fechada, o que gera algumas dificuldades (i) se a
+coleta dos sinais de sada for feita pelos mesmos
+sensores usados na realimentacao, pode haver polarizacao dos parametros, devido a correlacao entre entradas e rudos de medicao (ii) e necessario
+que se tenha um controlador, que e difcil de projetar sem que haja um modelo_dinamico do veculo
+(iii) os sinais de entrada nao podem ser arbitrariamente escolhidos e, por isso, podem nao apresentar persistencia de excitacao suficiente. A metodologia experimental adotada neste trabalho contorna as dificuldades (i) e (ii) os experimentos de
+identificacao de parametros sao feitos coletandose dados de voos conduzidos por um piloto experiente. A maior dificuldade passa a ser gerar
+persistencia de excitacao. Mesmo para pilotos experientes, nao e tarefa simples excitar as quatro
+entradas do veculo e ao mesmo tempo manter a
+estabilidade do helicoptero.
+A proxima secao apresenta como controladores sao projetados a partir do modelo_matematico
+obtido.
+3
+
+(Conway, 1995), os angulos  e  sao manipulados para controlar as posicoes pN e pE . Em (Kim
+e Shim, 2003) malhas intermediarias sao adicionadas para controle das velocidades horizontais.
+A principal desvantagem do uso de controladores
+PID multimalhas esta em se subestimar o acoplamento entre as variaveis controladas, o que limita a banda passante e a agilidade alcancaveis
+(Castillo-Effen et al., 2007).
+Quando o acoplamento entre os estados nao
+pode ser negligenciado, controladores LQR (Linear Quadratic Regulator ) constituem uma boa
+alternativa de projeto. Essa tecnica e utilizada
+em (Shin et al., 2005).
+Alguns autores tratam explicitamente as nao
+linearidades dos modelos. Em (Taylor et al.,
+2006), uma camera em solo e uma embarcada proveem estimativas dos estados de um quadrirrotor,
+aos quais se aplicam de leis de controle_nao_lineares. Uma revisao mais detalhada de tecnicas
+de controle aplicadas a helicopteros pode ser encontrada em (Castillo-Effen et al., 2007) e (Bejar
+et al., 2007).
+Neste trabalho, pela simplicidade do modelo
+dinamico considerado, foi escolhida a estrategia de
+controle PID multimalhas. Essa escolha levou em
+conta tambem a facilidade de ajuste dos ganhos
+de forma emprica e intuitiva.
+3.1
+
+Controlador 1 Atitude e Posicao Horizontal
+em Cascata
+
+As equacoes do modelo de (Abbeel et al., 2006)
+(Equacoes (1)) indicam as principais relacoes entre os estados e as entradas do helicoptero. Altura
+e angulo de guinada sao controlados, respectivamente, por ucol e uped . Para a movimentacao no
+plano xyABC , manipula-se a projecao da gravidade
+nos eixos xABC e yABC , o que e equivalente a manipular os angulos  e . Por fim, ulat e ulon sao
+utilizados para controlar, respectivamente,  e .
+Com base nessas relacoes de causalidade, propoese a topologia de controle mostrada na Figura 1.
+Nessa figura, pNE  pN , pE , 0T , ABC
+NED R() e a
+matriz de rotacao que transforma o erro de posicao horizontal do sistema NED para ABC e
+C sao controladores monovariaveis.
+
+Sntese de Controladores
+
+No projeto do sistema_de_controle, varias nao linearidades existem principalmente porque o helicoptero obedece a comandos em seu sistema de
+coordenadas local, o referencial ABC, e as referencias de posicao sao dadas em um referencial
+global, o referencial NED. O mapeamento entre velocidades de NED para ABC e feito por
+uma matriz de rotacao, que depende dos angulos de atitude da aeronave (em voos nao agressivos, principalmente de ). Embora as equacoes
+de mapeamento sejam nao lineares, elas sao bem
+conhecidas e nao dependem de parametros. Dessa
+forma, as nao linearidades podem ser compensadas por linearizacao_por_realimentacao nao linear
+de estados. As duas estrategias_de_controle testadas neste trabalho adotam essa tecnica.
+Muitos trabalhos encontrados na literatura
+usam a estrategia_de_controle PID em cascata. Em
+
+3.2
+
+Controlador 2 Atitude, Velocidade e Posicao Horizontais em Cascata
+
+O principal problema do Controlador 1 e nao haver controle sobre as velocidades. Dessa forma,
+ao se realizarem grandes variacoes na referencia
+de posicao, mesmo com saturacao na referencia
+dos angulos, e provavel que o sistema_de_controle
+imprima altas velocidades ao veculo. Isso pode
+tirar o helimodelo do ponto em torno do qual foi
+levantado o modelo e, por consequencia, leva-lo a
+instabilidade. Alem disso, no caso de movimen-
+
+3219
+
+3,1 metros do solo, apontadas para baixo. A linha de base do sistema estereo e de 24,6 cm. As
+cameras sao do modelo Dragonfly, fabricado pela
+PointGrey Research, com sensor CCD de 640x480
+pxeis. As imagens sao adquiridas sincronizadas
+via barramento IEEE1394 a 15 Hz. O espaco de
+trabalho em que o helicoptero se movimenta com
+seguranca no campo de visao das duas cameras e
+de aproximadamente 1, 80  1, 80 metros. As informacoes provenientes da IMU e das cameras sao
+combinadas com o auxilio de um Filtro de Kalman Estendido conforme mostrado em (Moreira
+et al., 2009).
+
+Figura 1 Topologia do Controlador 1.
+
+Figura 2 Topologia do Controlador 2.
+Figura 3 Helicoptero utilizado nos experimentos.
+
+tacao em ambientes internos, como e o caso dos
+testes deste trabalho, o risco de colisoes e elevado.
+Para superar essas limitacoes, foram adicionadas ao diagrama da Figura 1 malhas_de_controle para as velocidades U e V . A topologia de
+controle resultante e mostrada na Figura 2. De
+forma similar ao que ocorre no Controlador 1, o
+erro de posicao no plano xyNED e rotacionado para
+o referencial do helicoptero. Para controla-lo em
+ABC, manipulam-se as velocidades U e V , cujo
+controle e, por sua vez, realizado pela manipulacao
+dos angulos de arfagem e rolamento, controlados
+por ulon e ulat , respectivamente.
+4
+
+Na etapa de modelagem, uma conexao no
+radio-controle do helimodelo permite a leitura dos
+sinais enviados ao helicoptero. A transmissao e
+feita via codificacao PPM (Pulse Position Modulation), em que o valor de cada canal e representado
+pela posicao de seu respectivo pulso. A mesma conexao permite que os sinais a serem enviados ao
+helicoptero sejam gerados externamente, o que e
+feito nos testes de controle_automatico. Para lidar
+com a leitura e geracao dos sinais, foi utilizado um
+microcontrolador PIC18F2550, que, via emulacao
+de RS-232 pela interface USB, se comunica com o
+computador. O computador utilizado foi um modelo Intel Core 2 Quad, 2,4 GHz, e 2Gb de RAM
+rodando Windows XP. Este computador e responsavel pela localizacao e controle do helicoptero.
+
+Resultados Experimentais
+
+Nesta secao, mostra-se a validacao_experimental
+das metodologias de modelagem_e_controle, apresentadas nas secoes 2 e 3. Antes disso, descreve-se
+o arranjo experimental utilizado.
+4.1
+
+4.2
+
+Resultados da Modelagem Matematica
+
+Um piloto experiente foi convidado a controlar e
+excitar o helicoptero nos experimentos de identificacao. Nestes, a recomendacao para o piloto era
+manter o helicoptero em voo e ao mesmo tempo
+excitar tanto quanto possvel as entradas u. Dentre todos os experimentos foram retirados dois trechos de aproximadamente 30 segundos, em que as
+recomendacoes foram de melhor forma atendidas.
+Um deles foi utilizado para estimacao dos parametros e o outro para validacao do modelo.
+Os dados dos voos foram utilizados para a
+identificacao do modelo parametrizado (1). Os
+parametros estimados pelos metodos MQ, MQP
+e LLA sao mostrados na Tabela 1. Os metodos
+MQ e MQP sao identicos nos casos dos modelos de
+
+Arranjo Experimental
+
+O helicoptero utilizado e um modelo Honey Bee
+King II. Ele foi instrumentado com uma IMU, modelo 3DM-GX1, fabricada pela Microstrain, que
+opera a 76 Hz e fornece aceleracoes lineares e velocidades angulares nos eixos x, y e z da aeronave
+e os angulos de rolamento, arfagem e guinada. O
+veculo carrega ainda tres marcos visuais circulares coloridos para facilitar a identificacao por visao_computacional, como mostra a Figura 3. O
+helicoptero e observado por duas cameras externas que proveem imagens coloridas e que sao posicionadas a uma distancia de aproximadamente
+
+3220
+
+aceleracao angular. Para os modelos de aceleracao
+linear, na estimacao_de_parametros por MQP, os
+dados sao ponderados pelas estimativas das variancias dos erros de estimacao das velocidades lineares fornecidas pelo Filtro de Kalman. Observa-se
+que em alguns casos ha grandes diferencas entre os
+parametros sugeridos por cada um dos tres metodos. Na estimacao de Cx ha inclusive discordancia
+sobre o sinal do parametro3 . Considerando que os
+angulos de arfagem na maior parte do tempo tem
+ordem de grandeza de unidades de graus e que
+as velocidades tpicas sao dezenas de centmetros
+por segundo, pela magnitude de Cx estimada, e
+pouco provavel que este parametro possa ser desprezado, uma vez que a contribuicao de Cx U e da
+mesma ordem de grandeza de gx . Uma das possveis causas para a divergencia entre os parametros
+e a baixa persistencia de excitacao dos sinais de
+comando produzidos pelo piloto. Outro problema
+e o pequeno tamanho da janela de dados, de cerca
+de apenas 30 segundos.
+Para avaliar a qualidade dos modelos,
+calculou-se o erro_de_predicao de um passo a
+frente. Apesar da sofisticacao dos metodos LearnLagged-Acceleration e Mnimos Quadrados Ponderados, a menor discrepancia entre valores preditos
+e valores medidos foi obtida com o metodo de Mnimos Quadrados tradicional. Dessa forma, os parametros estimados por ele foram utilizados para
+projeto dos controladores.
+
+delagem, ou seja, o ponto de operacao do sistema
+foi alterado.
+O comando ucol regula a velocidade do rotor
+principal e altera o passo das pas desse mesmo
+rotor. A medida que a bateria perde capacidade
+de fornecer corrente, a velocidade do rotor principal diminui e, para manter altura constante, o
+passo das pas tem que ser aumentado. O rotor de
+cauda e acoplado ao principal por uma correia e,
+portanto, a razao das velocidades dos dois rotores
+e constante. O comando uped , responsavel pelo
+movimento de guinada, controla o passo das pas
+do rotor de cauda. Com a diminuicao da velocidade dos rotores, o valor medio de uped tambem e
+alterado. Foram observadas ainda alteracoes nos
+pontos de operacao de ucol e uped com o passar do
+tempo num mesmo experimento, devido a perda
+de carga da bateria.
+Devido a substituicao da bateria e pela sensibilidade das dinamicas vertical e de guinada em relacao a seu estado de carga, os controladores CpD
+e C projetados com base no modelo identificado
+nao estabilizaram pD e . Por isso, adotou-se a
+estrategia de ajuste emprico dos ganhos, atraves
+da qual se conseguiu um controle satisfatorio dessas variaveis. As leis de controle de CpD e C sao
+do tipo PID.
+Os controladores de  e  foram inicialmente
+sintonizados por sntese direta. Buscou-se uma
+resposta ao degrau criticamente amortecida com
+constante de tempo igual a 10 vezes o valor do perodo de amostragem. De acordo com o modelo,
+esse tipo de resposta e conseguido por um controlador PD. No entanto, controladores do tipo PD
+nao conseguem eliminar perturbacao de carga em
+degrau no controle dessas variaveis. Esse tipo de
+perturbacao de fato existe, devido a acoplamentos nao modelados e as incertezas na estimacao
+dos parametros D1 e D2 do modelo (1).
+Na pratica, constatou-se que, devido a topologia em cascata dos controladores, o controle dos
+angulos de arfagem e rolamento deve ser bastante
+exato. Poucos graus de desvio em relacao a referencia fazem com que o helicoptero saia do campo
+de visao das cameras. Para neutralizar as perturbacoes de carga e possibilitar controle com erro
+nulo em regime_permanente, foram adicionados
+termos integrais aos controladores de  e .
+
+4.3
+
+4.4
+
+Tabela 1 Parametros estimados pelos algoritmos
+Mnimos Quadrados (MQ), Mnimos Quadrados
+Ponderados (MQP) e Learn-Lagged-Acceleration
+(LLA).
+CP
+CQ
+CR
+Cx
+Cy
+Cz
+C1
+C2
+C3
+C4
+D0
+D1
+D2
+D3
+D4
+
+MQ
+-19,18
+-12,54
+-1,00
+-1,16
+-1,28
+-3,85
+24,91
+-13,24
+4,92
+-2,02
+-1,31
+1,78
+3,53
+-1,10
+-8,34
+
+MQP
+-19,18
+-12,54
+-1,00
+-1,17
+-1,10
+-4,01
+24,91
+-13,24
+4,92
+-2,35
+-1,28
+1,78
+3,53
+-1,10
+-8,10
+
+LLA
+-25,74
+-21,36
+-2,42
+0,13
+-0,05
+-3,45
+32,77
+-22,65
+5,73
+-1,45
+-1,46
+2,34
+6,04
+-1,36
+-8,50
+
+Resultados do Controle de Altura e Atitude
+
+No intervalo de tempo que separou a modelagem
+e o primeiro voo autonomo, algumas reposicoes de
+pecas se fizeram necessarias, entre as quais a da
+bateria do helimodelo. Com a nova bateria, foi
+possvel decolar o helicoptero com um comando
+ucol medio menor do que aquele utilizado para mo-
+
+Movimentacao Horizontal Controlador 1
+
+As malhas de  e  foram desconsideradas no
+projeto dos controladores Cpx e Cpy . Para que
+isso seja possvel, as malhas de posicao devem ser
+muito mais lentas do que as malhas internas de
+atitude, o que foi conseguido especificando-se uma
+constante de tempo de resposta ao degrau 5 vezes
+maior do que a da malha interna. Os ganhos foram calculados por sntese direta. Controladores
+PD foram utilizados. Ganhos integrais foram evi-
+
+3 Pela definicao de C na Equacao (1), C U e um termo
+x
+x
+de atrito viscoso e, portanto, o sinal correto de Cx seria
+negativo.
+
+3221
+
+tados porque o referencial ABC e movel, o que
+implicaria somar erros em referenciais diferentes.
+Para avaliar o desempenho do Controlador 1,
+foi feito um experimento em que se variaram todas
+as referencias das malhas externas. Os eventos de
+variacao de referencia foram os seguintes degrau
+positivo de altura (subida) degrau em pE(ref)  degrau em pN(ref)  degrau em ref  degrau simultaneo em pN(ref) , pE(ref) e ref e, finalmente, degrau
+negativo de altura (descida). Os resultados sao
+mostrados na Figura 4. A linha tracejada vertical, no tempo t  0, indica a transicao manualautomatico no controle de altura.
+Apesar de as malhas internas  malhas de  e
+  estarem bem sintonizadas, o controle da movimentacao no plano horizontal nao foi satisfatorio. Na ocorrencia de degraus em pN(ref) e pE(ref) ,
+ocorrem overshoots elevados. Alem disso, mesmo
+quando as referencias sao constantes, o erro nao
+converge para zero, devido a ausencia de integradores nos controladores Cpx e Cpy .
+Por volta do tempo 40 segundos, a curva de
+altura indica que o helicoptero possa ter cado, o
+que e falso. Na verdade, o helicoptero, devido a
+um overshoot na variacao de pE(ref) , sai do campo
+de visao das cameras, o que faz com que o Filtro de
+Kalman forneca estimativas erradas de altura, as
+quais provocam uma acao exagerada do controlador CpD . Devido ao acoplamento dos movimentos
+vertical e de guinada, isso causa uma perturbacao em . No restante do experimento, o controle
+do angulo de guinada e bastante preciso e exato,
+inclusive na ocorrencia de variacoes na referencia.
+4.5
+
+dores CU , CV , Cpx e Cpy .
+Os ganhos dos controladores CU e CV foram
+ajustados para que se tivesse uma resposta ao degrau criticamente amortecida 5 vezes mais lenta
+do que aquela das malhas internas  malhas de
+ e . O controlador ideal para a resposta requerida e do tipo PI. O integrador no controlador permite que sejam rejeitadas perturbacoes de
+carga constantes, que, para as malhas de velocidade, podem ser interpretadas como erro em regime_permanente no controle dos angulos. Dessa
+forma, poderia-se permitir um pequeno erro de
+controle nas malhas internas, ou seja, nao seria
+necessaria a utilizacao de ganhos integrais nessas
+malhas. Porem, como as malhas de velocidade sao
+muito mais lentas do que as de atitude, nos testes
+realizados sem integrador na malha interna, o helicoptero acabou por sair do campo de visao das
+cameras antes que as perturbacoes fossem compensadas.
+Como as posicoes sao obtidas pela integral das
+velocidades (desprezadando-se a rotacao do helimodelo), foram utilizados controladores do tipo
+proporcional para Cpx e e Cpy , que seriam suficientes para garantir erro nulo em regime_permanente
+para posicionamento no plano horizontal. A malha de posicao foi feita 5 vezes mais lenta do que a
+de velocidade. Mesmo fazendo-se as malhas mais
+externas nao tao mais lentas do que as malhas internas, a constante de tempo especificada para a
+malha de posicao e de 6,5 segundos.
+O experimento para avaliacao do Controlador 2 tem a mesma sequencia de eventos de variacao de referencia utilizada no experimento do
+Controlador 1. Os resultados sao mostrados na Figura 5. A resposta a variacoes em pN(ref) e pE(ref)
+sao bastante lentas, condizentes com a constante
+de tempo esperada. As oscilacoes nas posicoes horizontais foram bastante reduzidas e praticamente
+nao ha ultrapassagem na ocorrencia de variacao
+de referencia. Observa-se uma reducao significativa nas altas frequencias, especialmente na estimacao das velocidades horizontais. No entanto,
+em baixas frequencias, as curvas de U e V oscilam
+consideravelmente em torno do valor de referencia. Como no caso do Controlador 1, o controle
+de  e  continua bastante preciso e exato. Dessa
+forma, restam as seguintes provaveis causas para
+as imperfeicoes no controle de U e V 
+
+Movimentacao Horizontal Controlador 2
+
+Os resultados da secao anterior mostram um alto
+nvel de vibracoes do helicoptero. Grande parte
+delas e causada pela propagacao de altas frequencias das malhas mais externas para as mais internas. A propagacao poderia ser ainda mais agravada pela adicao da malha intermediaria de velocidade. Por isso, foram tomadas medidas para
+tornar os sinais de velocidade mais suaves.
+O Filtro de Kalman originalmente proposto (Moreira et al., 2009) combina duas fontes
+de informacao ruidosas acelerometros e sistema
+de visao_estereo. A estrategia para reduzir as altas frequencias nas medicoes foi a substituicao dos
+acelerometros por um modelo de velocidade constante, isto e, nas equacoes de predicao do filtro, as
+medicoes de aceleracao sao feitas iguais a zero. A
+falsificacao dessas medicoes tem como consequencia um atraso na estimacao, uma vez que o filtro
+demora a perceber mudancas nas velocidades.
+Muitos dos ajustes utilizados para o Controlador 1 puderam ser reaproveitados no projeto do
+Controlador 2. Os ganhos dos controladores CpD ,
+C , C e C foram mantidos. Dessa maneira, o
+ajuste consistiu apenas em sintonizar os controla-
+
+ para que as malhas de posicao nao fossem demasiadamente lentas, as constantes de tempo
+das malhas de velocidade foram especificadas
+apenas 5 vezes maiores do que as de atitude
+e, portanto, ha um acoplamento entre as malhas
+ o modelo_dinamico adotado considera que U
+e V sao afetadas unicamente por  e . E
+desconsiderado o fato de que, ao se inclinar,
+o disco de rotacao das pas gera forcas laterais
+
+3222
+
+pN (m)
+
+pN (m)
+
+1
+0
+
+pE (m)
+
+0
+1
+
+Altura (m)
+U (ms)
+
+2
+0
+2
+
+V (ms)
+
+2
+0
+2
+
+10
+
+W (ms)
+
+W (ms)
+ (graus)
+
+1
+
+20
+10
+0
+10
+
+ (graus)
+
+ (graus)
+
+0
+
+0
+10
+
+ (graus)
+
+50
+0
+50
+
+ulat
+
+0
+
+2
+0
+2
+2
+0
+2
+1
+0
+1
+20
+10
+0
+10
+10
+0
+10
+50
+0
+50
+
+0
+1
+
+1
+
+1
+ulon
+
+1
+
+0
+
+0
+1
+
+1
+
+1
+uped
+
+1
+
+0
+
+0
+
+1
+
+1
+
+1
+
+1
+ucol
+
+ulat
+ulon
+uped
+
+0.4
+0.2
+0
+0.2
+
+1
+
+1
+
+ucol
+
+0
+1
+
+0.4
+0.2
+0
+0.2
+
+1
+
+ (graus)
+
+1
+
+1
+
+ (graus)
+
+V (ms)
+
+U (ms)
+
+Altura (m)
+
+pE (m)
+
+1
+
+1
+0.5
+0
+0.5
+
+0
+1
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+140
+
+0
+1
+
+160
+
+0
+
+Tempo (s)
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+140
+
+160
+
+Tempo (s)
+
+Figura 4 Experimento que mostra o seguimento
+de referencias variando em degraus utilizando o
+Controlador 1.
+
+Figura 5 Experimento que mostra o seguimento
+de referencias variando em degraus utilizando o
+Controlador 2.
+
+e longitudinais, alem dos torques que alteram
+ e 
+
+a movimentacao vertical e de guinada e a movimentacao horizontal.
+Comparando-se os resultados experimentais
+do Controlador 1 e do Controlador 2, pode-se dizer que o segundo reduziu as oscilacoes do sistema.
+No entanto, o controle_de_velocidades nao foi satisfatorio, o que impede que o helimodelo possa
+realizar bem tarefas do tipo seguir trajetoria ou
+seguir um campo vetorial. Para melhorar o controle_de_velocidades, e necessario um estudo mais
+aprofundado do veculo, para que os diversos aco-
+
+ o descarte das informacoes de aceleracao
+causa atrasos na estimacao_de_velocidades, o
+que, como se sabe, reduz as margens de estabilidade.
+Os resultados no controle de pD e  sao similares aos obtidos com a utilizacao do Controlador 1.
+Isso ja era esperado, uma vez os controladores CpD
+C foram mantidos e ha pouco acoplamento entre
+
+3223
+
+plamentos entre os movimentos sejam modelados
+e possam ser compensados com controladores mais
+sofisticados.
+5
+
+Conway, A. R. (1995). Autonomous control of an
+unstable model helicopter using carrier phase
+GPS only, PhD thesis, Stanford University,
+EUA.
+
+Conclusoes e Trabalhos Futuros
+
+Gyron (1998). Sistema HELIX Historico, perguntas mais frequentes, descritivo tecnico, especificacoes tecnicas, aplicacoes, competencia tecnologica, equipe, artigos publicados,
+parcerias., Technical report, Gyron Sistemas
+Autonomos.
+
+Neste trabalho, foram estudadas e implementadas
+com sucesso as etapas de modelagem_e_controle
+num projeto cujo objetivo e dar autonomia a um
+helimodelo comercial de pequeno porte. Diferentemente da maioria dos trabalhos encontrados na
+literatura, optou-se pela utilizacao de ambientes
+internos, o que permitiu uma rapida prototipacao
+do sistema e facilidades nas execucoes de testes.
+Outro diferencial deste trabalho e a utilizacao de
+um helicoptero de baixo_custo, o que, aliado as facilidades de testes em ambientes internos, faz com
+que a metodologia proposta possa ser replicada e
+adaptada em outros centros de pesquisa para experimentacao inicial com esse tipo de veculo.
+Como trabalhos futuros, uma vez feita a estabilizacao do veculo, pode-se pensar em identificacao em malha_fechada, em que sinais de excitacao
+seriam somados a sada do controlador. Outra
+proposta e a obtencao de modelos mais completos
+e a avaliacao de outras estrategias_de_controle na
+plataforma_de_testes construda neste trabalho.
+
+IARC (2010). International Aerial Robotics Competition, httpiarc.angel-strike.com.
+Kim, H. J. e Shim, D. H. (2003). A flight control system for aerial robots Algorithms
+and experiments, Control Engineering Practice 11(12) 1389  1400.
+Kondak, K., Bernard, M., Meyer, N. e Hommel, G. (2007). Autonomously flying VTOLrobots Modeling and control, Robotics and
+Automation, 2007 IEEE International Conference on, pp. 736741.
+Martins, A. S., Bo, A. P. L., Borges, G. A. e
+Ishihara, J. Y. (2007). Design and experimental evaluation of rotor speed regulators
+for model helicopters in a test bench., Proc.
+IEEERSJ Int. Conf. on Intelligent Robots
+and Systems., IEEE, pp. 16001605.
+
+Agradecimentos
+Os autores agradecem aos revisores pelas otimas
+sugestoes. Este projeto foi financiado pela Fundacao de Amparo a Pesquisa do Estado de Minas
+Gerais (FAPEMIG). M. A. G. Moreira agrade a
+CAPES pela bolsa de mestrado. G. A. S. Pereira,
+L. A. B. Torres e P. Iscold sao bolsistas do CNPq.
+
+Mettler, B., Tischler, M. B. e Kanade, T. (1999).
+System identification of small-size unmanned
+helicopter dynamics, Presented at the American Helicopter Society 55th Forum.
+Moreira, M. A. G., Pereira, G. A. S., Torres,
+L. A. B. e Iscold, P. (2009). Localizacao
+de um mini-helicoptero em ambientes internos usando sensores_inerciais e visao_estereo,
+Anais do Simposio Brasileiro de Automacao
+Inteligente (SBAI2009), Braslia, DF, Brasil.
+
+Referencias
+Abbeel, P., Ganapathi, V. e Ng, A. (2006). Learning vehicular dynamics, with application to
+modeling helicopters, Advances in Neural Information Processing Systems 18, MIT Press,
+Cambridge, MA, pp. 18.
+
+NONAMI, K. (2007). Prospect and recent research  development for civil use autonomous
+unmanned aircraft as uav and mav, Journal
+of System Design and Dynamics 1(2) 120
+128.
+
+Bejar, M., Ollero, A. e Cuesta, F. (2007). Modeling and control of autonomous helicopters,
+Advances in Control Theory and Applications, Springer Berlin  Heidelberg.
+
+Shin, J., Nonami, K., Fujiwara, D. e Hazawa, K.
+(2005). Model-based optimal attitude and
+positioning control of small-scale unmanned
+helicopter, Robotica 23(1) 5163.
+
+Castillo-Effen, M., Castillo, C., Moreno, W. e Valavanis, K. P. (2007). Control fundamentals of small  miniature helicopters - a survey, Advances in Unmanned Aerial Vehicles,
+Springer Press.
+
+Taylor, C. J., Ostrowski, J. P. e Altug, E. (2006).
+Vision based control of model helicopters,
+Mobile Robots, Moving Intelligence, Pro Literatur Verlag.
+
+Coates, A., Abbeel, P. e Ng., A. Y. (2008). Learning for control from multiple demonstrations, Proc. of the 25th International Conference on Machine Learning.
+
+3224

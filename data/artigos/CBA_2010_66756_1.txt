@@ -1,0 +1,1336 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+PROCESSOS DE DECISAO MARKOVIANOS COM PROBABILIDADES 
+UMA SOLUCAO COM PROGRAMACAO EM DOIS NIVEIS
+Karina Valdivia Delgado, Leliane Nunes de Barros
+
+
+Universidade de Sao Paulo
+Rua de Matao 1010, Butanta
+Sao Paulo, SP, Brasil
+Emails kvd@ime.usp.br, leliane@ime.usp.br
+Resumo Os algoritmos exatos de Programacao Dinamica (iteracao de valor e iteracao_de_poltica) propostos
+nas decadas de 70 e 90 para resolver um MDPIP (Markov Decision Process with Imprecise Probabilities) apresentam desempenho limitado principalmente por adotar uma representacao enumerativa de estados. Recentemente,
+foram propostas solucoes_aproximadas para MDPIPs com representacao fatorada de estados e uso de estruturas
+de dados que permitem calculos eficientes usando Programacao Dinamica, isto e, solucoes capazes de resolver
+problemas com milhares de estados. Alem disso, foi proposto um metodo de programacao multilinear aproximado
+para resolver MDPIPs fatorados capaz de, em certas condicoes, superar o desempenho das solucoes baseadas em
+Programacao Dinamica. Nesse trabalho, mostramos uma nova solucao para MDPIPs baseada em programacao
+matematica a programacao fatorada e aproximada em dois nveis.
+Palavras-chave
+
+
+1
+
+Processos Markovianos de Decisao (MDPs), tomada_de_decisao sequencial, probabilidades
+
+Introducao
+
+A tomada_de_decisao sequencial e uma atividade importante e tem sido estudada nas areas de pesquisa
+operacional, planejamento e robotica. Processos
+Markovianos de Decisao (MDPs) (Puterman, 1994)
+(Bellman, 1957) (Russell and Norvig, 2003) fornecem um arcabouco matematico para modelar a tomada de decisoes sequencial em domnios estocasticos e tempo_discreto. Um MDP modela a interacao
+entre um agente e seu ambiente. A cada instante
+o agente (robotico ou de software) faz uma escolha
+de acoes (com efeitos probabilsticos) e decide executar uma acao que produzira um estado futuro e
+uma recompensa. O objetivo do agente e maximizar a recompensa ganha ao longo de uma sequencia
+de escolhas de acoes. Por exemplo, no dominio do
+robo entregador de cafe (Boutilier et al., 1999)(Figura 1), suponha que o robo esta num estado em
+que sua locacao e o quarto 2, o Carlos quer as impressoes, o Marcio quer cafe e a bateria do robo esta
+baixa. Nesse instante o robo tem que escolher uma
+acao (com efeitos probabilsticos) entre ir para a
+estacao de recarga, ir para a cozinha ou ir para a
+impressora. Por exemplo, a acao ir para a impressora tem uma probabilidade de 0.95 de sucesso e
+0.05 de falhar. Suponha que o robo escolha executar a acao ir para a impressora, e como resultado da
+aplicacao da acao ele falha ao pegar as impressoes
+obtendo uma recompensa de -10 unidades. Esse problema pode ser modelado com um MDP ajudando
+o robo a decidir qual e a melhor acao a ser escolhida em cada estado. Extensoes conhecidas de um
+MDP sao mais adequadas para representar problemas praticos de maior interesse para aplicacoes reais.
+Entre elas (1) um MDP em que estados sao representados por variaveis de estado, chamado de MDP
+fatorado, que permite representar o espaco de esta-
+
+Figura 1 Robo entregador de cafe
+dos de maneira mais compacta (2) um MDP cujas
+probabilidades nao sao completamente conhecidas,
+chamado de MDPIP (Markov Decision process with
+Imprecise Probabilities). Nesse artigo, estamos interessados em mostrar como resolver um MDPIP
+fatorado formulado como um problema de programacao matematica de dois nveis.
+Na Secao 2 introduzimos os principais conceitos relativos a um MDPIP. Na Secao 3 apresentamos a definicao de um MDPIP fatorado e a sua formulacao usando programacao em dois nveis. Alem
+disso, avaliamos os possveis metodos para resolver
+esse problema de programacao. Finalmente, nas Secoes 4 e 5 mostramos um domnio de aplicacao e um
+exemplo completo usando um dos metodos avaliados.
+2
+
+MDP com Probabilidades 
+
+Em geral, as probabilidades que refletem a escolha
+da natureza nao sao precisas. Assim, um maior realismo pode ser dado para os MDPs, permitindo que
+eles representem imprecisao na determinacao das
+probabilidades de transicao. Dessa forma, podemos
+5284
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+representar crencas incompletas, ambguas ou crencas conflitantes de especialistas sobre um sistema de
+transicoes de estados.
+2.1
+
+ Existe uma poltica estacionaria determinstica que
+e otima.
+ A poltica otima produz uma funcao valor otima,
+representada por V  , que e a unica solucao da equacao de Bellman dada por
+
+Definicao de MDPIPs
+
+V  (s)  max
+
+Os processos markovianos de decisao com probabilidades  (MDPIP) (White III and Eldeib, 1994) (Satia and Lave Jr, 1973) representam
+uma extensao dos MDPs, nos quais existe imprecisao nas probabilidades de transicao. As probabilidades associadas a cada transicao sao definidas por um
+conjunto de inequacoes lineares. Esse conjunto de
+probabilidades e chamado de conjunto credal K, que
+e definido sobre o espaco_de_estados (Cozman, 2000).
+Formalmente, a definicao de um MDPIP e descrita
+pela tupla M  (T, S, A, R, K), em que
+
+min
+
+aA P Ka (s s)
+
+R(s, a) + 
+
+X
+
+P (s s, a)V  (s )
+
+s S
+
+Na Equacao (1) o agente escolhe a acao a que
+maximiza o valor de V (s) e a natureza escolhe a
+probabilidade que minimiza V (s). O fator de desconto  assume valores entre 0 e 1 e e usado para
+dar menos importancia a recompensas futuras.
+Definicao 1 (MDPIP - Modelo Conceitual) (Satia
+and Lave Jr, 1973)
+Um MDPIP modela a interacao entre um agente e
+seu ambiente. A cada instante o agente faz uma escolha de acoes (com efeitos probabilsticos) e decide
+executar uma acao que produzira um estado futuro e
+uma recompensa que depende tambem das escolhas
+da natureza. O objetivo do agente e maximizar a
+recompensa ganha ao longo de uma sequencia de escolhas de acoes assumindo que a escolha da natureza
+minimiza sua recompensa.
+
+ T e um conjunto enumeravel de estagios (instantes do processo). Uma decisao e tomada a
+cada estagio. Assim, podemos fazer uma analogia entre os pontos de decisao de um processo
+sequencial com uma representacao de tempo
+discreto. Assumimos que o estagio inicial e
+t  0.
+
+Algoritmos de iteracao de valor e iteracao_de_poltica (White III and Eldeib, 1994) foram propostos
+para MDPIPs, que usam a representacao enumerativa de estados. Dada a ineficiencia dessas solucoes
+(a enumeracao de todos os estados leva a uma explosao combinatoria) foram propostas solucoes fatoradas e aproximadas para MDPIPs com representacao
+fatorada e uso de estruturas de dados que permitem
+calculos eficientes usando Programacao Dinamica
+(Delgado, Sanner, de Barros and Cozman, 2009),
+isto e, resolver problemas com milhares de estados.
+Alem disso, em (Delgado, de Barros, Cozman and
+Shirota, 2009) foi proposto um metodo de programacao multilinear e aproximado para resolver MDPIPs fatorados, que pode superar o desempenho da
+solucao baseada em Programacao Dinamica. Nesse
+trabalho, mostramos uma outra solucao para MDPIPs baseada em programacao matematica a programacao em dois nveis.
+
+ S e um conjunto finito de estados. Se o processo
+tem conhecimento total do estado atual, entao o
+MDP e chamado de totalmente observavel, caso
+contrario, e parcialmente observavel (POMDP).
+Neste trabalho, estamos interessados em MDPs
+totalmente observaveis.
+ A e um conjunto finito de acoes que permitem
+que o sistema mude de um estado para outro.
+A tomada_de_decisao significa a escolha de uma
+acao, dado que o agente se encontra num determinado estado.
+ R  SxA  R e a funcao de recompensa, sendo
+que R(s, a) representa a recompensa obtida pelo
+agente, dado que ele esta no estado s  S e executa a acao a  A. Neste trabalho, assumimos
+que a funcao de recompensa e estacionaria (isto
+e, independe do estagio).
+ Ka (s s) define as transicoes markovianas sobre S, que sao os conjuntos condicionais credais validos representados por inequacoes lineares para expressar todas as possveis distribuicoes de probabilidade P (s a, s).
+
+2.2
+
+Formulacao em dois nveis para MDPIPs
+
+A Equacao (1) pode ser reduzida a um problema de
+programacao em dois nveis (Shirota et al., 2007)
+min
+
+
+
+
+Sujeito a
+
+
+
+V
+
+Dadas as caractersticas de um MDPIP, e possvel definir varios criterios para avaliar uma poltica.
+Nesse trabalho, estamos interessados em polticas
+que levem o agente para a maior recompensa esperada, assumindo que as escolhas da natureza (para
+definir as imprecisoes) pretendem minimizar a recompensa esperada do agente, isto e, o criterio maxmin. Em (Satia and Lave Jr, 1973) foram mostrados varios resultados importantes para MDPIPs
+que adotam esse criterio, a saber
+
+X
+
+V  (s)
+
+(2)
+
+s
+
+
+V (s)  R(s, a) +
+X
+
+P (s s, a)V  (s ), s  S, a  A.
+s S
+
+P  argmin
+
+X
+
+P (s s, a)V  (s ).
+
+s S
+
+
+Sujeito a  P (s s, a)  Ka (s s)
+
+O Problema 2 e um problema de programacao em
+dois nveis pois define um problema de minimizacao
+dentro de outro problema de minimizacao.
+5285
+
+(1)
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+3
+
+esta necessariamente relacionado com Di . Note que
+se permitimos que as funcoes base tenham domnios
+de tamanho ilimitado, poderamos cair no extremo
+de usar todas as variaveis de estado, o que estaria
+em contradicao com o objetivo de ter uma representacao compacta (Patruscu, 2004).
+Conhecendo o conjunto H de funcoes base, o
+objetivo agora passa a ser calcular o conjunto de
+pesos w de modo a obter uma boa aproximacao da
+funcao valor otima. Para permitir que os calculos sejam feitos mais eficientemente, algumas suposicoes
+devem ser estabelecidas (Guestrin, 2003) i) cada
+funcao base depende de algumas (poucas) variaveis
+de estado ii) no modelo de transicao, as variaveis do
+proximo estado dependem de algumas (poucas) variaveis da camada do estado atual iii) as recompensas locais dependem de algumas (poucas) variaveis
+de estado e iv) o numero de acoes e pequeno.
+Apesar dessas suposicoes parecerem, a princpio
+muito restritivas, existem muitos problemas praticos
+que podem ser modelados fazendo-se essas suposicoes (Guestrin, 2003).
+
+Definicao de MDPIP fatorado
+
+Chamamos de MDPIP fatorado um MDP em que
+os estados sao descritos usando variaveis de estado
+Xi para i  1..n as transicoes sao representadas por
+Redes Credais Dinamicas e as funcoes valor e recompensa tambem sao fatoradas (Delgado, de Barros,
+Cozman and Shirota, 2009).
+Funcao transicao de estado fatorada. Uma
+Rede Credal Dinamica (Dynamic Credal Network DCN) e uma representacao mais compacta do modelo de transicao de estados para um MDPIP fatorado. Uma rede credal generaliza o conceito de rede
+bayesiana, permitindo que cada variavel, para cada
+configuracao de seus pais, seja associada a um conjunto de densidades de probabilidade, no lugar de
+uma simples densidade, como acontece com as redes
+bayesianas (Cozman, 2000).
+Num MDPIP fatorado definimos uma rede credal dinamica para cada acao a, pela tupla a <
+Ga , Ka >, sendo Ga um grafo cclico dirigido de
+duas camadas, uma camada representando o estado
+atual e uma camada representando o proximo estado
+(exatamente como nas redes_bayesianas dinamicas).
+Os nos estao associados a variaveis de estado Xi e
+Ka e uma colecao de conjuntos credais condicionais
+Ka (Xi sparents(Xi )). Neste caso, temos um conjunto de distribuicoes conjuntas de probabilidade,
+cada uma satisfazendo a seguinte equacao
+
+
+P (s s, a) 
+
+Y
+
+3.2
+
+Programacao em dois nveis para MDPIP fatorado
+
+Usando a funcao valor fatorada como foi proposta na
+Secao 3.1 e substituindo-a no problema da Equacao
+(2) temos
+
+min
+w
+
+P (xi sP arents(Xi ), a)
+
+
+
+s
+
+(3)
+
+i
+
+Sujeito a
+
+k
+XX
+
+
+
+k
+X
+
+wi hi (s)
+
+(5)
+
+i1
+
+wi hi (s)  R(s, a) +
+
+i1
+
+Funcao recompensa fatorada. Em MDPIPs fatorados, para definir a recompensa de aplicar a acao
+a no estado s e usado um conjunto de funcoes de
+recompensas locais Ri que dependem de um subconjunto de variaveis de estado Di (a)  X1 , ..., Xn .
+Seja kR a quantidade de subconjuntos de s para os
+quais sao definidas funcoes de recompensa local. A
+recompensa para um estado s dado que a acao a foi
+executada e definida como
+R(s, a) 
+
+kR
+X
+
+
+
+X
+
+P (s s, a)
+
+k
+X
+
+wi hi (s ),
+
+i1
+
+s S
+
+s  S, a  A.
+P  argmin
+
+X
+s S
+
+
+P (s s, a)
+
+k
+X
+
+wi hi (s ).
+
+i1
+
+Sujeito a  P (s s, a)  Ka (s s)
+
+Em que
+Ri (Di (a), a)  R
+
+(4)
+
+P (s s, a) 
+
+i1
+
+Y
+
+P (xi sP arents(Xi ), a)
+
+i
+
+3.1
+
+Funcoes base e funcao valor aproximada
+
+A funcao valor e aproximada por uma combinacao
+linear de funcoes base h1 , ..., hk , ou seja
+Vb (s) 
+
+k
+X
+
+Note que o problema resultante possui as seguintes
+caractersticas
+CA1 A funcao objetivo do primeiro nvel e linear.
+CA2 As restricoes do primeiro nvel sao nao-lineares.
+
+wj hj (s)
+
+j1
+
+Uma condicao necessaria para a realizacao de
+calculos eficientes (Koller and Parr, 1999), e que
+sera considerada nesse trabalho, e que o escopo de
+cada hi esteja restrito a algum subconjunto de variaveis de estado Ci  X1 , ..., Xn . Sendo que Ci nao
+
+CA3 A funcao objetivo do segundo nvel e nao-linear.
+CA4 As restricoes do segundo nvel sao lineares.
+CA5 E um problema de programacao em dois nveis (Bilevel Probabilistic Program - BLPP ) geral.
+CA6 As restricoes do primeiro nvel contem variaveis do
+segundo nvel (que correspondem as probabilidades).
+
+5286
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Backprojection gia (hi , Pa )
+1 * Definicao do escopo de Backproj 
+2 a (C )  Xj C P arentsa (Xj )
+
+3 para cada
+Patribuicao
+Q y  a (C ) faca
+a
+4 gi (y)  c C jX  C Pa (c Xj y)hi (c )
+
+3). No passo 4, j toma os valores do ndice das variaveis de estado que pertencem ao escopo de hi ,
+sendo que cada c e uma configuracao das variaveis
+de estado que pertencem ao escopo de hi .
+
+j
+
+3.4
+Figura 2 Algoritmo Backprojection gia .
+3.3
+
+Operacao Backprojection
+
+Uma das operacoes que pode ser executada eficientemente explorando a estrutura do MDP fatorado
+e um pre-calculo chamado de backprojection, realizado em (Guestrin, 2003) para MDPS, e que pode
+ser aplicado na resolucao de MDPIPs fatorados.
+Sendo as restricoes do problema associado ao
+MDPIP fatorado da forma
+X
+
+wi hi (s)  R(s, a) + 
+
+i
+
+X
+
+P (s s, a)
+
+X
+
+wi hi (s ),
+
+(6)
+
+i
+
+s S
+
+s  S, a  A
+
+com P (s s, a)  Ka (s s). Essas restricoes podem
+ser reescritas da seguinte maneira
+k
+X
+
+wi hi (s)  R(s, a) + 
+
+i1
+k
+X
+
+i1
+
+wi hi (s)  R(s, a) + 
+
+i1
+k
+X
+
+k
+X
+k
+X
+
+wi
+
+X
+
+P (s s, a)hi (s )
+
+s S
+
+wi gia (s).
+
+i1
+
+wi (gia (s)  hi (s))  R(s, a)
+
+i1
+k
+X
+
+wi cai (s)  R(s, a)
+
+i1
+
+Em que
+P (s s, a)  Ka (s s)
+Y
+P (s s, a) 
+P (xi sP arents(Xi ), a)
+gia (s)
+
+
+
+cai (s) 
+
+X
+
+Como resolver o programa de dois nveis?
+
+E importante notar que podemos usar a operacao backprojection para calcular as restricoes do
+primeiro nvel e a funcao objetivo do segundo nvel do Problema (5). A maioria dos algoritmos
+para BLPP tenta resolver programas em dois nveis somente para BLPP linear, BLPP quadratico
+ou BLPP linear-quadratico (o que nao se aplica para
+nosso problema devido a CA5), por exemplo, o algoritmo K-th Best (Bialas and Karwan, 1978). Outros
+algoritmos resolvem BLPP gerais cujas restricoes do
+primeiro nvel nao contem variaveis do segundo nvel
+(o que nao se aplica devido a CA6), por exemplo o
+algoritmo branch-and-bound (Bard, 1988), o algoritmo de regioes de confianca (Colson et al., 2005)
+e o algoritmo de restauracao inexata (Andreani
+et al., 2007) . Outros resolvem BLPP gerais sem
+restricoes no primeiro nvel (o que nao se aplica devido a CA2), por exemplo, o metodo de maxima
+descida (Savard and Gauvin, 1994), em que a direcao maxima de descida e a solucao de um BLPP
+quadratico. Em suma, todos esses algoritmos nao
+podem ser usados para resolver o BLPP associado
+ao MDPIP fatorado, devido as caractersticas CA2,
+CA5 e CA6 de nosso problema.
+Um metodo que pode ser usado para resolver esse problema em dois nveis e a reformulacao usando as condicoes de Karush-Kuhn-Tucher
+(KKT) (Bard and Falk, 1982). Esse metodo transforma o problema em dois nveis
+min  F (x, y)
+
+i
+
+s.t.  G(x, y)  0
+
+P (s s, a)hi (s )
+
+s S
+gia (s)
+
+(7)
+
+x,y
+
+y  argminy f (x, y  )
+s.t.  g(x, y  )  0
+
+ hi (s)
+
+no seguinte problema nao-linear novo, substituindo o problema do segundo nvel por suas condicoes KKT (Bard and Falk, 1982)
+
+Ainda que as probabilidades sejam variaveis, a
+operacao backprojection que explora a estrutura de
+MDPs fatorados (Guestrin, 2003) pode ser utilizada para MDPIPs fatorados, uma vez que a unica
+diferenca e que num MDPIP consideramos P (s s, a)
+como uma variavel que pertence a Ka (s s). A partir de gia podemos calcular tambem cai . O algoritmo
+Backprojection gia da Figura (2), permite calcular gia em que a funcao base hi tem escopo C e o modelo de transicao da acao a e Pa . Pode-se mostrar
+que se hi tem escopo restrito a C, entao a operacao
+backprojection tem escopo restrito aos pais de C
+na rede_bayesiana dinamica da acao a (Koller and
+Parr, 1999) (passo 2 do algoritmo da Figura 2). O
+calculo de gia e feito para todas as configuracoes y
+possveis das variaveis do subconjunto a (C ) (passo
+
+min
+
+x,y,
+
+
+
+s.t 
+
+F (x, y)
+
+(8)
+
+G(x, y)  0
+g(x, y)  0
+i  0, i  1, ..., m2
+i gi (x, y)  0, i  1, ..., m2
+y L(x, y, )  0
+
+where  L(x, y, )  f (x, y) +
+
+m2
+X
+i1
+
+5287
+
+i gi (x, y)
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Depois disso, o novo problema nao-linear (Problema (8)) pode ser resolvido usando um solver naolinear. No Problema (8) L e a funcao de Lagrange
+associada ao problema do segundo nvel, i.e., o metodo cria um multiplicador de Lagrange i para cada
+restricao do problema do segundo nvel. Uma caraterstica dessa reformulacao e que existem mais variaveis no novo problema i i  1, ..., m2 (em que
+m2 e o numero de restricoes no segundo nvel). Uma
+outra caraterstica dessa reformulacao e que cresce o
+numero de restricoes o numero de restricoes no novo
+problema nao-linear relacionado ao MDPIP fatorado
+e SA+3m2 +V arP rob, em que V arP rob e o numero de variaveis de probabilidade no segundo nvel.
+Alem disso, para fazer a reformulacao e necessario
+calcular as derivadas parciais para cada variavel do
+segundo nvel.
+Uma caraterstica importante do metodo KKT
+e que o novo problema de programacao_nao-linear
+nao e sempre equivalente ao problema de programacao em dois nveis e equivalente somente quando
+o problema do segundo nvel do programa em dois
+nveis e convexo e regular (Bard and Falk, 1982).
+Em particular, um MDPIP fatorado formulado
+como um problema de programacao em dois nveis
+e equivalente ao novo problema nao-linear, usando
+esse metodo, se as funcoes base tem escopo restrito
+a uma variavel de estado, conforme demostrado a
+seguir.
+
+Figura 3 Configuracao cclica do domnio do Administrador de Sistemas
+Exemplo 1 Administrador de Sistemas (Guestrin,
+2003). Considere o problema de otimizar o comportamento de um administrador de uma rede contendo
+n computadores, cada um conectado a um subconjunto de computadores. Varias topologias podem ser
+definidas desta maneira. Por exemplo, numa rede
+simples podemos conectar as maquinas de maneira
+cclica, em que a maquina i esta conectada a maquina i+1 e i1. Cada maquina influenciando uma
+unica maquina (Figura 3). Nesta rede, apenas um
+dos computadores e o servidor. Cada maquina esta
+associada a uma variavel binaria Xi , representando
+se ela esta funcionando ou nao. Em cada passo do
+tempo o administrador recebe um pagamento (recompensa) por cada maquina que estiver funcionando.
+Dado que o servidor e o computador mais importante na rede, e dada uma recompensa maior se ele
+estiver funcionando. O trabalho do administrador
+do sistema e decidir qual das maquinas reinicializar.
+Assim, existem n+1 possveis acoes em cada passo
+do tempo reinicializar uma das n maquinas ou nao
+reinicializar nenhuma (esta ultima sera chamada de
+a0 ). Apos executar a acao reinicializar a maquina i,
+que chamaremos de ai , a probabilidade da maquina
+i estar funcionando no proximo passo no tempo e
+alta. Em cada passo cada computador tem uma probabilidade baixa de deixar de funcionar, que cresce
+dramaticamente se seus vizinhos nao estao funcionando. As maquinas podem comecar a funcionar
+espontaneamente com uma pequena probabilidade.
+
+Proposicao 1 (Equivalencia do problema de dois
+nveis com o problema nao-linear apos a transformacao KKT para problemas com funcoes base com
+escopo restrito a uma variavel de estado).
+Para provar essa afirmacao, se analisarmos o
+Problema (5), podemos ver que i) as restricoes no
+segundo nvel sao inequacoes lineares que expressam
+todas as possveis distribuicoes de probabilidade (segundo a definicao de Ka (s s)) e ii) a funcao objetivo
+do segundo nvel, quando as funcoes base tem escopo
+restrito a uma variavel de estado, e linear nas variaveis de probabilidade. Assim, neste caso, o segundo
+nvel e convexo e regular e portanto aplicando a reformulacao usando as condicoes KKT obtemos um
+problema equivalente. Depois desta transformacao,
+podemos usar um solver nao-linear para obter w e p.
+Ainda assim, existem varios domnios que podem ser
+modelados usando funcoes base com escopo restrito
+a uma variavel de estado.
+
+4
+
+Rede Credal Dinamica para o exemplo do Administrador. O grafo de transicao da rede credal
+dinamica para a acao a0 e mostrado na Figura 4.
+Nesta configuracao os pais de Xi sao Xi e Xi1 . As
+probabilidades de transicao para a acao aj , j 6 i
+sao
+
+Modelando um MDPIP fatorado para o
+exemplo do Administrador de Sistemas.
+
+Nesta secao descrevemos o domnio do Administrador de Sistemas (Guestrin, 2003) modelado como
+um MDPIP fatorado, isto e, descrevemos um conjunto de Redes Credais Dinamicas, a funcao recompensa fatorada e a funcao valor aproximada.
+5288
+
+P (Xi  1Xi  1, Xi1  1, aj )
+
+
+
+P (Xi  0Xi  1, Xi1  1, aj )
+
+
+
+0, 1
+
+P (Xi  1Xi  1, Xi1  0, aj )
+
+
+
+0, 667
+
+0, 9
+
+P (Xi  0Xi  1, Xi1  0, aj )
+
+
+
+0, 333
+
+P (Xi  1Xi  0, Xi1  0, aj )
+
+
+
+0, 01
+
+P (Xi  0Xi  0, Xi1  0, aj )
+
+
+
+0, 99
+
+P (Xi  1Xi  0, Xi1  1, aj )
+
+
+
+0, 01
+
+P (Xi  0Xi  0, Xi1  1, aj )
+
+
+
+0, 99
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Os conjuntos condicionais credais estao definidos pelas seguintes equacoes lineares
+
+Figura 4 Grafo de transicao do rede credal dinamica
+da configuracao cclica do problema do Administrador de Sistemas para a acao a0 .
+O grafo de transicao da rede credal dinamica para
+a acao ai e igual ao grafo da Figura 4 exceto que a
+variavel Xi nao depende de nenhuma outra variavel
+e
+P (Xi  1Xi , Xi1 , ai )  0, 95
+
+5.1
+
+P1
+
+
+
+P2
+
+
+
+0, 9
+0, 1
+
+P1 + P 2
+
+
+
+1
+
+P3
+
+
+
+0, 9
+
+P4
+
+
+
+0, 1
+
+P3 + P 4
+
+
+
+1
+
+P5
+
+
+
+0, 9
+
+P6
+
+
+
+0, 1
+
+P5 + P 6
+
+
+
+1
+
+P7
+
+
+
+0, 9
+
+P8
+
+
+
+0, 1
+
+P7 + P 8
+
+
+
+1
+
+Calculo de gia e cai
+
+A backprojection da base constante h0 e mostrada
+na Equacao (10).
+
+(9)
+
+Observe que existe imprecisao na determinacao das
+seguintes probabilidades P (Xi  1Xi  1, Xi1 
+1, aj ) e P (Xi  0Xi  1, Xi1  1, aj ) para j 6 i.
+
+g0a
+
+
+
+X
+
+Pa (s s)h0
+
+(10)
+
+s
+
+Funcao recompensa fatorada. A funcao recompensa e decomposta em n recompensas locais, uma
+para cada maquina e igual para todas as acoes, R1 ,
+R2 , R3 ,...,Rn . Cada maquina contribui com 1 para
+a recompensa, exceto o servidor que contribui com
+2
+
+
+
+1
+
+Pa (s s)1
+
+Vamos calcular a backprojection das funcoes
+base hi . Para o nosso exemplo, sabemos que
+cada funcao hi tem escopo restrito a Xi . Dado
+que cada funcao hi tem escopo restrito a C  
+Xi , a backprojection tem escopo restrito a
+P arentsa (Xi )  a (C  )  Xi1 , Xi . Aplicando
+o algoritmo Backprojection gia temos
+
+ Ri (Xi  1)  2 e Ri (Xi  0)  0 se a maquina i e
+o servidor.
+
+Funcao valor aproximada. Para esse exemplo,
+definimos a funcao base constante h0  1 e as demais funcoes base hi como hi (Xi  1)  1 e
+hi (Xi  0)  0. Neste exemplo simplificado, hi
+tem seu escopo restrito a uma unica variavel Xi .
+
+1. Definimos o escopo de Backproj como a (C ) 
+Xi1 , Xi .
+2. Para cada atribuicao y  a (C ) calculamos
+
+Resolvendo uma instancia do domno do
+Administrador com 2 computadores
+
+gia (y)
+
+
+
+X
+
+Y
+
+Pa (c Xj y)hi (c )
+
+(11)
+
+c C jXj C
+
+Considere uma instancia do domnio do Administrador de Sistemas em configuracao cclica com 2 computadores M1 e M2 modelada com uma rede credal
+dinamica. Sendo M1 o servidor. Existem 3 acoes
+neste modelo a0 , a1 e a2 . Atribuindo uma variavel
+para cada imprecisao nas probabilidades, temos
+P (X1
+P (X1
+P (X2
+P (X2
+P (X2
+P (X2
+P (X1
+P (X1
+
+X
+s
+
+ Ri (Xi  1)  1 e Ri (Xi  0)  0 para i 
+1, 2, ..., n sendo que a maquina i nao e o servidor.
+
+5
+
+
+
+
+
+XY
+xi
+
+
+
+X
+
+Pa (xi xi1 , xi )hi (xi )
+
+ixi
+
+Pa (xi xi1 , xi )hi (xi )
+
+xi
+
+
+
+Pa (Xi  1xi1 , xi )1 + Pa (Xi  0xi1 , xi )0
+
+
+
+Pa (Xi  1xi1 , xi )
+
+ 1X1  1, X2  1, a0 )  P1
+
+Temos 4 atribuicoes possveis para a (C  ) 
+xi1 , xi . A seguir, mostramos todas as tabelas
+com os valores gia . Aproveitamos tambem para calcular cai , para i  0 ca0  0, 05 (para a acao a0 ,
+veja os dados nas Tabelas 1 e 2).
+Para a acao a1 , veja as Tabelas 3 e 4.
+Para a acao a2 , veja as Tabelas 5 e 6.
+
+ 0X1  1, X2  1, a0 )  P2
+ 1X2  1, X1  1, a0 )  P3
+ 0X2  1, X1  1, a0 )  P4
+ 1X2  1, X1  1, a1 )  P5
+ 0X2  1, X1  1, a1 )  P6
+ 1X1  1, X2  1, a2 )  P7
+ 0X1  1, X2  1, a2 )  P8
+
+5289
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+X2
+1
+1
+0
+0
+
+X1
+1
+0
+1
+0
+
+g1a0
+P1
+0,01
+0,667
+0,01
+
+ca1 0
+0,95*P1 -1
+0,95*0,01-0 0,0095
+0,95*0,667-1-0,36635
+0,95*0,01-0 0,0095
+
+r8 -0.05*w0 + 0.9025*w1 + 0.0095*w2 < 0
+r9 -0.05*w0 + (0.95*P7-1)*w1- 0.0975*w2 < -3
+r10 -0.05*w0 - 0.36635*w1 + 0.9025*w2 < -2
+r11 -0.05*w0 + 0.0095*w1 - 0.0975*w2 < -1
+r12 -0.05*w0 + 0.0095*w1 + 0.9025*w2 < 0
+P1,P3 argmin w0+P1*w1+P3*w2
+r13 0.9 - P1 <0
+r14 P1 -1 < 0
+r15 0.9 - P3 <0
+r16 P3 -1 < 0
+
+Tabela 1 Calculo de g1a0 eca1 0
+X1
+1
+1
+0
+0
+
+X2
+1
+0
+1
+0
+
+g2a0
+P3
+0,01
+0,667
+0,01
+
+ca2 0
+0,95*P3 -1
+0,95*0,01-0 0,0095
+0,95*0,667-1-0,36635
+0,95*0,01-0 0,0095
+
+P5 argmin w0+0.95*w1+P5*w2
+r17 0.9 - P5 <0
+r18 P5 -1 < 0
+P7 argmin w0+P7*w1+0.95*w2
+r19 0.9 - P7 <0
+r20 P7 -1 < 0
+
+Tabela 2 Calculo de g2a0 e ca2 0
+X2
+1
+1
+0
+0
+
+X1
+1
+0
+1
+0
+
+g1a1
+
+ca1 1
+0,95
+0,95
+0,95
+0,95
+
+*
+*
+*
+*
+
+0,95
+0,95
+0,95
+0,95
+
+-1
+-0
+-1
+-0
+
+
+
+
+
+
+Podemos agora resolver o problema em dois nveis aplicando o metodo de reformulacao utilizando
+as condicoes KKT mostrado na Secao 5.2. O programa em dois nveis, neste caso, e equivalente ao
+problema nao-linear descrito a seguir
+
+-0,0975
+0,9025
+-0,0975
+0,9025
+
+Tabela 3 Calculo de g1a1 e ca1 1
+X1
+1
+1
+0
+0
+
+X2
+1
+0
+1
+0
+
+g2a1
+P5
+0,01
+0,667
+0,01
+
+maximize obj -4*w0 - 2*w1 - 2*w2
+r1 -0.05*w0 + (0.95*P1 -1)* w1 + (0.95*P3-1)*w2<-3
+r2 -0.05*w0 - 0.36635*w1 + 0.0095*w2 < -2
+r3 -0.05*w0 + 0.0095*w1 - 0.36635*w2 < -1
+r4 -0.05*w0 + 0.0095*w1 + 0.0095*w2 < 0
+r5 -0.05*w0 - 0.0975*w1 + (0.95*P5-1)*w2 < -3
+r6 -0.05*w0 - 0.0975*w1 + 0.0095*w2 < -2
+r7 -0.05*w0 + 0.9025*w1 - 0.36635*w2 < -1
+r8 -0.05*w0 + 0.9025*w1 + 0.0095*w2 < 0
+r9 -0.05*w0 + (0.95*P7-1)*w1- 0.0975*w2 < -3
+r10 -0.05*w0 - 0.36635*w1 + 0.9025*w2 < -2
+r11 -0.05*w0 + 0.0095*w1 - 0.0975*w2 < -1
+r12 -0.05*w0 + 0.0095*w1 + 0.9025*w2 < 0
+r13 0.9 - P1 <0
+r14 P1 -1 < 0
+r15 0.9 - P3 <0
+r16 P3 -1 < 0
+r17 0.9 - P5 <0
+r18 P5 -1 < 0
+r19 0.9 - P7 <0
+r20 P7 -1 < 0
+r21 L1>0
+r22 L2>0
+r23 L3>0
+r24 L4>0
+r25 L5>0
+r26 L6>0
+r27 L7>0
+r28 L8>0
+r29 L1*(0.9 - P1) 0
+r30 L2*(P1 -1)  0
+r31 L3*(0.9 - P3) 0
+r32 L4*(P3 -1)  0
+r33 L5*(0.9 - P5) 0
+r34 L6*(P5 -1)  0
+r35 L7*(0.9 - P7) 0
+r36 L8*(P7 -1)  0
+r37 w1 - L1 + L2  0
+r38 w2 - L3 + L4  0
+r39 w2 - L5 + L6  0
+r40 w1 - L7 + L8  0
+
+ca2 1
+0,95*P5 -1
+0,95*0,01-0 0,0095
+0,95*0,667-1-0,36635
+0,95*0,01-0 0,0095
+
+Tabela 4 Calculo de g2a1 e ca2 1
+X2
+1
+1
+0
+0
+
+X1
+1
+0
+1
+0
+
+g1a2
+P7
+0,01
+0,667
+0,01
+
+ca1 2
+0,95*P7 -1
+0,95*0,01-0 0,0095
+0,95*0,667-1-0,36635
+0,95*0,01-0 0,0095
+
+Tabela 5 Calculo de g1a2 e ca1 2
+X1
+1
+1
+0
+0
+
+X2
+1
+0
+1
+0
+
+g2a2
+
+ca2 2
+0,95
+0,95
+0,95
+0,95
+
+*
+*
+*
+*
+
+0,95
+0,95
+0,95
+0,95
+
+-1
+-0
+-1
+-0
+
+
+
+
+
+
+-0,0975
+0,9025
+-0,0975
+0,9025
+
+Tabela 6 Calculo de g2a2 e ca2 2
+
+5.2
+
+Resolvendo o MDPIP como um programa de
+dois nveis
+
+Usando os valores gia e cai pre-calculados podemos
+explicitar as restricoes do Problema (5) como segue
+minimize obj 4*w0 + 2*w1 + 2*w2
+r1
+r2
+r3
+r4
+r5
+r6
+r7
+
+-0.05*w0
+-0.05*w0
+-0.05*w0
+-0.05*w0
+-0.05*w0
+-0.05*w0
+-0.05*w0
+
++
++
++
++
+
+(0.95*P1 -1)* w1 + (0.95*P3-1)*w2<-3
+0.36635*w1 + 0.0095*w2 < -2
+0.0095*w1 - 0.36635*w2 < -1
+0.0095*w1 + 0.0095*w2 < 0
+0.0975*w1 + (0.95*P5-1)*w2 < -3
+0.0975*w1 + 0.0095*w2 < -2
+0.9025*w1 - 0.36635*w2 < -1
+
+As restricoes 37, 38, 39 e 40 sao as derivadas
+parciais referentes a P1 , P3 , P5 e P7 . Note que o
+problema reformulado tem 8 variaveis a mais e tem
+S  A + 3  m2 + V arP rob4*3+3*8+440 restricoes. Usando o solver nao-linear Minos (Murtagh
+5290
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+and Saunders, 1998), obtemos o seguinte resultado
+
+Boutilier, C., Dean, T. and Hanks, S. (1999). Decisiontheoretic planning Structural assumptions and
+computational leverage, Journal of Artificial Intelligence Research 11 194.
+
+Valor da func
+ao objetivo 211.460492
+w0 50.91467320213732
+w1 2.3445074109184922
+w2 1.5563921884729717
+
+Colson, B., Marcotte, P. and Savard, G. (2005). A trustregion method for nonlinear bilevel programming
+Algorithm and computational experience, Comput.
+Optim. Appl. 30(3) 211227.
+
+Finalmente, dados os valores wi e o conjunto
+de funcoes base, podemos construir a funcao valor e
+extrair a poltica otima aproximada.
+6
+
+Cozman, F. G. (2000). Credal networks, Artificial Intelligence 120 199233.
+
+Conclusao
+
+Delgado, K. V., de Barros, L. N., Cozman, F. G. and Shirota, R. (2009). Representing and solving factored
+Markov decision processes with imprecise probabilities, 6th International Symposium on Imprecise
+Probability Theories and Applications (ISIPTA),
+SIPTA, Durham, United Kingdom, pp. 169178.
+
+O problema de tomada_de_decisao sequencial, em
+que as probabilidades de transicao nao sao completamente conhecidas, pode ser modelado por um Processo Markoviano de Decisao com Probabilidades
+ (MDPIP). Por muito tempo, nao foram
+propostas solucoes eficientes para esse problema, isto
+e, solucoes capazes de resolver problemas grandes
+modelados como MDPIPs. Em trabalhos anteriores foram propostas solucoes fatoradas aproximadas
+baseadas em (i) programacao_dinamica (Delgado,
+Sanner, de Barros and Cozman, 2009) e (ii) programacao multilinear (Delgado, de Barros, Cozman and
+Shirota, 2009). Os resultados mostraram que a solucao baseada em programacao matematica (multilinear) pode, em certas condicoes, ser mais eficiente
+em tempo que as solucoes baseadas em programacao_dinamica, enquanto essas podem apresentar um
+menor erro na aproximacao_da_funcao_valor.
+Nesse trabalho, propomos uma nova solucao baseada em programacao matematica a solucao baseada em uma formulacao de MDPIPs como programacao em dois nveis. Primeiro, definimos um MDPIP geral como um programa de dois nveis. Em
+seguida, mostramos como transforma-lo num programa fatorado e aproximado por funcoes base. Finalmente, descrevemos um algoritmo e resolvemos
+uma instancia de problema no domnio de exemplo
+do Administrador de Sistemas. Em trabalhos futuros pretendemos comparar o desempenho da solucao
+aplicando a transformacao KKT com a solucao multilinear proposta em trabalhos anteriores (Delgado,
+de Barros, Cozman and Shirota, 2009).
+
+Delgado, K. V., Sanner, S., de Barros, L. N. and Cozman, F. G. (2009). Efficient solutions to factored MDPs with imprecise transition probabilities,
+19th International Conference on Automated Planning and Scheduling (ICAPS), Thessaloniki, Greece, pp. 98105.
+Guestrin, C. E. (2003). Planning under uncertainty in
+complex structured environments, PhD thesis, Stanford University. Adviser-Daphne Koller.
+Koller, D. and Parr, R. (1999). Computing factored value functions for policies in structured MDPs, IJCAI, pp. 13321339.
+Murtagh, B. A. and Saunders, M. A. (1998). MINOS
+5.5 users guide, Technical Report SOL 83-20R,
+Systems Optimization Laboratory, Department of
+Operations Research, Stanford University, California.
+Patruscu, R.-E. (2004). Linear Approximations for Factored Markov Decision Processes, PhD thesis, University of Waterloo.
+Puterman, M. L. (1994). Markov Decision Processes
+Discrete Stochastic Dynamic Programming, John
+Wiley  Sons, Inc.
+Russell, S. J. and Norvig, P. (2003). Artificial Intelligence A Modern Approach, Pearson Education.
+Satia, J. K. and Lave Jr, R. (1973). Markovian decision processes with uncertain transition probabilities, Operations Research 21(3) 728740.
+
+Referencias
+
+Savard, G. and Gauvin, J. (1994). The steepest descent
+direction for the nonlinear bilevel programming problem, Operations Research Letters 15(5) 265272.
+
+Andreani, R., Castro, S. L. C., Chela, J. L., Friedlander, A. and Santos, S. A. (2007). An inexactrestoration method for nonlinear bilevel programming problems, Computational Optimization and
+Applications .
+
+Shirota, R., Cozman, F. G., Trevizan, F. W., de Campos,
+C. P. and de Barros, L. N. (2007). Multilinear and
+integer programming for markov decision processes with imprecise probabilities, 5th International
+Symposium on Imprecise Probability Theories and
+Applications, Prague,Czech Republic, pp. 395404.
+
+Bard, J. F. (1988). Convex two-level optimization, Math.
+Program. 40(1) 1527.
+Bard, J. F. and Falk, J. E. (1982). An explicit solution to
+the multi-level programming problem, Computers
+ Operations Research 9 77100.
+
+White III, C. C. and Eldeib, H. K. (1994). Markov decision processes with imprecise transition probabilities, Operations Research 42(4) 739749.
+
+Bellman, R. E. (1957). Dynamic Programming, Princeton University Press, USA.
+Bialas, W. and Karwan, M. (1978). Multilevel linear
+programming, Technical Report 78-1.
+
+5291

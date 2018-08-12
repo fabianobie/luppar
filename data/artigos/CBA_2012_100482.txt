@@ -1,0 +1,694 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+MPC COM CONTROLE DAS SAÍDAS POR FAIXAS DE UM PROCESSO DE PRODUÇÃO DE
+PETRÓLEO "OFFSHORE"
+RODRIGO R. SANTOS, OSCAR A. Z. SOTOMAYOR
+Programa de Pós-Graduação em Engenharia Elétrica (PROEE), Universidade Federal de Sergipe (UFS)
+Cidade Universitária Prof. Aloísio de Campos, Av. Marechal Rondon sn, Jardim Rosa Elze
+CEP 49100-000, São Cristóvão-SE, Brasil
+E-mails rodrigorbst@gmail.com, oscars@del.ufs.br
+
+Abstract
+ In the oil production process in offshore platforms, the separation unit is responsible for performing the separation of
+the multiphase fluid from the wells and also absorb the slugging flow production. This paper proposes a model predictive control
+scheme (MPC) with zone control for application in an oil separation unit. According to the numerical simulation results, the
+proposed MPC control shows a good performance, keeping the oscillations of the operational variables of the system within
+predetermined ranges, in order to maintain the operation of the separation and safety of the production process.
+Keywords
+ Slug control, MPC with zone control, oil production process
+Resumo
+ No processo de produção_de_petróleo em plataformas_offshore, a unidade de separação é responsável por realizar a
+separação do fluído multifásico proveniente dos poços de produção e também absorver as golfadas do fluxo de alimentação.
+Neste trabalho é proposto um sistema_de_controle_preditivo (MPC), com estratégia de controle das saídas por faixas, para
+aplicação em uma unidade de separação de petróleo. Os resultados de simulações numéricas mostram o bom desempenho do
+controle proposto, mantendo as oscilações das variáveis operacionais do sistema dentro de faixas pré-estabelecidas, visando,
+desta forma, preservar a operação da separação e segurança do processo de produção.
+Palavras-chave
+ .
+
+1
+
+Introdução
+
+Nos últimos anos, a exploração e a produção de
+petróleo têm apresentado grandes desafios
+tecnológicos para as áreas de automação e controle.
+Um dos pontos críticos para superar estes desafios é
+a implantação de técnicas de controle_ativo de poços,
+bem como de sistemas_de_controle_avançado e
+otimização em tempo_real (RTO), de maneira de
+estabilizar e otimizar a produção (Campos e Teixeira,
+2011).
+As operações de produção_de_petróleo "offshore"
+são principalmente realizadas em plataformas FPSO
+(unidades flutuantes de produção, armazenamento e
+descarga), com a ajuda de equipamentos básicos tais
+como vasos separadores, tratadores eletrostáticos,
+hidrociclones, desgaseificadores, compressores,
+trocadores_de_calor etc, como mostrados na Figura 1.
+Em termos de controle, o objetivo é manter os níveis
+nos separadores estáveis (Campos et al., 2008 ). No
+separador de produção, devem-se manter os níveis da
+interface óleo-água e do óleo. No tratador
+eletrostático deve-se manter o nível da interface óleoágua. E no separador atmosférico, deve-se manter o
+nível de óleo.
+Uma das perturbações decorrentes em processos
+de produção "offshore" são as flutuações (golfadas)
+da corrente de alimentação, i.e. severas oscilações de
+líquido (óleo e água) seguidas de grandes ondas de
+gás. As consequências deste escoamento com
+golfadas são oscilações nas pressões e nas vazões do
+processo que podem causar severos problemas para a
+operação da plataforma (Azevedo Jr. e Sotomayor,
+
+ISBN 978-85-8001-069-5
+
+2010) (i) dificuldade de separação da água e do óleo,
+comprometendo o desempenho de equipamentos 
+jusante, e (ii) possível parada de emergência da
+plataforma por nível muito alto ou baixo dos vasos
+separadores.
+
+Figura 1  Fluxograma básico de operação de uma plataforma
+FPSO
+
+Técnicas de controle têm sido aplicadas para
+conter os efeitos indesejáveis das golfadas, algumas
+delas atuando no riser (Santos et al., 2011) e outras
+diretamente no separador de produção. Neste último
+caso, Filgueiras (2005) e Figueiredo e Sotomayor
+(2010) controlam o nível da interface água-óleo,
+nível de óleo e pressão no separador usando um
+sistema_de_controle PI (Proporcional-Integrativo)
+multi-malha, enquanto que Silveira (2006) e Ribeiro
+(2009) usam controle MPC (Model Predictive
+Control) multivariável. Porém, dado que o objetivo
+
+5074
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+destes trabalhos é manter as variáveis controladas o
+mais próximo possível de um setpoint fixo, as
+oscilações na alimentação são repassadas para as
+saídas do processo, o que pode provocar a
+degradação do desempenho do separador e sistemas
+subsequentes. Para contornar este problema, Nunes
+(2004) propõe o uso da estratégia de controle por
+bandas, cuja idéia básica consiste em permitir
+variações do nível no vaso separador dentro de certos
+limites de modo a manter o desempenho do processo.
+Em Nunes (2004), um controlador PI é
+configurado inicialmente com ganhos proporcional e
+integrativo que acarretam em uma ação de controle
+branda sobre o processo, neste caso a variável
+manipulada varia pouco e a variável controlada acaba
+se afastando do valor de setpoint. Porém, quando a
+variável controlada extrapola os limites de uma
+banda (ou faixa) estipulada na configuração, é ligado
+outro controlador PI com ganhos que proporcionam
+uma ação de controle mais vigorosa. Isto força a
+variável controlada a voltar para dentro da banda e
+quando isto ocorre é chaveado novamente para o
+controlador mais brando. Estratégias equivalentes ao
+controle_por_bandas, onde um controlador PI nãolinear muda seus ganhos em função da região na qual
+se encontra operando, i.e., dentro ou fora da banda,
+foram apresentadas por Campos et al. (2006) e Junior
+et al. (2010).
+O objetivo do presente trabalho é o
+desenvolvimento de um sistema_de_controle MPC
+para um subsistema importante do processo de
+produção petróleo, especificamente a unidade de
+separação, onde as variáveis de saídas são
+controladas por faixas_de_operação ao invés de
+setpoint fixo. O MPC proposto é implementado
+como parte de uma estrutura de controle_hierárquica,
+em cascata com uma camada de controle regulatório,
+composta por controladores PI, que regulam as
+variáveis de saída do processo. Resultados de
+simulações numéricas mostram o bom desempenho
+do processo sob controle MPC, perante perturbações
+no fluxo de alimentação em padrão de golfadas,
+quando comparado com o desempenho do processo
+operando sob controle PI regulatório.
+2 Processo de Produção de Petróleo
+No processo de produção_de_petróleo, o
+tratamento primário consiste, em linhas gerais, em
+separar o fluido multifásico extraído dos poços em
+suas diferentes fases, no condicionamento do óleo e
+do gás para que possam ser transferidos para as
+refinarias e para as unidades de processamento de
+gás_natural (UPGN), respectivamente, e no
+tratamento da água para reinjeção ou descarte no
+mar. Nas plataformas de produção offshore estas
+operações iniciam-se na unidade de separação.
+Devido  importância nas operações de uma
+plataforma, o presente estudo estará focalizado na
+unidade de separação, neste caso composto por um
+separador de produção trifásico associado com uma
+
+ISBN 978-85-8001-069-5
+
+bateria de três hidrociclones em série, conforme
+apresentado na Figura 2.
+
+Figura 2  Unidade de Separação (adaptado de Silveira, 2006)
+
+2.1 Separador de Produção
+O separador de produção, ou vaso separador, é
+responsável por promover a separação adequada das
+fases aquosa, oleosa e gasosa, além de exercer a
+função de tanque pulmão, absorvendo as golfadas da
+corrente de alimentação. Dessa forma, os
+equipamentos subsequentes ao separador recebem
+uma vazão mais estável para não comprometer a
+operação do sistema de produção.
+O separador de produção trifásico possui
+formato cilíndrico horizontal e é composto por duas
+seções denominadas câmara de separação e câmara
+de óleo, ambas separadas por um vertedouro. Na
+entrada do equipamento, uma placa defletora
+promove a fragmentação das fases, facilitando assim
+a saída do gás e ao mesmo tempo aumentando ainda
+mais o grau de dispersão das diversas fases. A força
+gravitacional promove a segregação das fases na
+câmara de separação formando-se uma fase rica em
+água (fase aquosa), uma fase rica em óleo (fase
+oleosa) e uma interface entre ambas as fases. A fase
+oleosa transborda sobre o vertedouro para a câmara
+de óleo, sendo em seguida transferida até os
+tratadores, que retiram sais e resíduos da água. O gás,
+já separado do óleo e da água, é canalizado para
+compressores sendo, então, direcionado a uma planta
+de tratamento, onde a umidade é retirada. A fase
+aquosa é encaminhada  unidade de tratamento, neste
+caso os hidrociclones, para redução de resíduos de
+óleo nos padrões especificados.
+
+5075
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+2.2 Hidrociclone
+O hidrociclone é um equipamento formado por
+um tubo composto de trechos cilíndricos e cônicos
+justapostos que efetua a separação da fase dispersa
+pela ação de um campo centrífugo resultante, pela
+configuração do equipamento e pelo modo com que a
+suspensão o alimenta.
+O princípio de operação deste equipamento
+consiste na entrada tangencial de água oleosa, sob
+pressão, no trecho de maior diâmetro, sendo
+direcionada internamente, em fluxo espiral, em
+direção ao trecho de menor diâmetro. O decréscimo
+de diâmetro faz com que este fluxo seja acelerado,
+gerando uma força centrífuga que força o
+componente mais pesado (água) contra as paredes.
+2.3 Simulador da Unidade de Separação
+O simulador da unidade de separação utilizado
+neste trabalho foi implementado na plataforma
+SimulinkMatlab. Este simulador é baseado em
+modelos fenomenológicos disponíveis na literatura.
+Para o separador de produção usa-se um modelo
+dinâmico simplificado com sete estados de
+conservação de massa, desenvolvido por Nunes
+(2007), que descrevem balanço de massa global na
+câmara de separação, balanço de massa da fase
+aquosa na câmara de separação, balanço de massa da
+fase oleosa na câmara de óleo, balanço de massa da
+fase gasosa, balanço de massa da água dispersa na
+fase oleosa na câmara de separação, balanço de
+massa de óleo disperso na fase aquosa na câmara de
+separação e balanço de massa de água dispersa na
+fase oleosa na câmara de óleo.
+Com relação ao hidrociclone, utilizou-se o
+modelo hidrodinâmico proposto por Filgueiras
+(2005), que descreve a perda de carga das linhas de
+topo e de fundo deste equipamento. Este modelo
+adota o diferencial de pressão entre a corrente de
+alimentação e a corrente de descarga superior do
+hidrociclone e o diferencial de pressão entre a
+corrente de alimentação e a corrente de descarga
+inferior do hidrociclone.
+Para simular o escoamento em regime de
+golfadas utilizou-se o modelo de um poço operando
+por injeção contínua de gás (gas lift), conforme
+descrito em Santos et al. (2011). Trata-se de um
+modelo_dinâmico com três estados que descreve o
+balanço de massa de gás no tubo anular, balanço de
+massa de gás no tubo de produção e balanço de
+líquido (óleo + água) no tubo de produção.
+Segundo Figueiredo e Sotomayor (2010), a
+dinâmica da unidade de separação é governada por
+uma mistura complexa de sistemas estáveis e
+integradores. Para a operação estável do processo, o
+simulador inclui um sistema_de_controle regulatório,
+baseado em quatro controladores PI (ver Figura 2).
+Neste esquema, a pressão no separador (P), o nível
+da fase oleosa na câmera de óleo (hl) e o nível da
+interface água-óleo na câmera de separação (hw) é
+realizada pela manipulação das aberturas da válvula
+
+ISBN 978-85-8001-069-5
+
+de gás (Sg), válvula de óleo (Sl) e válvula de água
+(Su3), respectivamente. Além disso, a unidade de
+separação inclui um controle de razão que é um tipo
+especial de controle feedforward, onde duas
+perturbações são medidas e é mantida uma relação
+constante entre elas. Assim, para o último
+hidrociclone, usa-se um controlador PI para manter
+constante a relação entre as quedas de pressão da
+corrente de topo e de fundo (R) pela manipulação da
+abertura da válvula de topo (So3), garantindo, desta
+forma, uma melhor eficiência de separação. Note-se,
+no esquema de controle da Figura 2, que as aberturas
+das válvulas So1, So2 e Su3 obedecem o mesmo sinal
+de comando.
+Maiores detalhes sobre os modelos usados
+podem ser encontrados nas referências mencionadas.
+Alguns dos parâmetros de simulação correspondem a
+uma plataforma real em operação na Bacia de
+Campos, enquanto que outros dados foram arbitrados
+para reproduzir uma operação normal do sistema.
+3 Sistema de Controle MPC
+O sistema_de_controle proposto é implementado
+com parte de uma estrutura hierárquica, atuando
+sobre a camada de controle regulatório, conforme
+apresentado na Figura 3.
+
+Figura 3  Sistema de Controle MPC
+
+No esquema apresentado, o controlador MPC
+manipula os setpoints dos controladores PI, enviando
+para estes o melhor setpoint possível para estabilizar
+o sistema dentro de uma faixa de operação
+permissível, de forma a atenuar as perturbações que
+possam prejudicar o processo de produção. Assim, as
+variáveis manipuladas e controladas do MPC são os
+setpoints e as variáveis controladas dos PIs,
+respectivamente.
+
+5076
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+O MPC usado neste trabalho é o algoritmo
+QDMC (Quadratic Dynamic Matrix Control) de
+García e Morshedi (1986), amplamente usado na
+indústria de petróleo (Qin e Badgwell, 2003).
+Basicamente, o QDMC usa um modelo de resposta
+ao degrau do processo para predição, através do qual
+calcula os valores das variáveis manipuladas (ações
+de controle) que minimizam a diferença entre os
+valores preditos e desejados das variáveis
+controladas, sujeitas a restrições nas variáveis
+manipuladas. Em geral, um QDMC minimiza a
+seguinte função objetivo linear-quadrático
++
+
+
+
+
+
++
++
+
+
+
+
+
+1
+
++ 1
+
+
+
++ 1
+
+Sujeito s restrições
+
+
+
+
+
+
+
+
++ 1 
+
++ 1 
+
+,
+
+,
+
+ 1,  ,
+
+ 1,  ,
+
+(2)
+
+Sendo
++
+o valor predito da saída, ysp o
+setpoint, u(k+j-1)u(k+j-1)-u(k+j-2) o incremento
+nas entradas, p o horizonte de predição, m o
+horizonte de controle, umax e umin são os limites
+máximos e mínimos das entradas, umax é o limite
+máximo de incremento nas entradas, Q e R são
+matrizes diagonais de ponderação positiva definida e
+positiva semi-definida, respectivamente. O problema
+de otimização (1) sujeito s restrições (2) é resolvido
+usando programação_quadrática (QP). Note-se que só
+a primeira ação de controle do vetor u(k) é aplicada
+na planta.
+Em grande parte das aplicações industriais, as
+variáveis de saída são controladas por faixas de
+operação ao invés de setpoints fixos. Esta estratégia é
+usualmente adotada com a intenção de obter alguns
+graus de liberdade que permitam levar o processo a
+seu target ótimo e suavizar a resposta do sistema
+perante perturbações. Para levar em conta o controle
+por faixas das saídas, a equação (1) é modificada da
+seguinte forma (Sotomayor et al., 2009)
+
+
++
+
+
+
+
+
++
++
+
++
+
+
+
+
++ 1
+
++
+
+
+
+
+
+correspondente a essa saída é um parâmetro de
+sintonia do controlador.
+ Se y j (k + i ) < y j ,min , a saída yj deve ser trazida
+para
+y bj ( k
+
+seu
+
+limite inferior. Portanto, fazemos
++ i )  y j ,min . O parâmetro da matriz Q
+
+correspondente a essa saída é o mesmo do caso
+anterior.
+4 O Modelo do Processo
+A implementação do controlador QDMC requer
+um modelo_linear estável do processo. Para o
+levantamento deste modelo considerou-se os
+controladores PI como parte integrante do processo.
+Assim, assumindo um escoamento de alimentação
+constante, o tradicional teste de resposta ao degrau
+foi aplicado individualmente nos setpoints dos
+controladores PI, obtendo-se 16 curvas de resposta
+entrada-saída. Estas respostas, mostradas na Figura 4,
+foram usadas na construção da matriz com as
+características dinâmicas do processo para o MPC.
+
+3
++ 1
+
+A estratégia de controle por faixas das saídas é
+implementada da seguinte forma. Para cada saída j
+observa-se a respectiva predição no instante k + i
+ Se ,  
++  ,
+, a saída yj deve ser
+ignorada (liberada ou removida dos cálculos de
+controle) no instante k + i. Portanto, o parâmetro da
+matriz Q correspondente a essa saída deve ser zero.
+y bj (k + i) pode ser qualquer valor dentro da faixa.
+ Se y j (k + i ) > y j ,max , a saída yj deve ser trazida
+para seu limite superior. Portanto, fazemos
+y bj ( k + i )  y j ,max . O parâmetro da matriz Q
+
+ISBN 978-85-8001-069-5
+
+Figura 4  Curvas de Resposta ao Degrau
+
+5077
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+5 Resultados e Discussões
+A sintonia fina de controladores MPC tem um
+caráter iterativo. No presente caso, os parâmetros de
+sintonia do controlador foram definidos após
+extensivas simulações, usando algumas regras
+heurísticas e o procedimento da tentativa e erro,
+visando alcançar um bom desempenho do controle.
+Na Tabela 1 encontram-se os valores dos parâmetros
+de sintonia selecionados na implementação do MPC.
+Tabela 1 - Parâmetros de sintonia do MPC com controle das saídas
+por faixas.
+Descrição
+
+Valor
+
+Tempo de amostragem
+
+Ts  10s
+
+Horizonte do modelo
+
+N  300
+
+Horizonte de predição
+
+p  20
+
+Horizonte de controle
+
+m2
+
+Matriz de ponderação das
+variáveis controladas
+Matriz de supressão das
+variáveis manipuladas
+Limite
+máximo
+das
+variáveis controladas.
+Limite
+mínimo
+das
+variáveis controladas
+Limite máximo das
+variáveis manipuladas
+Limite
+mínimo
+das
+variáveis manipuladas
+Variação máxima das
+variáveis manipuladas
+
+Q  diag(100,10,5,5)
+R  diag(2,4,4,2)
+ymax  0.60 0.55 9.7 1.35 T
+ymax  0.40 0.45 9.3 1.15 T
+umax  0.60 0.60 10 1.30T
+umax  0.40 0.40 9 1.20T
+umax  0.04 0.05 0.05 0.04T
+
+Para avaliar o desempenho do sistema de
+controle, considerou-se um escoamento em padrão de
+golfadas conforme mostrado na Figura 5, que ilustra
+as vazões das fases aquosa (Win), oleosa (Lin) e
+gasosa (Gin) da alimentação geradas por um poço
+operando por gás-lift contínuo, e que ingressam 
+unidade de separação.
+
+Figura 5  Escoamento em Regime de Golfadas Geradas pelo
+Sistema Gás-lift
+
+ISBN 978-85-8001-069-5
+
+Nas Figuras 6 e 7, mostram-se os efeitos da
+sequência de golfadas na unidade de separação
+operando sob controle regulatório. Como pode ser
+observado na Figura 6, os controladores PI não
+conseguiram manter as variáveis controladas em
+torno dos seus setpoints, prejudicando a eficiência do
+separador de produção e do hidrociclone, que por ser
+sensível a flutuações na vazão de entrada exige do
+separador uma vazão mais estável. As variáveis
+controladas apresentaram grande variabilidade nas
+suas amplitudes, com picos muito acentuados que
+podem comprometer a operação da unidade.
+
+Figura 6  Resposta do sistema com controle regulatório PI
+
+Figura 7  Frações de abertura das válvulas com controle PI
+
+5078
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+No caso do nível de óleo, esta variação chegou
+próximo a 0.45m de pico a pico, o que representa
+uma variação de 90 em relação a seu ponto de
+operação nominal. Já no caso da interface água-óleo,
+esta variação chegou a quase 25 em relação a seu
+ponto de operação nominal.
+As Figuras 8 e 9 apresentam o desempenho do
+processo operando sob controle MPC. Como pode
+ser visualizado na Figura 8, o MPC com estratégia de
+controle das saídas por faixas conseguiu atenuar
+grande parte das oscilações causadas pelas golfadas,
+principalmente com relação aos níveis de óleo e
+interface água-óleo e pressão no separador.
+
+Com o controle MPC proposto, as variáveis
+controladas permaneceram dentro das faixas prédefinidas durante a maior parte do tempo,
+apresentando picos de amplitude moderadas com
+pequenas violações dos limites operacionais, mas que
+não chegam a representar algum risco para a
+operação da unidade de separação e do processo de
+produção em geral.
+5 Conclusões
+Na comparação dos resultados obtidos nas
+simulações, o processo operando sob MPC com
+controle das saídas por faixas apresentou melhor
+desempenho em relação ao processo operando
+somente com controle regulatório. Na estratégia
+apresentada, com o controlador MPC manipulando
+os setpoints dos controladores PI, tornou o
+tratamento primário de petróleo mais robusto contra
+as oscilações do fluxo de entrada na unidade de
+separação. Os benefícios possíveis da utilização
+efetiva deste sistema_de_controle_avançado
+principalmente para a produção_de_petróleo offshore
+são significativos, podendo gerar maiores ganhos
+econômicos, como o aumento de produção, assim
+como obter maior estabilidade, confiabilidade e
+segurança das operações na plataforma.
+O esquema de controle proposto abre caminho
+para a implementação de outros níveis dentro da
+estrutura de controle_hierárquica, tais como
+otimização econômica para geração de targets para
+as entradas manipuladas e RTO.
+Agradecimentos
+Os autores agradecem o auxílio financeiro do
+projeto UFS-UFRN-Petrobras AIPetro e do
+programa de recursos humanos PRHANPUFS-45.
+
+Figura 8  Resposta do sistema com o controle MPC
+
+Referências Bibliográficas
+Azevedo Jr, D.O. and Sotomayor, O.A.Z (2010).
+Controle de escoamentos no regime de golfadas
+em processos de produção_de_petróleo. Mecánica
+Computacional, XXIX(1) 8447-8461.
+Campos, M.C.M., Loureiro, P. and Filho, A.B.
+(2006). Novas estratégias de controle para a
+plataforma de petróleo P-55. Rio Oil  Gas
+2006 Expo and Conference, Rio de Janeiro-RJ.
+Campos, M.C.M., Costa, L.A., Torres, A.E. and
+Schmidt, D.C. (2008). Controle avançado dos
+níveis dos separadores de plataformas de
+produção. 1 Congresso de Instrumentação,
+Controle e Automação da Petrobras (1
+CICAP), Rio de Janeiro-RJ.
+
+Figura 9 - Frações de abertura das válvulas com controle MPC
+
+ISBN 978-85-8001-069-5
+
+Campos, M.C.M. and Teixeira, A.F. (2011). Os
+benefícios da aplicação de técnicas de controle
+avançado e otimização em tempo_real em
+5079
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+unidades marítimas de produção. VI Congresso
+Rio Automação, Rio de Janeiro-RJ.
+Figueiredo, A.I.L. and Sotomayor, O.A.Z. (2010).
+Controlabilidad, resiliencia y control de un
+proceso de separación agua-óleo-gas. XIV
+Congreso
+Latinoamericano
+de
+Control
+Automático (CLCA), Santiago de Chile, Chile.
+Filgueiras, N.G.T. (2005). Modelagem, análise e
+controle de um processo de separação
+óleoágua.
+Dissertação
+de
+Mestrado,
+COPPEUFRJ, Rio de Janeiro-RJ.
+Garcia, C.E. and Morshedi, A.M. (1986). Quadratic
+programming solution of dynamic matrix control
+(QDMC).
+Chemical
+Engineering
+Communications, 46(1-3) 73-87.
+Junior, J.D.S., Oliveira, S.A. N., Trindade, M.R.P.,
+Oliveira, R.C.L., Santos, D.L. and Silva, C.D.
+(2010). Controle de nível em tanques
+separadores através de técnica não-lineares
+controle_fuzzy sintonizado via algoritmo
+genético. XVIII Congresso Brasileiro de
+Automática (CBA 2010), Bonito-MS.
+Nunes, G.C. (2004). Controle por bandas conceitos
+básicos e aplicação no amortecimento de
+oscilações de carga em unidades de produção de
+petróleo. Boletim Técnico da Petrobras, 47(2-4)
+151-165.
+
+ISBN 978-85-8001-069-5
+
+Qin, S.J. and Badgwell, T.A. (2003). A survey of
+industrial model predictive control technology.
+Control Engineering Practice, 11(7) 733-764.
+Nunes, G.C. (2007). Modelagem dinâmica do
+processamento primário de petróleo conceitos
+fundamentais e aplicação em controle de
+processos. Boletim Técnico da Produção de
+Petróleo, 2(1) 29-47.
+Ribeiro, C.H.P. (2009). Simulação e avaliação
+controle_preditivo aplicado a sistema
+tratamento primário de petróleo. Trabalho
+Conclusão
+de
+Curso,
+Escola
+EngenhariaUFRJ, Rio de Janeiro-RJ.
+
+de
+de
+de
+de
+
+Santos, R.R., Teixeira, I.T.A. and Sotomayor, O.A.Z.
+(2011). Controle não-linear de poços de petróleo
+operados por gás-lift contínuo. X Conferência
+Brasileira de Dinâmica, Controle e Aplicações
+(DINCON11), Águas de Lindóia-SP.
+Silveira, M.A.C.R. (2006). Controle de um processo
+de tratamento primário de petróleo. Dissertação
+de Mestrado, COPPEUFRJ, Rio de Janeiro-RJ.
+Sotomayor, O.A.Z. D. Odloak, D. and Moro, L.F.L.
+(2009). Closed-loop model re-identification of
+processes under MPC with zone control. Control
+Engineering Practice, 17(5) 551-563.
+
+5080

@@ -1,0 +1,967 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+LOCALIZACAO DE ROBO MOVEL BASEADA EM FILTRO DE KALMAN
+ESTENDIDO USANDO UM SONAR
+Ivo Paixao de Medeiros, Luciano Buonocore, Cairo Lucio Nascimento Junior
+
+
+Laboratorio de Maquinas Inteligentes - LMI
+Instituto Tecnologico de Aeronautica - ITA
+Sao Jose dos Campos, Sao Paulo, Brasil
+
+Emails ivopm@ita.br, luciano@ita.br, cairo@ita.br
+Abstract Mobile robot localization is a basic robot autonomous navigation task. In doing so, robot translational and rotational motion measurements are needed by doing so, it is commonlly used odometry information,
+gathered from the machine internal sensors. Moreover, only that information is not enough to estimate with
+acceptable preciseness the robot pose, which requires additional information, such as environment data extracted
+from external sensors. This paper seeks to test the efficacy of Extended Kalman Filter (EKF) localization algorithm applied to a low cost robot equipped with odometric sensor and one sonar. It presents experiments
+to evaluate odometry-based and EKF localization algorithm pose estimation, in order to show environment
+information importance to decrease the uncertainty of robot localization.
+Keywords
+
+Localization, Extended Kalman Filter, Sonar
+
+Resumo A localizacao de robos_moveis constitui uma das tarefas basicas em navegacao_autonoma de robos.
+Para isso e necessario mensurar o deslocamento, tanto translacional quanto rotacional do robo. Para esse fim, e
+comum o uso de informacao de odometria, quantificada por sensores internos acoplados ao equipamento movel.
+Entretanto, apenas essa informacao nao e suficiente para se estimar a pose do robo com precisao aceitavel,
+fazendo-se necessario uso de outros artficios, como dados do ambiente capturados por sensores externos. Neste
+artigo e testada a eficacia do algoritmo de localizacao baseado em Filtro de Kalman Extendido (FKE) aplicado a
+um robo de baixo_custo equipado com sensor odometrico e um sonar. Sao apresentados os testes fazendo-se uso
+apenas da odometria e de localizacao por FKE (odometria e sonar), com objetivo de comprovar a importancia
+das informacoes do ambiente na reducao da incerteza de localizacao do robo.
+Palavras-chave
+
+.
+
+Introducao
+
+O problema de navegacao pode ser sumarizado de
+maneira simples, em tres perguntas (Leonard and
+Durrant-Whyte, 1991) onde estou?, para onde
+vou? e como chego ao meu destino?. A primeira
+se refere ao problema de localizacao, que e definir
+onde estou no ambiente, baseado no que se pode
+perceber e no conhecimento previo daquele a segunda concerne a definicao de um objetivo para
+onde se deseja ir e a ultima e o planejamento a
+fim de alcanca-lo. Este trabalho preocupa-se em
+investigar a primeira questao.
+Determinar a propria posicao e uma capacidade basica para que qualquer tarefa de navegacao
+seja executada. E fundamental que um robo consiga determinar a posicao e orientacao em que se
+encontra dentro do ambiente para que ele possa
+responder para onde vou? e planejar como
+chego ao meu destino? e assim cumprir as tarefas programadas (Wolf et al., 2009).
+A localizacao pode ser divida em a) localizacao relativa, em que a pose (posicao e orientacao)
+do robo e estimada em relacao a posicao e a orientacao iniciais conhecidas, a priori e b) localizacao
+global, em que nao e necessario a pose inicial para
+estimar a localizacao.
+A maioria dos robos_moveis com rodas usa
+informacao de odometria para estimar a pose no
+ambiente. Entretanto, erros sistematicos (como
+
+Na pratica de localizacao de robos, alem da
+odometria, tambem sao usadas as informacoes do
+ambiente, as quais sao obtidas por sensores que
+tomam medidas dos objetos dentro do alcance de
+medicao do robo, permitindo que as incertezas de
+localizacao sejam reduzidas.
+A proposta deste artigo e dotar um robo_movel de capacidade de se localizar, em um ambiente
+estatico, com marcos artificais, indoor, usando informacoes fornecidas pelo sistema de odometria e
+extracao de marcos artificiais por um sonar. Essas
+informacoes sao combinadas atraves da aplicacao
+do Filtro de Kalmam Estendido (FKE). Trata-se
+de um trabalho com resultados preliminares, que
+tem como contribucao especfica, realizar a tarefa
+de localizacao usando apenas um sonar rotativo,
+que e um sensor bastante rudoso.
+Na secao 2 sao descritos o robo e o ambiente de
+navegacao. Na secao 3 sao apresentados a modelagem do robo. Na secao 4 e comentado em detalhes
+o algoritmo usado na localizacao com FKE. Os resultados obtidos com os experimentos sao mostrados na secao Secao 5.
+
+4373
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+2
+
+Robo e Ambiente
+
+Para uma melhor compreensao do trabalho aqui
+desenvolvido e necessario fazer uma breve descricao do robo utilizado e do ambiente preparado
+para a navegacao durante os experimentos realizados.
+2.1
+
+Robo Trekker
+
+O robo Trekker, cuja foto e mostrada na Figura
+1, pertencente ao Laboratorio de Maquinas Inteligentes - LMI, foi montado com base no kit Trekker Navigation Plus, pertecente a familia de robos
+SuperDroid Robots Inc (SuperDroid Robots - Autonomous Robot Kits and More, 2010). A versao
+usada nos experimentos e equipada com um sonar, um infra-vermelho, uma bussola eletronica,
+dois sensores oticos (um em cada roda) para determinar deslocamentos, um sensor de contato para
+informar colisao, alem de uma camera embarcada.
+A comunicacao do robo com o computador de base
+(onde executa o programa de localizacao) e feita
+com um modulo sem fio ZigBee. A computacao
+embarcada no robo Trekker e baseada no microcontrolador PIC16F877A.
+
+Figura 2 Vista superior do ambiente de navegacao.
+do sensor usado na aquisicao das distancias, no
+caso o sonar. Ambos os modelos fazem parte
+da abordagem probabilstica empregada na implementacao do algortmo.
+3.1
+
+Modelo de Movimento
+
+Utilizou-se o modelo de movimento baseado em
+odometria, tal modelo e construdo a partir da informacao de movimento entre duas poses que definem o vetor de controle. Assim, dado um intervalo de tempo (t  1, t, o robo parte da pose atual
+xt1 para a proxima xt , o que significa um deslocamento de xt1  (x y )T para xt  (x0 y 0 0 )T ,
+definindo a informacao de movimento ut , dada por
+(Thrun et al., 2006)
+
+ut 
+
+
+
+No modelo odometrico, o deslocamento de
+xt1 para xt e decomposto em tres movimentos
+basicos uma rotacao rot1 , uma translacao trans
+e uma ultima rotacao rot2 , como ilustrado na Figura 3, dados por
+
+Figura 1 Robo Trekker da SuperDroid Robots Inc.
+
+rot1  tan1
+2.2
+
+xt1
+xt
+
+
+
+y0  y
+x0  x
+
+
+
+
+(1)
+
+Ambiente
+trans 
+
+Para a definicao do ambiente foi projetada e montada uma mesa plana de 275x160 cm, ocupada por
+cilindros de 25 cm de altura e raio de 5 cm, que
+sao os marcos artificais (vide Figura 2). O topo
+dos marcos e colorido, para que por meio de uma
+camera instalada no teto da sala onde se encontra
+o tablado, extraia-se os centrodes de cada marco,
+que juntos constituem a representacao do ambiente, ou seja, o mapa a ser usado pelo algoritmo
+de localizacao.
+3
+
+p
+(x  x0 )2 + (y  y 0 )2
+
+rot2  0    rot1
+
+(2)
+(3)
+
+Apos a execucao do movimento, o que
+e extrado a partir da odometria e o vetor
+(rot1 trans rot2 )T , onde
+
+Modelagem
+
+O algortmo de localizacao requer a definicao tanto
+do modelo_cinematico do robo quanto do modelo
+
+4374
+
+rot1  rot1 + rot12
+
+(4)
+
+trans  trans + trans2
+
+(5)
+
+rot2  rot2 + rot22
+
+(6)
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+4
+
+Algoritmo de Localizacao
+
+O Filtro de Kalman realiza atualizacao de estados atraves de medidas corrompidas por rudos
+(Nascimento Jr., 1988). O Filtro de Kalman Estendido (FKE) e uma versao do Filtro de Kalman
+aplicada a sistemas com dinamica nao-linear eou
+equacoes de medicao nao-lineares.
+O modelo do sistema para o FKE e dado por
+Figura 3 Modelo de movimento
+(Thrun et al., 2006).
+As parcelas 2 representam rudos gaussianos
+de media zero e variancia  2 que geram estimativas do erro de odometria. Estas estimativas constituem informacoes importantes para sintonizar o
+FKE usado no algoritmo de localizacao, que sera
+apresentado na secao 4.
+3.2
+
+Existem dois tipos de mapas utilizados na representacao de ambientes metrico e topologico. O
+mapa metrico representa o ambiente por celulas,
+que podem assumir uma dada condicao, por exemplo, ocupada ou desocupada. O mapa topologico
+e uma representacao atraves de elementos significativos o suficiente para permitir navegacao do
+robo_movel pelo ambiente.
+Nestre trabalho o mapa e uma lista de marcos
+M  m1 , m2 , m3 , ..., mi , em que cada elemento
+possui uma localizacao global, designada por mi,x
+e mi,y , as coordenadas do centroide do topo de
+cada um dos cilindros.
+O modelo do sensor e baseado na extracao de
+marcos a partir dos dados brutos produzidos pelas leituras do sonar. Esse processo reduz a quantidade de medidas, pois elas sao agrupadas para
+caracterizar os marcos modelados, no caso os cilindros citados na Secao 2.
+As medidas consideradas nesse modelo sao
+distancia d e orientacao  de cada marco em relacao a pose do robo, que compoem o vetor de
+medicao zt  (d )T . Entao, dada a pose do robo
+xt  (x y )T , tem-se
+
+ tan
+
+1
+
+
+
+mi,y  y
+mi,x  x
+
+
+   2
+
+zt  h(xt ) + t
+
+(10)
+
+t  g(ut , t1 )
+
+(11)
+
+t  Gt t1 GTt1 + Rt
+
+(12)
+
+Kt  t HtT (Ht t HtT + Qt )1
+
+(13)
+
+t  t + Kt (zt  h(t ))
+
+(14)
+
+t  (I  Kt Ht )t
+
+(15)
+
+onde Gt e Ht sao matrizes_jacobianas que linearizam o modelo odometrico e de sensor, respectivamente. A primeira e a derivada da funcao g em
+relacao a pose xt1 e a segunda e a derivada da
+funcao h em relacao a xt (Thrun et al., 2006).
+As matrizes de covariancia Rt e Qt representam a covariancia do rudo de odometria (t ) e
+de medicao (t ), respectivamente. A matriz Kt
+computa o ganho do sistema linearizado (Thrun
+et al., 2006).
+Na fase de predicao, o modelo de movimento
+e usado na estimacao da pose xt e na fase de atualizacao o modelo de medicao e responsavel por
+corrigir essa estimativa. Esse ciclo e a base do
+algoritmo de localizacao, que consiste dos seguintes passos estimativa usando modelo odometrico,
+leitura do sensor, estimativa usando modelo do
+sensor, associacao de dados e atualizacao de pose
+do robo (Leonard and Durrant-Whyte, 1992).
+Esses passo sao representados e relacionados,
+em uma visao global do processo, no diagrama
+da Figura 4. O algoritmo de localizacao recebe
+como parametros de entrada a) a estimativa da
+posicao atual do robo, e b) o mapa do ambiente e
+c) as medicoes realizadas na posicao atual. E gera
+
+q
+(mi,x  x)2 + (mi,y  y)2 + r + d2 (7)
+
+jt
+
+(9)
+
+em que g e h sao funcoes nao-lineares que representam o modelo de movimento e o modelo de sensor
+respectivamente, t e t sao os rudos gaussianos
+inerentes a cada modelo.
+O FKE calcula para o vetor estimativa do estado xt sua media t e covariancia t  e opera
+em duas fases distintas e sequenciais a) predicao,
+descrita pelas equacoes (11) e (12) e b) atualizacao, definida pelas equacoes (13), (14) e (15).
+
+Modelo do Sensor
+
+djt 
+
+xt  g(ut1 , xt1 ) + t
+
+(8)
+
+As equacoes 7 e 8 correspondem a j-esima medida associada ao i-esimo marco, no tempo t, r e
+o raio do cilindro e d2 e 2 sao as estimativas de
+erro da leitura do sonar, modelados por distribuicoes gaussianas de media zero e variancia d2 e 2 ,
+respectivamente.
+
+4375
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+como sada a posicao corrigida apos as etapas de
+predicao e de atualizacao.
+
+A matriz de covariancia Mt , equacao 23, incorpora os erros de translacao e rotacao do robo
+atraves de parametros especficos 1 , 2 e 3
+(Thrun et al., 2006).
+
+
+1
+Mt   0
+0
+4.2
+
+Estimativa usando modelo odometrico
+
+Primeiramente, usando-se o modelo odometrico,
+faz-se a estimaticao da nova pose do robo, apos ter
+se movimentado da pose xt1 para xt . Observa-se
+pela equacao (19), que esse passo corresponde a
+fase de predicao do FKE.
+x  trans cos( + rot1 )
+
+(16)
+
+y  trans sen( + rot1 )
+
+(17)
+
+  rot1 + rot2
+
+(18)
+
+
+
+4.3
+
+
+
+x
+t  t1 +  y 
+
+
+Rt 
+
+Leitura do sensor
+
+Estimativa usando modelo do sensor
+
+A partir da localizacao estimada no passo descrito
+na subsecao 4.1 e do mapa M  m1 , m2 , ..., mi ,
+para cada marco i e estimado um vetor de medidas zti , que no contexto do FKE e expresso pela
+equacao (25), onde q 0,5 e a distancia_euclidiana.
+
+(19)
+
+Alem disso, calcula-se a matriz de covariancia associada a estimacao do estado xt , dada pela
+equacao (12). As matrizes jacobiana Gt e de covariancia Rt do modelo de movimento sao dadas
+por (Thrun et al., 2006)
+
+
+1 0 y
+x 
+Gt   0 1
+(20)
+0 0
+1
+Vt Mt VtT
+
+(23)
+
+Neste passo, os dados brutos sao obtidos a partir da leitura do sonar DAVENTECH SRF04,
+em uma varredura de 180 graus relativo a parte
+frontal do robo, usando-se o metodo de Regioes
+de Profundidade Constante (RPC) (Leonard and
+Durrant-Whyte, 1992). O vetor zt e preenchido
+com medidas que correspondem as observacoes
+dos marcos.
+No metodo de RPC, as regioes sao formadas
+por medidas adjacentes, quanto a orientacao e em
+que a diferenca entre uma medida de distancia e a
+subsequente seja menor que um limite R . Neste
+trabalho, quando a diferenca entre duas medidas
+de distancia subsequentes e maior que R , tambem calcula-se a diferenca entre uma medida e a
+medida apos a sequente e se o resultado e menor
+que R , as duas medidas adjacentes sao includas
+na RPC. No metodo e definido um angulo max ,
+que e o maior angulo de visibilidade de um objeto. Neste trabalho tambem adotou-se um angulo
+min , que e o menor angulo de visibilidade de um
+objeto. Experimentalmente, observou-se que essas melhorias foram uteis para lidar com os dados
+brutos espurios da leitura do sonar.
+
+Figura 4 Algoritmo de Localizacao.
+
+4.1
+
+
+0
+0 
+3
+
+0
+2
+0
+
+2
+
+2
+
+q  (mi,x  t,x ) + (mi,y  t,y )
+
+zti
+
+
+q
+
+
+tan1
+
+(21)
+
+
+
+mi,y t,y
+mi,x t,x
+
+(24)
+
+!
+
+
+(25)
+
+ t,
+
+Nesta fase tambem e calculada a matriz_jacobiana de medicao Hti para cada marco, com derivacao apresentada na equacao (26).
+
+A matriz_jacobiana Vt , equacao (22), e a derivada da funcao g em relacao aos parametros de
+
+T
+movimento rot1 , trans , rot2
+obtidos de ut .
+
+
+y  x
+0
+trans
+
+
+y
+Vt   y
+(22)
+0 
+trans
+1
+0
+1
+
+Hti 
+
+4376
+
+mi,x t,x
+
+q
+mi,y t,y
+q
+
+
+
+mi,y t,y
+
+q
+mi,x t,x
+
+q
+
+
+
+0
+1
+
+!
+(26)
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+4.4
+
+Associacao de dados
+
+5
+
+Associacao de dados e o problema de estimar a
+correspondencia entre cada medida ztj obtidas a
+partir da leitura sonar e os marcos existentes no
+mapa M conhecido a priori. Para isso, inicialmente calcula-se a incerteza Sti relativa a medida
+estimada zti 
+ T
+Sti  Hti t Hti + Qt
+onde Qt e dada por
+
+
+d d
+0
+Qt 
+0
+ 
+
+O que se pretende avaliar com os experimentos realizados com o robo Trekker e apresentados nesta
+secao e a eficacia do uso das informacoes do ambiente na correcao do posicionamento do robo comparada ao uso exclusivo das informacoes de odometria durante a navegacao pelo ambiente.
+Assim, os testes foram agrupados em duas categorias localizacao apenas com informacoes de
+odometria e posicionamento com algoritmo FKE
+usando odometria e informacoes do ambiente de
+navegacao.
+
+(27)
+
+(28)
+
+Na equacao (28), d e  representam, respectivamente, as incertezas relativa a distancia
+e a orientacao estimadas pelo modelo de sensor.
+Na pratica, o produto   e substitudo por uma
+constante que significa quantos graus de erro ha
+na estimativa de orientacao em media, ja que nao
+faz sentido um erro proporcional ao angulo de orientacao, como o que acontece com a distancia.
+O objetivo na fase da associacao de dados e
+avaliar dentro das medidas efetuadas pelo sonar a
+que mais se aproxima de cada medida estimada,
+atraves do metodo de maxima_verossimilhanca,
+equacao (31), permitindo definir a correspondencia c (j) a ser usada na fase de atualizacao do algoritmo, onde k1 e k2 sao partes da representacao
+de uma distribucao normal.
+k1  det 2Sti
+
+k2  exp
+
+ 1
+2
+
+5.1
+
+1. Realizam-se 10 trajetorias no sentido horario
+e 10 no sentido anti-horario e medem-se as
+poses finais
+
+T  1 
+
+1  j
+j
+i
+i
+i
+zt  zt
+St
+zt  zt
+2
+(30)
+
+2. Obtem a media para o conjunto de medidas
+obtidos em cada sentido
+
+(31)
+
+i
+
+4.5
+
+3. Mede-se a distancia das medias obtidas para
+o ponto final planejado da trajetoria. A maior
+destas medidas oferece uma avaliacao quantitativa dos erros sistematicos que incidem no
+robo ao realizar o trajeto
+
+Atualizacao da pose
+
+Neste ultimo passo, que corresponde a fase de atualizacao da pose no FKE, a correspondencia c (j)
+e usada para calcular o ganho de Kalman Ktj , que
+determina a proporcao que a medida sera considerada para atualizar a pose do robo e a matriz de
+covariancia associada a estimativa neste passo
+h
+iT h
+i1
+c(j)
+c(j)
+Ktj  t Ht
+St
+
+(32)
+
+
+
+c(j)
+t  t + Ktj ztj  zt
+
+(33)
+
+
+
+t  I 
+
+c(j)
+Ktj Ht
+
+
+
+t
+
+Experimentos
+
+Para a avaliacao_experimental da localizacao de
+Trekker, fez-se uso do teste UMBmark (University of Michigan Benchmark ) que permite avaliar
+quantitativamente os erros sistematicos e nao sistematicos concernetes a odometria obtida do deslocamento do robo_movel com acionamento diferencial (Borenstein et al., 1996). A realizacao
+desse teste consiste em comandar o robo Trekker
+para percorrer uma trajetoria quadrada, partindo
+de um dos vertices do quadrado e voltando para
+o ponto de onde partiu, tanto no sentido horario
+quanto anti-horario, avaliando a posicao e orientacao da ponto final em relacao ao inicial.
+O procedimento experimental seguido e tambem utilizado em (Gabriel, 2005)
+
+(29)
+
+c (j)  argmax k1 k2
+
+Experimentos e Resultados
+
+4. Calcula-se o desvio padrao para o conjunto
+de medidas descritas acima, o qual representa uma medida quantitativa dos erros naosistematicos que incidem na execucao do trajeto pelo robo no ambiente proposto.
+O trajeto e um quadrado de 54 cm de lado e
+foram usados quatro cilindros, em disposicao apresentada na Figura 2. A posicao inicial do robo
+Trekker e a posicao do centroide do topo de cada
+cilidro sao informadas atraves de duas cameras
+instaladas no teto da sala a uma distancia aproximada da mesa de 2,45 m, cada uma visualizando
+uma metade da mesa.
+
+(34)
+
+A media t e matriz de covariacia t sao atualizados para cada elemento do vetor de correspondencia c(j). O ciclo do algoritmo se completa,
+retornando a posicao atualizada que sera usada no
+proximo movimento.
+
+4377
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+5.2
+
+Resultados
+
+de orientacao no entanto nao foi consistente durante toda a bateria de experimentos, o que e bem
+indicado pelos desvios-padroes. A explicacao para
+tal e que o metodo RPC de extracao de marcos,
+usando um sonar, para os experimentos aqui realizados, teve desempenho excelente quanto a definicao de distancia em relacao ao objeto lido pelo sensor, porem nao apresentou tao boa performance
+para a determinacao da orientacao dos marcos
+em relacao ao robo. Essa dificuldade se deve ao
+grande angulo de dispersao do sonar de aproximadamente 90 graus, dificuldade ja relatada em
+(Robinson et al., 2004), que tambem faz uso da
+tecnica de RPC para o mesmo modelo de sonar.
+
+Os resultados foram obtidos a partir da execucao da trajetoria planejada na subsecao 5.1. Em
+cada pose dessa trajetoria registrou-se a estimativa dada pela odometria e a estimativa do algoritmo de localizacao e calculou-se a diferenca entre
+essas estimativas e a pose real informada pelas cameras no teto.
+Os experimentos realizados e com resultados
+apresentados nas tabelas 1,2, 3 e 4 mostram realmente reducao na incerteza de localizacao de Trekker, atraves do algoritmo de localizacao, principalmente no que diz respeito a posicao. Quanto a
+orientacao, houve reducao, porem menor proporcionalmente em relacao ao resultado obtido para
+a posicao. Isso e explicado pela grande imprecisao
+com que o deslocamento rotacional e realizado por
+Trekker, com destaque para o sentido anti-horario.
+
+Tabela 3 Resultados de teste UMBmark com realimentacao de estimacao por odometria.
+Medicoes
+Erro de orientacao (grau)
+Horario
+Anti-Horario
+1
+-53,20
+23,7
+2
+-9,2
+24,7
+3
+-18,9
+49,3
+4
+-59
+61,5
+5
+-31,8
+46,3
+6
+-9,2
+58,4
+7
+-22,6
+51,6
+8
+-6,8
+45
+9
+-8
+26,5
+10
+-9,4
+42,3
+Media
+-22,81
+42,93
+Desvio Padrao
+4,39
+13,69
+
+Tabela 1 Resultados de teste UMBmark com realimentacao de estimacao por odometria.
+Medicoes
+Erro de posicao (cm)
+Horario Anti-Horario
+1
+33,19
+25,23
+2
+10,69
+24,4
+3
+23,83
+31,76
+4
+32,03
+38,56
+5
+20,89
+25,82
+6
+12,28
+30,21
+7
+13,34
+33,78
+8
+14,47
+32,49
+9
+14,11
+31,86
+10
+18,43
+28,48
+Media
+19,32
+30,26
+Desvio Padrao
+8,09
+19,3
+
+Tabela 4 Resultados de teste UMBmark com realimentacao de estimacao por FKE.
+Medicoes
+Erro de orientacao (grau)
+Horario
+Anti-Horario
+1
+-5,9
+5,8
+2
+-13
+13
+3
+-8,4
+13
+4
+-4,5
+16,6
+5
+-14,3
+6,1
+6
+4,9
+35,6
+7
+-27,6
+58,6
+8
+-12,64
+34,3
+9
+-28,6
+37,1
+10
+-8,6
+13,45
+Media
+-11,86
+23,35
+Desvio Padrao
+10,16
+17,2
+
+Tabela 2 Resultados de teste UMBmark com realimentacao de estimacao por FKE.
+Medicoes
+Erro de posicao (cm)
+Horario Anti-Horario
+1
+8,11
+3,05
+2
+4,79
+3,49
+3
+4,31
+0,51
+4
+7,63
+5,33
+5
+3,85
+4,55
+6
+3,77
+5,31
+7
+4,02
+12,24
+8
+4,49
+8,36
+9
+12,77
+16,94
+10
+3,58
+5,64
+Media
+5,73
+6,54
+Desvio Padrao
+2,49
+4,82
+
+Alem da avaliacao dos pontos inicial e final, e
+importante tambem comentar sobre os pontos intermediarios, o que pode ser observado nos graficos das figuras 5, 6, 7 e 8. Nos graficos das figuras
+5 e 6 e ntido como, a cada ponto, a estimativa
+baseada em odometria diverge da posicao real do
+robo, devido aos erros que se acumulam. Ja os
+graficos das figuras 7 e 8, usando FKE, mostram
+
+Comparando-se as medias e desvios-padroes
+das tabelas 3 e 4, percebe-se que o algoritmo de
+localizacao teve sucesso na reducao da incerteza
+
+4378
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+em cada ponto a estimativa proxima ao valor esperado, convergido para trajetoria desejada.
+A figura 8 ilustra uma situacao interessante,
+pois e no sentido anti-horario, que o robo Trekker
+realiza com maior imprecisao a rotacao. Nesta situacao a cada posicao o algoritmo de localizacao
+compensa o erro de orientacao de forma a garantir de maneira aceitavel uma convergencia para os
+pontos reais.
+Figura 8 Estimacao de posicao por FKE, no sentido anti-horario.
+entre os dados lidos do sonar e os marcos distribudos no ambiente e desconhecida.
+A principal dificuldade constatada foi lidar
+com o largo angulo de dispersao do sonar SRF04,
+ja que a dimensao do ambiente de experimento e
+pequena, o que dificulta garantir um compromisso
+entre distribuir uma boa quantidade de marcos no
+ambiente e mante-los esparsos o suficiente para
+que possam ser extrados com precisao aceitavel,
+de maneira que o estimador de maxima_verossimilhanca associe-os aos dados brutos com maior
+acuracia. Apesar disso, os resultados mostram desempenho satisfatorio em relacao ao uso apenas de
+odometria.
+Uma possvel solucao de hardware para o problema do angulo de dispersao do sonar SRF04 e a
+adotada em (Santos, 2007), que se vale de arranjo
+de sonares, na obtencao de orientacoes com maior
+precisao. Ja uma solucao de programacao possvel
+e a utilizada em (Robinson et al., 2004), que muda
+a interpretacao dos dados brutos antes de aplicar
+o metodo de RPC.
+Os trabalhos futuros incluem
+
+Figura 5 Estimacao de posicao por odometria, no
+sentido horario.
+
+Figura 6 Estimacao de posicao por odometria, no
+sentido anti-horario.
+
+ Investigar a abordagem utilizando um sensor
+infra-vermelho, ja que esse oferece informacao
+de distancia direcionada, favorecendo a definicao de orientacao do marco em relacao ao
+robo.
+ Investigar a abordagem usando fusao de dois
+mapas um construdo a partir de um infravermelho e outro a partir de um sonar.
+ Tratar, a partir da evolucao da presente proposta, o problema de SLAM (Simultaneous
+Localization and Mapping), em que o robo
+nao tera mais conhecimento do mapa a priori, construindo-o ao mesmo tempo em que
+se localiza no ambiente.
+
+Figura 7 Estimacao de posicao por FKE, no sentido horario.
+
+6
+
+Conclusoes e Trabalhos Futuros
+
+Este trabalho propos a utilizacao de um algoritmo
+de localizacao baseado em Filtro de Kalman Estendido, usando marcos articiais, extrados atraves de apenas um sonar, que faz varredura de 180
+graus frontal ao robo.
+Neste artigo tambem foi tratado o problema
+de associacao de dados, atraves do metodo de maxima_verossimilhanca, ja que a correspondencia
+
+Agradecimentos
+Agradecimentos sao devidos a CAPES (Programa
+Pro-Engenharias PE-0412007) e a FAPESP
+(Processo no. 200606005-0) pelo apoio financeiro
+aos projetos de pesquisa em desenvolvimento no
+Laboratorio de Maquinas Inteligentes da Divisao
+de Eletronica.
+
+4379
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Referencias
+Borenstein, J., Everett, H. R. and Feng, L. (1996).
+Navigating mobile robots Systems and Techniques, A K Peters.
+Gabriel, G. W. (2005). Projeto e Construcao
+de uma Plataforma Movel para Navegacao
+em Ambiente Estruturado, Tese de Mestrado,
+Instituto Tecnologico de Aeronautica, Sao
+Jose dos Campos - SP.
+Leonard, J. J. and Durrant-Whyte, H. F. (1991).
+Mobile robot localization by tracking geometric beacons, IEEE Transactions on Robotics
+and Automation 7 376382.
+Leonard, J. J. and Durrant-Whyte, H. F. (1992).
+Directed Sonar Sensing for Mobile Robot Navigation, Kluwer Academic Publishers.
+Nascimento Jr., C. L. (1988). Estudo Comparativo de Metodos de Combate a Divergencia
+de Filtros de Kalman, Tese de Mestrado, Instituto Tecnologico de Aeronautica, Sao Jose
+dos Campos - SP.
+Robinson, C. L., Block, D., Brennan, S., Bullo, F.
+and Cortes, J. (2004). Nonsmooth analysis
+and sonar-based implementation of distributed coordination algorithms, IEEE International Conference on Robotics and Automation
+.
+Santos, J. L. (2007). Navegacao do Robo Romeo
+Utilizando a Tecnica de Occupancy Grid Via
+Sonares, Tese de Mestrado, Instituto Tecnologico de Aeronautica, Sao Jose dos Campos
+- SP.
+SuperDroid Robots - Autonomous Robot
+Kits and More (2010).
+Disponvel em
+<httpwww.superdroidrobots.com>.
+Acesso em 24.fev.2010.
+Thrun, S., Burgard, W. and Fox, D. (2006). Probabilistic Robotics, MIT Press. Cambridge,
+Massachusetts.
+Wolf, D. F., do Valle Simoes, E., Osorio, F. S. and
+Junior, O. T. (2009). Robotica movel inteligente Da simulacao as aplicacoes no mundo
+real, XXIX Congresso da SBC. Jornada de
+Atualizacao em Informatica .
+
+4380

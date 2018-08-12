@@ -1,0 +1,831 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+DESENVOLVIMENTO DE UM SISTEMA EMBARCADO DE TEMPO REAL PARA
+APLICACOES EM ROBOTICA
+Bruno Tunes de Mello, Mario Sarcinelli-Filho
+
+
+Laboratorio de Automacao Inteligente, Departamento de Engenharia Eletrica
+Universidade Federal do Esprito Santo
+Vitoria, ES, Brasil
+Emails bruno.tunesm@gmail.com, mario.sarcinelli@ufes.br
+
+Abstract This work presents an embedded computer system with a Linux-based operating system integrated
+to a real-time structure. Such structure has features that offer support for both user space and system space,
+besides allowing creating applications through programming interfaces. The platform is described in terms of
+hardware and software, focusing on the cooperation between the Linux operating system and the real-time
+subsystem. The embedded system performance is tested by performing a simple real-time task in conjunction
+with tools that generate load to the processor, to simulate a multitask environment with high processing level.
+The results thus obtained are compared with the platform without the real-time structure.
+Keywords
+
+Embedded system, Linux, Real-time system
+
+Resumo Este trabalho apresenta um sistema computacional embarcado, usando um sistema operacional
+baseado em Linux integrado a uma estrutura de tempo_real. Tal estrutura possui recursos que oferecem suporte
+tanto em espaco de usuario quanto em espaco de sistema, alem de permitir criar aplicacoes atraves de interfaces
+de programacao. A plataforma e descrita em termos de hardware e de software, com foco na cooperacao entre o
+Linux e o subsistema_de_tempo_real. O desempenho do sistema_embarcado e testado atraves da execucao de uma
+tarefa de tempo_real simples em conjunto com ferramentas que geram carga para o processador, de tal forma
+que simule um ambiente multitarefa com elevado nvel de processamento. Os resultados obtidos sao comparados
+com a plataforma sem a estrutura de tempo_real.
+Palavras-chave
+
+. Desta
+forma, deve-se utilizar um sistema_de_tempo_real
+(RTS, sigla do termo em ingles real-time systems),
+de tal forma que se garanta resultados satisfatorios de suas funcoes.
+Um sistema_de_tempo_real e um sistema cuja
+resposta deve ser entregue dentro de um limite de
+tempo estabelecido, isto e, deve obedecer restricoes de tempo entre o incio e o final da tarefa a
+ser executada. O sistema deve ser capaz de realizar seus processos em um intervalo especfico
+de tempo, caso contrario os atrasos podem ocasionar falhas graves ou reducao do desempenho
+(Laplante, 2004).
+Diversas atividades dos mais variados campos
+necessitam que seus sistemas operem em tempo
+real. Em (Hall, 2001), por exemplo, usa-se um
+computador embarcado PC-104 que executa uma
+variante de tempo_real do Linux padrao, chamado
+RTLinux, para o controle_de_atitude de um aeromodelo autonomo. As tarefas na qual se executam
+o controle se encontram em espaco de sistema enquanto que as rotinas de navegacao, baseadas em
+dados de GPS, sao a nvel de espaco de usuario e
+promovem comandos para as tarefas de tempo_real
+crticas (controle). O RTLinux tambem e usado
+em (Hong et al., 2005) para um sistema de voo
+autonomo de um helicoptero em miniatura executando tarefas crticas como controle e leitura de
+dados sensoriais, alem da comunicacao com uma
+estacao em terra. O desempenho e comparado
+
+Introducao
+
+A utilizacao de sistemas_embarcados nas mais diversas aplicacoes tem crescido nos ultimos anos,
+devido a confiabilidade que possuem, aliada ao
+fato de que tais sistemas permitem mais recursos as pessoas que os usam, alem da qualidade e
+sofisticacao na funcao exercida.
+Com a evolucao da microeletronica e da exigencia das aplicacoes em termos de funcionalidades, ha um aumento na complexidade e nos recursos presentes nos microprocessadores e microcontroladores, que passaram a ter mais capacidade de
+processamento e a disponibilizar mais servicos aos
+seus usuarios. Assim, a programacao direta destes dispositivos, isto e, em baixo nvel, se torna
+extremamente complexa e pouco flexvel, alem de
+requerer tempo de desenvolvimento.
+A solucao de tal problema reside em utilizar
+um sistema operacional para gerenciar o hardware, o que permite ao desenvolvedor se preocupar apenas em trabalhar na aplicacao em si. Neste
+contexto, o uso de sistemas_operacionais (OS, sigla
+do termo em ingles operating systems) com Linux
+e bastante difundido, devido a sua flexibilidade,
+robustez e confiabilidade de codigo, alem de oferecer amplo suporte a hardware de diversas arquiteturas e dispositivos, ao seu baixo_custo (codigo
+livre) e por disponibilizar uma ampla variedade de
+ferramentas (Yaghmour, 2009).
+Entretanto, existem aplicacoes nas quais o
+processamento de eventos em tempo habil se faz
+
+3962
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+com o sistema portando um OS com Linux padrao, de forma a mostrar a eficiencia do RTS.
+Uma vantagem do uso de um OS baseado em
+Linux e o baixo_custo. Em (Centioli et al., 2004)
+utiliza-se tal sistema com o suporte de tempo_real
+RTAI (sigla do termo em ingles Real-time application interface, ou interface de aplicacao de tempo
+real, em portugues) para o controle_de_corrente
+de plasma em um tokamak, um dispositivo de formato toroidal com um eletroma, cuja finalidade
+e o confinamento de plasma. O Linux e usado
+para substituir um sistema comercial existente de
+custo financeiro elevado, e mostra-se que, atraves de poucas mudancas do codigo de controle, foi
+possvel obter resultados satisfatorios em relacao
+as restricoes de tempo.
+Tambem para o problema de controle de
+plasma, em (Zilker et al., 2010) um OS Linux
+com suporte de tempo_real, chamado Xenomai,
+e utilizado para a aquisicao_de_dados. Alem disso,
+o sistema e capaz de armazenar as informacoes
+em um banco_de_dados, alem de realizar um preprocessamento, enviando tais dados para o controle de posicao e de formato do plasma. Outro
+ponto importante e o uso de um modelo de driver
+de tempo_real empregado para a interface com os
+sensores e para a comunicacao entre o sistema de
+aquisicao_de_dados e o de controle.
+Em aplicacoes como as industriais, o tempo
+real e necessario para os sistemas_de_controle
+e de instrumentacao. Por exemplo, em (Aroca
+et al., 2007) o controle de um manipulador_robotico de seis_graus_de_liberdade e realizado por um
+computador_industrial que porta um Linux com o
+suporte RTAI, apresentando resultados consistentes.
+Em (Barbalace et al., 2008) os desempenhos
+dos sistemas Linux padrao e com os suportes RTAI
+e Xenomai sao analisados e comparados com o do
+OS de tempo_real proprietario VxWorks. O objetivo e verificar a possibilidade de substituir tal
+software comercial por um de codigo livre, para
+reduzir os custos financeiros.
+Sistemas de tempo_real podem ser classificados quanto a necessidade de atendimento as restricoes de tempo em sistemas soft, hard e firm.
+Em um soft RTS o nao atendimento dos prazos de tempo resulta em degradacao do desempenho da aplicacao, como em sistemas de multimdia. Por outro lado, em um hard RTS o nao cumprimento de uma restricao causa falha grave ou
+desastre, como em sistemas aeronauticos. Por fim,
+em um firm RTS a perda de alguns prazos provoca a reducao de desempenho do sistema e, caso
+isto se prolongue, pode resultar em falha, como
+um meio termo entre soft e hard. Como exemplo
+para esta ultima classe, pode-se citar o controle
+de robos_autonomos.
+Neste contexto, este trabalho propoe um sistema_embarcado de tempo_real com ambiente Li-
+
+nux, de forma a permitir o desenvolvimento de
+aplicacoes nas quais e necessario satisfazer restricoes de tempo no processamento de tais tarefas, buscando melhorar o desempenho. A secao
+2 apresenta os recursos de um sistema_operacional_de_tempo_real para a criacao de aplicacoes.
+Na sequencia, a secao 3 detalha o hardware utilizado na plataforma, enquanto a secao 4 discute as
+questoes relativas a arquitetura de software, mostrando a integracao entre o Linux e o RTS. Por
+fim, a secao 5 apresenta um teste de desempenho do sistema_embarcado, atraves da execucao
+de uma tarefa de tempo_real juntamente com ferramentas de geracao de carga para o processador.
+Conclusoes e sugestoes para trabalhos futuros sao
+apresentadas no final.
+2
+
+Sistemas Operacionais de Tempo Real
+
+Sistemas de tempo_real sao desenvolvidos a partir
+de uma estrutura conjunta de hardware e software,
+na qual o suporte de tempo_real e formado por
+componentes de software que gerenciam as aplicacoes e os recursos de hardware. Assim, o projeto
+de tais sistemas se baseia na utilizacao de um kernel, componente que realiza as funcoes basicas de
+um OS, ou um sistema operacional propriamente
+dito, que possui mais recursos em espaco de usuario.
+Em sistemas_operacionais, as aplicacoes (programas computacionais), de tempo_real ou nao,
+sao abstradas em unidades logicas chamadas de
+tarefas ou processos. Cada tarefa e caracterizada
+por um identificador, estado de execucao, prioridade, recursos usados e outros atributos, formando um contexto (Laplante, 2004).
+Um sistema_operacional_de_tempo_real (RTOS
+do termo ingles real-time operating system) deve
+fornecer um conjunto basico de funcionalidades
+para o gerenciamento de tarefas escalonamento,
+mudanca de contexto (dispatch), intercomunicacao e sincronismo. Diferentemente de um OS de
+proposito geral, o qual tambem possui tais ferramentas, em um RTOS estes recursos sao projetados de forma a otimizar o desempenho em termos de restricoes de tempo. Assim, o primeiro
+busca o compartilhamento mais justo e igualitario entre os processos enquanto o segundo atende
+aos processos de acordo com a sua prioridade
+(Yaghmour, 2009).
+O escalonador e um programa que determina
+qual tarefa sera executada a seguir, segundo algum
+algoritmo de escalonamento. Esta funcao e fundamental em OS, pois possibilita a criacao de um
+ambiente multitarefa, isto e, com varias aplicacoes
+simultaneas. O algoritmo de escalonamento segue uma determinada estrategia, de forma a manter as respostas dos processos dentro das restricoes
+de tempo (Laplante, 2004).
+Sistemas de tempo_real devem ser determi-
+
+3963
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+nsticos, isto e, para cada conjunto de sinais de
+entrada em certo estado do sistema, um unico
+conjunto de sadas e possvel, e o proximo estado
+pode ser determinado. Se o tempo de resposta
+de cada sada e conhecido, entao o sistema possui determinismo temporal. Isto e necessario, pois
+um sistema_de_tempo_real deve garantir que sempre sera capaz de responder em qualquer instante
+e quando ira responder (determinismo temporal)
+(Laplante, 2004).
+O dispatcher tem a funcao de salvar e carregar o contexto da proxima tarefa, de modo que
+permita ao processador tal processo. O expeditor
+realiza o chaveamento de contexto de acordo com
+o escalonador, transferindo o controle do processador para a proxima tarefa da forma mais eficiente
+possvel.
+A intercomunicacao prove mecanismos de comunicacao entre tarefas, como a troca de mensagens e filas, comuns entre processos que dependem
+uns dos outros para a propria execucao. Em conjunto, o sincronismo de tarefas, provido por semaforos, tem como objetivo manter a integridade
+dos recursos compartilhados, de forma a assegurar
+uma cooperacao entre processos.
+3
+
+de 1 MB de memoria cache L2, esta compartilhada
+entre os nucleos. Tal processador possui diversos
+perifericos, integrados atraves de um barramento.
+O sistema operacional e a distribuicao Linux
+Ubuntu, fornecida pela Linaro, uma organizacao
+sem fins lucrativos que desenvolve ferramentas e
+software de codigo livre (como Linux) para a arquitetura ARM. A versao do software e a Linaro
+ALIP 13.09 (sigla em ingles para ARM Linaro Internet Platform, ou plataforma ARM de Internet
+da Linaro, em portugues) que se baseia na versao 3.0.35-4.1.0 do kernel Linux, modificado pela
+fabricante da placa Boundary Devices, a qual tambem disponibiliza a imagem para o cartao microSD ja pronta, isto e, todo o sistema operacional.
+4
+
+Suporte de Tempo Real para Linux
+
+Diversos projetos foram desenvolvidos com a finalidade de inserir funcionalidades de tempo_real no
+kernel Linux. Entre tais projetos se encontra o
+Xenomai, que e utilizado na plataforma aqui proposta. O projeto Xenomai se baseia na abordagem
+de kernel dual, na qual um nanokernel e executado ao lado do kernel do Linux, sobre o mesmo
+hardware. O co-kernel e o responsavel pelo gerenciamento das tarefas de tempo_real que sao executadas no ambiente Linux (Yaghmour, 2009).
+
+O Sistema Embarcado
+
+A plataforma embarcada e um single board computer (SBC, computador em placa unica, em portugues), fabricado pela empresa Boundary Devices, contendo um processador IMX6Quad da Freescale, com 1GB de memoria RAM, uma interface
+para cartao microSD que pode armazenar um Sistema Operacional, e diversas interfaces de comunicacao e multimdia. A figura 1 mostra uma foto
+da plataforma utilizada.
+
+4.1
+
+Arquitetura do projeto Xenomai
+
+A estrutura do Xenomai pode ser vista como um
+conjunto de camadas, desde o nvel mais baixo,
+acima apenas do hardware, ate o nvel mais alto,
+o espaco de usuario, onde sao executadas as aplicacoes. A figura 2 apresenta a arquitetura do Xenomai.
+Aplicações em espaço
+de kernel (módulos)
+Aplicações do espaço de usuário
+Interface de chamada ao Sistema Linux
+VxWoks
+
+pSOS
+
+VRTX
+
+POSIX
+
+...
+
+Nucleus RTOS
+HAL
+ADEOSI-Pipe
+
+Figura 1 Computador de placa unica utilizado no
+projeto.
+
+Figura 2 Arquitetura do suporte de tempo_real
+Xenomai.
+
+O IMX6Quad e um processador com quatro
+nucleos de arquitetura ARM Cortex A9, que opera
+em ate 1,2 GHz. Ele contem 32 KB de memoria
+cache L1 para instrucoes e 32 KB de memoria cache L1 para dados, ambas para cada nucleo, alem
+
+Logo acima do hardware se encontra uma estrutura de software chamada de I-pipe, que significa pipeline de interrupcoes. A I-pipe deriva
+do sistema ADEOS (sigla em ingles de Adaptive
+
+3964
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Domain Environment for Operating Systems ou
+Ambiente Adaptativo de Domnio para Sistemas
+Operacionais, em portugues), cuja funcao e disponibilizar os recursos de hardware para multiplos sistemas_operacionais (Yaghmour, 2009 Xenomai, n.d.).
+A I-pipe, por sua vez, e uma forma simplificada do ADEOS, sendo uma camada de virtualizacao com funcao de um controlador de interrupcoes
+programavel. Como o Linux pode adiar interrupcoes externas, o que nao pode ocorrer em sistemas
+crticos, a I-pipe cria mascaras de interrupcao separadas (Yaghmour, 2009 Xenomai, n.d.).
+A estrutura I-pipe trabalha com o conceito de
+domnios, no qual o sistema completo e organizado
+como um conjunto de tais entidades conectadas
+formando uma pipeline. Estes domnios podem ser
+sistemas_operacionais, modulos do kernel ou componentes de software baseados em kernel. Desta
+forma, a I-pipe promove os servicos de despacho
+de interrupcoes, excecoes e chamadas de sistemas
+para cada domnio, de acordo com a sua prioridade (Xenomai, n.d.).
+O Xenomai e o domnio de mais alta prioridade na pipeline, enquanto que o kernel Linux
+padrao e o de menor prioridade. Os eventos enviados pela I-pipe sao analisados pelos tratadores
+do Xenomai antes de serem transferidos ao domnio Linux, caso estes eventos sejam do domnio do
+kernel padrao. Assim, os eventos tem um fluxo
+do domnio de maior prioridade para o de menor
+prioridade. A figura 3 apresenta um esquema da
+I-pipe e os tais domnios (Yaghmour, 2009 Xenomai, n.d.).
+Interrupções
+Eventos
+
+tracao de hardware, em portugues). Ela compreende todo o codigo dependente da plataforma
+utilizada (arquitetura do processador), promovendo acesso direto ao hardware. Assim, os servicos oferecidos permitem que os codigos de camadas superiores sejam independentes da plataforma
+(Yaghmour, 2009).
+Na camada seguinte se encontra o co-kernel
+do Xenomai, chamado de Nucleus, que fornece
+os servicos de um RTOS para as aplicacoes de
+tempo_real da camada superior. O Nucleus do
+Xenomai e um RTOS abstrato, formado por componentes genericos que podem ser executados sob
+qualquer API fornecida pela camada acima. Ele
+oferece suporte a criacao de um ambiente multitarefas de tempo_real com escalonamento atraves
+de um algoritmo preemptivo, sincronizacao, alocacao de memoria com garantias de tempo_real,
+gerenciamento de temporizacao e tratamento de
+interrupcoes (Yaghmour, 2009 Gerum, 2004).
+A camada superior e formada pelas API s do
+Xenomai, chamadas de skins (peles, em portugues). A criacao de APIs de diversos RTOS tradicionais tem como objetivo permitir um suporte
+de tempo_real em um ambiente Linux para uma
+aplicacao desenvolvida particularmente em outro
+ambiente de tempo_real (Gerum, 2004).
+4.2
+
+Uma grande qualidade do Xenomai e a busca pela
+portabilidade de codigo. Cada RTOS possui peculiaridades em seus servicos, isto e, uma determinada funcionalidade em dois sistemas diferentes
+pode ter pequenas diferencas de comportamento
+que, por sua vez, podem ser relevantes para o funcionamento da aplicacao. Desta forma, a camada
+superior funciona como um conjunto de emuladores construdos a partir de uma estrutura generica
+(Nucleus) para RTOS tradicionais como VxWorks
+e pSOS+, alem de fornecer uma API nativa e outra baseada no padrao POSIX.
+E importante citar que as tarefas de tempo
+real podem requisitar servicos comuns do Linux
+padrao. Entretanto, tais servicos, por nao estarem em um domnio de tempo_real, podem ter latencias imprevisveis, o que pode ate ser aceitavel
+em casos nao crticos.
+Apesar dos domnios serem executados de
+forma independente, na qual o Xenomai executa
+as tarefas de tempo_real enquanto o Linux executa
+os processos normais, e possvel existir compartilhamento de contexto entre ambos os kernels. Assim, uma tarefa de tempo_real pode ser transferida
+para o ambiente Linux quando esta necessitar de
+chamadas de sistema comum (do kernel padrao) e
+pode retornar ao contexto de tempo_real quando
+requisitar servicos do Xenomai (Yaghmour, 2009).
+Estes dois domnios sao chamados de primario (Xenomai), de alta prioridade, e secundario
+
+ADEOS I-pipe por CPU
+
+Xenomai
+(pimário)
+
+Proteção de
+Interrupções
+
+Caractersticas do Subsistema
+
+Linux
+(secundário)
+
+Figura 3 Esquema de controle de eventos da Ipipe.
+A I-pipe permite que o Xenomai trate todas
+as interrupcoes antes do kernel Linux, impedindoo de mascara-las. Isto garante que o Xenomai tenha latencias de interrupcoes previsveis em nveis
+de microssegundos, independente do que esta em
+execucao no Linux. Alem disso, conta com uma
+protecao para interrupcoes, de forma que, no caso
+de um domnio que esta tratando uma interrupcao
+e recebe uma outra, faz com que esta segunda interrupcao seja agendada ate que o domnio esteja
+apto a trata-la, evitando que desca ate o domnio
+de menor prioridade na pipeline.
+Acima da camada I-pipe se encontra a Hardware Abstraction Layer (HAL, camada de abs-
+
+3965
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+(Linux padrao), de baixa prioridade.
+Neste aspecto, uma grande caracterstica do
+Xenomai e o seu alto grau de integracao com o
+ambiente nativo do Linux, que o diferencia de outros sistemas de kernel dual (Yaghmour, 2009 Gerum, 2004).
+Por fim, o projeto Xenomai fornece uma interface comum para a construcao de drivers de
+dispositivos para aplicacoes de tempo_real, chamada de RTDM (sigla em ingles de Real Time
+Driver Model ou modelo de driver em tempo_real,
+em portugues). Ela promove uma interface entre o
+co-kernel e o driver do dispositivo, como um mediador entre a aplicacao e os servicos oferecidos
+pelo driver do dispositivo (Yaghmour, 2009).
+Atualmente, o Xenomai conta com um suporte para diversas plataformas, e se encontra
+sempre em desenvolvimento, dissociado do kernel
+padrao, dando maior liberdade para a escolha da
+versao do Linux.
+5
+
+mera USB e no processamento de tais imagens
+atraves do metodo de fluxo otico conhecido como
+metodo de Lucas e Kanade (1981), utilizando-se
+a biblioteca OpenCV (Open Source Computer Vision Library ou biblioteca de codigo livre para visao_computacional, em portugues). O metodo de
+Lucas e Kanade se baseia no calculo do gradiente
+de deslocamento dos pixels atraves de um algoritmo de mnimos_quadrados, resultando nos vetores de fluxo otico. Portanto, para tal algoritmo,
+sao necessarios dois quadros de imagem, atraves
+dos quais serao estimados os vetores de fluxo optico, que informam o movimento relativo entre a
+camara e o objeto sendo visualizado.
+Para tal metodo de fluxo optico, o OpenCV
+possui uma funcao chamada cvCalcOpticalFlowPyrLK() que usa piramide de imagem, que e
+a decomposicao de uma imagem em diferentes resolucoes, para a realizacao do algoritmo. Na tarefa
+proposta, serao utilizadas dois quadros de imagem
+para a estimacao dos vetores de fluxo optico e,
+apos o processamento, os vetores serao calculados
+em modulo e direcao.
+A tarefa de tempo_real possui, em geral, a
+estrutura apresentada no algoritmo a seguir.
+
+Resultados Experimentais
+
+O experimento aqui considerado para o teste do
+sistema implementado consiste na criacao e execucao de uma tarefa de tempo_real periodica utilizando a API nativa do Xenomai. Tal tarefa e uma
+atividade relacionada com sensoriamento, cuja finalidade e ser empregada em robotica. O desempenho do sistema_embarcado sera analisado tanto
+com o uso do Xenomai quanto sem tal suporte,
+atraves da execucao de ferramentas computacionais que geram carga para as unidades de processamento, simulando um ambiente multitarefa. A
+versao utilizada do Xenomai e 2.6.3, a mais atual.
+A API nativa do Xenomai fornece servicos de
+temporizacao, gerenciamento de tarefas, sincronizacao, intercomunicacao e manipulacao de dispositivos de entrada e sada. Neste caso, o algoritmo sera criado atraves da interface disponvel
+em nativetask.h, que fornece o gerenciamento de
+tarefas necessario, como a criacao, inicializacao,
+configuracao de prioridade e do perodo de execucao (caso seja periodica) de uma tarefa. Pode-se
+suspender o processo, bem como coloca-lo em estado de espera, e ao final deve-se deletar a tarefa
+da memoria.
+A interface nativetimer.h, que fornece servicos de temporizacao, sera usada para a realizacao
+da leitura do tempo de execucao de cada tarefa,
+o que pode ser feito para processos de tempo_real
+ou nao. A funcao rt timer read(), que retorna a
+leitura do tempo, se baseia em um contador de
+alta precisao para tal atividade, com capacidade
+de medir intervalos na ordem de nanossegundos.
+5.1
+
+Algoritmo Tarefa de tempo_real.
+inicializacao
+while TRUE do
+comandos da tarefa
+espera do fim do perodo
+end
+
+5.2
+
+Ferramentas de Geracao de Carga em Processadores
+
+Na comunidade Linux existem softwares que geram carga de processamento para testar o desempenho dos sistemas. Existem pacotes que realizam
+testes de hardware e software com o mesmo proposito. Ambos podem ser usados para o teste da
+plataforma de tempo_real aqui desenvolvida, em
+termos de garantia das restricoes de tempo.
+Em distribuicoes como o Ubuntu, existem os
+pacotes stress e cpuburn, que geram carga de processamento atraves da criacao de processos no espaco de usuario. O stress possui o comando de
+terminal stress -c 4 e o cpuburn possui o comando
+burnCortexA9 para tal finalidade.
+O proprio Xenomai conta com um comando
+de geracao de carga chamado dohell. Tal comando
+pode ser usado com conjunto com o LTP (sigla em
+ingles de Linux Test Project ou Projeto de Testes
+para Linux, em portugues), um pacote mantido
+pela empresa IBM que conta com diversas ferramentas para testes de funcionamento, confiabilidade e estabilidade do Linux.
+
+Algoritmo de Teste do Suporte
+
+A tarefa de tempo_real consiste na leitura de dois
+quadros sucessivos de imagem a partir de uma ca-
+
+3966
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Com tais recursos pode-se simular um ambiente multitarefas, havendo diversos processos requisitando o uso do processador, como no caso de
+existirem diversas tarefas para uma determinada
+atividade, como robotica por exemplo.
+5.3
+
+número de ocorrências 
+
+5
+
+Resultados Obtidos
+
+número de ocorrências 
+
+25
+
+1
+
+com suporte de tempo_real
+sem suporte de tempo_real
+
+sem carga
+
+15
+
+10
+
+5
+
+stress
+350
+
+400
+
+450
+500
+550
+tempo de execução ms
+
+600
+
+650
+
+15
+
+700
+
+cpuBurn
+
+com suporte de tempo_real
+sem suporte de tempo_real
+
+dohell
+
+10
+
+5
+
+0
+300
+
+350
+
+400
+
+450
+500
+550
+tempo de execução ms
+
+600
+
+650
+
+12
+10
+8
+6
+4
+2
+0
+300
+
+350
+
+400
+
+450
+500
+550
+tempo de execução ms
+
+600
+
+650
+
+450
+500
+550
+tempo de execução ms
+
+600
+
+650
+
+700
+
+Medida estatstica ms
+media
+desvio padrao
+moda
+mnimo
+maximo
+media
+desvio padrao
+moda
+mnimo
+maximo
+media
+desvio padrao
+moda
+mnimo
+maximo
+media
+desvio padrao
+moda
+mnimo
+maximo
+
+Com
+tempo
+real
+388,4
+5,3
+386,9
+382,7
+491,3
+365,6
+7,1
+362,8
+358,6
+455,1
+386,4
+8,2
+382,7
+377,5
+530,6
+465,4
+11,8
+459,3
+417,3
+511,7
+
+Sem
+tempo
+real
+413,2
+55,5
+399,5
+374,9
+1850,2
+483,4
+111,1
+367,0
+362,8
+853,5
+474,4
+116,2
+347,1
+345,0
+781,2
+542,6
+83,5
+536,9
+404,8
+998,2
+
+Observa-se em todas as figuras anteriores que
+o Xenomai possui uma capacidade maior de manter o tempo de execucao o mais constante possvel. Isto mostra a caracterstica determinstica do
+tempo_real de tal suporte. Como consequencia, os
+graficos do sistema_de_tempo_real sao mais concentrados enquanto que o sistema sem o suporte
+possui graficos mais dispersos, como pode ser visto
+nos valores de desvio padrao obtidos para cada
+caso. Nota-se que o desvio padrao da latencia da
+tarefa executada com o suporte de tempo_real e
+muito pequeno quando comparado com a tarefa
+executada sem tal suporte, como esperado, para
+todas as situacoes.
+Outra observacao importante e a respeito do
+valor maximo, que no sistema_de_tempo_real e menor que no sistema sem tal suporte. Esta diferenca
+chega proxima do dobro da segunda em relacao a
+primeira. Esta constatacao tambem se deve ao
+fato do sistema ser determinstico, uma vez que
+
+com suporte de tempo_real
+sem suporte de tempo_real
+
+14
+
+400
+
+Tabela 1 Medidas estatsticas obtidas no experimento.
+
+700
+
+Figura 5 Latencia do processamento_de_imagem
+na presenca do comando stress.
+
+16
+
+350
+
+Ambiente
+
+Figura 4 Latencia do processamento_de_imagem
+em ambiente sem carga.
+
+número de ocorrências 
+
+2
+
+Figura 7 Latencia do processamento_de_imagem
+na presenca do comando dohell.
+
+20
+
+0
+300
+
+número de ocorrências 
+
+3
+
+0
+300
+
+A tarefa teve o seu tempo de execucao em uma
+iteracao medido, com o valor aproximado de 400
+ms para a captura e processamento das duas imagens.
+As figuras a seguir apresentam os numeros de
+ocorrencias das latencias da tarefa de processamento_de_imagem para os casos do sistema_embarcado com e sem o suporte de tempo_real Xenomai.
+
+com suporte de tempo_real
+sem suporte de tempo_real
+
+4
+
+700
+
+Figura 6 Latencia do processamento_de_imagem
+na presenca do comando cpuBurn.
+Atraves dos dados obtidos, e possvel realizar
+uma analise de estatstica descritiva de forma a
+obter os valores significativos. A tabela 1 resume
+numericamente as informacoes.
+
+3967
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+ha a concentracao dos valores de latencia.
+O valor medio calculado tambem e menor no
+sistema_de_tempo_real que na outra situacao, assim como o valor da moda, exceto quando na presenca do gerador de carga cpuBurn. Entretanto os
+valores mnimos nao sao menores que no sistema
+sem suporte, uma vez que em qualquer sistema de
+tempo_real a presenca dos mecanismos de escalonamento e mudanca de contexto para a preempcao das tarefas tambem exige uso do processador,
+aumentando a latencia das tarefas.
+O resultado do experimento com o uso do
+dohell em conjunto com o LTP e bastante
+proximo do esperado em um sistema_embarcado. O comando dohell -s 192.168.0.5 -m medialinaroPENDRIVE -l optlp realiza o envio
+de informacao atraves da rede, escreve dados em
+um diretorio, alem dos testes do LTP que verificam diversos aspectos e recursos do Linux, de
+forma a ser um gerador de carga bastante fiel ao
+que ocorre em plataformas embarcadas.
+6
+
+cacoes cujo objetivo e capacitar um helicoptero
+em miniatura para navegacao_autonoma. Os trabalhos futuros tem como objetivo explorar ainda
+mais as capacidades do Xenomai, possivelmente
+desenvolvendo-se drivers de tempo_real com o
+RTDM para comunicacao com sensores, a fim de
+melhorar o desempenho do sistema. Alem disso,
+como o Xenomai continuamente se desenvolve, assim como o kernel Linux, as novas versoes poderao
+conter otimizacoes que irao incorporar melhorias
+a plataforma.
+Agradecimentos
+Os autores agradecem ao CNPq (Conselho Nacional de Desenvolvimento Cientfico e Tecnologico), processo numero 4731852012-1, pelo apoio
+financeiro concedido, assim como a FAPES, Fundacao de Amparo a Pesquisa e Inovacao do Esprito Santo, pelo apoio financeiro adicional para o
+projeto.
+
+Conclusoes
+
+Referencias
+
+A plataforma embarcada proposta neste trabalho
+adiciona maior confiabilidade ao sistema Linux no
+que diz respeito ao cumprimento das restricoes de
+tempo impostas em sistemas_embarcados de forma
+geral. Tal plataforma consiste em um computador
+de bordo, em uma unica placa, capaz de executar
+um sistema operacional baseado em Linux integrado a um suporte de tempo_real. O uso do
+Linux permite o desenvolvimento de uma diversidade maior de aplicacoes, pois conta com um
+ambiente de alto nvel e varios recursos, como bibliotecas com uma grande gama de funcionalidades.
+Atraves de um experimento simples, pode-se
+verificar a eficiencia do suporte de tempo_real, em
+comparacao com a plataforma utilizando apenas
+o Linux padrao. Tal suporte oferece um aspecto
+determinstico na execucao dos processos, como
+se pode verificar nas figuras apresentadas e nos
+valores estatsticos determinados.
+E necessario destacar que apesar do excelente
+desempenho do sistema_de_tempo_real quando
+comparado com o Linux sem suporte de tempo
+real, este sistema nao se classifica como do tipo
+crtico (hard real time system, em ingles), uma
+vez que o uso do OpenCV requer chamadas do
+Linux padrao. Desta forma, a tarefa exige o chaveamento entre os domnios primario e secundario,
+e quando se encontra neste ultimo, nao ha garantia do cumprimento das restricoes. Entretanto, a
+plataforma de tempo_real se mostrou efetiva, em
+termos do cumprimento das restricoes de tempo
+real.
+Este trabalho apresenta os resultados iniciais
+da utilizacao de um suporte de tempo_real para
+Linux, atraves da qual serao desenvolvidas apli-
+
+Aroca, R., Tavares, D. and Caurin, G. (2007).
+Scara robot controller using real time linux,
+Proceedings of the 2007 IEEEASME international conference on Advanced intelligent
+mechatronics, 2007, pp. 16.
+Barbalace, A., Luchetta, A., Manduchi, G., Moro,
+M., Soppelsa, A. and Taliercio, C. (2008).
+Performance comparison of vxworks, linux,
+rtai, and xenomai in a hard real-time application, IEEE Transactions on Nuclear Science
+55(1) 435439.
+Centioli, C., Iannone, F., Mazza, G., Panella, M.,
+Pangione, L., Vitale, V. and Zaccarian, L.
+(2004). Open source real-time operating systems for plasma control at ftu, IEEE Transactions on Nuclear Science 51(3) 476481.
+Gerum, P. (2004). Xenomai - implementing a
+rtos emulation framework on gnulinux.
+httpwww.xenomai.orgdocumentation
+branchesv2.3.xpdfxenomai.pdf.
+Acesso em 11 de Janeiro de 2014.
+Hall, C.E., J. (2001). A real-time linux system
+for autonomous navigation and flight attitude_control of an uninhabited aerial vehicle, Proceedings of the 20th Digital Avionics
+Systems Conference, 2001. (DASC), Vol. 1,
+Florida, USA, pp. 1A111A19.
+Hong, W. E., Lee, J. S., Rai, L. and Kang, S.-J.
+(2005). Rt-linux based hard real-time software architecture for unmanned autonomous
+helicopters, Proceedings of the 11th IEEE
+International Conference on Embedded and
+
+3968
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Real-Time Computing Systems and Applications, 2005, pp. 555558.
+Laplante, P. A. (2004). Real-time systems design
+and analysis, 3rd edn, IEEE Press.
+Lucas, B. and Kanade, T. (1981). An iterative
+image_registration technique with an application to stereo vision, Proceedings of the 7th
+International Joint Conference on Artificial
+Intelligence - IJCAI 81, Vancouver, Canada,
+pp. 674679.
+Xenomai (n.d.). Xenomai Real-time framework
+for linux, httpwww.xenomai.org.
+Yaghmour, K. (2009). Construindo sistemas Linux embarcados, 2 edn, Alta Books.
+Zilker, M., Behler, K., Bluhm, T., Heimann, P.,
+Hennig, C., Kroiss, H., Kuhner, G., Laqua, H., Lewerentz, M., Maier, J., Neu, G.,
+Raupp, G., Reich, M., Riemann, H., Schacht, J., Spring, A., Treutterer, W., Werner,
+A. and Zehetbauer, T. (2010). Development
+and implementation of real-time data acquisition systems for fusion devices with open
+source software, Fusion Engineering and Design 85(34) 378382.
+
+3969

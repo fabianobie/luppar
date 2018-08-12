@@ -1,0 +1,655 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+DETECCAO DE MUDANCAS E RECUPERACAO DE FORMA EM MAPAS 3D
+BASEADOS EM NUVENS DE PONTOS
+Paulo Drews Jr, Rui Rocha, Mario Campos, Jorge Dias
+
+
+Departamento de Ciencia da Computacao - UFMG - Belo Horizonte - Brasil
+
+
+Instituto de Sistemas e Robotica - UC - Coimbra - Portugal
+
+Emails paulol@dcc.ufmg.br, rprocha@isr.uc.pt, mario@dcc.ufmg.br, jorge@isr.uc.pt
+Abstract There are several applications for which it is important to both detect and modelling changes. In
+the context of 3D point cloud, detecting changes constitutes a challenging task due to the large amounts of data
+that must be compared, as well as shape retrieval needs to deal with large kind of shape and with noise in the
+data. Thus, this paper proposes a framework to efficiently detect and represent changes through a compact model.
+Initially, the point cloud is simplified in order to preserve the geometric characteristics. Moreover, a combined
+approach using Gaussian Mixture Models (GMM) and the Earth Movers Distance (EMD) is proposed, together
+with a greedy technique. It allows detect and segment changes, through an previous knowledge about the
+environment map. The 3D shape retrieval is achieved using two different approaches. The first approach is a new
+method that we developed which directly retrieves basic shapes the detected shape in the Gaussian space (planes,
+spheres and cylinders). The second approach uses superquadric models and the split-and-merge paradigm due to
+their good expressiveness in representing 3D shapes. Experimental results in various real scenarios were obtained
+to evaluate the approachs feasibility and robustness with large datasets.
+Keywords
+
+Novelty Detection, 3D Maps.
+
+Resumo Existem muitas aplicacoes onde e importante detectar e modelar mudancas. No contexto de nuvem de pontos 3D, detectar mudancas constitui um problema desafiador devido a grande quantidade de dados
+que precisa ser comparado. Alem disso, para determinar a forma e preciso lidar com um grande numero de
+possibilidades e com rudo nos dados. Assim, o presente trabalho propoe um arcabouco para determinacao e
+representacao de mudancas em modelos conhecidos de forma eficiente. Inicialmente, uma simplificacao da nuvem
+de pontos e feita, buscando preservar as caractersticas geometricas. Alem disso, e utilizada uma combinacao de
+Modelos de Misturas Gaussianas (GMM) e da metrica de distancia Earth Movers Distance (EMD), por meio
+de uma tecnica gulosa. Essa combinacao permite detectar e segmentar mudancas a partir de um conhecimento
+previo do mapa do ambiente. Dois metodos para a recuperacao de formas 3D foram propostos. Primeiramente,
+um novo metodo e desenvolvido usando formas basicas no espaco das Gaussianas (planos, esferas e cilindros).
+Uma segunda abordagem utiliza superquadricas e o paradigma split-and-merge, visando dar uma maior expressividade a representacao de forma 3D. Resultados experimentais foram obtidos em varios cenarios reais, de forma
+a avaliar a robustez do metodo em grandes conjuntos de dados.
+Palavras-chave
+
+.
+
+Introducao
+
+et al., 2007). Resolver o problema de deteccao de
+mudancas eficientemente e desafiador e requer o
+desenvolvimento de tecnicas especficas a fim de
+alcancar dois objetivos inter-relacionados (i) detectar a existencia de mudancas (ii) realizar a
+segmentacao e a modelagem das mudancas. Esses dois objetivos tambem facilitam uma posterior
+classificacao eou identificacao das mudancas.
+
+Robos moveis para trabalhar de forma independente em ambientes dinamicos devem ser capazes de (i) construir o mapa do ambiente baseado
+em suas percepcoes e simultaneamente localizarse com respeito ao mapa (SLAM) (Thrun et al.,
+2005) (ii) navegar e explorar o ambiente. Assim,
+a capacidade de navegar pode ser prejudicada pela
+presenca de mudancas, de forma a afetar o caminho escolhido pelo robo. Deste modo, quando o
+robo visita novamente lugares no ambiente, pode
+ser de interesse comparar a percepcao atual com
+a previamente adquirida, de modo a detectar mudancas. Bem como determinar algumas caractersticas da mudanca como volume e area pode ser
+importante, de forma a replanejar a navegacao.
+Assim, realizando a modelagem da mudanca e um
+meio de determinar essas informacoes.
+
+Este trabalho propoe um arcabouco para detectar, segmentar e modelar mudancas. Inicialmente, os dados sao simplificados de modo a reduzir o custo_computacional dos proximos passos,
+por meio de uma abordagem multi-escala. Posteriormente, a deteccao e segmentacao de mudancas sao feitas sobre uma representacao dos dados
+usando o Modelo de Misturas Gaussianas (GMM ).
+Por fim, a modelagem da mudanca e realizada utilizando dois modelos. Uma primeira modelagem
+e feita utilizando formas basicas, diretamente no
+espaco de Gaussianas. Enquanto na segunda se
+faz por meio de superquadricas (Barr, 1981). A
+Figura 1 ilustra a ideia.
+
+O problema de detectar mudancas nao e restrito a robos_moveis durante a navegacao (Markou
+and Singh, 2003). Porem, essa questao e de
+suma importancia nesse contexto, principalmente,
+em sistemas de vigilancia automatica (Andreasson
+
+O trabalho esta disposto com a Secao 2, a qual
+mostra uma revisao do estado da arte. Na Secao 3
+
+2086
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+nha elevado custo_computacional para computar
+formas tridimensionais. Outra tecnica muito utilizada e o crescimento de regioes (Vieira and Shimada, 2005), na qual as regioes crescem em areas
+vizinhas, a partir de sementes previamente determinadas. Recentemente, foi proposto o uso de
+RANSAC para determinacao de formas basicas
+(Schnabel et al., 2007), este robusto a presenca
+de rudo.
+A superquadrica e um modelo para formas geometricas, representado por um conjunto simples
+de parametros com grande expressividade. Leonardis et al. (Leonardis et al., 1997) introduziram o padrao para segmentacao e recuperacao
+de forma usando superquadricas. Esse metodo foi
+aplicado em imagens de profundidade. Uma importante abordagem para nuvem de pontos 3D foi
+proposta em (Chevalier et al., 2003), onde o paradigma split-and-merge foi utilizado em nuvem de
+pontos 3D. Apesar do elevado custo_computacional, o algoritmo produz resultados interessantes.
+Maiores detalhes sobre superquadricas podem ser
+encontrados em (Jaklic et al., 2000).
+
+Figura 1 Visao geral de proposta.
+e apresentada a metodologia proposta para deteccao_de_mudancas. Na Secao 4, os metodos para
+modelagem de mudancas sao mostrados. Os resultados experimentais sao mostrados na Secao 5.
+Por fim, na Secao 6, as conclusoes e as direcoes
+futuras sao apontadas.
+2
+
+Trabalhos Relacionados
+
+O uso de robos_moveis em ambientes dinamicos
+tem sido intensamente estudado durante a ultima decada. Uma estrategia tpica e remover
+os objetos dinamicos do modelo, de modo a melhorar a navegacao e a localizacao do robo (Fox
+et al., 1999). Entretanto, essas mudancas podem ser importantes de serem reconhecidas, como
+no trabalho de Andreasson et al. (Andreasson
+et al., 2007), no qual e proposto um sistema de
+deteccao_de_mudanca utilizando a informacao de
+um laser scanner 3D e de uma camera colorida.
+Apesar dessa abordagem se mostrar eficiente, o
+metodo e dependente da dimensao do ambiente
+a ser mapeado e da presenca de contraste de cor
+entre as mudancas e o ambiente.
+Outro trabalho importante foi proposto por
+Vieira Neto et al. (Vieira Neto and Nehmzow, 2008), no qual um metodo para deteccao de
+mudancas para vigilancia e desenvolvido, baseado
+em modelo de saliencia e algoritmos de clusterizacao. Os resultados mostraram que a abordagem
+detecta mudancas, principalmente quando existe
+grande contraste de cor entre as mudancas e o ambiente. Porem, em casos com pouco contraste, o
+metodo tem dificuldade de deteccao. O presente
+trabalho por utilizar mapas 3D construdos com
+laser scanners, torna-se independente de variacoes
+de condicoes de iluminacao e de contraste das mudancas.
+A determinacao de forma e uma tarefa comum em diversas areas da Geometria e Ciencia
+da Computacao. O uso de formas basicas como
+esferas, planos, cilindros e outros tem sido foco
+de diversas propostas. Alguns autores usaram a
+Transformada de Hough para obtencao de formas
+basicas (Ballard, 1987), embora essa tecnica te-
+
+3
+
+Deteccao de Mudancas
+
+No presente trabalho, a nuvem de pontos 3D e
+simplificada e transformada do espaco Euclidiano
+para o espaco matematico de Gaussianas. Isso
+permite compressao_de_dados e efetuar uma comparacao de maneira eficiente, usando a metrica
+EMD (Rubner et al., 1998).
+Um novo algoritmo foi proposto usando tecnica gulosa e a metrica de distancia EMD, de
+forma a permitir a segmentacao das mudancas.
+As principais vantagens dessa abordagem sao (i)
+simples e eficaz, devido ao uso da simplificacao da
+nuvem de pontos e ao novo algoritmo de segmentacao (ii) segmentacao robusta, devido a remocao
+de outliers e ao uso do espaco de Gaussianas. A
+descricao detalhada do metodo e apresentada nas
+proximas subsecoes.
+3.1
+
+Pre Processamento
+
+O pre processamento tem como parte central a
+simplificacao da nuvem de pontos, a qual e utilizada para reduzir a alta densidade de pontos
+adquiridos por um laser scanner 3D, diminuindo
+o custo_computacional da abordagem como um
+todo. A abordagem utilizada e baseada no trabalho proposto por Pauly et al. (Pauly et al., 2002).
+A principal vantagem do metodo e a reducao
+da densidade com pouca perda na informacao geometrica da nuvem, com reduzido custo_computacional. A abordagem permite gerar uma representacao multi-escala da nuvem de pontos usando
+particao binaria. Alem disso, e feito uso da analise de covariancia de modo a determinar uma metrica denominada de variacao da superfcie (Pauly
+
+2087
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+et al., 2002) (), baseada nos autovalores.
+Inicialmente, o metodo de simplificacao constroi uma arvore binaria baseado na divisao de
+cada agrupamento, utilizando uma abordagem
+top-down. A nuvem de pontos e sempre dividida
+ao longo da direcao de maior variacao. Porem, o
+agrupamento P so e dividido quando o numero de
+pontos P  for menor do que um valor mnimo necessario para estimacao da covariancia e o valor
+da variacao da superfcie for maior que um dado
+limiar maximo max . O plano de corte e definido
+a partir do centroide do agrupamento e do autovetor associado ao maior autovalor. A representacao
+em multi-escala e baseada nos nveis de restricoes
+impostas a arvore, ou seja, escolhendo-se valores
+para o tamanho mnimo de P  e para max .
+Em nuvem de pontos obtidas por laser scanner, e comum a presenca de plano do solo nos
+dados. Neste trabalho, um metodo usando RANSAC para ajustar o plano do solo e utilizado (Lai
+and Fox, 2009). Finalmente, a remocao da outliers foi adicionada durante a construcao da arvore
+de simplificacao, baseado no trabalho de Rusu et
+al. (Rusu et al., 2008).
+3.2
+
+Figura 2 Deteccao e segmentacao de mudanca
+usando GMM  A) Corredor ideal sem mudanca
+com modelo em GMM em C) B) Corredor ideal
+com mudanca, modelado por uma GMM em D).
+A mudanca detectada pelo algoritmo foi indicada
+pelo retangulo preto em D.
+3.4
+
+A Equacao (2) permite quantificar as mudancas no
+ambiente, porem, nao permite segmenta-las diretamente. Tipicamente, o problema de deteccao de
+mudancas pode ser definido como determinar um
+limiar Uth , que representa o maior valor a partir
+do qual e assumido a existencia de mudanca no
+mapa recentemente adquirido. Porem, limiares fixos sao de difcil determinacao e dependentes das
+caractersticas dos dados.
+Um novo algoritmo baseado em tecnica gulosa foi proposto objetivando ultrapassar essa restricao. A Figura 2 ilustra a ideia do algoritmo.
+A estrutura do metodo e mostrada em pseudo codigo no Algoritmo 1. O metodo busca mais do que
+detectar mudanca, ele segmenta a mudanca e determina os conjuntos de pontos associados a cada
+mudanca, utilizando a probabilidade a posteriori.
+O algoritmo tem como entrada duas GMMs
+ e . Em cada iteracao do algoritmo e selecionada uma Gaussiana de , que obtem a menor
+distancia global com GMM , utilizando a funcao
+Selecao Gulosa(,   new ). Essa funcao computa iterativamente a EMD entre  e   new ,
+removendo uma Gaussiana por vez e adicionando
+a GMM new . O resultado do algoritmo e uma
+lista de conjuntos de pontos C. Cada conjunto
+de C representa uma regiao da nuvem de pontos
+segmentada por uma unica Gaussiana e computada pela funcao Seleciona P ontos. Essa funcao
+tem como argumento a nuvem de pontos P , utilizada para gerar a GM M  e uma unica Gaussiana newi  (, ). A probabilidade a posteriori,
+alem de permitir segmentar os pontos relacionados a cada Gaussiana, ainda permite identificar a
+relacao topologica entre as Gaussianas que representam a mudanca. Essa relacao sera importante
+na modelagem por superquadricas na Secao 4.2.
+
+Modelos de Misturas Gaussianas (GMM)
+
+O modelo de mistura Gaussiana e uma funcao densidade de probabilidade descrita por uma combinacao linear de Gaussianas. Assim, a funcao e a
+uma mistura de Gaussianas quando tem a seguinte
+forma
+f (x, ) 
+
+K
+X
+
+pk g(x k , k )
+
+(x  RN ),
+
+(1)
+
+k1
+
+onde a funcao g sao Gaussianas definidas por
+k  RN e k , vetor media e matriz de covariancia, respectivamente. O coeficiente
+PKpk , peso da
+mistura, deve satisfazer pk  0 e k1 pk  1.
+A GMM e um otimo modelo para agrupamento de pontos. Dado um conjunto de pontos
+e possvel encontrar uma GMM  usando o conhecido metodo Expectation Maximization (EM ).
+O numero de Gaussianas da mistura(K) e selecionando usando um valor de Kmax e uma funcao
+de penalidade baseado em Minimum Description
+Length (MDL) (Rissanen, 1983).
+3.3
+
+Earth Movers Distance (EMD)
+
+O Earth Movers Distance (EMD) (Rubner
+et al., 1998) e uma metrica que pode ser usada
+para computar a distancia entre duas distribuicoes. Com   ((1 , p1 ), . . . , (n , pn )) e  
+((1 , q1 ), . . . , (m , qm )), sendo duas GMM associadas a duas nuvem de pontos 3D, onde i e j
+sao funcoes Gaussianas pi e qj sao os pesos associados a cada Gaussiana, respectivamente. A
+distancia entre duas GMM e definida por
+dGM M (, )  EM D (, ) .
+
+Segmentacao de Mudancas usando GMM
+
+(2)
+
+2088
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+mudanca identificada pelo algoritmo de deteccao
+de mudanca. A matriz 2 e a covariancia associada a forma ideal (cada forma e representa por
+uma matriz no espaco de Gaussianas). Considerando as rotacoes e escalas possveis para a forma
+da mudanca, a Equacao 4 foi utilizada.
+
+Tabela 1 Algoritmo para Segmentacao de Mudancas
+1 dGM M  EM D(, )
+2 new  
+3 size  0
+4 repeat
+5
+dGM M old  dGM M
+6
+new , dGM M   Selecao Gulosa(,  
+new )
+7
+size  size + 1
+8 until (dGM Mold < dGM M )
+9 new  new  newsize
+10 C  
+11 for all newi (, )  new do
+12
+C  CSeleciona P ontos(P, newi (, ))
+13 end for
+4
+
+i  Tj TT  (R  L)j (R  L)T ,
+
+onde T e a transformacao rgida aplicada a forma
+ideal (sem escala nem rotacao), sendo composta
+pela matriz de rotacao R e pela matriz L, essa
+definida como uma matriz diagonal com os fatores
+de escala em cada eixo.
+A Equacao 3 e minimizada usando mnimos
+quadrados, baseado no algoritmo de LevenbergMarquardt. Neste e modificada a rotacao e escala
+a cada iteracao. A inicializacao dos parametros
+e feita por meio dos autovetores e autovalores da
+matriz de covariancia da mudanca.
+
+Recuperacao de Forma 3D
+
+Os algoritmos para recuperacao de formas 3D das
+mudancas utilizam dois modelos distintos e sao
+detalhados nesta seccao. O primeiro e baseado
+em formas basicas (e.g. planos, esferas e cilindros) no espaco de Gaussianas. O segundo modelo utilizado sao as superquadricas. Este ultimo,
+especializado de forma a obter uma melhor representacao por meio do paradigma split-and-merge.
+Esses metodos serao detalhados nos subsecoes a
+seguir.
+4.1
+
+(4)
+
+4.2
+
+Superquadricas
+
+A superquadrica e um modelo compacto de representacao de formas. Ela e definida por dois parametros de forma (1 , 2 ) e tres de escala (a1 ,a2 ,a3 ).
+A equacao implcita das superquadricas e
+
+F (x, y, z) 
+
+x
+a1
+
+ 2
+
+
+
+2
+
++
+
+y
+a2
+
+
+ 2 ! 21
+2
+
+
+
+z
++
+a3
+
+ 2
+
+1
+
+.
+
+(5)
+A informacao sobre a posicao de um dado
+ponto (x, y, z) em relacao a superfcie da superquadrica e dada por essa equacao. Basicamente, se o valor for igual a um, o ponto encontrase na superfcie. Caso contrario, se for maior
+que um, encontra-se fora da superquadrica, se for
+menor, esta dentro da superquadrica. Isso permite efetuar a determinacao da superquadrica de
+forma eficiente (Jaklic et al., 2000). Para representar superquadrica em um sistema de coordenadas global, como no caso da deteccao_de_mudanca, mais seis parametros para a pose sao necessarios. Logo, tem-se onze parametros no modelo
+final (  1 , . . . , 11 ).
+Para a estimacao de um modelo a partir de
+um conjunto de pontos utiliza-se o metodo de minimizacao de quadrados, baseado no algoritmo de
+Levenberg-Marquardt (Jaklic et al., 2000). Embora outros metodo possam ser utilizados, esse e
+o mais rapido (Chevalier et al., 2003).
+Neste trabalho, a partir de um modelo inicial
+utiliza-se o paradigma split-and-merge para buscar uma melhor representacao em superquadricas
+da mudanca, detalhada na subsecao a seguir. Posteriormente, e realizado um refinamento no modelo baseado na abordagem multi-escala. Esse refinamento e realizado em apenas dois nveis, um
+nvel inicial com dados simplificados e, um posterior, com os dados completos da nuvem de pontos.
+
+Formas Basicas no Espaco de Gaussianas
+
+O algoritmo de recuperacao de forma no espaco de
+Gaussianas e baseado no uso da matriz de covariancia de cada Gaussiana, a qual fornece informacao sobre a forma. Sendo new uma mistura de
+Gaussianas associada as mudancas do ambiente,
+cada mudanca k e caracterizada por uma funcao
+Gaussiana newk  (k , k ). Assim, e proposto
+um algoritmo que busca dentre as formas basicas,
+a que melhor modela a mudanca, considerando
+uma transformacao T. Para cada forma basica,
+e medida a similaridade com a Gaussiana apresentada. O modelo que obtiver a melhor representacao e definido como formato da mudanca.
+Como medida de similaridade entre matrizes
+de covariancia foi utilizada a metrica proposta no
+trabalho de Forstner e Moonen (Forstner and Moonen, 1999). Tal metrica e descrita na equacao
+abaixo
+v
+uN
+uX
+ln2 i (1 , 2 ),
+(3)
+d(1 , 2 )  t
+i1
+
+onde 1 e 2 sao duas matrizes de covariancia, 
+sao os autovalores generalizados das matrizes 1
+e 2 , e N e a dimensionalidade das matrizes, no
+caso tres. Neste trabalho, a matriz 1 representa
+a covariancia da funcao Gaussiana referente a uma
+
+2089
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+4.3
+
+Paradigma Split-and-Merge
+
+foram inseridas e uma nova leitura foi efetuada.
+O algoritmo para deteccao e segmentacao de mudanca foi executado com resultados mostrados a
+seguir, bem como para a modelagem das mudancas.
+
+A GMM e uma excelente feature para dados 3D,
+porem, o algoritmo utilizado para segmentacao
+tem uma importante limitacao ele garante apenas
+mnimos locais. Para ultrapassar esse problema,
+uma abordagem utilizando o paradigma split-andmerge e proposta. Nessa, uma extensao ao trabalho de Chevalier et al. (Chevalier et al., 2003) que
+segmenta superquadricas e proposta a abordagem e inicializada com segmentos dados pelo metodo de deteccao_de_mudanca, bem como a relacao
+topologica e determinada a partir desse metodo
+(Secao 3.4). Essa abordagem permite uma simplificacao do metodo, gerando reducao do tempo de
+processamento.
+O passo split divide o conjunto de dados, de
+modo que pontos de um objeto a ser reconhecido
+por uma superquadrica estarao em subconjuntos
+distintos ao fim desse passo. A divisao e efetuada utilizando um plano de corte baseado no momento de inercia (Chevalier et al., 2003), e confirmada caso a distancia das duas superquadricas
+seja menor que a distancia da superquadrica original (Equacao 5). Esse metodo gera uma arvore
+binaria que representa a relacao topologica entre
+os subconjuntos. Essa relacao e importante para
+evitar a recomputacao no passo merge.
+O passo merge gera um conjunto reduzido de
+formas, sem aumento da distancia global do modelo, a partir dos subconjuntos do split. Ele computa uma matriz com os custos de unir as superquadricas vizinhas (com relacao topologica).
+Iterativamente, escolhe-se um par que minimiza
+a distancia e efetua a uniao, atualizando a matriz
+de custos.
+Uma importante contribuicao foi o uso de programacao_dinamica por meio da matriz de custo,
+que permite atualizar apenas as distancias da nova
+superquadrica gerada, evitando recomputar valores. Isso torna o metodo mais rapido que o metodo
+proposto por (Chevalier et al., 2003).
+5
+
+5.1
+
+Montagem Estatica
+
+A Figura 3 ilustra os resultados gerados a partir da
+montagem estatica. Na Figura 3-A e mostrado o
+ambiente utilizado para gerar os mapas 3D, tratase de um ambiente de escritorios, com um corredor e portas. O mapa 3D obtido pela montagem
+e mostrado na Figura 3-B, onde a pessoa e destacada em vermelho no mapa, apenas de maneira
+ilustrativa. Pode-se notar que existe uma pequena
+inclinacao no mapa gerado devido a um offset na
+medida de angulacao da unidade de pan-tilt. As
+Gaussianas geradas a partir dos dois mapas 3D
+(sem e com mudanca) sao mostradas nas figuras
+3-C e D. Pode-se notar que devido a presenca de
+outliers na leitura do mapa sem mudanca, o algoritmo obtem uma Gaussiana maior (em verde) que
+nao representa corretamente o ambiente. Porem,
+devido a robustez do algoritmo essa Gaussiana nao
+foi considerada como uma mudanca (mostrada em
+destaque na Figura 3-E).
+Na Figura 3-F e mostrada a modelagem da
+mudanca utilizando a abordagem de formas basicas. Em vermelho, e mostrado o resultado obtido
+pela abordagem do estado da arte de Schnabel
+et al. (Schnabel et al., 2007), enquanto em azul,
+e mostrado o resultado da abordagem proposta.
+Devido a segmentacao utilizando o algoritmo EM,
+a forma humano foi segmentada por apenas uma
+Gaussiana e, consequentemente, por apenas uma
+forma basica. Apesar de uma pequena diferenca
+de inclinacao, ambas as abordagens obtiveram resultados semelhantes.
+A Figura 3-G mostra o resultado do uso de
+superquadricas para a mudanca da Figura 3-E.
+Enquanto na Figura 3-H e mostrado o resultado
+da abordagem proposta para segmentacao de superquadricas usando o paradigma split-and-merge.
+Pode-se notar que a pessoa foi segmentada por
+um numero bem maior de formas, que permite
+uma melhor representacao. As partes do corpo
+sao ilustradas na figura, com destaque para a segmentacao do braco direito e do troco por apenas
+uma unica superquadrica. Isso se deve ao fato de
+que durante a aquisicao dos mapas, a pessoa esta
+com o braco direito junto ao corpo, dificultando a
+segmentacao. Apesar dessa dificuldade, a pessoa
+foi corretamente segmentada, gerando uma representacao que pode permitir uma posterior classificacao da forma.
+
+Resultados Experimentais
+
+Neste artigo, a abordagem proposta foi avaliada
+utilizando dados reais de um robo_movel construindo mapas tridimensionais (montagem dinamica), a partir de um laser scanner 2D e de uma
+montagem estatica de um laser scanner 2D e uma
+unidade de pan-tilt. O robo_movel utilizado foi
+um Pioneer 3 AT, equipado com odometria nas
+rodas e um laser SICK LMS 200 montado ortogonalmente ao movimento do robo. A montagem
+estatica foi composta de uma unidade de Pan-tilt
+Directed Perception PTU-D46-17 e um laser scanner Hokuyo URG-04LX.
+Em ambas as abordagens, mapas tridimensionais foram adquiridos a fim de se obter a representacao do ambiente. Posteriormente, mudancas
+
+5.2
+
+Montagem Dinamica
+
+Para a obtencao de resultados experimentais da
+montagem dinamica foram inseridas duas mudan-
+
+2090
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Figura 3 Montagem Estatica A) Imagem do ambiente apos insercao da mudanca (pessoa ao centro do corredor) B) Mapa 3D com mudanca destacada em vermelho C) e D) mostram a representacao em GMM do ambiente para o ambiente
+sem e com mudanca, respectivamente E) Ampliacao da mudanca detectada pelo algoritmo (Caixa
+preta em D F) Resultado do algoritmo de modelagem de formas basicas para mudanca em E G)
+Representacao em superquadrica da mudanca em
+F H) Representacao em superquadricas usando
+abordagem proposta.
+
+Figura 4 Montagem Dinamica A) e B) Imagens
+do ambiente apos insercao da mudanca (cilindro
+vermelho e pessoa, respectivamente) C) e D) Representacoes 3D dos ambientes sem a presenca de
+mudancas (Pontos e Gaussianas) E) e F) Representacoes 3D dos ambientes com mudanca destacada por caixas em preta G) e H) Representacao
+em superquadricas usando abordagem proposta.
+com a colocacao de uma caixa branca para igualar
+as alturas de aquisicao e do cilindro (mostrada na
+Figura 4-A). A pessoa representada na Figura 4H, foi segmentada de uma maneira menos refinada
+do que na Figura 3-H, devido, principalmente, ao
+numero de pontos obtido nas mudancas. Nesse resultado, o abdomen e os bracos foram modelados
+pela mesma forma devido a posicao dos bracos da
+pessoa durante a aquisicao dos mapas.
+
+cas diferentes. Uma primeira mostrada na Figura
+4-A na qual um cilindro vermelho de tamanho conhecido foi inserido ao ambiente (20 cm de raio
+por 47 cm altura) de forma a verificar a qualidade
+da abordagem. Foi inserida tambem uma pessoa
+como mudanca, mostrada na Figura 4-B. O ambiente utilizado para obtencao de mapas foi de um
+corredor com portas, semelhante ao montagem estatica. Nele, o robo percorreu cerca de 8 metros,
+apenas usando a informacao de odometria, sujeita
+a erros. Pode-se notar um erro grande ao fim da
+leitura entre os mapas das figuras 4-C e E. Mesmo
+com a presenca desses erros, a abordagem conseguiu detectar corretamente as mudancas (caixas
+em preto nas figuras 4-E e F).
+Apos a deteccao das mudancas, elas foram
+modeladas por superquadricas, como mostram as
+figuras 4-G e H. Na Figura 4-G obteve-se uma
+forma com raio de aproximadamente 20cm e altura de 40cm. A diferenca entre a medida de altura real do cilindro e a obtida pelo modelo se deve
+ao fato de que a leitura feita pelo laser scanner estar um pouco acima do incio do cilindro, mesmo
+
+6
+
+Conclusoes
+
+Este artigo apresentou um novo metodo para detectar e segmentar diretamente mudancas em um
+ambiente robotico, usando laser scanner 3D e,
+alem disso, modelar a forma dessas mudancas
+usando dois modelos. Modelos de Misturas Gaussianas foram utilizados como features em mapas
+3D, mostrando-se capaz de comprimir informacao
+e representar adequadamente o ambiente. A metrica EMD associada a tecnica gulosa proposta foi
+capaz de detectar e segmentar mudancas adequadamente. A nova tecnica proposta para modelagem de formas basicas foi comparada com uma
+abordagem do estado da arte proposta por Schnabel et al. mostrando resultados semelhantes. O
+modelo de superquadricas associado ao paradigma
+
+2091
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+split-and-merge deu maior expressividade a modelagem de forma de uma maneira eficiente. Os resultados experimentais em ambiente real mostram
+a capacidade da abordagem em detectar, segmentar e modelar as mudancas.
+Trabalhos futuros vao ser focados em realizar
+mais experimentos validando a abordagem de uma
+maneira quantitativa, alem de permitir o uso do
+metodo de maneira online. Uma possibilidade e o
+uso de GMM com aprendizado_online. O objetivo
+final e obter um sistema completo capaz de detectar e representar objetos virtuais no ambiente do
+robo, com capacidade de identificar e classificar esses objetos. Outra importante melhoria proposta
+e a inclusao de um metodo de registro ao trabalho,
+de forma a impossibilitar o sistema de identificar
+regioes nao escaneadas como mudancas, alem de
+evitar a necessidade dos mapas estarem no mesmo
+sistema de coordenadas.
+
+Jaklic, A., Leonardis, A. and Solina, F. (2000).
+Segmentation and Recovery of Superquadrics,
+Kluwer Academic Publishers, Norwell, EUA.
+Lai, K. and Fox, D. (2009). 3D laser scan classification using web data and domain adaptation, Robotics Science and Systems (RSS),
+Seattle, EUA, pp. 18.
+Leonardis, A., Jaklic, A. and Solina, F. (1997).
+Superquadrics for segmenting and modeling range data, IEEE Transactions on
+Pattern Analisys and Machine Intelligence
+19(11) 12891295.
+Markou, M. and Singh, S. (2003). Novelty detection A review - part 1 Statistical approaches, Signal Processing 83(12) 2003.
+Pauly, M., Gross, M. and Kobbelt, L. P. (2002).
+Efficient simplification of point-sampled surfaces, IEEE Visualization (VIS), IEEE Computer Society, Boston, EUA, pp. 163170.
+
+Agradecimentos
+Este trabalho contou com o apoio da CAPES,
+CNPQ, FAPEMIG e do projeto PROMETHEUS
+(EU-FP7-ICT-2007-1-214901). Os autores gostariam de agradecer tambem a colaboracao do Prof.
+Pedro Nunez e dos colegas do LRM-ISR e VerLabUFMG.
+
+Rissanen, J. (1983). A universal prior for integers and estimation by minimum description
+length, The Annals of Statistics 11(2) 416
+431.
+Rubner, Y., Tomasi, C. and Guibas, L. J. (1998).
+A metric for distributions with applications
+to image databases, International Conference
+on Computer Vision (ICCV), IEEE Computer Society, Bombay, India, pp. 5966.
+
+Referencias
+Andreasson, H., Magnusson, M. and Lilienthal,
+A. J. (2007). Has something changed here?
+Autonomous difference detection for security
+patrol robots, IEEERSJ International Conference on Intelligent Robots and Systems
+(IROS), San Diego, EUA, pp. 34293435.
+
+Rusu, R. B., Marton, Z. C., Blodow, N., Dolha,
+M. and Beetz, M. (2008). Towards 3D point
+cloud based object maps for household environments, Robotics and Autonomous Systems
+56(11) 927941.
+
+Ballard, D. H. (1987). Generalizing the Hough
+transform to detect arbitrary shapes, Morgan Kaufmann Publishers Inc., San Francisco, EUA, pp. 714725.
+
+Schnabel, R., Wahl, R. and Klein, R. (2007). Efficient RANSAC for point-cloud shape detection, Computer Graphics Forum 26(2) 214
+226.
+
+Barr, A. H. (1981). Superquadrics and anglepreserving transformations, IEEE Computer
+Graphics and Applications 1(1) 1123.
+
+Thrun, S., Burgard, W. and Fox, D. (2005). Probabilistic Robotics, primeira edn, The MIT
+Press, Cambridge, EUA.
+
+Chevalier, L., Jaillet, F. and Baskurt, A. (2003).
+Segmentation and superquadric modeling of
+3D objects, Journal of Winter School of
+Computer Graphics 11(1) 916.
+
+Vieira, M. and Shimada, K. (2005). Surface mesh
+segmentation and smooth surface extraction
+through region growing, Computer Aided Geometric Design 22(8) 771792.
+
+Forstner, W. and Moonen, B. (1999). A metric
+for covariance matrices, Technical report, Departament of Geodesy and Geoinformatics Stuttgart University, Stuttgart, Alemanha.
+
+Vieira Neto, H. and Nehmzow, U. (2008). Visual
+novelty detection for autonomous inspection
+robots, in Y. Takahashi (ed.), Service Robot Applications, I-Tech Education and Publishing, Vienna, Austria, pp. 309330.
+
+Fox, D., Burgard, W. and Thrun, S. (1999). Markov localization for mobile robots in dynamic environments, Journal of Artificial Intelligence Research 11 391427.
+
+2092

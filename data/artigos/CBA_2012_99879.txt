@@ -1,0 +1,624 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+SISTEMA SUPERVISÓRIO VOLTADO PARA OSCILOGRAFIA EM TEMPO REAL DE
+GERADORES SÍNCRONOS
+MICHEL F. CRUZ, TIAGO L. RIECHEL, VINICIUS N. OBADOWSKI, PAULO E. M. UGOSKI, CARLOS M. RICHTER,
+SÉRGIO L. S. SEVERO, ANDRÉ A. P. LERM
+Instituto Federal de Educação, Ciência e Tecnologia Sul-Rio-Grandense  IFSul
+Campus Pelotas  Praça Vinte de Setembro, 455, CEP 96015-360, Pelotas, RS, Brasil.
+E-mails cruz.michel@gmail.com, tiagoriechel@gmail.com, obadowski@ieee.org,
+ugoski@pelotas.ifsul.edu.br, richter@pelotas.ifsul.edu.br,
+severo@pelotas.ifsul.edu.br, alerm@pelotas.ifsul.edu.br
+
+MARIO O. OLIVEIRA, MARTIN C. RODRIGUEZ PAZ, ARTURO S. BRETAS
+Universidade Federal do Rio Grande do Sul  UFRGS
+Av. Osvaldo Aranha 103, CEP 90035-190, Porto Alegre, RS, Brasil.
+E-mails moliveira@ece.ufrgs.br, mcrodriguezpaz@ece.ufrgs.br, abretas@ece.ufrgs.br
+DENIS T. FRANCO
+Universidade Federal do Rio Grande  FURG
+Campus Carreiros  Av. Itália, km 8, Bairro Carreiros, Rio Grande, RS, Brasil.
+E-mail denisfranco@furg.br
+WAGNER DE F. CIARELLI
+AES Tietê
+Av. Nações Unidas n17-17, 11andar, sala 1109  Vila Santo Antonio, CEP 17013-905, Bauru, SP, Brasil.
+E-mail wagner.ciarelli@aes.com
+
+Abstract This paper presents an innovative proposal for a SCADA system platform that incorporates to the functions usually
+found in supervisory and control systems the ones related to oscillography systems. The proposed system was developed in C ++
+language, exploring the features via multiple threads of execution on a processing platform of the IBM-PC  Windows 7. The resulting system has a low implementation cost. The hardware architecture, along with software tools adopted, satisfactorily meets
+all the requirements originally planned for the proposed system.
+Keywords Oscillography, SCADA, MFC, Windows, documentview architecture, multithread, data acquisition, real-time system, signal conditioning.
+Resumo Este trabalho apresenta uma proposta inovadora de uma plataforma de sistema SCADA que incorpora s funções
+usualmente encontradas nos sistemas_supervisórios e de controle as funções próprias dos sistemas de oscilografia. O sistema foi
+desenvolvido em linguagem C++, explorando as características de execução via múltiplas threads, em uma plataforma de processamento do tipo IBM-PC  Windows 7, com reduzido custo de implementação. A arquitetura de hardware, em conjunto com
+as ferramentas de software adotadas, atende de maneira satisfatória a todas as exigências inicialmente previstas para o sistema
+proposto.
+Palavras-chave .
+
+1 Introdução
+A utilização de geradores de pequeno e de médio
+porte vem aumentando, tanto na área da geração_distribuída de energia, quanto em aplicações industriais.
+A operação confiável de geradores conectados a um
+sistema elétrico (grid) requer a utilização de diversos
+subsistemas, tais como os relacionados ao seu co-
+
+ISBN 978-85-8001-069-5
+
+mando e  sua proteção (Kundur, 1994). A utilização
+de sistemas SCADA (Supervisory Control And Data
+Acquisition) permite o monitoramento e o controle de
+diversas variáveis associadas  operação dos geradores, entre elétricas e mecânicas (Albuquerque, 2009).
+As configurações usuais utilizadas pelos sistemas
+SCADA atualmente disponíveis, por outro lado, não
+permitem a integração de dados especializados, como
+os oriundos de registros de oscilografia, aos citados
+anteriormente.
+
+2570
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+O presente trabalho é resultado de um projeto de
+PD que envolve a interconexão e o controle de geradores auxiliares em usinas hidrelétricas com a rede
+elétrica, através da utilização de compensação série
+da armadura do gerador. A característica deste sistema_de_controle de geradores auxiliares instigou o
+desenvolvimento de uma plataforma SCADA que
+incorporasse s funções usualmente encontradas nos
+sistemas_supervisórios e de controle as funções próprias dos sistemas de oscilografia. Ao mesmo tempo,
+partiu-se da premissa de utilização de um hardware
+para o sistema SCADA com baixo_custo de implementação.
+O sistema desenvolvido permite realizar uma série de tarefas, tais como as relacionadas ao processo
+de sincronização da máquina geradora a um barramento energizado e o monitoramento de sua operação de forma contínua. Além destes, destaca-se a
+necessidade de monitoramento dos conteúdos harmônicos decorrentes da conexão do gerador  rede
+elétrica e o registro oscilográfico das grandezas de
+interesse.
+Para dar suporte s diversas etapas do desenvolvimento deste projeto de PD, o sistema_supervisório idealizado permite o monitoramento das variáveis
+elétricas e mecânicas do conjunto geradorrede utilizado. O estágio atual de desenvolvimento deste sistema_supervisório permite as seguintes funcionalidades monitorar e comandar o processo de sincronismo
+do gerador com a rede monitorar sua estabilidade a
+pequenas_perturbações gerar alertas e acionar os
+sistemas de proteção e, principalmente, permitir a
+oscilografia das variáveis envolvidas. Com o sistema
+supervisório em questão, espera-se obter os dados
+necessários para a validação e otimização dos diferentes blocos do sistema de interconexão, como por
+exemplo, os circuitos de aquisição e condicionamento dos sinais e os circuitos de chaveamento dos
+semicondutores de potência utilizados na compensação série do gerador controlado.
+As características mencionadas concedem aspectos inovadores ao sistema_supervisório e de controle aqui apresentado. A estrutura geral do sistema
+de supervisão e controle encontra-se indicada na Figura 1. Neste esquema unifilar podem ser observados
+os pontos onde estão inseridos os isoladores de medição, bem como os atuadores responsáveis pela manobra da planta. Esta estrutura refere-se  versão para
+os testes em bancada, podendo facilmente ser aplicada posteriormente a usinas hidrelétricas.
+O presente artigo apresenta as principais características do sistema_de_supervisão_e_controle proposto,
+bem como os resultados obtidos com o mesmo. A
+Seção 2 contém a descrição do monitoramento do
+protótipo desenvolvido em bancada. A Seção 3 apresenta os requisitos definidos para a operação do sistema de supervisão, bem como as características de
+hardware e software do sistema implementado. A
+Seção 4 apresenta o sistema_supervisório desenvolvido e alguns resultados obtidos com a operação do
+
+ISBN 978-85-8001-069-5
+
+Excitatriz
+u1
+x1
+u2
+
+NI PCIe-6353, 4 AO
+
+M
+
+GS
+
+GS
+Manobra
+
+NI PCIe-6353,
+48 DIO
+
+Inversor
+
+NI3110
+NI PCIe-6353,32 AI
+
+Compensação
+
+x1
+u1
+
+Oscilografia
+x2
+
+- ISO 120
+- optoacoplador
+
+Figura 1. Arquitetura do sistema proposto de controle e aquisição
+de dados.
+
+mesmo. Por fim, as conclusões sobre o trabalho desenvolvido são apresentadas na Seção 5.
+2 Planta instrumentada
+Para o projeto caracterizado na Figura 1, foi
+montada uma planta de geração_de_energia constituída de dois geradores_síncronos de 12,5kVA380V
+cada, acoplados por flanges a um motor_de_indução
+trifásico de 40CV380V comandado por um inversor
+de corrente com controle_vetorial. O inversor de corrente utilizado possui diversos parâmetros acessíveis
+de forma remota, que possibilitam o controle completo de diversas variáveis, tais como velocidade e
+torque, que implicam diretamente na frequência da
+tensão gerada e na potência despachada pelo gerador.
+O controle da amplitude da tensão de saída do gerador é realizado por um RAT (Regulador Automático
+de Tensão) que permite ajuste através da variação de
+um sinal de controle. Para este ajuste, foi desenvolvido um dispositivo comandado por sinais digitais,
+capaz de variar o sinal de controle do RAT de forma
+bastante ampla.
+Para realização do controle proposto é necessário o monitoramento da tensão de saída de cada uma
+das três fases do gerador, da tensão de cada uma das
+três fases do barramento onde o gerador será inserido
+(ou seja, das tensões das três fases a montante e a
+jusante do sistema de compensação) e das correntes
+de cada uma das três fases do gerador. A partir do
+processamento dos sinais destas grandezas é possível
+se obter o seu conteúdo_harmônico. Todos os sinais
+de tensão e de corrente encontram-se isolados, através da utilização de TPs (transformadores de potencial) e de TCs (transformadores_de_corrente).
+3. O sistema SCADA proposto
+O sistema proposto está baseado em componentes de hardware, para aquisição dos sinais e atuação,
+e componentes de software, para o processamento e
+2571
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+armazenamento dos dados. Tais componentes são
+detalhados no que segue.
+3.1 Hardware de controle
+Para os componentes de hardware foram especificados alguns requisitos de desempenho e confiabilidade relacionados  suportabilidade do sistema.
+Estes limites operacionais implicam diretamente na
+escolha dos periféricos e controladores que devem
+ser utilizados para o desenvolvimento do sistema.
+Como requisitos de operação foram especificados
+ Confiabilidade padrão industrial, com capacidade de operação 247
+ Plataforma comercial para instrumentação e
+automação de alto_desempenho e baixo_custo de implementação
+ Barramento de interconexão com grande largura de banda e baixa latência, baseado em
+uma arquitetura modular com conjunto de
+interfaces para sensores (módulos intercambiáveis) conectados ao processador  gerenciador dos dispositivos
+ Temporização e sincronização integradas no
+hardware
+ Capacidade de processamento em tempo_real dos sinais especificados
+ Aquisição simultânea de dados
+ Interface homem-máquina visual, reconfigurável e capaz de virtualização total da instrumentação
+ Robustez industrial para operação em campo quando necessário.
+Visando atender estas diretrizes, optou-se pela
+utilização de uma arquitetura IBM-PC (microcomputadores pessoais), que são os sistemas baseados em
+processadores de uso geral da família x86 (Tanenbaum, 2007 Parhami, 2008), os quais são dispositivos projetados visando flexibilidade de operação, ou
+seja, capacidade de executar praticamente qualquer
+tipo de aplicação.
+Além de ter uma arquitetura de uso geral voltada
+ flexibilidade, os microcomputadores pessoais também operam sob o controle_de_sistemas_operacionais
+de uso geral, os quais foram desenvolvidos para privilegiar o interfaceamento homem-máquina, as aplicações multimídia e a interconexão com outros sistemas. Tais sistemas_operacionais podem ser vistos
+como uma camada de software de interconexão entre
+o usuário e o hardware, de forma a facilitar a interação destes, mas também com o objetivo de proteger o
+hardware de operações incorretas e mal intencionadas.
+Os microcomputadores pessoais atuais possuem
+alta capacidade de processamento, utilizando processadores com frequências de operação da ordem de
+GHz, com múltiplos núcleos de processamento independentes e diversas interfaces IO (entrada_e_saída).
+
+ISBN 978-85-8001-069-5
+
+Apesar do exposto, estas arquiteturas não são
+especializadas no controle_de_processos e na execução de aplicações em tempo_real de alto_desempenho.
+Estas limitações são justificadas pelas características
+do seu conjunto de instruções e da sua organização
+de memória, sendo corroboradas pelas restrições impostas pelos sistemas_operacionais multitarefa. Tais
+sistemas, como o Windows, restringem o controle
+sobre o hardware de baixo nível (portas IO), de forma a evitar conflitos de acesso aos recursos do processador por parte dos diferentes programas em execução simultânea (Brey, 2000). Dessa forma, apesar
+dos microprocessadores x86 serem arquiteturas de
+alto_desempenho, suas características não são adequadas para o tipo de processamento envolvido nas
+aplicações em tempo_real e de controle. Por outro
+lado, as mesmas são indicadas para o desenvolvimento de aplicações que se beneficiem com os recursos
+de processamento_paralelo disponibilizados pelos
+múltiplos núcleos dos processadores modernos (Hennessy e Patterson, 2009).
+Dessa forma, mesmo não atendendo aos requisitos de restrição temporal e de determinismo exigidos
+para o desenvolvimento de um sistema_de_tempo_real,
+o grande poder de processamento da arquitetura x86,
+aliada aos recursos de processamento_paralelo (multicore e multithreading), aponta para uma capacidade
+de execução adequada para suprir as necessidades
+deste projeto, na sua fase de desenvolvimento experimental.
+Após a avaliação das características de diferentes
+plataformas, determinou-se que os requisitos do ambiente_de_desenvolvimento proposto seriam atendidos
+com a utilização de um computador_industrial, equipado com uma placa de aquisição_de_dados multifuncional com 32 canais analógicos de 16 bits de resolução, e 48 canais digitais com velocidade de até
+10MHz.
+3.2 Condicionamento de sinais
+Para permitir a leitura dos sinais de tensão e de
+corrente pelo sistema de aquisição_de_dados, foram
+utilizados equipamentos de isolação e de condicionamento destes sinais. Para adequar os sinais medidos aos padrões dos dispositivos digitais, foram desenvolvidos circuitos com amplificadores operacionais isoladores ISO120G, da Texas Instruments, que
+permitem isolação de até 1500VRMS. O sinal de tensão é obtido sobre um divisor de tensão que reduz a
+tensão medida em 100 vezes. Este sinal atua na entrada de um ISO120G. O sinal de corrente é amostrado sobre um resistor do tipo shunt, aplicado a um
+amplificador de instrumentação constituído por quatro amplificadores operacionais integrados em um
+único chip TL084, e aplicado a um segundo
+ISO120G. Estes dois circuitos operam com tensões
+de alimentação da ordem de  15 V e  12 V, na entrada_e_saída dos circuitos, respectivamente. A entrada (parte conectada aos pontos de medição) possui as
+
+2572
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+tensões de alimentação referenciadas  própria fase
+de medição, de modo evitar o ruído de modo comum.
+A saída (parte isolada onde ocorre a conexão com os
+dispositivos digitais) possui as tensões de alimentação referenciadas ao aterramento do sistema de aquisição, garantindo que os máximos valores encontrados nesta etapa não ultrapassem os limites dos equipamentos digitais.
+3.3 Plataforma de programação
+O desenvolvimento de soluções de aquisição de
+dados e controle desenvolvidas em PC é, em geral,
+executado de duas formas principais
+ Soluções baseadas em aplicativos prontos,
+configuráveis pelo usuário, que realizam
+desde a tarefa de interfaceamento com
+hardware próprio de aquisição, passando pela visualização dos dados, até o armazenamento dos mesmos em memória não volátil
+para posterior análise. Nesse caso, dentre os
+aplicativos mais conhecidos, podem-se citar
+o Intouch da Wonderware e o Lab-View da
+National Instruments (Cavalcanti, 2008). No
+Brasil, o software Elipse é um exemplo de
+sucesso comercial na área. Todos são sistemas poderosos, de utilização relativamente
+fácil por parte de usuários sem experiência
+em programação, mas que possuem um custo elevado. Possuem também grande capacidade de criar interfaces de supervisão muito
+atrativas e são encontradas versões para as
+mais diversas plataformas, além da plataforma Windows. Existem, ainda, opções
+open-source, de baixo_custo, tal como o
+ScadaBR (ScadaBr, 2012), mas que não
+atendem aos requisitos de determinismo necessários ao desenvolvimento de sistemas de
+controle por serem desenvolvidos em plataforma Java.
+ Soluções baseadas no desenvolvimento do
+aplicativo de aquisição através de linguagens de programação tradicionais, auxiliadas por bibliotecas para aquisição e supervisão. Nessa situação, a capacidade do sistema
+encontra seu limite na experiência do programador, nos recursos disponibilizados pelas bibliotecas e na plataforma de desenvolvimento. Na plataforma Windows, está se
+tornando comum a utilização de componentes de software, que auxiliam muito na produtividade do programador, principalmente
+no que diz respeito ao desenvolvimento da
+interface de apresentação. Esse tipo de solução possui como vantagem principal seu
+baixo_custo. Ela não envolve a compra de
+um aplicativo específico para aquisição dos
+dados e possibilita acesso ilimitado a todos
+os recursos disponibilizados pelo hardware.
+
+ISBN 978-85-8001-069-5
+
+Os fatores que determinam a escolha da topologia para o desenvolvimento do sistema são
+ Complexidade do sistema de aquisição
+ Capacidade e experiência dos desenvolvedores
+ Interesse do usuário final em deter acesso
+completo  tecnologia
+ Qualidade das bibliotecas, componentes e
+soluções disponíveis com o hardware de
+aquisição.
+Objetivando obter a máxima liberdade de utilização dos recursos de hardware e uma consequente
+exploração das características que aproximam o sistema em desenvolvimento de um sistema de tempo
+real, optou-se pela não utilização de aplicativos disponíveis no mercado para o desenvolvimento do sistema SCADA em questão.
+A API (Application Programming Interface)
+Win32 (Prosise, 1999) fornece ao programador uma
+poderosa interface de programação, disponibilizando
+todos os processos necessários ao desenvolvimento
+de um sistema SCADA. A programação para Windows com a utilização direta das rotinas da API
+Win32 é, entretanto, extremamente difícil, tediosa e
+complexa, mesmo para pequenos sistemas. Como
+facilitador para programação existe a possibilidade
+de utilização de uma biblioteca de classes, ou framework, específica para a programação em Windows
+(Microsoft, 2012). Como exemplo de framework
+pode-se citar a MFC (Microsoft Foundation Classes),
+que é uma estrutura de classes baseada em programação orientada a objetos em C++. Neste framework o
+desenvolvimento do aplicativo considera uma arquitetura conhecida como arquitetura documentovista, a qual é adequada para o desenvolvimento de
+aplicações gerais stand-alone, que pressupõem uma
+interface com o usuário, e um documento para armazenamento. Tal arquitetura preconiza a separação
+rígida entre dados, a visão desses dados e o processamento destes. As vantagens dessa escolha podem
+ser relacionadas da forma como segue
+ A arquitetura possibilita facilmente a persistência de objetos via serialização, facilidade
+com a qual pode-se armazenar tanto a configuração do sistema quanto os dados adquiridos, formando o documento do sistema.
+ Ainda na configuração, no que diz respeito 
+entrada dos dados pelo usuário, essa é a capacidade mais avançada proporcionada pelo
+Windows e, por sua vez, pela arquitetura
+documento-vista. A possibilidade de criação
+semi-automática de tabelas de propriedades
+facilita muito a organização e armazenamento dos dados de configuração.
+ Para a visualização dos dados emprega-se
+na vista a classe da MFC mais adequada
+para a apresentação de formulários em tela.
+Essa classe possibilita a inserção fácil de
+componentes permitindo a construção de
+
+2573
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+instrumentos virtuais, bem como a apresentação adequada de gráficos.
+ Dentro da arquitetura_documento-vista existe uma classe conhecida como aplicação,
+a qual é responsável pelo gerenciamento do
+aplicativo e na qual são inseridas todas as
+rotinas de processamento não relacionadas
+com o documento e nem com a vista, mas,
+no caso em questão, relacionadas com a
+aquisição e o processamento dos dados adquiridos.
+ A plataforma de 32 bits do Windows possui
+um espaço de endereçamento de memória
+muito grande, teoricamente limitado apenas
+pelo espaço disponível no disco rígido do
+sistema. Adicionando-se a isso os mais diversos meios de armazenamento de massa
+atuais, a quantidade de dados possíveis de
+serem armazenados fica muito elevada.
+ A API Win32 possui um amplo conjunto de
+rotinas para comunicação_em_rede que vão
+desde
+protocolos
+tradicionais
+como
+NetBios, TCP-IP e IPX-SPX, até protocolos
+mais modernos como tunelamento PPTP e
+IPSec, específicos para comunicação entre
+computadores via Internet. Acrescentando a
+isto a possibilidade de programação distribuída com uma interface aberta como
+DCOM (Distributed Component Object
+Module), a capacidade de intercâmbio de
+dados pode assumir as mais diversas formas.
+Estas características indicam que a plataforma
+em questão é bastante adequada para o desenvolvimento de um sistema SCADA. A padronização
+e a ampla documentação fazem com que o custo de
+propriedade de sistemas desenvolvidos nela seja fortemente reduzido.
+3.4 Sistema desenvolvido
+O sistema SCADA apresentado neste artigo foi
+desenvolvido para utilização em plataforma Microsoft Windows, utilizando-se como ferramenta de edição o Microsoft Visual Studio 2010. Todos os códigos foram escritos na linguagem C++, com a utilização de recursos da MFC, seguindo a arquitetura_documento-vista. Foram utilizadas bibliotecas específicas para acesso aos dispositivos IO da placa de aquisição_de_dados, fornecidas pelo fabricante.
+A ideia geral do aplicativo é ser um sistema multithread (Hennessy e Patterson, 2009 Parhami, 2008)
+baseado no paradigma da orientação_a_objetos, com
+métodos bem definidos para cada tarefa a ser executada, a fim de facilitar a remodelação para utilização
+com equipamentos diferentes, sejam diferentes periféricos com diferentes bibliotecas de manipulação,
+sejam diferentes equipamentos a serem controlados.
+Seguindo a arquitetura_documento-vista, todas as
+rotinas para acesso aos periféricos foram escritas em
+métodos da classe aplicação, enquanto que os con-
+
+ISBN 978-85-8001-069-5
+
+troles de operação e a interface com o operador foram declarados na classe vista.
+Muitas rotinas foram, obrigatoriamente, implementadas em workerthreads (segmento de trabalho
+usado para manipular tarefas de plano de fundo),
+para execução em paralelo com o restante do sistema
+a fim de aumentar a velocidade de execução e evitar
+o congelamento durante as execuções.
+Algumas sub-rotinas foram implementadas como
+ferramentas para o sistema principal. Uma rotina de
+monitoramento da porta_serial foi implementada para
+comunicação com o inversor de corrente. Este equipamento utiliza uma comunicação serial padrão
+RS232 e protocolo Modbus-RTU. Para implementação desta rotina foi criada uma classe chamada Cserial, que contém métodos de configuração de porta e
+início de comunicação, envio de dados pelo barramento e finalização da comunicação, com liberação
+do hardware. Quando executado o método de início
+da comunicação, um workerthread é iniciado com
+rotinas de overlapped IO (Davis, 1996), que responde a três eventos chegada de caractere na porta_serial, solicitação de envio de dados pela porta_serial e
+finalização da comunicação. Devido ao fato dos
+eventos de recebimento de informações pela porta
+serial não serem de prioridade crítica ao funcionamento do sistema, o tratamento destes dados foi vinculado  disponibilidade do sistema operacional, de
+forma a não sobrecarregar o sistema_de_controle.
+Embora o inversor de corrente atualmente utilizado
+não realize comunicação full-duplex, esta rotina de
+comunicação serial foi desenvolvida de forma a suportar leitura e escrita simultâneas na porta_serial.
+Um componente ActiveX, denominado Grafxy,
+foi reescrito para se adaptar ao projeto. Este componente, inicialmente desenvolvido pela Hiperlogic
+Informática, realiza a geração de gráficos de valores
+discretos em forma de sinal analógico. Após sua remodelação, esta ferramenta é capaz de desenhar até
+três sinais simultâneos sobrepostos, realizando automaticamente as correções de escalas pertinentes. Este
+componente se faz necessário para facilitar a visualização de fatores como diferenças de fase e amplitude
+entre sinais.
+A organização geral do sistema SCADA desenvolvido encontra-se indicada na Figura 2.
+Na etapa de inicialização do hardware são executadas todas as rotinas de configuração de periféricos, seleção de canais digitais e analógicos que serão
+monitorados, configuração da porta_serial e início da
+sua rotina de monitoramento, e início da aquisição de
+dados de tensão e corrente.
+A aquisição_de_dados ocorre de forma contínua
+em um workerthread, com uma taxa de amostragem
+de 30KHz. Este thread realiza a leitura dos dados
+aquisitados e transfere os valores para um buffer circular alocado dinamicamente em memória, para facilitar o acesso aos mesmos a partir de qualquer função
+do sistema. Uma mensagem é postada, periodicamente, na fila de mensagens do sistema operacional,
+
+2574
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Inicialização do
+hardware
+
+Aquisição
+continua de
+dados
+
+Exibição de
+dados
+
+Sincronismo do
+gerador
+
+Controle do operador
+Conexão ao
+barramento
+
+Monitoramento
+de Operação
+
+Figura 2. Organização simplificada do sistema SCADA desenvolvido.
+
+contendo a quantidade de dados aquisitados, para que
+a vista possa acessar estes dados de acordo com a
+disponibilidade de processamento do sistema operacional. Uma vez que os dados são acessados pela
+vista, a mesma realiza a cópia de determinada
+quantidade dos mesmos para que possam ser processados para exibição. Estes dados passam por cálculos
+que determinam valores eficazes (RMS) de tensão,
+potência_ativa e reativa, diferença de fase entre sinais, além de indicar os sinais discretos no tempo e a
+magnitude do conteúdo_harmônico discreto em frequência.
+A etapa de sincronismo pode ser realizada de
+maneira manual ou automática. O sincronismo automático é realizado de forma sequencial, seguindo a
+ordem ajuste de amplitude da tensão do gerador,
+correção do ângulo de defasagem entre as tensões,
+teste redundante após alguns instantes para garantir
+que os valores estejam dentro dos referenciais estipulados e, por fim, liberação para conexão do gerador
+ao barramento. O ajuste de amplitude é realizado em
+um laço de execução onde o valor eficaz da tensão do
+gerador é comparado ao da tensão do barramento.
+Dependendo da diferença dos valores medidos, um
+comando é enviado, através da porta IO digital conectada ao hardware de ajuste de amplitude (RAT),
+determinando o aumento ou redução da tensão. Este
+processo é repetido até que a diferença entre as tensões eficazes esteja dentro dos valores aceitáveis para
+conexão. Após a realização desta etapa, ocorre o início da etapa de sincronismo de fase entre as tensões
+do gerador e do barramento. Para a atual arquitetura
+da planta de testes, este ajuste ocorre com a variação
+(aumento ou diminuição) da velocidade do gerador.
+Este processo de ajuste da velocidade do gerador
+permite adiantar e atrasar, respectivamente, a tensão
+do gerador em relação ao barramento energizado.
+Após o cálculo do ângulo de defasagem entre as tensões, um comando é enviado ao inversor para que
+ocorra o aumento ou redução de velocidade do gera-
+
+ISBN 978-85-8001-069-5
+
+dor e em seguida o retorno  velocidade síncrona do
+mesmo. Este processo é repetido até que o ângulo de
+defasagem esteja dentro dos valores estipulados. Para
+garantir que as diferenças de amplitude e defasagem,
+entre as tensões do gerador e do barramento ao qual
+este será conectado, estejam dentro dos limites estipulados para que a conexão ocorra de forma segura,
+um novo teste é executado após um determinado intervalo de tempo onde, caso haja algum valor fora
+dos limites estabelecidos, o processo é abortado e
+reiniciado, exibindo esta informação ao operador.
+Cada etapa deste sincronismo é realizada em um
+workerthread específico, podendo ser abortada pelo
+operador do sistema a qualquer instante.
+Após realizar a conexão do gerador ao barramento, o sistema continua operando em regime de
+monitoramento. Os processos de aquisição_de_dados,
+cálculos e apresentação dos resultados em tela continuam sendo executados.
+Foram implementadas rotinas de gravação, em
+disco, dos dados monitorados em tempo_real, para
+permitir uma posterior análise dos mesmos. Estas
+rotinas foram construídas de modo que seu início e
+término de operação pudessem ocorrer tanto por comandos do operador como por ocorrência de determinados eventos, previamente configurados. Estes
+eventos, que geram o início automático da gravação
+de dados, podem ser de diversas naturezas, tais como valores médios ou instantâneos de tensão e corrente ultrapassando valores pré-estabelecidos, aumento do conteúdo_harmônico e variação da defasagem entre os sinais. Para garantir uma análise mais
+detalhada da oscilografia, os dados gravados em disco contemplam os dois segundos que antecedem o
+comando de início da gravação.
+4 Resultados
+O sistema SCADA apresentado na seção anterior
+ainda se encontra em fase de aperfeiçoamento. Apesar deste fato, as principais funções de monitoramento e comando já foram implementadas e testadas.
+O sistema desenvolvido diferencia-se dos existentes no mercado por agregar s rotinas de supervisão e de controle as funções de oscilografia. As versões comerciais, tal como o SMGer670 da AQX Instrumentação (AQX Instrumentação, 2012), apesar de
+atenderem s necessidades de monitoramento, não
+permitem o acionamento de quaisquer atuadores,
+sejam eles para controle ou proteção dos sistemas
+monitorados.
+A Figura 3 representa a interface do sistema_supervisório referente ao monitoramento do gerador e
+da rede, com visualização das diversas grandezas em
+tempo_real e do painel de comando associado  operação do sistema. Esta figura apresenta a condição de
+operação em que o gerador está conectado ao grid.
+Os dados mostrados  direita correspondem aos valores RMS de uma das fases do gerador, da fase
+
+2575
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 5. Sistema com visualização de conteúdo_harmônico.
+Figura 3. Interface do sistema_supervisório desenvolvido (versão
+inicial).
+
+correspondente da rede_elétrica e da corrente existente entre elas. O gráfico, mais ao centro, indica os
+mesmos dados, sendo que as fases estão sobrepostas
+devido ao paralelismosincronismo e a corrente, ampliada para melhor visualização, apresenta grande
+distorção.
+Os resultados obtidos até o momento destacam a
+importância do sistema desenvolvido na operação da
+planta piloto. Inicialmente projetado sem a amostragem do conteúdo_harmônico, o aplicativo possibilitou
+a visualização de consideráveis distorções na corrente circulante no sistema elétrico monitorado. Para um
+melhor entendimento das distorções observadas, foi
+acrescida a visualização em tempo_real do conteúdo
+harmônico, discreto em frequência, conforme indicado nas Figuras 4 e 5.
+Os dados oscilografados e armazenados em disco permitem uma análise offline muito mais detalhada dos eventos que ocorrem com o sistema. Na
+Figura 6 podem-se observar as variações ocorridas
+com as tensões do gerador e do barramento no momento em que o mesmo é desconectado do grid. Esta
+imagem foi gerada a partir de um arquivo de oscilografia gravado em disco após comando manual.
+
+Figura 6. Tensões decorrentes no instante da desconexão do gerador.
+
+A Figura 7 apresenta a variação de corrente
+ocorrida durante um dos testes realizados com a planta. O registro desta oscilografia foi iniciado de forma
+automática pelo aumento da corrente.
+
+Figura 7. Surto de corrente do gerador.
+
+5 Conclusões
+
+Figura 4. Sistema com visualização de conteúdo_harmônico.
+
+ISBN 978-85-8001-069-5
+
+Este trabalho apresentou uma proposta inovadora de uma plataforma de sistema SCADA que incorpora s funções usualmente encontradas nos sistemas_supervisórios e de controle as funções próprias
+
+2576
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+dos sistemas de oscilografia. O sistema foi desenvolvido em linguagem C++, explorando as características de execução via múltiplas threads, em uma plataforma de processamento do tipo IBM-PC  Windows
+7, com reduzido custo de implementação.
+A arquitetura de hardware, juntamente com as
+ferramentas de software adotadas, atende de maneira
+satisfatória a todas as exigências inicialmente previstas para o sistema proposto.
+O sistema mostrou-se essencial, não só para o
+entendimento dos fenômenos que ocorrem durante as
+manobra de conexão do gerador ao grid, mas também
+para o acompanhamento das demais etapas de um
+projeto de PD que objetiva controlar a potência
+ativa de geradores_síncronos auxiliares em usinas
+hidrelétricas através da técnica de compensação série.
+Agradecimentos
+O presente trabalho contou com apoio técnico e
+financeiro da empresa AES Tietê, de acordo com o
+Programa de Pesquisa e Desenvolvimento do Setor
+de Energia Elétrica definido pela Agência Nacional
+de Energia Elétrica (ANEEL). Os autores também
+agradecem o apoio financeiro recebido da CAPES
+(Coordenação de Aperfeiçoamento de Pessoal de
+Nível Superior) e CNPq (Conselho Nacional de Desenvolvimento Científico e Tecnológico).
+Referências Bibliográficas
+Albuquerque, P. U. B. (2009). Redes Industriais
+Aplicações em Sistemas Digitais de Controle
+Distribuido. Ensino Profissional Editora, 2
+edição, ISBN 9788599823118.
+AQX Instrumentação (2012). Datasheet SMGer670
+AQX. Online. Available httpwww.aqx.
+
+ISBN 978-85-8001-069-5
+
+com.brprodutosSMGer670datasheetSMGer6
+70.pdf.
+Brey, B. (2000). The Intel Microprocessors
+Architecture, Programming, and Interfacing.
+Prentice Hall, 5th Edition, ISBN 0139954082.
+Cavalcanti, F. A. (2008). SupervisórioIHM Aplicado
+ao Processo de uma Coluna de Destilação.
+httpwww2.ee.ufpe.brinstrumentacaomonograf
+iasFranciscoMonografiaPROMINPI.pdf.
+Davis, R. (1996). Win32 Network Programming.
+Addison-Wesley Developers Press, ISBN
+0201489309.
+Farines, J. M. Fraga, J. S. and Oliveira, R. S. (2000).
+Sistemas de Tempo Real, 12a Escola de
+Computação, IME-USP.
+Hennessy, J. L. and Patterson, D. A. (2009).
+Arquitetura de Computadores uma abordagem
+quantitativa. Ed. Campus, 4a edição, ISBN13
+9788535223552.
+Kundur, P. (1994). Power System Stability and
+Control. Mcgraw-Hill Inc, ISBN13 9780070359581.
+Microsoft (2012). Microsoft Developer Network.
+Online. Available httpmsdn.microsoft.com
+librarydefault.aspx.
+Parhami, B. ( 2008). Arquitetura de Computadores,
+de Microprocessadores a Supercomputadores.
+Ed. McGraw Hill Brasil, 1a edição, ISBN
+8577260259.
+Prosise, J. (1999). Programming Windows with
+MFC. Microsoft Press 2nd Edition, ISBN13
+978-1572316959.
+ScadaBr (2012). Manual ScadaBr. Online.
+Available
+httpufpr.dl.sourceforge.net
+projectscadabrSoftwareDocsManual20Scad
+aBR.pdf.
+Tanenbaum, A. S. (2007). Organização Estruturada
+de Computadores. Ed. Prentice Hall (Pearson),
+5a edição, ISBN 8576050676.
+
+2577

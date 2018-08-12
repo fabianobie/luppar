@@ -1,0 +1,743 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+IMPLEMENTACAO E AVALIACAO DE UM ALGORITMO DE ESTIMACAO DE
+DENSIDADES BASEADO NO MKDE APLICADO A CLASSIFICACAO DE
+ELETRONS NO DETECTOR ATLAS
+Igor Abritta Costa, David de Melo Souza, Rafael Antunes Nobrega, Jose Manoel de
+Seixas
+
+
+
+
+Universidade Federal de Juiz de Fora
+Juiz de Fora-MG, Brasil
+
+Universidade Federal do Rio de Janeiro
+Rio de Janeiro-RJ, Brasil
+
+Emails igorabritta@gmail.com, david.melo@engenharia.ufjf.br, ranobr@gmail.com,
+seixas@lps.ufrj.br
+Abstract The electron identification is of fundamental importance for the physics demanded by ATLAS
+experiment due to the presence of these in the final process of interest particles decay. In particle physics
+environment, the occurrence probability of relevant electrons are very low compared to particles considered
+background, requiring algorithms with detection efficiency index and background rejection each time better. In
+this work, the methods applied in the electron identification in ATLAS experiment will be reviewed and possible
+optimizations will be evaluated from the data produced by the ATLAS experiment. Concentrated in the offline
+context, the work reproduces the method based on Likelihood and proposes an improvement with the use of
+multivariate technique MKDE (Multivariate Kernel Density Estimation), capable of mitigate the error inserted
+in consideration of independence between discriminating variables entered by the method Likelihood as is the
+case of ATLAS.
+Keywords
+
+Electron identification, Likelihood, Multivariate KDE
+
+Resumo A identificacao_de_eletrons e de fundamental importancia para a fsica que se deseja observar no
+experimento ATLAS, devido a presenca destes no processo final de decaimento de partculas de interesse. Nesse
+ambiente de fsica de partculas, a probabilidade de ocorrencia de eletrons, que sao de interesse, sao baixssimas
+em relacao a partculas consideradas rudo de fundo, exigindo algoritmos com ndices de eficiencia de deteccao e
+rejeicao de rudo de fundo cada vez melhores. Nesse trabalho, os metodos aplicados na identificacao_de_eletrons no
+Experimento ATLAS serao revisados e possveis otimizacoes serao avaliadas. Concentrado no contexto offline, o
+trabalho reproduz o metodo baseado em verossimilhanca e propoe uma melhoria com o uso da tecnica multivariada
+MKDE (do ingles, Multivariate Kernel Density Estimation), capaz de mitigar o erro inserido na consideracao de
+independencia entre as variaveis discriminantes, inserida em aplicacoes do metodo de verossimilhanca, como e o
+caso no ATLAS.
+Palavras-chave
+
+.
+
+Introducao
+
+Em ambientes industriais ou em laboratorios de
+pesquisa, a analise multivariada tem se mostrado
+uma ferramenta poderosa na resolucao de varios
+problemas ligados a estimacao e selecao de eventos. Problemas que requerem solucoes deste tipo
+ocorrem em varias areas do conhecimento.
+Nas ultimas decadas, varios experimentos geradores de enorme quantidade de dados foram iniciados, fazendo com que a importancia da estimacao de densidade, utilizando-se de metodos nao
+parametricos, crescesse consideravelmente. Os
+Experimentos ligados ao acelerador de partculas, conhecido como LHC (do ingles Large Hadron Collider ), representam alguns deles (CERN,
+2015). Em geral, a fsica experimental de altas
+energias e um dos ramos da ciencia que mais exige
+dos sistemas de processamento, tendo em vista
+que os eventos de interesse sao muito raros e contaminados com alto nvel de rudo de fundo, devendo
+o sistema ser capaz de eliminar a maior quantidade possvel dos eventos de rudo de fundo sem
+
+ISSN 2525-8311
+
+descartar os raros eventos de interesse. Isso faz
+com que o desempenho dos algoritmos aplicados
+para este fim seja essencial e uma busca contnua
+pela otimizacao dos mesmos faz-se indispensavel.
+Nos anos de 2013 (Collaboration et al., 2013)
+e 2014 (Collaboration et al., 2014), a colaboracao ATLAS publicou analises e resultados da tecnica de verossimilhanca aplicada na identificacao
+de eletrons. Contudo, o grupo utiliza uma simplificacao da formulacao matematica desse metodo,
+assumindo independencia entre as variaveis. Portanto, possibilita a investigacao do impacto desta
+simplificacao no desempenho do metodo.
+Este trabalho se concentra na identificacao de
+eletrons, no detector ATLAS, analisando os subprodutos das colisoes geradas no LHC. Mais especificamente, na estimacao de densidades conjuntas nao-parametricas, no intuito de mitigar o
+problema de dependencia entre as variaveis utilizadas pelo algoritmo de identificacao por verossimilhanca. Foi desenvolvido um algoritmo para
+estimacao de densidades uni e multidimensional,
+efetuando a comparacao dos mesmos.
+
+2902
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Este documento esta organizado da seguinte
+maneira a Secao 2 apresenta uma sntese da identificacao_de_eletrons no detector ATLAS, na Secao
+3 uma discussao sobre estimacao de densidades de
+Nucleo (KDE) sera apresentada, a Secao 4 apontara os resultados e analises e finalmente na Secao
+5 as conclusoes serao pontuadas.
+2
+
+geradas na colisao (Lippmann, 2012). Um exemplo do processo de interacao das principais partculas com o detector pode ser visto na Figura 3.
+Os muons, protons e eletrons deixam sinal no detector de traco os muons, eletrons, fotons e protons no calormetro eletromagnetico os muons,
+protons, neutrons no calormetro hadronico e a
+camara de muons somente detecta os muons.
+
+Identificacao de eletrons no
+experimento ATLAS
+
+Com 46 metros de comprimento, 25 metros de altura, 25 metros de largura e 7 mil toneladas, o
+detector ATLAS e o maior detector de partculas
+ja construdo (Figura 1). Situa-se em uma caverna
+a 100 metros, no CERN, como pode ser visto na
+Figura 2, proximo da cidade de Meyrin, na Suca.
+
+Figura 3 Assinatura das partculas no detector
+ATLAS. Extrado de (Landua, 2009).
+
+2.2
+Figura 1 Detector ATLAS. Extrado de (CERN,
+2016).
+
+Figura 2 Vista subterranea do detector ATLAS.
+Extrado de (CERN, 2016).
+
+No intuito de alcancar novas descobertas,
+utilizando-se de eventos raros, o experimento efetua colisoes com uma taxa muito alta de operacao,
+gerando um conjunto muito grande de informacoes, onde grande parte desses eventos podem ser
+descartados a fim de evitar o armazenamento de
+dados nao relevantes (Watts, 2003).
+Nesse contexto, faz-se necessario um Sistema
+de Filtragem Online, capaz de separar os eventos considerados importantes e armazena-los para
+uma analise Offline. Essas analises utilizam algoritmos mais complexos e criteriosos para selecionar as partculas de interesse da analise proposta.
+2.3
+
+Feixes de protons sao acelerados em direcoes
+opostas pelo LHC e colidem no centro do Detector
+ATLAS, gerando subptrodutos sob a forma de novas partculas, que se espalham em todas as direcoes. Por ser um detector de uso geral , o ATLAS
+deve ser capaz de identificar os mais diversos tipos de partculas assim como medir suas energias
+e trajetorias. Para isto, seis subsistemas de deteccao diferentes foram dispostos em camadas ao
+redor do ponto de colisao, fazendo com que a reconstrucao completa dos eventos fosse possvel.
+2.1
+
+Perfil dos eventos do ATLAS
+
+O perfil dos eventos de interesse do ATLAS e
+suas particularidades ditaram as caractersticas de
+construcao e modulacao do detector. Cada componente deste equipamento foi especificado para
+medir um conjunto de propriedades das partculas
+
+ISSN 2525-8311
+
+Sistema de filtragem do ATLAS
+
+Algoritmos de identificacao_de_eletrons
+
+Uma boa performance dos algoritmos na reconstrucao e identificacao_de_eletrons e um requisito
+fundamental para o sucesso do programa cientfico do experimento ATLAS, uma vez que as principais assinaturas dos processos eletrofracos sao os
+leptons (Alison, 2014), sendo utilizados para inumeras analises, como, por exemplo, as medidas de
+precisao do modelo padrao, a descoberta do boson
+de Higgs e a busca por uma nova fsica alem do
+Modelo Padrao.
+Os eletrons isolados produzidos nos processos
+fsicos de interesse estao sujeitos a uma grande
+quantidade de rudos de fundo provenientes de hadrons identificados equivocadamente, fotons convertidos e eletrons nao-isolados. Por essa razao, e
+de primordial importancia alcancar uma eficiente
+identificacao_de_eletrons, sobre todo o detector, e
+manter uma grande rejeicao de rudo de fundo.
+
+2903
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+A colaboracao ATLAS utiliza dois algoritmos
+para identificacao_de_eletrons O T2Calo, que atua
+na parte rapida da selecao, usando a informacao
+de calorimetria, que e combinada com a de traco,
+e um algoritmo baseado em verossimilhanca, que
+atua na parte de precisao.
+O T2Calo efetua a identificacao_de_eletrons
+utilizando cortes nas PDFs (do ingles Probability
+Density Function) de variaveis altamente discriminantes provenientes do detector. Ja o algoritmo
+baseado em verossimilhanca consiste na estimacao
+das densidades dessas variaveis e calculo do discriminante utilizando a PDF conjunta.
+3
+
+Estimacao de densidade
+
+O KDE (do ingles Kernel Density Estimation) e
+uma tecnica nao-parametrica para estimacao de
+densidades de distribuicao onde cada observacao
+e ponderada pela distancia em relacao a um valor
+central, o nucleo. Apos a estimacao da densidade
+de um conjunto de dados, tem-se, supostamente,
+conhecimento sobre a probabilidade de ocorrencia
+de eventos futuros, podendo ser usado em problemas de classificacao (Scott, 2015).
+3.1
+
++
+
+ K (u) du  1 e K (u)  0  u  < (Fun-
+
+
+
+coes Kernels de ordem maiores que 2 nao satisfazem a ultima propriedade).
+Alguns exemplos de funcoes kernel de segunda
+ordem sao (Scott, 2015) Triangular, Epanechnikov, Quartic, Triweight e Gaussiana, sendo que a
+ultima foi a escolhida para esse trabalho.
+Em ambas as abordagens, histogramacao e
+KDE, fica clara a dependencia da estimacao em
+relacao ao parametro h de largura de banda. Na
+literatura existem algumas formas de otimizacao
+da estimacao de densidades por meio da escolha
+otima do parametro h. Nesse trabalho, a escolha
+do parametro h foi feita utilizando o metodo Lp ,
+que e uma ideia bastante comum para medir a diferenca entre duas funcoes, dado pela Equacao 4
+Z
+Lp 
+
+f  gp
+
+1
+p
+
+(4)
+
+onde p e o parametro a ser escolhido. Quando
+p  2 na Equacao 4, temos
+  Z h
+i2
+ISE fh 
+fh (x)  f (x) dx
+
+Estimacao de densidade univariada
+
+Uma das maneiras mais simples de abordar esse
+problema e a estimacao por histograma, equacionado como segue
+n
+1 XX
+I (xi  Bj ) I (x  Bj )
+fh (x) 
+nh i1 j
+
+onde K(u) e a funcao Kernel, h e a largura de
+banda e n e o numero de eventos em torno de
+xi . Para garantir que esse modelo retorne uma
+funcao de densidade, o Kernel deve satisfazer
+
+(1)
+
+que e, entao, chamada de Integral do Erro
+Quadratico (do ingles, Integrated Squared Error
+(ISE)), sendo assim, para o calculo da Integral
+do Erro Quadratico Medio (do ingles, Mean Integrated Squared Error (MISE)), utiliza-se o valor
+esperado de f (x), obtendo a Equacao 6.
+o2
+  Z n
+E fh (x)  f (x) dx
+M ISE fh 
+
+onde,
+Bj  xo + (j  1) h, xo + jh)
+jZ
+
+ISSN 2525-8311
+
+(6)
+
+(2)
+
+Esse metodo lida com os parametros de origem (xo ) e tamanho do bin (h), sendo que ambos, se escolhidos de maneira errada, podem resultar em uma ma estimacao. No intuito de diminuir esse problema, e possvel efetuar a estimacao pela media de sub-histogramas deslocados, tornando o metodo independente da origem
+(Seather, 1992). Entretanto, o problema de otimizacao do parametro h continua e sua otimizacao foi considerada em varios trabalhos, como por
+exemplo (Abramson, 1982), (Silverman, 1986) e
+(Comaniciu et al., 2001).
+Outra forma de estimacao de densidades
+muito utilizada na literatura e o uso de um estimador por nucleo, que de forma direta, aplica
+uma funcao Kernel em cada evento, considerando
+a contagem de eventos em sua vizinhanca. O estimador e dado pela Equacao 3 e foi Rosenblatt em
+1956 o primeiro autor que considerou esse modelo.
+
+
+n
+1 X
+(xi  Xk )
+f (xi ) 
+K
+nh k1
+h
+
+(5)
+
+(3)
+
+Do mesmo modo que o Erro Quadratico Medio (do ingles, Mean Squared Error (MSE)), que e
+a medida do erro medio de um certo ponto x, a expressao do MISE pode ser decomposta em termos
+de bias e variancia, como mostrada na Equacao 7.
+ 
+M SE fh
+
+n
+o2
+E fh (x)  f (x)
+
+2
+
+
+Bias fh (x) + var f (x)
+2
+1 00
+f (x) h2 2 (K) +
+2
+
+f (x)R(K)
+1
++ o nh + h4
+nh
+
+
+
+
++
+
+(7)
+
+Na Equacao 7, o ultimo termo e devido ao erro
+de truncamento da expansao de Taylor, como sugerido em (Hansen, 2004) faz-se uma aproximacao
+assintotica no MSE, desconsiderando esse termo,
+a equacao recebe o nome de AMSE . Quando se
+trata de distribuicoes e nao de pontos, a medida
+de erro e chamada de MISE, e sua aproximacao
+assintotica AMISE, dada pela Equacao 8.
+AM ISE
+
+
+
+AM SE f (x) dx
+
+
+
+R
+
+
+
+1 4
+h 2 (K)2 R (f 00 )
+4
+
++
+
+1
+R (K)
+nh
+
+(8)
+
+2904
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+onde 2 representa a variancia do Kernel de segunda ordem e R(.) a rugosidade.
+Temos entao que o primeiro termo (bias) aumenta proporcionalmente ao parametro h, ja o segundo termo (variancia) diminui de maneira inversamente proporcional ao aumento de h, com isso
+observa-se claramente um conflito entre reduzir a
+variancia e o bias de forma simultanea, visto que a
+escolha de um h pequeno para garantir um menor
+bias ocasiona uma variancia grande (Scott, 2015).
+Na Equacao 8, fazendo a primeira derivada
+igual a zero, pode-se calcular a largura de banda
+otima, dada pela Equacao 9.
+"
+hAM ISE 
+
+R (K)
+
+1
+5
+
+
+2 (K)2 R f 00 n
+
+(9)
+
+Como a Equacao 9 mostra, o problema de calcular a largura de banda otima via AMISE, com o
+conhecimento somente da distribuicao, e circular.
+Assumiu-se uma distribuicao normal com variancia  2 para a escolha automatica desse parametro
+(Silverman, 1986). Com isso o parametro de largura de banda fixa h que minimiza o AMISE e
+h  1, 06n15
+
+
+
+n
+X
+(xi  Xk )
+1
+K
+nh(xi ) k1
+h(xi )
+
+(11)
+
+onde h(xi ) e uma largura de banda que varia de
+acordo com o ponto xi .
+Para calcular o parametro de largura de banda
+variavel h(xi ) utiliza-se a Equacao 12, como sugerido por (Abramson, 1982).
+h (xi )  p
+
+h
+fp (xi )
+
+(12)
+
+onde, h e uma largura de banda fixa e fp (xi ) e
+a probabilidade de xi na PDF. Para estimar esse
+ultimo parametro fez-se um estudo sobre metodos de validacao cruzada, que utilizam os criterios
+de ISE e MISE e entao utilizando um algoritmo
+proposto por (Shimazaki and Shinomoto, 2007) de
+estimacao da binagem otima para um histograma,
+que aborda o problema fazendo uso de uma funcao
+custo que minimiza o criterio MISE. Entretanto,
+essa escolha nao mostrou um bom resultado devido as variedades nas formas das distribuicoes
+analisadas nesse trabalho. Para contornar este
+problema foi necessario inserir outro parametro,
+o , chamado de constante de proporcionalidade
+proposto por (Comaniciu et al., 2001), como mostram as equacoes 13 e 14
+
+ISSN 2525-8311
+
+
+fp (xi )
+
+1
+
+2
+
+(13)
+
+sendo  dado por
+n1
+
+e
+
+3.2
+
+n
+P
+
+log(fp (xi ))
+
+i1
+
+(14)
+
+Estimacao de densidade Multivariada
+
+O conceito de KDE univariado precisa ser ampliado quando precisa-se investigar a dependencia
+entre as variaveis do problema. Tendo como base
+a teoria univariada, uma generalizacao do KDE e
+mostrada na Equacao 15
+fh1 ,h2 ,...,hv (x1,2,...,v ) 
+ (x X ) 
+N
+1
+k1
+1 P 1 1
+... h1 K
+ n
+h1 h2
+h1
+v
+k1
+ (x X ) 
+ (x X ) 
+2
+k2
+v
+kv
+K
+...K
+h
+h
+
+(15)
+
+v
+
+2
+
+O raciocnio e analogo e, em nosso algoritmo,
+foi utilizado a forma generalizada matricial. Primeiro, a largura de banda foi modelada como
+H  diag(h1 , h2 , ..., hv )
+
+(10)
+
+A largura de banda h, como foi abordado, e
+um parametro crucial, e pode ser utilizado de duas
+formas, fixa ou variavel. A segunda abordagem
+possibilita a utilizacao de uma largura de banda
+h(xi ) para cada ponto de xi em que desejamos
+estimar a probabilidade fhi (xi ). Esse estimador e
+conhecido como balloon estimator e tem a forma
+fhi (xi ) 
+
+
+h (xi )  h
+
+(16)
+
+Foi escolhida a largura de banda fixa como
+proposto por (Wand and Jones, 1995), sendo uma
+generalizacao multidimensional de h.
+
+hj 
+
+4
+d+2
+
+
+
+1
+(d+4)
+
+1
+
+n (d+4) j
+
+(17)
+
+onde, d representa o numero de dimensoes do problema, j e o subndice da respectiva dimensao, n
+e o numero de eventos e j e o desvio padrao dos
+eventos da dimensao j. Note-se que, para d1, a
+Equacao 17 coincide com o metodo proposto por
+Silverman, dado pela Equacao 10.
+Sendo x  x1 , x2 , ..., xv , tem-se a formula para o KDE Multivariado, denominado de
+MKDE
+fH (x)
+
+
+
+
+1
+n
+1
+n
+
+n
+P
+k1
+n
+P
+
+1
+K
+det(H)
+
+
+
+H 1 (x  Xk )
+(18)
+
+KH (x  Xk )
+
+k1
+
+com,
+KH (a) 
+
+
+1
+K H 1 a , a  (x  Xk )
+det(H)
+
+4
+
+(19)
+
+Resultados
+
+Uma boa estimacao da densidade conjunta das variaveis discriminantes e central para o metodo de
+Verossimilhanca e, devido a isto, este trabalho se
+concentrou principalmente neste topico. Para tal,
+dados de Monte Carlo gerados pela Colaboracao
+ATLAS foram utilizados.
+
+2905
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+O menu utilizado contempla 13 variaveis discriminantes e os dados foram divididos em 12 regioes, tres em Et e quatro em , ponderando sobre a estatstica disponvel e regioes de interesse,
+sendo que os resultados aqui mostrado sao referentes a regiao 1, que compreende os dados com
+Et < 20GeV e  < 0.8, interessantes por ser
+onde mais existe contaminacao de rudo de fundo.
+O conjunto de dados foi dividido igualmente
+em treinamento e validacao. O conjunto de treinamento e utilizado para estimar as PDFs e no
+calculo de parametros (por exemplo, a matrix de
+AUC (do ingles, Area Under the Curve) na Figura 6) utilizados na verossimilhanca, ja o conjunto de validacao e utilizado para avaliar o desempenho dos algoritmos construdos.
+A implementacao do algoritmo de estimacao
+de densidades foi efetuado em conformidade com
+as formulacoes matematicas descritas na Secao 3.1
+e seu resultado pode ser visto na Figura 4, onde
+sao mostradas 4 distribuicoes, duas de sinal e duas
+de rudo de fundo, sendo que a escolha da melhor
+binagem para visualizacao do histograma foi feita
+utilizando a medida do 2 .
+Variável 11 - Sinal
+
+Probabilidade Normalizada
+
+Probabilidade Normalizada
+
+Variável 12 - Sinal
+
+Variável 11
+
+Variável 12
+Variável 12 - Ruído de Fundo
+
+Variável 11 - Ruído de Fundo
+Probabilidade Normalizada
+
+Probabilidade Normalizada
+
+Variável 12
+
+Variável 11
+
+Figura 4 Histograma da variavel e a sua PDF
+estimada pelo KDE. (Sup. Esq.) Variavel 12 de
+sinal (Sup. Dir.) Variavel 11 de sinal (Inf. Esq.)
+Variavel 12 de rudo de fundo (Inf. Dir.) Variavel
+11 de rudo de fundo.
+De forma analoga, o resultado da implementacao do algoritmo de estimacao de densidades multivariadas, para o caso bidimensional, pode ser observado na Figura 5, trazendo ao lado das mesmas,
+para fins de comparacao, as densidades estimadas
+a partir do metodo univariado, utilizando-se de
+suas marginais (do ingles, Marginal ) e do histograma normalizado da distribuicao.
+Uma vez com as densidades estimadas, podese utiliza-las no algoritmo de identificacao_de_eletrons, baseado no metodo de verossimilhanca, e
+efetuar uma comparacao entre o uso das PDFs
+construdas de forma marginal e conjunta. Entretanto a escolha dos pares de variaveis discriminantes que serao utilizados para estimacao de
+densidade bivariada e de suma importancia, sendo
+que o metodo de analise aqui proposto e observar a diferenca entre AUC (do ingles, Area Under
+the Curve) das analises conjunta (multivariada) e
+
+ISSN 2525-8311
+
+Figura 5 Grafico que ilustra para um par de variaveis a diferenca entre a estimacao de densidade
+conjunta (Joint) e marginal (Marginal ), com o
+histograma normalizado da distribuicao. (Superior) Sinal (Inferior) Rudo de Fundo
+.
+marginal (univariada) para todos os pares de variaveis e entao escolher as que apresentarem os
+maiores ndices de melhoria, no intuito de otimizar a performance do algoritmo de classificacao de
+eventos multivariado.
+A Figura 6 apresenta a diferenca de AUC das
+ROCs obtidas a partir dos algoritmos_de_estimacao unidimensional e bidimensional aplicados a
+cada um dos pares possveis entre as 13 variaveis
+discriminantes. Observa-se que os pares 4 e 7 10 e
+12 5 e 6 9 e 11 sao possveis escolhas baseando-se
+nessa proposta.
+
+Figura 6 Grafico de AUC com a combinacao de
+todos os pares de variaveis, para a Regiao 1.
+A Figura 7 mostra a comparacao, via curva
+ROC, entre a utilizacao da analise Univariada e
+Bivariada para os dados de validacao da regiao 1.
+Observando esses resultados, tem-se um indicativo
+que o metodo de analise multivariada apresenta
+
+2906
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+nals of Statistics pp. 12171223.
+Alison, J. (2014). The road to discovery Detector alignment, electron identification, particle
+misidentification, ww physics, and the discovery of the Higgs Boson, Springer.
+CERN (2015). Experiments, httphome.cern
+aboutphysics. Accessed in 20-04-2016.
+CERN (2016).
+Estrutura do detector atlas,
+httpskjende.web.cern.chkjendept
+atlas.htm. Accessed in 23-04-16.
+Figura 7 Curva ROC da Regiao 1 comparando a
+analise Univariada com a Bivariada para os eventos de CC. (Sup. Esq.) Par de variaveis - 9 e
+11 (Sup. Dir.) Par de variaveis - 10 e 12 (Inf.
+Esq.) Par de variaveis - 5 e 6 e (Inf. Dir.) Par de
+variaveis - 4 e 7.
+um pequeno ganho de performance, uma vez que
+este metodo diminui o impacto dos eventuais erros
+causados pela consideracao de independencia das
+variaveis discriminantes.
+5
+
+Conclusoes
+
+Este trabalho apresentou resumo dos estudos, implementacao e analise relacionados a um algoritmo
+de estimacao de densidade nao-parametrico baseado no MKDE aplicado a selecao de eletrons para
+o Experimento ATLAS usando a tecnica de verossimilhanca. A identificacao_de_eletrons e de suma
+importancia para o programa de fsica do ATLAS.
+Os resultados apresentados indicam uma pequena melhora no uso de PDFs bidimensionais
+estimadas pelo metodo de MKDE na Verossimilhanca. Atualmente ha um novo conjunto de dados disponvel para analise e sera usado para confirmacao desses resultados. Ressalta-se que os Experimentos do LHC estao em evolucao e novas fases com energia e luminosidade maiores sao previstas. Com isso, o aprofundamento deste trabalho pode levar a um aprimoramento do sistema de
+selecao de eventos com impacto direto nos resultados das pesquisas desenvolvidas nesse ambiente.
+Agradecimentos
+Ao Programa de Pos-Graduacao em Engenharia
+Eletrica (PPEE) da Universidade Federal de Juiz
+de Fora (UFJF), a CAPES, ao CNPQ, a FAPERJ
+e a RENAFAE (MCTI) por darem suporte estrutural e financeiro para a realizacao deste artigo, e
+a Colaboracao ATLAS pelas discussoes frutferas
+acerca deste trabalho.
+Referencias
+Abramson, I. S. (1982). On bandwidth variation
+in kernel estimates-a square root law, The an-
+
+ISSN 2525-8311
+
+Collaboration, A. et al. (2013).
+Description
+and performance of the electron likelihood
+tool at atlas using 2012 lhc data, Technical report, ATLAS-COM-PHYS-2013-378.
+httpcds. cern. chrecord1537410.
+Collaboration, A. et al. (2014). Electron efficiency measurements with the atlas detector
+using the 2012 lhc proton-proton collision
+data, ATLAS-CONF-2014-032.
+Comaniciu, D., Ramesh, V. and Meer, P. (2001).
+The variable bandwidth mean shift and
+data-driven scale selection, Computer Vision,
+2001. ICCV 2001. Proceedings. Eighth IEEE
+International Conference on, Vol. 1, IEEE.
+Hansen, B. E. (2004). Nonparametric estimation
+of smooth conditional distributions, Dept. of
+Economics University of Wisconsin .
+Landua, R. (2009).
+O lhc, httpwww.
+scienceinschool.orgpt2008issue10
+lhchow. Accessed in 15-04-2016.
+Lippmann, C. (2012). Particle identification,
+Nucl. Instrum. Meth. A666 148172.
+Scott, D. W. (2015). Multivariate density estimation theory, practice, and visualization,
+John Wiley  Sons.
+Seather, S. (1992). The performance of six popular bandwidth selection methods on some
+real data sets, COMPUTATIONAL STATISTICS QUARTERLY 7 225225.
+Shimazaki, H. and Shinomoto, S. (2007). A
+method for selecting the bin size of a time
+histogram, Neural computation 19(6).
+Silverman, B. W. (1986). Density estimation for
+statistics and data analysis, CRC press.
+Wand, M. and Jones, M. (1995). Kernel smoothing, ChapmanHall, London .
+Watts, G. (2003). Review of triggering, Nuclear
+Science Symposium Conference Record, 2003
+IEEE, Vol. 1, pp. 282287 Vol.1.
+
+2907

@@ -1,0 +1,692 @@
+RASTREAMENTO VISUAL DIRETO DE SUPERFICIES RIGIDAS E DEFORMAVEIS
+SOB VARIACOES ARBITRARIAS DE ILUMINACAO
+Geraldo Silveira, Ezio Malis
+
+
+CTI Renato Archer  Divisao DRVC
+Rod. Dom Pedro I, km 143,6, Amarais
+CEP 13069-901, CampinasSP, Brasil
+
+
+INRIA Sophia Antipolis  Projeto ARobAS
+2004 Route des Lucioles, BP 93
+06902 Sophia-Antipolis, Franca
+
+Emails Geraldo.Silveira@cti.gov.br, Ezio.Malis@sophia.inria.fr
+Resumo The fundamental task of visual tracking is considered in this work as an incremental direct image
+registration problem. Direct methods refer to those that exploit the pixel intensities without resorting to image
+features. We propose new transformation models and optimization methods for directly and robustly registering
+images of rigid and deformable objects, all in a unified manner. We also show that widely adopted models are in
+fact particular cases of the proposed ones. Indeed, the proposed general models combine various classes of image
+warps and ensure robustness to generic lighting changes. Experiments are reported to demonstrate that visual
+tracking can indeed be highly accurate and robust despite deforming objects and severe illumination_changes.
+Palavras-chave
+
+.
+
+Resumo A importante tarefa de rastreamento_visual e considerada neste trabalho como um problema de
+registro direto de imagens. Metodos diretos sao aqueles que exploram as intensidades dos pixels sem recorrer a
+primitivas geometricas. Neste artigo, novos modelos de transformacao e metodos de otimizacao sao propostos
+para registrar diretamente imagens de objetos rgidos e deformaveis, de forma unificada e robusta. Tambem
+mostramos aqui que modelos amplamente adotados na literatura correspondem a casos particulares do modelo
+proposto. De fato, ele combina varias classes de transformacao de imagens e assegura robustez a variacoes genericas de iluminacao. Resultados experimentais sao apresentados para demonstrar que rastreamento_visual pode
+ser altamente preciso e robusto mesmo no caso de objetos deformaveis e sob mudancas severas de iluminacao.
+Palavras-chave
+
+.
+
+cas nas imagens, e.g., pontos e retas. No segundo
+grupo, os metodos exploram os valores de intensidade dos pixels sem etapas intermediarias, isto
+e, sem recorrer a primitivas geometricas. Metodos diretos sao tambem frequentemente chamados
+de metodos baseados em textura, em template ou
+em intensidade. Como toda a informacao contida
+nas imagens pode ser explorada, mesmo onde nao
+ha primitivas geometricas, metodos diretos podem
+ser altamente precisos. Como focamos neste artigo em aplicacoes de registro de imagens para robotica, e.g. SLAM visual (Silveira et al., 2008) e
+controle_servo-visual (Silveira e Malis, 2007a), alta
+precisao e geralmente desejada. Assim, concentraremos aqui nos metodos diretos de registro de imagens. Ademais, focamos somente em algoritmos
+diretos que utilizam cameras nao calibradas que
+podem ser executados em tempo_real em sistemas
+roboticos e que nao realizam ajustes em blocos
+(do ingles, bundle adjustment). Estes ultimos nao
+podem ser considerados dentro do nosso contexto
+devido a sua estimacao nao causal. Outra caracterstica importante e que eles devem ser robustos a
+mudancas de iluminacao. Portanto, metodos que
+assumem condicoes constantes de luminosidade,
+e.g., (Lucas e Kanade, 1981 Benhimane e Malis, 2007), nao sao considerados neste trabalho.
+
+Introducao
+
+Rastreamento visual de um objeto de interesse
+pode ser formulado como um problema de registro
+de imagens. Registrar imagens consiste em estimar as transformacoes que melhor alinham uma
+imagem da referencia (imagem fixa) a uma segunda imagem (variante no tempo). Frequentemente, deseja-se que apenas uma pequena regiao
+da imagem, tambem chamada de template, seja
+alinhada a sucessivas imagens. Vide a Fig. 1 para
+uma ilustracao. O registro de imagens e um procedimento fundamental em muitas aplicacoes baseadas em visao, tais como, analise de imagens
+medicas, em realidade_aumentada e para controle
+servo-visual. A literatura disponvel e por conseguinte abundante, e uma revisao dos trabalhos
+existentes esta fora do escopo do presente artigo.
+Assim, torna-se necessario delimitarmos o contexto no qual este artigo se insere.
+Em primeiro lugar, os metodos de registro de
+imagens podem ser em geral classificados em dois
+grupos principais (Irani e Anandan, 1999) (i) metodos baseados em primitivas geometricas, tambem chamadas de caractersticas visuais e (ii) metodos diretos. Os metodos do primeiro grupo sao
+assim chamados porque efetuam a extracao e a associacao de um conjunto adequado de caractersti-
+
+2067
+
+2
+2.1
+
+(a)
+
+Fundamentacao teorica
+
+Geometria epipolar entre duas imagens
+
+Considere o modelo de camera de orifcio. A geometria_epipolar entre duas imagens descreve as
+relacoes entre pontos correspondentes p  p
+(Faugeras et al., 2001). Para o caso de cameras
+nao calibradas observando objetos rgidos, essa relacao e dada por
+
+(b)
+
+Figura 1 (a) Imagem de referencia (template) sobreposta por uma grade. (b) Grade registrada sobre a
+imagem corrente. Registrar imagens consiste em estimar as transformacoes que melhor alinham todos os
+pixels do template a uma segunda imagem do mesmo
+objeto, capturada sob condicoes diferentes.
+
+p  G p +  e
+
+ P2 ,
+
+(1)
+
+onde G  SL(3) corresponde a uma homografia,
+e  R3 denota o epipolo, e   R representa o
+paralaxe do ponto 3D projetado na imagem de referencia I  como p . Observe que (1) tambem
+abrange os casos particulares de movimentos rotacionais e de objetos planares. Em ambos casos,
+tem-se que  e  0.
+
+Alem disso, consideramos aplicacoes onde nao e
+possvel a realizacao de etapas de aprendizagem,
+e.g., (Hager e Belhumeur, 1998), antes da execucao da tarefa robotica propriamente dita. O registro deve ser executado imediatamente apos a demarcacao do template de referencia. Finalmente,
+a solucao para o nosso problema deve suportar
+todas as classes de transformacao na imagem, incluindo deformacoes perspectivas. Isso e crucial
+para desenvolver algoritmos os mais gerais possveis. Em particular, isso permite o controle servovisual de todos os seis_graus_de_liberdade de um
+robo. Portanto, tecnicas de rastreamento_visual
+como, e.g., mean-shift (Comaniciu et al., 2000),
+embora efetivas, nao sao suficientes para o nosso
+proposito pois elas so fornecem uma transformacao de similaridade.
+
+2.2
+
+Registro direto geometrico de imagens
+
+Permita-nos considerar nesta secao o caso particular de objetos planares por simplicidade. Neste
+caso (  0), uma funcao de transformacao de coordenadas (do ingles, warping) pode ser definida
+a partir de (1) como
+w  SL(3)  P2  P2
+
+
+(2)
+
+
+(G, p ) 7 p  w(G, p ).
+
+(3)
+
+O registro direto geometrico de imagens consiste em obter os parametros espaciais que transformam a imagem corrente tal que cada pixel p
+tenha sua intensidade I(p) associada da melhor
+forma possvel aquelas da imagem de referencia
+I  (p ). Mais formalmente, dado uma estimativa
+b (que pode ser o elemento identidade) de G e um
+G
+modelo de transformacao geometrica, e.g., (3),
+
+Dentro deste contexto, este artigo propoe uma
+nova tecnica de rastreamento_visual de varias classes de objetos, a despeito de mudancas genericas de luminosidade. Para isso, apresentamos novos modelos fotogeometricos de transformacao de
+imagens e de um metodo eficiente de otimizacao
+nao linear. Em relacao a parte geometrica, demonstramos como objetos rgidos e deformaveis
+podem ser modelados de forma unificada. Ademais, mostramos que modelos amplamente utilizados sao de fato casos particulares do modelo proposto. Na parte fotometrica, demonstramos aqui
+que o modelo de mudancas arbitrarias de iluminacao proposto por Silveira e Malis (2007b) para
+objetos planares pode ser aplicado para o caso de
+superfcies mais complexas. Resultados sao obtidos em sequencias de imagens de diversos tipos de
+objetos e sob fortes mudancas de iluminacao especulares, difusas e ambientais, as quais variam em
+numero, tipo, potencia e no espaco. As tecnicas
+existentes (Baker e Matthews, 2004 Bartoli e Zisserman, 2004) nao sao capazes de lidar com tais
+cenarios desafiadores, especialmente se os objetos
+nao forem Lambertianos eou se grandes deslocamentos dos objetos sao observados nas imagens.
+
+
+e G,
+b p )  I(p)  I w(G
+e G,
+b p )  0, (4)
+Ig (G
+um sistema tpico de registro direto de imagens
+puramente geometrico objetiva determinar o dese de forma a resolver prolocamento incremental G
+blemas de otimizacao nao linear do tipo
+min
+
+e
+GSL(3)
+
+2
+1X  eb 
+Ig (GG, pi )  I  (pi ) ,
+2 i
+
+(5)
+
+para o caso de objetos planares.
+Neste artigo, mostraremos primeiramente
+como estender o registro direto geometrico a superfcies rgidas e deformaveis. Essa extensao engloba, naturalmente, o caso particular de objetos
+planares. Em seguida, mostraremos como assegurar, aos metodos diretos de registro de imagens,
+robustez a variacoes genericas de iluminacao.
+
+2068
+
+2.3
+
+Modelamento das variacoes de iluminacao
+
+Recentemente, um modelo de variacao de iluminacao foi proposto por Silveira e Malis (2007b) para
+lidar com mudancas arbitrarias de luminosidade
+entre a imagem corrente I e a de referencia I  
+Ih (h, I)  S  I + ,
+
+(6)
+(a)
+
+com
+h  S, ,
+
+(7)
+
+Figura 2 (a) Imagem de referencia de uma superfcie
+planar. (b) Uma deformacao invariante desse objeto.
+Sua estrutura 3D foi modificada (i.e., o objeto nao e
+mais planar), mas e possvel obter (a) apenas alterando o ponto de vista do observador.
+
+onde S e interpretado como uma superfcie,   R,
+e o operador  denota multiplicacao elementopor-elemento. E importante observar que, enquanto  captura apenas variacoes globais, a superfcie S tambem modela mudancas locais de iluminacao (e.g., produzidas por reflexoes especulares). Ademais, este modelo fotometrico permite
+que o registro seja efetuado sem conhecimento previo sobre os atributos do objeto (e.g., reflectividades, forma) e dos iluminantes (e.g., numero, pose).
+3
+3.1
+
+Caso particular 2 (Objetos rgidos) A classe de
+superfcies rgidas nao planares e mais complexa
+do que o caso planar, pois mais parametros sao necessarios a sua modelagem. Entretanto, uma vez
+corretamente estimados, esses parametros podem
+ser tomados como constantes
+  0
+
+Registro direto fotogeometrico
+proposto
+
+Considere um ponto m  x , y  , z    R3 definido em relacao ao sistema de coordenadas de
+referencia F  . Permita que esse ponto 3D seja deformado para a coordenada m , tambem definida
+em relacao a F  . Neste artigo, propomos modelar
+essa mudanca de posicao como
+1
+m +  
+
+
+ R3 ,
+
+  6 0
+
+(8)
+
+Objetos
+
+Deformacao
+
+Planares
+Rgidos
+Sob def. invariante
+Sob def. genericas
+
+
+
+
+
+
+
+
+0
+0
+0
+6 0
+
+Paralaxe
+
+
+
+
+
+0
+0
+6 0
+6 0
+
+(9)
+Finalmente, podemos tambem generalizar o
+operador de transformacao (2) usando (9)
+w  G  P2  P2
+(g, p ) 7 p  w(g, p ),
+
+(14)
+(15)
+
+onde G representa um grupo apropriado e
+g  G, e,  ,   
+
+G
+
+(16)
+
+codifica a descricao geometrica da cena, da camera
+propriamente dita, e do seu movimento espacial.
+Por conseguinte, podemos definir um modelo de
+transformacao geometrica geral como
+
+Ig (g, p )  I w(g, p )
+ 0.
+(17)
+
+Caso particular 1 (Objetos planares) O caso planar representa a classe mais simples com relacao
+ao numero de parametros. De fato, para esse caso
+e   0.
+
+(13)
+
+Tabela 1 Caracterizacao dos tipos de superfcies.
+
+onde    u , v , 0  R3 e um vetor de deformacao de coordenadas na imagem, o qual engloba
+  e  . Observe que o paralaxe   R em (9)
+tambem compreende a deformacao imposta por
+ . A relacao generica (9) corresponde ainda a
+um modelo geometrico unificado. De fato, a transicao entre modelos e obtida como se segue.
+
+  0
+
+e  6 0,
+
+em nosso Desideratum (9). Vide a Tabela 1 para
+um resumo dos casos.
+
+onde   R+ leva em consideracao somente deformacoes invariantes, e    x , y , 0  R3 captura as demais deformacoes. Classificamos como
+deformacoes invariantes aquelas que alteram a estrutura 3D do objeto com relacao a F  , mas nao
+modificam a imagem de referencia (vide Fig. 2).
+Aplicando as equacoes de movimento a (8) e
+utilizando o modelo de projecao perspectiva, podemos entao generalizar o modelo geometrico (1)
+ P2 ,
+
+(11)
+
+No caso mais geral (i.e., aquele com o mais
+alto nvel de complexidade), situa-se a classe de
+objetos deformaveis tal que
+
+
+
+p  G (p +   ) +  e
+
+e   0.
+
+Caso particular 3 (Objetos sob def. invariante)
+Aumentando o nvel de complexidade, a proxima
+classe compreende as superfcies deformaveis tal
+que
+   0 e  6 0.
+(12)
+
+Extensao para objetos rgidos e deformaveis
+
+m 
+
+(b)
+
+(10)
+
+2069
+
+Imagem de referencia
+
+Imagem 250
+
+Imagem 500
+
+Imagem 693
+
+Template de referencia
+
+Registro 250
+
+Registro 500
+
+Registro 693
+
+Figura 3 Sequencia Bola Rastreamento visual de uma esfera em imagens obtidas a partir de uma camera
+nao calibrada. (Linha superior) Grade registrada (em vermelho) sobre as imagens sucessivas. (Linha inferior)
+Imagens registradas com relacao ao template. Elas demonstram a precisao do rastreador visual proposto.
+
+3.2
+
+Modelo de transformacao proposto
+
+imagens e obtido pela aplicacao do modelo foto
+geometrico Igh
+(21) em (5). Esse sistema pode
+entao ser formulado como o seguinte problema de
+otimizacao nao linear
+
+Um modelo fotogeometrico de transformacao pode
+ser definido a partir da aplicacao do modelo de
+mudancas de iluminacao (6) ao modelo geral de
+transformacao de coordenadas (15). Mais formalmente, o modelo de transformacao proposto
+e dado por
+
+
+Igh
+(x, p )  Ih h, I(p)
+(18)
+
+
+
+ Ih h, I w(g, p )
+(19)
+
+
+
+ S(, p )  I w(g, p ) + , (20)
+
+min
+e
+x
+
+
+
+
+
+
+
+o qual busca
+as diferencas de intensi minimizar
+
+ex
+b .
+dade d  di x
+3.3
+
+Metodo eficiente de otimizacao
+
+O objetivo do problema (22) consiste em detere tal que sua composicao com
+minar o valor de x
+b forneca os valores verdadeiros x,
+a estimativa x
+ex
+b. Em nosso contexto, uma solucao
+i.e., x  x
+iterativa eficiente e necessaria. A partir de uma
+b0 , essa solucao e obtida via deestimativa inicial x
+ek e sua atualizacao iterativa
+terminacao de x
+bk+1  x
+ek  x
+bk ,
+x
+
+
+
+e
+b, p 
+S 
+
+
+b, p ) + e  b
+I w(e
+gg
+
+ex
+b, p
+x
+
+(22)
+
+di (e
+xb
+x)
+
+onde x  g, h engloba as variaveis geometricas
+e fotometricas, resp., g  G, e,  ,    (16) e h 
+S,  (6), onde S e parametrizada por .
+A estimacao dessas variaveis em tempo_real
+requer a aplicacao de metodos locais de otimizab suficao nao linear. Nesse caso, uma estimativa x
+cientemente proxima da solucao e necessaria. Esta
+estimativa e integrada a (20) via
+
+Igh
+
+2
+
+1X 
+ex
+b, pi  I  (pi ) ,
+Igh x
+2 i
+z
+
+
+
+(23)
+
+bk  x, onde k indexa as iteratal que limk x
+coes. Na pratica, a convergencia para a solucao
+ek for arbitrariamente proe estabelecida quando x
+xima do elemento identidade do grupo envolvido.
+Para isso, uma expansao em serie de Taylor
+e inicialmente efetuada. De forma a obtermos
+grandes domnios e taxas de convergencia, efetuamos uma aproximacao de segunda ordem eficiente (Malis, 2004). Ela e computacionalmente efi-
+
+ 0, (21)
+
+e corresponde ao deslocamento incremental
+onde x
+a ser estimado e  representa o operador de composicao associado ao grupo envolvido.
+Finalmente, ao inves de utilizarmos o modelo
+transformacao para o caso de objetos planares Ig
+(4) em (5), um sistema geral de registro direto de
+
+2070
+
+Imagem de referencia
+
+Imagem 0800
+
+Imagem 1000
+
+Imagem 1082
+
+Template de referencia
+
+Registro 0800
+
+Registro 1000
+
+Registro 1082
+
+Figura 4 Sequencia Bexiga Rastreamento visual de uma superfcie deformavel na presenca de variacoes globais
+de luminosidade. (Linha superior) Grade registrada (em vermelho) sobre as imagens sucessivas. (Linha inferior)
+Imagens alinhadas com relacao ao template. Elas demonstram a precisao do rastreador visual proposto.
+
+ciente pois as Hessianas nao sao calculadas explicitamente. De fato, mostra-se que, suprimindo
+os termos de terceira ordem, tal aproximacao
+b)  di (e
+b) em torno de x
+b e
+de d(e
+xx
+xx
+
+1
+e. (24)
+b)  d(b
+b) x
+d(e
+xx
+x) + J(b
+x) + J(e
+xx
+2
+Em seguida, aplicando uma condicao necessaria
+e seja um ponto estacionario de (22) forpara que x
+nece
+
+1
+e  d(b
+J(b
+x) + J(x) x
+x),
+(25)
+2
+onde o Jacobiano J(b
+x) e completamente determinado a partir das informacoes visuais. O sise detema de equacoes (25) nao e linear em x
+vido a J(x). Entretanto, se a algebra de Lie
+(Varadarajan, 1974) for usada para descrever o
+movimento espacial, entao essa parte de J(x) satisfaz a propriedade de invariancia a esquerda. Assim, ele tambem pode ser completamente obtido
+a partir das informacoes visuais. Isto nao e verdadeiro para os demais parametros. Neste caso,
+uma aproximacao das partes correspondentes do
+Jacobiano deve ser efetuada, e.g., utilizando os pab  J(x) a rerametros do estado corrente. Seja J
+presentacao dessa aproximacao. Um problema de
+mnimos_quadrados pode entao ser escrito a partir
+de (25), cuja solucao e dada por
+
+b + d(b
+e  2 J(b
+x
+x) + J
+x),
+(26)
+
+um custo_computacional equivalente ao metodo de
+Gauss-Newton (que nao considera a contribuicao
+b o metodo proposto explora toda a informade J),
+cao disponvel em ambas imagens, a corrente e a
+de referencia. Isto contribui para a obtencao de
+grandes domnios e taxas de convergencia.
+4
+
+Resultados experimentais
+
+Esta secao apresenta os resultados1 obtidos pela
+tecnica proposta em tres tipos diferentes de objetos, em tres condicoes distintas de iluminacao.
+Abaixo, o erro fotometrico corresponde ao RMS
+da diferenca entre o template de referencia e a
+imagem corrente transformada.
+Sequencia Bola. Este experimento utiliza
+uma superfcie rgida nao planar onde as condicoes
+de iluminacao sao praticamente constantes. Algumas resultados do rastreamento_visual podem ser
+observados na Fig. 3. Na parte inferior e mostrada a area de interesse alinhada, com sucesso,
+ao template de referencia. Essa area possui 250 
+250 pixels. O erro fotometrico mediano obtido ao
+longo da sequencia (composta de 694 imagens) e
+de 13,6 nveis de escala de cinza (sobre 256), efetuando uma mediana de 7 iteracoes por imagem
+para a precisao requerida.
+Sequencia Bexiga. Uma superfcie deformavel invariante e utilizada neste experimento, onde
+variacoes globais de iluminacao sao observadas. O
+template de referencia possui area de 262  262
+
+onde ()+ representa a pseudoinversa e 2 (J(b
+x) +
++
+b
+J ) d(b
+x) corresponde a direcao de descida proposta. Os valores otimos sao obtidos iterativamente via (23). E importante enfatizar que, por
+
+1 Os vdeos correspondentes podem ser acessados em
+httpsites.google.comsitegeraldofsilveira .
+
+2071
+
+Imagem de referencia
+
+Imagem 260
+
+Imagem 355
+
+Imagem 418
+
+Template de referencia
+
+Registro 260
+
+Registro 355
+
+Registro 418
+
+Figura 5 Sequencia Coracao Rastreamento visual de uma superfcie deformavel complexa sob variacoes genericas de iluminacao. (Linha inferior) Regiao da imagem alinhadas com relacao ao template de referencia. O
+rastreamento_visual e bem sucedido a despeito da presenca de diversas especularidades.
+
+pixels. A parte inferior da Fig. 4 mostra o nvel
+de precisao do registro para algumas imagens da
+sequencia (total de 1083), a despeito das variacoes
+de luminosidade e da grande deformacao da superfcie. O erro fotometrico mediano obtido ao longo
+da sequencia e de 5,6 nveis de escala de cinza (sobre 256), efetuando uma mediana de 5 iteracoes
+por imagem para a precisao requerida.
+Sequencia Coracao. Alguns resultados do
+registro de imagens de um objeto deformavel generico sob variacoes severas de iluminacao estao
+mostrados na Fig. 5. A parte inferior demonstra
+que o registro e bem sucedido, a despeito da presenca de diversas especularidades. Para a precisao
+requerida, a tecnica efetuou uma mediana de 9 iteracoes por imagem, obtendo um erro fotometrico
+mediano ao longo da sequencia (total de 1200 imagens) de 8,3 nveis de escala de cinza (sobre 256).
+5
+
+Referencias
+Baker, S. e Matthews, I. (2004). Lucas-Kanade 20 years
+on A unifying framework, International Journal of
+Computer Vision 56(3) 221255.
+Bartoli, A. e Zisserman, A. (2004). Direct estimation of
+non-rigid registration, Proc. of the British Machine
+Vision Conference, pp. 899908.
+Benhimane, S. e Malis, E. (2007). Homography-based 2D
+visual tracking and servoing, International Journal of
+Robotic Research 26(7) 661676.
+Comaniciu, D., Ramesh, V. e Meer, P. (2000). Real-time
+tracking of non-rigid objects using mean-shift, IEEE
+Computer Vision and Pattern Recognition.
+Faugeras, O., Luong, Q.-T. e Papadopoulo, T. (2001). The
+geometry of multiple images, The MIT Press.
+Hager, G. e Belhumeur, P. (1998). Efficient region tracking
+with parametric models of geometry and illumination,
+IEEE Trans. on Pattern Analysis and Machine Intelligence 20(10) 10251039.
+Irani, M. e Anandan, P. (1999). All about direct methods,
+Proc. Workshop on Vision Alg. Theory and practice.
+Lucas, B. e Kanade, T. (1981). An iterative image_registration technique with an application to stereo vision,
+Proc. of the IJCAI, pp. 674679.
+Malis, E. (2004). Improving vision-based control using Efficient Second-order Minimization techniques, IEEE
+ICRA, EUA.
+Silveira, G. e Malis, E. (2007a). Direct visual servoing
+with respect to rigid objects, IEEERSJ IROS, EUA,
+pp. 19631968.
+Silveira, G. e Malis, E. (2007b). Real-time visual tracking
+under arbitrary illumination_changes, IEEE Computer Vision and Pattern Recognition.
+Silveira, G., Malis, E. e Rives, P. (2008). An efficient direct approach to visual SLAM, IEEE Transactions on
+Robotics 24 969979.
+Varadarajan, V. (1974). Lie groups, Lie algebras, and their
+representations, Prentice-Hall.
+
+Conclusoes
+
+Este artigo propoe uma nova tecnica de registro direto de imagens para rastrear varias classes de objetos, a despeito de mudancas genericas de iluminacao. Para isso sao apresentados novos modelos
+fotogeometricos de transformacao de imagens e de
+um metodo eficiente de otimizacao nao linear. Diversos experimentos utilizando superfcies rgidas
+e deformaveis sob fortes variacoes de luminosidade
+demonstram a generalidade, a robustez e o nvel
+de precisao da tecnica proposta. Nao obstante,
+como todo metodo direto de registro de imagens,
+os objetos devem ser suficientemente texturizados.
+
+2072

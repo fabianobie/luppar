@@ -1,0 +1,1040 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+A VISUAL-INERTIAL NAVIGATION ALGORITHM FOR MICRO AERIAL
+VEHICLES USING THE UNSCENTED KALMAN FILTER
+Joao Paulo de A. Barbosa Raphael Ballet Davi A. dos Santos Stiven S. Dias
+
+
+
+
+Praca Marechal Eduardo Gomes, 50 - Vila das Acacias - 12.228-900
+Instituto Tecnologico de Aeronautica - ITA
+Sao Jose dos Campos, Sao Paulo, Brazil
+
+Avenida Doutor Altino Bondensan, 500 - Distrito de Eugenio de Melo - 12247-016
+Embraer
+Sao Jose dos Campos, Sao Paulo, Brazil
+
+Email barbosajoaopa@gmail.com raphaelballet@hotmail.com davists@ita.br
+stiven.dias@embraer.com.br
+Abstract This work proposes a position, velocity and heading estimation algorithm based on the unscented
+Kalman filter (UKF) for a multirotor unmanned aerial vehicle (UAV) using low-cost components, including a
+gyro-stabilized two-axis gimbal platform containing a downward-facing camera, inertial sensors and an ultrasonic
+range sensor. In the filter formulation, the inertial sensors together with kinematics equations are used in the
+prediction step, while landmark vector measurements computed from the camera images and the ultrasonic sensor
+readings are applied in the update step. This method is evaluated via extensive Monte Carlo simulations, which
+show its effectiveness. Furthermore, this paper shows a performance comparison between the proposed method
+and a similar EKF-based method. The proposed method shows a slightly better performance, but has a higher
+computational burden.
+Keywords
+
+Unscented Kalman filter, visual-inertial navigation, sensor fusion, unmanned aerial vehicle.
+
+Resumo Este trabalho propoe um algoritmo de estimacao de posicaoo, velocidade e guinada, baseado no
+filtro de Kalman unscented (UKF), para um veculo aereo  (VANT) do tipo multirotor utilizando
+componentes de baixo_custo, incluindo uma plataforma giro-estabilizada de dois eixos contendo uma camera
+apontada para baixo, sensores_inerciais e um sensor ultrassonico. Na formulacao do filtro, os sensores_inerciais,
+juntamente com as equacoes dinamicas, sao usados na etapa de predicao, enquanto as medidas dos vetores dos
+landmarks, computados a partir das imagens da camera, e do sensor ultrassonico sao aplicados na etapa de
+atualizacao. Esse metodo e avaliado por simulacoes Monte Carlo, as quais demonstra sua eficiencia. Alem disso,
+esse artigo mostra uma comparacao de performance entre o metodo proposto e um metodo baseado no EKF. O
+metodo proposto demonstra uma performance levemente melhor, mas com maior carga_computacional.
+Palavras-chave
+.
+
+1
+
+Filtro de Kalman unscented, navegacao inercial auxiliada, fusao_sensorial, veculo aereo
+
+Introduction
+
+Micro Aerial Vehicles (MAV) have attracted great
+attention in recent years due to its wide range
+of possible applications in both military and civil
+areas. Special attention is given to autonomous
+UAV, which represents a multidisciplinary challenge. Some recent applications include terrain mapping for precision agriculture (Primicerio
+et al., 2012), border surveillance (Beard et al.,
+2006), building and power line inspection (Metni
+and Hamel, 2007), and search and rescue (Erdos
+et al., 2013). All of these applications relies on an
+accurate navigation algorithm.
+Traditional navigation systems were mostly
+focused on outdoors operations, using the wellknown GPSINS sensor fusion scheme (Farrell
+and Barth, 2007 St-Pierre and Gingras, 2004).
+More recent researches have concerned with accurate and robust navigation in GPS-denied environment, such as indoor environments (Bachrach
+et al., 2010 Carrillo et al., 2012). However, both
+projects rely on accurate and usually expensive
+equipments and the authors do not provide a per-
+
+ISSN 2525-8311
+
+formance analysis of different and newer filtering
+methods to the chosen set of sensors.
+Sensor fusion for navigation is mostly based
+on the framework of a stochastic optimal state estimator. The Kalman filter (KF)(Kalman, 1960)
+is the most popular of such estimator, but it is
+only suitable for linear-Gaussian systems. For
+nonlinear problems, there exists several adaptations of the original Kalman filter, such as
+the extended Kalman filter (EKF) (Gelb, 1974),
+the unscented Kalman filter (UKF) (Julier and
+Uhlmann, 2004), the cubature Kalman filter
+(CKF) (Arasaratnam and Haykin, 2009), and others. The EKF method is the most popular estimation filter for navigation applications (Scaramuzza
+et al., 2014 Bachrach et al., 2010), despite of
+its limitations in accuracy for highly nonlinear
+systems compared to UKF (St-Pierre and Gingras, 2004).
+The present paper proposes an UKF-based
+navigation algorithm appropriate for micro aerial
+vehicles and compares its effectiveness with an
+EKF-based algorithm. Similar analysis is presented in St-Pierre and Gingras (2004). How-
+
+2323
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ZP
+
+
+tor
+h
+w , (r w)T
+
+YP
+
+ZG
+r PG
+YG
+O
+
+C
+v PG
+XP
+
+XG
+
+Figure 1 The navigation platform and the Cartesian Coordinate Systems (CCS).
+
+ever, the present project focus on GPS-denied environment and uses low cost sensors, characteristic
+that also differs this work from those presented in
+Bachrach et al. (2010) and Carrillo et al. (2012).
+The sensors platform consists of a rate-gyro, a
+three-axis accelerometer, a downward-facing camera and an ultrasonic range finder, all mounted
+on a two-axis gyro-stabilized gimbal, which maintains the sensors platform plane always parallel to
+the ground plane. Further, the vehicle is assumed
+to navigate through an environment with known
+visible landmarks, that are captured by the camera and fused within the estimation filter. The
+method is formulated for estimating the vehicles
+position, velocity, heading and biases of the inertial sensors.
+2
+2.1
+
+Problem Definition
+
+T
+
+T
+
+iT
+
+ R11 ,
+(6)
+assumed to be a zero-mean white Gaussian noise
+with covariance Q  R11  and a and z denote the
+measurements taken from the accelerometer and
+rate-gyro, respectively. The variables a and g
+represent the measurements biases, respectively
+
+T
+gG , 0 0 g is the gravity acceleration vector represented in SG , and DPG () is the attitude matrix of SG with respect to SP .
+Now, Eq. (1)-(5) can be rewritten in statespace form
+x  f (x, u) + w
+(7)
+(v w)
+
+
+
+g
+
+w
+
+(a w)
+
+w
+
+where
+
+PG
+vG,x
+
+
+PG
+
+
+vG,y
+
+
+PG
+
+
+v
+G,z
+
+
+c (a   )  s (a   )
+P,x
+a,x
+P,y
+a,y 
+f (x, u) , 
+s (a   ) + c (a   )
+P,x
+a,x
+P,y
+a,y 
+
+
+
+aP,z  a,z  g
+
+
+
+
+wz  g
+041
+(8)
+with c and s representing cos  and sin , respectively, and the state vector is defined as
+
+
+x,
+
+
+
+GP
+
+rG
+
+T 
+
+GP
+
+vG
+
+T
+
+T
+
+T
+
+ g (a )
+
+ R11 ,
+(9)
+
+Dynamic Model
+and the known input vector is given by
+
+Figure 1 illustrates a navigation platform and two
+Cartesian coordinate systems (CCS) for describing the problem. Ground SG , XG , YG , ZG  is
+fixed to the ground at point O, with ZG aligned
+with the local vertical. The platform SP ,
+XP , YP , ZP  is fixed on the platform, at point
+C, with ZP parallel to ZG .
+The platform is composed with a twoaxis gyro-stabilized gimbal with a three-axis accelerometer aligned with SP , a single-axis rategyro, an ultrassonic range sensor, and a downward
+pointing camera all aligned with ZP axis.
+Consider the SG representation of r PG and
+PG
+PG
+PG
+v
+denoted, respectively, by rG and vG .
+The nonlinear set of equations that describes the
+PG
+PG
+dynamic rG and vG are given by
+PG
+
+rG
+
+PG
+
+vG
+
+PG
+
+ vG + r w
+(1)
+ PG
+T
+v
+ D
+() (aP  a ) + gG + w (2)
+
+  z  g +  w
+g
+
+2.2
+
+(4)
+
+a  a w
+
+(5)
+
+where w  R11 is defined as the state-noise vec-
+
+z
+
+iT
+
+ R4 .
+
+(10)
+
+Measurement Equation
+
+Figure 2 shows the navigation system with a
+pin-hole camera model (Hartley and Zisserman,
+2004) and a map of landmarks. We introduce
+a new CCS, the camera CCS defined as SC ,
+XC , YC , ZC  with origin also coincident with C.
+Therefore, r PG  r CG .
+Each landmark is represented in SG as a position vector l i , for i  1, 2, ..., m where m is the
+total number of known landmarks in the environment. Similarly, the landmarks can be represented
+in SC with s i , for i  1, 2, ..., m. Hence, from Figure 2 one could geometrically obtain r CG for the
+i-th landmark as
+
+(3)
+
+g  w
+
+ISSN 2525-8311
+
+h
+u , (aP )T
+
+r CG  l i  s i
+
+(11)
+
+Representing Eq. (11) in SG , we obtain
+CG
+
+rG
+
+
+T
+ lGi  DCP DPG () siC
+
+(12)
+
+2324
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ZC
+
+YP ,XC
+
+XP ,YC
+
+C
+ZC
+
+f
+
+XI
+
+r PG
+ZG
+
+P
+
+Image Plane
+
+YI
+
+Optical axis
+
+s i
+YG l i
+
+s q
+l q
+
+Figure 2 Navigation environment and a pinhole
+camera model.
+Hence
+
+
+CG
+sCi  DCP DPG () lGi  rG
+
+(13)
+
+where DPG () consists of a rotation by  around
+the ZC axis and the rotation matrix DCP is obtained from a rotation of the frame SP to frame
+SC .
+Furthermore, the general form of measurement model is given by
+yki  hi (xk ) + vki
+
+(15)
+
+represents the nonlinear measurement equation
+defined to an arbitrary i-th landmark. Note that
+the full measurement equation has a different size
+depending on the number of visible landmarks
+measured by the camera at a given sample time.
+Thus, for q measured landmarks, we obtain
+yk  h (xk ) + vk ,
+(16)
+
+T
+where yk , yk1 yk2 . . . ykq , and the noise
+ 1
+
+T
+vector vk , vk vk2 . . . vkq , and
+
+ 1
+h (xk )
+h2 (xk )
+
+
+h (xk ) ,  . 
+(17)
+ .. 
+hq (xk )
+
+
+Problem statement Given the measurements
+from the inertial sensors u, a map of landmarks,
+
+ISSN 2525-8311
+
+Problem Solution
+
+Camera Model and Range Sensor
+
+In order to compute the vector measurements
+
+
+i
+i T
+zC
+siC , xiC yC
+, i  1, 2, ..., q, from a 2D image, a pinhole camera model is adopted (Hartley
+and Zisserman, 2004) (See Figure 2). Define the
+image coordinate system SI , XI , YI , with origin at point P , coincident at the cameras principal point and XI and YI are parallel to XC and
+YC , respectively.
+Denote the projection of siC onto SI by siI ,
+ i i T
+xI yI . Thus, one can write
+xiC 
+
+i
+zC
+xi
+f I
+
+i
+yC
+
+
+i
+zC
+yi ,
+f I
+
+(18)
+
+i
+i
+are the components of siC
+and zC
+where xiC , yC
+and f is the cameras focal length, considered constant.
+
+(14)
+
+where vki   R3 is the measurement noise vector
+of the i-th landmark defined as a zero-mean Gaussian white noise, with covariance matrix Rik , and
+hi (xk ) is the measurement equation described in
+Eq. (13). Therefore,
+hi (xk ) ,
+
+
+
+
+
+CG
+CG
+s lxi  rG,x + c lyi  rG,y
+
+
+
+
+
+ c li  rCG + s li  rCG 
+
+
+x
+y
+G,x
+G,y
+CG
+lzi + rG,z
+
+3
+3.1
+
+O
+XG
+
+and the nonlinear kinematic equations, the problem is to obtain the vectors siC , for i  1, 2, ..., q,
+from the image taken from the camera, and accurately estimate the state vector x, thus obtaining
+a navigation solution for the UAV.
+
+3.2
+
+Unscented Kalman Filter
+
+The estimation algorithm chosen in this paper to
+resolve the problem stated in section 2.1 is the
+UKF. The filter was designed to better propagate the probability density of states through the
+dynamic model. In order to achieve this goal,
+the Unscented Transform (UT) is used to represent the true mean and covariance of the states
+by using a well defined set of sample points,
+called sigma-points (Julier and Uhlmann, 2004).
+Once defined these sigma-points, it is possible
+to propagate the probability density through the
+true nonlinear system and find out the posterior mean and covariance of the states. Wan and
+Merwe (2002) defines the sigma-points Xi  Rn ,
+for i  1, 2, ..., (2n + 1), and associated weights
+Wi  R(2n+1) of a random variable x  Rn , with
+mean x and covariance Px , where n  11 is the
+state vectors dimension defined in the dynamic
+model.
+Moreover, the dynamic model presented in
+Section 2 is a continuous-time stochastic process
+while the measurement model is discrete-time.
+These characteristics drove the solution to use a
+derivation of the UKF for continuous-discrete filtering problem. Sarkka (2007) proposes a method
+for continuous-discrete unscented Kalman filter
+(CDUKF). The difference to conventional UKF
+is present in the prediction step of the filter.
+Mean m  Rn and covariance P  Rnn prediction equations for the CDUKF are presented
+
+2325
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+by Sarkka (2007) as follow
+dm
+ f (X )Wm
+dt
+dP
+ X Wf T (X )
+dt
++ f (X )WX T
+
+4
+4.1
+(19)
+
++ LQLT
+where f is the drift function, defined by Eq. (8)
+and Q is the covariance of state noise. X 
+Rn(2n+1) represents the matrix of sigma-points
+defined by the unscented transform in continuoustime application while Wm  R(2n+1) and W 
+R(2n+1)(2n+1) are associated weights used to calculate the posterior mean and covariance in matrix form.
+Therefore, the prediction step of CDUKF consists of integrating the differential equations of
+Eq. (19), considering the integration limits as the
+conditions from time tk1 until actual time tk .
+This leads to prediction of mean m
+k and covariance P
+of
+the
+states
+(Sarkka,
+2007).
+k
+The update step of the CDUKF filter is similar to the conventional discrete UKF algorithm.
+
+Thus, with m
+k and Pk predicted from previous
+step, it is possible to calculate the new sigmapoints Xk , propagate them through measurement equations h(Xk ), then estimate mean k
+and covariance Sk of the measurement and crosscovariance Ck of the state and measurement, as
+described in Eq. (20) (Sarkka, 2007).
+
+
+
+Xk  m
+k ... mk
+q i
+ h q 
++ c 0
+Pk  P
+k
+Yk  h(Xk )
+
+(20)
+
+k  Yk Wm
+Sk  Yk WYk T + Rk
+Ck  Xk WYk T
+
+where h is the measurement model defined in
+Eq. (17), Rk is the covariance of measurement
+noise and c is a UT parameter defined by c 
+2 (n + k), and  and k are parameters used to
+determine sigma-points (Wan and Merwe, 2002).
+Finally, it is possible to calculate the filter gain Kk
+and the updated state mean mk and covariance
+Pk . Matrix equations for this step are defined as
+follow (Sarkka, 2007)
+Kk  Ck S1
+k
+mk  m
+k + Kk yk  k 
+Pk 
+
+P
+k
+
+
+
+(21)
+
+Kk Sk KTk
+
+Therefore, using dynamic and measure models defined in sections 2.1 and 2.2 respectively with
+the CDUKF-based method described in this section, it is possible to determine the problem states
+defined in Eq. (9).
+
+ISSN 2525-8311
+
+Simulation and Results
+
+Computational Simulation
+
+To evaluate the proposed problem, a simulation
+platform is used. The model is simulated in
+Simulink with a Runge-Kutta method and sampling time T  0.1 s. The Simulink 3D Animation
+simulates the environment containing visible landmarks and dynamics of the sensors. A viewpoint
+attached to the vehicle simulates the embedded
+camera and it is fixed to the vehicle translation
+and rotation about the ZP axis. The simulated vehicle follows a predefined trajectory over the map
+of landmarks and the simulator returns the real
+position, the sensors output using Eq. (1)-(5), and
+the image taken from the simulated camera, that
+are used in the filtering algorithm. It is important
+to notice that the trajectory over the map of landmarks is generic, since it does not interfere in the
+estimation filter.
+Simulation environment contains 25 landmarks that are displaced uniformly on a virtual
+square grid. The side distance of the grid is 0.5
+m in both horizontal and vertical direction. Each
+landmark has its own unique color that is used in
+a simple processing algorithm in order to track the
+position of each landmark. The simulated camera
+has a diagonal field-of-view (FOV) of 0.7854 radian and a focal length f  1 m. Furthermore, the
+output image has a pixel resolution of 200  300.
+The states noise covariance is tuned in Q 
+diagr2 , v2 , 2 , g2 , a2  with r2  1.0  106 I3
+m2 , v2  1.0  106 I3 (ms)2 , 2  1.0  106
+rad2 , g2  1.0  106 (rads)2 and a2  1.0 
+104 I3 (ms2 )2 . Likewise, the covariance of the
+measurement noise is tuned in Rik  1.0  104 I3
+m2 . In addition, to test the filters robustness, it
+is introduced in the ultrasonic range sensor measurement a white Gaussian noise with variance
+u2  1.0  104 m2 , as well as in the measurements of the camera xiI and yIi , with vari2
+2
+ 1.0  104 m2 , simulatances of I,x
+ I,y
+ing the image processing algorithm errors. The
+initial conditions are also random variables, with
+
+
+T
+x0  N x, P , with x  0 0 1.5 018 and
+2
+2
+2
+2
+2
+2
+, 0,v
+, 0,
+, 0,g
+, 0,a
+, where 0,r
+
+P  diag0,r
+2
+2
+2
+diag1, 1, 1.0  10  m , 0,v  1.0  104 I3
+2
+2
+2
+(ms)2 , 0,
+ (0.25) rad2 , 0,g
+ 1.0  106
+2
+2
+6
+(rads) and a  1.0  10 I3 (ms2 )2 .
+In order to define the sigma-points for Unscented Transform, the scaling parameters were
+defined as   1,   2 and k  0. These values
+generated most representative set of sigma-points
+for the project proposed (Wan and Merwe, 2002).
+Moreover, in prediction step, as described in Section 3.2, Equations 19 have to be numerically integrated. Thus, as one of the purposes of this work
+is to compare the obtained result of an UKF-based
+algorithm with a similar EKF-based one proposed
+
+2326
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Results
+
+Table 1 Monte Carlo simulations for different values of landmarks used (q).
+
+UKF
+
+EKF
+
+1.5
+1
+0.5
+
+p
+8.4
+5.6
+5.3
+4.5
+9.4
+5.7
+5.2
+4.7
+
+p
+15.7
+6.5
+15.3
+3.4
+26.2
+4.6
+7.7
+3.1
+
+v
+5.6
+7.0
+8.0
+6.7
+6.4
+6.2
+6.9
+6.5
+
+v
+5.5
+23.2
+78.2
+22.9
+9.8
+11.5
+26.4
+15.3
+
+
+12.3
+5.2
+3.8
+3.3
+15.7
+8.1
+6.2
+5.3
+
+
+69.3
+8.6
+5.7
+1.3
+132.3
+20.4
+19.1
+9.7
+
+Therefore, when comparing the results presented in Table 1 it is possible to notice that, in
+terms of states mean estimation error p and standard deviation p from a single MC simulation
+(100 runs), the UKF-based algorithm presents a
+better performance for heading and position, but
+worse for velocity estimation. The reason for this
+difference is related to a faster position estimation
+convergence using the UKF model, in which leads
+to a wider variation in velocity.
+Figure 3 shows the temporal response of the
+position, velocity and heading estimation error for
+the proposed UKF-based method. Monte Carlo
+simulations were executed using 4 landmarks. As
+can be observed, the filter has higher errors between 0 and 2 seconds of simulation. This occurs
+mostly due to the large initial conditions errors in
+position and heading. It explains the error spike
+in Figure 3b at approximately 1 second, where the
+position convergence of the filter produces a virtual restoring velocity, as the measurement model
+(Eq. (15)) does not provide information about the
+vehicles velocity. Moreover, it can be seen that
+the filter converges in approximately 2 seconds.
+Even though the method presented in this
+paper presents slightly better estimations (see
+Table 1), some other aspects should be taken
+
+ISSN 2525-8311
+
+0
+0
+
+2
+
+4
+
+6
+
+8
+
+10
+
+Time (s)
+
+(a) Position estimation error.
+2.5
+
+ev  M C  1, 100
+ev
+ev  v
+
+2
+
+error (ms)
+
+The UKF filter presented in this paper is evaluated via extensive Monte Carlo (MC) simulations
+in order to demonstrate its performance. For each
+MC simulation the number of landmarks used in
+update phase is changed, varying from 1 to 4 landmarks. Moreover, each MC simulation is performed by 100 estimation runs.
+The same problem were also solved using
+EKF (Ballet et al., 2016). A comparison between
+these two different approaches is relevant to identify the differences and find the most appropriate
+method for the estimation problem presented. Table 1 shows the results from both, UKF and EKF,
+methods.
+
+q
+1
+2
+3
+4
+1
+2
+3
+4
+
+ep  M C  1, 100
+ep
+ep  p
+
+2
+
+1.5
+1
+0.5
+0
+0
+
+2
+
+4
+
+6
+
+8
+
+10
+
+Time (s)
+
+(b) Velocity estimation error.
+2
+
+error (rad)
+
+4.2
+
+2.5
+
+error (m)
+
+by Ballet et al. (2016), the integration method
+chosen were the same for both filter, the RungeKutta 4.
+
+e  M C  1, 100
+e
+e  
+
+1.5
+1
+0.5
+0
+0
+
+2
+
+4
+
+6
+
+8
+
+10
+
+Time (s)
+
+(c) Heading estimation Error
+
+Figure 3 Monte Carlo simulations using q  4
+landmarks for the UKF method.
+
+into account. Another important characteristic,
+that matters for embedding the filter in a real
+UAV with limited computational resources, is the
+time for processing the filter operations. Table 2 presents the simulation time of each filtering
+method and the ratio between them for different
+number of landmarks used.
+Table 2 Average time of one simulation for different values of landmarks used (q).
+
+q
+1
+2
+3
+4
+
+Simulation Time s
+UKF
+EKF
+0.5725
+0.0539
+0.5870
+0.0640
+0.5982
+0.0695
+0.6104
+0.0748
+
+Time Proportion
+UKFEKF
+10.62
+9.17
+8.61
+8.16
+
+As can be seen in Table 2, simulation time for
+the EKF-based filter is around ten times shorter
+than the UKF one. In this case, both use a RungeKutta 4 method for integrating the dynamic equation in the prediction step, however, the UKF filter has to perform this step for all sigma points
+(23 sigma-points for the problem presented) in order to propagate the probability density of the
+prediction step. This is the reason why CDUKF
+is way slower than the Continuous-Discrete Ex-
+
+2327
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+tended Kalman Filter (CDEKF).
+Therefore, the EKF method seems to be more
+suitable than UKF for real-time applications in
+slower and low-cost processors. Although the
+state error of the UKF during all the estimation
+period may be slightly smaller, mainly for heading, after the convergence this difference is negligible, meanwhile, the computational effort contrast
+drives the EKF-based filter to be, in overall, a
+more suitable solution for the estimation problem
+studied in this project. Similar conclusions can be
+found in St-Pierre and Gingras (2004).
+5
+
+Conclusion
+
+The present paper has proposed an unscented
+Kalman filter formulation for accurate and robust
+estimation of position, velocity, and heading, as
+well as the inertial sensors bias, of a micro aerial
+vehicle using a downward-facing camera, inertial
+and ultrasonic sensors. Thus, we claim that it
+is suitable for operation in GPS-denied environments and can be performed using low-cost equipments in a real experiment application.
+Results show that the method can successfully estimate the desired navigation. It is sufficiently accurate for most applications and shows
+a slight better performance compared to a similar EKF-based method. On the other hand, the
+UKF-based method requires a significant higher
+computational effort, which makes it less attractive than the EKF in practical applications.
+References
+Arasaratnam, I. and Haykin, S. (2009). Cubature kalman filters, Automatic Control, IEEE
+Transactions on 54(6) 12541269.
+Bachrach, A., De Winter, A., He, R., Hemann,
+G., Prentice, S. and Roy, N. (2010). RANGE
+- Robust autonomous navigation in GPSdenied environments, Proceedings - IEEE International Conference on Robotics and Automation, pp. 10961097.
+Ballet, R., Santos, D. A. and Zoran, S. (2016).
+Position, Velocity And Heading Estimation
+For Unmanned Aerial Vehicles Using Camera
+And Inertial Sensors, Congresso Brasileiro de
+Engenharia Mecanica (CONEM).
+Beard, R. W., McLain, T. W., Nelson, D. B.,
+Kingston, D. and Johanson, D. (2006). Decentralized cooperative aerial surveillance using fixed-wing miniature UAVs, Proceedings
+of the IEEE 94(7) 13061323.
+Carrillo, L. R. G., Lopez, A. E. D., Lozano, R.
+and Pegard, C. (2012). Combining stereo
+vision and inertial navigation system for a
+
+ISSN 2525-8311
+
+quad-rotor UAV, Journal of Intelligent and
+Robotic Systems Theory and Applications
+65(1-4) 373387.
+Erdos, D., Erdos, A. and Watkins, S. E. (2013).
+An experimental UAV system for search and
+rescue challenge, IEEE Aerospace and Electronic Systems Magazine 28 3237.
+Farrell, J. A. and Barth, M. (2007). The Global
+Positioning System  Inertial Navigation,
+2nd edn, Wiley-Interscience.
+Gelb, A. (1974). Applied Optimal Estimation,
+Vol. 64, The MIT Press.
+Hartley, R. and Zisserman, A. (2004). Multiple
+view geometry in computer_vision, Vol. 1.
+Julier, S. and Uhlmann, J. (2004). Unscented Filtering and Non Linear Estimation, Proceedings of the IEEE 92(3) 401422.
+Kalman, R. E. (1960). A New Approach to Linear
+Filtering and Prediction Problems.
+Metni, N. and Hamel, T. (2007). A UAV for bridge
+inspection Visual servoing control law with
+orientation limits, Automation in Construction 17(1) 310.
+Primicerio, J., Di Gennaro, S. F., Fiorillo, E.,
+Genesio, L., Lugato, E., Matese, A. and Vaccari, F. P. (2012). A flexible unmanned
+aerial vehicle for precision agriculture, Precision Agriculture 13(4) 517523.
+Sarkka, S. (2007). On unscented Kalman filtering
+for state estimation of continuous-time nonlinear_systems, IEEE Transactions on Automatic Control 52(9) 16311641.
+Scaramuzza, D., Achtelik, M. C., Doitsidis,
+L., Friedrich, F., Kosmatopoulos, E., Martinelli, A., Achtelik, M. W. et al. (2014).
+Vision-controlled micro flying robots From
+system design to autonomous navigation
+and mapping in GPS-denied environments,
+IEEE Robotics and Automation Magazine
+21(3) 2640.
+St-Pierre, M. and Gingras, D. (2004). Comparison
+between the unscented Kalman filter and the
+extended Kalman filter for the position estimation module of an integrated navigation
+information system, IEEE Intelligent Vehicles Symposium, 2004 pp. 831835.
+Wan, E. A. and Merwe, R. v. d. (2002). The
+unscented Kalman filter for nonlinear estimation, Adaptive Systems for Signal Processing, Communications, and Control Symposium 2000. AS-SPCC. The IEEE 2000
+pp. 153158.
+
+2328

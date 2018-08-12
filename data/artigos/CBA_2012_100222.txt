@@ -1,0 +1,1139 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A DISTRIBUTED NAVIGATION STRATEGY FOR MOBILE ROBOTS BASED ON
+WIRELESS SENSOR NETWORKS
+Leonardo Olivi, Ricardo Souza, Fernando Paolieri, Eliane Guimaraes, Eleri
+Cardozo
+
+
+Department of Computer Engineering and Industrial Automation
+State University of Campinas - UNICAMP
+Campinas, Sao Paulo, Brasil
+
+
+Division of Robotics and Computer Vision
+Center for Information Technology Renato Archer - CTI
+Campinas, Sao Paulo, Brasil
+Emails lrolivi@dca.fee.unicamp.br, rssouza@dca.fee.unicamp.br,
+fernando@dca.fee.unicamp.br, eliane.guimaraes@cti.gov.br, eleri@dca.fee.unicamp.br
+Abstract This paper presents a distributed navigation strategy for mobile robots in environments instrumented by wireless sensor networks (WSN). The strategy distributes the navigation components across the mobile
+robot, stationary processing nodes outside the robot and WSN nodes. The WSN supplies a navigable path consisting of a sequence of WSN nodes that the robot must follow with the aid of visual beacons. The navigation
+components inside the mobile robot perform visual tracking of beacons with computer_vision and local obstacle
+avoidance with a neural network. The stationary nodes are powerful computers for high-cost algorithms. In
+this application, the stationary nodes perform local mapping, path planning with A* search and path guidance
+with a fuzzy controller. Finally, components running on WSN nodes are responsible for computing a path taking
+into account the monitored environmental data. The proposed distributed navigation strategy requires no global
+maps, precise location of WSN nodes, or corrected odometry, and demands much less processing power and
+network bandwidth than strategies based on simultaneous localization and mapping (SLAM).
+Keywords
+
+Distributed systems, wireless sensor network, artificial intelligence.
+
+Resumo Este artigo apresenta uma estrategia de navegacao distribuda para robos_moveis em ambientes
+instrumentados por redes_de_sensores sem fio (RSSF). A estrategia consiste em distribuir os componentes de
+navegacao pelo robo_movel, nos estacionarios fora do robo e nos da RSSF. A RSSF fornece uma rota navegavel
+que consiste numa sequencia de nos da RSSF que o robo deve seguir com a ajuda de sinais visuais. O robo_movel
+executa o rastreamento dos sinais visuais com visao_computacional e evita colisao com obstaculos transientes
+utilizando uma rede_neural artificial. Os nos estacionarios consistem de computadores com alta capacidade de
+processamento e memoria, e ficam encarregados dos algoritmos de alto custo_computacional. Nesta aplicacao os
+nos estacionarios constroem mapas locais, calculam as melhores rotas com a busca A* e guiam o robo utilizando
+um controlador_fuzzy. Finalmente, os nos de RSSF sao responsaveis por calcular um caminho tendo em conta os
+dados ambientais monitorados. A estrategia de navegacao distribuda proposta nao necessita de mapas globais,
+de localizacao precisa dos nos da RSSF, ou correcao de odometria, exige menor poder computacional e largura
+de banda do que as estrategias com base em mapeamento_e_localizacao simultaneos (SLAM).
+Palavras-chave
+
+.
+
+INTRODUCTION
+
+Wireless sensor networks (WSN) have been
+employed in a multitude of scenarios ranging
+from environmental monitoring to military applications. In the robotics field, WSN can help
+mobile robots to navigate through environments,
+to localize themselves and to communicate in
+cases where wideband networks are not available
+(Peng et al., 2009 Popa et al., 2009 Yao and
+Gupta, 2011 Tekdas et al., 2009 Sichitiu and Ramadurai, 2004).
+In networked robotics, WSNs can be part of
+the networking infrastructure composed of mobile
+robots, mobile devices, and powerful processing
+nodes. This paper explores this scenario where
+a WSN is deployed for aiding the navigation of
+mobile robots through indoor and structured environments. The idea is to distribute the navigation
+components across the WSN, the mobile robots
+
+ISBN 978-85-8001-069-5
+
+and the processing nodes in such a way that the
+processing power and communication capabilities
+required from the mobile robots are minimized.
+In the proposed strategy, the WSN supplies
+a navigable route to mobile robots for tasks accomplishments. This route is presented to the
+mobile robot as visual beacons emmitted by the
+WSN nodes which belong to the path. The mobile robot follows the route hop-by-hop, that is,
+when the robot is close to a beacon it communicates with the WSN in order to produce the next
+beacon towards the goal. Navigation components
+inside the mobile robots perform only tasks of
+beacon tracking and obstacle avoidance. Navigation components running on stationary and more
+powerful processing nodes perform local mapping,
+path planning and path guidance.
+The distributed strategy demonstrated that a
+mobile robot with a limited embedded computer
+(Pentium M) is able to navigate through a com-
+
+3854
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+plex environment with non-convex obstacles and
+narrow corridors thanks to the WSN that supplies the route and the stationary processors that
+perform computing extensive tasks, such as local
+mapping, search algorithms and intensive control
+loop computing. Figure 1 presents the network
+robotics infrastructure required by the proposed
+navigation strategy. The motivating application
+for this work is assistive robotics where smart environments monitored by WSNs aid the navigation of mobile robot carrying disabled persons.
+The paper is organized as follows. Section 2
+presents the related works. Section 3 presents the
+proposed distributed navigation strategy based on
+WSNs. Section 4 presents the algorithms employed in the navigation (visual beacon tracking, local mapping and path planning, trajectory
+tracking, and transient obstacle avoidance). Section 5 presents the experimental results obtained
+in practical experiments, Section 6 concludes the
+paper and presents the future works.
+2
+
+RELATED WORKS
+
+There are many possibilities for integrating
+mobile robotics and WSNs. One of the most usual
+application is to employ WSNs for aiding the navigation of mobile robots. A solution presented
+in Popa et al. (2009) performs motion control of a
+mobile robot based on information gathered from
+a WSN through a sensor node attached to the
+robot. The robots node communicates with a
+node attached to a PC which monitors other nodes
+in the environment, receiving data regarding the
+robots position and motion. The robot sends periodic beacons to allow the WSN to track its position, calculated by a trilateration method with the
+distance between the robot and the node, inferred
+from radio signal strength indicator (RSSI). This
+implies that at least three WSN nodes must know
+Wireless Sensor Network
+- Global route definition
+- Environment monitoring
+
+Mobile robot
+- Computer vision
+- Collision avoidance
+- Path guidance
+
+Stationary node
+- High-cost algorithms
+- High storage space
+
+Figure 1 Distributed robotics infrastructure.
+
+ISBN 978-85-8001-069-5
+
+their exact cartesian positions.
+Another trilateration method based on RSSI
+is presented in Fu et al. (2009). This work uses
+pre-deployed WSNs with at least three nodes per
+room with known locations transmitting their positions. The robot is then able to determine its
+own position. Few solutions adopt a distributed
+approach for the navigation problem, an exception
+is the work presented in Yao and Gupta (2011). A
+distributed planning framework, D-PRM, is proposed where sensor nodes, that are capable of
+mapping their sorroudings, are used to build a
+navigation map for the mobile robot. Partial maps
+aquired by the sensor nodes are put together using landmarks placed on the monitored environment. One negative point of this solution is that
+the sensor nodes must be equipped with powerful sensors, such as cameras or rangefinders, that
+are capable of detecting these landmarks. Also,
+the sensor nodes must be able to process and determine navigation routes for the robot based on
+their local maps, which requires high processing
+power from the WSN nodes.
+WSNs are also applied to solve localization in
+dynamic problems. In Peng et al. (2009), a system
+that calculates the localization of a moving target
+traveling along an area covered by a WSN is presented. In this scenario a mobile robot is equipped
+with a sensor node, turning it into a mobile sensor node to the WSN. It is assumed that all static
+nodes of the sensor network have known positions.
+When the robot moves through the WSN its position is determined using trilateration based on
+the position of the static nodes.
+A system for integrating mobile robots and
+wireless sensor network is presented in JimenezGonzalez et al. (2010). The system employs an altered version of the Player framework as the main
+hardware abstraction layer. This framework provides a testbed for accessing different types of cooperating objects present in the environment. The
+system works on a fully controlled environment
+with landmarks for object localization and multiple cameras for monitoring. The wireless sensor
+network is used only to enhance the systems capability to monitor the environment.
+The main contribution of this work is a distributed strategy that releases the mobile robot
+from computing and communication intensive
+tasks, demanding no global maps, no precise localization of the WSN nodes, or precise odometry from the mobile robots. Instead of relying on
+RSSI that is reported as unstable, highly noisy
+and inaccurate, this work employs visual beacons
+emmited by the WSN nodes for guiding the mobile robots. This strategy was implemented above
+the REALabs framework for networked robotics
+that integrates WSN and mobile robots around
+Internet technologies as reported in Cardozo et al.
+(2010) and Souza et al. (2011).
+
+3855
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+3
+
+WIRELESS NETWORK SOLUTION
+
+In our navigation strategy, the WSN determines and maintains end-to-end global routes between the mobile robot and its goal. Using the
+WSN nodes to assist the navigation allows the system to not rely on global maps or global position
+knowlegde for the robot neither the WSN nodes.
+Although this solution implies that nodes should
+necessarily be placed along navigable paths, such
+as doorways and corridors. It remains computationally lighter than building maps using approaches such as SLAM. Furthermore, by applying sensor nodes that can monitor environment caracteristics, such as temperature, lightning, humidity, crowding identification by camera
+pictures, etc, the system can change navigation
+routes based on the environment conditions.
+In our WSN architecture there are three diferent class of nodes robot nodes, server nodes
+and environment sensor nodes. Robot nodes are
+those connected to the robots, it makes an interface between the robot and the environment sensor nodes. In that sense, the robot (through its
+node) is seen by the WSN as a dynamic node.
+The server nodes are connected to stationary desktops or servers and can be used as an interface to
+the WSN, retriving information or sending commands to the robot through IEEE 802.15.4, as
+shown in Souza et al. (2011), when in the absence of a more reliable network, such as Wi-Fi.
+Finally, the environment sensor nodes are those
+placed throughout the environment. These are
+the nodes that perform the actual route definition
+and environmental monitoring.
+The environment nodes are capable of routing
+packets between the server and the robot using a
+slightly modified version of the CTP routing protocol (Gnawali et al., 2008), where nodes can specify the destination address. Although all WSN
+nodes form a network (communication layer), an
+overlay network (navigation layer) is simultaneously defined but only among the environmental
+nodes, as presented in Figure 2. In the communication layer the routing tables are defined by
+the existence of communication links within the
+Communication layer
+
+Communication link
+
+Navigation layer
+
+Navigation link
+
+Figure 2 Wireless network architecture layers.
+
+ISBN 978-85-8001-069-5
+
+nodes link range. However, it is within the overlay network that the robots routes are defined.
+The main difference between these layers is that
+the routing tables of the navigation layer are defined by the topological relationship of the nodes,
+taking in account the navigable paths, and can be
+influenced by environmental conditions.
+Since navigation routes are located within the
+navigation layer, all routes begins and ends on sensor nodes. The starting node is always a WSN
+node that is in the neighborhood of the mobile
+robot. The ending node is, for example, the node
+on a room where the robot must reach. Routes
+are computed from the WSN ending node towards
+a starting node. The route definition algorithm
+works as follows. When a node is defined as a target node it disseminates this information throughout the network, requesting the presence of the
+robot as close as possible to this node. When this
+information reaches the robot, it broadcast a message to its neighbor nodes requesting a route to the
+target node. This request is forwarded throughout the navigation layer and the first one to reach
+the target will be the robots route.
+Each node that receives a route request message, verifies if it has already forwarded that request based on a sequence number. If it hasnt
+been forwarded, it increments the hopcount and
+forwards it, otherwise the message is dropped.
+When this request reaches the target node, a route
+response message is generated and sent back to the
+robot. The target node only answers the first received request. The route request answer contains
+the information of which robot neighbor is the first
+hop of the route. When this answer is received by
+the robot, it sends a navigation beacon request to
+its correct neighbor. When the acknowledgement
+of the beacon request from a neighbor is received
+by the robot, the navigation is ready to begin.
+When the robot reaches a node, it informs the
+network and waits for a confirmation if the final
+target was reached or that the next hop is already
+emmiting a beacon. Upon the arrival of the confirmation that a node has been reached, the network
+verifies if that node is the final target node if it
+isnt, a handover process is initiated, otherwise,
+the navigation ends. The handover process consists of the reached node sending a navigation beacon request to the next hop of the route and this
+node sending an navigation beacon acknowledgement back to the robot. A beacon is generated
+by turning on a light-emitting diode (LED) in the
+next WSN node the robot must reach.
+With this approach, the global navigation
+route is splited into several local navigations which
+are forwarded to the robot one at a time. The
+main advantage of this solution is that whenever
+the route is recalculated there is no need to stop
+the navigation and update the robots route. The
+robot remains completely unaware of the route
+
+3856
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+changes as its only concern is to navigate towards
+the next hop. For multiple robots, a different LED
+color is designed for each robot.
+4
+
+ROBOT NAVIGATION
+
+Once the end-to-end route is supplied by the
+WSN, the robot must follow the path hop-by-hop
+avoiding obstacles. The robot follows the path by
+detecting visual beacons generated by the WSN
+nodes. This task is performed by a vision algorithm running on the robots onboard processor. The path planning towards the current beacon is computed by a A* algorithm running on
+local maps constructed from laser measurements
+requested to the mobile robot. These tasks run on
+one or more processors outside the robot, which
+also run a fuzzy controller that supplies commands
+to the robots wheels and to the cameras pantilt (PT) unit. The communication among the
+distributed components is performed through the
+REALabs robotic platform (Cardozo et al., 2010).
+4.1
+
+BEACON TRACKING
+
+Now that the WSN has calculated the route,
+the first node in the path is one of the robots
+neighbors. This node starts to emit a visual beacon and informs the robot to start the vision algorithm for identifying and tracking the beacon.
+To find the beacon into the scene, a computer
+vision algorithm with HSV color transform, dilation and erosion (that we named NodeID) is
+used (Gonzalez and Woods, 2002).
+With HSV color transform, the algorithm gets
+the intensity channel to find the black structure of
+the WSN node, creating a region of interest (ROI).
+Then, erosion is applied to filter the noise and dilation is applied to mask the possible positions of
+the light-emitting diode (LED). All masked pixels have their HSV values compared to a reference color to measure the similarity. The nodes
+position (XI ,YI ) is the centroid of the identified
+region. The NodeID algorithm is developed in
+CC++. Despite powerful processing nodes are
+available to process the vision algorithm, we preferred to embed NodeID in the robot because
+sending images can overload the wireless link.
+NodeID algorithm is heavy because dilation
+and erosion are applied to the whole image. Then,
+when the nodes ROI is found, an Optical Flow
+with Speeded-Up Robust Feature (SURF) (Bay
+et al., 2006), implemented with OpenCV (Wilson,
+2012), is applied. This implies in a significant decrease of the computational cost. If the optical
+flow loses the node, the NodeID procedure starts
+over. Figure 3(a) presents the robots ceiling vision, showing the node structure with the green
+light. The processed image with the identified
+nodes position is shown in Figure 3(b).
+
+ISBN 978-85-8001-069-5
+
+(a)
+
+(b)
+
+Figure 3 (a) Robots ceiling vision (b) Processed
+image with WSN nodes position identified.
+4.2
+
+MAPPING AND PATH PLANNING
+
+A path planner must be able to compute feasible paths for the robot and replan when they
+become unfeasible (Latombe, 1991). To be successful in this task, the path planner has to have
+a property called probabilistic completeness. This
+property assures that the probability in finding a
+solution, if one exists, asymptotically approaches
+to one when time grows to infinite (Karaman
+and Frazzoli, 2011). Then, we choose an A*
+algorithm strategy (with an admissible heuristic of Euclidean distance) because it is computationally efficient, handles local minima where
+attractiverepulsive algorithms such as Potential
+Fields (Arkin, 1998) fails, and produces completeness (Thrun et al., 2005), which is a stronger characteristic than probabilistic completeness because
+it assures a solution of failure in finite time.
+The local map is built from a single scanning
+of the laser rangefinder (90o ,90o , step of 1o )
+and stored in a grid format, providing the robots
+obstacles surroundings. The nodes position at the
+robots horizontal plane (XN ,YN ) is determined
+with the vision algorithm and Equation 1 given
+by trigonometry (see Figure 4 for the angles)
+XN  d cos(), YN  d sin(), d 
+
+H h
+.
+tan()
+
+(1)
+
+The robots initial position is always the origin
+z
+
+WSN node
+
+y
+
+WSN node
+
+(XN ,YN )
+x
+
+x
+m
+
+y
+d
+PT camera
+
+!
+d
+
+h
+
+H
+
+
+
+Laser
+rangefinder
+Robot
+
+Robot
+
+(a)
+
+(b)
+
+Figure 4 Angle-Distance relation (a)  (tilt) angle (b)  (pan) angle.
+
+3857
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+   + atan2 (YH , XH )
+
+(2)
+
+where  is the odometrys angle, XH and YH
+are, respectively, the abscissa and ordinates distance to the current A* path point, all in the local
+maps frame. The wheels controller output sets
+are displayed in Figure 5(d). Table 1 shows the
+controllers fuzzy rules, where EL is for Extreme
+Left, LF for Left, CT for Center, RT for Right,
+ER for Extreme Right, EH for Extremely High,
+HG for High, LW for Low, EL for Extremely Low,
+BR for Back Right and BL for Back Left.
+The laser measurements can produce known
+(inside lasers range) and unknown (outside lasers
+range or blocked by obstacles) areas to the local
+map, as shown in Figure 6. Considering Equation 1, the scenes node can belong to the known
+or to the unknown area. Is possible to determine
+in which area the node is placed by verifying if
+obstacle cells are inside the region between the
+half-lines
+X0 Y N  XN Y 0
+Rw + 
+YN  Y0
+x+
+
+y1,2 
+X0  XN
+X0  XN
+2
+(3)
+where Rw is the robots width and  is a positive
+arbitrary small value. The node is the goal unless
+it is placed in the unknown area. When it happens, interesting goals are passage points such as
+
+Table 1 Rules for the fuzzy controller.
+XI
+EL LF CT RT ER
+ EN NG ZR PS EP
+
+
+
+EH
+EN
+
+Left motor
+Right motor
+
+HG
+NG
+
+BR
+PS
+NG
+
+ISBN 978-85-8001-069-5
+
+YI
+CT
+ZR
+
+RT
+PS
+NT
+
+LW
+PS
+
+CT
+PS
+PS
+
+EL
+EP
+
+1 ELEH LFHG CT
+
+BL
+NG
+PS
+
+1 EN
+0.8
+
+0.6
+
+0.6
+
+0.4
+
+0.4
+
+0.2
+
+0.2
+
+0
+0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1
+
+NG
+
+RB
+
+1
+
+EP
+
+-1 -0.8-0.6-0.4-0.2 0 0.2 0.4 0.6 0.8 1
+
+LB
+
+1
+
+0.8
+
+0.8
+
+0.6
+
+0.6
+
+0.4
+
+0.4
+
+0.2
+
+0.2
+
+0
+0
+
+PS
+
+(b)
+
+RT CT LF
+
+-150 -100 -50
+
+ZR
+
+0
+
+(a)
+
+50 100 150
+
+0
+-1
+
+NG
+
+NT
+
+-0.5
+
+0
+
+(c)
+
+PS
+
+0.5
+
+1
+
+(d)
+
+Figure 5 Fuzzy (a) PT inputs and (b) outputs,
+(c) Navigation input and (d) outputs.
+doorways and corridors. These patterns can be
+recognized by tangents, defined by
+q
+(XLi+1  XLi )2 + (YLi+1  YLi )2 > Rw (4)
+where (XLi ,YLi ), i  1, 2, ... are consecutive laser
+points. The tangents midpoint is a good choice
+to establish its existence, as shown in Figure 6(b).
+If there is more than one tangent into the map,
+the elected subgoal is given by
+q
+min dj  (XTj  XN )2 + (YTj  YN )2 , (5)
+where j  1, 2, ... and Pj are tangent points. In
+Figure 6, C is an arbitrary large weight for the A*.
+4.3
+
+TRAJECTORY TRACKING
+
+When the goal point is the node, the local
+map is discarded and the odometry is set to zero
+because the robot will end the path under the goal
+node with the cameras tilt pointing 90o . As such,
+no odometry error is accumulated demanding no
+odometry correction algorithms. However, if the
+goal point is a tangent, a new local map has to
+be acquired. When elected goals are dead-ends
+in occlusion, the new local map presents a node
+in the unknown area. Consequently, one of the
+following situations can emerge
+c
+c
+Unknown area
+c
+c
+c
+c c
+c ccccccccccc c
+c
+(XN,YN) (X G,YG) c c
+c c
+c WSN node
+c
+c c
+y2 c c
+c
+A* path
+c
+c c
+ccc
+c
+c
+y1
+Start
+c
+(0,0)
+obstacles
+c
+
+(a)
+
+LF
+NT
+PS
+
+RTLW EREL
+
+0.8
+
+cc
+c
+c
+c
+c
+c
+c
+c
+c
+c
+c
+c
+c
+c
+c
+
+c
+d1
+c P1
+c
+c
+c c
+c ccccc
+c
+c
+c
+c
+c
+c
+c
+c
+c obstacles
+
+WSN node
+
+(X G,YG)
+
+(X0  0,Y0  0). The cells of the grid which are
+neighbor to obstacles receive a large weight.
+Once A* determined the trajectory towards
+the next beacon, the robot must follow it maintaining its on-board camera tracking the visual
+beacon. In order to get the controls for the  and
+ angles shown in Figure 4 and for the robots left
+and right wheels during the navigation, a MAXMIN Mamdanis fuzzy controller with centroid defuzzification is designed. The cameras pan-tilt
+(PT) unit, which fuzzy sets are presented in Figure 5(a), centralizes the node in the scene using
+visions centroid (XI ,YI ). The PT output sets
+(,) are shown in Figure 5(b). Figure 5(c)
+shows the robots wheels controller input, angle
+, given in Siegwat and Nourbakhsh (2004)
+
+d2
+c P
+cccccc c 2
+c c
+c c
+c c
+c c
+c c
+y1 c c c
+y2
+Start
+A* path
+(0,0)
+(X N,YN)
+
+cc
+c
+c
+c
+c
+c
+c
+c
+c
+c
+c
+c
+c
+c
+c
+
+(b)
+
+Figure 6 (a) A node inside lasers range and (b)
+a node outside lasers range.
+
+3858
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ the map has no tangent, which is a dead-end
+
+Node 2
+
+Node 1
+
+Node 3
+
+ the map has tangents placed inside the previous local map, which cannot lead to the node
+ the map has worse tangents than those produced by the previous local map.
+In any of these cases, it is preferred to try the
+tangents of the previous map that is kept until a
+better tangent is found in a new local map.
+Because local maps are build with limited information (a single laser scanning), dynamic obstacles such as walking persons may not be properly identified. To handle this, a local obstacle
+avoidance strategy based on neural networks is
+employed. Neural networks are light and fast algorithms, good for embedded processes in weak
+computers (Haykin, 2008).
+A Multilayer Perceptron composed of a input layer with 16 inputs, one hidden layer with
+20 neurons and 2 outputs neurons which supplies
+the left and right motors velocities necessary to
+detour transient obstacles. The neural network is
+fed with the readings of the 16 sonars (S) divided
+in a set of 8 inputs Gk , k  0, ..., 7. Each input is
+defined by the following
+Gk (S)  min (S2k , S2k+1 )
+
+(6)
+
+producing additional actuation on the robot when
+in the presence of non predicted transient obstacles. The neural network and the sonars inputs
+are shown in Figure 7.
+5
+
+EXPERIMENTAL RESULTS
+
+This section presents the experiments and results of the proposed distributed navigation strategy using both simulated and real environments.
+Simulations were employed to evaluate the WSN
+performance and to calibrate the mobile robot algorithms, as the local path planning and local obstacle avoidance algorithms. After that the system was evaluated in a real environment.
+The network simulation was design to evaluate the scalability of the solution. The TinyOS
+Simulator, TOSSIM, was used to evaluate the solutions performance as the network grew. The
+G2
+
+G1
+
+1
+G0
+G1
+
+2
+
+4
+
+5
+6 G3
+
+G0 1
+
+2
+
+1
+
+Left
+Motor
+
+Right
+2 Motor
+G7
+
+3
+
+20
+
+(a)
+
+7
+
+0
+
+8
+
+15
+
+G7 14
+
+9 G4
+13 12 11 10
+
+G6
+
+G5
+
+(b)
+
+Figure 7 (a) The Perceptrons multilayer neural
+network and (b) the sonars arrangement.
+
+ISBN 978-85-8001-069-5
+
+Start
+
+Node 6
+
+Node 5
+
+Node 4
+Path 1
+
+Path 3.a.
+
+Path 2
+
+Tangent
+
+Goal Path 3.b.
+Node 7
+
+Node 8
+
+Node 9
+
+Figure 8 Lab facility (scale of 1210) with WSN
+nodes placement and paths.
+simulated scenarios consisted of a grid network
+with 10, 30, 50, 75 and 100 nodes. The robot
+and the target node were always located as far as
+possible in a way that the route would have to
+pass through the maximum number of nodes.
+The simulations started when the target node
+requested the robots presence and finished when
+the robot received the acknowledgement that the
+navigation beacon was activated. WSN simulations showed that an end-to-end route is computed
+from 3 to 20 seconds for WSNs with 10 and 100
+nodes, respectively. The path planning and local
+obstacle avoidance were tuned in the MobileSim
+simulator and validated with a P3-DX robot.
+The time taken for the WSN to deliver a route
+for the robot (on the scenario presented in Figure 8) was approximately 2.5s. The handover
+time, that is the time taken for the network to
+setup the next navigation beacon which is equivalent for the time the robot waits between hops,
+was 250ms. While the route definition time on
+the real experiments matched the simulation results, the handover time appeared to be greater
+than expected, due to the processing latency of
+the hardware and high radio interference caused
+by several WiFi antennas located in the lab.
+The scenario where all tests took place was
+the Laboratory of Computer Engineering and Industrial Automation (LCA) which can be seen in
+Figure 8 which also shows the WSN route computed for the robot. Figs. 9, 10, 11 and 12 show
+a complete route composed of 3 nodes. Table 2
+
+Table 2 Table of Parameters
+Parameter
+H (Figure 3)
+h (Figure 3)
+L (Cell size)
+Avg. dist. among nodes
+Robots max. allowed speed
+max. m (Figure 3)
+Robots average speed
+Route computation time
+Handover time
+
+and Results
+Value
+2670 mm
+520 mm
+300 mm
+5750 mm
+125 mms
+6138 mm
+95.8 mms
+2.433 s
+250 ms
+
+3859
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+Obstacles
+
+Node 5
+
+Node 9
+Tangent 12
+
+Tangent 1 1
+Tangent 9
+Tangent 7
+
+Node 5
+Goal
+
+Tangent 10
+Tangent 8
+Tangent 6
+
+A* path
+Tangent 4
+
+Start
+
+Non-convex
+obstacle
+
+A* path
+Start
+
+Passage
+
+Passage
+
+Tangent 5
+
+Goal
+Tangent 1
+
+Robot
+
+(a)
+
+Tangent 2
+
+iMote2 outside known map
+
+Robot
+Obstacles
+
+Tangent 3
+
+(a)
+
+(b)
+
+(b)
+
+Figure 9 (a) Convex and non-convex obstacles
+surpassing, (b) A* path with fuzzy controllers.
+
+presents quantitative results for the experiments.
+When the robot starts the navigation, the
+WSN lights the first node on path, which is the
+Node 5. Using laser rangefinder scan and the vision algorithm, the stationary node is able to obtain a local map with the goal node position, the
+start point and the robots surroundings. The first
+path, shown in Figure 9, presents a non-convex
+(big open box) and a convex (waste containers)
+obstacles. As expected, the A* algorithm recognizes and avoids all the obstacles in the local map,
+leading the robot through a safe path guided by
+the fuzzy controller. A* is capable to avoid nonconvex obstacles within the lasers range.
+The second path, from Node 5 to Node 6 presented in Figure 10, shows no static obstacles between the robot and the goal point. Then, A* calculates a direct path to the goal. In order to test
+the neural protection, a dynamical obstacle (walking person) moves towards the robot. The sonars
+perceive the non-predicted obstacle and the neural network responds by deflecting the robot from
+its A* path. The original path is resumed as soon
+as the dynamical obstacle disappears.
+
+Figure 11 (a) Tangent goal, (b) A* path with
+fuzzy controllers for path guidance.
+The third (and final) path, from Node 6 to
+Node 9, has to be splited in two steps. Figure 11(a) shows an unreachable node outside the
+known map (because of a wall between the robot
+and the node). Then the tangent approach is used
+leading to a goal that leads the robot through
+the path 3.a. (see Figure 8) reaching the tangent point, which is the half of the path. In
+Figure 11(b) there are many tangents, which are
+caused by chairs and tables. These tangents may
+lead the robot to a wrong path, showing the importance of the map analysis developed in Sec. 4.3.
+The second half of the path, 3.b. (see Figure 8), is
+shown in Figure 12, where the node is now reachable and the robot can finally complete its task.
+The whole path was performed successfully leading the robot to a position right below the final
+WSN node.
+6
+
+CONCLUSIONS AND FUTURE
+WORKS
+
+This paper presented a distributed navigation
+strategy for mobile robots in environments instrumented by wireless sensor networks. The navigation process is splited into smaller tasks that are
+Obstacles
+
+Node 9
+
+Node 6
+
+Start
+
+A* path
+Start
+
+Node 6
+Goal
+
+A* path
+
+Robot
+Passage
+
+Passage
+
+Robot
+
+(a)
+
+Obstacles
+
+(b)
+
+Figure 10 (a) Dynamical obstacle scenario, (b)
+A* path with fuzzy and neural controllers.
+
+ISBN 978-85-8001-069-5
+
+Node 9
+Goal
+
+(a)
+
+(b)
+
+Figure 12 (a) Final goal through a tangent, (b)
+A* path with fuzzy controllers.
+
+3860
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+distributed through several processing nodes (mobile robots, WSN nodes and servers). The WSN is
+responsible for obtaining an end-to-end route for
+the navigation. This route is informed to the robot
+via visual beacons. Local mapping and path planning towards the beacons are computed on a powerful server. This processor also houses fuzzy and
+neural controllers for camera and locomotion control. On the mobile robot runs a vision tracking
+algorithm to detect the visual beacons based on
+NodeID and SURF Optical Flow. Individual results for each aspect of the solution are presented
+in simulated and real environments. Experimental
+results for the whole solution were also presented,
+and it is possible to verify the robustness and eficiency of the developed solution.
+Regarding future works, this paper is a preliminary result of a project that aims to develop
+an intelligent distributed environment for assistive
+mobile robotics. We are adding new environmental sensors in addition to the WSN nodes such as
+cameras for image manipulation inside the WSN
+node and radiofrequency identifiers (RFID) tags.
+7
+
+ACKNOWLEDGMENTS
+
+This work is supported by FINEP (DesTINe
+project) and Capes (Pro-Engineering program).
+
+Jimenez-Gonzalez, A., Martnez-de Dios, J. and
+Ollero, A. (2010). An integrated testbed for
+heterogeneous mobile robots and other cooperating objects, IEEERSJ International
+Conference on Intelligent Robots and Systems, pp. 33273332.
+Karaman, S. and Frazzoli, E. (2011). Samplingbased algorithms for optimal motion planning, The International Journal of Robotics
+Research, Vol. 30, pp. 846894.
+Latombe, J. (1991). Robot Motion Planning,
+Kluwer Academic Publishers.
+Peng, C., Meng, M.-H. and Liang, H. (2009).
+An experimental system of mobile robots
+self-localization based on wsn, IEEE International Conference on Automation and Logistics., pp. 10291034.
+Popa, M., Marcu, M. and Popa, A. (2009). Wireless sensory control for mobile robot navigation, 7th International Symposium on Intelligent Systems and Informatics., pp. 197201.
+Sichitiu, M. and Ramadurai, V. (2004). Localization of wireless sensor networks with a mobile
+beacon, IEEE International Conference on
+Mobile Ad-hoc and Sensor Systems, pp. 174
+183.
+
+References
+Arkin, R. C. (1998). Behavior-Based Robotics,
+MIT Press.
+Bay, H., Ess, A., Tuytelaars, T. and van Gool,
+L. (2006). Speeded-up robust features (surf),
+Computer Vision and Image Understanding
+(CVIU), Vol. 10, pp. 346359.
+Cardozo, E., Guimaraes, E., Rocha, L., Souza, R.,
+Paolieri, F. and Pinho, F. (2010). A platform
+for networked robotics, IEEERSJ International Conference on Intelligent Robots and
+Systems, pp. 10001005.
+Fu, S., Hou, Z.-G. and Yang, G. (2009). An indoor navigation system for autonomous mobile robot using wireless sensor network, International Conference on Networking, Sensing and Control., pp. 227232.
+Gnawali, O., Fonseca, R., Jamieson, K. and Levis,
+P. (2008). Ctp Robust and efficient collection though control and data plane integration, Technical Report SING-08-02, Stanford
+Information Networks Group.
+Gonzalez, R. and Woods, R. (2002). Digital Image
+Processing, 2nd. edn, Prentice Hall.
+
+Siegwat, R. and Nourbakhsh, I. (2004). Introduction to Autonomous Mobile Robots, MIT
+Press.
+Souza, R., Agostinho, L., Teixeira, F., Rodrigues,
+D., Olivi, L., Guimaraes, E. and Cardozo,
+E. (2011). Control of mobile robots through
+wireless sensor networks, XXIX Brazilian
+Symposium on Computer Networks and Distributed Systems, pp. 805818.
+Tekdas, O., Isler, V., Lim, J. and Terzis, A.
+(2009). Using mobile robots to harvest data
+from sensor fields, IEEE Wireless Communications 16(1) 2228.
+Thrun, S., Burgard, W. and D., F. (2005). Probabilistic Robotics, MIT Press.
+Wilson, G. (2012). Open computer_vision library - opencv, httpopencvlibrary.
+sourceforge.net.
+Yao, Z. and Gupta, K. (2011). Distributed
+roadmaps for robot navigation in sensor
+networks, IEEE Transactions on Robotics
+27(5) 9971004.
+
+Haykin, S. S. (2008). Neural Networks A Comprehensive Foundation, 3rd. edn, Prentice
+Hall.
+
+ISBN 978-85-8001-069-5
+
+3861

@@ -7,7 +7,7 @@ from engine.query import Query
 
 class Source(object):
     __metaclass__ = abc.ABCMeta
-    __prepro_list = {'pt': PortuguesePreprocessor, 'en': EnglishPreprocessor}
+    __prepro_list = {'pt-br': PortuguesePreprocessor, 'en': EnglishPreprocessor}
 
     def __init__(self,local_file_doc,local_file_q,language="en",info=None,preprocessor=None):
         super(Source, self).__init__()

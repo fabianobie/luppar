@@ -1,0 +1,792 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+RASTREAMENTO DE JOGADORES DE FUTEBOL EM SEQUÊNCIAS DE IMAGENS
+RODRIGO D. ARNAUT, ANNA H. R. COSTA
+Laboratório de Técnicas Inteligentes, Departamento de Engenharia de Computação e Sistemas Digitais (PCS)
+da Escola Politécnica, Universidade de São Paulo
+Av. Prof. Luciano Gualberto, trav.3, n.158, Cidade Universitária, CEP 05508-900 - São Paulo - SPBrasil
+E-mails rdarnaut@usp.br, anna.reali@poli.usp.br
+Abstract
+ Visual tracking in image sequences has been extensively studied in the last 30 years because of the many applications it has in real-time computer_vision systems however, there are few algorithms available for this task so that it is performed
+successfully. This work presents an effective and efficient system architecture and method to track players in soccer games. The
+system input consists of videos captured by static cameras installed in soccer stadiums. The output is the trajectory described by
+the player during a soccer match, given in the image plane. The system comprises two processing stages initialization and tracking. The system startup is critical in the tracking performance and its goal is to produce a rough estimate of the configuration
+and characteristics of each target, which is used as an initial estimate of the state by the visual tracker. The tracking system uses
+Kalman filters to model the shape, position and speed of the players. Results are presented using real data. Quantitative assessments are provided and the proposed system is compared with related systems. The experiments show that our system can
+achieve very promising results.
+Keywords
+ Visual Tracking, Kalman Filter, Soccer Players, Computer Vision
+Resumo
+ Rastreamento visual em sequências de imagens tem sido muito estudado nos últimos 30 anos devido s inúmeras aplicações que possui em sistemas de visão_computacional em tempo_real entretanto, poucos são os algoritmos disponíveis para
+que tal tarefa seja realizada com sucesso. Este trabalho apresenta um método e uma arquitetura eficazes e eficientes para rastrear
+jogadores em jogos de futebol. A entrada do sistema consiste de vídeos capturados por câmeras estáticas instaladas em estádios
+de futebol. A saída é a trajetória descrita pelo jogador durante uma partida de futebol, dada no plano de imagem. O sistema possui dois estágios de processamento inicialização e rastreamento. A inicialização do sistema é crítica no desempenho do rastreador e seu objetivo consiste em produzir uma estimativa aproximada da configuração e características de cada alvo, a qual é usada como uma estimativa inicial do estado pelo rastreador. O sistema de rastreamento utiliza Filtros de Kalman para modelar o
+contorno, posição e velocidade dos jogadores. Resultados são apresentados usando dados reais. Avaliações quantitativas são
+fornecidas e o sistema proposto é comparado com outro sistema correlato. Os experimentos mostram que o sistema proposto apresenta resultados bastante promissores.
+Palavras-chave
+ 
+
+1
+
+Introdução
+
+mesmo para o apoio oficial no auxílio de arbitragem
+em uma partida real, como, por exemplo, o rastreamento automático da bola, indicando sua posição
+dentro do campo de futebol em situações de dúvida
+visual. Esta ferramenta já é adotada em jogos oficiais,
+desde 2003, para partidas de tênis, em importantes
+competições como as de Wimbledon (Owens Harris
+Stennett, 2003).
+Entretanto, há uma grande carência na resolução dos
+problemas de rastreamento_de_alvos em sequências
+de imagens, visto que muitos trabalhos pesquisados
+na literatura não possuem uma boa eficácia nos resultados apresentados o que motiva o presente estudo,
+cujas principais contribuições consistem na avaliação
+de algumas técnicas propostas em trabalhos correlatos e na implementação de uma nova proposta, permitindo que esta seja utilizada com melhor eficácia,
+melhorando alguns aspectos como, por exemplo, a
+qualidade no processo de tratamento dos contornos
+dos jogadores e o tratamento da variação de movimento e velocidade dos alvos.
+O objetivo do presente trabalho consiste em realizar
+o rastreamento automático de jogadores_de_futebol
+em sequências de imagens capturadas por câmeras
+fixas em partidas de futebol, sem a necessidade de
+interações humanas durante o processo, utilizando
+técnicas de alto_desempenho, com o emprego de dois
+
+O rastreamento de jogadores em uma partida
+de futebol é uma complexa tarefa devido a alguns
+aspectos particulares os jogadores possuem fisionomias ou formas com características heterogêneas,
+suas velocidades de deslocamento variam de acordo
+com o tempo, o tamanho dos jogadores na imagem
+sofre alterações de escala, ocorrem mudanças bruscas
+na trajetória de movimentação, mais de um jogador
+pode ser detectado na imagem, pode ocorrer oclusão
+entre jogadores, entre outros. A maioria dos estádios
+de futebol não possui cobertura superior, ficando
+sujeito a variações de intensidade de iluminação natural, causadas pelos efeitos das condições climáticas,
+tais como sol, chuva, céu nublado e entardecer, por
+exemplo. Ainda, existem casos onde é utiliza uma
+iluminação_artificial em jogos noturnos, acarretando
+dificuldades no rastreamento.
+No entanto, os resultados de um bom rastreamento,
+neste cenário, possibilitam diversas aplicações, dentre as quais algumas têm o foco em informações estatísticas, permitindo avaliar aspectos como, por exemplo, a velocidade média e a distância percorrida por
+cada jogador durante uma partida. Estas informações
+são relevantes ferramentas para emissoras de televisão, clubes e técnicos de futebol (Borg, 2007), ou até
+
+3545
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Filtros de Kalman intercalados permitindo o desacoplamento de sistemas_não_lineares, garantindo uma
+boa eficiência e máxima eficácia na qualidade do
+rastreamento, principalmente em relação  forma dos
+alvos. Especificamente duas abordagens da literatura
+foram selecionadas, implementadas e analisadas,
+servindo como base para o desenvolvendo de modificações e inovações na abordagem que apresentou a
+melhor solução, sugerindo uma nova proposta, denominada REALIFUT (Rastreamento Eficaz Automático Livre de Intervenções para FUTebol 
+www.realifut.com.br). Experimentos e análises comparativas são conduzidos para mostrar o funcionamento dos algoritmos, nas mesmas cenas.
+
+convexo, que é então aproximado por curvas diversas. O movimento é dado pelos parâmetros de translação do centro de área do contorno e mudança de
+escala, definidos no modelo de movimento da cinemática do alvo. Devido  variação de velocidade dos
+alvos de um quadro para o quadro subsequente ser
+pequena, as variáveis de velocidades são modeladas
+como ruídos gaussianos.
+
+2 Trabalhos Correlatos
+
+Figura 1. Inicialização do Rastreamento por De Bem (2007)
+
+Dois trabalhos relacionados ao rastreamento
+visual específico para jogadores_de_futebol e para
+pessoas em outros ambientes, o trabalho de De Bem
+(2007) e o de Xu et al. (2005), foram selecionados
+como base para este estudo por terem ótima eficiência e simplicidade, apresentando bons resultados para
+cenas de rastreamento do perfil humano em movimento, quando capturado por câmeras fixas..
+
+Na etapa de rastreamento concentra-se a parte principal do trabalho de De Bem (2007), pois é onde foi
+empregado o Filtro de Kalman. Na Figura 2, dadas as
+estimativas dos estados iniciais dos alvos, as quais
+foram definidas de acordo com seus vetores de forma
+e movimento na etapa de inicialização, o rastreamento inicia a execução recursiva das etapas de estimação e correção, baseada nos modelos de movimento e
+de observação com o propósito de estimar a trajetória
+de cada alvo.
+Para a detecção do contorno dos alvos, são definidas
+linhas de medidas que representam pontos em torno
+da envoltória do alvo. Elas são construídas de forma
+normal aos contornos do jogador, distribuídas uniformemente e fixas no seu ponto central ao longo do
+contorno gerado por uma função B-Spline (De Bem,
+2007). Assim, com base na estimativa anterior e predição atual, uma previsão do contorno é feita, em
+torno das linhas de medida. Nestas linhas, buscam-se
+evidências do contorno dos alvos na imagem atual,
+constituindo a observação atual, que alimenta a estimação feita pelos filtros estocásticos.
+
+2.1 Rastreador de De Bem (2007)
+O sistema proposto por De Bem (2007) de
+rastreamento_de_alvos em sequências de imagens utiliza o Filtro de Kalman para alvos com formas heterogêneas, livres de modelo. A implementação dividese em duas etapas inicialização e rastreamento.
+Na inicialização é executado, em cada quadro, o processo de detecção dos alvos de interesse para o rastreamento, utilizando técnicas de processamento de
+imagens que explorem o contorno dos alvos (Gonzalez Woods, 1993), e também são definidas as estimativas dos estados iniciais de cada alvo, com relação a
+sua forma e movimento, conforme exposto na Figura
+1.
+O algoritmo proposto na inicialização possui dois
+tipos de detecção de alvo uma detecção manual,
+onde cada alvo a ser rastreado é indicado pelo usuário e uma detecção automática, baseada em morfologia matemática e utilizando técnicas de subtração de
+fundo de cena e extração de componentes conexos
+(Gonzalez Woods, 1993). O fundo de cena é composto por todos os elementos que não são definidos
+como alvos de interesse, considerando que tudo o que
+não é alvo, é fundo de cena. Após a detecção, são
+inicializadas as variáveis de estado dos alvos que
+serão utilizadas pelo Filtro de Kalman durante o rastreamento. A estimativa do estado de cada alvo é
+definida por sua forma e movimento no plano de imagem.
+A forma é representada por pontos de controle de
+uma B-Spline fechada, uma técnica bastante conhecida para a construção de curvas (De Bem, 2007), que
+aproxima sua forma a um contorno de um polígono
+
+Figura 2. Etapa de rastreamento e as interações com os blocos das
+equações do Filtro de Kalman estimação e correção
+
+O pseudo algoritmo de De Bem (2007) é dividido em
+5 etapas, sendo a primeira a entrada de todos os parâmetros utilizados pelo algoritmo.
+Na segunda etapa é realizada a segmentação da imagem, subtraindo o fundo pela intensidade de cor e
+
+3546
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+extraindo todos os alvos de interesse por meio de
+processos, tais como
+ Binarização da imagem, aplicando uma limiarização pela intensidade de cor
+ Execução de uma abertura morfológica na
+imagem, eliminando pequenas partes (conjunto de pixels vizinhos) que não são alvos
+ Cálculo do número total de alvos detectados, baseado nos componentes conexos resultantes.
+Na terceira etapa são inicializados os parâmetros e os
+estados a serem estimados pelos Filtros de Kalman
+(forma e movimento) para cada alvo e também é
+construída a representação das linhas de medidas
+para cada um. Após a criação das linhas de medidas,
+é criada uma estrutura de dados que contém todas as
+informações dos alvos (componentes conexos) da
+imagem atual, determinando o polígono envolvente
+de cada alvo e aproximando cada polígono envolvente por uma B-Spline de grau três, definindo pontos de
+controle, e associando e calculando o centróide.
+Na etapa quatro é executado o algoritmo de rastreamento baseado em dois Filtros de Kalman, considerando inicialmente as etimativas feitas na fase de
+inicialização. Para cada alvo a ser rastreado inicia-se
+um ciclo para os quadros posteriores da sequência de
+imagens, salvando todas as informações de cada um
+(centróide, pontos de controle, matriz de estimação e
+observação do movimento e da forma, entre outros).
+A parte principal desta etapa está no processamento
+dos filtros, onde primeiramente é executado um Filtro
+de Kalman para a estimação do movimento dos alvos
+e em seguida é empregado um outro Filtro de Kalman
+para estimar a forma dos alvos. Após a execução do
+rastreamento são armazenadas, na quinta etapa, além
+das informações relativas ao centróide estimado do
+alvo, as informações resultantes do rastreamento em
+uma estrutura de imagem, para posterior visualização
+do vídeo com o alvo sendo rastreado.
+
+fechamento morfológico do resultado da subtração.
+Como resultados, são gerados, além do número total
+de alvos detectados, o retângulo envolvente de cada
+alvo e seu respectivo centro de área. Na segunda etapa é executado o rastreamento dos alvos com um
+Filtro de Kalman, utilizando uma representação baseada na região do retângulo envolvente do alvo e seu
+centro de área como variável de estado e de observação.
+O rastreamento de cada jogador é realizado considerando seu retângulo envolvente, que representa o
+alvo, e fazendo uma correlação com o histograma de
+cor entre o próximo quadro e o quadro anterior, tanto
+do retângulo envolvente do alvo como de um retângulo interno que define a cor do uniforme do jogador.
+Assim sendo, o Filtro de Kalman é aplicado para a
+estimação da próxima posição dos retângulos envolvente do alvo e do interno. O pseudo-algoritmo inspirado na proposta de Xu et al. (2005), considerando
+informação de cor do alvo e da cena de fundo, é descrito em quatro etapas.
+Na primeira etapa, definem-se manualmente os fatores de interesse do processo, sendo eles
+ Alvo de interesse coordenadas do retângulo
+envolvente do jogador no primeiro quadro
+da seqência e do retângulo interno que define a cor do uniforme
+ Cor do fundo de cena seleciona na imagem
+uma área retangular com a cor predominante
+do fundo de cena.
+Na segunda etapa definem-se os parâmetros do rastreamento, como tamanhos das janelas de buscas, cor
+média da cena de fundo, calculam-se as posições
+relativas do retângulo interno (uniforme) dentro do
+retângulo envolvente do alvo, e define-se a cor do
+uniforme.
+Os parâmetros iniciais para o Filtro de Kalman são
+definidos na terceira etapa.
+O processo de rastreamento é a quarta etapa e a mais
+importante do algoritmo, e é realizada através de um
+ciclo dos quadros subsequentes lê o quadro a ser
+processado, procura dentro do retângulo envolvente
+estimado do alvo onde está a localização do retângulo interno, calculando a nova posição do alvo e o
+retângulo envolvente atual, e por fim aplica o Filtro
+de Kalman, considerando pouca variação de velocidade e um sistema linear. Dentro do algoritmo do
+Filtro de Kalman são consideradas as informações
+sobre o ruído de observação, a covariância de estimação, a estimação do estado atual, calcula-se o ganho de Kalman e o vetor de estimação atualizando a
+estimação do estado e a posição do retângulo envolvente estimado. Após o cálculo da nova posição estimada, calcula-se a covariância do erro estimado e
+salvam-se os parâmetros do algoritmo para o próximo ciclo e para os gráficos que serão gerados com os
+resultados.
+A abordagem do trabalho de Xu et al. (2005) trata a
+oclusão de uma forma simples. Neste artigo, no entanto, não se considera a oclusão de alvos.
+
+2.2 Rastreador de Xu et al. (2005)
+O sistema de Xu et al. (2005) aplica o Filtro
+de Kalman para o rastreamento de jogadores com
+câmeras fixas. A proposta faz parte do projeto
+INMOVE, formado por um consórcio europeu integrando instituições da área de pesquisa e desenvolvimento, telefonia e tecnologia, envolvendo cinco
+países Finlândia, Holanda, Itália, Dinamarca e Inglaterra. O objetivo é desenvolver projetos na área de
+visão_computacional, com foco em mobilidade (Andersin et al., 2005). O projeto INMOVE incorporou o
+desenvolvimento do sistema de rastreamento de jogadores_de_futebol como uma importante ferramenta
+para os usuários de dispositivos_móveis e fãs de futebol.
+O sistema de rastreamento está dividido em duas etapas principais. Na primeira é realizada a detecção dos
+alvos nas imagens utilizando técnicas de subtração de
+fundo, atualização dinâmica do modelo de fundo e
+3547
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Tabela 1. Tabela comparativa dos trabalhos correlatos principais.
+
+2.3 Comparação qualitativa entre os sistemas
+Devido s grandes variações de movimento
+ocorridas durante uma partida, quando um jogador de
+futebol realiza suas ações dentro do campo, sua forma sofre deformações que dificultam a representação
+baseada em modelos simples, seja pela região retangular da imagem que envolve o alvo, seja por somente suas características visuais, tais como cores e texturas do corpo ou uniforme. Contudo, para obter uma
+boa aproximação do contorno do alvo em relação 
+sua forma, é necessário o emprego de técnicas livres
+de modelos e que se adaptem s dinâmicas destas
+deformações durante o rastreamento. O emprego destas técnicas garante uma boa precisão na representação da forma do alvo, permitindo extrair algumas
+informações relevantes como, por exemplo, a altura
+do jogador, a posição de seus pés naquele quadro,
+indicação nos casos de oclusões parciais, e até mesmo uma possível identificação do evento no qual o
+jogador está participando daquela cena. Assim, descrições mais detalhadas do contorno, como a usada
+por De Bem, são mais precisas que aquelas usadas
+por grande parte dos trabalhos correlatos, que são os
+retângulos envolventes.
+Outro frequente problema que ocorre na sequência de
+imagens em uma partida de futebol, e que a maioria
+dos trabalhos não resolve totalmente, é a oclusão
+entre os alvos. Resolver o problema de oclusão significa controlar exatamente o rastreamento da forma
+dos alvos mantendo o alvo rastreado, mesmo depois
+de passar por oclusões parciais, onde o alvo desaparece parcialmente e reaparece em cena alguns quadros seguintes. O presente trabalho não pretende resolver o problema de oclusão entre alvos, mas garantir o desenvolvimento do rastreamento de jogadores
+de futebol que possua uma base de informações suficientes e que permita a exploração do problema de
+oclusão em futuros trabalhos, como continuidade do
+corrente. Para comparar os dois trabalhos correlatos
+principais aqui detalhados, segundo algumas dimensões de interesse, visando principalmente  eficiência
+computacional,  eficácia dos resultados de rastreamento e  simplicidade no rastreamento, é apresentada a Tabela 1.
+A proposta de De Bem (2007) garante um bom desempenho e eficácia devido ao desacoplamento do
+sistema utilizando dois Filtros de Kalman, e é livre de
+modelos em relação s características do alvo e ao
+contorno de sua forma. Por outro lado, é uma proposta que possui como principais desvantagens uma
+complexidade maior na definição das variáveis de
+estado, devido ao desacoplamento do sistema utilizando dois Filtros de Kalman, por não considerar
+informação de cor no algoritmo de rastreamento e
+por não ter sido aplicado na tarefa de interesse rastreamento de jogadores em partidas de futebol em
+imagens capturadas por câmeras fixas.
+
+Trabalho
+Correlato
+
+De
+Bem
+(2007)
+
+Xu et
+al.
+(2005)
+
+Vantagem
+
+Desvantagem
+
+Bom desempenho e
+excelente
+eficácia,
+sendo livre de modelos em relação ao
+tamanho e forma do
+contorno dos alvos.
+Foco somente nos
+alvos.
+Excelente desempenho, razoável eficácia,
+fácil detecção do
+retângulo envolvente.
+Considera a informação apenas de cor de
+fundo.
+
+Difícil modificação
+da variável de estado
+devido ao desacoplamento do sistema.
+Não considera informação de cor para o
+rastreamento.
+Limitada restrição na
+definição do contorno
+e na variação do tamanho do alvo. Representação
+muito
+simples do alvo.
+
+A proposta de Xu et al. (2005) é baseada em regiões,
+considerando que os alvos são detectados conforme
+suas características visuais e são rastreados pelas
+informações de região do retângulo envolvente. Possui excelente desempenho por utilizar um retângulo
+envolvente e considerar a informação de cor para
+detectar o alvo rastreado. A principal desvantagem
+está na limitação da representação muito simples do
+contorno do alvo, por um retângulo envolvente, não
+garantindo precisão de algumas informações do alvo,
+como a largura e a altura, por exemplo. O sistema é
+eficiente, porém não tão eficaz, sendo muito difícil,
+por exemplo, detectar os pés dos jogadores, uma vez
+que os mesmos se encontram, por várias vezes, fora
+do retângulo envolvente.
+Os estudos com os trabalhos correlatos mostraram
+que, para uma boa eficiência computacional e uma
+melhor eficácia nos resultados, seria necessário rastrear os alvos de modo que seu contorno ficasse o
+mais próximo possível de sua forma real. Deste modo, escolheu-se seguir a linha da proposta de De Bem
+para descrição dos alvos, por possuir uma notável
+eficiência e uma eficácia comprovada em rastreamento de pessoas e objetos móveis, conforme apresentado nos resultados do trabalho de De Bem. No rastreamento, o principal motivo da escolha está no excelente resultado alcançado pelo desacoplamento do
+sistema empregando dois Filtros de Kalman e também por considerar a informação de contorno do
+alvo. Todavia, considera-se necessário implementar
+uma nova proposta para o rastreamento de jogadores
+de futebol, que não só considere a informação de
+contorno do alvo mas também inclua novos parâmetros e informações sobre outras características como,
+por exemplo, a cor do alvo ou da cena de fundo, visando eficácia computacional para aplicações de rastreamento de jogadores_de_futebol.
+
+3548
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+3 Proposta REALIFUT
+
+aproximado por uma curva B-Spline fechada de grau
+3 e nC pontos de controle, suavizando melhor a representação do contorno de cada alvo. Sobre este
+contorno de B-Spline são distribuídas, uniformemente, segmentos de retas de medidas normais ao contorno, com comprimento de cL pixels. O resultado deste
+processo é superposto no quadro de imagem colorida
+original e ilustrado na Figura 4, após ter sido definido
+no seu correspondente quadro binário.
+
+A contribuição e o objetivo deste trabalho é
+melhorar as técnicas estudadas, apresentando uma
+nova proposta para que seja utilizada no rastreamento
+de jogadores_de_futebol com mais eficácia. O modelo
+utilizado na proposta de De Bem (2007) executa a
+detecção de alvos baseada em linhas de medidas,
+representadas por um vetor unidimensional. A utilização de variáveis mais simples como entrada para o
+Filtro de Kalman garante uma implementação eficaz,
+com bons resultados na representação da forma dos
+alvos, e eficiente computacionalmente, melhorando o
+desempenho do algoritmo. Por outro lado, a proposta
+de Xu et al. (2005) considera a cor de fundo da cena
+e do uniforme dos jogadores no algoritmo de rastreamento simplificando o processo e resultando em um
+excelente desempenho, mas não se preocupa muito
+com a forma dos alvos, aproximando-os a retângulos.
+A idéia da presente proposta é utilizar a base do algoritmo de De Bem (2007), que transformou um sistema não_linear, desacoplando-o em dois sistemas_lineares, possibilitando o emprego de dois Filtros de Kalman (um para o tratamento do movimento e o outro
+para a forma dos alvos) de modo eficiente e eficaz, e
+incluir uma contribuição no algoritmo com o objetivo
+de aplicar a solução no processo de rastreamento
+automático de jogadores_de_futebol com sucesso,
+livre de intervenções humanas, incluindo novas informações no processo, como as cores da cena de
+fundo, inspirada no trabalho de Xu et al. (2005).
+Assim, a proposta REALIFUT, consiste nos blocos
+exibidos na Figura 3 que são leitura de arquivos de
+vídeo (bloco 1), inicialização da detecção (bloco 2),
+inicialização do rastreamento (blocos 3 e 4), rastreamento_de_alvos (bloco 5) e resultados (bloco 6).
+
+Figura 4. Retas de medidas (amarelas) e representação poligonal
+(linha cyan), pontos de controle (rosa) e contorno com o uso de BSplines (linha vermelha) de um jogador, representados no espaço
+de cor RGB da imagem.
+
+Os círculos na cor azul representam os pontos dos
+vértices do polígono convexo (linha na cor cyan) que
+aproxima o contorno do jogador detectado. Os pontos de controle da B-Spline estão na cor rosa e foram
+utilizados para a construção do contorno em linha na
+cor vermelha, representando a forma do jogador. As
+retas em amarelo são as linhas de medidas, normais
+ao contorno e uniformemente distribuídas pela BSpline, usadas para a detecção dos alvos nos quadros
+posteriores.
+A implementação de De Bem (2007) utiliza linhas de
+medidas para observar e representar a forma do contorno de alvos, no espaço monocromático de representação das imagens, e os contornos são detectados
+durante o processo de filtragem pela busca por pontos de variação brusca da intensidade da imagem. No
+caso deste trabalho, também foi adotado o uso das
+retas de medidas para observar o contorno dos jogadores_de_futebol para garantir uma maior precisão na
+representação da forma do alvo e no rastreamento.
+Contudo, na proposta REALIFUT, passou-se a utilizar a informação da intensidade de cor da cena de
+fundo, representada pela banda V do espaço de cor
+HSV. Para a detecção do alvo a partir da predição de
+um contorno, usa-se um filtro que avalia o que é cor
+de fundo de cena e o que deve ser jogador ao longo
+das linhas de medidas, procurando na linha de medida o ponto que melhor define a transição entre o jogador e o fundo de cena, para definir a observação
+atual do alvo.
+A busca pela borda da transição do jogador com a
+cena de fundo, nas retas de medida, se dá percorrendo cada reta de modo radial (partindo do centro de
+área do contorno), comparando cada ponto com a
+faixa de valor estipulada para o fundo, e marcando
+cada ponto como pertencente ao jogador ou ao fundo.
+Se todos os pontos da reta de medida forem considerados como jogador, marca-se como borda o ponto
+mais distante do centro do contorno fechado. Por
+
+Figura 3. Blocos da proposta REALIFUT
+
+Inicialmente, no bloco 1, o arquivo de vídeo é convertido para a sequência de imagens que serão analisadas e então, no bloco 2, é executada a segmentação
+da imagem, que consiste na detecção dos alvos de
+interesse (jogadores). Efetua-se a subtração entre
+imagens eliminando-se a informação de fundo de
+cena, a imagem é binarizada, depois é executada uma
+abertura morfológica e, por fim, efetua-se a determinação dos componentes conexos, resultando-se nos
+alvos de interesse. Considerando a hipótese de que
+cada componente conexo corresponde a um alvo de
+interesse (jogador), é então criado um polígono convexo envolvente a este alvo com nA vértices, o qual é
+
+3549
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+pontos da imagem que correspondem ao contorno de
+cada jogador rastreado, usando a cor de fundo como
+parâmetro para determinar o que deve ou não ser
+jogador com a observação dos pontos de controle do
+contorno encontrado na imagem, atualiza-se a estimativa da forma (contorno e pontos de controle). Esta
+estimativa da forma é usada para definir a observação
+do filtro de movimento, calculando a velocidade e o
+fator de escala observado pelo contorno estimado
+estes dados alimentam o filtro de Kalman de movimento, que atualiza a estimativa de velocidade e fator
+de escala do alvo, e o processo se repete.
+O sexto e último bloco da Figura 3 representa a parte
+final do algoritmo que armazena os resultados para
+análises e para posterior visualização de toda a cena
+com o alvo sendo rastreado.
+
+outro lado, marca-se o ponto mais próximo do centro
+de área do contorno do jogador como borda no caso
+de somente encontrar informação de fundo de cena
+ao longo da linha de medida. Se existirem partes da
+reta definidas como jogador, intercaladas com outras,
+definidas como fundo marca-se a transição mais distante do centro (é o caso quando a linha de medida
+cruza parte do braço distanciado do corpo, por exemplo). Ao término da execução deste bloco, tem-se
+a detecção de cada alvo no quadro atual, juntamente
+com seu correspondente contorno B-Spline e suas
+retas de medida distribuídas sobre ele.
+No bloco 3 são inicializados os parâmetros utilizados
+pelo algoritmo de filtragem.
+O vetor de estado completo da proposta REALIFUT,
+assim como na proposta de De Bem (2007), é descrito pelos parâmetros que descrevem a forma do contorno e seu movimento
+r
+ Xk 
+ r   (  0,k ,...,  i ,k ,...,  nC 1,k , v x,k , v y ,k , sk )T ,
+M 
+ k
+
+4 Experimentos
+
+(1)
+
+Foram executados testes de rastreamento de
+jogadores_de_futebol, aplicados a sequências de imagens de partidas, capturadas em jogos reais. Para
+efeito de análise e comparação, tanto a proposta inspirada em Xu et al. (2005) quanto a proposta
+REALIFUT baseada em De Bem (2007), foram implementadas e submetidas aos mesmos testes com as
+imagens selecionadas. Comprova-se uma melhora
+significativa dos resultados em relação aos testes
+anteriores publicados na revista TECCEN (Arnaut
+Costa, 2009).
+Para a realização dos testes utilizou-se equipamentos
+de gravação de imagens com câmeras e lentes especiais, amplamente utilizadas em sistemas de visão. Além destes, também foram necessários computadores
+e softwares para realizar o processamento dos algoritmos. A cena aqui apresentada permite avaliar o
+processo de rastreamento em um deslocamento do
+jogador tanto horizontal quanto vertical.
+
+r
+em que X k representa todos os nC pontos de controle da B-Spline que define a forma do contorno
+envolvendo o jogador, dado por
+
+r
+X k 0  (  0,k ,...,  i ,k ,...,  nC 1, k ) T ,
+
+(2)
+
+onde cada ponto de controle  i, k é dado por suas
+coordenadas x e y na imagem,
+
+ i , k  ( xi , k , y i , k ) T
+
+(3)
+
+r
+e M k define os parâmetros que descrevem o movimento do alvo, dado pela velocidade de translação do
+centróide do contorno do jogador, na horizontal, vx,k,
+e na vertical, vy,k, e o fator de escala, sk
+
+r
+M k  ( v k , s k )  (v x , k , v y , k , s k ) T
+
+.
+
+(4)
+
+Ainda, no quarto bloco da Figura 3, é criada uma
+estrutura de dados identificando o jogador, contendo
+as seguintes informações centróide do contorno feito
+pela B-Spline, pontos de controle da B-Spline, todos
+os parâmetros relacionados aos Filtros de Kalman,
+como covariâncias e vetores de estado.
+No quinto bloco é executado o algoritmo de rastreamento baseado em dois Filtros de Kalman, um para a
+estimação da forma e outro para a estimação do movimento com base nas estimativas anteriores de velocidade e fator de escala, efetua-se a previsão da
+posição dos pontos de controle do contorno no quadro atual, usando a seguinte equação da cinemática
+do modelo de movimento dos alvos, envolvendo a
+posição (x,y), velocidade v e fator de escala s, para
+cada ponto i do contorno descrito no vetor da forma,
+sendo ck-1 o centróide no quadro k-1.
+x
+ x i ,k   x i ,k 1 + v x ,k 1 + s k 1 ( x i ,k 1  c k 1 ) 
+ , (5)
+
+  
+y
+
+ y i ,k   y i ,k 1 + v y ,k 1 + s k 1 ( y i ,k 1  c k 1 ) 
+
+4.1 Implementação inspirada em Xu et al. (2005)
+Os resultados foram eficientes computacionalmente, porém não muito eficazes. Como a proposta de Xu et al. (2005) utiliza um retângulo envolvente
+para definir a forma do alvo, algumas informações
+relevantes para o rastreamento ficam prejudicadas
+como, por exemplo, a posição dos pés do jogador nas
+sequências de imagens.
+O gráfico na Figura 6 mostra toda a trajetória percorrida pelo jogador, permitindo avaliar que a linha da
+trajetória se aproxima muito da linha de fato percorrida pelo jogador, comparando-se com a Figura 5. O
+teste mostra que o algoritmo apresenta uma razoável
+eficácia com relação  representação da forma do
+jogador durante o rastreamento pelo retângulo envolvente (35x72 pixels), e que obteve-se uma trajetória
+linear, quase suave, acompanhando, de fato, todo o
+percurso do jogador.
+
+A seguir, buscam-se nas linhas de medida, definidas
+em cada ponto de controle do contorno previsto, os
+3550
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+a forma do jogador melhor do que a observada pelo
+trabalho de Xu et al (ilustrado na Figura 5). Da mesma maneira, ocorre uma maior suavidade da curva de
+trajetória percorrida pelo alvo, dado pela estimativa
+do centro de área, conforme ilustrado no gráfico da
+Figura 8. Esta segunda curva de trajetória se aproxima mais daquela estimada por um humano ao observar a mesma sequência de imagens.
+
+Figura 5. Último quadro da sequência de imagens com 160 quadros (640x480 pixels). Tamanho do retângulo envolvente 35x72
+pixels.
+
+Figura 8. Resultado do teste. Trajetória estimada do centro de área
+do alvo em posições com coordenadas X e Y.
+
+4.3 Análise Comparativa
+Para a análise comparativa foram utilizados
+quatro índices diferentes o Tempo Médio de Processamento de Quadros por Segundo (TMPQS), a Raiz
+do Erro Quadrático Médio (REQM), o Erro Percentual Relativo s coordenadas X e Y (EPRXY) e, por
+último, o Erro Percentual Absoluto Médio (EPAM).
+
+Figura 6. Resultado do teste. Trajetória estimada do centro de área
+do alvo em posições com coordenadas X e Y
+
+Tabela 2. Tabela comparativa com os resultados e análise final.
+
+4.2 Implementação da REALIFUT
+
+ANÁLISE COMPARATIVA
+FINAL
+
+Os testes da proposta REALIFUT também
+foram aplicados em imagens e alvos reais, jogadores,
+em ambientes abertos e externos, que são os campos
+de futebol, obtendo resultados satisfatórios.
+
+IMAGENS SELECIONADAS
+
+MÉDIA
+FINAL
+
+EFICIÊNCIA (TMPQS)
+Inspirada em Xu et al. (2005)
+Proposta REALIFUT
+
+Cena 1
+1.66
+1.48
+
+Cena 2
+1.23
+1.16
+
+Cena 3
+1.1
+1.05
+
+Média
+
+EFICÁCIA (REQM)
+Inspirada em Xu et al. (2005)
+Proposta REALIFUT
+
+Cena 1
+3.98
+3.27
+
+Cena 2
+6.21
+3.31
+
+Cena 3
+3.35
+2.73
+
+(pixels)
+4.5
+3.1
+
+EFICÁCIA (EPRXY)
+Inspirada em Xu et al. (2005)
+Proposta REALIFUT
+
+Cena 1
+1.63
+1.27
+
+Cena 2
+1.12
+0.1
+
+Cena 3
+0.86
+0.67
+
+()
+1.2
+
+EFICÁCIA (EPAM)
+Inspirada em Xu et al. (2005)
+Proposta REALIFUT
+
+Cena 1
+9.71
+6.92
+
+Cena 2
+2.74
+1.03
+
+Cena 3
+2.3
+2.16
+
+()
+4.9
+3.4
+
+1.33
+1.23
+
+0.7
+
+Do ponto de vista de eficiência computacional, quanto mais rápido ocorrer o processamento mais eficiente é a proposta. Consideramos que as duas propostas
+apresentaram bons resultados, dado que em todos os
+testes foram executados em ambiente_de_desenvolvimento com o Matlab como principal ferramenta, e o
+TMPQS de Xu et al. foi de 1,66 quadrosseg e o da
+REALIFUT foi de 1,48 quadrosseg. Outros índices
+se encontram ilustrados na Tabela 2.
+Analisando a eficácia dos algoritmos, no fato de a
+proposta executar o rastreamento do jogador em relação  posição do alvo, durante toda a cena, mantendo
+o contorno da forma do jogador o máximo parecido
+
+Figura 7. Último quadro da sequência de imagens com 160 quadros (640x480 pixels).
+
+Observando os resultados da Figura 7 fica claro, visualmente, que o contorno do alvo envolve a forma
+do jogador de modo bem eficaz, pois a região vermelha que circunda a forma do jogador manteve o contorno em toda a sua densidade de pixels, preservando
+
+3551
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+com sua forma visual real, conclui-se que a proposta
+REALIFUT apresentou resultados satisfatórios nos
+testes, garantindo sempre uma Raiz do Erro Quadrado Médio (REQM) com boa vantagem em relação 
+proposta inspirada em Xu et al. (2005).
+O destaque mais significante desta análise comparativa é o fato de que a eficácia define a precisão e a
+qualidade dos resultados da melhor proposta aqui
+implementada. Sendo assim, conclui-se que a proposta REALIFUT possui melhor eficácia.
+
+interessante efetuar uma análise comparativa do desempenho do rastreador quando se utilizam abordagens para sistemas_não-lineares ao invés de desacoplamento dos filtros, como feito aqui.
+É inegável a necessidade de desenvolvimento de propostas que lidem com oclusões, parciais ou totais,
+uma vez que as mesmas ocorrem com frequência em
+partidas de futebol monitoradas com câmeras fixas.
+Outro importante ponto, e que deve ser considerado
+para a evolução desta técnica, é o desenvolvimento
+de algoritmos que consideram, além da informação
+de contorno e cor do jogador, a informação de iluminação variável do campo de futebol, garantindo e
+melhorando a robustez do sistema nas variações
+bruscas de iluminação da cena.
+
+5 Conclusão
+O presente trabalho tem sua sustentação sobre
+dois outros o trabalho de Xu et al. (2005) e o de De
+Bem (2007). A proposta de De Bem (2007) foi utilizada como base para a implementação da proposta
+REALIFUT, sendo aquela adaptada para poder ser
+aplicada com sucesso no rastreamento de jogadores
+em imagens reais de partidas de futebol. Para isso, foi
+de suma importância o uso do modelo de observação
+baseado em linhas de medidas que realizam a observação do contorno da forma de cada jogador, de acordo com a intensidade da cor de fundo de cena,
+tornando-se um algoritmo robusto e eficaz. O uso
+deste modelo foi inspirado em Xu et al. (2005).
+Os resultados das variáveis de estado, definidas pelas
+posições e velocidades dos pontos de controle dos
+contornos de cada jogador rastreado, analisadas nas
+duas implementações durante os experimentos, apresentaram-se satisfatórias, mas a proposta aqui apresentada obteve uma boa vantagem em relação  proposta inspirada em Xu et al. (2005).
+Uma das desvantagens na utilização do Filtro de
+Kalman em projetos de rastreamento_de_alvos está na
+falha do algoritmo quando algum objeto desaparece
+por inteiro e de forma repentina, reaparecendo posteriormente, como um efeito de completa oclusão, dificultando, desta forma, a continuidade da estimação
+da trajetória correta do alvo. Outra inconveniência na
+adoção de estimadores com abordagem probabilística, como o Filtro de Kalman, está na definição dos
+parâmetros de inicialização do filtro, por se tratar de
+uma tarefa muito complexa e exaustiva. O uso do
+Filtro de Kalman limita-se a sistemas_lineares. Para
+sistemas_não-lineares é necessário realizar o desacoplamento dos sistemas, como na proposta aqui adotada, ou utilizar Filtros de Kalman que tratem de sistemas_não-lineares, como o FKE - Filtro de Kalman
+Estendido (Welch Bishop, 1995) ou filtros de partículas, como o Condensation (Isard Blake, 1998).
+Entretanto, é inegável a eficiência alcançada pelo
+Filtro de Kalman na estimação para o rastreamento
+de alvos, daí a justificativa para sua escolha no presente trabalho, o que propiciou eficácia e eficiência
+do REALIFUT.
+Para trabalhos futuros sugere-se o desenvolvimento e
+aprimoramento desta técnica em codificações mais
+eficientes para resposta em tempo_real. Ainda, seria
+
+Referências Bibliográficas
+Andersin, A. et al. INMOVE - D1.2.22 Public Final
+Report. INMOVE Consortium. S.l. 2005.
+Arnaut, R. D.Costa, A. H. R. Rastreamento de
+jogadores_de_futebol em seqência de imagens.
+Revista Eletrônica TECCEN, v. 2, p. 44-53,
+ISSN 1984-0993, 2009.
+Borg, J. Detecting and Tracking Players in Football
+Using Stereo Vision. Dissertação (Mestrado) Department of Electrical Engineering, Linkping
+University, Suécia, 2007.
+De Bem, R. A. Uma abordagem livre de modelo para
+rastreamento de objetos em sequências de
+imagens. 2007. 84 p. Dissertação (Mestrado em
+Engenharia Elétrica), Universidade de São
+Paulo, São Paulo, 2007.
+Gonzalez, R. C. Woods, R. E. Digital Image
+Processing. EUA Ed. Addison Wesley, 1993.
+716 p.
+Isard, M. Blake, A. CONDENSATION 
+conditional density propagation for visual
+tracking. International Journal of Computer
+Vision, v. 29, n. 1, p. 5-28, 1998.
+Owens, N. Harris, C. Stennett, C. Hawk-eye tennis
+system. In Proceedings of International
+Conference on Visual Information Engineering.
+VIE 2003, p. 182-185, 2003.
+Xu, M. Orwell, J. Lowey, L. Thirde, D.
+Architecture and algorithms for tracking football
+players with multiple cameras. United Kingdom.
+In Proceedings of IEEE Proceedings  Vision,
+Image and Signal Process., v. 152, n. 2, p. 232141. 2005.
+Welch, G. Bishop, G. An Introduction to the Kalman
+Filter. Relatório Técnico TR95-041, University
+of North Carolina at Chapel Hill, NC, EUA,
+1995.
+
+3552

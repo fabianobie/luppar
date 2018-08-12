@@ -1,0 +1,889 @@
+APLICAÇÃO DE TRANSFORMAÇÕES MORFOLÓGICAS DURANTE A GERAÇÃO DE MAPAS TOPOLÓGICOS POR
+MEIO DE UM MÉTODO THINNING
+JANDERSON R. OLIVEIRA, EDSON A. S. FILHO, ROSELI A. F. ROMERO
+Laboratório de Aprendizado de Robôs, Instituto de Ciências Matemáticas e de Computação, Universidade de
+São Paulo
+Caixa Postal 668, 13560-470 São Carlos, SP, Brasil
+E-mails jrodrigo@icmc.usp.br, edstorolli@icmc.usp.br, rafrance@icmc.usp.br
+Abstract Environment mapping has been a great challenge for many researchers in the autonomous navigation area. There are
+two important paradigms for mapping, metric and topological mapping. Several mapping methods that combine the advantages
+of each paradigm have been proposed. A simple alternative is to combine the metric mapping technique known as Occupancy
+Grid with an Thinning image skeletonization method to topological mapping. However, due noise inherent to the robots own
+ability of capturing sensor signals, the topological map generated through this combination presents several unnecessary
+topological lines, hindering consequently the task of autonomous navigation. Therefore, this work also aims to propose a set of
+morphology transformations to generation of topological maps suitable for real environments, seeking to reduce influence of
+noise in performed mapping. Several experiments have been performed to verify the efficiency of the proposed approach. The
+application of the mathematical morphology filters demonstrated to be a useful method for the creation of topological maps
+considerably less noise, since it eliminates most of the topological lines generated in consequence of noise in the sensors.
+Keywords Morphological transformation, thinning, occupancy grid, mapping.
+Resumo O mapeamento_de_ambientes é um dos maiores desafios para pesquisadores na área de navegação_autônoma. As
+técnicas existentes estão divididas em dois importantes paradigmas, o mapeamento métrico e o topológico. Diversos métodos de
+mapeamento que combinam as vantagens de cada um desses paradigmas têm sido propostos. Uma alternativa simples é combinar
+a técnica de mapeamento métrico conhecida como Grade de Ocupação com um método de esqueletização de imagens Thinning
+para mapeamento topológico. Contudo, devido a ruídos inerentes as leituras sensoriais obtidas pelo robô, o mapa topológico
+gerado através dessa combinação apresenta diversas linhas topológicas desnecessárias, dificultando consequentemente a tarefa de
+navegação_autônoma. Portanto, este trabalho tem o objetivo de propor um conjunto de transformações morfológicas para geração
+de mapas topológicos adequados a ambientes reais, visando reduzir a influência de ruídos no processo de mapeamento realizado.
+Vários testes foram realizados para verificar a eficiência do sistema proposto. A aplicação das transformações morfológicas
+demonstrou ser eficiente para a criação de mapas topológicos livres de ruído, uma vez que elimina grande parte das linhas
+topológicas geradas em conseqência dos ruídos dos sensores do robô.
+Palavras-chave .
+
+1
+
+de informações obtidas de seus sensores, em um
+mapa do ambiente no qual o robô está inserido. O
+mapeamento tem o objetivo de criar, também através
+dos dados adquiridos de seus sensores, um modelo
+espacial do ambiente do robô. Por fim, o
+planejamento_de_trajetória é responsável por enviar
+comandos motores ao robô fazendo com que este
+navegue de forma segura, desviando de obstáculos,
+até um local determinado.
+O mapeamento_de_ambientes internos se expressa
+através de dois grandes paradigmas o mapeamento
+métrico (Moravec, 1988) (Elfes, 1989) (Borenstein
+ Koren, 1991) (Prestes e Silva Jr. Et al, 2004) e o
+mapeamento
+topológico
+(Matari,
+1994)
+(Kortenkamp  Weymouth, 1994) (Roque 
+Doering, 2005). O mapeamento métrico captura as
+propriedades geométricas do ambiente, enquanto o
+mapeamento topológico descreve a conectividade
+entre os diferentes locais que compõem o ambiente.
+Contudo, modelos híbridos (Blanco et al, 2009)
+(Rizzini  Caselli, 2009) (Rawlinson  Jarvis, 2008)
+que combinam as informações obtidas pelo
+mapeamento métrico e pelo mapeamento topológico
+têm sido propostos como uma solução promissora
+para lidar com ambientes reais amplos e complexos.
+
+Introdução
+
+O campo da morfologia matemática foi
+originado do trabalho dos matemáticos J. Serra e G.
+Matheron em meados de 1960 e tornou-se uma
+importante base teórica para a criação de ferramentas
+úteis na área de processamento e análise de imagens.
+De fato, a morfologia matemática tem sido aplicada a
+uma ampla variedade de problemas práticos, tais
+como, por exemplo, pré-processamento_de_imagens,
+associação de padrões, detecção e decomposição de
+formas, e filtragem de ruídos (Costa  César, 2001).
+Os algoritmos baseados em morfologia matemática
+são criados através da combinação de um conjunto
+de operações simples, permitindo a criação de
+técnicas capazes de resolver problemas de
+processamento_de_imagens complexos, tais como os
+problemas encontrados na área de robôs_móveis
+autônomos.
+A pesquisa na área de navegação_autônoma de robôs
+móveis
+provê
+basicamente
+três
+desafios
+fundamentais, sendo estes a localização, o
+mapeamento_de_ambientes, e o planejamento de
+trajetórias. A localização de robôs_móveis consiste
+na tarefa de estimar a posição de um robô, por meio
+5014
+
+A tarefa de adquirir uma representação espacial do
+ambiente possui algumas limitações práticas
+herdadas da própria natureza do problema. Dentre
+estas limitações destaca-se os ruídos oriundos dos
+sensores acoplados ao robô, influenciando
+diretamente na obtenção de um modelo espacial
+exato do ambiente robótico. Sendo assim, neste
+trabalho é apresentado um conjunto de
+transformações morfológicas que visam reduzir a
+influência de ruídos durante o processo de
+mapeamento do ambiente.
+O objetivo do presente trabalho é propor e formalizar
+um mecanismo de filtragem para a geração de mapas
+topológicos adequados a ambientes reais, visando
+reduzir a influência de ruídos no processo de
+mapeamento realizado. Para isso é proposta a
+aplicação de um conjunto de transformações
+morfológicas para a geração de mapas métricotopológicos. Essa abordagem híbrida explorada
+combina duas técnicas encontradas na literatura, uma
+usada para mapeamento métrico, conhecida como
+Grade de Ocupação proposta por Elfes (1989), e
+outra para mapeamento topológico, baseada em um
+algoritmo de esqueletização de imagens denominado
+Thinning (Ko et al., 2004) (Kwon et al., 2006)
+(Oliveira  Romero, 2009).
+O presente trabalho está organizado da seguinte
+forma. Na Seção 2, são apresentados os principais
+conceitos sobre as técnicas de mapeamento
+utilizadas. Na Seção 3, uma descrição básica das
+transformações
+morfológicas
+é
+realizada,
+apresentando os principais conceitos dessas
+transformações sob a ótica da navegação_autônoma.
+Na Seção 4, são apresentados os testes executados
+para validar a aplicação das transformações
+morfológicas no processo de mapeamento híbrido.
+Finalmente, as conclusões e trabalhos futuros são
+apresentados na Seção 5.
+
+Ocupação proposto por Elfes (1989). O método
+Grade de Ocupação usa uma representação
+probabilística e reticulada da informação para
+modelar o ambiente. A Grade de Ocupação é
+definida como um campo aleatório multidimensional
+que contém estimativas estocásticas dos estados das
+células em um espaço reticulado.
+As estimativas do estado de cada célula são obtidas
+através da interpretação das leituras de distâncias
+utilizando modelos probabilísticos dos sensores.
+Procedimentos de estimativa Bayesianos permitem a
+atualização incremental da Grade de Ocupação por
+meio de leituras realizadas, por vários sensores,
+sobre múltiplos pontos de vista.
+A variável de estado s(C), associada  célula C da
+Grade de Ocupação, pode ser definida como uma
+variável aleatória discreta que possui três estados
+distintos ocupada, vazia e desconhecida, denotadas
+aqui por OCC, EMP e UNK. Dessa maneira, a Grade
+de Ocupação corresponde a uma matriz de taxas de
+ocupação que pode ser interpretada através de um
+campo aleatório de estados discretos.
+Para interpretar as medidas de distâncias (dados
+sensoriais), é usado um modelo estocástico do
+sensor. Definido por uma função de densidade de
+probabilidade na forma p(r  z) que relaciona a leitura
+r ao parâmetro de espaço z referente a uma posição
+do mapa. Esta função de densidade é
+subsequentemente utilizada em um procedimento de
+estimativa
+Bayesiano
+para
+determinar
+as
+probabilidades de estado das células da Grade de
+Ocupação.
+Partindo-se da estimativa atual do estado da célula
+Ci, Ps(Ci)  OCC  rt, baseada nas observações
+rt  r1,..., rt e dada uma nova observação rt+1, a
+estimativa atualizada é dada por
+
+P s(Ci )  OCC rt +1  
+
+2 Mapeamento
+
+Ai
+Bi
+
+(1)
+
+em que Ai é dado por
+
+O mapeamento_de_ambientes internos se
+expressa através de dois grandes paradigmas o
+mapeamento métrico e o mapeamento topológico.
+Nas seções subseqentes são apresentados os
+métodos de mapeamento utilizados nesse trabalho,
+Sendo assim, na Seção 2.1 será apresentado um
+método de mapeamento métrico probabilístico,
+conhecido como Grade de Ocupação (Mullane et al.,
+2009) (Noykov  Roumenin, 2007) (Birk  Carpin,
+2006), e na seção subseqente, Seção 2.1, será
+apresentada uma técnica de esqueletização de
+imagens para mapeamento topológico, conhecida
+como Thinning.
+
+Ai  prt +1  s(Ci )  OCC P s(Ci )  OCC rt 
+
+(2)
+
+e Bi é dado por
+
+Bi 
+
+ pr
+
+t +1
+
+ s(Ci )P s (Ci ) rt 
+
+(3)
+
+s ( Ci )
+
+A partir dessa formulação recursiva, a estimativa
+anterior do estado da célula, Ps(Ci)  OCC  rt,
+serve como priori e é obtida diretamente da Grade de
+Ocupação. Então, a nova estimativa é armazenada na
+matriz e desde modo, obtém-se um mapa que
+expressa as probabilidades de ocupação de cada
+célula.
+
+2.1 Grade de Ocupação
+Um dos métodos mais amplamente utilizado
+para mapeamento métrico é o método Grade de
+
+5015
+
+2.2 Thinning
+
+Por outro lado, o método Thinning não gera este tipo
+de informação. Sendo assim, a técnica de
+esqueletização de imagens apresenta melhor
+desempenho sob o ponto de vista da eficiência
+computacional e da capacidade de representação das
+diversas características geométricas do ambiente.
+
+O método Thinning é uma técnica de
+esqueletização
+de
+imagens
+utilizado
+para
+processamento_de_imagens para se detectar o
+esqueleto, ou representação estrutural, das imagens
+(Baxes, 1994). No contexto desse trabalho, o método
+de esqueletização de imagens é responsável por
+definir as linhas topológicas de um mapa métrico.
+O método Thinning considera um conjunto de nove
+células, representadas por valores binários. Se a
+célula estiver ocupada será representada pelo valor 1,
+caso contrário, pelo valor 0.
+Considerando a célula central C1 como referência e
+assumindo que esta está ocupada, o funcionamento
+da técnica de esqueletização de imagens pode ser
+descrito através da verificação de oito condições
+divididas igualmente em dois passos, sendo esses
+
+3 Transformações Morfológicas
+De acordo com Sonka et al. (1999) uma
+transformação_morfológica  é definida pela relação
+entre uma imagem X (analisada como um conjunto
+de pontos na forma x,y) com outro conjunto de
+pontos B, chamado elemento estruturante. B é
+expresso através de uma origem local 
+(denominada
+ponto
+representativo).
+Alguns
+exemplos de elementos estruturantes típicos são
+apresentados na Figura 1. Como pode ser observado
+pela figura o elemento estruturante é representado
+pelas células em cinza e o ponto representativo é
+denotado pelo símbolo X. Na Figura 1(c), é
+apresentada uma situação onde o ponto
+representativo  não é membro do elemento
+estruturante B.
+
+Passo 1
+2  N(C1)  6
+S(C1)  1
+C2 . C4 . C6  0
+C4 . C6 . C8  0.
+em que
+- N(C1) é o número de células ocupadas ao redor de
+p1 (i.e., N(C1)  s(C2) + s(C3) + s(C4) + s(C5) + s(C6)
++ s(C7) + s(C8) + s(C9))
+- S(C1) é o número de mudanças de 0 para 1 na
+seqência p2, p3, ..., p9.
+
+X
+(a)
+
+X
+
+X
+
+(b)
+
+(c)
+
+Figura 1  Elementos estruturantes típicos
+
+Aplicar a transformação_morfológica (X)  imagem
+X significa deslocar o elemento estruturante B
+através da imagem X. Assumindo que B está
+posicionado em algum ponto da imagem, a célula na
+imagem correspondente ao ponto representativo  é
+chamada de célula corrente.  medida que o
+elemento estruturante é deslocado o resultado da
+relação entre a imagem X e o elemento estruturante
+B na posição corrente é armazenado em uma imagem
+de saída na posição correspondente da célula
+corrente da imagem. De maneira que, no caso de
+transformações morfológicas binárias, este resultado
+sempre será igual a zero ou um.
+O conjunto de células com valores 0 e 1
+constitui a descrição de uma imagem binária.
+Assumindo que apenas células com valor 1 são
+consideradas, as demais células podem ser tratadas
+como fundo. As operações morfológicas primárias
+são a dilatação e a erosão, sendo que a partir da
+combinação destas duas transformações outras
+operações mais complexas podem ser desenvolvidas,
+como a abertura e o fechamento. As transformações
+morfológicas de erosão, dilatação e abertura
+utilizadas nesse trabalho serão apresentadas aqui
+utilizando o formalismo de Minkowski, uma vez que
+segundo Sonka et al. (1999) o formalismo de
+Minkowski se assemelha mais as noções de conjunto
+ensinadas nos cursos de matemática.
+
+Passo 2
+2  N(C1)  6
+S(C1)  1
+C2 . C4 . C8  0
+C2 . C6 . C8  0.
+Se as oito células vizinhas de C1 satisfazem as
+condições de um desses passos, então a célula central
+é convertida em uma célula vazia, pois esta não faz
+parte do esqueleto da imagem a ser gerada. Quando
+os passos 1 e 2 são realizados sequencialmente, as
+células mais externas, correspondentes ao contorno
+do objeto, são eliminadas (ou seja, convertidas em
+células vazias). Esse processo é repetido até que
+restem somente as células ocupadas pertencentes ao
+esqueleto da imagem. Contudo, como no
+mapeamento topológico o que se deseja é a linha
+mediana do espaço livre e não os esqueletos dos
+objetos (i.e, obstáculos) as células com estado EMP
+são representadas por 1 e as células com estado
+OCC por 0.
+Mapas topológicos também podem ser gerados
+através de técnicas baseadas em grafos de Voronoi.
+Segundo Kwon (2006), os métodos baseados em
+grafos de Voronoi são robustos para vários tipos de
+ambientes, contudo os mapas gerados por esses
+métodos podem criar alguns nós e linhas de trajetória
+que são desnecessários para a tarefa de navegação.
+5016
+
+A transformação_morfológica de dilatação 
+combina dois conjuntos usando adição vetorial (i.e.,
+(a,b) + (c,d)  (a+c,b+d)) em um espaço Euclidiano
+bidimensional 2. A dilatação X  B pode ser
+definida como o conjunto de pontos das possíveis
+adições vetoriais dos pares de elementos dos
+conjuntos X e B (um de cada um).
+X  B   p  2  p  x + b, x  X e b
+ B
+
+Segundo a equação anterior, Equação 4, um teste é
+realizado sobre todo ponto p pertencente a imagem,
+de maneira que o resultado da erosão é dado pelos
+pontos p para os quais todos os possíveis p + b estão
+em X. Na Figura 3, é apresentado um exemplo do
+conjunto de pontos X erodidos pelo elemento
+estruturante B.
+X  (1,0), (1,1), (1,2), (0,3), (1,3), (2,3), (3,3),
+(1,4)
+B  (0,0), (1,0)
+X  B  (0,3),(1,3),(2,3)
+
+(4)
+
+A seguir, na Figura 2, é apresentado um exemplo da
+transformação_morfológica de dilatação, assumindo a
+seguinte configuração de pontos para X e B
+X  (1,0), (1,1), (1,2), (2,2), (0,3), (0,4)
+B  (0,0),(1,0)
+X  B  (1,0), (1,1), (1,2), (2,2), (0,3), (0,4),
+(2,0), (2,1), (2,2), (3,2), (1,3), (1,4)
+
+X
+
+X
+(a)
+
+(b)
+
+X
+(c)
+
+X
+
+Figura 3  Erosão (a) Imagem original (b) Imagem erodida
+(c) Elemento estruturante
+
+X
+(a)
+
+(b)
+
+Assumindo que o elemento estruturante B está
+deslizando através da imagem X, a transformação
+morfológica de erosão pode ser interpretada através
+da verificação da condição a seguir. Se B transladado
+pelo vetor p está contido na imagem X, o ponto
+correspondente ao ponto representativo de B
+pertence a erosão X  B. É importante salientar que,
+ao contrário da transformação_morfológica de
+dilatação, o operador de erosão não é comutativo.
+
+X
+(c)
+Figura 2  Dilatação (a) Imagem original (b) Imagem
+dilatada (c) Elemento estruturante
+
+A dilatação com um elemento estruturante isotrópico
+3x3 pode ser descrita como uma transformação
+morfológica que altera todas as células de fundo da
+vizinhança do objeto em células pertencentes ao
+objeto. Além disso, tem-se que a operação de
+dilatação possui as seguintes propriedades
+
+XBBX
+
+De acordo com Costa e César (2001) a erosão
+morfológica é amplamente aplicada em problemas de
+processamento_de_imagens e análise de formas.
+Segundo o autor embora a erosão possa ser utilizada
+para a redução de alguns tipos de ruídos, tais como
+os encontrados em regiões pequenas de imagens, a
+transformação_morfológica de abertura é mais
+usualmente adotada para este propósito.
+A transformação_morfológica de abertura pode ser
+definida como a aplicação do operador de erosão
+seguido pelo operador de dilatação (Dougherty 
+Lotufo, 2003). A abertura da imagem X pelo
+elemento estruturante B é denotada por X  B e é
+definida como
+
+é comutativa,
+XBBX
+
+(5)
+
+e também é associativa,
+X  (B  D)  (X  B)  D.
+
+(6)
+
+A transformação de erosão  combina dois
+conjuntos usando subtração vetorial dos elementos
+dos conjuntos, sendo considerada a operação
+contraposta da dilatação. O operador de erosão é
+dado por
+X  B   p  2  p + b  X para cada
+b  B
+
+(8)
+
+X  B  (X  B )  B
+
+(9)
+
+(7)
+A transformação_morfológica de abertura com um
+elemento estruturante isotrópico é usada para
+5017
+
+eliminar detalhes específicos da imagem menores do
+que o elemento estruturante, de modo que a forma
+global dos objetos não seja distorcida.
+De acordo com Russ (2007) existem vários
+parâmetros que podem ser utilizados para ajustar as
+transformações morfológicas de erosão e de abertura,
+contudo os principais são o número de iterações  e o
+padrão de vizinhos adotado pelos operadores
+morfológicos.
+Sobre o padrão de vizinhos, as transformações
+morfológicas clássicas de erosão e abertura alteram o
+estado de uma célula OCC ou EMP se esta é vizinha
+de outra célula com estado oposto. Assim, a
+vizinhança nesse contexto corresponde s oito
+células vizinhas a um ponto representativo  
+Figura 1(a), embora alguns sistemas possam lidar
+com um padrão de vizinhos de quatro células 
+Figura 1(b). Outra proposta é contar o número de
+células vizinhas com estado oposto  célula central,
+comparar este número com algum parâmetro , e
+apenas alterar o estado da célula se o número de
+vizinhos for maior ou igual ao valor de . O efeito de
+diferentes coeficientes para  é a alteração da taxa de
+crescimento e encolhimento das regiões do mapa e o
+controle, em certa medida, da isotropia do resultado.
+Nesse caso,  representa uma alternativa mais
+flexível para implementar o elemento estruturante B.
+Ao invés de se estabelecer com exatidão a estrutura
+de um elemento estruturante B, pode-se apenas
+determinar um valor  para o número de vizinhos do
+ponto representativo , independentemente da
+disposição das células vizinhas a , tornando assim a
+implementação de B mais flexível.
+No contexto da navegação_autônoma de robôs
+móveis utilizando a técnica Grade de Ocupação para
+mapeamento
+métrico,
+as
+transformações
+morfológicas podem ser descritas através da
+mudança do estado s(C) das células da grade de
+ocupação. Sendo assim, o processo de dilatação pode
+ser analisado como a adição de células ao redor da
+periferia de todas as regiões livres do mapa (ou seja,
+muda o estado de uma célula que é originalmente
+OCC para EMP), provocando um crescimento das
+dimensões dessas regiões. De modo geral a dilatação
+pode provocar a união de áreas distintas em uma
+única região. Nesse contexto, a transformação
+morfológica de dilatação pode ser representada por
+ EMP  se 8-N (C1 )  
+s (C1 )OCC  
+OCC  caso contrário
+
+dessas regiões. Contudo, deve-se notar que o
+encolhimento das dimensões das regiões livres pode
+eventualmente causar a ruptura de uma região em
+várias outras partes, fragmentando uma única região
+em duas ou mais regiões. Assim a transformação
+morfológica de erosão pode ser representada por
+OCC  se N (C1 )  
+s (C1 ) EMP  
+ EMP  caso contrário
+
+(11)
+
+Por fim, é importante enfatizar que células isoladas
+que foram completamente removidas pela
+transformação_morfológica de abertura durante a
+etapa de erosão não provocam a adição de novas
+células durante a etapa de dilatação. Essas células
+isoladas são permanentemente apagadas do mapa.
+Devido a esse fato a transformação de abertura é o
+operador mais geralmente utilizado para remover
+ruídos de imagens binárias.
+O Algoritmo 1 abaixo ilustra os princípios gerais da
+aplicação das transformações morfológicas em um
+mapa de estados C qualquer. A variável abertura
+no algoritmo é uma variável booleana que determina
+se a transformação de abertura será realizada ou se
+apenas a transformação de erosão será executada.
+Uma vez que a abertura é definida como a erosão
+seguida pela dilatação, uma vez que o método seja
+chamado o algoritmo inicialmente sempre irá
+executar a transformação de erosão e caso a variável
+abertura seja true, então após a erosão o método
+irá realizar a transformação de dilatação, gerando
+assim a transformação_morfológica de abertura.
+Transformações Morfológicas(C, , , abertura)
+VARIAVÉIS
+contador, i, j Inteiro
+INÍCIO
+PARA contador  1 ATÉ  FAÇA
+PARA i  BSup ATÉ BInf FAÇA
+PARA j  BEsq ATÉ BDir FAÇA
+SE (s(Cij)  1) ENTÃO
+SE N(Cij)   ENTÃO
+s(Cij)  0
+FIM-SE
+
+(10)
+
+SENÃO
+**Nada Acontece**
+FIM-SENÃO
+
+Deve-se notar que a operação 8  N(C1) representa
+o número de células com estado OCC, uma vez que
+N(C1) é a quantidade de células EMP ao redor de C1.
+Por outro lado, ainda no contexto da navegação
+autônoma, o processo de erosão pode ser visto como
+a remoção de células EMP ao redor da periferia de
+todas as regiões livres do mapa (ou seja, muda o
+estado de uma célula que é originalmente EMP para
+OCC), provocando um encolhimento das dimensões
+
+FIM-SE
+FIM-PARA
+FIM-PARA
+FIM-PARA
+
+5018
+
+A aplicação das transformações morfológicas foi
+validada através da geração de mapas topológicos a
+partir de diferentes ambientes. Os ambientes
+considerados diferiam entre si em tamanho, forma e
+complexidade.
+Na Figura 4, são ilustradas as linhas topológicas
+obtidas através do método de esqueletização de
+imagens baseado na técnica Thinning com e sem a
+aplicação das transformações morfológicas de erosão
+e de abertura. Na Figura 4(a), é apresentado o mapa
+obtido sem a utilização das transformações
+morfológicas. Nas Figuras 4(b) e 4(c), são
+apresentados os mapas híbridos com a aplicação das
+transformações de erosão e de abertura,
+respectivamente. Em ambos os casos, a quantidade
+de iterações foi igual a 1 e o número de células
+vizinhas analisadas foi configurado também em 1.
+Em outras palavras, se o número de células vizinhas
+com estado oposto  célula de referência for maior
+ou igual a 1, então o estado da célula central será
+alterado de acordo com a transformação usada.
+
+SE abertura ENTÃO
+PARA contador  1 ATÉ  FAÇA
+PARA i  BSup ATÉ BInf FAÇA
+PARA j  BEsq ATÉ BDir FAÇA
+SE (s(Cij)  0) ENTÃO
+SE (8-N(Cij))   ENTÃO
+s(Cij)  1
+FIM-SE
+SENÃO
+**Nada Acontece**
+FIM-SENÃO
+FIM-SE
+FIM-PARA
+FIM-PARA
+FIM-PARA
+FIM-SE
+FIM
+Algoritmo 1  Transformações morfológicas
+
+É importante notar que, de acordo com o Algorimo
+1, as variáveis BSup, BInf, BEsq e BDir representam
+os limites da matriz de estados C, sendo essas
+variáveis a borda superior, a borda inferior, a borda
+esquerda e a borda direita, respectivamente, da
+matriz C.
+
+(a) Sem transformações
+
+4 Experimentos
+A implementação do sistema proposto foi
+realizada na linguagem CC++ usando a IDE de
+desenvolvimento Borland C++ Builder 5.0. Todos os
+testes realizados foram executados em um robô
+Pioneer 1 equipado com um sensor_laser SICK PLS,
+pertencente ao Laboratório de Aprendizado de Robôs
+do Instituto de Ciências Matemáticas e de
+Computação da Universidade de São Paulo.
+A implementação das técnicas descritas ao longo
+desse artigo foi realizada através de três ciclos
+distintos. Inicialmente, os estados das células da
+grade_de_ocupação são adequadamente atualizados
+de acordo com as leituras sensoriais obtidas pelo
+robô. Em seguida, as transformações morfológicas
+são executadas sobre o mapa métrico obtido. Então,
+quando esta etapa é concluída, a técnica de
+esqueletização de imagens é executada, gerando
+assim as linhas topológicas do ambiente. Sendo
+assim, o funcionamento do sistema proposto é
+baseado em ciclos de atualização de grade de
+ocupação alternados por ciclos de definição das
+linhas topológicas.
+
+(b) Erosão
+
+(c) Abertura
+Figura 4  Transformações morfológicas
+
+5019
+
+Como ilustrado na Figura 4, os ruídos na região
+externa do mapa são quase completamente
+eliminados. Contudo, em certas aplicações pode ser
+necessário eliminar todas as linhas topológicas
+externas ao mapa. Incrementar o número de iterações
+utilizadas pelas transformações morfológicos é um
+dos métodos viáveis para eliminar essas linhas
+externas.
+Na Figura 5 pode ser visto, por exemplo, o mapa
+topológico obtido através da aplicação da
+transformação_morfológica de erosão com quatro
+iterações. Como pode ser observado, o mapa gerado
+possui algumas linhas topológicas segmentadas.
+Contudo, em certas tarefas da navegação_autônoma
+um usuário pode desejar manter o mapa topológico
+tão contínuo quanto for possível.
+
+morfológica de abertura com cinco iterações e
+número de células vizinhas analisadas igual a quatro.
+
+Figura 7 Abertura (5 iterações e 4 células vizinhas)
+
+De acordo com os testes executados, observa-se que
+escolher um número grande de células analisadas, tal
+como de 6 a 8, seleciona apenas células isoladas com
+ruído, não interferindo nas áreas maiores do mapa.
+Por exemplo, escolhendo um número de células
+vizinhas igual a 8, apenas células isoladas terão seus
+estados alterados. As transformações morfológicas
+de erosão e abertura com de número de células
+vizinhas igual a 6 ou 7 são capazes de remover linhas
+unitárias de células sem afetar qualquer outra parte
+do mapa. Um valor de 1 a 5 é capaz de mudar mais
+significativamente a estrutura do mapa.
+Figura 5  Erosão (4 iterações)
+
+5 Conclusão
+
+Uma alternativa eficiente para eliminar ruídos e
+manter o mapa contínuo, restaurando as linhas
+topológicas segmentadas, é a aplicação da
+transformação_morfológica de abertura. Na Figura 6,
+é ilustrado o mapa com uma transformação
+morfológica de abertura de cinco iterações e número
+de células vizinhas analisadas configurado em 1.
+
+Nesse trabalho, um conjunto de transformações
+morfológicas foram propostas, visando aperfeiçoar o
+processo de construção de mapas topológicos a partir
+de um método de esqueletização de imagens,
+conhecido como Thinning. As transformações
+morfológicas foram propostas visando fornecer ao
+sistema de mapeamento a capacidade de lidar com
+situações nas quais os ruídos oriundos das leituras
+sensoriais realizadas pelo robô impedem a
+construção
+de
+mapas
+métricos
+precisos,
+consequentemente implicando na obtenção de mapas
+topológicas inadequados. Tornando assim necessário
+a utilização de mecanismo de filtragem que fossem
+capazes de eliminar as linhas topológicas incorretas
+obtidas em função da imprecisão dos sensores.
+Vários testes foram realizados para validar esta
+proposta. Estes experimentos demonstraram que a
+aplicação das transformações morfológicas para
+geração de mapas topológicos é uma alternativa
+simples e eficiente para se obter um mecanismo de
+filtragem de ruídos durante o processo de
+mapeamento.
+As
+operações
+morfológicas
+demonstraram ainda serem capazes de eliminar
+ruídos em ambientes com diferentes formas e
+complexidades, contribuindo significativamente para
+tornar a tarefa de navegação_autônoma mais simples
+e robusta. De modo geral, a transformação de erosão
+apresentou uma maior capacidade de eliminar os
+
+Figura 6  Abertura (5 iterações)
+
+De acordo com a aplicação do usuário outro possível
+requisito de um sistema de navegação é a redução da
+quantidade de linhas topológicas internas, com o
+objetivo de se obter um mapa topológico mais
+conciso, facilitando assim a tarefa de planejamento
+de trajetórias. A variação do número de células
+vizinhas analisadas é um método de se controlar a
+quantidade de linhas internas. Na Figura 7, é
+apresentado o mapa obtido com uma transformação
+
+5020
+
+ruídos do mapa topológico, contudo essa maior
+capacidade pode provocar um efeito considerado
+indesejado, a fragmentação das linhas topológicas.
+Por outro lado, a transformação de abertura
+demonstrou ser um método mais apropriado para se
+manter a consistência das linhas topológicas. Sendo
+assim, cada uma das transformações se mostrou mais
+adequada para um tipo de situação, que é definida
+pelas necessidades da aplicação do usuário.
+Como trabalho futuro, pretende-se comparar o
+método Thinning com transformações morfológicas
+com os métodos de Voronoi, visando obter as
+vantagens e desvantagens de cada abordagem na
+geração de mapas topológicos.
+
+through topological information. In 2006
+IEEERSJ IROS - Int. Conf. on Intelligent
+Robots and Systems, p. 424  429, 2006.
+Matari, M. J. Interaction and intelligent behavior.
+Technical Report AI-TR-1495, Massachusetts
+Institute of Technology, Artificial Intelligence
+Laboratory, Cambridge, MA, 1994.
+Moravec, H. P. Sensor fusion in certainty grids for
+mobile robots. AI Magazine, p. 61  74, 1988.
+Mullane, J. Adams, M. D. Wijesoma, W. S.
+Robotic
+Mapping
+Using
+Measurement
+Likelihood Filtering. The International Journal
+of Robotics Research, vol. 28, p. 172  190,
+2009.
+Noykov, S. Roumenin, C. Occupancy grids building
+by sonar and mobile robot. Robotics and
+Autonomous Systems, vol. 55, p. 162  175,
+2007.
+Oliveira, J. R. Romero, R. A. F. Image
+Skeletonization Method applied to generation of
+Topological Maps. In Proceedings of Latin
+American
+Robotics
+Symposium,
+ValparaisoChile, 2009.
+Prestes e Silva Jr., E. Idiart, M. A. P. Trevisan, M.
+Engel, P. M. Autonomous Learning Architecture
+for Environmental Mapping. Journal of
+Intelligent and Robotics Systems, vol. 39, p. 243
+ 263, 2004.
+Rawlinson, D. Jarvis, R. Topologically-directed
+navigation. Robotica, vol. 26, p. 189  203,
+2008.
+Rizzini, D. L. Caselli, S. Metric-topological maps
+from laser scans adjusted with incremental tree
+network optimizer. Robotics and Autonomous
+Systems, vol. 57, p. 1036  1041, 2009.
+Roque, W. L. Doering, D. Trajectory planning for
+lab robots based on global vision and Voronoi
+roadmaps. Robotica, vol. 23, p. 467  477, 2005.
+Russ, J. C. The Image Processing  Handbook.
+Editora CRC, 5. Edição, 2007.
+Sonka, M. Hlavac, V. Boyle, R. Image Processing,
+Analysis, and Machine Vision. 2nd. Ed. 1999.
+
+Agradecimentos
+Ao Conselho Nacional de Desenvolvimento
+Científico e Tecnológico e  Fundação de Amparo 
+Pesquisa do Estado de São Paulo, pelo apoio
+financeiro para a realização desta pesquisa.
+Referências Bibliográficas
+Baxes, G. A. Digital Image Processing. John Wiley
+ Sons, 1994.
+Birk, A. Carpin, S. Merging Occupancy Grid Maps
+From Multiple Robots. In Proceedings of the
+IEEE, vol. 94 (7), p. 1384  1397, 2006.
+Blanco, J. L. González, J. Fernández-Madrigal, J.A. Subjective local maps for hybrid metrictopological SLAM. Robotics and Autonomous
+Systems, vol 57, p. 64  74, 2009.
+Borenstein, J. Koren, Y. The Vector field histogram
+ fast obstacle avoidance for mobile robots.
+IEEE Transactions on Robotics and Automation,
+vol. 7(3), p. 278  288, 1991.
+Costa, L. F. César Jr., R. M. Shape Analysis and
+Classification  Theory and Practice. Editora
+CRC, 2001.
+Dougherty, E. R. Lotufo, R. A. Hands-on
+Morphological Image Processing. Tutorial Texts
+in Optical Engineering, vol. TT59. Editora SPIE,
+2003.
+Elfes, A. Occupancy Grids A Probabilistic for Robot
+Perception and Navigation. Tese Ph.D.,
+Carnegie Mellon University, 1989.
+Ko, B. Y. Song, J. B. Lee, S. Real-time Building of
+Thinning-Based Topological Map with Metric
+Features. In Proceedings of International
+Conference on Intelligent Robots and Systems,
+p. 1524  1529, 2004.
+Kortenkamp, D. Weymouth, T. Topological
+mapping for mobile robots using a combination
+of sonar and vision sensing. In Proceedings of
+the Twelfth National Conference on Artificial
+Intelligence. AAAI  IAAI  MIT Press, p. 979 
+984, 1994.
+Kwon, T. Yang J. Song, J. Chung, W. Efficiency
+improvement in Monte Carlo localization
+5021

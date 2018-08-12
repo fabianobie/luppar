@@ -1,0 +1,863 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+UMA ARQUITETURA PARA TELEOPERACAO INTEGRANDO INTERFACE
+NATURAL, REALIMENTACAO DE FORCA E SERVOVISAO
+Gabriel C. da Motta-Ribeiro, Antonio C. Leite, Pal J. From, Fernando Lizarralde,
+Liu Hsu
+
+
+Programa de Engenharia EletricaCOPPE
+Universidade Federal do Rio de Janeiro - UFRJ
+Rio de Janeiro, RJ, Brasil
+
+
+Department of Mathematical Sciences and Technology
+Norwegian University of Life Sciences
+As, Norway
+
+Emails gabrielcasulari@poli.ufrj.br, toni@coep.ufrj.br, pal.johan.from@umb.no,
+fernando, liu@coep.ufrj.br
+Abstract The teleoperation of robotic devices allows that the operators perform several tasks with safety in
+remote areas and hazardous environments. However, interfaces and architectures proposed for these systems are
+limited to operating point-to-point or have complex and application associated programming structures, making
+difficult extent and rapid prototyping. This paper presents a new teleoperation architecture performed using
+Matlab and Robot Raconteur. These tools allow one to change input and robotics devices, as well as the control
+strategies. Currently in the developed application are considered natural interface, haptic and visual servo control
+for a robotic manipulator. The concept was tested in pick-and-place tasks, remotely executed by using a PUMA
+560 manipulator, a CCD camera, a Phantom Omni haptic device and a Kinect.
+Keywords
+
+Teleoperation, Force Feedback, Remote Control, Visual Servoing
+
+Resumo A teleoperacao de dispositivos roboticos permite que operadores executem diversas tarefas com
+seguranca, em areas remotas e ambientes perigosos. Entretanto, as interfaces e arquiteturas propostas para estes
+sistemas sao limitadas a operacao ponto a ponto ou possuem estruturas de programacao complexas e associadas
+a aplicacao, dificultando extensao e prototipagem_rapidas. Neste trabalho e apresentada uma nova arquitetura
+de teleoperacao implementada atraves de Matlab e Robot Raconteur. Essas ferramentas permitem a alteracao
+de dispositivos de entrada e sistemas roboticos, bem como das estrategias_de_controle. Atualmente, na aplicacao
+desenvolvida sao consideradas interface natural, haptica e servovisao para um manipulador_robotico. O conceito
+foi testado em tarefas de pick-and-place remotamente executadas usando um manipulador PUMA 560, uma
+camera CCD, um dispositivo haptico Phantom Omni e Kinect.
+Palavras-chave
+
+
+
+Introducao
+
+A utilizacao de robos operados remotamente
+para realizar tarefas em ambientes hostis ou
+locais de difcil acesso tem despertado o interesse da comunidade cientfica nos ultimos
+anos (Bellingham and Rajan, 2007 Trevelyan
+et al., 2008). Neste contexto, a teleoperacao uni
+ou bilateral (Niemeyer et al., 2008) apresenta-se
+como uma solucao viavel para a execucao de tarefas de inspecao e manutencao em diversas aplicacoes, por exemplo, nuclear (Iborra et al., 2003), espacial (Preusche et al., 2006) e offshore (Skourup
+and Pretlove, 2009), a fim de reduzir os custos da
+operacao e melhorar as condicoes de saude, seguranca e meio_ambiente. A instabilidade em operacoes bilaterais, gerada pelo atraso nos meios de
+comunicacao, foi estudada em termos da estrutura
+de controle (Hokayem and Spong, 2006). Entretanto os trabalhos referentes a estas tecnicas, geralmente, nao especificam a arquitetura utilizada
+como plataforma experimental.
+No ambito academico, a possibilidade de utilizar equipamentos roboticos localizados fora do espaco fsico de um determinado laboratorio ou ins-
+
+ISBN 978-85-8001-069-5
+
+tituicao permite o compartilhamento de recursos
+de hardware entre diferentes centros de pesquisa.
+Nesta aplicacao e importante utilizar uma arquitetura flexvel que permita que a estrutura seja
+reconfigurada ou expandida, alterando-se estrategias_de_controle e adicionando novos equipamentos
+de forma simples e rapida.
+As arquiteturas e interfaces de teleoperacao
+propostas na literatura sao limitadas a operacoes ponto a ponto (Taylor et al., 1999 Bambang, 2007) ou trajetorias planejadas antes da execucao (Safaric et al., 2003) sem uma forma de realimentacao visual durante o movimento, operacoes bilaterais com os sistemas mestre e escravo no
+mesmo ambiente (Oboe and Fiorini, 1998 Munir
+and Book, 2003 Goto et al., 2010) ou dependentes
+de um padrao de comunicacao em rede pouco difundido (Anderson, 1995). O OROCOS (Soetens
+and Bruyninckx, 2005) e ROS (Quigley et al.,
+2009) estao se difundido como plataformas de desenvolvimento de aplicacoes roboticas. Entretanto
+a primeira nao se aplica a este trabalho por ser
+desenvolvida para controle_em_tempo_real e a segunda pode apresentar mal funcionamento devido
+
+3549
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+a temporizacao de diferentes fontes de mensagens,
+o que e crtico a grandes distancias.
+O objetivo deste trabalho e apresentar uma
+nova arquitetura_de_controle realizada atraves de
+Matlab (The MathWorks, Inc.) e Robot Raconteur (RR) (Wason and Wen, 2011) que integra em
+uma unica interface grafica (GUI) diferentes modalidades de controle. A realimentacao pode ser
+visual atraves de uma camera com stream online
+e de forca com dispositivos hapticos, permitindo
+operacoes com controle uni ou bilateral. As ferramentas utilizadas permitem a prototipagem_rapida com alteracao de dispositivos de entrada, dispositivos roboticos e estrategias_de_controle.
+Experimentos realizados com um robo PUMA
+560 do Rensselaer Polytechnic Institute (Troy,
+NY, EUA) comandado do Laboratorio de Controle da COPPEUFRJ, ilustram a viabilidade da
+estrutura de teleoperacao apresentada.
+2
+
+Arquitetura Proposta
+
+A arquitetura de teleoperacao proposta permite a
+realizacao das seguintes acoes, individuais ou combinadas
+1. Movimentacao mestreescravo e realimentacao visual
+2. Controle de posicao via servovisao
+3. Alteracao do estado da garra
+4. Realimentacao de forca,
+a fim de garantir a realizacao bem sucedida
+de uma tarefa teleoperada (e.g., pick-and-place).
+A primeira operacao pode ser realizada com o
+Phantom Omni (Sensable) ou o Kinect (Microsoft
+Corp.).
+As diferentes interfaces de comando do robo
+localizadas no ambiente remoto sao integradas
+atraves do Matlab e as posicoes no espaco das
+juntas, ou erro no espaco da imagem, sao enviadas atraves da internet para o ambiente local onde
+estao as malhas_de_controle do manipulador_robotico. Os fluxos de informacao desta arquitetura
+sao apresentados na Figura 1, sendo a infraestrutura local e remota detalhadas nas secoes seguintes.
+2.1
+
+Comunicacao
+
+Como mostrado na Figura 1 existem duas vias de
+comunicacao entre os ambientes remoto e local,
+uma para operacao do manipulador e outra para
+transmissao de vdeo. A primeira e realizada atraves de comunicacao UDP servidorcliente implementada em Matlab atraves do pacote pnet. Para
+estabelecer a conexao o cliente envia um comando
+para o servidor, conhecendo previamente o seu endereco IP, este entao reconhece o endereco do cliente e inicia o envio de comandos de acordo com
+o modo de operacao estabelecido. O controle de
+
+ISBN 978-85-8001-069-5
+
+acesso ao manipulador e realizado pelo ambiente
+local, que define a conexao com o servidor UDP
+remoto (ver Figura 2). Alem disso, como o sistema_de_controle esta em uma rede virtual local
+(ver secao 2.2) ao se requisitar a conexao o roteador e capaz de resolver as questoes de roteamento
+interno de portas. As possveis barreiras de firewall estabelecidas pela rede do ambiente local
+podem ser ultrapassadas atraves da utilizacao de
+uma VPN (em ingles, virtual private network ).
+A segunda via de comunicacao utiliza protocolo TCP para o envio das imagens do ambiente
+local como realimentacao para o operador remoto.
+Neste caso o servidor e local, pois o recurso acessado pode ser utilizado de forma segura por multiplos clientes, no ambiente remoto de operacao ou
+nao. O gerenciamento de conexoes e a transmissao
+da imagem sao realizados atraves da arquitetura
+RR (Wason and Wen, 2011).
+Robot Raconteur
+O RR e uma arquitetura e biblioteca de comunicacao para aplicacoes de robotica e automacao. E
+baseada em nos, tipicamente processos em uma
+maquina, que se conectam atraves de canais em
+um modelo servidorcliente. A conexao e realizada atraves de uma requisicao do no cliente que
+conhece previamente o endereco IP do no servidor, este entao expoem suas funcionalidades por
+meio de um texto com as definicoes de suas estruturas e objetos em um formato independente de
+linguagem. Desta forma o cliente nao necessita conhecer previamente as caractersticas do servidor,
+podendo o mesmo ser alterado de forma independente (Wason and Wen, 2011).
+Os canais de transporte de mensagem implementados permitem a comunicacao atraves de
+TCPIP para uma rede_local ou internet, de uma
+pipe para processos internos em uma maquina
+Windows e da porta_serial para processadores embarcados de baixo consumo. O RR considera sistemas_em_tempo_real ou baseados em eventos e permite programacao em diferentes linguagens. Atualmente sao permitidos nos desenvolvidos em linguagens C, C++ e Matlab ou que utilizem a
+plataforma Arduino (Wason and Wen, 2011). A
+possibilidade de integracao com o Matlab e o reconhecimento de funcionalidades no ato da conexao, tornam o RR mais adequado a prototipagem_rapida que ferramentas mais gerais como o
+ROS (Quigley et al., 2009).
+2.2
+
+Infraestrutura Local
+
+O ambiente de operacao local contem um manipulador_robotico com um sensor de forca acoplado ao
+efetuador, uma malha_de_controle para os atuadores das juntas e uma camera conforme sera descrito a seguir.
+
+3550
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+Kinect
+
+Phantom
+
+Manipulador
+
+Local
+
+Remoto
+RobotRaconteur
+
+RR
+
+Força
+(PUMA 560)
+
+Esqueleto
+
+RR
+
+Posição
+(Espaço das juntas)
+
+RR
+
+Posição
+
+Cinemática
+inversa
+
+Força
+
+Posição
+(Espaço das juntas)
+Trajetória
+preestabelecida
+
+Servidor
+Distância ao alvo
+(pixels)
+
+Imagem
+
+Cliente
+
+RR
+Visualização
+(Video)
+
+Processamento
+de imagem
+
+Figura 1 Diagrama de interfaces entre as diferentes modalidades de entrada (ambiente remoto) e o sistema de
+controle (ambiente local). RR indica a comunicacao atraves do Robot Raconteur.
+
+Sistema de controle
+A malha_de_controle do sistema robotico e implementada de forma digital em um computador utilizando um kernel em tempo_real com codigo gerado atraves da ferramenta XPC Target para MatlabSimulink. Os comandos sao enviados atraves
+de outros computadores rodando Matlab dentro
+de uma rede interna do laboratorio, com a integracao realizada atraves do RR.
+Camera
+Na arquitetura proposta a camera presente no ambiente local fornece a realimentacao visual para o
+operador e a entrada para o controle por servovisao, sendo a informacao capitada enviada atraves
+de um servidor desenvolvido com o RR. No caso da
+realimentacao o vdeo e observado de forma contnua em um aplicativo cliente desenvolvido com
+a mesma biblioteca, enquanto que na servovisao
+imagens sao amostradas diretamente no Matlab
+utilizando um no nativo do RR.
+2.3
+
+Infraestrutura Remota
+
+No ambiente remoto estao presentes os dispositivos mestre, Phantom e Kinect, integrados por
+
+Phantom Omni
+
+IP Real
+
+Remoto
+
+uma GUI, com a qual tambem e implementada a
+servovisao.
+Kinect
+O Kinect e um dispositivo composto por uma camera RGB e uma camera e emissor infravermelho.
+Este gera uma nuvem de pontos cuja deformacao permite ao dispositivo fornecer informacoes de
+profundidade junto a imagem do ambiente, sendo
+classificado como um dispositivo RGBD (em ingles, red, green, blue and depth). O Kinect foi
+desenvolvido para fornecer interface natural a jogos eletronicos, a partir do rastreamento dos movimentos do usuario. O rastreamento e realizado
+atraves de 20 pontos compreendendo as articulacoes dos bracos e pernas, maos, pes, cabeca, centro
+da linha dos ombros, centro de massa do corpo
+(proximo ao umbigo) e um ponto intermediario
+entre os dois ultimos. Para estender esta capacidade a plataforma Windows foram utilizados o
+driver e kit de desenvolvimento oficiais da Microsoft, sendo a interface com Matlab realizada por
+um servidor TCP utilizando o RR.
+O servidor fornece, quando requisitado, um
+vetor de 80 elementos com a posicao e a qualidade da identificacao de cada um dos 20 pontos,
+
+IP Real
+
+Local
+
+IP virtual
+Cliente UDP
+
+Kinect (RR)
+Trajetória Fixa
+
+Servidor UDP
+xPC Target
+
+Manipulador
+
+RR
+
+Monitor
+Cliente TCP
+Processamento
+de Imagem
+
+Câmera
+RR
+
+Servidor TCP
+(Vídeo)
+
+Figura 2 Diagrama representativo das vias de comunicacao para a arquitetura de teleoperacao proposta. RR
+indica a comunicacao atraves do Robot Raconteur.
+
+ISBN 978-85-8001-069-5
+
+3551
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+para ate dois esqueletos. Para a aplicacao atual
+somente tres pontos, mostrados na Figura 3, referentes ao braco direito sao utilizados.
+
+z
+P2
+
+x
+
+0
+2
+V
+
+2
+P1
+
+1
+V
+
+1
+
+P0
+
+Figura 3 Pontos (P0 , P1 e P2 ) do esqueleto fornecido
+pelo Kinect e utilizados para controle do manipulador.
+
+Para movimentar o manipulador sao utilizados os angulos do ombro (0 e 1 ) e do cotovelo
+(2 ), onde o braco e modelado por meio dos vetores
+1
+V
+
+V2
+
+
+Rz (0 )Ry (1 )(y )
+ Rz (0 )Ry (1 )Ry (2 )(z)
+
+(1)
+
+onde Rz (0 ) e uma rotacao elementar de 0 em
+torno do eixo z e Ry (i ) e uma rotacao elementar de i em torno do eixo y para i  1, 2. Note
+1 e V
+2 , definidos na Figura 3,
+que, os vetores V
+podem ser obtidos por cinematica inversa atraves
+dos subproblemas 2 e 1 de Paden-Kahan (Murray
+et al., 1994). Este modelo considera a posicao zero
+do manipulador com o elo 1 alinhado ao eixo y e
+o elo 2 ao eixo z, alem de um movimento inverso
+para os angulos 1 e 2 . Esta inversao e justificada
+para se obter melhor ergonomia em operacoes com
+o cotovelo do robo para o alto, por exemplo coletando objetos sobre uma mesa.
+
+Servovisao
+Servovisao consiste em controlar a posicao de um
+manipulador (ou de um robo_movel) a partir
+da realimentacao visual obtida por um ou mais
+dispositivos de captura de imagem (Hutchinson
+et al., 1996). Neste trabalho propoe-se uma implementacao transparente ao operador, o qual somente indica a posicao inicial de um marcador
+colorido (vermelho, verde ou azul) no punho do
+manipulador e a posicao final desejada (alvo).
+A posicao inicial e necessaria devido a execucao
+do processamento_de_imagem em uma sub-janela,
+considerando-se um movimento lento em relacao
+a amostragem das imagens. Este processamento e
+realizados em cinco etapas
+1. subtracao da imagem em tons de cinza da camada da cor do marcador
+2. filtragem atraves de filtro da mediana
+3. transformacao de escala de cinza para preto
+e branco
+4. remocao de objetos pequenos
+5. calculo do centroide do objeto identificado.
+Uma vez obtido o centroide do marcador no
+punho o erro de imagem (em pixels), obtido a partir da diferenca entre a posicao desejada e a posicao do centroide, e transmitido para o ambiente
+local. Todo processamento e realizado em Matlab
+fazendo o uso do pacote Image Processing atraves
+das linhas de codigo apresentadas no Codigo 1.
+Codigo 1 Processamento da imagem.
+f u n c t i o n  Xc , Yc , f a l h a  g e t c e n t r o i d ( data , Xci ,
+Yci , L )
+Xciround ( Xci )  Yciround ( Yci ) 
+s u b w i n xmax ( XciL , 1 )  min ( Xci+L , 4 8 0 ) 
+s u b w i n ymax ( YciL , 1 )  min ( Yci+L , 6 4 0 ) 
+d i f f i mi m s u b t r a c t ( d a t a ( subwin x , subwin y , 1 ) ,
+r g b 2 g r a y ( d a t a ( subwin x , subwin y ,  ) ) ) 
+d i f f i mm e d f i l t 2 ( d i f f i m ,
+
+Phantom Omni
+O Phantom e um mecanismo robotico com 6
+juntas de revolucao, 3 atuadas e 3 nao atuadas. Possui uma biblioteca de desenvolvimento
+em CC++ com a qual e possvel programar aplicacoes graficas que o utilizam como dispositivo de
+entrada de 6 graus de mobilidade com realimentacao em 3 graus, ou controlar diretamente o hardware.
+Para integrar o Phantom no sistema utilizouse a capacidade do Matlab de reproduzir funcoes
+escritas em linguagem C pre-compiladas em arquivos MEX. A funcao desenvolvida inicializa o
+laco de controle do dispositivo e permite a leitura
+das posicoes das juntas e a escrita de um vetor
+de forcas de forma assncrona. Para ajustar a leitura dos angulos a cinematica de diferentes manipuladores pode-se realizar rotacoes e translacoes
+independentes para cada junta.
+
+ISBN 978-85-8001-069-5
+
+4
+
+4) 
+
+d i f f i mim2bw ( d i f f i m , 0 . 2 0 ) 
+d i f f i mbwareaopen ( d i f f i m , 3 0 ) 
+s t a t sr e g i o n p r o p s ( d i f f i m ,
+for
+
+ Centroid  ) 
+
+o b j e c t 1 l e n g t h ( s t a t s )
+bcs t a t s ( o b j e c t ) . C e n t r o i d 
+bcbc +max ( YciL , 1 ) 1 max ( XciL , 1 )  1  
+
+end
+i f e x i s t (  bc  ,  v a r  )
+Xcround ( bc ( 1 ) )  Ycround ( bc ( 2 ) ) 
+f a l h a 0
+else
+f a l h a 1
+XcYci  YcXci 
+end
+
+Interface Grafica
+A operacao no ambiente remoto e centralizada em
+uma GUI desenvolvida em Matlab permitindo escolher a modalidade de controle, configurar o servidor e controlar o estado da garra no efetuador,
+
+3552
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+alem de fornecer informacoes para auxiliar o operador. A Figura 4 apresenta a GUI, onde na parte
+superior e realizada a selecao do controle, abaixo
+configuram-se as portas do cliente e do servidor, a
+posicao inicial das juntas do manipulador e o perodo de amostragem. A opcao de reiniciar sempre
+retorna a posicao inical escolhida cada vez que a
+operacao e parada e reiniciada, caso contrario isto
+ocorre apenas se o servidor for desligado.
+
+rida a partir da requisicao do operador pelo botao
+snapshot ou ao se iniciar o procedimento. E atraves desta figura que a posicao inicial do marcador
+no punho e o alvo sao informados. As coordenadas
+do alvo podem ser alteradas a qualquer instante
+de tempo bastando selecionar um novo local da
+imagem, enquanto o marcador deve ser relocalizado apenas quando o processamento da imagem
+nao o faz automaticamente.
+Na operacao atraves do Kinect nenhuma informacao e mostrada no painel principal e o operador e realimentado por duas figuras. A primeira
+apresenta uma reconstrucao do braco atraves dos
+pontos de esqueleto recebidos do dispositivo. A
+segunda varia de acordo com o momento de operacao ao ser iniciada apresenta a diferenca absoluta em relacao a ultima posicao (ou a posicao
+inicial informada na interface), apos esta diferenca
+atingir o limite de 10o em todas as juntas a figura
+e trocada para o angulo e os limites, superior e
+inferior, de cada uma. Exemplos destas figuras
+sao apresentados na Figura 6, da esquerda para
+direita.
+3
+
+Figura 4 Interface grafica na configuracao para operacao com trajetoria preestabelecida.
+
+Na regiao inferior da interface estao o controle
+da garra, uma indicacao do estado da mesma, informacoes sobre as mensagens enviadas, o estado
+do servidor (desligado, esperando conexao ou conectado) e os botoes para ligar e desligar o mesmo.
+A regiao central apresenta configuracoes e informacoes referentes a modalidade de controle selecionada, sendo alterada de acordo com cada uma.
+Na Figura 4 e apresentada a interface para o envio
+de uma trajetoria preestabelecida e, neste caso,
+existe um botao para alterar a trajetoria de cada
+junta e a cada instante e apresentado ao operador
+o valor do angulo enviado. Para a operacao com
+Phantom o painel mostra somente os angulos de
+cada junta e para a servovisao o painel apresenta
+as posicao do alvo e do marcador no punho do
+manipulador alem do erro de imagem em pixels,
+como representado na Figura 5.
+
+Figura 5 Campo de comandos e informacoes referentes a servovisao.
+
+Para a servovisao tambem e apresentada uma
+figura com uma foto do ambiente local adqui-
+
+ISBN 978-85-8001-069-5
+
+Testes Experimentais
+
+Para o teste experimental da arquitetura proposta
+o ambiente de operacao local utilizado pertence
+ao Rensselaer Polytechnic Institute (Troy, NY,
+EUA). O ambiente experimental e composto por
+dois manipuladores_roboticos PUMA 560 montados sobre um sistema de trilho contendo uma
+junta prismatica e duas de revolucao (Wason and
+Wen, 2011). Entretanto, nos ensaios experimentais sera utilizado apenas um dos manipuladores
+com a base fixa, uma camera CCD e um sensor de
+forca JR3 (JR3 Inc.). Para avaliar a viabilidade
+da estrutura estabelecida duas tarefas teste foram
+desenvolvidas, uma abrangendo os tres primeiros
+itens enumerados na Secao 2 e a outra para a realimentacao_de_forca.
+A primeira tarefa teste consiste em segurar
+um objeto alvo sobre um suporte em uma mesa e
+deixa-lo dentro de uma cesta (pick-and-place). O
+manipulador e inicializado em uma posicao esticada para frente, com vetor de angulos das juntas
+dado por   0 0 2 0 3 0T rad. Em seguida ele
+e alinhado ao objeto alvo em um posicionamento
+lateral com 1   2 rad de forma a obter o marcador do punho no quadro da camera. Entao, o
+manipulador e levado ate o objeto e, apos agarrar o mesmo, o caminho inverso e realizado. Os
+grandes deslocamentos sao realizados atraves do
+Phantom ou Kinect, enquanto o posicionamento
+fino utiliza a servovisao. As etapas estao exemplificadas na Figura 7 e os numeros representam as
+acoes enumeradas na Secao 2.
+Durante o experimento a etapa de servovisao
+foi realizada atraves de um algoritmo iterativo do
+tipo look-and-move (Hutchinson et al., 1996). O
+
+3553
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 6 Exemplos de figuras para auxlio do operador durante o uso do Kinect. Painel esquerdo - reconstrucao
+do braco atraves dos pontos fornecidos pelo dispositivo painel central - diferenca entre angulos das juntas no
+Kinect e no manipulador antes de iniciar a operacao painel direito - angulos enviados ao manipulador (linhas
+solidas) e limites (linhas tracejadas) para cada junta. Nos dois ultimos os eixos sao radianos e amostras.
+
+1
+2
+
+2
+1
+3
+3
+
+Figura 7 Exemplo do experimento com as diferentes
+modalidades de controle.
+
+robo e controlado no espaco das juntas, em uma
+malha de posicao com a referencia (qd ) dada por
+qd (k)  q(k  1) + KJp1 (q(k  1))(k),
+
+(2)
+
+sendo Jp o Jacobiano de posicao do manipulador,
+K uma matriz de ganhos positivos, q a posicao
+atual das juntas e  o erro de imagem. Neste caso
+se o plano de trabalho e o plano da camera sao
+paralelos com uma rotacao ,  < 2 , e possvel garantir que o erro na imagem converge para
+zero (Zachi et al., 2006).
+A tarefa referente a realimentacao_de_forca
+e dividida em duas etapas regulacao e rastreamento. Em ambas um operador local atua diretamente no sensor de forca instalado no efetuador do manipulador e as leituras deste sao enviadas ao ambiente remoto servindo como entrada
+de forca para o Phantom, cujos angulos das juntas
+sao enviados para manipulador local. Na primeira
+etapa o operador remoto deve manter a posicao
+do dispositivo fixa, enquanto na segunda o dispositivo pode se movimentar, resultando em um
+movimento do manipulador.
+4
+
+Observacoes dos Experimentos
+
+A seguir sao apresentados resultados para avaliacao da eficacia da estrutura proposta. Primeira-
+
+ISBN 978-85-8001-069-5
+
+mente, destaca-se que a estrutura utilizada permitiu a realizacao da tarefa de pick and place 1 ,
+porem devido ao grande atraso (proximo a 1 s),
+a baixa taxa de amostragem (0, 5 s) e a operacao
+unilateral, somente com realimentacao visual, os
+movimentos devem ser realizados em baixa velocidade.
+Na Figura 8 sao apresentados os angulos enviados para o ambiente local durante a movimentacao mestreescravo, tanto com Phantom quanto
+com o Kinect. Observa-se que inicialmente os valores sao constantes durante o perodo em que o
+operador ajusta o controlador a posicao atual do
+manipulador, de forma a nao ocorrem saltos na
+posicao das juntas. Apos este ajuste a junta 1 e
+levada a posicao  2 rad durante a etapa inicial e
+retorna proximo a zero na etapa final, assim como
+definido na tarefa. Ressalta-se que a operacao com
+o Kinect se mostrou mais difcil, com maiores oscilacoes e tempo de execucao, pois o PUMA 560 nao
+possu todos os graus de mobilidade do braco humano tornando o movimento pouco natural, com o
+operador virando todo o corpo e dificultando a visualizacao da tela de operacao. Alem disso, apesar
+das inversoes consideradas na cinematica inversa
+tornarem mais ergonomica a posicao de cotovelo
+do manipulador para cima, elas tornam tambem
+os movimentos do braco menos intuitivos.
+Durante a servovisao, devido ao procedimento
+de obtencao da imagem pelo no Matlab do RR,
+o intervalo de tempo entre o envio de informacoes para o ambiente local aumenta, podendo
+aproximar-se de 3 s. Com isso o deslocamento
+do manipulador deve ser realizado com velocidade
+ainda menor de forma a manter o marcador dentro da sub-janela de processamento da imagem.
+Este atraso na atualizacao do erro, porem, nao inviabiliza o controle como pode ser observado na
+Figura 9. A aproximacao e realizada de forma
+gradual, enquanto a execucao do trajeto de volta,
+1 Um vdeo com a tarefa de pick and place esta em
+httpwww.youtube.comwatch?vJ5vRgDkieY. O uso de
+dois dispositivos Phantom controlando um manipulador
+de dois bracos esta em httpwww.youtube.comwatch?
+vB1hhOHAGjnk.
+
+3554
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+Alinhamento ao objeto
+
+5
+
+rad
+
+4
+
+0
+2
+0
+
+ 2
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+Retorno para a cesta
+4
+rad
+
+Comparacao com Outras Arquiteturas
+
+2
+
+2
+Abertura da garra
+
+Abertura da garra
+
+0
+2
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+140
+
+160
+
+s
+
+Figura 8 Trajetorias da juntas 1 (cinza escuro), 2
+(preto) e 3 (cinza claro) durante a movimentacao mestre escravo com o Kinect (contnuo) e Phantom (tracejado).
+
+apos o fechamento da garra, ocorre em uma etapa
+unica. Uma alternativa para aumentar a velocidade do controlador e realizar o processamento local, com o operador remoto capturando a imagem
+somente para indicar o marcador e o alvo e sendo
+realimentado pela informacao de erro de imagem.
+Servovisão
+40
+
+20
+
+Fechamento da garra
+
+pixel
+
+0
+
+20
+
+40
+
+60
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+amostra
+
+Figura 9 Erro em pixels nos eixos x (cinza) e y (preto)
+durante a servovisao.
+
+Como a estrategia de servovisao adotada considera somente o movimento planar, ao fim da
+etapa inicial de movimentacao mestreescravo o
+manipulador deve estar alinhado ao objeto. A
+tarefa, porem, e dificultada pela falta da informacao de profundidade na realimentacao para o
+operador remoto. A profundidade da imagem
+pode ser acrescentada atraves de uma visao naofrontal a partir de outras cameras (Bambang,
+2007), de duas cameras realizando estereoscopia (Hutchinson et al., 1996) ou utilizando a
+medida da area do marcador no punho (Zachi
+et al., 2006), entre outros.
+O teste de realimentacao_de_forca mostrou que
+e possvel reproduzir no Phantom as forcas medidas no efetuador do manipulador. Alem, observase que devido a pequena amplitude do movimento
+na etapa de regulacao a operacao e estavel mesmo
+com o atraso_na_comunicacao, o mesmo nao ocorrendo durante o rastreamento. A instabilidade
+na teleoperacao bilateral, com realimentacao de
+forca, devido a presenca de atrasos pode ser eliminada utilizando uma das tecnicas apresentadas
+por Hokayem and Spong (2006).
+
+ISBN 978-85-8001-069-5
+
+Taylor et al. (1999) e Bambang (2007) apresentam
+interfaces para operacao de manipuladores atraves
+da internet limitadas a operacao ponto a ponto,
+onde o operador fornece uma posicao e deve esperar o fim do movimento para indicar um novo alvo.
+As posicoes podem ser definidas no espaco das juntas por meio de um formulario (Bambang, 2007)
+ou no espaco cartesiano tambem atraves de um
+formulario, clicando em uma imagem ou em um
+modelo virtual (Taylor et al., 1999). Ja na interface de Safaric et al. (2003) a tarefa pode ser
+completamente planejada em um modelo virtual
+do manipulador, sendo posteriormente enviada e
+executada no robo real. Estas funcoes sao realizadas atraves das opcoes de trajetoria preestabelecida e servovisao, limitada a um plano por utilizar
+somente uma camera. Em todos os trabalhos a
+interface grafica e desenvolvida para navegadores
+utilizando CGI, HTML e Java.
+A SMART, arquitetura modular de controle
+apresentada por Anderson (1995), e implementada em uma rede VME (Virtual Module Europe)
+de sensores, atuadores e computadores utilizando
+sistema operacional VxWorks. A interface de comando esta em uma maquina que se conecta a rede
+atraves do padrao Ethernet. E possvel criar malhas para teleoperacao autonoma ou bilateral atraves da interligacao de blocos pre-programados.
+Apos conectar todos os blocos sao gerados codigos
+em linguagem C, que podem ser modificados para
+atender especificacoes da tarefa e entao compilados e enviados para os respectivos computadores
+ou dispositivos na rede.
+Uma arquitetura que combina operacao bilateral e servovisao e apresentada por Goto et al.
+(2010). O mestre e o escravo sao controlados por
+dois computadores rodando Linux de tempo_real.
+A comunicacao entre o ambiente remoto e o local, das posicoes dos manipuladores, e realizada
+por protocolo TCP, com previsao para implementacao em internet, mas testado somente em rede
+local. Como proposto aqui, a servovisao e responsavel pelo posicionamento fino, porem e utilizada
+uma camera no punho que e alinhada ao alvo de
+forma automatica apos este entrar no quadro da
+imagem. O processamento e local em um terceiro
+computador se comunicando via TCP com o controlador do manipulador escravo.
+Realizando somente o controle bilateral Oboe
+and Fiorini (1998) utilizam um sistema em tempo
+real criado pelos autores que se comunica com a
+internet atraves de uma socket. Munir and Book
+(2003) utilizam um processo em tempo_real no
+Windows NT com o auxlio do Hyperkernel, um
+programa que cria um kernel paralelo ao do sistema operacional, realizando a comunicacao com
+a internet atraves do NT que acessa uma memoria compartilhada com o Hyperkernel. Em ambos
+
+3555
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+um computador remoto retransmite o sinal de controle do manipulador mestre, atraves da internet,
+para uma simulacao do mesmo utilizada como escravo, que realimenta o sistema_de_controle diretamente. Hirche et al. (2004) controlam um manipulador de 7 graus de mobilidade em um espaco
+operacional de 2 graus e Stanczyk and Buss (2004)
+estendem o controle atraves de um manipulador
+mestre com 6 graus de mobilidade. Os trabalhos
+tambem realizam o controle dos dispositivos roboticos utilizando a combinacao MatlabSimulink
+XPC Target, porem nao especificam como e realizada a comunicacao UDP entre as maquinas e
+consideram a realimentacao visual um problema
+ja resolvido.
+Por outro lado, a nova arquitetura proposta
+neste trabalho realiza somente controle unilateral,
+porem ja apresenta uma via para a realimentacao_de_forca possibilitando a implementacao do
+caso bilateral. E valido ressaltar que as diferentes interfaces propostas anteriormente nao apresentam visualizacao online do ambiente de operacao. As imagens sao mostradas no incio e fim
+do movimento (Taylor et al., 1999), um vdeo da
+tarefa e mostrado apos a sua execucao (Safaric
+et al., 2003), apenas um modelo virtual e apresentado ao operador (Bambang, 2007) ou o mestre e o escravo estao no mesmo ambiente (Oboe
+and Fiorini, 1998 Munir and Book, 2003 Goto
+et al., 2010).
+6
+
+Conclusoes
+
+A estrutura para teleoperacao proposta neste trabalho se mostrou capaz de realizar operacoes unilaterais com movimentacao mestreescravo e servovisao utilizando realimentacao visual. Ela permite ainda o envio de forcas medidas no manipulador local que sao reproduzidas atraves do
+Phantom para o operador remoto. Todas as etapas sao realizadas com o Matlab ou aplicativos
+executaveis, gratuitos e de codigo aberto (RR),
+permitindo a prototipagem_rapida e a extensao
+da arquitetura em uma linguagem de alto nvel.
+Agradecimentos
+Este trabalho foi financiado pelo CENPESPETROBRAS no convenio COPPETEC intitulado Sistemas
+de Producao Offshore com Alto Grau de Automacao, e pelo CNPq, FAPERJ e CAPES. Os autores
+agradecem ao Prof. John Wen e ao Dr. John Wason pelo apoio para realizar os testes experimentais
+no CATSRPI.
+Referencias
+Anderson, R. (1995). Smart a modular control architecture for telerobotics, IEEE Robot. Autom. Mag.
+2(3) 10 18.
+
+Bellingham, J. G. and Rajan, K. (2007). Robotics in remote and hostile environments, AAAS Science Magazine 318(5853) 10981102.
+Goto, S., Naka, T., Matsuda, Y. and Egashira, N. (2010).
+Teleoperation system of robot arms combined with
+remote control and visual servo control, Proc. of SICE
+Annual Conf., pp. 1975 1981.
+Hirche, S., Stanczyk, B. and Buss, M. (2004). Haptic
+tele-assembly over the internet, Proc. of EuroHaptics
+Conf., pp. 417421.
+Hokayem, P. and Spong, M. (2006). Bilateral teleoperation
+An historical survey, Automatica 42(12) 20352057.
+Hutchinson, S., Hager, G. and Corke, P. (1996). A tutorial
+on visual servo control, IEEE Trans. Robot. Autom.
+12(5) 651 670.
+Iborra, A., Pastor, J., Alvarez, B., Fernandez, C. and Merono, J. (2003). Robots in radioactive environments,
+IEEE Robot. Autom. Mag. 10(4) 1222.
+Munir, S. and Book, W. J. (2003). Control techniques and
+programming issues for time delayed internet based
+teleoperation, J. DYN. SYST. 125(2) 205214.
+Murray, R. M., Li, Z. and Sastry, S. S. (1994). A mathematical introduction to robotic manipulation, Boca raton, FL, USA.
+Niemeyer, G., Preusche, C. and Hirzinger, G. (2008). Telerobotics, in B. Siciliano and O. Khatib (eds), Springer
+Handbook of Robotics, Springer, pp. 741757.
+Oboe, R. and Fiorini, P. (1998). A design and control environment for internet-based telerobotics, Int. J. Robot.
+Res. 17(4) 433449.
+Preusche, C., Reintsema, D., Landzettel, K. and Hirzinger, G. (2006). Robotics component verification on iss
+rokviss - preliminary results for telepresence, Proc. of
+IROS, pp. 45954601.
+Quigley, M., Conley, K., Gerkey, B. P., Faust, J., Foote, T.,
+Leibs, J., Wheeler, R. and Ng, A. Y. (2009). Ros an
+open-source robot operating system, ICRA Workshop
+on Open Source Software.
+Safaric, R., Hedrih, I., Klobucar, R. and Sorgo, B. (2003).
+Remote controlled robot arm, Proc. of ICIT, Vol. 2,
+pp. 12021207.
+Skourup, C. and Pretlove, J. (2009). The robotized field operator - greater safety and productivity by design, Productivity Solutions - ABB Process Automation pp. 6873.
+Soetens, P. and Bruyninckx, H. (2005). Realtime hybrid
+task-based control for robots and machine tools, Proc.
+of ICRA, pp. 260265.
+Stanczyk, B. and Buss, M. (2004). Development of a telerobotic system for exploration of hazardous environments, Proc. of IROS, Vol. 3, pp. 25322537.
+Taylor, K., Dalton, B. and Trevelyan, J. (1999). Web-based
+telerobotics, Robotica 17(1) 4957.
+Trevelyan, J., Kang, S.-C. and Hamel, W. R. (2008).
+Robotics in hazardous applications, in B. Siciliano
+and O. Khatib (eds), Springer Handbook of Robotics,
+Springer, pp. 11011126.
+Wason, J. and Wen, J. (2011). Robot raconteur A communication architecture and library for robotic and
+automation systems, Proc. of CASE, pp. 761766.
+Zachi, A. R. L., Hsu, L., Lizarralde, F. and Leite, A. C.
+(2006). Adaptive control of nonlinear visual servoing systems for 3D cartesian tracking, Automation
+ Control Brazilian Mag. 17(4) 381390.
+
+Bambang, R. (2007). Development of architectures for internet telerobotics systems, J. Bionic Eng. 4(4) 291
+297.
+
+ISBN 978-85-8001-069-5
+
+3556

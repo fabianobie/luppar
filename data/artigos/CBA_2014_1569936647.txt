@@ -1,0 +1,1201 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+CONTROLE PREDITIVO PARA RECONFIGURACAO DE ROBOS MOVEIS
+ARTICULADOS PERCORRENDO TERRENOS IRREGULARES
+Gustavo Freitas, Fernando Lizarralde, Liu Hsu
+
+
+Universidade Federal do Rio de JaneiroCOPPE, Brasil
+
+Emails gfreitas@coep.ufrj.br, fernando@coep.ufrj.br, liu@coep.ufrj.br
+
+Abstract This paper concerns the reconfiguration control of actively articulated mobile robots navigating
+through irregular and rough terrains. Active mechanisms are able to adjust the vehicles configurations to accommodate for different operation conditions. The capability to influence mobility depends on the mechanism
+kinematic structure and the actuators velocity limitations. The robot mobility is evaluated considering ground
+clearance, orientation and stability. Control strategies are proposed considering the actuators bandwidth to compensate abrupt variations of the navigation trajectory and the driven terrain. The proposed solution consists in
+anticipating the command action by employing a model predictive control strategy, based on a predictive functional control method to adjust the robot for critical conditions faced during operation. Numerical simulations
+using field data, recorded while navigating on a natural terrain, are performed in order to obtain a realistic
+evaluation of the proposed strategies controlling a two actuated DoF robot.
+Keywords
+
+Mobile Robots, Field Robotics, Model Predictive Control
+
+Resumo Este artigo trata do problema do controle de reconfiguracao de robos_moveis com articulacao ativa
+navegando em terrenos irregulares e acidentados. Mecanismos ativos podem ajustar sua configuracao para se
+acomodar a diferentes condicoes de operacao. A capacidade de influenciar a mobilidade depende da estrutura
+cinematica do mecanismo e velocidade de atuacao das juntas. A mobilidade do veculo e avaliada com base na
+altura, orientacao e estabilidade. Estrategias de controle sao propostas considerando a largura de banda dos
+atuadores para compensar variacoes abruptas do terreno percorrido. A solucao proposta consiste em antecipar
+a acao de comando utilizando uma estrategia_de_controle_preditivo funcional baseado em modelo, buscando
+adaptar o robo as condicoes severas deparadas ao longo da operacao. Simulacoes utilizando dados experimentais
+sao realizadas a fim de validar as estrategias propostas ao controlar um robo com dois_graus_de_liberdade atuados.
+Palavras-chave
+
+
+
+Introducao
+
+Robos Moveis com Articulacao Ativa (RMAA) proporcionam melhor mobilidade e desempenho ao navegar em terrenos irregulares e acidentados quando
+comparados aos de arquitetura rgida. Mecanismos
+articulados sao capazes de ajustar sua configuracao,
+reposicionando o Centro de Massa do robo (CMR )
+conforme as condicoes de operacao. Comandando os
+atuadores do mecanismo, e possvel definir a distancia ao terreno e ajustar a orientacao e estabilidade do
+robo, diminuindo o risco de capotamento.
+A Figura 1 apresenta alguns exemplos de robos
+articulados, incluindo o Autonomous Prime Mover
+(APM) (Singh et al., 2009), DIANE (EOD), e o Robo
+Ambiental Hbrido (RAH) (Freitas et al., 2010).
+Estes robos navegam em baixas velocidades, e utilizam atuadores lentos para a reconfiguracao que limitam a capacidade de ajuste de mobilidade. Os bracos
+de alavanca do DIANE, por exemplo, rotacionam a
+10 s as juntas das pernas do RAH levam 13s para
+percorrer todo seu curso. Tais atuadores nao sao capazes de reagir em tempo de evitar o tombamento do
+robo ao cair numa depressao acentuada, o que ocorre
+numa fracao de segundos. Ainda assim o tombamento
+poderia ser evitado ao se identificar o obstaculo e comandar os atuadores com antecedencia, alcancando a
+configuracao ideal do robo no momento previsto para
+o impacto.
+Uma possvel solucao consiste em empregar uma
+estrategia de Controle Preditivo baseado em Modelo (MPC). De maneira geral, o algoritmo de MPC
+pode ser dividido em tres etapas (Camacho and Bordons, 2004) primeiro o comportamento futuro do sis-
+
+Figura 1 Exemplos de robos_moveis articulados.
+
+tema e predito com base no modelo em seguida e
+otimizada uma funcao objetivo a fim de minimizar o
+custo associado e calcular uma sequencia de controle
+por fim o sinal de comando equivalente ao primeiro
+termo da sequencia e enviado aos atuadores.
+Este artigo corresponde a uma extensao do trabalho apresentado em (Freitas et al., 2013) para controlar um atuador com largura de banda limitada acoplado a uma plataforma elevatoria. O objetivo aqui
+consiste em implementar a estrategia de MPC para
+controlar um RMAA com dois_graus_de_liberdade
+(DoF) atuados atraves de um Controle Preditivo Fun-
+
+85
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+O corpo do robo e representado por um prisma
+retangular de largura L e juntas prismaticas com comprimento di instaladas nas extremidades. O sistema
+de coordenadas E R coincide com CMR , coforme apresentado na Figura 2.
+
+cional (PFC).
+A principal caracterstica do PFC consiste em
+avaliar os custos referentes a apenas alguns pontos pertencentes ao horizonte de predicao estes pontos coincidentes sao selecionados conforme as condicoes crticas de mobilidade deparadas ao longo da operacao. A
+mobilidade e predita com base na trajetoria de navegacao e o modelo do terreno percorrido considerando
+aplicacoes de campo, uma proposta para modelagem
+de terrenos e apresentada.
+A viabilidade do controle e ilustrada atraves de
+simulacoes utilizando modelos de navegacao e terreno
+obtidos experimentalmente, demonstrando a eficiencia
+da estrategia em reduzir inclinacoes extremas do robo
+e garantir sua estabilidade.
+O artigo e composto por sete Secoes. A Secao
+II apresenta o modelo do sistema composto por um
+RMAA percorrendo um terreno irregular. A Secao III
+apresenta os criterios empregados para avaliar a mobilidade do robo. A Secao IV descreve o procedimento
+de modelagem de terrenos naturais. O metodo proposto de PFC e descrito na Secao V, e os resultados
+obtidos com simulacoes sao apresentados na Secao VI.
+Por fim, as conclusoes e linhas futuras de pesquisa sao
+discutidas na Secao VII.
+2
+
+Figura 2 Modelo de robo_movel com duas articulacoes ativas.
+Os pontos de contato pR
+ci sao localizados nas terminacoes das pernas, determinadas pelas juntas ativas
+d  d1 , d2 T 
+
+Terreno e Robo Movel Articulado
+
+A configuracao do sistema de coordenadas E j associado a um corpo rgido e definida com respeito a um
+sistema de referencia E i pela pose xij  (pij , Rji ), onde
+pij  R3 e a posicao e Rji  SO(3) e a matriz de
+rotacao. A orientacao pode ser parametrizada pelos
+angulos de row, pitch e yaw   j , j , j T .
+O sistema composto por um RMAA se locomovendo num terreno e representado por tres sistemas de
+coordenadas robo E R , terreno E  e um sistema inercial de referencia E I . A pose xIR define a configuracao
+do robo com respeito a E I , calculada combinando xI
+(terreno para inercial), e x
+R (robo para terreno)
+pIR
+I
+RR
+
+
+
+I 
+pI + R
+pR
+
+(1)
+
+
+
+I
+R
+
+(2)
+
+
+RR
+
+
+
+pR
+c1 
+
+Z
+0
+
+t
+
+kpI (t)kdt
+
+
+
+L
+2
+
+,
+
+
+
+pR
+c2
+
+d1
+
+
+0
+
+  L
+2
+d2
+
+(4)
+
+O plano do terreno e definido pelo vetor normal
+R
+nR
+ e qualquer ponto de contato pci , tal que
+T R
+(nR
+ ) pci  hR  0
+
+(5)
+
+onde hR  R e a distancia entre terreno e robo.
+Considerando o robo com m  2 pontos de contato, o vetor normal ao terreno nR
+ e obtido por
+
+0
+
+ sin()  ,
+
+ cos()
+
+
+nR
+
+
+Por simplicidade, a trajetoria de navegacao planar,
+definida pela posicao pI x (t), pI y (t)T e angulo de yaw
+ (t) topografico (com respeito ao terreno local), e
+assumida conhecida a priori t.
+O terreno percorrido pode ser estimado de acordo
+com a posicao dos m pontos de contato (pci , i 
+1, ..., m) com as rodas do robo. Como o perfil percorrido causa variacoes de altura e inclinacao do robo,
+e possvel parametrizar o terreno atraves da altura
+h  pI z e angulos de roll ( ) e pitch ( ), tal que
+  h ,  ,  T .
+O terreno local (l) e definido com respeito a distancia l(t) percorrida pelo veculo
+l(t) 
+
+0
+
+
+  arctan
+
+d
+L
+
+
+(6)
+
+e d  d2  d1 .
+A pose xR
+ corresponde a posicao
+R
+pR
+  hR n
+
+(7)
+
+e orientacao RR  Rx ()  SO(3).
+Ao combinar as poses xI e xR
+ , e possvel calcular
+I
+I
+as velocidades linear vR
+e angular R
+do robo com
+I
+respeito a E (Goldstein, 1980). A velocidade_angular
+pose ser obtida derivando os angulos de roll, pitch e
+yaw tal que   JR , onde JR  R33 e o Jacobiano
+de representacao.
+As forcas e torques resultantes atuando no CMR
+sao estimadas utilizando as equacoes de NewtonEuler, tal que
+
+(3)
+
+
+
+O mecanismo articulado considerado e capaz de
+ajustar a posicao do CMR no plano lateral do robo,
+similar a veculos com articulacao tipo shoulder joints.
+Para tal, o robo possui 2 pernas opostas conectadas
+ao seu corpo cada perna e acoplada a um atuador,
+fornecendo 2 DoF atuados ao mecanismo.
+
+frI
+rI
+
+
+
+
+
+
++
+
+M I
+0
+ki
+
+I
+RR
+
+0
+I RIR
+
+
+
+I
+ M vR
+I I RR  I
+ki  RR
+I
+R
+
+I
+vR
+I
+R
+
+
+
+
+(8)
+
+onde M e a massa e I  R33 e o momento de inercia
+do robo.
+
+86
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+3
+
+Analise de Mobilidade
+
+3.3
+
+Estabilidade via Medidas de Forca e Angulo
+
+A metrica de estabilidade proposta em (Papadopoulos
+and Rey, 1996) considera os angulos i necessarios
+para rotacionar o robo ate o tombamento, conforme
+ilustrado na Figura 3. Os angulos dependem dos sistemas de forca fi atuando no CMR , com respeito aos
+eixos de tombamento obtidos por
+
+A capacidade de se locomover no ambiente de operacao determina a mobilidade do sistema, que pode ser
+avaliada considerando a altura, orientacao e estabilidade.
+E importante manter uma distancia mnima entre robo e terreno, especialmente ao se locomover em
+terrenos acidentados, de maneira a evitar colisoes com
+obstaculos.
+Um requisito ao transportar pessoas e cargas frageis consiste em manter o corpo do robo paralelo a
+horizontal, comandando o mecanismo articulado para
+compensar as inclinacoes do terreno percorrido. Considerando o cenario estatico apresentado na Figura 3,
+a configuracao (b) distribui as forcas de sustentacao
+de maneira uniforme entre as pernas, melhorando a
+eficiencia de tracao das rodas. O sistema esta estavel,
+porem as chances de tombamento em torno de pc2 sao
+maiores que em torno de pc1 .
+A configuracao mais estavel e alcancada quando
+o robo esta inclinado no sentido contrario ao terreno,
+conforme apresentado na Figura 3(c), exigindo maior
+deslocamento das juntas. Nesta configuracao, o risco
+de tombamento e o mesmo em torno de pc1 e pc2 .
+Ainda assim, a distribuicao das forcas de sustentacao
+nao e uniforme, prejudicando a eficiencia de tracao.
+
+R
+fi  (I  ati aT
+ti ) fr +
+
+pR
+R
+ci  ni
+, ni  (ati aT
+ti ) r
+pR
+ci
+
+onde os eixos de tombamento at1  xR  e at2 
+p
+xR , p  p
+e o vetor normalizado, e fr , r corres
+pondem as forcas e torques resultantes (Equacao (8))
+atuando em CMR .
+Para o robo articulado com m  2 rodas, os angulos de tombamento entre fi e pci sao calculados pela
+relacao geometrica
+
+
+i  i arccos (fi )T pci ,
+
+com
+
+
+i 
+
++1,
+1,
+
+(c)
+
+4
+
+Altura
+
+A menor distancia entre o sistema de coordenadas do
+robo E R e o plano representando o terreno corresponde a altura do veculo hR , definida em termos das
+juntas ativas d
+
+
+L
+d
+q
+2 2 + L2
+
+
+
+fh (d)
+
+(9)
+
+d
+
+com d  d1 + d2 .
+3.2
+
+Orientacao
+
+A orientacao do robo pode ser expressa pela matriz de
+I
+rotacao RR
+, ou parametrizada pelos angulos de roll,
+pitch e yaw R  R , R , R T .
+I
+A orientacao RR
+e composta por duas rotacoes
+primeiro RI do terreno para o sistema inercial dada
+
+do robo para
+por    ,  ,  T , e depois RR
+o terreno definida pelo angulo  conforme as juntas
+ativas d
+I
+RR
+ Rz ( )Ry ( )Rx ( ) Rx ()  fo (d,  )
+
+(13)
+
+m2
+
+
+
+fe (d,  , fr , r )
+
+(14)
+
+.
+
+Modelagem do Terreno
+
+A estrategia proposta para reconfiguracao de um
+AAMR consiste em prever a mobilidade do sistema
+com base na trajetoria de navegacao e no modelo do
+terreno, e antecipar a acao de comando de acordo com
+a largura de banda dos atuadores.
+Terrenos irregulares e acidentados sao geralmente
+formados por complexas superfcies nao-lineares que
+nao sao facilmente modeladas (Sreenivasan and Wilcox, 1994). Uma solucao consiste em representar o
+terreno percorrido por malhas que, em geral, sao capazes de representar qualquer combinacao de superfcies (Burgard and Hebert, 2008). Esta e uma representacao compacta, especialmente quando aplicados
+algoritmos de simplificacao para reduzir o modelo do
+terreno percorrido.
+As metricas adotadas para avaliar a mobilidade
+do robo dependem dos pontos de contato com as rodas,
+e o resto do perfil do terreno e desconsiderado. Assim,
+e possvel representar o terreno por uma sequencia de
+planos definidos pelos pontos de contato, equivalente
+a resolucao mnima utilizada pela representacao por
+malhas.
+Grande parte das pesquisas sobre predicao de mobilidade assume que as posicoes dos contato sao conhecidas. Diferentes estrategias podem ser empregadas para estimar tais posicoes em operacoes rotineiras o robo poderia utilizar como referencia um mapa
+pre-registrado do terreno ao navegar num local desconhecido, o robo deve empregar os sensores embarcados para perceber o terreno durante a operacao
+
+diferentes configuracoes do robo (a) R > 0 e 1 >>
+2 , (b) R  0 e 1 > 2 , (c) R < 0 e 1  2 .
+
+hR
+
+i  1, ..., m
+
+O tombamento ocorre quando   0. A configuracao
+mais estavel e aquela onde todos i possuem o mesmo
+valor. Desta forma, considerando um robo com numero m par de rodas, e conveniente representar a estabilidade do sistema pela diferenca  entre angulos
+opostos de tombamento
+
+Figura 3 Orientacao e angulos de tombamento para
+
+3.1
+
+(12)
+
+(fi  pci )T ati > 0
+(fi  pci )T ati  0
+
+  min(i ),
+
+onde   R
+
+(b)
+
+i  1, 2
+
+De acordo com o criterio, a estabilidade e estimada pelo angulo mnimo de tombamento
+
+  i  i+m2
+
+(a)
+
+(11)
+
+(10)
+
+87
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+outra abordagem consiste no emprego de multiplos
+robos, onde um dispositivo mais simples se locomove
+na frente do robo articulado medindo com precisao o
+perfil do terreno.
+Dada a distancia l percorrida pelo robo, e possvel
+computar o plano (l) em termos de pIci (l), representando as caractersticas locais do terreno. O plano
+local e definido com respeito a E I pelo vetor unitario
+normal e qualquer ponto de contato pIci , tal que
+(nI )T pIci  d  0
+
+(15)
+
+
+I
+
+onde d  R e a distancia entre E e E .
+Um corpo rgido necessita de tres pontos de contato para se sustentar num espaco tridimensional.
+Desta forma, um robo com m  4 ou mais rodas constitui um problema indeterminado. Uma solucao consiste em simplificar o sistema atraves de uma restricao
+que garanta o contato de todas as rodas com o terreno,
+tal que g  pci  , i  1, ..., m.
+No caso de um robo generico com 4 rodas, o vetor
+normal nI pode ser calculado utilizando os pontos de
+contato pIc1 , pIc2 e pIc3 
+
+
+pIc2  pIc3  pIc1  pIc2
+
+nI 
+
+ R3
+
+kpIc2  pIc3 k kpIc1  pIc2 k
+
+Figura 4 Plataforma autonoma Laurel empregando
+um sistema de localizacao e um laser scanner para
+modelagem de terrenos. A imagem ilustra os sistemas
+de coordenadas do laser E L , robo E R , terreno E  e
+referencia inercial E I .
+
+baixo (L  20 ) a fim de medir o perfil do terreno a
+frente ( 4 m) do robo. Este veculo ja conta com um
+sistema de deteccao_de_obstaculos, conforme descrito
+em (Freitas et al., 2012).
+
+(16)
+
+Neste artigo e considerado um experimento de
+campo realizado com o Laurel no pomar Soergel (PAEUA) em 24082011. Durante o teste, o APM coletou dados dos sensores embarcados ao cruzar um
+terreno irregular parcialmente coberto por grama. O
+modelo obtido e apresentado na Figura 5, destacando
+os pontos de contato e tambem parte da sequencia de
+planos representando o terreno percorrido.
+
+Ja para o robo com 2 apresentado na Figura 2, o
+vetor normal nI pode ser obtido por
+nI 
+
+1, 0, 0T  pIc1  pIc2
+
+
+
+kpIc1  pIc2 k
+
+ R3
+
+(17)
+
+O sistema de coordenadas do terreno E  e obtido
+projetando E R no plano , definido pela posicao pI
+tal que
+I
+pI  pIR  hR (nR
+)
+
+(18)
+
+pIR
+
+e obtida atraves dos pontos
+onde a posicao do robo
+de contato pIc e comprimento das juntas ativas d.
+A altura do terreno e calculada por
+h  0, 0, 1 pI
+
+(19)
+
+e a orientacao e dada pelos angulos  e  , obtidos
+com base no vetor normal nI 
+
+
+
+
+nI y
+
+arctan
+
+nI z
+
+!
+,
+
+
+
+
+
+(20)
+
+Figura 5 Modelo de terreno equivalente a sequencia
+de planos (l) com base nos pontos de contato pIci (l)
+com as rodas do robo se locomovendo no pomar Soergel.
+
+
+
+
+nI x
+
+
+
+arctan  q
+
+(nI y )2 + (nI z )2
+
+(21)
+
+Assumindo o veculo executando um determinado
+percurso no terreno, e possvel parametrizar os planos
+com respeito a distancia percorrida l atraves de
+(l)  h ,  ,  T  f (l)
+
+4.1
+
+A Figura 6 ilustra a parametrizacao do terreno
+(l) computada com dados experimentais obtidos por
+Laurel durante a operacao no pomar Soergel.
+
+(22)
+
+Experimento de Campo
+
+Esta secao descreve um experimento de modelagem de
+terreno natural realizado com uma plataforma agrcola (Figura 4) da famlia Autonomous Prime Movers
+(APM), desenvolvida no Robotics Institute - Carnegie Mellon University como parte do projeto CASC
+(Singh et al., 2009).
+O veculo utilizado foi o APM Laurel, empregando um sistema de posicionamento de alta precisao
+Applanix POS 220 LV INSGPS com 6 DoF e um laser Sick LMS 291 instalado no veculo inclinado para
+
+Figura 6 Parametrizacao do terreno (l)
+h ,  ,  T obtida durante operacao de campo.
+
+88
+
+
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+5
+
+Reconfiguracao Baseada em Controle
+Preditivo Funcional
+
+O desempenho do controle e avaliado por um
+custo V definido como a soma dos erros quadraticos
+entre a sada predita y e a trajetoria de referencia w,
+com respeito aos pontos coincidentes, pela funcao objetivo
+
+O Controle Preditivo Funcional (PFC) foi proposto
+em (Richalet, 1993) para lidar com processos rapidos,
+incluindo o comando para seguimento_de_trajetoria de
+plataforma com 2 DoF, e manipuladores paralelo com
+4 DoF (Vivas and Poignet, 2005) e industrial com 6
+DoF (Vivas and Mosquera, 2005). Outra aplicacao e
+o controle_de_direcao de um trator com presenca de
+escorregamento, de forma a reduzir picos na resposta
+transiente durante o inicio de execucao de uma curva
+(Lenain et al., 2005).
+O PFC considera o erro predito de apenas alguns
+pontos, denominados de pontos coincidentes, ao inves de todo horizonte de predicao para calcular o custo
+associado. Quando as juntas do mecanismo nao estao no fim de curso ou saturadas, e possvel seguir os
+pontos coincidentes e cancelar o custo predito. Desta
+forma, a acao de controle pode ser computada solucionando um sistema equivalente de equacoes, simplificando assim o processamento computacional relacionado a otimizacao da funcao objetivo (Rossiter, 2003).
+Outra caracterstica do PFC consiste em calcular
+a acao de controle atraves de combinacao linear entre
+funcoes base. A escolha das funcoes base caracteriza
+a acao de controle e pode assegurar um determinado
+comportamento, por exemplo suavizar os sinais enviados aos atuadores (Camacho and Bordons, 2004).
+O sistema e representado por um modelo discreto
+no espaco_de_estados. Considerando o RMAA com na
+juntas ativas representadas por d e controle_cinematico
+ o modelo resultante e dado por
+definido por u  d,
+d(k + 1)
+
+
+
+d(k) + t u(k)
+
+(23)
+
+y(k)
+
+
+
+f (d(k),  (k), fr (k), r (k))
+
+(24)
+
+V 
+
+u(k + i) 
+
+nb
+X
+
+nj (k)Bnj (i),
+
+0  i  th
+
+(29)
+
+nj 1
+
+onde  sao os ganhos e nb e o numero de funcoes base
+empregadas, por exemplo
+B1 (i)
+
+
+
+1
+
+B2 (i)
+
+
+
+i
+
+B3 (i)
+
+
+
+i2
+
+Utilizando funcoes base pre-definidas, e possvel
+definir a acao de controle u em funcao apenas de .
+O numero nb de funcoes base deve ser igual ou menor
+que o numero nh de pontos coincidentes. A escolha
+de nb e feita de acordo com as variacoes esperadas na
+trajetoria de referencia e a dinamica do sistema.
+Considerando o sinal de controle dado pela Equacao (29) com nb  1, a sada predita do sistema e
+calculada com respeito aos pontos coincidentes por
+ + ni+1 )  d(k + ni1 ) + t(ni+1  ni ) u(k + ni )
+d(k
+
+
+ + ni ),  (k + ni ), fr (k + ni ), r (k + ni )
+y(k + ni )  f d(k
+
+
+A sequencia futura de controle e obtida por um otimizador que, dadas as restricoes do sistema, retorna ganhos  otimos de forma a minimizar o custo V . Os resultados apresentados neste artigo foram obtidos empregando um metodo de descida simplex  outras tecnicas de otimizacao de sistemas_nao-lineares poderiam
+ser empregadas, como Fletcher-Reeves, Polak-Ribiere
+ou Hestenes-Stiefel.
+O sinal de comando aplicado as juntas corresponde ao primeiro termo da sequencia de controle
+
+0  i  th (25)
+
+onde 0 <  < 1 determina o polo em malha_fechada
+dados o perodo de amostragem T e a constante de
+T
+tempo  , temos   e  .
+Os pontos coincidentes sao definidos como w(k +
+ni ), onde ni  Ni e Ni  n1 , n2 , ..., nh . O numero
+de pontos nh e limitado pelo perodo de amostragem
+um baixo numero nh pode levar a uma representacao
+inadequada do sistema ja um alto numero nh exigira
+maior processamento computacional para otimizar a
+funcao de custo.
+Para robos articulados navegando em terrenos irregulares e acidentados, os pontos coincidentes podem
+ser selecionados com base nos picos da trajetoria de
+referencia. A escolha utiliza a variacao w, tal que
+
+u(k) 
+
+nb
+X
+
+nj (k)Bnj (0)
+
+(30)
+
+nj 1
+
+enquanto o resto da sequencia e utilizada, nesta aplicacao, para inicializar o otimizador durante a proxima
+iteracao do algoritmo.
+Os parametros de ajuste do PFC sao a trajetoria
+desejada em malha_fechada definida por , o horizonte
+de predicao th , e a escolha dos pontos coincidentes Ni .
+A Figura 7 apresenta resultados relacionados ao
+controle_preditivo de orientacao do robo. Dada a referencia R   +   0, e possvel representar a
+orientacao desejada do robo por r      .
+As imagens a esquerda representam instantes passados com (superior) trajetoria de referencia r e sada
+do sistema y   (inferior) comandos u  d1 , d2 T
+enviados aos atuadores. As imagens a direita correspondem ao horizonte futuro de predicao, com (superior) trajetoria de referencia r, trajetoria desejada
+
+Ni  ni  0, th   w(k +ni ) w(k +ni 1)  0 (26)
+
+A lei de controle e computada utilizando uma estrategia deadbeat para garantir a igualdade entre a sada
+predita do sistema y e a trajetoria de referencia w com
+respeito aos pontos coincidentes
+ni  n1 , n2 , ..., nh
+
+(28)
+
+e o termo multiplicado por  associa custos ao controle, de forma a suavizar o comando enviado para as
+juntas.
+O sinal de controle e composto por uma combinacao linear de funcoes base B, tal que
+
+onde d  R e o estado, t  R e o incremento
+temporal, u  Rna e a acao de comando e y  Rna e
+a sada medida do sistema, equivalente as metricas de
+mobilidade - altura (fh ), orientacao (fo ), estabilidade
+(fe ) - a serem controladas.
+De maneira geral, estrategias preditivas de controle antecipam o comando de forma que a sada predita do sistema siga a trajetoria de referencia r definida para um horizonte futuro de tempo th . A trajetoria desejada em malha_fechada w e definida por
+
+y(k + ni )  w(k + ni ),
+
+(y(k + ni )  w(k + ni ))2 +  (u(k))2
+
+ni n1
+
+na
+
+w(k + i)  r(k + i)  i (r(k)  y(k)),
+
+nh
+X
+
+(27)
+
+89
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+em malha_fechada w , e a sada predita do sistema y
+- os pontos coincidentes estao marcados por estrelas
+(inferior) ganhos futuros   R2nb nh com nb  1 a
+serem aplicados ao longo de th .
+
+A divisao pelo termo  aumenta o custo associado
+aos pontos coincidentes com menor angulo de tombamento. O capotamento ocorre quando   0, o que
+resulta num custo infinito.
+6
+
+Simulacoes
+
+Diferentes simulacoes foram realizadas com o RMAA
+a fim de validar as estrategias de reconfiguracao propostas. Os dados experimentais coletados pelo APM
+durante a operacao de campo previamente descrita sao
+utilizados para modelar o perfil do terreno apresentado
+na Figura 6 e a trajetoria de navegacao ilustrada na
+Figura 8.
+
+Figura 7 Esquematico do PFC. As imagens a esquerda apresentam instantes passados, enquanto as
+imagens a direita correspondem ao horizonte futuro
+de predicao. As referencias e sada do sistema sao
+apresentadas acima, enquanto os sinais de controle sao
+ilustrados abaixo.
+
+Figura 8 Trajetoria de navegacao plana definida pela
+posicao pI x (t), pI y (t)T e orientacao  (t) executada
+durante operacao de campo.
+
+O robo com 2 DoF atuados (Figura 2) e capaz
+de controlar dois criterios de mobilidade. Um grau de
+articulacao e restrito de forma a garantir uma altura
+de referencia entre robo e terreno. A outra articulacao
+e utilizada para ajustar a orientacao ou estabilidade.
+As estrategias propostas para a reconfiguracao do robo
+sao apresentadas a seguir.
+5.1
+
+Os parametros empregados do robo sao largura
+L  100 cm, massa M  100 kg e momento de inercia
+I  diag(8.42, 0.17, 8.42)kg.m2 . As restricoes dos
+atuadores sao dadas por d  10cms. A altura de
+referencia hR  60 cm define a configuracao padrao
+do robo com d1  d2  60 cm.
+A Figura 9 ilustra a mobilidade do robo ao percorrer l(t)  0, 13.4 m do terreno em configuracao padrao, destacando os valores extremos alcancados durante a simulacao.
+
+Controle de Altura e Orientacao
+
+O modelo do sistema (Equacao (24)) considera a sada
+
+
+hR
+R
+
+y
+
+
+ fho (d,  )
+
+(31)
+
+O objetivo do controle consistem em manter a
+altura de referencia hR e seguir a trajetoria desejada
+de orientacao em malha_fechada w definida conforme
+a Equacao (25) utilizando R  0. A funcao objetivo
+e dada por
+V
+
+nh 
+2
+X
+hR (k + ni )  hR +
+
+
+
+ni n1
+
+2
+
+R (k + ni )  w (k + ni )
+
++
+
+5.2
+
+(32)
+
+Controle de Altura e Estabilidade
+
+O modelo do sistema (Equacao (24)) considera a sada
+
+y
+
+hR
+
+
+
+ fhe (d,  , fr , r )
+
+(33)
+
+Figura 9 Criterios de mobilidade do RMAA percorrendo o terreno em configuracao padrao.
+
+O objetivo do controle consistem em manter a altura de referencia hR e seguir a trajetoria desejada de
+estabilidade em malha_fechada w definida conforme
+a Equacao (25) utilizando    0. A funcao objetivo
+e dada por
+V
+
+
+
+nh 
+X
+
+hR (k + ni )  hR
+
+2
+
+Todas as simulacoes foram realizadas utilizando
+o perodo de amostragem de T  0.02s a trajetoria
+desejada em malha_fechada w e definida por   0.15.
+O horizonte de predicao e determinado conforme a largura de banda dos atuadores e variacoes na trajetoria
+de referencia uma escolha conservativa seria definir th
+conforme o tempo que os atuadores levam para percorrer todo seu curso. A funcao objetivo empregada
+
++
+
+ni n1
+
++
+
+
+(k
++ ni )  w (k + ni )
+(k + ni )
+
+!2
+(34)
+
+90
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+(28) nao associa custos ao comando das juntas, tal
+que   0. A acao de controle e obtida atraves de
+uma combinacao de degraus com nb  1, e os pontos
+coincidentes sao selecionados de forma a satisfazer a
+desigualdade expressa pela Equacao (26).
+Os resultados obtidos com o PFC sao comparados
+com uma estrategia mais comumente utilizada para
+reconfigurar robos articulados, equivalente a um controle proporcional (Freitas et al., 2010) com alto ganho. Dado que as irregularidades do terreno a serem
+percorridas sao conhecidas, seria tambem possvel avaliar o desempenho do PFC com respeito a um controle
+com acao feed-forward. Entretanto, devido as limitacoes de largura de banda, o controle proporcional ja
+satura os atuadores ao buscar compensar as irregularidades do terreno, de forma que a acao feed-forward
+nao influencia de forma efetiva na reconfiguracao.
+A Figura 10 ilustra o controle de altura e orientacao aplicado ao RMAA. O sinal de controle_preditivo
+e definido otimizando o custo V (32), com respeito aos
+pontos coincidentes marcados por estrelas.
+
+Figura 11 Criterios de mobilidade do RMAA percorrendo o terreno com controle PFC de altura e orientacao.
+
+Figura 12 (superior) Metrica de estabilidade  do
+robo alcancada na configuracao padrao (std), ou aplicando as estrategias_de_controle proporcional (P) ou
+preditivo (PFC). (inferior) Custos V associados.
+
+Figura 10 (superior) Orientacao R do robo alcancada na configuracao padrao (std), ou aplicando as
+estrategias_de_controle proporcional (P) ou preditivo
+(PFC). (inferior) Custos V associados.
+Para o horizonte de predicao th  3.0 s, os custos
+associados aumentam entre os instantes t  4, 7 s
+devido a variacao abrupta do terreno percorrida em
+t  7 s. O custo alcanca valor maximo de 165 em
+t  4.5 s com o controle proporcional. O valor diminui
+para 90 em t  5.7 s com a estrategia PFC.
+A inclinacao extrema do terreno de   16
+em t  7s e atenuada para R  10.1 com o controle proporcional a estrategia PFC reduz a inclinacao
+maxima para R  6.9 em t  8.2s. O robo mantem a altura de referencia, com variacao extrema de
+h max  0.3 cm. Os resultados estao apresentados
+na Figura 11.
+A Figura 12 ilustra o controle de altura e estabilidade aplicado ao RMAA. O sinal de controle_preditivo
+e definido otimizando o custo V (34), com respeito aos
+pontos coincidentes marcados por estrelas.
+Para o horizonte de predicao th  2.0 s, o custo
+alcanca valor maximo de 5.2  103 em t  5.5 s com o
+controle proporcional o valor diminuir para 3.0  103
+em t  5.6 s com a estrategia PFC.
+A diferenca extrema entre angulos de tombamento   63.8 , (  6.1 ) alcancada pelo robo
+em t  7.3 s na configuracao padrao e atenuada para
+  57.5 , (  9.5 ) com o controle proporcional a estrategia PFC reduz esta diferenca para  
+36.5 , (  21.5 ) no mesmo instante. O robo sofre
+uma alteracao maxima de altura de h max  1.6
+cm. Os resultados estao apresentados na Figura 13.
+
+Figura 13 Criterios de mobilidade do RMAA percorrendo o terreno com controle PFC de altura e estabilidade.
+
+A Tabela 1 resume os resultados obtidos, apresentando os valores extremos alcancados pelo robo na
+configuracao padrao, ou empregando as estrategias de
+controle_preditivo (Equacoes (32) e (34)).
+7
+
+Conclusoes e Trabalhos Futuros
+
+A estrategia de PFC alcanca melhorias significativas
+de mobilidade ao controlar um RMAA navegando em
+um terreno modelado com dados experimentais. Ao
+contrario do controle proporcional que ajusta o robo
+a uma referencia instantanea, a estrategia preditiva
+
+91
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+std
+
+altura 
+
+altura 
+
+config.
+
+ori.
+
+estab.
+
+h max cm
+
+0.0
+
+0.3
+
+1.6
+
+R max  
+
+16.0
+
+6.9
+
+10.6
+
+
+
+max  
+
+63.8
+
+47.8
+
+36.5
+
+ min  
+
+6.1
+
+15.5
+
+21.5
+
+154 
+
+252 
+
+Incremento de Estab.
+
+Tabela 1
+
+Referencias
+Burgard, W. and Hebert, M. (2008). World Modeling,
+Handbook of Robotics pp. 853870.
+Camacho, E. and Bordons, C. (2004). Model predictive
+control, Springer Verlag.
+Freitas, G., Gleizer, G., Lizarralde, F., Hsu, L. and dos
+Reis, N. R. S. (2010). Kinematic reconfigurability
+control for an environmental mobile robot operating in the amazon rain forest, Journal of Field
+Robotics, Vol. 27, pp. 197216.
+
+Resultados das simulacoes.
+
+Freitas, G., Hamner, B., Bergerman, M. and Singh,
+S. (2012). A practical obstacle detection system for autonomous orchard vehicles, IEEERSJ
+Int. Conf. on Intelligent Robots and Systems, Algarve, Portugal, pp. 33913398.
+
+leva em conta os pontos coincidentes pertencentes ao
+horizonte de predicao. A acao de comando e definida
+considerando a largura de banda dos atuadores ao minimizar a funcao de custo referente aos erros de mobilidade associados a todos os pontos coincidentes.
+Para o cenario apresentado, o controle_preditivo
+e capaz de reduzir a inclinacao maxima do robo de
+R  16 para R  6.9  o controle proporcional
+atenua a inclinacao maxima apenas para R  10.1 ,
+mesmo utilizando alto ganho de forma a saturar os
+atuadores. Do ponto de vista de estabilidade, o angulo de tombamento crtico de   6.1 alcancado pelo
+robo na configuracao padrao e elevado para   21.5
+com o PFC o controle proporcional comanda os atuadores acalcando   9.5  a diferenca de desempenho
+entre as estrategias e de aproximadamente 200 com
+respeito a configuracao padrao.
+Os resultados obtidos ate agora foram baseados
+em simulacao. Antes de integrar a estrategia_de_controle num robo real, e preciso reimplementa-lo de
+maneira computacionalmente eficiente num programa
+embarcado. O programa devera ser composto por tres
+processos executando em paralelo. O primeiro processo computa os dados de sensores para modelar o
+terreno o segundo processo utiliza o modelo do terreno e trajetoria de navegacao para prever a mobilidade do veculo o terceiro processo otimiza a funcao
+de custo a fim de calcular os sinais de controle futuros
+e o o comando das juntas.
+As principais dificuldades de implementacao estao associadas a modelagem de terreno e a otimizacao
+em tempo_real. As incertezas associadas aos pontos
+de contato estimados devem ser consideradas o problema e agravado quando o terreno esta coberto por
+vegetacao interferindo nas medicoes do laser, ou ainda
+quando o movimento do veculo nao esta sincronizado
+com o modelo do terreno. Uma possvel solucao consiste em representar as incertezas como disturbios atuando no sistema, e ajustar a estrategia_de_controle a
+fim de assegurar robustez em tais condicoes. Conforme as irregularidades do terreno e capacidade de
+processamento embarcado, pode ser necessario limitar a velocidade de navegacao do robo e o horizonte
+de predicao a fim de otimizar a funcao de custo e calcular os sinais de controle_em_tempo_real.
+8
+
+Freitas, G., Lizarralde, F., Hsu, L. and Bergerman, M.
+(2013). Terrain model-based anticipative control
+for articulated vehicles with low bandwidth actuators, Proceedings of IEEE International Conference on Robotics  Automation, Karlsruhe,
+pp. 382389.
+Goldstein, H. (1980). Classical Mechanics, Columbia
+Univetsity.
+Lenain, R., Thuilot, B., Cariou, C. and Martinet, P.
+(2005). Model predictive control for vehicle guidance in presence of sliding application to farm
+vehicles path tracking, Robotics and Automation,
+2005. ICRA 2005. Proc. of the 2005 IEEE Int.
+Conf. on, IEEE, pp. 885890.
+Papadopoulos, E. G. and Rey, D. A. (1996). A new
+measure of tipover stability margin for mobile
+manipulators, Proceedings of IEEE International
+Conference on Robotics  Automation, Vol. 4,
+Minneapolis (MN), pp. 31113116.
+Richalet, J. (1993).
+Pratique de la commande
+predictivehermes, Francia .
+Rossiter, J. A. (2003). Model-based predictive control
+a practical approach, CRC press.
+Singh, S., Baugher, T., Bergerman, M., Ellis, K., Grocholsky, B., Hamner, B., Harper, J., Hoheisel,
+G., Hull, L. and Jones, V. (2009). Automation for specialty crops A comprehensive strategy, current results, and future goals, IFAC Int.
+Workshop on Bio-Robotics, Information Technology, and Intelligent Control for Bioproduction
+Systems, Champaign.
+Sreenivasan, S. V. and Wilcox, B. H. (1994). Stability and traction control of an actively actuated micro-rover, Journal of Robotic Systems
+11(6) 487502.
+Vivas, A. and Mosquera, V. (2005). Predictive functional control of a puma robot, ACSE - Association
+for Computer Studies Educators.
+Vivas, A. and Poignet, P. (2005). Predictive functional
+control of a parallel robot, Control Engineering
+Practice 13(7) 863874.
+
+Agradecimentos
+
+Este trabalho foi parcialmente financiado pelo CNPq
+e FAPERJ. Os autores gostariam de agradecer a todos
+os membros do projeto CASC, em especial os Professores Marcel Bergerman e Sanjiv Singh.
+
+92

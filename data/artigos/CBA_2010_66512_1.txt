@@ -1,0 +1,989 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+PSCLASS UMA VERSÃO PARA CLASSIFICAÇÃO
+DO ALGORITMO DE ENXAME DE PARTÍCULAS
+ALEXANDRE SZABO, LEANDRO N. DE CASTRO
+Laboratório de Computação Natural, Faculdade de Computação e Informática e Programa de PósGraduação em Engenharia Elétrica, Universidade Presbiteriana Mackenzie
+Caixa Postal 01302-907 São Paulo, SP, Brasil
+E-mails alexandreszabo@gmail.com, lnunes@mackenzie.br
+Abstract The study about collective behavior of social animals can result in algorithms capable of solving various engineering
+and computing problems, such as combinatorial optimization and data analysis problems. This paper presents a proposal for an
+algorithm inspired by sociocognitive behaviors of social agents to solve data classification problems, called Particle Swarm
+Classification Algorithm (PSClass). To generate the classifier, PSClass uses the Particle Swarm Clustering heuristic and the
+LVQ1 algorithm to adjust the position of the prototypes on the classes of the database. The PSClass was applied to some databases of the literature and compared with the Nave Bayes classifier.
+Keywords Data classification, Particles swarm, Learning vector quantization, Social adaptation.
+Resumo O estudo sobre o comportamento coletivo de animais sociais pode resultar em algoritmos capazes de solucionar diversos problemas de engenharia e computação, como problemas_de_otimização combinatória e análise de dados. Este artigo apresenta uma proposta de um algoritmo inspirado no comportamento sócio-cognitivo de agentes sociais para resolver problemas de
+classificação_de_dados, denominado algoritmo de Classificação por Enxame de Partículas (PSClass). Para gerar o classificador, o
+PSClass usa a heurística dos algoritmos PSC (Particle Swarm Clustering) e LVQ1 para o ajuste de posição dos protótipos sobre
+as classes da base de dados. O PSClass foi aplicado a seis bases de dados da literatura e comparado com o classificador Nave
+Bayes para efeito de benchmarking.
+Palavras-chave .
+
+1
+
+Introdução
+
+Classificação é uma área de grande relevância
+em mineração_de_dados e métodos de aprendizagem
+supervisionada são comumente utilizados nestas
+tarefas. O objetivo da aprendizagem em tarefas de
+classificação é construir um modelo (classificador ou
+preditor) que seja capaz de predizer a classe a qual
+um novo objeto de entrada da base de dados deva
+pertencer. Ou seja, dado um objeto cuja classe é
+desconhecida pelo preditor, este deverá ser capaz de
+atribuí-lo a uma das classes para as quais ele foi
+treinado. Porém, nem todos os algoritmos de classificação geram tal modelo a priori, como, por exemplo,
+o k-NN (k-Nearest Neighbours) (Batista e Monard,
+2003), (Yang e Liu, 1999), e o Nave Bayes (Yi e
+Zhang, 2008), (Lewis, 1998), que utilizam um conjunto de exemplos da base de dados diretamente para
+fazer a predição do objeto desconhecido.
+Os classificadores normalmente são construídos a
+partir de um conjunto de dados para treinamento e
+avaliados através de um conjunto de dados para teste,
+sendo estes dois conjuntos disjuntos. Portanto, o
+processo de classificação possui duas etapas essenciais
+1.
+
+2.
+
+o objeto pertence, é conhecida. Isso implica
+na disponibilidade de pares (yi,ci)i  1...,
+N, em que yi e ci i, são os vetores de entrada e as respectivas saídas (classes) desejadas.
+Teste uma vez que o preditor foi gerado, é
+preciso avaliar seu desempenho quando aplicado a dados não usados no processo de
+treinamento, conhecidos como dados de teste ou, em alguns casos, dados de validação.
+
+O desempenho do preditor quando aplicado a dados
+de teste oferece uma estimativa de sua capacidade de
+generalização. Como os rótulos das classes dos dados
+de treinamento são conhecidos, esse processo é denominado de treinamento supervisionado (ou aprendizagem supervisionada) (Mitchell et al., 1990).
+Exemplos de tarefas de classificação incluem identificação de spams, classificação de objetos, atribuição
+de crédito, detecção de fraudes e outros.
+Este artigo propõe um algoritmo bioinspirado para
+classificação_de_dados denominado algoritmo de
+Classificação por Enxame de Partículas - PSClass.
+O PSClass é uma modificação do algoritmo PSC
+(Particle Swarm Clustering) (Cohen e de Castro,
+2006) para resolver problemas de classificação de
+dados. O classificador proposto também usa heurísticas do algoritmo LVQ1 (Learning Vector Quantization) (Kohonen, 1986) para ajuste dos protótipos no
+espaço, de modo que as fronteiras definidas pelos
+mesmos minimizem a classificação incorreta.
+Para efeito de benchmarking, o PSClass foi aplicado
+a seis bases de dados da literatura Iris, Yeast, Wine,
+Glass Identification, Habermans Survival e Pima
+
+Treinamento na primeira etapa o preditor é
+gerado, tal que ele se torne capaz de descrever e distinguir um conjunto prédeterminado de classes. O classificador é
+gerado usando um conjunto de dados de
+treinamento rotulados, ou seja, para cada vetor de entradas há uma saída, a classe a qual
+
+837
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+xj(t + 1)  xj(t) +  (t)yi(t)  xj(t),
+
+Indians Diabetes, todas do repositório da UCI (URL
+httparchive.ics.uci.edumldatasets.html), e seu
+desempenho foi comparado com o do classificador
+Nave Bayes. Os resultados obtidos pelo classificador
+foram avaliados pelo método k-pastas considerando
+o percentual de classificação correta.
+Este artigo está organizado da seguinte maneira a
+Seção 2 descreve o algoritmo LVQ1 e suas principais
+características. Na Seção 3 é feita uma breve descrição do algoritmo PSC e do processo adaptativo entre
+agentes sociais. A Seção 4 introduz o algoritmo PSClass e apresenta suas principais características. Na
+Seção 5 o PSClass é avaliado para algumas bases de
+dados da literatura e os resultados são discutidos. Na
+Seção 6 é realizada uma análise de convergência do
+PSClass para seis bases de dados da literatura. O
+artigo é concluído na Seção 7, com uma proposta de
+trabalhos futuros.
+2
+
+se o protótipo xj e o objeto yi pertencem  mesma
+classe
+xj(t + 1)  xj(t) -  (t)yi(t)  xj(t),
+
+2.
+3.
+
+4.
+
+(2)
+
+se o protótipo xj e o objeto yi não pertencem  mesma
+classe
+Em ambos os casos, (t) é a taxa de aprendizagem do
+algoritmo, ou seja, o tamanho_do_passo dado na direção yi(t)  xj(t). Assim, o algoritmo tenta mover os
+protótipos que estão distantes das fronteiras de classe
+(Kohonen, 1990), promovendo menor erro de classificação. Como um só protótipo é atualizado por vez
+(o protótipo vencedor), o algoritmo LVQ1 é considerado o mais simples dentre os algoritmos LVQ ( Lloyd et al., 2007). Além dessa característica particular do LVQ1, os algoritmos LVQ são de fácil implementação (Witoelar et al., 2007).
+
+LVQ1 e Suas Principais Características
+3
+
+Learning Vector Quantization (LVQ) é uma
+classe de algoritmos de aprendizagem supervisionada
+para classificação_de_dados (Seo et al., 2003) proposta por Kohonen (1986) como uma melhoria em quantização_vetorial rotulada.
+O objetivo deste método de aprendizagem é determinar um conjunto de protótipos (codebook vectors)
+que melhor represente cada classe da base de dados
+(Shui-sheng et al., 2005).
+Como o algoritmo não conhece a distribuição das
+classes a priori, o limite ótimo entre as classes da
+base de dados é aproximado gerando um conjunto de
+pontos denominados codebook vectors (Lloyd et al.,
+2007).
+Um algoritmo básico é usado por todos os métodos
+baseados no LVQ (Umer e Khiyal, 2007)
+1.
+
+(1)
+
+PSC Agrupamento por Enxame de Partículas
+
+Segundo (Fayyad et al., 1996), agrupamento de
+dados é uma das principais tarefas do processo de
+KDD (Knowledge Discovery from Databases). Esse
+processo refere-se ao particionamento de um conjunto de objetos em grupos, tal que objetos de um mesmo grupo sejam altamente similares entre si e dissimilares em relação aos objetos dos demais grupos.
+Esta atividade visa encontrar classes em bases de
+dados.
+O algoritmo PSC usa inteligência_coletiva para resolver problemas de agrupamento_de_dados (Cohen e de
+Castro, 2006) e de textos (Prior et al., 2008). Ele
+simula o comportamento sócio-cognitivo (adaptação
+comportamental) entre animais sociais, como cardumes de peixes ou uma revoada de pássaros na busca
+por comida.
+Em (Kennedy et al., 2001), os autores usam três
+princípios para descrever o processo adaptativo
+
+O algoritmo recebe como entrada um objeto
+yi da base de dados com sua classe correta
+c k
+Um número de protótipos é selecionado para a classe ck
+O protótipo vencedor é determinado por alguma medida de dissimilaridade entre os
+protótipos das classes e o objeto de entrada.
+Os protótipos são atualizados de forma a
+minimizar o erro de classificação.
+
+1.
+
+2.
+
+3.
+
+O processo de atualização dos protótipos é iterativo e
+a seleção do protótipo vencedor é determinada por
+um método de vizinho mais próximo (Nearest Neighbor).
+Este método determina o melhor protótipo para um
+objeto através de alguma medida de dissimilaridade
+entre o protótipo e o objeto, como, por exemplo, a
+distância Euclidiana.
+Dado um objeto yi da base de dados, o protótipo xj de
+maior afinidade (vencedor) com esse objeto é atualizado segundo as equações a seguir (Kohonen, 1990)
+
+Avaliar Capacidade do indivíduo de se auto-avaliar, ou seja, avaliar quão boa é sua
+solução em relação ao problema que está
+sendo tratado
+Comparar O indivíduo possui capacidade
+de comparar sua solução com a solução dos
+demais indivíduos
+Imitar O indivíduo possui capacidade de
+imitar o comportamento de outros.
+
+No algoritmo PSC, os agentes sociais são representados por vetores (partículas) e a base de dados representa o ambiente no qual estes indivíduos estão inseridos. A implementação computacional deste algoritmo é bastante simples e requer os seguintes passos
+(Cohen e de Castro, 2006)
+1.
+
+838
+
+Gerar algumas partículas aleatoriamente no
+espaço de busca
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+2.
+3.
+
+25.
+
+Gerar uma velocidade para cada partícula
+Atualizar a posição das partículas e suas velocidades.
+
+As partículas são posicionadas em um espaço Euclidiano D-dimensional, onde a dimensão D é dada pela
+dimensão dos objetos da base de dados. Dessa forma,
+a distância Euclidiana pode ser usada como medida
+de dissimilaridade entre uma partícula e um objeto da
+base de dados. As equações a seguir descrevem a
+dinâmica comportamental dos agentes durante o
+processo de adaptação
+
+Algoritimo1 Agrupamento por Enxame de Partículas.
+
+4
+
+vj(t + 1)  (t).vj(t) + 1(pji(t) - xj(t)) + 2(gi(t) xj(t)) + 3(yi - xj(t))
+(3)
+xj(t+1)  xj(t) + vj(t+1)
+
+PSClass Classificação por Enxame de Partículas
+
+O algoritmo de Classificação por Enxame de
+Partículas (PSClass) é uma extensão do algoritmo
+PSC para tarefas de classificação_de_dados.
+O PSClass combina dois métodos para gerar o preditor agrupamento por enxame_de_partículas (PSC) e
+LVQ1. A heurística do LVQ1 foi adotada porque
+este método exige menos exemplos de treinamento e
+é mais rápido do que outros métodos_de_classificação
+(Umer e Khiyal, 2007).
+As principais motivações para o projeto deste classificador são
+
+(4)
+
+A Equação 3 atualiza a velocidade da partícula no
+instante (t + 1). Nessa equação, a variável (t) é
+denominada peso de inércia e decresce iterativamente, sendo responsável pela convergência do algoritmo. Os vetores 1, 2 e 3 são aleatórios e influenciam os termos cognitivo, social e auto-organizado,
+respectivamente. No PSC, o termo cognitivo pji representa a melhor posição da partícula xj para um
+objeto yi e o termo social, gi, representa a posição da
+melhor partícula em relação ao objeto de entrada yi.
+Na Equação 4 a posição da partícula é atualizada.
+A cada iteração do algoritmo um objeto da base de
+dados é selecionado. Para cada objeto uma partícula
+de maior afinidade (vencedora) é eleita através de um
+método de vizinho mais próximo. Apenas a partícula
+eleita vencedora é atualizada.
+Ao término do algoritmo as partículas tornam-se
+protótipos de grupos naturais da base de dados. A
+seguir, o algoritmo PSC original
+
+1.
+2.
+
+3.
+
+Facilidade de implementação do algoritmo
+Poucos protótipos podem ser usados para
+representar grandes bases de dados, oferecendo, portanto, baixo_custo_computacional,
+tanto durante a construção do modelo, quanto durante o processo de predição
+Pode ser aplicado em problemas multiclasse.
+
+Para gerar o preditor com o PSClass e avaliar seu
+desempenho, a base de dados é dividida em dois
+conjuntos disjuntos treinamento e teste.
+Na etapa de treinamento o algoritmo PSC é executado para encontrar os protótipos de grupos naturais da
+base de dados e, consequentemente, suas classes
+(Algoritmo 1). Em sua versão original, o PSC pára
+após um número fixo de iterações do algoritmo. Para
+a construção do PSClass, o algoritmo PSC foi modificado tal que o número de iterações necessárias para
+sua convergência não seja definido pelo usuário. Para
+tanto, foi definido um critério de parada do algoritmo a estabilização do percurso dos protótipos, dada
+pela média da distância Euclidiana entre a posição
+atual e a memória da posição dos protótipos. Assim,
+o algoritmo pára quando essa média for igual ou
+inferior a 10-3.
+O número de partículas deve ser informado pelo
+usuário e depende do tamanho da base de dados,
+devendo ser no mínimo igual ao número de classes
+existentes na base de dados.
+Dessa maneira, o PSClass posiciona automaticamente os protótipos sobre as respectivas classes, aumentando a eficiência do algoritmo durante a construção
+do classificador.
+
+1. procedure X 
+PSC(dataset,vmax,npart,, maxit)
+2. Y  dataset
+3. initialize X usually every particle xj
+is initialized at random
+4. initialize vj at random, vj -vmax,vmax
+5. initialize dist
+6. t 1
+7. while t < maxit do,
+8. for i  1 to N do, for each data
+9.
+for j  1 to npart do,
+10.
+dist(j)  distance(yi,xj)
+11.
+end for
+12.
+I  min(dist)
+13.
+if distance(xI, yi) < distance(pIi, yi),
+14.
+then pIi  xI,
+15.
+end if
+16.
+if distance(xI, yi) < distance(gi, yi),
+17.
+then gi  xI,
+18.
+end if
+19.
+
+if(xi ! win)
+
+26.
+vi(t+1)(t)vi(t)+4(xmostwin xi(t))
+27.
+vi vmax,vmax
+28.
+xi(t+1)  xi(t) + vi(t+1)
+29.
+end if
+30. end for
+31.   0.95*
+32. end while
+33. end procedure
+
+vI(t+1)  (t) vI(t) + 1(pIi xI(t)) +
+
+20.
+2(gi xI(t)) + 3(yi xI(t))
+21.
+vI vmax,vmax
+22.
+xI(t+1)  xI(t) + vI(t+1)
+23. end for
+24. for i  1 to npart do,
+
+839
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+1. procedure X 
+PSClass(X, dataset,vmax,npart, correctlabels, predictedlabels)
+2. Y  dataset
+3. CLABELS  correctlabels
+4. PLABELS  predictedlabels
+5. initialize vj at random, vj -vmax,vmax
+6. initialize dist
+7. while not converges do,
+8. for i  1 to N do, for each data
+9.
+for j  1 to npart do,
+10.
+dist(j)  distance(yi,xj)
+11.
+end for
+12.
+I  min(dist)most similar particle
+13.
+if distance(xI, yi) < distance(pIi, yi),
+14.
+then pIi  xI,
+15.
+end if
+16.
+if distance(xI, yi) < distance(gi, yi),
+17.
+then gi  xI,
+18.
+end if
+
+O processo de treinamento consiste no ajuste iterativo da posição dos protótipos, de modo a minimizar a
+classificação incorreta. Esse processo pode ser visto
+como uma correção da posição de protótipos sobre as
+classes da base de dados, caracterizando o PSClass
+como um algoritmo de aprendizagem supervisionada.
+O algoritmo PSClass é uma modificação do algoritmo PSC, sendo que apenas dois passos são necessários para obter o classificador por enxame_de_partículas
+1.
+
+O algoritmo PSC é executado para encontrar
+os protótipos da base de dados
+2. Alguns passos são adicionados ao algoritmo
+PSC, tal que os protótipos sejam ajustados
+pelo método LVQ1, como mostrado nas Equações 5 e 6.
+
+vI(t+1) (t).vI(t) + 1(pIi xI(t))+
+
+19.
+
+2(g xI(t)) + 3(yi xI(t))
+20.
+vI vmax,vmax
+21.
+if(PLABELS(I)  CLABELS(i))
+22.
+xI(t+1)  xI(t) + vI(t+1)
+23.
+else
+24.
+xI(t+1)  xI(t) - vI(t+1)
+25.
+end if
+26. end for
+27.   0.95*
+28. end while
+29. end procedure
+i
+
+Para cada objeto da base de dados existe um protótipo de maior afinidade, o qual é atualizado considerando as equações do PSC (Equações 3 e 4) com a
+heurística do LVQ1
+xj(t+1)  xj(t) + vj(t+1)
+
+(5)
+
+se o protótipo xj e o objeto yi pertencem  mesma
+classe
+xj(t+1)  xj(t)  vj(t+1),
+
+Algoritmo 2 Classificação por Enxame de Partículas.
+
+A seguir são descritas as principais características do
+PSClass
+
+(6)
+
+se o protótipo xj e o objeto yi não pertencem  mesma
+classe
+
+
+
+
+
+
+Note que a Equação 5 (PSClass) é idêntica  Equação
+4 (PSC) e que a Equação 6 (PSClass) difere da Equação 5 apenas pela substituição do sinal de adição pelo
+sinal de subtração, de acordo com a condição de
+dissimilaridade entre um objeto e uma partícula, dada
+pelo LVQ1.
+Assim, quando uma partícula rotula corretamente um
+objeto da base de dados, a partícula é movida em
+direção a esse objeto (Equação 5) caso contrário, é
+movida em sentido oposto ao objeto (Equação 6).
+O ajuste dos protótipos nas classes pode ser visto
+como uma adaptação_social entre agentes coletivos
+(protótipos) em um ambiente comum (mesma base
+de dados).
+Depois de concluída a etapa de treinamento tem-se
+um conjunto de protótipos (classificador) capaz de
+descrever e predizer a classe de um novo objeto de
+entrada para a base de dados.
+A etapa de teste avalia a capacidade de generalização
+do classificador. Nessa etapa os objetos de teste são
+apresentados ao classificador.
+O método de vizinhos mais próximos é utilizado para
+a eleição do protótipo de maior similaridade em
+relação aos objetos da base de dados.
+
+
+
+
+
+
+
+5
+A.
+
+Pequeno número de protótipos para representar grandes bases de dados
+Resolve problemas multiclasse
+Fácil implementação
+Inicializa os protótipos sobre as respectivas
+classes, portanto minimizando o custo_computacional durante o ajuste de posição dos
+protótipos na fase supervisionada
+O critério de parada do algoritmo é dado pela estabilização do percurso da partícula na
+proximidade do objeto de entrada.
+É inspirado no processo adaptativo entre agentes que vivem em um ambiente social
+(PSC)
+Ajuste de fronteiras de classes para minimizar a chance de classificação incorreta
+(LVQ1)
+Opera com dados numéricos em um espaço
+Euclidiano.
+Avaliação de Desempenho e Discussões
+Problemas de Benchmark
+
+As principais características das bases de dados
+utilizadas para avaliar o PSClass são descritas na
+Tabela 1. Estas bases de dados foram obtidas a partir
+
+840
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+do repositório de bases de dados da
+(httparchive.ics.uci.edumldatasets.html).
+
+UCI
+
+Tabela 1. Bases de dados para avaliação.
+Base de dados
+
+Objetos
+
+Atributos
+
+Classes
+
+Iris
+Yeast
+Wine
+Glass Identification
+Habermans Survival
+PimaIndiansDiabetes
+
+150
+205
+178
+214
+306
+768
+
+4
+20
+13
+9
+3
+8
+
+3
+4
+3
+6
+2
+2
+
+Para efeitos comparativos o algoritmo PSClass foi
+comparado ao Nave Bayes. Foi utilizada uma validação em k-pastas, sendo os algoritmos executados
+10 vezes para uma validação com 10 pastas. Os objetos de cada uma das classes foram distribuídos uniformemente entre as 10 pastas. As configurações
+paramétricas do PSClass são descritas na Tabela 2. É
+importante notar que para todas as bases de dados o
+mesmo conjunto de parâmetros foi utilizado.
+
+Como os resultados obtidos pelos classificadores
+apresentados na Tabela 3 são próximos entre si, foi
+realizado um Teste T entre o PSClass e o Nave Bayes. Para as bases de dados Iris e Wine a diferença
+entre os dois algoritmos não é considerada estatisticamente significativa. Para as bases Glass Identification, Yeast, Habermans Survival e Pima Indians
+Diabetes, a diferença entre os dois algoritmos é considerada muito significativa, sendo o PSClass estatisticamente superior. O Percentual de Classificação
+Correta (Pcc) também foi obtido por classe, para
+cada base de dados. Essa informação permite direcionar as análises para os objetos da classe para a
+qual o PSClass apresentou um desempenho inferior
+em relação as demais classes da mesma base de dados. Dessa maneira, um estudo mais detalhado da
+base de dados permitirá tirar conclusões mais precisas sobre o comportamento do PSClass para a base
+de dados avaliada.
+Tabela 4. Desempenho do PSClass para cada classe da base de
+dados Iris.
+Classes
+
+Tabela 2. Configurações paramétricas do PSClass.
+Parâmetros
+
+ inicial
+ decaimento
+ final
+vmax
+
+Setosa
+versicolor
+virgínica
+
+Valores
+
+0,90
+0,95
+0,01
+0,1
+
+Classes
+
+classe 1
+classe 2
+classe 3
+classe 4
+
+Iris
+Yeast
+Wine
+Glass
+Habermans Survival
+Pima Ind. Diabetes
+
+Classes
+
+Percentual de classificação correta com o método k-pastas
+
+Nave Bayes
+
+96,004,66
+99,471,66
+95,625,93
+64,747,87
+89,003,16
+100100
+
+96,000,0
+97,560,0
+96,630,0
+49,530,0
+74,510,0
+75,910,0
+
+Nave Bayes
+1000,0
+96,000,0
+92,000,0
+
+Percentual de classificação
+correta com o método k-pastas
+
+PSClass
+1000,0
+1000,0
+1000,0
+90,0031,62
+
+Nave Bayes
+1000,0
+73,330,0
+1000,0
+92,900,0
+
+Tabela 6. Desempenho do PSClass para cada classe da base de
+dados Wine.
+
+Tabela 3. Desempenho do PSClass e do Nave Bayes.
+
+PSClass
+
+PSClass
+1000,0
+98,006,32
+90,0014,14
+
+Tabela 5. Desempenho do PSClass para cada classe da base de
+dados Yeast.
+
+O número de partículas utilizado foi o dobro do número de classes presentes nas respectivas bases de
+dados. O domínio do espaço vetorial foi limitado em
+0, 1. A velocidade das partículas também foi controlada e ficou definida no intervalo 0.1, 0.1. Os
+vetores 1, 2 e 3 são inicializados de acordo com os
+valores discutidos na Seção 3. Na Tabela 3 é exibido
+o desempeno do PSClass e do Nave Bayes para seis
+bases de dados da literatura.
+
+Base de dados
+
+Percentual de classificação
+correta com o método k-pastas
+
+classe 1
+classe 2
+classe 3
+
+Percentual de classificação
+correta com o método k-pastas
+
+PSClass
+96,008,43
+92,8610,10
+1000,0
+
+Nave Bayes
+94,900,0
+95,800,0
+1000,0
+
+Tabela 7. Desempenho do PSClass para cada classe da base de
+dados Glass.
+Classes
+
+Nota-se que o PSClass apresentou um bom desempenho de classificação para as seis bases de dados
+avaliadas, principalmente para as bases Yeast e Diabetes. O pior desempenho apresentado pelo PSClass
+foi para a base de dados Glass, com 64,74 de acerto, na média. Mesmo assim seu desempenho foi
+substancialmente superior ao do classificador Nave
+Bayes.
+
+building windows
+non-float processed
+vehicle windows
+containers
+tableware
+Headlamps
+
+841
+
+Percentual de classificação
+correta com o método k-pastas
+
+PSClass
+78,5718,13
+65,7115,36
+0,00,0
+20,0042,16
+30,0048,30
+85,0024,15
+
+Nave Bayes
+75,700,0
+15,800,0
+5,900,0
+15,400,0
+1000,0
+86,200,0
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Tabela 8. Desempenho do PSClass para cada classe da base de
+dados Habermans Survival.
+Classes
+
+patient survived
+patient died
+
+original, mostrado na Tabela 3 (64,747,87), estatisticamente a diferença não é significativa.
+
+Percentual de classificação
+correta com o método k-pastas
+
+PSClass
+96,362,87
+68,758,84
+
+6 Análise de Convergência do PSClass
+
+Nave Bayes
+94,200,0
+19,800,0
+
+A convergência do algoritmo PSClass não é dada por um número fixo de iterações, como mencionado anteriormente. A convergência do algoritmo
+ocorre quando a média da distância Euclidiana entre
+a posição atual e a memória da posição dos protótipos é igual ou menor a 10-3. Esta condição está presente tanto na etapa não-supervisionada quanto na
+etapa supervisionada do algoritmo. Uma análise
+gráfica sobre o comportamento típico do classificador para sua convergência, para cada base de dados,
+é realizada nesta seção.
+
+Tabela 9. Desempenho do PSClass para cada classe da base de
+dados Pima Indians Diabetes.
+Classes
+
+negative
+positive
+
+Percentual de classificação
+correta com o método k-pastas
+
+PSClass
+100,00,0
+100,00,0
+
+Nave Bayes
+84,00,0
+60,800,0
+
+O Pcc por classe foi obtido para as seis bases de dados, o qual é apresentado da Tabela 4  Tabela 9. O
+pior desempenho ocorreu para a base de dados Glass,
+mostrado na Tabela 7.
+O desempenho do PSClass poderá ser reduzido
+quando a base de dados possuir classes nãolinearmente separáveis. Assim, o protótipo é eleito
+vencedor tanto pra uma classe quanto para outra,
+oscilando entre essas classes, embora seu rótulo seja
+dado pela classe para a qual ele mais vezes venceu.
+Uma proposta para minimizar o erro de classificação
+no PSClass é gerar, em sua fase supervisionada, um
+protótipo sobre a classe onde o rótulo dos seus objetos seja predito incorretamente.
+A proposta foi testada para base de dados Glass, a
+qual possuiu o pior desempenho dentre as bases
+avaliadas, tanto para o PSClass quanto para o algoritmo Nave Bayes. O desempenho do PSClass para a
+base Glass, considerando a nova proposta, é mostrado na Tabela 10.
+
+6.1 Base de Dados Iris
+
+Figura 1 Convergência do PSClass para a Base Iris.
+
+O PSClass converge na iteração 59 em sua etapa
+não-supervisionada. Em seguida, na etapa supervisionada, os protótipos são ajustados e o PSClass converge em 58 iterações. Para a base de dados Iris o
+algoritmo convergiu em média em 119,02,91 iterações.
+
+Tabela 10. Desempenho do PSClass para cada classe da base de
+dados Glass.
+Classes
+
+building Windows
+non-float processed
+vehicle Windows
+containers
+tableware
+headlamps
+
+Percentual de classificação
+correta com o método k-pastas
+
+PSClass
+87,1412,51
+60,0026,22
+0,00,0
+70,0048,30
+40,0051,64
+70,0025,82
+
+Nave Bayes
+75,700,0
+15,800,0
+5,900,0
+15,400,0
+1000,0
+86,200,0
+
+6.2
+
+Base de Dados Yeast
+
+Um Teste T foi realizado para comparar o desempenho das classes da base de dados Glass, entre as
+Tabelas 7 e 10.
+O PSClass apresentou desempenho significativamente melhor para a classe containers, quando o algoritmo usa a proposta de criar protótipos em sua fase
+supervisionada.
+O desempenho geral do classificador para a base de
+dados Glass foi de 67,3711,04, embora numericamente superior quando comparado ao mecanismo
+Figura 2 Convergência do PSClass para a Base Yeast.
+
+842
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Para a base de dados Yeast, o PSClass convergiu em
+147,02,62 iterações, em média. Nas etapas nãosupervisionada e supervisionada, o número de iterações necessárias para a convergência do algoritmo
+foi de 71 e 72, respectivamente.
+
+Para esta base, diferentemente das demais bases de
+dados avaliadas até o momento, a oscilação dos protótipos foi maior nas primeiras iterações do algoritmo
+em sua fase supervisionada.
+
+6.3 Base de Dados Wine
+O PSClass convergiu em 163,802,66 iterações,
+em média. Em sua fase não-supervisionada a convergência ocorreu em 83 iterações e na fase supervisionada em 80 iterações.
+
+Figura 5 Convergência do PSClass para a Base Habermans
+Survival.
+
+6.6
+
+O
+algoritmo
+PSClass
+convergiu
+em
+513,90482,56 iterações, em média.
+Foi a maior média de iterações para a convergência
+do algoritmo e a maior variação de iterações em
+relação  media, dentre as bases de dados avaliadas
+neste trabalho.
+Na sua fase não-supervisionada, o PSClass convergiu
+em média em 96 iterações e na sua fase supervisionada, ocorreu em média em 151 iterações.
+
+Figura 3 Convergência do PSClass para a Base Wine.
+
+6.4
+
+Base de Dados Pima Indians Diabetes
+
+Base de Dados Glass
+
+O algoritmo convergiu em 131,303,13 iterações, em média. A convergência do PSClass para as
+fases não-supervisionada e supervisionada ocorreu
+em 61 e 70 iterações em média, respectivamente. O
+comportamento típico do algoritmo para a base de
+dados Glass é mostrado na figura a seguir.
+
+Figura 6 Convergência do PSClass para a Base Pima Indians
+Diabetes.
+
+A partir da análise gráfica da convergência do algoritmo PSClass, é possível observar que para todas as
+bases de dados avaliadas a oscilação dos protótipos
+foi maior na sua fase não-supervisionada.
+Esse comportamento deve-se ao processo adaptativo
+do algoritmo.
+Concluída a etapa não-supervisionada, os protótipos
+encontram-se no centróide dos grupos, ou em regiões
+de maior densidade de objetos.
+Assim, na sua fase supervisionada o PSClass ajusta a
+posição dos protótipos, os quais tendem a se deslocar
+dentro dos respectivos grupos, apenas.
+
+Figura 4 Convergência do PSClass para a Base Glass.
+
+6.5
+
+Base de Dados Habermans Survival
+
+Na etapa não-supervisionada o algoritmo convergiu em 76 iterações e 81 iterações na fase supervisionada, em média.
+A convergência global do algoritmo ocorre em
+151,104,09 iterações para a base de dados Habermans Survival.
+
+843
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Multiclass Classification Application to Characterization of Plastics.
+Mitchell, T. Buchanan, B. De Jong, G. Dietterich,
+T. Rosenbloon, P. and Waibel, A. (1990). Machine Learning. Annual Review of Computer
+Science, 4, pp. 417- 433.
+Prior, A.K.F. de Castro, L.N. de Freitas, L.R. and
+Szabo, A (2008). The proposal of two bioinspired algorithms for text clustering. Learning
+and Nonlinear Models, pp. 29-43.
+Seo, S. Bode, M. and Obermayer, K. (2003). Soft
+nearest prototype classification. Neural Networks, IEEE Transactions, pp. 390- 398.
+Shui-sheng, Z. Wei-wei, W. and Li-hua, Z. (2005).
+A new technique for generalized learning vector
+quantization algorithm.
+UCI Repository of Machine Learning Databases,
+Neural
+Networks
+Benchmarks.
+httparchive.ics.uci.edumldatasets.html.
+Umer, M.F. and Khiyal, M.S.H. (2007). Classification of textual documents using learning vector
+quantization. pp. 154- 159.
+Witoelar, A. Biehl, M. and Hammer, B.(2007).
+Learning vector quantization generalization
+ability and dynamics of competing prototypes.
+Proceedings of the 6th International Workshop
+on Self-Organizing Maps.
+Yang, Y. and Liu, X. (1999). A re-examination of
+text categorization methods. Proceedings of 22nd
+ACM International Conference on Research and
+Development in Information Retrieval, Berkeley, CA. pp. 42- 49.
+Yi, X. and Zhang, Y. (2008). Privacy-preserving
+nave Bayes classification on distributed data via
+semi- trusted mixers. pp. 371-380.
+
+7 Conclusões e Trabalhos Futuros
+Este artigo propôs algumas modificações no algoritmo de agrupamento por enxame_de_partículas
+(PSC) tal que ele pudesse ser aplicado a problemas
+de classificação_de_dados numéricos. Essas modificações foram baseadas em quantização_vetorial, mais
+especificamente no algoritmo LVQ1.
+O algoritmo resultante foi aplicado a seis problemas
+de classificação_de_dados e seu desempenho foi comparado ao do método Nave Bayes no que tange o
+percentual de classificação correta. Os resultados
+mostraram um bom desempenho de classificação
+para o PSClass quando comparado ao Nave Bayes
+para a maioria dos problemas testados.
+Como perspectivas futuras o algoritmo PSClass será
+aplicados em problemas de classificação de textos e
+de reconhecimento_de_padrões, além de aplicado a
+outros problemas numéricos e comparado a outros
+métodos_de_classificação. Em paralelo será investigada uma proposta para determinar automaticamente
+um número ótimo de partículas para a construção do
+classificador.
+Agradecimentos
+Os autores agradecem  Universidade Presbiteriana
+Mackenzie, ao Mackpesquisa e ao CNPq pelo apoio
+financeiro.
+Referências Bibliográficas
+Batista, G.E. and Monard, M.C. (2003). An analysis
+of four missing data treatment methods for supervised learning, Applied Artificial Intelligence. pp. 519 533.
+Cohen, S.C.M. and De Castro, L.N. (2006). Data
+Clustering with Particle Swarms. In International Conference on Evolutionary Computation,
+Proceedings of World Congress on Computational Intelligence, pp. 6256-6262.
+Fayyad, U. Shapiro, G.P. and Smyth, P. (1996).
+Preface. In Advances in Knowledge Discovery and Data Mining, MIT Press. pp. 13- 14.
+Kennedy, J. Eberhart, R. and SHI, Y. (2001). Swarm
+Intelligence, Morgan Kaufman Publishers.
+Kohonen, T. (1986). Learning Vector Quantization.
+Technical report, Helsinki Univ. of Tech, Finland.
+Kohonen, T. (1990). Improved Versions of learning
+vector quantization. Helsinki Univ. of Tech, Finland.
+Lewis, D.D. (1998). Nave (Bayes) at Forty The
+independence assumption in information retrieval. Proceedings of 10th European Conference on
+Machine Learning, Chemnitz, Germany. pp. 415.
+Lloyd, G.R. Brereton, R.G. Faria R. and Duncan,
+J.C. (2007). Learning Vector Quantization for
+
+844

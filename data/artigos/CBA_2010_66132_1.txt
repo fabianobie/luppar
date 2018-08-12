@@ -1,0 +1,1071 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+CONTROLE DE TRAJETÓRIA PARA VEÍCULOS TERRESTRES DE EXTERIOR
+Ely C. de Paiva a, José R. Azinheira b, Samuel S. Bueno c
+a
+
+Universidade Estadual de Campinas  DPM  FEM
+Rua Mendeleiev, 200, Cidade Universitária Zeferino Vaz
+13083-970  Campinas  SP  Brasil
+elypaiva@fem.unicamp.br
+b
+
+Instituto Superior Técnico - IDMEC  IST
+Av. Rovisco Pais ,1 - 1049-001 Lisboa - Portugal
+jraz@dem.ist.utl.pt
+c
+
+Centro de Tecnologia da Informação Renato Archer  DRVC  CTI
+Rod. D. Pedro I, km 143,6  13081-970  Campinas  SP -Brasil
+samuel.bueno@cti.gov.br
+
+Abstract This article addresses the development of control and trajectory tracking strategies for an all-terrain vehicle, which is
+characterized by two Ackerman steering front wheels and two electrically powered rear wheels. In this context, four control
+approaches are considered, using LQR, linear Proportional-Derivative, nonlinear Proportional-Derivative and Sliding Modes
+formulations. The controllers design is based on the vehicle cinematic model they are then evaluated in simulations based on a
+mathematical model that incorporates both kinematic and dynamic vehicle aspects, including a tire slipping model.
+Keywords ground robotics, kinematic and dynamic vehicle models, trajectory control, LQR, PD, nonlinear PD and Sliding
+Modes controllers
+Resumo Este artigo aborda o desenvolvimento de estratégias de controle e seguimento de trajetória para um veículo do tipo
+todo-terreno caracterizado por duas rodas dianteiras orientáveis em configuração Ackerman e duas rodas traseiras acionadas
+eletricamente. Neste contexto, quatro abordagens de controle são abordadas segundo as formulações LQR, ProporcionalDerivativo linear, Proporcional-Derivativo não-linear e por Modos Deslizantes. As sínteses dos controladores são realizadas a
+partir do modelo_cinemático do veículo eles são então avaliados em simulação calcada em um modelo_matemático que incorpora
+os aspectos cinemáticos e dinâmicos do veículo, incluindo modelo de derrapagemescorregamento nos pneus.
+Palavras-chave  .
+
+1
+
+Introdução
+
+configuração de tração e direção (diferentes arranjos
+de rodas, esteiras) e o grau de atuação decorrente (de
+sub-atuado até completamente holonômico).
+Sistemas de controle são projetados segundo esses
+fatores (Morin and Samson, 2008).
+Sob condições ideais de locomoção (i.e., em
+terreno plano, sem escorregamento, a velocidades
+compatíveis, etc.), o modelo_cinemático do veículo é
+suficiente para a síntese de leis de controle.
+No entanto, quando se trata da locomoção
+desses veículos em campo (i.e. sujeitos a
+inclinações, escorregamentos, efeitos da interação
+veículo-terreno, etc.), os aspectos dinâmicos tornamse importantes (Lenain, 2005), (Doumiati et al.,
+2009) e devem ser considerados para o
+estabelecimento de estratégias de controle e
+seguimento de trajetória. Nessas circunstâncias, uma
+alternativa preliminar é realizar a síntese do
+controlador baseado no modelo_cinemático e avaliar
+seu desempenho e robustez face aos efeitos
+dinâmicos - considerados nesse caso como
+perturbações. Outra alternativa, mais complexa, é
+incorporar esses aspectos dinâmicos diretamente na
+síntese do controlador.
+Este
+artigo
+tem
+como
+contexto
+o
+desenvolvimento de controladores para o
+
+Esforços de pesquisa atuais em veículos
+robóticos terrestres de exterior buscam agregar
+capacidades sensoriais, de percepção - tanto do
+veículo em si quanto do meio onde ele evolui - e de
+tomada de decisão, visando o estabelecimento de
+estratégias de operação com variados graus de
+autonomia, segundo especificidades da aplicação
+alvo. Um cenário de aplicação possível diz respeito
+ao uso desses veículos em ambientes urbanos, seja
+como unidades de transporte sem condutor, seja no
+âmbito de sistemas de apoio  condução de veículos
+(i.e. sistemas de auxílio ao motorista) ou ainda
+visando sua movimentação por estradas
+inteligentes. Outro cenário de aplicação
+corresponde s diferentes possibilidades de uso
+desses veículos em campo. Por exemplo, numa linha
+de robótica agrícola, automatizando a locomoção da
+máquina agrícola ou como apoio ao seu condutor.
+Sistemas de controle para seguimento de
+trajetória constituem um nível básico sobre o qual
+são acrescidos os diferentes módulos destinados a
+prover a navegação_autônoma do veículo.
+Veículos robóticos terrestres de exterior se
+distinguem, dentre outros aspectos, pela sua
+1686
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+seguimento de trajetória pelo Veículo Robótico de
+Exterior do Projeto VERO, desenvolvido pelo CTI e
+colaboradores. Aborda-se aqui a síntese de
+controladores de trajetória baseados em modelos
+cinemáticos, considerando o veículo sujeito a
+perturbações dinâmicas advindas de diferentes
+condições de aderência no seu percurso.
+Partindo do modelo_cinemático do veículo,
+quatro técnicas de projeto_de_controladores de
+trajetória são consideradas LQR, ProporcionalDerivativo linear, Proporcional-Derivativo nãolinear e por Modos Deslizantes. Os controladores
+resultantes são avaliados em ambiente de simulação
+calcado em um modelo_matemático que incorpora os
+aspectos cinemáticos e dinâmicos do veículo.
+O veículo e a infra-estrutura robótica do Projeto
+VERO (no qual essas técnicas de controle serão
+posteriormente avaliadas experimentalmente), foram
+apresentados em detalhe em (Bueno et al., 2009).
+O veículo, fabricado pela empresa Freedom
+(Freedom, 2010), é ilustrado na Figura 1. Ele possui
+2,3m de comprimento, 1,35m de largura, suspensão
+independente nas quatro rodas, tracionamento nas
+rodas traseiras por dois motores de corrente contínua
+independentes e direcionamento determinado pela
+orientação das duas rodas dianteiras montadas
+segundo mecanismo tipo Ackerman.
+A infra-estrutura robótica é composta por dois
+módulos integrados via barramento CAN. Um
+módulo básico, originário da própria Freedom, serve
+ operação do veículo via joysticks. O módulo para
+suportar as funções de controle e navegação
+autônoma, integralmente desenvolvido pelo CTI,
+compreende do hardware ao arcabouço de software
+para i) a estação embarcada, com seus sensores
+(GPS, unidade inercial, câmeras, lasers) e
+processadores ii) a estação de operação em solo e
+iii) o sistema de comunicação entre ambas.
+
+modelos cinemáticos para a síntese das leis de
+controle são abordados na seção 3 as quatro
+diferentes estratégias para o controle e seguimento
+de trajetória do veículo são desenvolvidas na seção 4
+e os resultados de simulação apresentados na seção
+5 finalmente, a seção 6 fornece as conclusões,
+seguindo-se a relação da bibliografia citada.
+2 Modelo dinâmico
+Estratégias de controle e de seguimento de trajetória
+constituem a base para a concepção de metodologias
+de navegação_autônoma de um veículo terrestre.
+Para o desenvolvimento e validação das abordagens
+de controle e guiamento, é necessário o uso de um
+ambiente de simulação fundamentado em um
+modelo
+matemático
+representativo
+do
+comportamento do veículo.
+Os modelos cinemáticos, não fornecem uma
+informação precisa do movimento do veículo
+quando se considera velocidades elevadas e raios de
+curvatura ou condições de aderência variáveis, bem
+como inclinações de terreno. Nesses casos, é
+imprescindível o uso de modelos dinâmicos.
+Existem na literatura diversas abordagens de
+dinâmica de veículos de quatro rodas, com
+diferentes níveis de complexidade, dependendo da
+aplicação (Kiencke and Nielsen, 2000), (Lenain,
+2003, 2005). Em geral, os modelos dinâmicos 3D,
+baseados nas equações clássicas de Newton Euler e
+Lagrange, são não-lineares e incluem as forças de
+contato pneusolo, cruciais para a previsão do
+movimento do veículo.
+
+Figura 2. Configuração mecânica e parâmetros para modelo
+dinâmico do veículo de 4 rodas (Doumiati et al, 2009).
+
+A configuração mecânica e os parâmetros
+associados ao modelo_dinâmico do veículo de 4
+rodas aqui utilizado, com o propósito de simulação
+dinâmica, é ilustrado na Figura 2 (Doumiati et al.,
+2009). O ângulo de derrapagem side slip (), no
+Centro de Gravidade (CG) do veículo, é a diferença
+entre a direção de sua velocidade (Vg) e a sua
+orientação (). A taxa de guinada ( ) é a
+velocidade_angular do veículo em torno do CG. As
+forças longitudinais (Fx) e laterais (Fy) são as forças
+atuantes em cada pneu. Considera-se a tração nas
+rodas traseiras. As forças laterais são obtidas
+somando-se as forças e momentos em torno do CG.
+
+Figura 1. O veículo robótico todo-terreno, vendo-se alguns
+sensores (câmera e lasers) e as antenas de comunicação.
+
+Após essa seção introdutória, o restante do
+artigo está assim organizado a seção 2 apresenta o
+modelo_dinâmico do veículo, enquanto que os
+1687
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Portanto, considerando-se pequenos valores de
+derrapagem  do veículo, um modelo_dinâmico
+simplificado é dado pelas equações a seguir
+
+ 
+
+ L1 Fy11 cos  + Fy12 cos   
+1
+  L2  Fy 21 + Fy 22  + E2  Fx12 cos 
+Iz 
+ Fx11 cos  + Fx 22  Fx 21 
+
+
+em pista seca de asfalto ou concreto) até 0.05
+(superfície de gelo).
+3 Modelos cinemáticos para controle_de_trajetória
+
+
+
+
+
+
+
+Apresenta-se a seguir o modelo_cinemático do
+veículo, que incorpora suas características de nãolinearidade e não-holonomicidade. As formulações
+apresentadas constituem a base para o projeto de
+estratégias de controle para seguimento de trajetória,
+o que será abordado na próxima seção.
+
+a y  m1 ( Fy11 cos  + Fy12 cos  + Fy 21 +
++ Fy 22 + Fx11sin + Fx12 sin )
+
+(1)
+
+3.1 O modelo bicicleta
+
+ax  m1 ( Fy11sin  Fy12 sin + Fx11 cos  +
+
+Considera-se o modelo comumente usado e
+denominado de bicicleta, onde as duas rodas de
+cada eixo são representadas apenas por uma roda
+central, o que supõe um veículo simétrico, com
+movimento em um plano (2D) (Snider, 2009),
+(Lenain, 2005). Nesse caso, para o propósito de
+navegação, utiliza-se geralmente o clássico
+referencial de Frenet, relativo  trajetória a ser
+seguida (Morin, and Samson, 2008), (Snider, 2009),
+ilustrado na Figura 3, que usa três variáveis a
+abscissa curvilínea, um erro de deslocamento lateral
+e um erro de orientação angular.
+
++ Fx12 cos  + Fx 21 + Fx 22 )
+onde m é a massa do veículo, e Iz o seu momento de
+inércia. O ângulo de derrapagem do pneu (ij),
+mostrado na Figura 2, é a diferença entre o eixo
+longitudinal do pneu e o seu vetor velocidade. O
+ângulo de esterçamento  considerado no modelo é a
+média dos valores das rodas dianteiras, ou seja,
+(11+12)2. O modelo para o cálculo das forças de
+contato pneu-solo (Fx, Fy) é complexo e envolve
+uma grande quantidade de parâmetros. Os três
+principais modelos são Burckhardt, Dugoff e
+Pacejka (Kiencke and Nielsen, 2000), (Pacejka,
+2002), sendo esse último o adotado no presente
+trabalho. No modelo de Pacejka, as forças Fx, Fy e o
+momento Mz são calculados a partir de uma fórmula
+empírica envolvendo dezenas de parâmetros. Para o
+cálculo das forças, é preciso conhecer o ângulo de
+derrapagem e a taxa de escorregamento longitudinal
+do pneu. O primeiro é definido por
+ ij  tan 1 (vr  ur ) , onde vr e ur são as velocidades
+lateral e longitudinal da roda. O segundo é dado pela
+relação f ij  1  (r  ur ) , onde  é a velocidade
+angular da roda e r o seu raio. Um valor positivo de f
+indica frenagem, enquanto que um valor negativo
+aponta um torque de aceleração. A fórmula geral de
+Pacejka é dada por (Pacejka, 2002)
+
+Figura 3. Referencial de Frenet e configuração para modelo
+cinemático de guiamento (Snider, 2009).
+
+Os principais parâmetros
+cinemática são portanto
+
+yij ( x)  D sinC tan 1 ( Bx  E ( Bx  tan 1 ( Bx))) (2)
+
+descrição
+
+
+
+s é a abscissa curvilínea ao longo da trajetória
+de referência.
+(cx,cy) é o ponto na curva s de menor distância
+ roda traseira, e c(s) é o inverso do raio de
+curvatura nesse ponto.
+ye é o erro lateral do veículo com relação 
+trajetória seguida.
+ e    p é o erro angular do veículo com
+
+
+
+ é o ângulo médio de direção (esterçamento)
+
+
+
+onde yij(x) é a força ou momento calculado em
+função da entrada x. Usando-se como entrada x o
+ângulo de derrapagem, temos que a força resultante
+yij(x) corresponde  força lateral Fy e ao torque Mz.
+Quando se usa como entrada x a taxa de
+escorregamento, a fórmula fornece a força
+longitudinal Fx. As variáveis B,C,D,E assumem
+valores diferentes em cada caso, e são funções de
+diversos outros
+parâmetros, incluindo as
+características físicas do pneu. A variável D
+especificamente, depende do coeficiente de atrito
+com o solo , e da força vertical sobre a roda Fz
+segundo a relação D  Fz . O coeficiente  indica a
+situação de aderência dos pneus ao solo, variando,
+por exemplo, de 1.2 (aderência máxima, para tráfego
+
+dessa
+
+
+
+
+
+relação  trajetória.
+
+
+
+
+1688
+
+das rodas dianteiras.
+vx é a velocidade longitudinal do veículo.
+L é a distância entre os dois eixos.
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Nessa representação, o veículo é completamente
+caracterizado pelo vetor_de_estados s ye  e T, sendo
+
+normalizado em relação  abscissa curvilínea s
+(Lenain, 2005). Utilizando-se a notação
+
+as entradas de controle a velocidade longitudinal vx e
+o ângulo da direção .
+
+a1  1
+
+a2  a3
+a  (m  m )  m
+2
+1
+3
+ 3
+
+Sob a hipótese de movimento sem derrapagem,
+o modelo_cinemático (Morin, and Samson, 2008),
+(Snider, 2009) é representado pelas equações
+
+isso é assegurado lembrando que o erro de distância
+y e é sempre bem menor do que o raio de curvatura
+1
+c(s)
+
+.
+
+Uma simplificação desse modelo (3),
+particularmente útil na síntese de controladores
+lineares, é dada na equação abaixo, onde se
+considera apenas os erros de distância e de ângulo
+para o guiamento lateral
+
+ y e  v x sin  e  v x e
+
+tan 
+ e  v x L  v x  L
+
+(7)
+
+Nessa seção, apresenta-se o desenvolvimento de
+4 diferentes controladores laterais para o seguimento
+de trajetória do veículo, a saber Linear-Quadrático
+(LQR), Proporcional-Derivativo linear (PDl),
+Proporcional-Derivativo não-linear (PDnl) e por
+Modos Deslizantes (SMC). A síntese dos
+controladores é baseada no modelo_cinemático
+apenas. Busca-se assim avaliar o limite do uso do
+modelo_cinemático para fins de síntese de
+controladores de trajetória, ao desconsiderarem-se,
+na síntese, os efeitos dinâmicos como os decorrentes
+de variações de aderência, etc., que caracterizam
+casos reais. Em todos os controladores, a variável de
+controle é  - o ângulo de direção (esterçamento) das
+rodas dianteiras - assumindo-se que a velocidade
+longitudinal (ajustada para 3.5 ms) é regulada por
+um outro controlador.
+Os dois controladores lineares (LQR e PDl)
+são projetados a partir do modelo_cinemático
+simplificado e linearizado da equação (4). Essa
+síntese, denominada "no tempo", corresponde ao
+enfoque clássico e constitui a referência para
+comparação com outras estratégias. Já no caso dos
+controladores não-lineares (PDnl e SMC), o projeto
+utiliza o modelo reparametrizado dado pelas
+equações (5) e (7). Essa síntese é denominada "em
+distância", e o desempenho torna-se independente da
+velocidade longitudinal ajustada.
+
+(3)
+
+A existência desse modelo exige que a condição
+ 0 se verifique. Em situações práticas,
+
+da trajetória a ser seguida, e portanto y e 
+
+,
+
+4 Leis de controle baseadas em modelos
+cinemáticos
+
+1  c( s) ye
+
+1
+c(s)
+
+da n
+ds
+
+o novo modelo é dado por
+
+3.2 Equações cinemáticas
+
+e
+s  1vxccos
+( s ) ye
+
+ y e  v x sin  e
+  v ( tan   c ( s ) cos e )
+x
+L
+1c ( s ) ye
+ e
+
+an 
+
+(4)
+
+3.3 Reparametrização das equações cinemáticas
+O modelo_cinemático em (3) pode ser
+transformado, através de uma mudança de variáveis,
+no sistema em cadeia abaixo (Lenain, 2005), que é
+muito mais simples de se manipular, para fins de
+projeto_de_controle
+
+4.1 Controle LQR
+
+a1  m1
+
+a 2  a3 m1
+a  m
+2
+ 3
+
+A derivação do controlador utilizando-se o critério
+Linear Quadrático, é baseada no modelo lateral
+simplificado e linearizado da equação (4), do tipo
+x  Ax + Bu , onde xye  e T é o vetor_de_estados
+
+(5)
+
+onde
+
+contendo a os erros de guiamento, u é a entrada
+de controle, e as matrizes A e B vem da linearização
+apresentada no modelo_cinemático simplificado de
+(4), assumindo-se a velocidade nominal v x 0  3,5
+
+d
+m1 
+, m2  (1  c( s ) ye ) tan  e 
+dt
+a1  s, a 2  y e , a 3  (1  c( s ) y e ) tan e 
+v x cos e
+1 c ( s ) ye
+
+ms, ou seja
+
+(6)
+
+ 0 
+0 v x 0 
+A
+ B
+
+
+0 0 
+v x 0  L 
+
+Tal modelo apresenta duas variáveis de
+controle, m1 e m2, onde a primeira expressa a
+dependência da velocidade longitudinal, e a segunda
+a dependência do ângulo de direção, relacionadas
+pela 3a equação de (3).
+A fim de se obter uma lei de controle cujo
+desempenho seja independente da velocidade
+longitudinal vx, o modelo resultante é então
+
+(8)
+
+Assim, a lei de controle obtida através do ganho de
+realimentação KK1 K2T é dada por
+
+ LQR  K1 ye + K 2 e
+1689
+
+(9)
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+dc ( s )
+y e tan  e 
+ds
+ K d (1  c ( s ) y e ) tan  e  K p y e +
+(13)
+
+4.2 Controle proporcional derivativo linear (PDl)
+
+3
+
+
+ PD  nl  arctan( L  (1cos
+c( s) y
+
+Ainda com base no modelo simplificado (4),
+pode-se obter um controlador do tipo proporcionalderivativo (PD). Nesse caso, o sinal de erro resulta
+da ponderação entre os erros de trajetória de
+distância (ye) e de ângulo (e), reunidos em uma
+única expressão, dada por e  ye + b0 e. Este erro
+ponderado incorpora um caráter preditivo com
+relação ao erro angular (Figura 4), expresso na lei de
+controle
+
+ PD  l  K p e + K d
+Posição
+do veículo
+
+de
+dt
+
+v
+
+(10)
+
+e
+
+ye  v0et
+trajetória de referencia
+
+)
+
+a1  1
+
+a 2  a 3 +  2
+a   m + 
+3
+3
+ 3
+
+Figura 4. Sinais de erro para controle PD linear.
+
+Onde Kp e Kd são os ganhos proporcional e
+derivativo, respectivamente. Essa é uma estratégia
+muito utilizada em controle e navegação de veículos
+robóticos (Azinheira et al., 2000), (de Paiva et al.,
+2006).
+
+(14)
+
+Para esse novo sistema, define-se a função de
+chaveamento
+
+z  a 2 + a3 , com   R +
+
+A convergência do sistema para a superfície de
+deslizamento, demonstrada em (Lenain, 2005), é
+obtida através da lei de controle
+
+4.3 Controle proporcional derivativo não-linear
+(PDnl)
+
+m3   kz  a 3   sign( z )
+
+Em (Lenain, 2005), tomando por base o sistema de
+linearização_exata em cadeia da equação (5), é
+derivada uma outra lei de controle do tipo
+proporcional-derivativo
+sobre
+as
+variáveis
+normalizadas a2 e a3, utilizando-se a lei de controle
+dada por m3
+
+m3   K d a3  K p a 2
+
+c ( s ) cos  e
+1 c ( s ) y e
+
+Considerando o mesmo modelo em cadeia dado
+pela equação (5), uma outra lei de controle nãolinear, conhecida por Modos Deslizantes, ou Sliding
+Mode Control (SMC), é derivada. A abordagem
+robusta dessa lei de controle por chaveamento foi
+desenvolvida por (Utkin, 1977), e encontra
+numerosas aplicações em manipuladores e robótica
+móvel (Utkin et al., 2008).
+Assumindo-se o modelo apresentado na equação
+(7), acrescentam-se duas perturbações 2 e 3 que
+a
+presença
+de
+tentam
+captar
+escorregamentoderrapagem ignorados no modelo
+original, ou seja
+
+predição
+
+X
+
+(
+
+4.4 Controle por modos_deslizantes (SMC)
+
+ye
+
+Y
+
+2
+e)
+
++ c ( s )(1  c ( s ) y e ) tan 2  e ) +
+
+b0e
+
+.
+ye
+
+e
+
+desde
+
+que
+
+ >  2 +  3
+
+seja
+
+obedecida
+
+a
+
+(15)
+condição
+
+.
+
+Com relação  abscissa curvilínea, a lei de controle
+acima, de fato, é descrita por
+
+(11)
+
+z    kz +  2 +  3   sign( z )
+
+O que associado  normalização dada na
+equação (7), leva  garantia de convergência de a2,
+pela equação a seguir, e por conseguinte de a3
+
+(16)
+
+E assim, a lei de controle SMC final se reduz a
+
+dc ( s )
+y e tan e 
+ds
+ kz  a3   sign ( z ) + c ( s )(1  c ( s ) y e ) tan 2  e )
+3
+
+
+(
+ SMC  arctan( L  (1cos
+c( s) y )
+e
+
+2
+
+e
+
+a2 +K d a2 + K p a2  0
+
+(12)
+
+e
++ c1(sc) (cos
+s ) y e )
+
+Os ganhos assim definidos, referem-se a um
+sistema relativo  abscissa curvilínea, determinando
+uma distância de resposta ao invés de um tempo
+de resposta, o que faz com que o desempenho do
+controlador seja independente da velocidade
+longitudinal do veículo. Utilizando-se a lei de
+controle acima e a transformação de variáveis (6),
+obtém-se finalmente a lei de controle PD não_linear
+a seguir
+
+(17)
+
+A qual é obtida a partir das relações de
+transformação de variáveis em (6).
+Para evitar oscilações (chattering) muito fortes
+no sinal de controle, a função tangente hiperbólica
+tanh(x) é utilizada ao invés da função sinal sign(x).
+Um dos objetivos da lei de controle SMC é manter o
+controle do veículo mesmo na presença de
+perturbações, consideradas aqui como pequenos
+escorregamentos e derrapagens não modeladas.
+
+1690
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+5. Resultados de simulação e análise comparativa
+
+direção para o controlador SMC no meio da curva.
+Os dois controladores lineares (LQR) e PDl não
+conseguem controlar o carro para essa condição de
+baixa aderência.
+
+Apresenta-se nessa seção os resultados de
+simulação e análise comparativa dos controladores
+laterais LQR, PDl, PDnl, e SMC para o
+seguimento de trajetória do veículo robótico. O
+objetivo é de avaliar o desempenho dessas quatro
+diferentes técnicas para condições de aderência
+variadas, em que os efeitos dinâmicos resultantes
+apresentam-se, em maior ou menor grau, como
+perturbações externas.
+As simulações foram realizadas com o modelo
+dinâmico apresentado na seção 2, para dois casos
+distintos em função dos valores atribuídos ao
+coeficiente de aderência  i) aderência entre alta e
+baixa (1.2    0.3) ii) aderência muito baixa ( <
+0.3). Ambos os casos, seguidos da análise dos
+resultados, são apresentados a seguir. Os valores de
+referência da aderência  são indicados na Tabela 1.
+0.25
+0.3
+0.8
+1.2
+
+Figura 5. Resultados do seguimento de trajetória para os 4
+controladores com 0.8 e vx3.5 ms.
+
+Terra molhadabarro
+Paralelepípedo molhado
+Piso seco (asfalto ou concreto
+de média aderência)
+Piso seco (asfalto ou concreto
+de alta aderência)
+
+Tabela 1. Valores de  para as condições de aderência simuladas.
+
+Em todas as simulações, a trajetória especificada
+é oval, com raio de curvatura de 6 metros nas
+extremidades, e a velocidade longitudinal é regulada
+em vx3.5 ms. Os parâmetros de sintonia dos quatro
+controladores laterais foram ajustados por tentativa e
+erro, visando obter-se o melhor desempenho nas
+diferentes condições consideradas e foram mantidos
+constantes ao longo dos ensaios.
+
+Figura 6. Sinal de controle  (ângulo de direção) para os
+controladores lineares LQR (superior) e PDl (inferior), durante
+uma volta completa, com 0.8 e vx3.5 ms.
+
+5.1 Aderência entre alta e baixa
+Nesse conjunto de simulações, o coeficiente de
+aderência  variou entre 0.3 e 1.2. As figuras 5 a 8
+resumem os principais resultados do seguimento de
+trajetória para   0.8 e vx  3.5 ms.
+A figura 5 ilustra o seguimento do percurso para
+os 4 controladores, enquanto que as figuras 6 e 7
+mostram os sinais de controle (ângulo de direção )
+para cada caso.
+Os valores do critério IAE, correspondendo 
+integral do módulo do erro de distância ye durante
+uma volta completa no circuito, para 3 valores
+diferentes de coeficientes de aderência são
+mostrados na Tabela 2. Já os valores máximos do
+erro de distância ye (em módulo) durante uma
+manobra de curva (extremidade da oval), para dois
+valores de raio de curvatura, (6m e 12m), no caso
+0.8, são mostrados na Tabela 3.
+A figura 8 mostra os sinais de controle 
+(direção) dos controladores não-lineares PDnl e
+SMC durante uma curva para a condição 0.3 e
+velocidade 3.5 ms. Note-se a inversão no sinal de
+
+Figura 7. Sinal de controle  (ângulo de direção) para os
+controladores não-lineares PDnl (superior) e SMC (inferior),
+durante uma volta completa, com 0.8 e vx3.5 ms.
+
+LQR
+PDl
+PDnl
+SMC
+
+1.2
+0.54
+2.14
+2.60
+2.52
+
+0.8
+0.60
+2.15
+2.50
+2.39
+
+0.3
+NC
+NC
+
+1.52
+0.98
+
+Tabela 2. Valores do critério IAE (em m.s) do erro de distância
+para os diferentes controladores, onde NC indica que os
+controladores não conseguem lidar com a situação.
+
+1691
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+R6m
+R12m
+
+LQR
+0.05
+0.02
+
+PDl
+0.19
+0.10
+
+PDnl
+0.19
+0.11
+
+fornece erros de seguimento muito baixos para as
+condições de média (0.8) e de alta (1.2)
+aderências, mas não consegue controlar o veículo na
+baixa aderência (0.3). Para efeito de comparação
+considerou-se aqui esse último caso. Da mesma
+forma, o controlador PD linear não conseguiu
+controlar o veículo nessa situação de baixa
+aderência.
+Os controladores não_lineares PDnl e SMC
+apresentaram erros de seguimento pouco maiores do
+que os dos lineares, porém são mais robustos e
+conseguem seguir a trajetória tanto em alta quanto
+em baixa aderência. O aumento do ganho  para
+tentar melhorar o desempenho do controlador SMC,
+levou a uma saturação_do_sinal_de_controle e
+consequente derrapagem do veículo. O uso da
+função tanh para tentar evitar a saturação e o
+chattering, apresenta reações adversas, diminuindo
+significativamente a reatividade do sistema, não
+evitando a derrapagem para valores de  menores do
+que 0.3. Dessa forma, o controlador SMC
+apresentou um desempenho geral similar ao do
+controlador PDnl.
+
+SMC
+0.19
+0.11
+
+Tabela 3. Valores máximos do erro de distância (em metros)
+durante uma curva, para o caso 0.8, para dois valores de raio.
+
+Figura 8. Sinal de controle  (ângulo de direção) para os
+controladores PDnl (curva cheia) e SMC (tracejada), para 0.3
+e velocidade de 3.5 ms.
+
+5.2 Aderência muito baixa
+Para testar o desempenho dos controladores
+não-lineares em condições extremas, o mesmo
+exemplo foi simulado para uma condição de
+aderência muito baixa (  0.25), para o caso do
+controlador PDnl. A figura 9 mostra uma parte do
+seguimento da trajetória, incluindo a orientação do
+carro e o ângulo do comando de direção , indicado
+por uma pequena barra preta na parte frontal do
+carro. A figura 10 mostra os ângulos ij de
+derrapagem das 4 rodas, juntamente com o valor
+correspondente de  para o trecho. Nessa situação,
+pode-se observar a inversão no sinal da direção, que
+chega a saturar após os 9 segundos, e a excursão dos
+ângulos de derrapagem mais pronunciados
+inicialmente nas rodas traseiras. Em seguida há
+perda de estabilidade, pois a partir da posição final
+mostrada na figura, o veículo não retorna mais 
+trajetória estipulada.
+
+Figura 9. Trajetória para o controlador PDnl com 0.25 e
+vx3.5 ms. A trajetória a ser seguida aparece em pontilhado.
+
+5.3 Análise dos resultados
+Várias conclusões podem ser extraídas desses
+resultados. De uma forma geral, a síntese de
+controladores baseada apenas no modelo_cinemático
+do veículo pode apresentar desempenho e robustez
+suficientes em condições de movimentação
+próximas do ideal no entanto, nas situações em que
+os efeitos da dinâmica do veículo tornam-se mais
+importantes, i.e., nas condições de velocidade alta
+eou menor aderência, o desempenho degrada e
+surge a necessidade de se buscar técnicas de projeto
+de controle mais elaboradas. Com relação ao
+controle LQR, destaca-se que seu desempenho é
+extremamente dependente das matrizes Q e R de
+ponderação. Em geral, duas situações são
+encontradas, dependendo das matrizes escolhidas.
+Na primeira delas, o controlador consegue realizar o
+seguimento de trajetória para a faixa de aderência de
+ entre 0.3 e 1.2, mas com um erro de trajetória
+bastante insatisfatório. E na segunda, o controlador
+
+Figura 10. Ângulos de derrapagem das rodas (superior) e ângulo
+de direção (inferior) para o controlador PDnl com 0.25 e
+vx3.5 ms.
+
+não-lineares
+também
+Os
+controladores
+apresentaram valores críticos semelhantes. Para uma
+velocidade de 3.5 ms, ambos apresentam perda de
+
+1692
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+8 Referências Bibliográficas
+
+estabilidade para  menor do que 0.30. E para uma
+alta aderência (1.2), ambos suportam uma
+velocidade máxima em torno de 6.5 ms (o dobro da
+velocidade nominal) numa curva de 6 m de raio.
+Os erros de trajetória menores, verificados para
+as condições de menor aderência, (ver as duas
+últimas linhas da Tabela 2), podem ser explicados
+pelo maior valor do ganho estático da função de
+transferência que relaciona a taxa de guinada r para
+a entrada de controle  nessas condições.
+
+Azinheira, J.R. (2000), de Paiva, E.C., Ramos,
+J.J.G., Bueno, S.S. Mission path following for
+an autonomous unmanned airship. Int.
+Conference on Robotics and Automation, San
+Francisco, USA, April 2000.
+Bueno, S.S. (2009), Azevedo, H. Mirisola, L.G.B.
+De Paiva, E.C. Ramos, J.J.G. Victorino, A.C.
+Azinheira, J.R. Uma Plataforma para Pesquisa
+e Desenvolvimento em Robótica Terrestre de
+Exterior IX Simpósio Brasileiro de Automação
+Inteligente (SBAI-2009), Brasília, DF, Brasil,
+Setembro 2009.
+Doumiati, M. (2009), A. Victorino, A. Charara, D.
+Lechner, Robust estimation of vehicle lateral
+tire-road forces  a comparison between extended
+and unscented Kalman filtering, European
+Control Conference 09, Budapest, Hongrie, aôut
+2009.
+de Paiva, E.C. (2006), Ramos, J.J.G., Azinheira,
+J.R., Moutinho, A., Bueno, S.S. (2006). Project
+AURORA Infrastrutcture and Flight Control
+Experiments for a Robotic Airship. Journal of
+Field Robotics, New York, 23 (3)  201-222.
+Freedom (2010). httpwww.freedom.ind.br
+Kiencke, U. (200) and L. Nielsen, Automotive
+control systems, Springer, 2nd edition, 2000.
+Lenain, R. (2003), Thuilot B. Cariou, C. Martinet,
+P. (2003). Rejection of sliding effects in car like
+robot control application to farm vehicle
+guidance using a single RTK GPS sensor. 2003
+IEEERSJ. Int. Conf. on Intelligent Robots and
+Systems, Las Vegas, Nevada, USA.
+Lenain, R. (2005). Contribuition  la modélisation et
+ la commande de robots mobiles en présence de
+glissement. Phd Thesis, Université Blaise Pascal
+Clermont-Ferrand, France, 2005.
+Morin, P. and Samson, C. (2008). Motion control
+of wheeled mobile robots. Chapter 34 of
+"Handbook of Robotics", Springer Verlag.
+Pacekja, Hans B. (2002). Tire and vehicle dynamics.
+Elsevier, 2002.
+Snider, Jarrod M. (2009). Automatic Steering
+Methods for Autonomous Automobile Path
+Tracking. Tech. report CMU-RI-TR-09-08,
+Robotics Institute, Carnegie Mellon University,
+February, 2009.
+Utkin, V. I., (1977). Variable structure systems
+with sliding mode, IEEE Transactions on
+Automatic Control, Vol. AC-22, No. 2, pp 212222, April, 1977.
+Utkin, V. I., (2008), Bartoszewicz A., Kaynak O.
+(2008). Special Section of the IEEE
+Transactions on Industrial Electronics, Vol. 55,
+N. 11, November, 2008.
+
+6 Conclusões
+Este trabalho apresentou o desenvolvimento e
+resultados de simulação de 4 controladores
+diferentes para o seguimento de trajetória de um
+veículo terrestre de exterior. Os controladores
+lineares (LQR e PD) e não-lineares (PD e Modos
+Deslizantes) foram projetados tomando por base um
+modelo_cinemático simplificado, mas foram testados
+e validados em um ambiente de simulação que
+utiliza um modelo_dinâmico para o veículo de 4
+rodas, com modelagem de Pacejka para a interação
+pneusolo, com escorregamento e derrapagem. Com
+isso, foi possível avaliar o comportamento dos
+controladores quando o veículo é submetido a
+condições variáveis de aderência  as quais geram
+efeitos dinâmicos que resultam em perturbações s
+malhas_de_controle concebidas a partir da cinemática
+somente.
+Os controladores lineares, que são soluções
+clássicas, apresentaram bom desempenho nas
+condições de boa aderência, mas mostraram
+robustez insuficiente para lidar com situações de
+aderência reduzida, para valores de  abaixo de 0.4.
+Os controladores não-lineares, com um projeto
+em distância, tiveram comportamento similar aos
+lineares em média e alta aderência, mas
+apresentaram robustez suficiente para conduzir
+adequadamente o veículo em baixa aderência até o
+limite da validade do modelo_cinemático sem
+derrapagem, ou seja   0.3.
+Na continuidade dos trabalhos, testaremos
+também o controle do tipo escalonamento_de_ganhos
+com LQR projetado para diferentes velocidades.
+Esses controladores serão então avaliados
+experimentalmente na plataforma robótica mostrada
+na Figura 1, incorporando também um controlador
+para a componente longitudinal do veículo.
+Posteriormente, visando a navegação do veículo em
+terrenos irregulares, de inclinação eou e de
+aderência
+variáveis,
+serão
+desenvolvidos
+controladores dinâmicos, incluindo estimação do
+coeficiente de aderência com o solo e consideração
+das forças 3D.
+7 Agradecimentos
+Este trabalho conta com o apoio do CNPq
+através do processo n. 4901802009-4.
+
+1693

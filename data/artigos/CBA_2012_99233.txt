@@ -1,0 +1,720 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+DETECCAO DE OBSTACULOS EM TEMPO REAL PARA SENSORES DE
+PROFUNDIDADE UTILIZANDO UMA GPU
+Caio Cesar Teodoro Mendes, Patrick Shinzato, Denis Fernando Wolf, Fernando
+Santos Osorio
+
+
+Instituto de Ciencias Matematicas e de Computacao
+Universidade de Sao Paulo
+Sao Carlos, Sao Paulo, Brasil
+
+Emails caiom@icmc.usp.br, shinzato@icmc.usp.br, denis@icmc.usp.br,
+fosorio@icmc.usp.br
+Abstract An accurate and efficient method for obstacle detection is a key component of a robotic navigation
+system. This paper presents the implementation and analysis of a method for obstacle detection. The method is
+based on the euclidian distance and angle between three-dimensional points. Despite having been used successfully
+on several occasions, the method has a high computational cost. An implementation using a Graphics Processing
+Unit (GPU) was the solution to enable its execution in real time. Experiments were performed using a stereo
+camera, where the GPU implementation was compared with multi-core and single-core implementations showing
+the validity of the employed approach.
+Keywords
+
+Obstacle detection, GPU, Parallel computing, Stereo vision.
+
+Resumo Um metodo para deteccao_de_obstaculos preciso e eficiente e fundamental para um sistema de
+navegacao robotico. Neste artigo e realizada a implementacao e analise de um metodo para deteccao_de_obstaculos.
+Tal metodo e baseado no calculo da distancia_euclidiana e angular entre pontos tridimensionais. Apesar de ter sido
+utilizado com sucesso em diversas ocasioes, o metodo possui um alto custo_computacional. Uma implementacao
+utilizando uma Graphics Processing Unit (GPU) foi a solucao encontrada para possibilitar sua execucao em
+tempo_real. Experimentos foram realizados utilizando uma camera estereo, onde a implementacao em GPU foi
+comparada com implementacoes multi-core e single-core demonstrado a validade de abordagem empregada.
+Palavras-chave
+
+.
+
+Introducao
+
+Para que um robo navegue com seguranca e necessario que obstaculos sejam detectados e evitados com eficiencia e precisao. Em se tratando de
+ambientes externos desconhecidos, esta e uma tarefa complexa ja que nao se pode contar com mapas ou padroes estruturais. Um exemplo dos recursos humanos e tecnologicos dedicados a tal tarefa vem das inumeras competicoes internacionais
+(DARPA, 2005 DARPA, 2007 LAGR, 2009) realizadas. Um dos principais objetivos desta linha
+de pesquisa e contribuir com o desenvolvimento
+de veculos_inteligentes, isto e, veculos capazes de
+se locomover autonomamente, eliminando ou minimizando a necessidade de um motorista.
+Este artigo lida com a otimizacao e analise de
+um metodo de deteccao_de_obstaculos, tal metodo
+funciona com base em sensores de profundidade
+que possuam uma referencia plana (e.g. imagem
+de profundidade). Exemplos deste tipo de sensor
+incluem cameras estereo, cameras Time-of-Flight
+(ToF) e ainda sensores Microsoft Kinect. No caso
+de sensores do tipo Light Detection And Ranging
+(LIDAR), a imagem de profundidade pode ser gerada artificialmente, garantindo a compatibilidade
+com o metodo.
+O foco deste trabalho e possibilitar a deteccao
+de obstaculos utilizando um metodo ja publicado
+que possui, como principal limitacao, seu custo
+
+ISBN 978-85-8001-069-5
+
+computacional. A abordagem empregada para superar esta limitacao consiste em uma implementacao paralela do metodo utilizando uma Graphics
+Processing Unit (GPU). GPUs sao unidades dedicadas ao processamento grafico, sua estrutura paralelizada a torna mais habil a este tipo de tarefa
+que uma Central Processing Unit (CPU). Com o
+passar do anos, seu hardware foi se tornando mais
+flexvel, o que gerou a possibilidade de utiliza-la
+em aplicacoes cientficas. Inicialmente atraves de
+shaders, aplicacoes nao relacionadas a graficos se
+tornaram aptas a execucao em GPU (Kilgariff and
+Fernando, 2005). Atualmente existem ao menos
+dois padroes para este fim CUDA da empresa
+NVIDIA e OpenCL do grupo KHRONOS.
+A opcao pela utilizacao de uma GPU se deu
+por varios fatores, dentre os principais estao o desempenho e a acessibilidade. GPUs modernas se
+encontram amplamente disponveis no mercado e
+sua capacidade de processamento pode superar,
+por uma ordem de magnitude, a de um processador comum. A sua principal desvantagem e que
+para fazer uso deste potencial e necessario paralelizar a aplicacao alvo levando em consideracao
+questoes inerentes ao seu hardware.
+Este artigo descreve e analisa uma implementacao paralela de um metodo de deteccao_de_obstaculos em uma GPU e sua consequente paralelizacao. Tambem e feita uma implementacao multicore, tal implementacao tem por objetivo servir
+
+1000
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+como base para comparacoes.
+2
+
+Trabalhos Relacionados
+
+Como mostra o trabalho de Rankin et al. (2005)
+grande parte dos metodos de deteccao_de_obstaculos utilizando sensores de profundidade se baseiam
+na procura de descontinuidades e elevacoes no
+mapa de profundidade, alem disso e comum a utilizacao das intensidades naturalmente associadas
+as informacoes de profundidade. Alguns trabalhos
+tem como primeira tarefa a estimacao do plano
+em que o veculo esta situado, para isso a tecnica
+de gerar uma imagem de profundidade em V e
+amplamente utilizada (Broggi et al., 2005 Caraffi
+et al., 2007). A criacao deste mapa e feita transformando a imagem de profundidade (i.e. mapa de
+disparidades) em uma nova imagem, de forma com
+que as colunas representem os valores de disparidade em ordem crescente, as linhas sejam mantidas na mesma ordem e a intensidade pode ser
+ajustada para representar a quantidade de disparidades iguais. Visualizando a Figura 1 e notavel a
+facilidade com que o plano navegavel pode ser estimado apos esta transformacao, com a utilizacao
+de heursticas simples tambem e possvel estimar
+a localizacao de obstaculos, como foi realizado no
+trabalho (Lima and G.A.S., 2010).
+
+planos. Sua principal limitacao e seu custo_computacional, uma implementacao direta do metodo
+pode levar alguns segundos para computar os obstaculos presentes em uma nuvem de pontos.
+Em (Santana et al., 2008), a maneira encontrada de acelerar seu processando foi uma reducao condicional da resolucao das imagens, no caso
+de encontrar um obstaculo, a busca voltaria a ser
+feita utilizando a imagem original. Uma abordagem similar foi utilizada em (Broggi et al., 2011),
+onde a imagem foi divida em segmentos horizontais, e sub-amostradas de acordo com as distancias
+que tais segmentos representassem. Ambas abordagens assumem que obstaculos sao formados por
+um conjunto razoavel de pontos, o que nao e necessariamente verdade, podendo ocultar obstaculos e diminuir a precisao da deteccao. No caso de
+van der Mark et al. (2007), foram utilizados um
+conjunto de parametros pre-calculados na busca
+por obstaculos, alcando um tempo computacional
+de 62 milissegundos ou 16,12 Hz.
+Utilizando uma implementacao paralelizada
+do metodo, o foco deste trabalho esta em uma
+reducao ainda maior do tempo computacional do
+metodo descrito por Talukder et al. (2002) e por
+conta da utilizacao de uma GPU, possibilitar a
+alocacao da CPU a outras tarefas.
+3
+
+Metodologia
+
+Esta secao descreve, em detalhes, a forma como o
+metodo de deteccao_de_obstaculos foi paralelizado
+para o uso dos varios nucleos de uma CPU assim
+como para utilizacao de uma GPU.
+
+Figura 1 Imagens e o respectivo mapa de disparidade em V(Broggi et al., 2005).
+A exemplo desses, outros trabalhos assumem
+uma regiao plana (Konolige et al., 2008 Happold
+and Ollis, 2006), utilizando o paradigma RANdom SAmple Consensus (RANSAC) para estimar
+os parametros do plano geometrico em que o veculo se situa. Com o plano estimado, e possvel
+calcular a distancia de qualquer ponto da nuvem
+de pontos ao plano e entao, pontos que nao fizerem parte do plano sao considerados obstaculos.
+Uma limitacao das tecnicas baseadas em plano e
+que tal modelo geometrico nao e adequado para
+representar regioes curvas ou acidentadas. Alem
+disso, e impossvel garantir que o plano estimado
+seja referente a uma regiao navegavel ao inves de
+qualquer outra regiao plana que possa dominar a
+imagem de profundidade.
+Um metodo mais robusto para deteccao de
+obstaculos e descrito por Talukder et al. (2002).
+Este metodo se baseia na busca por diferencas
+de altura e angulatura entre pontos, sendo capaz
+de detectar obstaculos mesmo em terrenos nao-
+
+ISBN 978-85-8001-069-5
+
+3.1
+
+Deteccao de Obstaculos
+
+O metodo descrito no artigo (Talukder et al.,
+2002) procura por pontos compatveis (ilustrada
+pela Figura 2), onde P 1  (px , py , pz ) e P 2 
+(px , py , pz ) sao ditos compatveis e sao considerados obstaculos caso satisfacam as seguintes condicoes
+1. HT < p2y  p1y  < Hmax 
+2. p2y  p1y P 2  P 1  > cos(T )
+onde HT , Hmax e T sao constantes selecionadas adequadamente.
+A primeira condicao se refere a diferenca de
+altura entre os dois pontos e a segunda ao angulo formado pelos pontos. Uma maneira direta
+de se implementar o metodo seria comparar todos
+os pontos entre si, o que resultaria em um elevado
+custo_computacional. Neste caso a complexidade
+seria igual a O(N 2 ) onde N e o numero de pontos.
+Uma forma de reduzir a area da busca e aproximala a uma regiao da imagem levando em consideracao os parametros Hmax , T e a distancia focal da
+
+1001
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 4 Aproximacao da area da busca por um
+quadrado no plano da imagem, onde os crculos
+vermelhos representam os pontos de referencia e
+os pontos azuis a area de busca.
+Figura 2 Ilustracao da busca por pontos compatveis, onde pontos marrons pertencem a via navegavel e pontos em azul sao considerados obstaculos (Talukder et al., 2002).
+
+camera f . Assumindo-se que a coordenada y do
+plano da imagem esteja associada com a altura do
+ponto P , a area de busca por pontos compatveis
+pode ser aproximada a um triangulo projetado no
+plano da imagem como ilustra a Figura 3.
+
+manho lateral da janela como sz, onde s e um
+parametro definido empiricamente a fim acomodar todos os possveis pontos compatveis. Como
+mencionado no artigo original, o tamanho da janela tende a ser de 3 a 4 vezes maior que o tamanho mnimo. Isso garante que nenhum dos pontos compatveis sejam perdidos. A Equacao 1 define como o tamanho lateral da janela e calculado,
+onde J e a funcao que retorna o tamanho, P o
+pivo, e Pz a coordenada z do pivo.
+J(P )  sPz
+
+Figura 3 A busca por pontos compatveis e aproximada pela projecao de um triangulo no plano
+da imagem (Talukder et al., 2002).
+A altura do triangulo projetado no plano da
+imagem para cada pivo e igual a kpz , onde
+k  f Hmax e o angulo de abertura do triangulo
+e igual a T . Nesse caso, a complexidade diminui
+para O(N K), onde N e o numero de pontos e K a
+area do triangulo projetado no plano da imagem.
+Existe, porem, um problema com tal abordagem
+e impossvel garantir que a coordenada y do plano
+da imagem esteja associada com a altura de um
+ponto P . A exemplo da implementacao original
+optou-se por realizar tal aproximacao utilizando
+uma janela quadrada, isso garante certa robustez em relacao a variacao do angulo da camera
+para com a cena e simplifica a implementacao. A
+Figura 4 ilustra a implementacao realizada onde
+pivo e ponto de referencia para a busca por pontos
+compatveis.
+Segundo Talukder et al. (2002), o tamanho lateral da janela quadrada para cada pivo deve ser
+1
+no mnimo de (HT2 cos2 (T ) + HT2 ) 2 f z. Na pratica, devido a limitacoes da resolucao espacial do
+sistema estereo, e mais conveniente definir o ta-
+
+ISBN 978-85-8001-069-5
+
+(1)
+
+Uma limitacao do metodo e que este assume a
+coordenada y de um ponto P como sendo referente
+a sua altura, o que a princpio, nao e verdade. Portanto, este metodo requer o alinhamento virtual
+da camera de modo a tornar y aproximadamente
+equivalente a altura. Uma maneira simples de calcular os parametros deste alinhamento e posicionar a plataforma robotica em uma regiao plana e
+calcular os parametros do plano dominante utilizando o paradigma RANSAC.
+3.2
+
+Programacao de Proposito Geral Utilizando
+GPUs
+
+Apesar de ter se tornado programavel com o proposito de possibilitar efeitos graficos, viu-se a possibilidade de explorar a capacidade computacional
+de uma GPU para aplicacoes de proposito geral.
+Para entender como pode ser possvel utilizar uma
+GPU para aplicacoes comuns e interessante conhecer a arquitetura de um estagio programavel.
+Como mostra a Figura 5, uma GPU e dividida
+em grupos de processadores (multiprocessadores).
+Cada um desses multiprocessadores e constitudo
+de varios processadores que executam uma thread
+ou work-item cada, e caso estejam dentro de um
+mesmo multiprocessador estas threads podem se
+comunicar atraves de uma memoria rapida (shared memory ou local memory) ou ainda serem sincronizadas.
+Threads de multiprocessadores diferentes so
+podem se comunicar atraves da memoria global
+(Device Memory ou Global Memory) a qual todos processadores tem acesso, mas nao podem ser
+sincronizadas. As threads referidas aqui sao diferentes das threads comuns, estas sao mais leves
+
+1002
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 5 Arquitetura de um estagio programavel.
+
+devido ao fato de que a GPU implementa o controle de threads em hardware, diferentemente das
+threads que rodam em uma CPU, que sao controladas pelo sistema operacional. Na programacao
+de uma GPU existe o conceito de grupo de threads ou work-group, todas as threads pertencentes a
+um mesmo grupo serao executadas por um mesmo
+multiprocessador, podendo entao compartilhar a
+memoria local e serem sincronizadas.
+Se faz necessario ainda introduzir os conceitos de warp e half-warp. Uma warp se refere a
+parte de um work-group cujas instrucoes sao executadas estritamente em paralelo. Da a necessidade de garantir que nao haja desvios de fluxo
+dentro de uma warp. O numero de threads que
+compoem uma warp e atualmente 32 na maioria
+das GPUs (NVIDIA, 2010). Uma half-warp representa metade de uma warp, ou seja, 16 threads de
+um mesmo grupo. Se algumas condicoes forem satisfeitas, o acesso a memoria do dispositivo e feita
+em paralelo por uma half-warp. A principal condicao para que o acesso seja realizado em paralelo
+e que a memoria a ser acessada esteja em sequencia (acesso alinhado), caso contrario o acesso sera
+feito sequencialmente, o que compromete significativamente o desempenho da aplicacao.
+E importante lembrar que e o programador
+quem vai escolher quantos grupos e qual o tamanho da cada grupo que sera executado em uma
+GPU e que a cada chamada todos os processadores irao executar o mesmo programa ou kernel.
+3.3
+
+Paralelizacao e Otimizacao
+
+Na pratica, a principal limitacao do metodo de deteccao_de_obstaculos proposto por Talukder et al.
+(2002) e seu custo_computacional. Mesmo com
+uma aproximacao da area de busca, o tempo para
+processar uma nuvem de pontos pode ser alto.
+
+ISBN 978-85-8001-069-5
+
+Tendo isto em mente, o metodo foi paralelizado
+de modo a utilizar eficientemente uma GPU. Uma
+implementacao utilizando multiplos nucleos tambem foi feita com o objetivo de servir de comparacao. Esta secao descreve as duas implementacoes
+realizadas.
+A paralelizacao voltada a utilizacao dos multiplos nucleos de um processador, foi realizada
+utilizando a biblioteca Open Multi-Processing
+(OpenMP )1 . Esta escolha se deu porque a biblioteca OpenMP e multiplataforma, voltada para um
+desenvolvimento agil e foi integrada ao compilador
+GNU Compiler Collection (GCC )2 a partir de sua
+versao 4.2.
+A biblioteca OpenMP prove uma diretiva que
+paraleliza e distribui automaticamente um laco
+entre varios processadores ou nucleos. Na caso da
+implementacao realizada do metodo, foi necessario apenas a adicao de uma linha com tal diretiva
+antes do laco mais externo. Tal laco se refere as
+linhas de pivo e consequentemente as janelas referentes, como resultado cada linha e enviada a um
+nucleo, sendo que o numero de linhas processadas
+em paralelo depende da quantidade de nucleos do
+processador empregado. A Figura 6 ilustra a execucao em paralelo.
+
+Figura 6 Forma com que o processamento e distribudo entre os varios nucleos cada linha e processada por um.
+No caso da paralelizacao voltada ao uso da
+GPU foi utilizada a especificacao aberta OpenCL.
+A vantagem desta em relacao a especificacao proprietaria CUDA e a possibilidade de utilizar GPUs
+de diferentes fabricantes. A especificacao OpenCL
+e composta por uma Application Programming Interface (API) e uma linguagem de programacao,
+similar a linguagem C. A API e utilizada para fazer a comunicacao com a GPU e a linguagem para
+definir o programa a ser executado na GPU.
+Uma das principais preocupacoes no desenvolvimento utilizando GPU e garantir a eficiencia dos
+acessos a memoria, especialmente entre os processadores da GPU e sua memoria global. Para que
+os dados da memoria global sejam acessados em
+paralelo por cada half-warp foi necessario mudar
+a disposicao das coordenadas da nuvem de pontos
+conforme ilustra a Figura 7.
+1 httpwww.openmp.org
+2 httpgcc.gnu.org
+
+1003
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 7 Redistribuicao das coordenadas na memoria a fim de possibilitar o acesso alinhado aos
+dados pela GPU.
+A primeira maneira encontrada de se distribuir o processamento pela GPU foi o processamento de um pivo (uma area de busca) por multiprocessador, onde cada processador checa a compatibilidade com um dos pontos da janela referente. A Figura 8 ilustra a distribuicao. O problema com esta distribuicao e que, na pratica, o
+limite de tamanho de um work-group e facilmente
+atingido uma area de busca de 20 por 20 pontos resulta em um work-group com 400 work-itens,
+bem acima do limite de 256.
+
+Figura 10 Forma como a busca por pontos compatveis em uma janela de 32 por 32 pontos e distribuda por um work-group de 64 work-itens ou
+processadores.
+
+menor que 64 resultaria em uma subutilizacao crtica da GPU. Uma solucao simples seria utilizar
+apenas janelas de tamanho 64 por 64, que seriam
+mais que suficiente para acomodar os pontos compatveis de qualquer distancia (coordenada z do
+pivo) no sistema estereo utilizado. A solucao encontrada para evitar esta carga de trabalho desnecessaria foi a opcao por dois tamanhos de janela
+fixo 32 e 64. O tamanho lateral de cada janela
+seria computado segundo a Equacao 2, onde J e a
+funcao que retorna o tamanho lateral da janela, P
+e o pivo em questao e Pz a coordenada z do pivo.
+
+Figura 8 Forma como o processamento foi distribudo pela GPU pela primeira implementacao..
+(
+Um forma de se contornar tal limite e aumentando a carga de trabalho dos processadores, onde
+ao inves de checar a compatibilidade de um ponto,
+cada processador checa a compatibilidade de uma
+coluna de pontos. Por exemplo, no caso de uma
+janela de 20 por 20 pontos, cada processador deve
+checar a compatibilidade de 20 pontos e nesse caso
+o tamanho de um work-group passa de 400 para
+20 work-itens. A Figura 9 ilustra a mudanca.
+
+Figura 9 Forma como o processamento foi distribudo pela GPU pela segunda implementacao.
+Um problema encontrado foi o de que o tamanho de um work-group e fixo, porem o tamanho
+da janela para cada pivo nao e, alem disso, o tamanho de uma warp nas GPUs da serie HD5xxx e
+de 64. Isso quer dizer que um tamanho de grupo
+
+ISBN 978-85-8001-069-5
+
+J(P ) 
+
+32 se sPz  32
+64 se sPz > 32
+
+(2)
+
+Tal funcao e computada para todo pivo e seu
+resultado guardado em uma matriz, que posteriormente sera enviada a GPU junto com o resto dos
+dados. Apesar do tamanho da janela ser variavel,
+optou-se por manter o tamanho dos work-groups
+em 64. Portanto, no caso de uma janela de 64 por
+64, seriam 64 processadores a computar a compatibilidade de 642 pontos. Nesse caso, a ideia da
+Figura 9 e mantida e cada processador computa
+a compatibilidade de uma coluna, cujo numero de
+pontos e igual a 64.
+Por fim, e necessario que os pontos em uma janela de 32 por 32 (322 pontos) sejam distribudos
+adequadamente entre os 64 processadores de um
+grupo. A Figura 10 ilustra como e feita esta distribuicao. Os processadores sao divididos em dois
+grupos de 32 processadores cada, onde cada processador de cada grupo processa uma coluna de 16
+pontos. Os pontos em azul representam os pontos processados pelo primeiro grupo, e em verde
+os pontos processados pelo segundo. Vale lembrar
+que sao processados 64 pontos por vez, sendo portando coerente com uma warp de tamanho 64.
+
+1004
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+4
+
+Resultados
+
+Como esperado, o metodo se mostrou robusto o
+suficiente para lidar com os cenarios propostos,
+mesmo no caso de terrenos acidentados, conseguindo se manter consistente na classificacao. Os
+testes realizados com o metodo utilizaram uma resolucao de 320 por 220 no par de imagens estereo
+e os parametros do metodo sao apresentados na
+Tabela 1.
+Tabela 1 Parametros selecionados para os testes
+com o metodo de deteccao_de_obstaculos baseado
+em cone.
+Parametro
+
+Valor
+
+HT
+Hmax
+T
+s
+
+16 cm
+40 cm
+45 graus
+120
+
+Como se pode observar na Figura 11, os resultados do metodo sao satisfatorios em diversos cenarios, possibilitando inclusive a deteccao_de_obstaculos tao baixos quanto uma guia. As unicas
+limitacoes do metodo sao referentes a quantidade
+de rudo, que aumenta com a distancia e que, em
+sua maioria, sao advindas do proprio metodo estereo. A implementacao de um filtro poderia minimizar o problema. Outra limitacao e seu custo
+computacional, mas como os resultados da secao
+4.2 mostram, este pode ser resolvido utilizando
+uma implementacao em GPU.
+4.1
+
+Validando Aproximacao Realizada
+
+Uma vez realizada a aproximacao descrita na secao 3.1, foram feitos alguns testes a fim de validala. Os testes consistem em comparar o resultado
+da aproximacao com o resultado do processamento
+completo, isto e, comparando todos os pontos entre si. Alem disso, foram efetuados testes de desempenho visando avaliar o ganho computacional
+relacionado a aproximacao.
+A Tabela 2 mostra o numero de pontos nao
+classificado utilizando a aproximacao e sua porcentagem em relacao ao numero total de pontos.
+A Figura 12 mostra a diferenca entre os dois modos. Como se pode notar, as diferencas nao sao
+significativas pois nenhum obstaculo maior foi perdido. Com isto em mente, decidiu-se manter a
+aproximacao para os experimentos seguintes.
+Tabela 2 Quantidade de pontos nao classificados
+pela aproximacao referente ao metodo de deteccao
+de obstaculos baseado em cone.
+Cenario
+
+Total de pontos
+
+Nao classificados
+
+Porcentagem referente
+
+1
+2
+
+417600
+417600
+
+1595
+2731
+
+0.4
+0.7
+
+ISBN 978-85-8001-069-5
+
+(a) Deteccao de cones, guias e predios.
+
+(b) Deteccao de cones e arvores em um terreno
+curvado.
+
+Figura 11 Resultados da deteccao_de_obstaculos
+baseada em cone.
+Tabela 3 Comparacao entre o tempo medio de
+processamento utilizando a aproximacao e o processamento completo.
+Modo
+
+Tempo medio
+
+Ganho de desempenho
+
+Completo
+Aproximado
+
+11546 ms
+168,594 ms
+
+1
+68,48
+
+Alguns testes foram realizados para averiguar
+o ganho computacional resultante da aproximacao. A Tabela 3 mostra os tempos obtidos no
+processamento de uma nuvem de pontos de 320
+por 220 pontos. Verificou-se, portanto, que tal
+metodo so poderia chegar a processar uma nuvem
+de pontos em tempo_real utilizando algum tipo de
+aproximacao.
+4.2
+
+Testes de Desempenho
+
+Foram realizados testes de desempenho utilizando
+uma nuvem de pontos de 320 por 220 pontos
+ou 70400 pontos. Nos testes foram comparadas
+a implementacao que utiliza um nucleo a implementacao realizada com a biblioteca OpenMP
+utilizando quatro nucleos a implementacao utilizando GPU. O equipamento utilizado nos testes
+consiste uma CPU Intel i5 2500 operando a 4 Ghz
+e uma GPU AMD RADEON 5850.
+Observando a Tabela 4 podemos notar um ganho de aproximadamente duas vezes da implemen-
+
+1005
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A implementacao em GPU possibilita executar a deteccao_de_obstaculos por volta de 55 vezes por segundo, o que supera os 30 quadros por
+segundos fornecidos pela camera utilizada. Tal
+tempo computacional deve vir a ser o suficiente
+para realizar a deteccao_de_obstaculos em grande
+parte dos sensores disponveis no mercado. Solucionando, ainda que temporariamente, a principal
+limitacao do metodo.
+5
+(a) Diferenca entre o processamento completo e o
+aproximado no primeiro cenario.
+
+(b) Diferenca entre o processamento completo e o
+aproximado no segundo cenario.
+
+Figura 12 Comparacao entre o resultado da
+classificacao utilizando aproximacao e o processamento completo. Pxeis amarelos representam os
+pontos nao classificados pela aproximacao.
+
+tacao utilizando 4 nucleos em relacao a que utiliza
+apenas 1 nucleo. No caso da GPU o ganho foi
+ainda maior, sendo em torno de 10 vezes mais rapido que a que utiliza um nucleo. A variacao dos
+tempos se dao por conta da variacao do tamanho
+da janela, implicando em mais ou menos pontos
+a serem processados. O ganho obtido utilizando
+a GPU nao foi maior por conta de suas restricoes
+em termos do tamanho da janela. O metodo foi
+executado 64 vezes em cada modo para obtencao
+dos dados.
+Utilizando a ferramenta AMD APP Profiler 3
+de analise de desempenho foi possvel obter dados detalhados da execucao do metodo pela GPU,
+como mostra a Tabela 5. Tal tabela mostra como
+a maior parte do processamento se da na propria execucao do kernel, o tempo gasto pela leituraescrita de buffers e desprezvel. O tempo de
+execucao e o tempo de execucao do kernel mais
+tres vezes o tempo de escrita do buffer e mais o
+tempo de leitura do buffer. Isso porque sao feitas
+tres escritas de buffer por execucao.
+3 httpdeveloper.amd.comtoolsAMDAPPProfiler
+
+ISBN 978-85-8001-069-5
+
+Conclusoes
+
+Este trabalho apresentou uma versao paralelizada
+para GPU de um metodo de deteccao_de_obstaculos. O metodo de deteccao_de_obstaculos proposto
+em (Talukder et al., 2002) ainda e largamente utilizado, porem autores que dele se valem tem de
+lidar com sua principal limitacao, seu custo_computacional.
+A maior dificuldade em se portar um codigo para execucao paralela em uma GPU
+e a necessidade de distribuir adequadamente
+o processamento entre os varios processadoresmultiprocessadores. O acesso a memoria tambem e um ponto crtico, este deve ser feito de maneira a evitar possveis gargalos. No caso do metodo alvo deste trabalho, foi necessario lidar com
+janelas de tamanho dinamico, tornando a paralelizacao ainda mais complexa.
+Tendo feita a opcao por dois tamanhos de janela separados por um limiar, os resultados da
+implementacao foram satisfatorios, sendo 9,39 vezes mais rapido que a implementacao single-core
+e atingindo o menor tempo mencionado na bibliografia consultada. Os resultados ainda demostraram a real necessidade de uma aproximacao e a
+validade da aproximacao realizada. Um aspecto
+importante da opcao pela GPU e que a CPU se
+torna apta a execucao de outras tarefas, sendo responsavel apenas pela leitura e escrita dos buffers.
+Como trabalho futuro, pretende-se utilizar o
+metodo implementado em conjunto com um filtro
+baseado em tecnicas de aprendizado_de_maquina
+para minimizar os rudos referentes a classificacao
+do metodo.
+Agradecimentos
+Os autores agradecem a FAPESP pela bolsa concedida (processo numero 201004798-9) e a toda
+equipe do Laboratorio de Robotica Movel da USP
+- Sao Carlos pelo apoio e suporte.
+Referencias
+Broggi, A., Buzzoni, M., Felisa, M. and Zani,
+P. (2011).
+Stereo obstacle detection in
+challenging environments The viac experience, Intelligent Robots and Systems (IROS),
+
+1006
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Tabela 4 Tempos de processamento para cada forma diferente de implementacao do metodo de deteccao
+de obstaculos baseado em cone.
+Forma de processamento
+
+Tempo medio
+
+Tempo maximo
+
+Tempo mnimo
+
+Ganho de desempenho
+
+1 nucleo
+4 nucleos
+GPU
+
+168,594 ms
+84,444 ms
+17,94378 ms
+
+194,495 ms
+112,995 ms
+44,08124 ms
+
+154,223 ms
+68,08 ms
+15,01299 ms
+
+1
+1,99
+9,39
+
+Tabela 5 Detalhamento dos tempos de processamento do metodo pela GPU.
+Etapa
+
+Numero de chamadas
+
+Tempo medio
+
+Tempo maximo
+
+Tempo mnimo
+
+Execucao do kernel
+Escrita dos buffers
+Leitura dos buffers
+Tempo por execucao
+
+64
+192
+64
+-
+
+14,06542 ms
+0,8162 ms
+1,42976 ms
+17,94378 ms
+
+29,42765 ms
+3,5599 ms
+15,01299 ms
+44,08124 ms
+
+12,88704 ms
+0,22881 ms
+0,26474
+15,01299 ms
+
+2011 IEEERSJ International Conference
+on, pp. 1599 1604.
+Broggi, A., Caraffi, C., Fedriga, R. and Grisleri, P.
+(2005). Obstacle detection with stereo vision
+for off-road vehicle navigation, Computer Vision and Pattern Recognition - Workshops,
+2005. CVPR Workshops. IEEE Computer
+Society Conference on, p. 65.
+Caraffi, C., Cattani, S. and Grisleri, P. (2007).
+Off-road path and obstacle detection using
+decision networks and stereo vision, Intelligent Transportation Systems, IEEE Transactions on 8(4) 607 618.
+DARPA (2005). DARPA Grand Challenge.
+Disponvel em httpwww.darpa.mil
+grandchallenge05. Acesso em 24 de Dezembro de 2010.
+DARPA (2007). DARPA Urban Challenge.
+Disponvel em httpwww.darpa.mil
+grandchallengeindex.asp. Acesso em 24
+de Dezembro de 2010.
+Happold, M. and Ollis, M. (2006). Autonomous
+learning of terrain classification within imagery for robot navigation, Systems, Man and
+Cybernetics, 2006. SMC 06. IEEE International Conference on, Vol. 1, pp. 260 266.
+Kilgariff, E. and Fernando, R. (2005). The geforce
+6 series gpu architecture, ACM SIGGRAPH
+2005 Courses, SIGGRAPH 05, ACM, New
+York, NY, USA.
+Konolige, K., Agrawal, M., Bolles, R., Cowan, C.,
+Fischler, M. and Gerkey, B. (2008). Outdoor
+mapping and navigation using stereo vision,
+in O. Khatib, V. Kumar and D. Rus (eds),
+Experimental Robotics, Vol. 39 of Springer
+Tracts in Advanced Robotics, Springer Berlin
+ Heidelberg, pp. 179 190.
+
+Disponvel em httpwww.darpa.mil
+iptoprogramslagrlagr.asp. Acesso em
+3 de Abril de 2010.
+Lima, D. and G.A.S., P. (2010). Um sistema de visao_estereo para navegacao de um carro_autonomo em ambientes com obstaculos, XVII
+Congresso Brasileiro de Automatica pp. 224
+231.
+NVIDIA (2010). OpenCL Programming Guide
+for the CUDA Architecture.
+Disponvel em httpwww.nvidia.com
+contentcudazonedownloadOpenCL
+NVIDIAOpenCLProgrammingGuide.pdf.
+Acesso em 24 de Dezembro de 2010.
+Rankin, A., Huertas, A. and Matthies, L. (2005).
+Evaluation of stereo vision obstacle detection
+algorithms for off-road autonomous navigation, In AUVSI Symp. on Unmanned Systems.
+Santana, P., Santos, P., Correia, L. and Barata,
+J. (2008). Cross-country obstacle detection
+Space-variant resolution and outliers removal, Intelligent Robots and Systems, 2008.
+IROS 2008. IEEERSJ International Conference on, pp. 1836 1841.
+Talukder, A., Manduchi, R., Rankin, A. and
+Matthies, L. (2002). Fast and reliable obstacle detection and segmentation for crosscountry navigation, In IEEE Intelligent
+Vehicles Symposium, pp. 610618.
+van der Mark, W., van den Heuvel, J. and Groen,
+F. (2007). Stereo based obstacle detection
+with uncertainty in rough terrain, Intelligent
+Vehicles Symposium, 2007 IEEE, pp. 1005 
+1012.
+
+LAGR (2009). Learning Applied to Ground Robots.
+
+ISBN 978-85-8001-069-5
+
+1007

@@ -1,0 +1,663 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+SISTEMA NEURAL SEGMENTADO DE DETECCAO ONLINE DE ELETRONS
+UTILIZANDO PRE-PROCESSAMENTO ESTATISTICO
+Diego C. Teles, Fabio Batista, Edmar E. P. de Souza, Eduardo F. Simas Filho, P. C.
+M. A. Farias, Jose M. de Seixas
+
+
+Universidade Federal da Bahia
+Laboratorio de Sistemas Digitais - PPGEEUFBA
+Salvador, Bahia, Brasil
+
+
+Universidade Federal do Rio de Janeiro
+Laboratorio de Processamento de Sinais - COPPEUFRJ
+Rio de Janeiro, Rio de Janeiro, Brasil
+Emails diegocarlosteles@gmail.com, engfabiobatista@gmail.com, edmar.egidio@cern.ch,
+eduardo.simas@ufba.br, paulo.farias@ufba.br, seixas@lps.ufrj.br
+Abstract ATLAS is one of the main particle detectors of the LHC (Large Hadron Collider), located at CERN
+(European Center for Nuclear Research). In ATLAS the energy measurement is performed by the calorimeter
+system, which is composed of seven layers and more than 100,000 sensors. The energy deposition profiles
+measured at the calorimeter are very important for particle identification. Considering specifically the detection
+of electromagnetic particles (electrons and photons) at LHC, the background noise (composed mainly of hadronic
+jets) is produced at rates that are several orders of magnitude higher than the physics of interest. The Neural
+Ringer is an electromagnetic particle discriminator operating at ATLAS online selection (trigger) system. It
+comprises a topological (ring-like) processing of the calorimeter cells and a neural network classifier. In order
+to properly make use of the calorimeter segmentation, it is proposed in this article a segmented classification
+scheme. The information from each calorimeter layer was processed separately and used to feed neural classifiers
+(a total of seven classifiers were trained, one for each layer). The outputs from each layer-level classifier were
+used to feed another neural network (in a second classification stage), which combines the segmented features in
+order to produce the final decision. Statistical signal processing techniques (such as principal component analysis
+and independent component analysis) were applied to reduce the redundancy among the input features and allow
+efficient signal compaction. The experimental results indicates that the proposed method is able to achieve higher
+discrimination efficiency when compared to the original setup.
+Keywords
+
+Online filtering, particle physics, Neural Networks, ICA, PCA.
+
+Resumo O ATLAS e um dos principais detectores de partculas do acelerador LHC (Large Hadron Collider ),
+localizado no CERN (Centro Europeu para Pesquisa Nuclear). No ATLAS a medicao da energia das partculas
+geradas nas colisoes, e realizada pelo seu sistema de calorimetria, composto por sete camadas sobrepostas e com
+mais de 100.000 sensores. O perfil de deposicao de energia medido nos calormetros e muito importante para a
+identificacao das partculas incidentes. Considerando especificamente a deteccao de partculas eletromagneticas
+(eletrons e fotons) no LHC, o rudo de fundo (composto principalmente de jatos hadronicos) e produzido em taxas
+que sao muitas ordens de grandeza superiores as da fsica de interesse. O Neural Ringer e um discriminador
+de partculas eletromagneticas que opera no sistema online de selecao de eventos (trigger ) do ATLAS. Ele
+compreende um arranjo topologico (em forma de aneis) das celulas do calormetro e um classificador baseado numa
+rede_neural artificial. Com o objetivo de melhor explorar a segmentacao da informacao disponvel nos calormetros,
+e proposto nesse artigo uma arquitetura de classificacao segmentada. A informacao proveniente de cada camada
+do calormetro e processada separadamente e utilizada para alimentar classificadores neurais (num total de sete,
+um para cada camada). As sadas de cada classificador segmentado sao utilizadas para alimentar uma outra rede
+neural (formando um segundo estagio de classificacao), que combina as caractersticas segmentadas para produzir
+a decisao final. Adicionalmente, tecnicas de processamento estatstico de sinais (analise_de_componentes_principais
+e analise_de_componentes_independentes) foram utilizadas para reduzir a redundancia entre as caractersticas
+de entrada, possibilitando uma eficiente compactacao da informacao. Resultados experimentais indicam que o
+metodo proposto e capaz de alcancar uma maior eficiencia de discriminacao se comparado a configuracao original.
+Palavras-chave
+
+.
+
+Introducao
+
+dores de partculas. O acelerador LHC (Large
+Hadron Collider ) (Evans and Bryant, 2008), e o
+maior ja construdo, com 27 km de comprimento,
+e atingindo energia de ate 14 TeV.
+
+A busca pela compreensao dos fenomenos da natureza tem motivado a humanidade na criacao de
+inumeras teorias. Um dos temas que mais aguca
+a curiosidade do ser humano e a constituicao fundamental da materia. A Fsica de Altas Energias
+(High Energy Physics - HEP) lida com este problema e a validacao dos modelos teoricos depende
+da comprovacao experimental. Os experimentos
+de HEP usualmente envolvem o uso de acelera-
+
+O LHC conta com alguns detectores nos pontos de colisao, um dos principais e o ATLAS (A
+Toroidal LHC Aparatus) (Colaboration, 2008). O
+ATLAS foi projetado para ser um detector de uso
+geral, ou seja, possui capacidade de detectar diversos tipos de partculas. Para isso, o detector
+foi projetado no formato cilndrico e conta com
+
+2493
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+os seguintes subdetectores detector de tracos calormetro (medidor de energia altamente segmentado) e a camara de muons (ver Figura 1).
+
+2
+
+Selecao Online de Eventos baseada em
+Calorimetria
+
+Calormetros sao projetados para medir os perfis
+de deposicao de energia das partculas incidentes
+a medida que elas interagem com o material do
+detector (Koletsou, 2011). O calormetro do Atlas
+e dividido em 7 camadas, 4 eletromagneticas (PS,
+E1, E2, E3), e 3 hadronicas (H0, H1, H2), cada
+uma com caractersticas distintas, na Figura 2 e
+possvel ter uma visao geral da distribuicao das
+camadas no calormetro (Hernandez, 2013).
+
+Figura 1 Detector ATLAS e seus sub-detectores.
+
+Os perfis de deposicao de energia medidos nos
+calormetros sao muito importantes para a deteccao das assinaturas de interesse. A adequada identificacao de partculas eletromagneticas (eletrons
+e fotons) e fundamental para o desempenho geral
+do detector, pois elas estao envolvidas em diversos
+decaimentos de interesse. O LHC realiza a colisao de feixes de protons, e neste caso, a geracao
+de partculas conhecidas como jatos hadronicos e
+muito intensa. Os jatos podem apresentar o perfil
+de deposicao de energia semelhante ao de eletrons,
+dificultando a identificacao destas partculas.
+
+Figura 2 Distribuicao das camadas no calormetro do detector ATLAS (corte transversal).
+
+Devido a alta taxa de eventos (que pode gerar
+ate 60 TB de informacao por segundo) o detector ATLAS utiliza um sistema de deteccao online
+(trigger ) que compreende tres estagios sequenciais para adequada selecao das informacoes de interesse. O Neural Ringer e um discriminador de
+partculas eletromagneticas que opera no segundo
+nvel de trigger do ATLAS e combina o processamento topologico das informacoes medidas (a partir da formacao de aneis concentricos de sensores
+ao redor do ponto de colisao) com um classificador
+Neural MLP (Multi-layer perceptron).
+
+O sistema de selecao online (trigger ) do detector ATLAS foi projetado para operar com severas
+restricoes de tempo de processamento, pois a taxa
+de eventos considerados como rudo de fundo (nao
+relevantes para o experimento) e muitas ordens de
+grandeza superior a dos eventos relevantes.
+O trigger do ATLAS conta com 3 nveis
+sequenciais (conforme descrito na Figura 3). O
+primeiro nvel (L1- Level One), conta com o menor tempo de latencia (da ordem de 2,5s), e a
+maior taxa de filtragem. O processamento e feito
+em hardware de alta velocidade (utilizando FPGAs). O L1 e responsavel por informar ao segundo nvel (L2 - Level Two), a localizacao de
+regioes do detector com grandes possibilidades de
+terem ocorrido eventos de interesse, regioes estas
+chamadas de RoI (Regions of Interest). Contando
+com o tempo maior de processamento (da ordem
+de 40ms), e implementado em software, o L2 processa as informacoes contidas nas RoIs informadas
+pelo L1. O terceiro nvel (chamado EF - Event Filter ), com o maior tempo de processamento ( 4s)
+utiliza toda a informacao do evento para tomar a
+decisao final de aceitacao ou rejeicao da assinatura
+em analise
+
+Este trabalho apresenta uma proposta de modificacao no sistema de classificacao utilizado no
+Neural Ringer a partir da utilizacao de classificadores especficos para cada camada do calormetro. O objetivo e extrair caractersticas
+de cada segmento do detector e, assim, melhorar o desempenho do sistema de classificacao.
+Adicionalmente, serao utilizadas tecnicas de preprocessamento estatstico (analise_de_componentes_independentes e analise_de_componentes_principais) cujo objetivo e aumentar a eficiencia dos
+classificadores, removendo o rudo de medicao e
+a redundancia de informacao. Resultados obtidos
+com uma base de dados simulada sao utilizados
+para mostrar a eficiencia do metodo proposto.
+
+2494
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Figura 3 Esquema do trigger online do ATLAS
+em tres nveis de processamento sequenciais.
+2.1
+
+Figura 4 Exemplos da construcao e concatenacao
+dos aneis.
+
+O discriminador Neural Ringer
+
+cao, os sinais em aneis precisam ser normalizados.
+A normalizacao utilizada neste trabalho foi a divisao da energia de cada anel (Ea i) pela energia
+total do evento
+
+O Neural Ringer e um algoritmo de classificacao projetado para a deteccao de partculas
+eletromagneticas (eletrons ou fotons) no L2 do
+ATLAS (dos Anjos et al., 2006). A sua proposta
+e fazer uma extracao_de_caractersticas atraves de
+um arranjo topologico dos sinais medidos no calormetro, com a construcao de aneis concentricos
+a partir do perfil de deposicao de energia. Posteriormente, as informacoes dos aneis sao processadas por uma rede_neural artificial para a realizacao do teste_de_hipoteses, definindo assim a natureza da partcula. O teste_de_hipoteses e realizado
+por uma rede_neural supervisionada na arquitetura Perceptron de Multiplas Camadas (MLP Multi-Layer Perceptron).
+O processo de anelamento consiste, primeiramente, na selecao das RoIs ao redor da celula mais
+energetica de cada camada. Esta celula e entao
+considerada como sendo o primeiro anel. As celulas ao redor do primeiro anel definem o segundo
+anel e assim sucessivamente (ate cobrir toda a janela da RoI). A energia amostrada pelas celulas
+pertencentes a um dado anel e somada, produzindo o sinal de energia em aneis. Os varios sinais
+em aneis de cada camada sao concatenados em
+um unico vetor com 100 aneis, a Figura 4 mostra
+a formacao de aneis de algumas camadas. E importante frisar que devido a diferenca de granularidade entre as camadas, um numero diferente
+de aneis e gerado para cada camada. A Tabela 1
+ilustra essa diferenca.
+
+EN i  Eai 
+
+PS
+08
+
+E1
+64
+
+E2
+08
+
+E3
+08
+
+H0
+4
+
+H1
+4
+
+Eai
+
+(1)
+
+i1
+
+Essa normalizacao reduz a influencia da energia de cada evento, mantendo assim a proporcao
+de energia contida em cada anel.
+3
+
+Classificadores Segmentados
+
+Cada camada do calormetro apresenta caractersticas proprias como os tipos de sensores utilizados
+e a granularidade das celulas. Conforme descrito,
+o Neural Ringer utiliza sem distincao as caractersticas de todas as camadas. Como as camadas sao
+sobrepostas, e o evento que se desenvolve muitas
+vezes interage com diversas camadas, pode ocorrer
+redundancia nas informacoes coletadas.
+A analise utilizando classificadores neurais
+segmentados (Torres et al., 2010) tem o objetivo
+de verificar quais camadas possuem caractersticas mais importantes ao processo de classificacao,
+ou seja, e possvel fazer combinacoes de algumas
+camadas, as mais relevantes, e ainda assim conseguir resultados proximos aos dos classificadores
+que utilizam todas as camadas de forma concatenada. Com o uso de menor quantidade de informacao, contribui-se para reduzir o tempo de
+processamento, o que e um requisito importante
+para a aplicacao.
+As sadas de cada rede_neural especialista
+(aqui chamadas de ELNN - Expert Layer Neural
+Networks) sao utilizadas como entradas para uma
+
+Tabela 1. Numero de aneis por camada.
+Camadas
+Aneis
+
+100
+X
+
+H2
+4
+
+Antes da utilizacao nos sistemas de classifica-
+
+2495
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+ordenados de forma decrescente pela variancia das
+projecoes. Para tornar a variancia independente
+da norma de vi , faz se
+vi 
+
+vi
+k vi k
+
+(4)
+
+Fazendo-se com que k vi k 1 , torna-se a
+variancia funcao apenas da direcao das projecoes.
+Como Ex  0 , entao Ezi   0 , logo a
+variancia da projecao zi e calculada por Ezi2 
+. O primeiro vetor da base v1 de componentes
+principais pode ser encontrado pela maximizacao
+
+Figura 5 Representacao de classificadores neurais
+segmentados.
+
+JiP CA (v1 )  Ezi2   E(v1T x)2   v1T Cx v1 (5)
+segunda rede_neural (Rede Neural Combinadora)
+para realizacao do teste_de_hipoteses propriamente
+dito (decisao), conforme mostrado na Figura 5.
+4
+
+onde Cx e a matriz de covariancia de x.
+A maximizacao da equacao anterior pode ser
+encontrada a partir da determinacao dos autovetores e1 , e2 , ..., en da matriz Cx . O ordenamento
+dos autovetores e, tal que, os autovalores que associados satisfazem d1 > d2 > ... > dN , assim
+vi  ei , tornando a decomposicao por autovalores
+da matriz Cx equivalente a PCA de x.
+Em aplicacoes de compactacao, a parcela contendo a menor variancia e descartada, mantendo
+assim os componentes com maior nvel de energia.
+
+Pre-Processamento Estatstico
+
+No trabalho (Simas Filho et al., 2007), foi sugerido
+a aplicacao de tecnicas de pre-processamento aos
+sinais em aneis antes do classificador_neural. As
+tecnicas utilizadas foram adotadas visando obter
+a extracao_de_caractersticas relevantes e a reducao da dimensao dos sinais. As tecnicas utilizadas
+para reducao da dimensao foram PCA (Principal
+Component Analysis)(Jolliffe, 2008) e PCD (Principal Component of Discrimination). Para a extracao_de_caractersticas foi utilizada a ICA (Independent Component Analysis)(Hyvarinen et al.,
+2001). A utilizacao em conjunto das tecnicas possibilitou um aumento na eficiencia de classificacao bem como uma reducao no tempo de processamento. Neste trabalho, foram utilizadas as
+tecnicas ICA e PCA como uma etapa de preprocessamento para os classificadores segmentados.
+4.1
+
+4.2
+
+A ICA e uma tecnica utilizada em processamento
+de sinais multidimensionais na busca por uma
+transformacao linear na qual os componentes na
+sada sao mutuamente independentes (Hyvarinen
+et al., 2001). A ICA vem sendo aplicada na solucao de diversos problemas na area de processamento_de_sinais, principalmente em extracao de
+caractersticas (Simas Filho et al., 2007).
+Na ICA, considera-se que um sinal multidimensional x(t)  x1 (t), ..., xN (t)T observado (ou
+medido) e gerado a partir da combinacao linear
+das fontes independentes s(t)  s1 (t), ..., sN (t)T 
+
+Analise de Componentes Principais
+
+A PCA (Analise de Componentes Principais) e
+uma transformacao linear que projeta um sinal
+multidimensional em componentes nao correlacionados e ordenados pela variancia (Jolliffe, 2008).
+Considerando-se um vetor x  x1 , ..., xn T
+aleatorio com n elementos e assumindo-se que ele
+tenha media nula
+Ex  0
+
+x  As,
+
+(2)
+
+sendo W a matriz de separacao. Se W  A1 ,
+y  s e o problema foi completamente solucionado (Hyvarinen et al., 2001).
+5
+
+zi  viT x 
+
+vki xk
+
+(6)
+
+onde A e a matriz de mistura. O objetivo final
+da ICA e encontrar uma aproximacao y das fontes independentes s, utilizando apenas os sinais
+observados x.
+y  Wx,
+(7)
+
+onde E. e o operador esperanca. Se x 
+x  Ex. A projecao zi de x na direcao de vi e
+definida por
+N
+X
+
+Analise de Componentes Independentes
+
+(3)
+
+k1
+
+Metodologia e Parametros de avaliacao
+da eficiencia dos classificadores
+
+Os dados utilizados foram produzidos por simulacoes de Monte Carlo, pela colaboracao do ATLAS,
+utilizando os simuladores Pythia (que produz as
+
+Na transformacao por PCA, os componentes
+extrados zi (i  1, ..., N ) devem ser ortogonais e
+
+2496
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+colisoes) e Geant (que realiza a interacao das partculas com o detector.
+Nos dados utilizados o sinal de interesse sao
+eletrons gerados no decaimento do boson Z em
+2 eletrons e o rudo de fundo para a identificacao sao jatos hadronicos. Foram utilizados dois
+conjuntos distintos de dados simulados do L2. A
+separacao foi realizada de acordo com o valor da
+energia transversa dos eventos. O conjunto e10
+e composto por assinaturas que possuem energia
+transversa maior que 7GeV e o conjunto e22 e formado por sinais que possuem energia transversa
+maior que 20GeV. Cada um deles representa uma
+configuracao de operacao real do detector.
+As assinaturas e10 representam um corte de
+primeiro nvel menos restritivo, que pode ser utilizado sempre que ha a necessidade de uma maior
+aceitacao de eventos de interesse. O conjunto e22
+e representativo de um corte de primeiro nvel
+mais forte, no qual um menor numero de assinaturas e aceito para analise posterior.
+No processo de treinamento da rede_neural foi
+utilizada a metade do conjunto de dados (treino)
+e outra metade foi utilizada para as etapas de
+teste e validacao das redes. O algoritmo de treinamento utilizado foi o RPROP (resilient backpropagation) (Riedmiller and Braun, 1993). Apesar
+do algoritmo RPROP ser uma tecnica muito difundida, e possvel que o algoritmo sofra com a incidencia de mnimos locais, devido ao uso da funcao de otimizacao do tipo gradiente_descendente.
+Para minimizar este problema, o processo de treinamento das redes_neurais foi repetido 10 vezes
+e a melhor rede_neural foi escolhida, levando em
+consideracao a avaliacao dos melhores ndice SP
+encontrados.
+O ndice SP (Soma Produto) e um parametro
+de avaliacao de eficiencia de classificadores definido por
+
+alarme (PF) a medida que se varia o patamar de
+decisao. A eficiencia de um classificador, a partir
+da curva ROC, e calculada baseando-se a area sob
+a curva. Quanto maior essa area, mais eficiente e
+o classificador.
+Na estrutura da rede_neural, foram utilizados
+dez neuronios na camada oculta, em cada classificador especialista treinado. Na rede combinadora,
+foram realizados testes, verificando a eficiencia por
+numero de neuronios ocultos utilizados. A configuracao otima para o conjunto de dados e10 ocorreu na utilizacao de 10 neuronios, tambem na rede
+combinadora, conforme mostra a Figura 6. Ja no
+conjunto e22, os melhores resultados em eficiencia
+foram encontrados utilizando nove neuronios na
+camada oculta da rede combinadora (ver Figura
+7).
+
+Figura 6 Max SP() por numero de neuronios na
+camada oculta da Rede Combinadora - Conjunto
+e10.
+
+r
+SP 
+
+p
+1
+( )  (Efe + Efj )  Efe  Efj , (8)
+2
+
+O SP foi utilizado neste trabalho como parametro para escolher o patamar de decisao otimo
+para um dado classificador. Variando-se o patamar de decisao em toda sua faixa de excursao
+calculam-se os valores do SP correspondentes. O
+SP maximo indica um patamar que apresenta alta
+eficiencia para as duas classes.
+A funcao de custo utilizada foi a MSE (mean
+squared error ) e as sadas alvo (target) da rede
+foram definidas da seguinte forma para eletrons
+1, jatos  1.
+Para a avaliacao da eficiencia dos classificadores foram utilizados os parametros ndice SP
+(Soma Produto) (dos Anjos, 2006) e curva ROC
+(Receiver Operating Characteristic) (Trees, 2001).
+A curva ROC apresenta a relacao entre a probabilidade de deteccao (PD) e a probabilidade de falso
+
+Figura 7 Max SP() por numero de neuronios na
+camada oculta da Rede Combinadora - Conjunto
+e22
+
+2497
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+6
+
+Resultados
+
+da eficiencia no classificador proposto. E interessante observar que, para as assinaturas e10, considerando uma deteccao de 97,5 , a aceitacao de
+rudo de fundo (falso alarme) foi reduzida quase
+pela metade.
+
+O pre-processamento estatstico atraves da aplicacao em conjunto das analises de componentes
+principais (PCA) e de componentes independentes (ICA) foi aplicado em cada camada do sistema de calorimetria, separadamente. Os classificadores segmentados foram treinados variandose o numero de componentes apresentados na entrada. Neste caso, foram encontrados nveis de
+compactacao otimos (atraves da avaliacao do maximo ndice SP), que reduziram a dimensao dos
+dados extrados nas camadas do calormetro. As
+Tabelas 2 e 3 mostram os resultados obtidos para
+os conjuntos e10 e e22, respectivamente. Percebese que, em alguns casos e possvel reduzir a informacao armazenada por camada em mais de 70 
+(para a camada E1).
+Tabela 2. Numero de componentes retidos por
+camada, apos aplicacao do pre-processamento
+por ICAPCA - Conjunto e10.
+Camadas
+Componentes
+Reducao ()
+
+PS
+5
+37,5
+
+E1
+18
+71,9
+
+E2
+5
+37,5
+
+E3
+8
+0,0
+
+H0
+4
+0,0
+
+H1
+4
+50,0
+
+Figura 9 Curva ROC do classificador projetado
+ELNN e o Neural Ringer - Conjunto e10.
+
+H2
+3
+25,0
+
+Tabela 3. Numero de componentes retidos por
+camada, apos aplicacao do pre-processamento
+por ICAPCA - Conjunto e22.
+Camadas
+Componentes
+Reducao ()
+
+PS
+5
+37,5
+
+E1
+14
+78,1
+
+E2
+5
+37,5
+
+E3
+6
+25,0
+
+H0
+4
+0,0
+
+H1
+4
+0,0
+
+H2
+3
+25,0
+
+Figura 8 Descricao do projeto do classificador
+segmentado com Pre-Processamento.
+
+Figura 10 Curva ROC do classificador projetado
+ELNN e o Neural Ringer - Conjunto e22.
+
+Apos os classificadores segmentados, foi adicionada a rede combinadora (formando a arquitetura da ELNN mostrada na Figura 8). O ultimo
+estagio de classificacao foi alimentado com as informacoes obtidas dos classificadores especialistas
+em cada camada. A partir deste sistema de classificacao de multiplos nveis, foi atingido um aumento na eficiencia de deteccao, conforme e possvel observar a patir da comparacao das Curvas
+ROC dos classificadores ELNN e Neural Ringer
+tanto para o conjunto e10 como para o e22, conforme pode-se observar nas Figuras 9 e 10, respectivamente.
+A Tabela 4, mostra os maximos SP encontrados para os discriminadores projetados, nas analises dos conjuntos e10 e e22, verificando o aumento
+
+Tabela 4. Comparacao dos metodos aplicados no
+conjunto de dados e10 e e22.
+Discriminadores
+E10-Ringer
+E10+ELNN
+E22-Ringer
+E22+ELNN
+
+Max SP()
+99.69 +-0.4
+99.78 +-0.2
+99.67 +-0.5
+99.68 +-0.5
+
+PD()
+99.75
+99.75
+99.73
+99.73
+
+PF()
+0.38
+0.21
+0.41
+0.38
+
+Em discriminadores de partculas, e importante tambem observar o comportamento do classificador proposto em funcao da energia total do
+evento, devido a possibilidades de ocorrencia de
+novas propriedades fsicas, em determinadas faixas de energia transversa.
+Conforme mostrado na Figura 11, observa-se
+tambem o aumento na eficiencia de deteccao, em
+
+2498
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+funcao da energia dos sinais estudados, utilizando
+o classificador ELNN em comparacao com o Neural Ringer. O discriminante proposto se destaca
+em relacao ao aumento da probabilidade de deteccao de eletrons, principalmente para baixas energias, na faixa de 10 a 25 GeV, onde o perfil de
+eletrons costuma ser mais semelhante ao de jatos
+hadronicos, indicando que o classificador proposto
+e mais robusto a este aspecto que o Neural Ringer.
+
+pelos dados simulados e por discussoes e sugestoes
+sobre este trabalho.
+Referencias
+Colaboration, A. (2008). Atlas experiment at cern
+large hadron collider, Journal of Instrumentation 3(S08003) 1407.
+dos Anjos, A. R. (2006). Sistema de filtragem
+online aplicada a um ambiente com alta taxa
+de eventos.
+dos Anjos, A., Torres, R. and Seixas, J. M.
+(2006). Neural triggering system operating
+on high resolution calorimetry information,
+Nuc. Inst. and Methods in Physics Research
+A 559(1) 134138.
+Evans, L. and Bryant, P. (2008). Lhc machine,
+Journal of Instrumentation 3(S08001) 1
+158.
+Hernandez, Y. (2013). The atlas tile calorimeter
+performance at lhc, Nuc. Inst. and Methods
+In Physics Research .
+Hyvarinen, A., Karhunen, J. and Oja, E. (2001).
+Independent Component Analysis.
+
+Figura 11 Curva de eficiencia de deteccao ()
+por energia total - Conjunto e10.
+
+Jolliffe, I. (2008). Principal Component Analysis,
+Springer.
+7
+
+Conclusoes
+
+Koletsou, I. (2011). The atlas liquid argon calorimeter at the lhc, Nuc. Inst. and Methods in
+Physics Research 628 351354.
+
+A eficiencia na deteccao dos eventos de interesse e
+um aspecto fundamental para detectores de partculas. Neste trabalho, foi proposta a utilizacao
+de uma nova arquitetura de classificacao para o
+problema da selecao online de eventos no detector ATLAS. Foram utilizados classificadores especialistas nas informacoes de cada camada do detector. Para combinar as informacoes obtidas de
+modo segmentado, foi utilizado um outro classificador_neural.
+A analise dos resultados obtidos indica que a
+arquitetura proposta contribui para um aumento
+na eficiencia de deteccao de partculas eletromagneticas (eletrons e fotons). Foi observado, ainda,
+que a adicao de uma etapa de pre-processamento
+estatstico, utilizando as analises de componentes
+independentes (ICA) e de componentes_principais
+(PCA) contribuiu para uma reducao da informacao necessaria para o problema, o que e um aspecto importante na aplicacao, que apresenta severas restricoes quanto ao tempo de resposta dos
+algoritmos_de_classificacao.
+
+Riedmiller, M. and Braun, H. (1993). A direct
+adaptive method for faster backpropagation
+learning, the rprop algorithm, Proc. of Int.
+Conf. on Neural Networks (1) 586591.
+Simas Filho, E. F., Caloba, L. P. and Seixas,
+J. M. (2007). Independent component analysis applied for online filtering on a high
+events rate and segmented information environment, Proceedings of the VIII Brazilian
+Conference on Neural Networks - CBRN .
+Torres, R. C., Simas Filho, E. F., Lima, D. E. F.
+and Seixas, J. M. (2010). Signal processing,
+In-Tech, India, pp. 337358.
+Trees, H. L. V. (2001). Detection, Estimation, and
+Modulation Theory, Vol. 1.
+
+Agradecimentos
+Os autores agradecem ao apoio financeiro do
+CNPq, FAPESB, RENAFAE e Vale SA. Agradecemos tambem a colaboracao do detector ATLAS
+
+2499

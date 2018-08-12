@@ -1,0 +1,912 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+APLICACAO DE MAQUINAS DE VETOR SUPORTE ON-LINE EM ALGORITMOS
+DE ITERACAO DE POLITICA PARA APRENDIZADO POR REFORCO
+Hugo Tanzarella Teixeira, Celso Pascoli Bottura
+ Av.
+
+Albert Einsten, 400, LE-31
+Cidade Universitaria Zeferino Vaz- Distrito de Barao Geraldo
+Campinas - SP, Brasil
+Emails tanzarella@gmail.com, cpbottura@fee.unicamp.br
+Abstract This paper presents an online support vector regression (osvrPI) policy iteration algorithm for
+control of nonlinear_systems whose dynamics is unknown. By using the osvrPI, optimal or near optimal control
+policies can be obtained without a priori knowledge of the model of the plant to be controlled. The algorithm uses
+an online support vector regression algorithm(osvrTD-Q) to perform the policy evaluation step. The utilization
+of support_vector_machines brings an improvement on generalization ability due to its characteristic of making
+sparse the solution.
+Keywords Machine Learning, Reinforcement Learning, Policy Iteration, Value Function Approximation,
+Online Support Vector Machine.
+Resumo Neste trabalho e apresentado um algoritmo de iteracao_de_poltica com maquina de vetor suporte
+(osvrPI) para controle_de_sistemas_nao_lineares em que a dinamica do sistema e desconhecida. A aplicacao do
+algoritmo osvrPI permite encontrar polticas otimas, ou quase-otimas, sem que haja conhecimento a priori do
+modelo da dinamica do sistema a ser controlado. O algoritmo usa um algoritmo de diferencas temporais com
+maquinas_de_vetor_suporte on-line (osvrTD-Q) para realizar a etapa de avaliacao de poltica. O uso das maquinas
+de vetor suporte traz uma melhoria na capacidade de generalizacao associada a sua caracterstica de tornar a
+solucao esparsa. O algoritmo proposto e testado em uma cadeia de Markov estocastica, problema tpico de
+aprendizado_por_reforco.
+Palavras-chave .
+
+1
+
+INTRODUCAO
+
+O aprendizado_por_reforco - reinforcement learning (RL) e uma estrutura de aprendizado de
+maquina para resolver problemas de tomadas de
+decisoes sequenciais modelados como um processo
+de decisao markoviano - Markov decision process (MDP). Em problemas de RL o controlador
+aprende um comportamento atraves da sua interacao com o sistema, baseado em sinais de reforco
+do sistema (Sutton and Barto, 1998). O controlador recebe como entrada o estado do sistema
+(St ) e tem como sada uma acao (At ), escolhida
+de acordo com uma poltica, que e aplicada ao sistema resultando em uma transicao para um novo
+estado (St+1 ) e uma recompensa (Rt+1 ) que avalia
+a qualidade dessa transicao, veja Figura 1. O
+objetivo do controlador e encontrar uma poltica
+otima ou quase otima a partir da sua experiencia sem que haja conhecimento de um modelo do
+MDP. Para tanto, algoritmos de RL geralmente
+estimam a funcao valor dos MDPs observando os
+dados gerados a partir das transicoes dos estados.
+O principal obstaculo no RL e que suas
+solucoes nao podem ser representadas de maneira
+exata para problemas com espacos de estado contnuos ou discretos com alta dimensao, como e
+o caso da maior parte dos problemas de controle (Busoniu et al., 2010). Com isso, vem a
+necessidade de utilizar representacoes compactas
+
+ISSN 2525-8311
+
+atraves de aproximadores de funcao para aproximar a funcao valor.
+No metodo de iteracao_de_poltica - policy iteration (PI) as funcoes valor e as polticas sao
+aproximadas separadamente em duas estruturas
+distintas, por isso a PI pode ser vista como uma
+classe do algoritmo de aprendizado ator-crtico.
+Lagoudakis and Parr (2003) propuseram o algoritmo de iteracao_de_poltica baseado em mnimos
+quadrados - least squares policy iteration (LSPI)
+em que a funcao valor e aproximada usando o algoritmo de diferencas temporais baseado em mnimos_quadrados - least squares temporal difference
+(LSTD) proposto por Boyan (2002), obtendo assim, boas condicoes de convergencia, estabilidade
+e complexidade das amostras do que algoritmos
+anteriores. Entretanto, a estrutura de aproximacao_da_funcao_valor pode apresentar queda no
+seu desempenho quando as funcoes de base sao
+escolhidas inapropriadamente (Lagoudakis and
+Parr, 2003). Para resolver esse problema Xu et al.
+(2007) propuseram uma versao baseado em kernel do algoritmo LSPI, chamado KLSPI, que usa
+funcoes kernel Mercer para aproximar as funcoes
+valor, embora o algoritmo tenha obtido bons resultados, ele nao pode ser aplicado de maneira online.
+Neste trabalho e proposto um algoritmo de
+iteracao_de_poltica on-line, chamado osvrPI,
+em que a etapa de avaliacao de poltica e realizada pelo algoritmo de diferencas temporais
+
+3091
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+com maquinas_de_vetor_suporte on-line (osvrTDQ), trazendo para a avaliacao de poltica as propriedades de generalizacao e convergencia inerentes das maquinas_de_vetor_suporte - support
+vector machines (SVM) (Cristianini and ShaweTaylor, 2000). Comparado com os algoritmos
+LSPI e KLSPI, o algoritmo proposto traz duas
+vantagens, uma e a selecao automatica das funcoes
+de base, proporcionada pelo uso das SVMs e a
+outra e a possibilidade de ser aplicado on-line, o
+que o torna mais adequado para problemas de controle.
+Este trabalho apresenta a seguinte organizacao na Secao 2 e apresentado uma breve introducao de maquinas_de_vetor_suporte para regressao, assim como sua versao on-line, que possibilitou o desenvolvimento deste trabalho. Na
+Secao 3 e feita uma descricao do problema de
+aprendizado_por_reforco. Sao apresentados os processos de decisao markovianos e os algoritmos de
+diferencas temporais e de iteracao_de_poltica. Na
+Secao 4 sao propostos os algoritmos osvrPI para iteracao_de_poltica on-line e osvrTD-Q para aproximacao_da_funcao_valor na etapa de avaliacao de
+poltica. Na Secao 5 o algoritmo osvrPI e submetido a um experimento computacional e o resultado e discutido em comparacao aos algoritmos
+LSPI e KLSPI que inspiraram a proposta deste
+trabalho. Por fim, na Secao 6 sao feitas algumas
+conclusoes sobre o trabalho.
+2
+
+Maquinas de vetor suporte on-line
+para regressao
+
+As SVMs tem atrado grande interesse por parte
+da comunidade de aprendizado_de_maquinas
+(Scholkopf and Smola, 2001), embora, a princpio nao e possvel realizar atualizacoes recursivas
+no modelo de uma SVM, tornando seu uso pouco
+pratico para aplicacoes em que o valor desejado
+das observacoes existentes mude rapidamente,
+como e o caso em problemas de RL (Martin, 2002).
+Para lidar com essa limitacao o algoritmo maquina
+de vetor suporte on-line para regressao - online
+support vector regression (OSVR) foi proposto independentemente por Martin (2002) e Ma et al.
+(2003).
+
+A ideia fundamental do algoritmo OSVRs
+consiste em atualizar o seu modelo de modo a
+satisfazer as condicoes de Karush-Kuhn-Tucker
+(KKT) quando um dado de treinamento e adicionado ou retirado do conjunto de treinamento,
+modificando sua influencia na funcao de regressao,
+sem que seja necessario treinar o modelo novamente do incio.
+
+2.1
+
+Maquina de vetor suporte para regressao
+
+O objetivo no problema de vetor suporte - support
+vector (SV) para regressao e estimar uma funcao
+linear
+f (x)  wT (x) + b
+
+(1)
+
+que forneca uma boa aproximacao para o conjunto
+m
+de dados de treinamento xi , yi N
+i1 , em que x  R
+b
+e a entrada e y  R e a sada observada, j (x)m
+i1
+e um conjunto de funcoes de base nao lineares que
+mapeia o espaco de entrada em um espaco caracterstico. O vetor de parametros w  Rmb e o
+vies b sao desconhecidos. O problema consiste em
+obter estimativas para w que minimizem a norma
+w2  wT w. A introducao da funcao perda insensvel proposta por Vapnik (1995),
+c (y, f (x))  max(y  f (x)  , 0),
+
+(2)
+
+possibilitou obter solucoes esparsas tambem no
+problema de regressao. A forma primal do problema de otimizacao para regressao e dada por
+N
+
+minimizar
+
+X
+1 T
+w w+C
+(i + i0 )
+2
+i1
+
+sujeito a
+
+yi  wT (xi )  b   + i
+wT (xi ) + b  yi   + i0
+i , i0  0
+
+(3)
+
+i  1, 2, . . . , N
+
+A constante C > 0 determina o compromisso entre a capacidade de ajuste de f e a tolerancia a
+erros maiores que . O problema de otimizacao
+(3) e resolvido atraves do seu dual, formulado encontrando o ponto de sela associado a funcao de
+Lagrange, obtendo-se a chamada expansao em vetores suporte
+
+Controlador
+f (x) 
+
+Rt+1
+
+N
+sv
+X
+
+(i  0i )(xi )T (x) + b
+
+(4)
+
+i1
+St
+
+Funcao de recompensa
+
+At
+
+Sistema
+
+Figure 1 Interacao Controlador-Sistema.
+
+ISSN 2525-8311
+
+em que Nsv e o numero de vetores suporte obtidos
+resolvendo o problema de otimizacao. Em muitos
+casos uma funcao kernel k(xi , xj )  (xi )T (xj )
+pode ser definida evitando que o vetor (x) seja
+explicitamente calculado. Isso e possvel apenas
+se a funcao kernel satisfaz a condicao de Mercer.
+
+3092
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+2.2
+
+Algoritmo OSVR
+
+O lagrangiano de problema dual pode ser representado como
+LD (, 0 , ,  0 , u, u0 , )
+N
+N
+X
+1 X
+(i  0i )yi
+
+(i  0i )(j  0j )k(xi , xj ) 
+2
+N
+X
+
+(i + 0i ) 
+
++
+
+
+
+N
+X
+
+(i i + i0 0i )
+
+i1
+
+i1
+N
+X
+
+Vetores suporte marginais S
+Vetores suporte de erro E
+Amostras restantes R
+
+ i i   C
+ i 0 < i  < C
+ i i  0
+
+i1
+
+i,j1
+
++
+
+O conjunto de amostras de treinamento T
+pode ser classificado em tres conjuntos distintos
+de acordo com (12)
+
+N
+X
+
+(i  0i )
+i (i  C) + i0 (0i  C) + 
+
+(5)
+
+Em que a representacao geometrica da distribuicao das amostras do conjunto de treinamento T nos conjuntos S , E e R pode ser vista
+na Figura 2.
+
+i1
+
+i1
+
+h(x)
+
+em que i , i0 , i , i0  0 e  sao os novos multiplicadores de Lagrange. As derivadas parciais de
+LD com respeito as variaveis primais (i , 0i ) devem ser nulas no ponto de otimo, o que leva as
+seguintes relacoes
+
+
+
+
+
+ 
+
+E, i  C
+S, C < i < 0
+
+
+
+
+0
+
+
+
+
+
+
+  
+
+x
+
+
+
+
+
+
+
+
+
+
+S, 0 < i < C
+E, i  C
+
+
+
+
+
+
+
+
+
+
+R , i  0
+
+
+
+i LD  0
+N
+X
+
+(j  0j )k(xi , xj )  yi +   i + i +   0
+
+(6)
+
+j1
+
+Figure 2 Distribuicao das amostras de treinamento nos conjuntos S , E e R de acordo com as
+condicoes de KKT, exemplo unidimensional.
+
+0 LD  0
+i
+
+
+
+N
+X
+
+(j  0j )k(xi , xj ) + yi +   i0 + i0    0,
+
+(7)
+
+j1
+
+i  1, 2, . . . , N
+
+A variavel  em (6) e (7) equivalente a b em (1)
+e (4) em condicoes de otimalidade (Martin, 2002
+Ma et al., 2003). As condicoes de complementaridade de KKT correspondentes sao
+i i  0, i0 0i  0,
+i (i  C)  0, i0 (0i  C)  0,
+
+(8)
+(9)
+
+i  1, 2, . . . , N
+
+Quando um novo dado (xc , yc ) e adicionado
+ao conjunto de treinamento T , o algoritmo OSVR
+atualiza a funcao maquina de vetor suporte
+para regressao - support vector regression (SVR)
+treinada. Cada novo dado de treinamento deve
+satisfazer uma das condicoes em (12). Se (xc , yc )
+pertence a R , nenhuma atualizacao no modelo
+SVR deve ser feita. Por outro lado, se (xc , yc ) pertence a E ou S , o valor inicial de c e gradualmente
+alterado para passar a respeitar as condicoes de
+KKT (Ma et al., 2003). Quando um dado e retirado do conjunto de treinamento, o mesmo procedimento iterativo e realizado ate que os dados
+restantes em T satisfacam as condicoes de KKT.
+
+Uma vez que i 0i  0 (Cristianini and ShaweTaylor, 2000), e i , 0i  0, e possvel definir o coeficiente i como
+i  i  0i ,
+
+e a funcao margem
+
+h(xi )
+
+(10)
+
+como
+
+3
+
+Formulacao do problema
+
+Em problemas de RL o objetivo e encontrar uma
+poltica otima, que maximize as recompensas acumuladas durante toda a trajetoria do processo,
+em sistemas modelados como MDPs (Sutton and
+Barto, 1998).
+
+h(xi )  f (xi )  yi ,
+
+
+N
+X
+
+j k(xi , xj ) + b  yi .
+
+(11)
+
+j1
+
+Combinando as equacoes (6) a (11), as condicoes
+de KKT podem ser reescritas como
+
+
+h(xi ) > ,
+
+
+
+
+
+ h(xi )  ,
+ < h(xi ) < ,
+
+
+
+
+h(xi )  ,
+
+
+
+h(xi ) < ,
+
+ISSN 2525-8311
+
+i  C,
+C < i < 0,
+i  0,
+0 < i < C,
+i  C.
+
+3.1
+
+Processo de decisao markoviano
+
+Um MDP e caracterizado pela tupla S, A, p, r, em
+que S e o espaco_de_estados, A e o espaco de acoes,
+p e a probabilidade de transicao de estados dado
+que uma acao a e tomada no estado s
+p(s0 s, a)  PrSt+1  s0 St  s, At  a,
+
+(12)
+
+e
+
+r
+
+(13)
+
+a recompensa esperada
+
+r(s, a, s0 )  ERt+1 St  s, At  a, Dt+1  s0 .
+
+(14)
+
+3093
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Uma poltica e uma sequencia   hi 
+it em
+que hi e uma funcao que mapeia o estado s em
+uma acao a, em que hi (s, a) e a probabilidade de
+At  a caso St  s.
+A funcao valor estado, v  S 7 R, e caracterizada como o retorno esperado em um dado estado
+s ao seguir uma certa poltica h
+v (s) E
+
+
+T
+X
+
+
+ kt R
+
+kt
+
+
+
+
+(15)
+
+k+1 St  s
+
+em que E  denota o valor esperado quando que
+o controlador segue a poltica  e 0    1 e o
+fator de desconto. A funcao valor estado-acao,
+q  S  A 7 R e caracterizada como o retorno
+esperado quando uma acao a e tomada em um
+estado s, seguindo uma certa poltica 
+q (s, a)  E
+
+
+T
+X
+
+
+ kt R
+
+kt
+
+
+
+k+1 St  s, At  a .
+
+(16)
+
+Resolver uma tarefa de RL significa encontrar uma poltica que resulta no maior acumulo
+de recompensas ao longo de uma trajetoria. Para
+MDPs finitos e possvel definir precisamente uma
+poltica, ou um conjunto de polticas  otimas,
+que partilham a mesma funcao valor otima q ,
+dada por
+q  (s, a)  max q (s, a)
+
+
+ s  S, a  A.
+
+De modo que uma poltica otima
+obtida como
+
+
+
+pode ser
+
+h (s)  arg max q  (s, a)
+
+(17)
+
+a
+
+3.2
+
+Iteracao de poltica e diferencas temporais
+
+A PI pode ser vista como uma classe da arquitetura_de_controle ator-crtico, representada na
+Figura 3, em que o crtico realiza a etapa de avaliacao de poltica e o ator a etapa de melhoria de
+poltica.
+A avaliacao de poltica e realizada, geralmente, por um algoritmo de diferencas temporais
+- temporal differences (TD) para estimar a funcao
+valor q sem nenhum conhecimento do modelo do
+MDP. Uma vez que a funcao valor foi estimada
+e possvel obter uma poltica que seja melhor, ou
+q
+
+Crtico
+
+Rt+1
+Ator
+
+At
+
+ 0  arg max q (s, a).
+a
+
+(18)
+
+Este processo iterativo e repetido ate que 0 seja
+igual a , quando isso ocorre a poltica obtida e a
+poltica otima  . A convergencia do algoritmo de
+PI depende diretamente da qualidade da aproximacao_da_funcao_valor.
+O metodo de TD usa a experiencia para resolver o problema de avaliacao de poltica dada
+alguma experiencia seguindo a poltica  e possvel estimar uma funcao valor aproximada v para
+v (15). No metodo de TD e preciso esperar ate o
+proximo instante de tempo para atualizar a estimativa v(St ). Por exemplo, o metodo de TD mais
+simples, conhecido como TD(0), tem como regra
+de atualizacao
+
+
+v(St )  v(St ) +  Rt+1 + v(St+1 )  v(St )
+
+(19)
+
+em que  e um fator de aprendizado, e o erro TD
+e definido como
+t  Rt+1 + v(St+1 )  v(St )
+
+4
+
+(20)
+
+osvrPI
+
+Em RL on-line, a solucao e aprendida dos dados
+coletados pela interacao do controlador com o sistema. Um algoritmo on-line, deve entao, fornecer
+um bom desempenho o mais cedo possvel, e nao
+somente no fim do processo de aprendizado, como
+e o caso off-line. Os algoritmos LSPI e KLSPI
+sao originalmente algoritmos off-line, eles realizam
+a melhoria de poltica somente depois que uma
+funcao valor estado-acao seja aproximada por uma
+grande quantidade de dados previamente coletados. No algoritmo osvrPI, proposto, as melhorias
+de poltica sao realizadas apos algumas transicoes
+de estado. Neste perodo a avaliacao da poltica
+atual e feita.
+Para assegurar uma boa capacidade de generalizacao na etapa de avaliacao de poltica do
+algoritmo osvrPI, proposto. Um novo metodo
+de aprendizado por TDs usando SVMs e proposto para aproximar a funcao valor estado-acao,
+chamado osvrTD-Q. O algoritmo osvrTD-Q e
+uma variacao do algoritmo osvrTD apresentado
+em (Teixeira and Bottura, 2015). No algoritmo
+osvrTD-Q a funcao valor estado-acao (16) e aproximada usando a expansao de vetores suporte (4),
+de forma que
+q(s, a) 
+
+N
+sv
+X
+
+(i  0i )k(si ai T , s aT ) + b
+
+(21)
+
+i1
+
+Sistema
+
+St+1
+
+Figure 3 Arquitetura de controle ator-critico.
+
+ISSN 2525-8311
+
+pelo menos igual, a poltica anterior no ator, na
+etapa de melhoria de poltica de modo que
+
+e os parametros , 0 e b sao obtidos utilizando
+o algoritmo OSVR descrito na Secao 2.2. O erro
+TD agora e dado por
+t  rt+1 +  q(St+1 , At+1 )  q(St , At )
+
+(22)
+
+3094
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Valor
+
+8
+
+6
+
+4
+
+2
+0
+
+ISSN 2525-8311
+
+20
+
+Valor
+
+8
+
+6
+
+4
+
+2
+5
+
+10
+
+15
+
+20
+
+Estado
+
+Resultados experimentais
+
+(b) 10 iteracoes (100 passos)
+
+8
+
+Valor
+
+Para ilustrar a capacidade de aproximacao do algoritmo osvrPI e a sua simplicidade, quando se
+trata da escolha das funcoes de base. O experimento e uma cadeia de Markov de 10 estados,
+em que uma versao simplificada de quatro estados
+e mostrada na Figura 4. Para cada estado existem duas acoes possveis, esquerda(L) edireita
+(R), cada acao tem probabilidade de sucesso de
+0,9 e falha de 0,1. Para o problema de quatro estados, o vetor de recompensas para cada estado e
+(0, +1, +1, 0) e o fator de desconto  e igual a 0,9. A
+poltica otima para esse problema e RRLL. Koller
+and Parr (2000) usaram um algoritmo de iteracao
+de poltica para resolver esse problema usando o
+algoritmo LSTD para fazer a avaliacao de poltica,
+no entanto, devido a uma escolha ruim de funcoes
+de base somente conseguiram obter polticas que
+oscilavam entre LLLL e RRRR.
+Lagoudakis and Parr (2003) conseguiram lidar
+com esse problema atraves da escolha das funcoes
+de base, no entanto, ao aumentar o numero de
+estados uma escolha mais cuidadosa deve ser feita,
+como observaram Xu et al. (2007).
+Agora considerando um problema com 20 estados com a mesma dinamica do problema anterior, exceto que a recompensa de +1 e dada somente nos estados limitantes (1 e 20). A poltica
+otima nesse caso e ir para esquerda nos estados
+de 1-10 e ir para direita nos estados de 11-20.
+Este experimento foi realizado em (Lagoudakis
+and Parr, 2003) e (Xu et al., 2007), neles os dois
+algoritmos usam uma colecao de dados aleatorios
+de 5000 passos. Xu et al. (2007) compara o desempenho dos dois algoritmos pelo numero de iteracoes onde ocorre a convergencia e mostra que o
+algoritmo KLSPI e mais eficiente na taxa de convergencia e ainda exige menos trabalho na selecao
+de funcoes de base.
+
+15
+
+(a) 6 iteracoes (60 passos)
+
+0
+
+5
+
+10
+
+Estado
+
+Figure 4 MDP de 4 estados problematica.
+Introduzir uma SVM na etapa de avaliacao de
+poltica possibilita que o algoritmo osvrPI lide
+com problemas em que a funcao valor tem comportamento nao linear, sem que haja necessidade
+de uma escolha cuidadosa das funcoes de base. E,
+alem disso, agrega a propriedade de esparsificacao
+da solucao.
+
+5
+
+6
+
+4
+
+2
+0
+
+5
+
+10
+
+15
+
+20
+
+Estado
+
+(c) 100 iteracoes (1000 passos)
+
+Figure 5 Funcao valor estado-acao q da poltica
+avaliada . Linha solida - valor aproximado pelo
+algoritmo osvrTD-Q, linha tracejada - valor otimo
+real.
+O algoritmo osvrPI tambem nao exige que
+seja feito uma escolha das funcoes de base e ainda
+apresenta uma vantagem em relacao aos dois algoritmo mencionados, por ser realizado de maneira
+on-line. O algoritmo osvrPI foi aplicado ao mesmo
+problema, porem os dados foram coletados a medida que a poltica era aplicada. A cada 10 passos
+uma nova poltica melhorada era obtida.
+O desempenho do algoritmo pode ser visto
+na Figura 5, em que e mostrado a funcao valor
+estado-acao aproximada pelo algoritmo osvrTDQ, em linhas solidas. E o valor otimo real e
+mostrado em linhas tracejadas. As linhas em vermelho sao referentes a acao direita e as linhas
+azuis sao referentes a acao esquerda. E mostrado
+a evolucao do algoritmo osvrPI apos 6 iteracoes,
+10 e 100 (que equivale a 60, 100 e 1000 passos). Ja
+a Figura 6 explicita a poltica melhorada aplicada
+ao sistema apos cada uma dessas etapas.
+O experimento foi realizado usando um mod-
+
+3095
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+1
+
+49 233246.
+
+0.5
+0
+1
+
+5
+
+10
+
+15
+
+20
+
+(a) 6 iteracoes (60 passos)
+1
+0.5
+0
+1
+
+5
+
+10
+
+15
+
+20
+
+(b) 10 iteracoes (100 passos)
+1
+0.5
+0
+1
+
+5
+
+10
+
+15
+
+20
+
+Busoniu, L., Babuska, R., DeSchutter, B. and Ernst, D.
+(2010). Reinforcement Learning and Dynamic
+Programming Using Function Approximators, 1
+edn, CRC Press, Inc., Boca Raton, FL, USA.
+Cristianini, N. and Shawe-Taylor, J. (2000). An Introduction to Support Vector Machines And Other
+Kernel-based Learning Methods, Cambridge University Press, New York, NY, USA.
+Koller, D. and Parr, R. (2000). Policy iteration for factored mdps, Proceedings of the Sixteenth Conference on Machine Learning pp. 326334.
+
+(c) 100 iteracoes (1000 passos)
+
+Lagoudakis, M. G. and Parr, R. (2003). Least-squares
+policy iteration, The Journal of Machine LearnFigure 6 Poltica melhorada . Vermelho indica
+ing Research 4 11071149.
+
+ir para direita e azul indica ir para esquerda.
+elo de SVM com funcoes kernel gaussianas com
+largura   0, 2, C  20 e   0, 1. O algoritmo proposto apresenta caractersticas semelhantes ao algoritmo KLSPI (Xu et al., 2007), em relacao a esparsidade da solucao capacidade de aproximacao
+e generalizacao e escolha automatica das funcoes
+de base, por se tratarem de algoritmos baseados
+em maquinas kernel. No entanto, o algoritmo proposto e mais eficiente para aplicacao em problemas
+de controle por poder ser executado on-line, como
+pode ser visto na Figura 6(b), apos 10 iteracoes,
+que equivale a apenas 100 passos o algoritmo ja
+fornecia ao sistema uma poltica otima para ser
+executada, enquanto que isso so foi possvel no algoritmo KLSPI apos uma coleta de dados de 5000
+passos e 3 iteracoes de poltica.
+6
+
+Conclusoes
+
+Como uma classe de metodos de programacao
+dinamica aproximada livre de modelo, o RL e bastante promissor quando aplicado em problemas de
+tomada_de_decisao sequencial complexos em que
+nao seja possvel aplicar programacao_dinamica
+classica ou metodos de aprendizado_supervisionado, seja por falta de informacao para criar um
+modelo ou seja por o modelo ser muito complexo.
+O algoritmo osvrPI proposto utiliza SVM
+para aproximar a funcao valor para estabelecer
+implicitamente um modelo para a dinamica do sistema de modo que o desempenho de controlador e
+otimizado no decorrer do tempo, a medida em que
+a iteracao_de_poltica e executada on-line. Embora os resultados obtidos neste trabalho sejam
+promissores, a aplicacao do algoritmo osvrPI depende ainda de mais investigacao em relacao ao
+seu tempo de execucao quando a complexidade
+do problema aumenta.
+
+Ma, J., Theiler, J. and Perkins, S. (2003). Accurate online support vector regression, Neural Computation 15(11) 26832704.
+Martin, M. (2002). On-line suport vector machines for
+function approximation, Software Department,
+Universitat Politecnica de Catalunya Technical
+Report(LSI-02-11-R) 111.
+Scholkopf, B. and Smola, A. J. (2001). Learning with Kernels Support Vector Machines, Regularization,
+Optimization, and Beyond, MIT Press, Cambridge, MA, USA.
+Sutton, R. S. and Barto, A. G. (1998). Reinforcement
+Learning, An Introduction, 1 edn, MIT Press,
+Cambridge, MA, USA.
+Teixeira, H. T. and Bottura, C. P. (2015). Temporaldifference learning - An online support vector regression approach, Proceedings of the 12th
+ICINCO, Colmar,France, pp. 318323.
+Vapnik, V. N. (1995). The nature of statistical learning
+theory, Springer-Verlag, New York.
+Xu, X., Hu, D. and Lu, X. (2007).
+Kernel-based
+least squares policy iteration for reinforcement
+learning, IEEE Trans. on Neural Networks
+18(4) 973992.
+
+References
+Boyan, J. A. (2002). Technical update Least-squares
+temporal difference learning, Machine Learning
+
+ISSN 2525-8311
+
+3096

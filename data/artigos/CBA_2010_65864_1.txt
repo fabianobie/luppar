@@ -1,0 +1,800 @@
+APRENDIZADO INCREMENTAL DE CONCEITOS HIERÁRQUICOS UTILIZANDO MODELOS DE
+MISTURA GAUSSIANOS
+M R H, P M E
+
+
+Universidade Federal do Rio Grande do Sul (UFRGS)
+Instituto de Informática  Porto Alegre, RS, Brasil
+
+Emails mrheinen@inf.ufrgs.br, engel@inf.ufrgs.br
+Resumo Este artigo apresenta um novo algoritmo para a formação incremental de conceitos, chamado de IGMM (do inglês
+Incremental Gaussian Mixture Model). Este algoritmo, que é baseado em modelos_de_mistura_gaussianos, consegue aprender
+as características dos dados de entrada de forma não supervisionada, criando conceitos de alto nível a partir de regularidades
+presentes nos mesmos. O IGMM visa a criação de conhecimentos hierárquicos, na qual conceitos espaço-temporais mais abstratos
+são criados a partir de conceitos de mais baixo nível. Os experimentos realizados demonstram que o algoritmo proposto consegue
+aprender conceitos de alto nível a partir de dados sensoriais ruidosos fornecidos pelo simulador do robô Pioneer 3-DX. Além disso,
+os experimentos demonstram que o IGMM aprende de forma bastante agressiva sem utilizar informações a priori.
+Palavras-chave
+
+.
+
+sos w(t) de um neurônio de modo a aproximá-lo do
+vetor de entrada através da equação
+
+Introdução
+
+O foco deste trabalho é o chamado aprendizado_incremental de conceitos, utilizado principalmente em
+tarefas que lidam com dados que estão disponíveis
+apenas instantaneamente para o sistema de aprendizado. Neste caso, o sistema de aprendizado deve
+agir imediatamente, levando em consideração o dado
+atual para atualizar o seu modelo. Para este tipo de
+tarefa, usualmente são empregadas soluções envolvendo técnicas de redes_neurais. As redes_neurais
+competitivas formam uma classe de sistemas autoorganizáveis capaz de aprender de forma incremental e não-supervisionada modelos de agrupamentos de
+dados (Haykin, 2008). Numa rede competitiva, cada
+neurônio armazena no seu vetor de pesos os valores
+dos atributos do centróide do agrupamento_de_dados
+que ele representa. A cada apresentação de um dado,
+num determinado instante de tempo, um único neurônio vencedor de um processo competitivo é escolhido para que seus vetores de pesos sejam ajustados. Alternativamente, redes competitivas especiais,
+os chamados Mapas Auto-Organizáveis (SOM, SelfOrganizing Map) (Kohonen, 1987) podem ser utilizadas para este fim. Numa rede SOM, os neurônios estão situados numa grade, sendo que a sua vizinhança
+física é levada em conta no processo de aprendizado.
+Neste caso, além do neurônio vencedor, um conjunto
+de neurônios na vizinhança do vencedor é escolhido
+para sofrer ajustes nos pesos. As redes do tipo SOM
+têm a vantagem de preservar a topologia dos dados de
+entrada, fazendo com que neurônios vizinhos na grade
+respondam a dados que são gerados em regiões vizinhas no espaço abstrato de seus atributos.
+A escolha do neurônio vencedor em um mapa
+auto-organizável é feita usualmente com base em um
+critério de menor distância_euclidiana entre o seu vetor de pesos e o vetor de dados apresentado naquele
+instante, correspondendo assim a uma tomada de decisão pelo vizinho mais próximo. A cada apresentação de um vetor de entrada x(t), a regra de Kohonen
+(Kohonen, 1987 Haykin, 2008) ajusta o vetor de pe-
+
+w(t + 1)  w(t) + (x(t)  w(t))
+
+(1)
+
+Para que o vetor de pesos convirja para o valor
+médio de um agrupamento_de_dados, é necessário que
+a taxa de aprendizado  decaia com o tempo. Em geral, a formulação do problema é feita de forma a aprender a média das entradas após várias apresentações sucessivas de todos os vetores de treinamento (épocas),
+fazendo  decrescer com o tempo. Apesar de convergir para a média, esta regra não oferece controle sobre
+o aprendizado, além do único parâmetro . Com isso,
+pode-se levar um número muito grande de passos para
+a convergência. Além disso, pode haver problemas em
+ambientes abertos, onde os dados são apresentados sucessivamente, desconhecendo-se a priori o número de
+vetores que formam o arquivo de treinamento. Com
+isso fica difícil especificar um parâmetro  adequado,
+pois não existe, neste caso, o conceito de época.
+Este trabalho visa encontrar uma solução para o
+problema do aprendizado_incremental e não supervisionado de conceitos, de forma que seja possível a
+construção de conhecimentos a partir de dados sensoriais ruidosos e correlacionados no tempo e no espaço. Além disso, o modelo proposto visa agrupar os
+conceitos de forma hierárquica, formando assim estruturas complexas a partir de elementos mais simples. No desenvolvimento deste algoritmo, três problemas foram enfrentados (i) como lidar com o dilema da estabilidade-plasticidade (Haykin, 2008) (decidir quando se deve criar um novo conceito ou apenas
+ajustar os existentes) (ii) como atualizar os valores
+dos parâmetros a medida que novos pontos de dados
+são sequencialmente recebidos e (iii) como criar conceitos de alto nível a partir de conceitos de mais baixo
+nível previamente aprendidos. A solução encontrada
+para estes problemas é inspirada no MPF (do inglês
+Memory-Prediction Framework), que é um modelo do
+neocórtex cerebral proposto por (Hawkins, 2005).
+Este artigo está estruturado da seguinte forma a
+Seção 2 descreve alguns trabalhos relacionados  for-
+
+1308
+
+mação não supervisionada de conceitos a partir de dados ruidosos a Seção 3 descreve a arquitetura geral do
+MPF a Seção 4 descreve o modelo proposto neste artigo a Seção 5 descreve os experimentos realizados e
+os resultados obtidos e por último a Seção 6 descreve
+as conclusões finais e perspectivas futuras.
+2
+
+vel, como esquinas, paredes e corredores, por
+exemplo, a partir de uma sequência de dados ruidosos (leituras sensoriais) fornecida por um robô_móvel. A detecção destas regularidades permite que um
+robô estime a sua posição e detecte mudanças no ambiente (Thrun et al., 2006). No passado, diferentes
+abordagens foram apresentadas para esta tarefa, mas
+a maioria delas não conseguia distinguir entre informações relevantes e ruídos no fluxo de dados, um
+problema comumente encontrado na área de aprendizado não supervisionado e conhecido como dilema
+da estabilidade-plasticidade (Grossberg, 2003 Haykin, 2008). Como um exemplo típico destas abordagens, em (Nolfi and Tani, 1999) foi proposta uma arquitetura hierárquica para extrair regularidades de séries_temporais, na qual as camadas mais elevadas da
+hierarquia são treinadas para predizer o estado interno
+dos elementos das camadas inferiores quando os estados se alteram significativamente. Nesta abordagem,
+a segmentação foi modelada como um problema tradicional de minimização de erro (Haykin, 2008), que
+favorece os padrões de entrada mais frequentes e trata
+como ruído (descarta) os padrões de entrada menos
+frequentes. Isto faz com que esse algoritmo seja capaz de reconhecer paredes ligeiramente diferentes, que
+representam os padrões de entrada mais frequentes,
+como conceitos distintos, mas é incapaz de detectar
+corredores e esquinas que são não muito frequentemente encontrados.
+Com o foco na detecção de mudanças, (Linker
+and Niklasson, 2000b Linker and Niklasson, 2000a
+Linker, 2003) propuseram a rede ARAVQ (do inglês Adaptive Resource Allocating Vector Quantization), que armazena a média móvel de segmentos da
+sequência dos dados de entrada como vetores alocados para os nodos de saída de uma rede_neural. Assim, cada vetor representa um agrupamentoconceito
+distinto. Novos vetores são incorporados ao modelo se (i) a discrepância entre a média móvel do
+sinal de entrada e os vetores existentes for maior
+que um determinado limite e (ii) um critério mínimo de estabilidade para o sinal de entrada for satisfeito. Embora a rede ARAVQ tenha sido utilizada
+com relativo sucesso em algumas aplicações de robótica_móvel (Linker and Jacobsson, 2001 Bakker
+et al., 2002 Bakker et al., 2003 Linker, 2003 Holland and Goodman, 2003 Stening et al., 2005), assim
+como outros algoritmos de formação de agrupamentos
+baseados em distância ela não é sensível a mudanças
+no tamanho e na densidade dos agrupamentos, produzindo modelos comparáveis com os gerados pelo algoritmo k-means.
+
+Trabalhos Relacionados
+
+A formação_de_conceitos tem uma longa tradição
+na literatura de aprendizado de máquina, na área de
+aprendizado não supervisionado. Entretanto, a maioria dos métodos parte do princípio que todos os dados estão disponíveis no momento dos cálculos, o
+que nem sempre acontece na prática, e adota algumas restrições na modelagem probabilística (Gennari
+et al., 1989). O largamente conhecido algoritmo kmeans (MacQueen, 1967 Tan et al., 2006), por exemplo, representa um conceito como a média de um subconjunto ou agrupamento (cluster) de dados. Neste
+caso, cada ponto de dados deve deterministicamente
+pertencer a um único conceito. A pertinência de um
+ponto de dados a um determinado conceito é decidida
+utilizando a menor distância deste em relação a média
+dos conceitos. Para o cálculo das médias, são considerados todos os pontos de dados pertencentes a cada
+um dos conceitos, e o número de conceitos é mantido
+fixo ao longo do aprendizado.
+Para o aprendizado de modelos probabilísticos, a
+referência é o algoritmo EM (do inglês ExpectationMaximization algorithm) (Dempster et al., 1977 Tan
+et al., 2006), que segue uma abordagem de distribuição de misturas para a modelagem probabilística. Este
+algoritmo trabalha em dois passos um passo de estimação (E), que calcula para cada dado a pertinência probabilística (probabilidade a posteriori) em relação a cada componente do modelo de mistura baseado na hipótese corrente (um conjunto de parâmetros), seguido por um passo de maximização (M), que
+atualiza os parâmetros da hipótese atual baseado na
+maximização da verosimilhança dos dados (hipótese
+de máxima verosimilhança). Assim como no caso do
+k-means, o algoritmo EM mantém o número de conceitos fixo durante o aprendizado, e este número precisa ser conhecido no início do processo de aprendizado. Os parâmetros de cada distribuição são calculados através de estimadores estatísticos de ponto tradicionais, o que exige que o conjunto completo de dados
+de treinamento seja fixo e previamente conhecido (Tan
+et al., 2006). Além disso, o EM é problemático em relação a inicialização das distribuições, de forma que
+se não for corretamente inicializado o algoritmo não
+converge para uma solução satisfatória. Atualmente
+existem diversos algoritmos que visam melhorar a performance do EM (Figueiredo and Jain, 2002 Arandjelovic and Cipolla, 2005 Kristan et al., 2008), mas
+nenhum destes é capaz de criar uma solução adequada
+para o problema em questão.
+Já na área de robôs_móveis autônomos, uma tarefa importante é a detecção de conceitos de alto ní-
+
+3 Memory-Prediction Framework
+Recentemente um novo framework que descreve o
+funcionamento do neocórtex cerebral, chamado de
+MPF foi proposto por (Hawkins, 2005). Este framework, que trabalha com padrões de entrada espaçotemporais, modela os conceitos de forma hierárquica,
+
+1309
+
+sendo que as camadas de baixo nível detectam padrões
+espaciais e as camadas de mais alto nível detectam
+padrões espaço-temporais. Além disso, os elementos de mais alto nível na hierarquia retornam predições
+aos elementos de mais baixo nível, o que ajuda a reduzir ambiguidades em todos os níveis da hierarquia
+(Pinto, 2009). A medida que as camadas de mais alto
+nível são examinadas, os conceitos se tornam mais e
+mais abstratos (pessoa e bola, por exemplo), e os
+conceitos mais concretos estão nos níveis mais baixos,
+como por exemplo os pixels que formam uma imagem.
+Outro ponto importante do MPF é que cada nodo da
+hierarquia usa o mesmo mecanismo de aprendizado,
+de forma que somente os dados de entrada é que tornam cada modalidade única (Pinto, 2009).
+Atualmente existem algumas implementações do
+MPF, como por exemplo as memórias hierárquicas
+temporais (Hierarchical Temporal Memory  HTM)
+(George and Hawkins, 2005 Hawkins, 2006) e o modelo HQSOM (do inglês Hierarchical Quilted SelfOrganizing Map) (Miller and Lommel, 2006). As
+HTMs são compostas por uma hierarquia de nodos
+bayesianos, onde os dados de entrada chegam na parte
+inferior da hierarquia, e as saídas são obtidas no topo
+através de um vetor no qual cada elemento representa
+um atributo potencial (conceito) dos dados sensoriais.
+Em uma HTM, cada nodo na hierarquia implementa a
+mesma função da hierarquia como um todo, ou seja,
+eles reconhecem padrões espaço-temporais de suas
+entradas e aprendem a atribuir características a estes
+padrões. Em outras palavras, cada nodo descobre as
+características eou regularidades de suas entradas, independente de sua na posição hierarquia (Pinto, 2009).
+Em uma HTM de inferência visual, por exemplo, os nodos da parte inferior da hierarquia representam características de baixo nível como pixels, bordas, linhas e cantos presentes em uma pequena parte
+do espaço visual, o que segundo (George and Hawkins, 2005) ocorre na área V1 do córtex visual. Já os
+nodos no topo da hierarquia representam características complexas de alto nível, como objetos e faces, e
+estas podem aparecer sobre todo o espaço visual ou
+em qualquer parte do mesmo. Além disso, os conceitos de alto nível são mais estáveis no tempo, ou seja,
+ficam ativos por mais tempo que os conceitos de baixo
+nível. Embora a HTM seja uma implementação completa do MPF, é importante ressaltar que atualmente
+ela não suporta aprendizado_online e incremental, ou
+seja, é necessário que todo o conjunto de dados seja
+apresentado no início do aprendizado.
+Já o modelo HQSOM, que é baseado em redes
+neurais auto-organizáveis, consegue aprender conceitos de forma online. Entretanto, ele não implementa
+as conexões de predição, que são um dos elementos
+mais importantes do MPF, e HQSOM possui os mesmos inconvenientes dos mapas_auto-organizáveis descritos anteriormente. Outra limitação dessas implementações do MPF é que em ambas a hierarquia deve
+ser previamente definida pelo usuário usando informações a priori. Na próxima seção é descrito o modelo
+
+proposto neste artigo que implementa os conceitos do
+MPF de forma incremental sem que seja necessário
+definir previamente a hierarquia de conceitos.
+4
+
+Modelo Proposto
+
+Esta seção descreve o modelo proposto neste artigo,
+chamado de IGMM (do inglês Incremental Gaussian
+Mixture Model) (Engel and Heinen, 2010). Este modelo, que implementa os conceitos do MPF (Hawkins,
+2005) através de modelos_de_mistura_gaussianos, foi
+projetado para aprender conceitos hierárquicos de
+forma não supervisionada e incremental, podendo ser
+utilizado, por exemplo, na descoberta de regularidades em dados sensoriais ruidosos, contínuos e altamente correlacionados fornecidos por robôs_móveis
+autônomos (Thrun et al., 2006). Em (Heinen and Engel, 2009a Heinen and Engel, 2009b Heinen and Engel, 2009c), uma versão prévia do IGMM, chamada
+INBC, foi utilizada para a categorização de dados sensoriais em um ambiente de futebol de robôs simulados.
+A Figura 1 exemplifica uma hierarquia de conceitos aprendida pelo IGMM. Cada nodo da hierarquia, que representa um conceito distinto, é implementado pelo IGMM através de uma gaussiana multivariada. Na primeira camada se encontram os conceitos de mais baixo nível, que correspondem a características espaciais presentes em uma pequena porção
+do espaço de entradas. Nas camadas mais elevadas se
+encontram conceitos espaço-temporais mais complexos, presentes em áreas maiores do espaço de entradas, mais estáveis temporalmente e formados da união
+de conceitos mais simples das camadas inferiores.
+
+Figura 1 Exemplo de uma hierarquia de conceitos
+Diferentemente das implementações anteriores do
+MPF, que passam para suas sucessoras somente o rótulo do conceito vencedor (de maior probabilidade
+a posteriori), no IGMM cada camada envia para a sua
+sucessora um vetor com as probabilidades a posteriori de todos os conceitos presentes nesta camada. Este
+mesmo vetor calculado no instante de tempo t é passado para a camada antecessora, que o utiliza como informação de contexto no instante de tempo t+1. Desta
+
+1310
+
+forma, cada nodo da hierarquia possui uma conectividade total com os nodos de suas camadas vizinhas, e
+assim as probabilidades a posteriori levam em conta
+não somente o valor de suas entradas mas também o
+contexto atual fornecido pelas camadas superiores.
+Uma das principais contribuições do IGMM é a
+sua formulação incremental. De fato, o aprendizado
+começa com apenas um nodo em uma única camada,
+e novos elementos são adicionados  camada sempre
+que os dados não puderem ser adequadamente explicados pelos conceitos existentes. Além disso, novas
+camadas são criadas sempre que houver mais de um
+nodo na camada superior. Para evitar a proliferação de
+camadas pouco expressivas, cada camada deve possuir
+menos nodos que a sua antecessora. Outro ponto importante é que o algoritmo executado em cada nodo é
+exatamente o mesmo em qualquer ponto da hierarquia.
+A execução do IGMM ocorre camada por camada, com as saídas de uma camada c alimentando
+as entradas da camada c + t no instante de tempo t e
+servindo como informação de contexto  camada c  t
+no instante de tempo t+1. Inicialmente a hierarquia de
+conceitos é formada por apenas uma único nodo (distribuição gaussiana multivariada) j  1 disposto em
+uma única camada c  1. Este nodo é inicializado no
+instante t  1 com o primeiro registro de dados recebido, x(t), de forma que o conceito fique centrado
+neste registro, possua uma distribuição hiper-esférica
+arbitrária de raio ini e probabilidade a priori unitária
+p( j)  1
+
+(2)
+
+sp j  1
+
+(3)
+
+ j  x(t)
+
+(4)
+
+C j,ik  2ini I
+
+(5)
+
+mente, uma nova camada na hierarquia é criada sempre que o número de conceitos M da camada mais elevada for maior que um (a camada superior é sempre
+unitária). Ou seja, sempre que um novo nodo for criado na camada superior, a hierarquia é expandido através da criação de uma nova camada acima desta.
+O próximo passo é o calculo das probabilidades
+a posteriori em função dos dados de entrada, o que é
+realizado de acordo com a regra de Bayes
+p(x j)p( j)
+, j
+p( jx)  P M
+q1 p(xq)p(q)
+
+onde  j é um vetor contendo as médias da distribuição j, C é a matriz de variânciascovariâncias, I é a
+matriz identidade e ini é uma constante utilizada para
+definir o desvio padrão inicial de cada distribuição. A
+variável sp j é um acumulador utilizado na atualização
+incremental das distribuições.
+Quando um novo registro de dados x(t) chega, a
+probabilidade deste registro pertencer a alguma das
+distribuições existentes é calculada pela fórmula
+(
+)
+1
+1
+T 1
+exp  (x   j ) C j (x   j )
+p(x j) 
+q
+2
+(2)D2 C j
+(6)
+onde D indica a dimensionalidade (número de atributos) do vetor de entrada x. Se o novo registro de dados
+diferir de forma significativa de todas as distribuições
+existentes, uma nova distribuição é criada e inicializada a partir deste registro utilizando as Equações 3, 4
+e 5. Já a probabilidade a priori p( j) é inicializada pela
+fórmula
+PM
+p( j)  ( q1
+spq )1
+(7)
+onde M indica o número de distribuições ativas (conceitos) da camada atual c. Como foi dito anterior-
+
+1311
+
+(8)
+
+onde apenas os elementos da camada atual c são levados em conta. Em seguida é realizada a atualização incremental das categorias, que ocorre para todas
+as distribuições j da camada atual c através das equações apresentadas em (Engel and Heinen, 2010 Heinen and Engel, 2010a) para o aprendizado_incremental
+de modelos_de_mistura_gaussianos. Essas equações seguem procedimentos estocásticos clássicos de regressão (Robbins and Monro, 1951 Keehn, 1965), o que
+garante a convergência do algoritmo.
+Após o processamento da camada inicial, as probabilidades a posteriori de todos os seus nodos são enviadas para a camada seguinte na forma de um vetor
+c contendo M elementos. A camada seguinte então é
+ativada utilizando como entradas o vetor c e utilizando
+o mesmo algoritmo descrito acima. Este processo se
+repete por toda a hierarquia até que se atinja o último nível. Além deste fluxo de informações bottomup, cada camada passa para a sua antecessora o vetor de probabilidades c que é utilizado como informação de contexto (top-down) no instante de tempo
+t + 1. Quando uma determinada camada não tiver sido
+ativada nenhuma vez, o que ocorre no início do treinamento ou toda vez que a hierarquia é expandida, é
+utilizado como contexto o escalar 1, pois neste caso
+a camada superior possui apenas um elemento. O escalar 1 também é utilizado como contexto na camada
+superior da hierarquia.
+O IGMM possui dois parâmetros que precisam
+ser configurados pelo usuário ini , que é o desvio padrão inicial utilizado para inicializar a matriz de variânciascovariâncias e nov  0, 1, que representa
+o quão distante um determinado valor x precisa estar
+de uma distribuição j para que um novo conceito seja
+criado. A principal função de nov é definir a granularidade do modelo. Valores pequenos (nov << 0.01)
+fazem com que poucos conceito sejam criados. Valores mais elevados (nov >> 0.01) podem levar a criação de muitas componentes espúrias. Na prática o
+valor nov  0.01) pode ser utilizado na maioria dos
+casos. Já o parâmetro ini , que é a única informação
+a priori informada ao modelo, deve ser configurado
+de acordo com as faixas de valores dos dados, mas
+em geral ele pode ser inicializado através da fórmula
+ini  (xmax  xmin )10.
+Com base no que foi descrito acima, é possível
+afirmar que o IGMM possui não somente elementos
+do MPF, mas também diversos pontos em comum
+
+com a teoria construtivista de (Piaget, 1996), pois
+(i) quando novos dados sensoriais podem ser explicados por algum dos esquemas existentes (categorias
+do IGMM), este esquema é ajustado para que represente corretamente a experiência obtida (processo de
+assimilação) (ii) quando os novos dados não puderem
+ser explicados por nenhum dos esquemas atuais, um
+novo esquema (distribuição) é gerado para representar
+a nova experiência eou conceito que contradiz os esquemas anteriores. Apesar disto, é importante ressaltar que o modelo proposto não segue fielmente o paradigma construtivista (modelos mais de acordo com
+esta teoria são encontrados em (Drescher, 1991 Perotto and Álvares, 2006 Perotto and Álvares, 2007)).
+As principais vantagens do IGMM em relação a outras
+abordagens prévias são (Engel and Heinen, 2010 Heinen and Engel, 2010a Heinen and Engel, 2010b)
+ O aprendizado ocorre de forma incremental
+ A hierarquia é definida de forma automática
+ O algoritmo atua de forma perpétua
+ Cada registro é analisado apenas uma vez
+ O IGMM aprende de forma bastante agressiva
+ Ele retorna a hipótese de máxima verossimilhança para os dados observados até o momento.
+5
+
+Figura 2 Conceitos gerados para a sala quadrada
+posto por duas salas ligadas por um pequeno corredor.
+Ele é inspirado em um ambiente similar utilizado em
+(Linker and Niklasson, 2000b Linker and Niklasson, 2000a Linker, 2003) neste mesmo tipo de aplicação, ou seja, a formação automática de conceitos a
+partir de dados sensoriais ruidosos.
+Os parâmetros das distribuições calculados pelo
+IGMM, bem como os conceitos que eles representam,
+são mostrados na Tabela 2. Através deste experimento
+percebe-se que o IGMM foi capaz de formar conceitos de primeiro nível bastante satisfatórios a partir das
+leituras sensoriais. Além disso, o modelo foi capaz de
+calcular as estatísticas dos mesmos (média, matriz de
+covariância e probabilidade a priori), e com estas estatísticas é possível saber o nível de certeza (probabilidade a posteriori) de se estar observando uma determinado conceito a partir das leituras sensoriais recebidas
+e do contexto atual.
+Através do experimento da Figura 3 é possível
+perceber que o IGMM foi capaz de detectar conceitos espaciais de forma bastante eficiente, mas neste
+experimento não foram extraídos conceitos espaçotemporais (a hierarquia possui apenas um nível). Já
+no experimento descrito na Tabela 3 todos os níveis da
+hierarquia foram utilizados sobre estes mesmos dados,
+o que permitiu a descoberta de correlações temporais
+nos dados de entrada. A Tabela 3 mostra os conceitos
+temporais detectados neste experimento e a frequência
+em que cada um deles ocorreu.
+Na Tabela 3, um conceito de nível 2 representa a
+transição de dois estados (1  3, por exemplo), conceitos de nível 3 representam a transição sucessiva entre três estados (1  3  4, por exemplo), e assim por
+diante. As colunas 1, 3 e 5 e 7 da Tabela 3 (colunas
+Transição) mostram as transições de estados, e as
+colunas 2, 4, 6 e 8 (colunas N) mostram a frequência com que cada transição ocorreu. Percebe-se que
+alguns dos conceitos de nível dois são apenas partes
+de conceitos maiores (como por exemplo os conceitos
+3  4 e 3  1), o que pode fica evidente pelo fato da
+frequência dos sub-conceitos ser a mesma do conceito
+
+Experimentos Realizados
+
+Esta seção descreve os experimentos realizados para
+validar o modelo proposto. Nestes experimentos, os
+dados consistem de uma sequência de quatro valores contínuos (s1 , s2 , s3 , s4 ), correspondentes as leituras dos sonares localizados nos lados esquerdodireito
+(s1 , s4 ) e a 10  +10 da frente (s2 , s3 ) de um robô,
+e dois valores contínuos (v1 , v2 ) correspondentes as
+velocidades dos motores esquerdodireito (cinemática
+diferencial). Estes valores foram gerados usando o simulador do robô Pioneer 3-DX1 . A Figura 2 mostra os
+conceitos gerados pelo IGMM enquanto o robô seguia
+as paredes de uma sala quadrada em sentido horário
+(uma seta marca a posição inicial e o sentido do robô
+durante a trajetória).
+O IGMM criou três agrupamentos correspondentes aos conceitos parede  esquerda  movendo-se
+para frente lentamente (no início da trajetória), parede  esquerda  movendo-se para frente e parede
+ esquerda e obstáculo em frente  virando para a direita. Os círculos coloridos preenchidos correspondem as posições onde cada agrupamento foi criado, e
+os quadrados não-preenchidos representam a trajetória do robô. Estes possuem a tonalidade da categoria
+com a maior probabilidade a posteriori para o ponto de
+dados correspondente. A Tabela 1 mostra os parâmetros dos conceitos calculados pelo IGMM. Para estes
+dados, uma leitura de 5000 corresponde ao valor máximo do sonar, o que indica que nenhum obstáculo foi
+detectado na direção correspondente.
+A Figura 3 apresenta um experimento similar,
+porém utilizando um ambiente mais complexo, com1 MobileSim
+
+e ARIA  httprobots.mobilerobots.com
+
+1312
+
+Tabela 1 Conceitos gerados pelo IGMM no percurso da sala quadrada
+s1
+s2
+s3
+s4
+v1
+v2
+Esquerda Frente -10 Frente 10 Direita Direita Esquerda
+Vermelho Parede  esquerdamovendo-se devagar  frente
+Priori 0.0066
+Média
+702
+4498
+4999
+5000
+256
+256
+Desvio padrão
+246
+358
+224
+0.01
+122
+124
+Azul Parede  esquerdamovendo-se  frente
+Priori 0.9033
+Média
+588
+3941
+4993
+5000
+699
+700
+Desvio padrão
+106
+618
+73
+0.01
+8
+8
+Preto Parede  esquerda e obstáculo  frentevirando  direita
+Priori 0.0901
+Média
+1318
+2633
+3883
+5000
+668
+731
+Desvio padrão
+532
+714
+615
+0.01
+17
+18
+
+Figura 3 Conceitos gerados pelo IGMM no ambiente com duas salas
+maior. Desta forma, é possível verificar a existência
+de vários conceitos temporais no ambiente, como por
+exemplo o conceito 3  4  3  1, que representa
+duas paredes e uma curva, que é algo que o robô encontra diversas vezes durante a trajetória.
+
+espaciais em tarefas de robótica_móvel utilizando apenas os dados fornecidos pelos sensores dos robôs. As
+perspectivas futuras incluem a realização de experimentos com dados fornecidos por um robô real.
+Agradecimentos
+
+6
+
+Conclusões
+Agradecemos ao apoio do CNPq que tornou possível
+a realização deste trabalho.
+
+Este artigo apresentou o IGMM, que é um algoritmo
+incremental para a formação_de_conceitos hierárquicos de forma não supervisionada a partir de dados
+de entrada ruidosos. Este algoritmo, que é inspirado
+no MPF (Hawkins, 2005), utiliza modelos de mistura
+gaussianos para modelar os conceitos de alto nível, de
+forma que ele é capaz de aprender as distribuições dos
+dados de entrada de forma bastante rápida e eficiente.
+De fato, o modelo proposto é capaz de estimar as probabilidades dos dados de entrada com relativa precisão
+utilizando poucos exemplos de treinamento, e a qualidade das previsões é melhorada toda vez que novos
+dados são recebidos e analisados pelo modelo.
+Através dos experimentos realizados foi possível
+verificar que o IGMM é capaz de aprender conceitos
+
+Referências
+Arandjelovic, O. and Cipolla, R. (2005). Incremental
+learning of temporally-coherent gaussian mixture models, Proc. 16th British Machine Vision
+Conf. (BMVC), Oxford, UK, pp. 759768.
+Bakker, B., Linker, F. and Schmidhuber, J. (2002).
+Reinforcement learning in partially observable
+mobile robot domains using unsupervised event
+extraction, Proc. IEEERSJ Int. Conf. Intelligent
+Robots and Systems (IROS), Vol. 1, IEEE Press,
+EPFL, Lausanne, Switzerland, pp. 938943.
+
+1313
+
+Tabela 2 Conceitos gerados pelo IGMM no ambiente com duas salas
+s1
+s2
+s3
+s4
+v1
+v2
+Esquerda Frente -10 Frente 10
+Direita
+Direita Esquerda
+Vermelho Parede  direitamovendo-se  frente
+Priori 0.5785
+Média
+4995
+4999
+4999
+1157
+398.7
+397.4
+Desvio padrão
+136.2
+23.4
+27.8
+87.0
+21.8
+21.7
+Azul Corredormovendo-se  frente
+Priori 0.0558
+Média
+1096
+4993
+5000
+1212
+398.2
+401.6
+Desvio padrão
+91.8
+87.6
+71.7
+443.8
+11.3
+11.2
+Preto Parede  direita e obstáculo  frentemovendo-se  frente
+Priori 0.2341
+Média
+5000
+3607
+3518
+1159
+403.1
+396.7
+Desvio padrão
+40.3
+891.1
+815.2
+104.2
+10.2
+10.5
+Ciano Parede  direita e obstáculo  frentevirando  esquerda
+Priori 0.0885
+Média
+5000
+3286
+2094
+1503
+456.5
+310.8
+Desvio padrão
+65.5
+1174.3
+431.5
+284.8
+47.3
+33.1
+Magenta Bifurcação e obstáculo  frentemovendo-se  frente
+Priori 0.0078
+Média
+5000
+2188
+2174
+5000
+388.7
+411.1
+Desvio padrão
+221.3
+282.3
+277.0
+227.8
+37.6
+37.5
+Verde Obstáculos em ambos os ladosvirando  direita
+Priori 0.0291
+Média
+2604
+3619
+4275
+1565
+308.9
+446.1
+Desvio padrão
+1464
+1442.4
+1147.5
+464.7
+44.3
+56.4
+Amarelo Parede  esquerdamovendo-se  frente
+Priori 0.0062
+Média
+1103
+5000
+5000
+4986
+384.1
+415.6
+Desvio padrão
+248.0
+208.9
+215.3
+285.5
+43.3
+43.2
+Tabela 3
+Nível 2
+Transição N
+13
+7
+34
+6
+43
+6
+31
+6
+
+Conceitos temporais obtidos a partir do ambiente com duas salas
+Nível 3
+Nível 4
+Nível 5
+Transição
+N
+Transição
+N
+Transição
+134 6 1343 6 13431
+343 6 3431 6 34313
+431 6 4313 5 43134
+313 5 3134 4 31343
+
+Bakker, B., Zhumatiy, V., Gruener, G. and Schmidhuber, J. (2003). A robot that reinforcement-learns
+to identify and memorize important previous observations, Proc. IEEERSJ Int. Conf. Intelligent
+Robots and Systems (IROS), Vol. 1, IEEE Press,
+Las Vegas, NV, pp. 430435.
+
+N
+6
+5
+4
+4
+
+Gennari, J. H., Langley, P. and Fisher, D. (1989). Models of incremental concept formation, Artificial
+Intelligence 40 1161.
+George, D. and Hawkins, J. (2005). A hierarchical
+bayesian model of invariant pattern recognition
+in the visual cortex, Proc. IEEE Int. Joint Conf.
+Neural Networks (IJCNN), IEEE Press, Montreal, Canada.
+
+Dempster, A. P., Laird, N. M. and Rubin, D. B. (1977).
+Maximum likelihood from incomplete data via
+the EM algorithm, Journal of the Royal Statistical Society 39(1) 138.
+
+Grossberg, S. (2003). How does the cerebral cortex
+work? development, learning, attention, and 3d
+vision by laminar circuits of visual cortex, Technical Report  Invited Article for Behavioral and
+Cognitive Neuroscience Reviews CASCNS TR2003-005, Boston Univ., Boston, MA.
+
+Drescher, G. L. (1991). Made-up Minds A Constructivist Approach to Artificial Intelligence, MIT
+Press, Cambridge, MA.
+Engel, P. M. and Heinen, M. R. (2010). Incremental learning of multivariate gaussian mixture
+models, Proc. 20th Brazilian Symposium on AI
+(SBIA), LNCS, Springer-Verlag, São Bernardo
+do Campo, SP, Brazil. To appear.
+
+Hawkins, J. (2005). On Intelligence, Owl Books.
+Hawkins, Jeff amd Dileep, G. (2006). Hierarchical
+temporal memory Concepts, theory, and terminology, Whitepaper, Numenta Inc.
+
+Figueiredo, M. A. T. and Jain, A. K. (2002). Unsupervised learning of finite mixture models,
+IEEE Trans. Pattern Analysis and Machine Intelligence 24(3) 381396.
+
+Haykin, S. (2008). Neural Networks and Learning
+Machines, 3 edn, Prentice-Hall, Upper Saddle
+River, NJ.
+
+1314
+
+Heinen, M. R. and Engel, P. M. (2009a). Aprendizado
+autônomo de robôs_móveis simulados em ambientes contínuos, Proc. XXXV Latin American Informatics Conf. (CLEI), Pelotas, RS, p. 10.
+
+Linker, F. and Niklasson, L. (2000b). Time series segmentation using an adaptive resource allocating vector quantization network based on
+change detection, Proc. IEEE-INNS-ENNS Int.
+Joint Conf. Neural Networks (IJCNN 2000),
+IEEE Press, Los Alamitos, CA, pp. 323328.
+
+Heinen, M. R. and Engel, P. M. (2009b). Aprendizado
+de robôs_móveis autônomos em ambientes simulados contínuos, Anais do IX Congr. Brasileiro
+de Redes Neurais  Inteligência Computacional
+(CBRN), Ouro Preto, MG, p. 5.
+
+MacQueen, J. B. (1967). Some methods for classification and analysis of multivariate observations,
+Proc. 5th Berkeley Symposium on Mathematical
+Statistics and Probability, Vol. 1, Univ. California Press, Berkeley, CA, pp. 281297.
+
+Heinen, M. R. and Engel, P. M. (2009c). Aprendizado
+e controle_de_robôs_móveis autônomos utilizando
+atenção visual, Anais do I Simpósio de Computação Aplicada (SCA 2009), Passo Fundo, RS.
+
+Miller, J. and Lommel, P. (2006). Biomimetic sensory abstraction using hierarchical quilted selforganizing maps, Proc. Storage and Retrieval for
+Media Databases (SPIE), Vol. 6384.
+
+Heinen, M. R. and Engel, P. M. (2010a). An incremental probabilistic neural network for regression
+and reinforcement learning tasks, Proc. 20th Int.
+Conf. Artificial Neural Networks (ICANN 2010),
+LNCS, Springer-Verlag, Thessaloniki, Greece.
+To appear.
+
+Nolfi, S. and Tani, J. (1999). Extracting regularities in
+space and time through a cascade of prediction
+networks The case of a mobile robot navigating
+in a structured environment, Connection Science
+11(2) 125148.
+
+Heinen, M. R. and Engel, P. M. (2010b). IPNN An incremental probabilistic neural network for function approximation and regression tasks, Proc.
+Int. Joint Conf. 2010, 11th Brazilian Neural
+Networks Symposium (SBRN), IEEE Press, São
+Bernardo do Campo, SP, Brazil. To appear.
+
+Perotto, F. S. and Álvares, L. O. (2006). Learning regularities with a constructivist agent, AAMAS06, ACM Press, Hakodate, Hokkaido, Japan, pp. 807809.
+Perotto, F. S. and Álvares, L. O. (2007). Constructivist
+anticipatory learning mechanism (CALM) - dealing with partially deterministic and partially observable environments, Proc. Seventh Int. Conf.
+Epigenetic Robotics Modeling Cognitive Development in Robotic Systems, Vol. 135 of Lund
+Univ. Cognitive Studies.
+
+Holland, O. and Goodman, R. (2003). Robots with Internal Models A Route to Machine Consciousness?, Vol. 10 of Machine Consciousness, Imprint Academic, Exeter, UK, pp. 77109.
+Keehn, D. G. (1965). A note on learning for gaussian proprieties, IEEE Trans. Information Theory
+11 126132.
+
+Piaget, J. (1996). A Construção do Real na Criança,
+3 edn, Editora Ática, São Paulo, SP, Brazil.
+
+Kohonen, T. (1987). Self-Organizing Maps, 2 edn,
+Springer-Verlag, Berlin, Germany.
+
+Pinto, R. C. (2009). A neocortex inspired hierarchical
+spatio-temporal pattern recognition system, Final undergraduate dissertation, Universidade Federal do Rio Grande do Sul (UFRGS), Porto Alegre, RS, Brazil.
+
+Kristan, M., Skocaj, D. and Leonardis, A. (2008). Incremental learning with gaussian mixture models, Proc. Computer Vision Winter Workshop
+2008, Moravske Toplice, Slovenia, pp. 2532.
+
+Robbins, H. and Monro, S. (1951). A stochastic approximation method, Annals of Mathematical Statistics 22 400407.
+
+Linker, F. (2003). Unsupervised On-line Data Reduction for Memorisation and Learning in Mobile
+Robotics, Ph.d. thesis, Computer Science, Univ.
+Sheffield, Sheffield, UK.
+
+Stening, J., Jacobsson, H. and Ziemke, T. (2005). Imagination and abstraction of sensorimotor flow
+Towards a robot model, Proc. AISB05 Symposium on Next Generation Approaches to Machine, Hatfield, UK.
+
+Linker, F. and Jacobsson, H. (2001). Mobile robot
+learning of delayed response tasks through event
+extraction A solution to the road sign problem
+and beyond, Proc. 17th Int. Joint Conf. Artificial
+Intelligence (IJCAI01), Morgan Kaufmann Publishers Inc., San Francisco, CA, pp. 777782.
+
+Tan, P.-N., Steinbach, M. and Kumar, V. (2006). Introduction to Data Mining, Addison-Wesley, Boston, MA.
+
+Linker, F. and Niklasson, L. (2000a). Sensory flow
+segmentation using a resource allocating vector quantizer, Proc. Joint IAPR Int. Workshops
+on Advances in Pattern Recognition, SpringerVerlag, London, UK, pp. 853862.
+
+Thrun, S., Burgard, W. and Fox, D. (2006). Probabilistic Robotics, Intelligent Robotics and Autonomous Agents, MIT Press, Cambridge, MA.
+
+1315

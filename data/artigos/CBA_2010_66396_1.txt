@@ -1,0 +1,378 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+CONTROLE EM TEMPO REAL DE UM VEÍCULO SUBMARINO NÃO TRIPULADO
+LUCIANO O. FREIRE, ETTORE A. DE BARROS, JOÃO L. D. DANTAS
+Laboratório de Veículos não Tripulados, Departamento de Engenharia Mecatrônica, Universidade de São
+Paulo
+Av. Prof. Professor Mello Moraes, 2231, sala MZ-08, 05508-030, São Paulo, SP, Brasil. Fone(11)3091-6017
+E-mails eabarros@usp.br, luciano.ondir@gmail.com
+
+Abstract
+ This work presents a decentralized control architecture for an underwater vehicle. This architecture aims to be low cost,
+extensible and versatile. For low cost we mean cheap and based on off the shelf components, free and largely known software tools,
+like C language, GNU compiler, etc. which requires low training time for an average undergraduate or graduate engineer student,
+which means low investment and time for adding a new functionality to the system, at costs of more work in coding new software,
+which, at an university background, is not expected to be a great problem. Although, once many students are expected to participate
+in this project, many aspects must be taken into account. The first is the software used must be modular, what is facilitated by the use
+of an embedded operational system and an object-oriented software design philosophy. The second is the hardware must be modular
+itself, allowing many different configurations. The third is the hardware must be fool proof and mechanically rugged to avoid being
+damaged by inexperienced handling. An implementation of an AUV to system identification is done and some preliminary experimental results are shown.
+Keywords
+ real-time, control architecture, underwater vehicles, AUV, CAN
+Resumo
+ Este trabalho propõe uma arquitetura_de_controle descentralizada para um veículo_submarino não tripulado. O objetivo é
+baixo_custo, extensibilidade e generalidade. Por baixo_custo entenda-se componentes disponíveis e baratos, ferramentas de software
+gratuitas e amplamente difundidas como linguagem C e compilador GNU que requerem pequeno tempo de treinamento para um estudante de graduação ou pós-graduação em engenharia, o que significa baixo investimento e pouco tempo para adicionar uma nova
+funcionalidade ao sistema, ao custo de maior trabalho de codificação de softwares novos, o que, em um ambiente universitário, não é
+esperado que seja um grande problema. Entretanto, uma vez que espera-se que vários estudantes participarão deste projeto, vários aspectos devem ser levados em conta. O primeiro é a modularidade do software, a qual é facilitada pelo uso de um sistema operacional
+embarcado e por uma filosofia de projeto orientada a objetos. O segundo é que o hardware deve ser modular, permitindo várias configurações diferentes. O terceiro é que o hardware deve ser  prova de burros e mecanicamente robusto para evitar danos por manuseio
+de pessoal inexperiente.  feita uma implementação de um AUV para identificação_de_sistemas e alguns resultados experimentais são
+mostrados.
+Palavras-chave
+ 
+
+1
+
+Introdução
+
+Figura 1. AUV Pirajuba em teste na piscina
+
+Uma arquitetura_de_controle para um veículo
+submarino desenvolvido no âmbito de uma universidade precisa se adequar a uma série de requisitos,
+tais como
+
+- alta modularidade  vários alunos deverão desenvolver módulos diferentes ao longo do projeto, o
+que implica que existe a necessidade de interfaces de
+saída e entrada bem definidas para que cada membro
+da equipe possa desenvolver e testar cada parte individualmente. Para isso, todo o trabalho deve ser desenvolvido de maneira modular, onde cada módulo
+faça apenas uma coisa e tenha interfaces de entrada
+e saída bem definidas, pois isso permite que pequenos blocos sejam desenvolvidos e testados simultaneamente por vários desenvolvedores e posteriormente sejam integrados. Além disso, é possível que
+cada um desses pequenos blocos seja reaproveitado
+sem que o novo usuário tenha conhecimento da estrutura interna
+- utilização de componentes disponíveis no mercado local s vezes um componente importado pode
+ter um desempenho melhor, porém, a sua aquisição
+costuma ser muito demorada, demorando cerca de
+um mês, o que pode comprometer o cronograma.
+Assim, o uso de componentes que possam ser adquiridos facilmente no mercado local ao mesmo tempo
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+reduz o custo por reduzir o número de sobressalentes
+necessários e agiliza o cronograma. Além disso, há
+uma redução no risco haver um atraso nos projetos
+- utilização de ferramentas amplamente conhecidas e difundidas nos cursos de graduação devemos
+sempre lembrar que um dos limitantes para a pesquisa científica é a falta de pessoal adequadamente
+treinado ou familiarizado com as ferramentas sendo
+usadas no projeto. Uma vez que o presente projeto se
+dá no contexto de um laboratório de uma universidade que tem como principal fonte de recursos humanos os alunos de iniciação científica e de mestradodoutorado, que permanecem na instituição por
+tempo limitado, é bastante desejável que todas as
+ferramentas usadas no projeto tenham sido apresentadas no curso de graduação. Dessa forma, fica facilitado o processo de familiarização dos alunos com
+as atividades do laboratório, o que resulta em menor
+tempo de preparo e maior produção durante o curso,
+ainda que possam existir ferramentas mais modernas
+e produtivas, mas que exigem um longo curso de
+familiarização
+- baixo_custo individual dos componentes em
+projetos desenvolvidos por alunos do curso de graduação ou por engenheiros recém formados a possibilidade de avaria por imperícia ou distração é bastante alta. Dessa forma, é desejável que se trabalhe
+com vários componentes de valor individual baixo
+do que com um único componente de desempenho
+superior. Além disso, uma vez que projetos de pesquisa devem poder ser constantemente alterados, o
+uso de componentes de baixo_custo é mais apropriado
+- generalidade e extensibilidade Uma vez que é
+desejável o reuso de componentes de hardware e
+software, a arquitetura deve ser bastante genérica e
+facilmente extensível, pois assim fica fácil o aproveitamento do trabalho realizado em um projeto anterior em um novo projeto, o que reduz o tempo de desenvolvimento e confere maior confiabilidade ao
+trabalho desenvolvido. Para que haja uma boa extensibilidade o uso de uma rede de dados é bastante
+recomendável e
+- robustez mecânica um veículo_submarino deve ser projetado de modo a ser robusto  corrosão da
+água do mar e a acelerações imposta por ondas e
+eventuais batidas durante o transporte e operação.
+Além disso, como é esperado um alto número de
+reconfigurações do sistema, os componentes devem
+ser bastante robustos ao manuseio e possuir um esquema de montagem bastante maciço.
+Foi feita uma pesquisa sobre o estado da arte em
+relação a veículos submarinos com arquiteturas de
+controle descentralizada e nessa pesquisa foram encontrados 11 artigos que descrevem sistemas similares ao desejado no laboratório e verificou-se que a
+boa parte (4 dentre os 11) usam uma rede CAN.
+
+Quanto aos sistemas_operacionais, houve uma
+grande variedade, não havendo uma tendência mais
+forte por parte dos autores. Chamou a atenção o sistema operacional chamado COSII, que pode ser
+embarcado em microprocessadores de pequeno porte, atende requisitos de tempo_real e possui certificações de segurança aeronáutica. Além disso, de acordo com 1, é bastante fácil de ser configurado e usado, e pode ser usado gratuitamente por universidades para fins de pesquisa e ensino.
+O uso de rede de dados ficou bastante concentrado em 2 padrões ethernet (5 autores) e CAN (4
+autores). Os autores de 2 e 3 afirmam que o uso
+de redes CAN aumenta a confiabilidade de um sistema se comparado com o uso de outras redes de
+dados e leva a uma redução no preço do sistema,
+bem como no espaço ocupado pelos cabos de rede.
+1.1 Descrição do AUV Pirajuba
+O AUV Pirajuba possui um casco axissimétrico
+e quatro lemes em cruz, sendo similar a um torpedo.
+Foi desenvolvido na Escola Politécnica da USP para
+validação experimental de teorias hidrodinâmicas.
+Para que possa ser feito o controle de rumo e profundidade, ele precisa ter uma velocidade mínima de
+0.5 ms avante. Seu casco é uma réplica do AUV
+Maya indiano.
+Tabela 1. Sensores do AUV Pirajuba.
+
+Sensor
+
+Fabricante
+
+Modelo
+
+Saída
+
+Bússola
+
+Precision
+Navigation
+
+TCM2
+
+RS232
+
+IMU
+
+Crossbow
+
+VG600
+
+RS232
+
+Nível de
+líquido
+
+Honeywell
+
+LLE
+
+TTL
+
+Pressão
+
+Honeywell
+
+MLH
+
+4-20mA
+
+Driver
+motor
+
+Maxon
+
+ADS5010
+
++-10V
+
+Giroscópio
+
+KVH Industries
+
+E Core2000
+
+0- 5V
+
+As equações de movimento e a teoria e a teoria
+de controle empregada podem ser vistas em 4.
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+torque. Entretanto, possuem um erro de posicionamento em regime_permanente proporcional  carga.
+Para compensar esse problema, foi feita uma ligeira
+modificação nos servos para medir, por meio de uma
+placa específica, o ângulo real de saída. Essa placa
+constitui um sensor a parte e requer um driver próprio.
+2 Arquitetura de software
+
+Figura 2. Carenagem hidrodinâmica, vasos de pressão principal e de
+manobra.
+
+Figura 3. Eletrônica embarcada no vaso principal, vaso de manobra
+e de propulsão.
+
+A estrutura do software adotada será em camadas, sendo a primeira para controlar os periféricos
+do microprocessador, a segunda é o sistema operacional embarcado, a terceira os controladores dos
+sensores e atuadores, a quarta uma camada para
+estabelecer a comunicação entre os nós e permitir o
+acesso de todas as informações do sistema a cada
+processo e a quinta camada contém os processos de
+alto nível, como guiagem, controle e intertravamentos de segurança.
+No AUV existem vários nós com diferentes tarefas. Cada um desses nós terá as 5 camadas, porém
+não terá todos os objetos. Os objetos de controle de
+periféricos, o sistema operacional, os objetos de controle da rede CAN e a memória compartilhada são
+comuns a todos os nós. Dentre esses, o mais relevante é a memória compartilhada (sharedMemory),
+que faz uso dos objetos de controle da rede CAN
+para enviar e receber dados. Todos os dados gerados
+em cada nó são transmitidos para a memória compartilhada do mesmo nó, que os transmite pela rede
+CAN para as outras memórias compartilhadas. Assim, todas as memórias compartilhadas possuem a
+versão mais recente de todos os dados. Dessa forma,
+toda tarefa de alto nível pode ser transferida de um
+nó para outro sem afetar a estrutura do sistema, possibilitando o balanço de carga de processamento
+entre os nós.
+2.1 Controle de periféricos
+Essa camada tem como função fazer o controle
+de baixo nível dos diversos periféricos do microprocessador usando os registradores de configuração e
+estabelecer rotinas genéricas em C para configuração e uso dos recursos, tais como gerador de PWM,
+conversor digital-analógico e portas seriais.
+
+Figura 4. Vaso de propulsão.
+
+As superfícies de controle são movidas independentemente por quatro servos radiocontrolados de
+alto torque, modelo DS8711 Ultra Torque SX da JR.
+Essa independência entre as quatro superfícies de
+controle permite, por exemplo, o controle do ângulo
+de banda ou rolagem (roll), ainda não implementado. Foram escolhidos por serem compactos, de fácil
+uso, apresentarem dinâmica rápida e possuírem alto
+
+2.2 Sistema operacional
+O uso de um sistema operacional possibilita a
+compartimentalização do código, separando o sistema em diversas tarefas. Diferentemente de um sistema foregroundbackground, onde uma alteração
+em uma parte do programa pode afetar o funcionamento de outras partes, um sistema operacional
+permite o desenvolvimento independente de vários
+módulos diferentes e que não trocarão influências
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+entre si além das previstas no código. Além disso, o
+sistema operacional proporciona uma série de serviços, tais como tempos de espera, semáforos, mensagens e início ou fim de tarefas. Foi usado o C-OSII,
+que pode ser portado para muitos microprocessadores, possui certificação aeronáutica e é gratuito para
+universidades e instituições de pesquisa.
+
+executar um algoritmo de controle em um terceiro
+nó da rede.
+
+Figura 6. Diagrama de blocos do veículo.
+
+2.5 Tarefas de alto nível
+Esses módulos estão ligados aos objetivos do veículo, tais como o armazenamento de dados, a navegação, a execução de manobras e a comunicação
+com uma estação base.
+3 Arquitetura de Hardware
+
+Figura 5. Estrutura de software.
+
+2.3 Drivers de sensores e atuadores
+Os diversos sensores e atuadores usados no veículo podem requerer em alguns casos procedimentos
+de configuração logo após serem ligados, tais como a
+bússola e a unidade de medição inercial. Haverá
+então um módulo de software dedicado a, usando um
+determinado periférico do microprocessador, configurar, usar e interpretar os dados vindos dos sensores. No caso de atuadores, esse módulo fará a conversão dos dados de comando (em rotações por minuto) para os dados binários que serão enviados para
+o atuador (por meio do conversor digital-analógico
+ou por meio da porta_serial, por exemplo).
+2.4 Memória compartilhada entre os nós
+Uma vez que haverão vários nós na rede e cada
+nó possui um subconjunto pequeno de informações,
+torna-se desejável que cada tarefa possa ter acesso a
+todos os dados presentes na rede. Assim, poderemos
+desenvolver módulos de software sem se preocupar
+em qual nó ele será executado, podendo então o processamento ser igualmente distribuído por todos os
+nós da rede. Como mostrado no diagrama_de_blocos
+do veículo abaixo, podemos aquisitar os sinais da
+bússola (modelo TCM2 da Precision Navigation
+Inc.) em um nó, os sinais da IMU em outro nó e
+
+Buscando-se uma arquitetura de baixo_custo e
+boa disponibilidade no mercado local, foi adotada
+uma linha similar  aplicada na indústria automobilística, que é o uso de uma rede CAN com uma série
+de nós de sensoriamento  atuação e um nó principal
+que faz o processamento dos dados e das funções
+computacionalmente mais custosas.
+Tal abordagem é bastante robusta (mecanicamente, eletricamente e a ruídos), reduz muito o número de fios, permitindo o uso de redundância e
+tolerância a falhas, de fácil implementação e baixo
+custo, já que usa componentes empregados na indústria automobilística. Cada nó da rede possui três
+camadas, a saber drivers, conversão de dados e controle de rede. Em 2 uma arquitetura similar de
+baixo_custo e alta confiabilidade é proposta.
+
+Figura 7. Um nó da rede CAN com sua implementação em pilha.
+
+3.1 Drivers
+Essa camada traduz os sinais elétricos do meio
+físico dos sensores ou os sinais de potência dos atuadores para os sinais de 0-3.3V de baixa corrente que
+o microprocessador usa em seus periféricos de conversão analógicadigital ou digitalanalógica.
+3.2 Conversão de dados
+Nesta camada de hardware é rodada toda a arquitetura de software desenvolvida anteriormente.
+Cada nó possui um microprocessador ARM7 de
+32 bits, modelo LPC2148, que faz rotinas de inicia-
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+lização de sensores e atuadores. Além disso, faz a
+conversão dos dados trafegados na rede para o formato de dados binários a ser introduzidos nos conversores DA e converte os dados adquiridos pelos
+conversores AD para o formato a ser trafegado na
+rede. Podem também incorporar filtros simples, rotinas de intertravamento em caso de perda de conexão com a estação base ou descarregamento da bateria e algoritmos simples de controle.
+
+Para que fosse obtido o ângulo de rumo do veículo
+foi integrado o sinal do giroscópio de fibra ótica. Foi
+observado que a manobra em questão não ficou perfeitamente regular e a causa foi atribuída  deficiência do controle de profundidade, ao arrasto do cordão umbilical e ao início da manobra com um momento angular não nulo. O método de controle utilizado foi uma versão simplificada daquele desenvolvido em 4, usando apenas um atuador.
+Falta ainda aperfeiçoar o procedimento do ensaio no sentido de iniciar a manobra já em regime
+permanente e executar maior número de guinadas.
+Isso pode ser feito por meio de um controle de rumo
+nos primeiros segundos de ensaio para zerar a velocidade_angular.
+Na parte mecânica podemos ver que existem
+ainda erros no posicionamento dos lemes, o que pode ser corrigido por meio de uma realimentação de
+posição ou por meio de uma mudança no mecanismo
+de atuação. Esses erros de posicionamento dos servos também podem estar contribuindo para a assimetria da manobra, já que existirão diferenças entre
+o leme inferior e superior, o que induz a um momento de rolagem e a uma trajetória tridimensional.
+
+Figura 8. Arquitetura de hardware.
+
+3.3 Controle de rede
+O protocolo CAN possui uma série de característica como arbitração não-destrutiva, checagem de
+dados através de CRC, etc que devem ser implementados por meio de hardware. Dessa forma, é mais
+conveniente fazer uso de circuitos integrados que
+implementam tais funções e que se comunicam com
+um microprocessador por meio de um protocolo serial ou paralelo. No caso, foram usados os CI
+MCP2515 para o controle da rede se comunicando
+com o ARM7 por meio de uma porta SPI. O driver
+de rede CAN usado foi o MCP2551.
+
+Figura 9. Manobra de zigzag com leme de 5 e guinada de 5
+
+4 Resultados e Discussão
+Uma primeira versão dessa arquitetura foi implementada em um veículo com a finalidade de obter
+validações experimentais de teorias hidrodinâmicas.
+Uma vez que os testes foram realizados em uma piscina que possuía materiais ferromagnéticos em sua
+estrutura, os sinais da bússola foram inutilizados.
+
+Figura 10. Profundidade e leme horizontal durante a manobra de
+zigzag.
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+LQGLTR,
+Congresso
+Automática CBA2010, 2010.
+
+Figura 11. AUV Pirajuba durante a manobra de zigzag com controle
+de profundidade.
+
+4 Conclusão e trabalhos futuros
+Foi desenvolvida uma arquitetura de baixo_custo e boa confiabilidade para um veículo_submarino
+que pode ser facilmente expandida por qualquer
+aluno de graduação em engenharia. Resultados de
+testes iniciais mostram a funcionalidade da arquitetura com o veículo realizando manobras de maneira
+autônoma. Em menos de meio dia de trabalho um
+aluno de graduação que não tinha participado da
+codificação conseguir agregar o controle de profundidade, o que evidencia a clareza e manutenabilidade da arquitetura criada. Para facilitar o desenvolvimento de controladores e algoritmos de navegação
+será pesquisada a possibilidade de integrar módulos
+de código gerado automaticamente a partir de modelos do MatLab Simulink pelo Real Time Workshop.
+Tal abordagem permitirá um rápido desenvolvimento de software_embarcado e pode encontrar aplicações diversas na indústria e em instituições de pesquisa, dado o baixo_custo de desenvolvimento e manutenção do sistema.
+Referências Bibliográficas
+1 ZHANG, L. et al., Design and experiment of
+automatic pilot for long range AUVs, 2008 3rd
+IEEE Conference on Industrial Electronics and
+Applications, p 1824-1827, 2008.
+2 ORTIZ, A., Improving the safety of AUVs,
+OCEANS 99 MTSIEEE, v. 2, p. 979-984,
+1999.
+3 OLIVER, G. et al., RAO a low cost AUV for
+testing, OCEANS 2000 MTSIEEE Conference
+and Exhibition, v. 1, p 397-401, 2000.
+4 DANTAS, J. L. D., DA CRUZ, J. J. e DE
+BARROS, E. A., Controle Longitudinal do
+Veículo Autônomo Submarino Pirajuba
+Utilizando Técnicas de Controle Robusto
+
+Brasileiro
+
+de

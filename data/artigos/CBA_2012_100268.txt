@@ -1,0 +1,892 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+INTEGRANDO RELEVANTES ASPECTOS DE ALGORITMOS EVOLUTIVOS MULTI-OBJETIVO PARA
+TRATAMENTO DO PROBLEMA DE RESTABELECIMENTO DE ENERGIA EM SISTEMAS DE DISTRIBUIÇÃO DE
+GRANDE PORTE
+DANILO S. SANCHES*, REMY A. C MARQUEZ, MURILO DA SILVA, ALEXANDRE C. B. DELBEM, JOÃO B. A.
+LONDON JR.
+* UNIVERSIDADE TECNOLÓGICA FEDERAL DO PARANÁ  CORNÉLIO PROCÓPIO
+ DEPARTAMENTO DE ENGENHARIA ELÉTRICA, EESC, UNIVERSIDADE DE SÃO PAULO
+ COMPANHIA PAULISTA DE FORÇA E LUZ
+ DEPARTAMENTO DE SISTEMAS DE COMPUTAÇÃO, ICMC, UNIVERSIDADE DE SÃO PAULO
+E-MAILS DANILOSANCHES@UTFPR.EDU.BR, REMY@USP.BR, MURILOSILVA@CPFL.COM.BR,
+ACBD@ICMC.USP.BR, JBALJ@SC.USP.BR
+Abstract
+ This paper proposes a network reconfiguration methodology to treat service restoration problems in large-scale Distribution Systems (DSs). The proposed methodology enables the obtaining of solutions (DS configuration), which satisfy all the
+objectives of the service restoration problem (minimization of switching operations and out-of-service areas) that do not violate
+the DS operational constraints (as for example voltage ratio, network and substation loading). In order to do this, the proposed
+methodology integrates the best characteristics of two Multi-Objective Evolutionary Algorithms (MOEA), the Non-Dominated
+Sorting Genetic Algorithm-II (NSGA-II) and one MOEA based in subpopulation tables. The proposed methodology works in parallel with several subpopulations stored in tables, where the best solutions, to each one of the characteristics of the problem, are
+stores in its respective tables. Besides those tables, the proposed methodology has other additional subpopulation tables to store
+the non-dominated solutions from Pareto fronts (calculated as the NSGA-II does). In order to improve the computational efficiency of the proposed methodology, it uses the data structure called Node Depth-Encoding (NDE) to computationally represent
+the electrical topology of the DSs. In order to show the efficiency of the proposed methodology, several computational simulations were performed considering the real DS of São Carlos-SP city and also its duplicated version.
+Keywords
+ Large-Scale Distribution Systems, Node-depth Encoding, Multi-Objective Evolutionary Algorithms, Service Restoration.
+Resumo
+ Propõe-se, neste artigo, uma metodologia para reconfiguração de sistemas_de_distribuição (SDs) de grande porte, para
+o tratamento do problema de restabelecimento_de_energia após a ocorrência de faltas permanentes. A metodologia proposta possibilita a obtenção de soluções (configurações do SD) que satisfazem todos os objetivos do problema de restabelecimento_de_energia (minimização do número de manobras e de consumidores sem energia), respeitando as restrições operacionais dos SDs
+(como, por exemplo, radialidade, limites de tensão e carregamento da rede, equipamentos e subestação). Para isso, a metodologia
+proposta combina as melhores características de dois Algoritmos Evolutivos Multi-Objetivos (AEMOs), o Non-Dominated Sorting Genetic Algorithm-II (NSGA-II) e um AEMO baseado em tabelas de subpopulações. A metodologia proposta trabalha em
+paralelo com várias subpopulações armazenadas em tabelas, onde as melhores soluções (ou configurações do SD), para cada característica do problema, são armazenadas em suas respectivas tabelas. Além dessas tabelas, a metodologia proposta faz uso de
+tabelas adicionais de subpopulações não dominadas, que armazenam as soluções não dominadas obtidas durante as gerações
+(calculadas da forma proposta pelo NSGA-II). Para aumentar a eficiência computacional da metodologia, ela faz uso da estrutura
+de dados denominada Representação Nó-Profundidade (RNP), para representar computacionalmente a topologia elétrica dos
+SDs. Para comprovar a eficiência da metodologia proposta, várias simulações computacionais foram realizadas utilizando o sistema_de_distribuição da cidade de São Carlos  SP, e uma versão duplicada desse sistema.
+Palavras-chave
+ .
+
+1
+
+Introdução
+
+Reconfiguração de redes é uma ferramenta importante para automação dos Sistemas de Distribuição (SDs), pois é um dos principais recursos para
+manutenção da qualidade e confiabilidade do fornecimento de energia_elétrica. Em condições normais
+de operação, pode-se utilizar a reconfiguração de
+redes, ou seja, alteração da configuração de um SD
+através da manobra de chaves para, por exemplo,
+reduzir as perdas totais por efeito joule, melhorar o
+perfil_de_tensão e alívio de trechos da rede com sobrecarga.
+Reconfiguração de redes pode ser aplicada também numa condição mais extrema, como, por exemplo, na ocorrência de contingências como faltas per-
+
+ISBN 978-85-8001-069-5
+
+manentes. Tal aplicação é o foco principal deste
+artigo. Nesse caso, depois de o setor1 em falta ter
+sido identificado e isolado, pela atuação do sistema
+de proteção, torna-se necessário a obtenção de um
+plano apropriado para restabelecimento da energia na
+área sem falta que ficou sem energia em função da
+atuação da proteção.
+De uma forma geral, um plano de restabelecimento_de_energia tem como principais necessidades
+práticas (i) ser determinado em um curto intervalo
+de tempo (ii) minimizar o número de manobras (iii)
+reduzir o número de consumidores interrompidos
+(iv) nenhum componente sobrecarregado (v) atender
+
+1 Um setor corresponde a um conjunto de barras e linhas sem a
+presença de chaves seccionadoras.
+
+4557
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+os limites de queda de tensão e (vi) manter a estrutura radial do sistema.
+Face ao exposto, o problema de restabelecimento
+de energia em SDs possui múltiplos objetivos, alguns
+conflitantes. Além disto, devido  grande quantidade
+de variáveis envolvidas nesse problema, ele está
+sujeito ainda ao fenômeno de explosão combinatória,
+tornando inviável a utilização de técnicas de programação_matemática (Schmidt et al, 2005 Delbem et
+al, 2005). Isso ocorre em razão de o espaço de busca
+de soluções possíveis aumentar exponencialmente
+com o número de variáveis. Eis a razão de diversas
+metaheurísticas estarem sendo propostas como alternativas para resolver o problema de restabelecimento
+de energia em SDs de grande porte, isto é, SDs com
+milhares de barras, linhas e chaves.
+Dentre as metaheurísticas existentes, os Algoritmos Evolutivos (AEs) têm sido a mais explorada.
+Alguns trabalhos utilizam AEs mono-objetivos (Zhu,
+2002 Carreno et. al., 2008 Santos et al, 2008), que
+fazem uso de fatores de ponderação que penalizam a
+violação das restrições operacionais. Outros fazem
+uso de AEs Multi-Objetivos (AEMOs)(Mendoza et
+al, 2006 Kumar et al, 2008 Mansour et al, 2009
+Santos et al, 2010 Fantin et al, 2011), que permitem
+o tratamento de diversos objetivos simultaneamente,
+sem a utilização de fatores de ponderação, através da
+utilização do conceito de Dominância de Pareto (Deb
+2001).
+Dentre os fatores críticos para utilização de AEs,
+em problemas de reconfiguração de redes de uma
+forma geral, destacam-se a estrutura de dados utilizada para representar a topologia elétrica dos SDs e
+os operadores genéticos utilizados, que normalmente
+não são capazes de gerar configurações radiais (Delbem et al, 2005 Mendoza et al, 2006 Carreno et.
+al., 2008 Kumar et al, 2008 Santos et al, 2010).
+Nas metodologias para reconfiguração de redes
+desenvolvidas em (Mansour et al, 2009 Santos et al,
+2010 Fantin et al, 2011), foi utilizada a estrutura de
+dados denominada Representação Nó-Profundidade
+(RNP), e seus correspondentes operadores genéticos
+(Delbem et al, 2004). A RNP pode melhorar o desempenho obtido por AEs em problemas de reconfiguração de redes devido as suas seguintes propriedades (i) A RNP e seus operadores produzem exclusivamente configurações factíveis, isto é, redes radiais
+capazes de fornecer energia para todo o sistema2 (ii)
+A RNP pode gerar muito mais configurações factíveis em relação as outras estruturas de dados, para
+um mesmo período de tempo, tendo em vista que a
+RNP apresenta uma complexidade computacional de
+ordem O( n ), onde n é o número de vértices do
+grafo (iii) Cada configuração gerada pela RNP possui todos os nós ordenados de acordo com uma
+relação conhecida como Modelo Pai-Filho (MPF),
+possibilitando, assim, a execução de um Algoritmo
+de Fluxo de Carga de Varredura diretainversa
+2 O termo todo o sistema significa que todas as partes do sistema
+estão conectadas. Ocasionalmente, não há nenhuma chave para
+conectar uma zona fora de serviço para a permanência da rede.
+
+ISBN 978-85-8001-069-5
+
+(AFCV) de forma mais eficiente (Shirmohammadi et
+al, 1988). O modelo_de_carga utilizado para o cálculo
+do fluxo_de_carga foi carga de corrente constante com
+a tensão, tornando o processo de solução direto, isto
+é, sem iteração. Isto ocorre quando se despreza a
+rotação de fase da tensão, que permite o cálculo da
+queda de tensão, nos trechos dos alimentadores,
+através de números reais. Vale ressaltar que não é
+realizado um estudo sobre curvas típicas de carga.
+Neste trabalho é utilizado apenas um patamar de
+carga para definir o comportamento da carga no
+sistema.
+A diferença entre as metodologias desenvolvidas
+em (Mansour et al, 2009 Santos et al, 2010 Fantin
+et al, 2011), é o AEMO utilizado. A metodologia
+proposta em (Santos et. al., 2010), denominado Algoritmo Evolutivo Multiobjetivo em Tabelas (AEMT),
+faz uso da RNP em conjunto com um AEMO baseado no método de Tabelas. Por outro lado, o método
+apresentado em (Mansour et. al., 2009), denominado
+NSGA-II com RNP (NSNP), baseia-se na combinação da RNP com uma versão modificada do AEMO
+denominado NSGA-II (do inglês, Elitist NonDominanted Sorting Genetic Algorithm). A metodologia proposta em (Fantin et al, 2011), denominada
+Algoritmo Evolutivo Multiobjetivo em Tabelas de
+Subpopulações Não-Dominadas (AEMT-SND),
+procura combinar os melhores aspectos das metodologias AEMT e NSNP, para tratamento do problema
+de redução_de_perdas em SDs. Assim como a metodologia AEMT, a AEMT-SND trabalha em paralelo
+com várias subpopulações armazenadas em tabelas,
+onde as melhores soluções (ou configurações do SD),
+para cada característica do problema, são armazenadas em suas respectivas tabelas. Entretanto, a
+AEMT-SND faz uso de tabelas adicionais de subpopulações não dominadas, que armazenam as soluções
+não dominadas obtidas durante as gerações (calculadas da mesma forma que no NSNP). Portanto, este
+artigo propõe a utilização da metodologia AEMTSND para o tratamento do problema de restabelecimento_de_energia.
+2 Formulação do Problema
+2.1 Restabelecimento de Energia
+Quando da ocorrência de uma falta permanente
+em um SD, a fim de minimizar o impacto desta,
+busca-se isolar o defeito e restabelecer rapidamente o
+fornecimento de energia nos setores não defeituosos.
+Este procedimento por ser executado por meio da
+reconfiguração da rede, ou seja, manobras de abertura e fechamento de chaves para alimentar o setor não
+defeituoso por outro caminho ou fonte.
+Para exemplificar o processo de restabelecimento_de_energia, consideremos o SD com três alimentadores mostrados na Figura 1, onde os retângulos
+representam as subestações, as linhas sólidas as chaves normalmente fechadas (NF), a linhas pontilhadas
+as chaves normalmente abertas (NA) e os círculos os
+
+4558
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+setores de cargas. Suponhamos que ocorra um distúrbio no setor 4, Fig. 1a. Este setor deverá ser isolado do SD por meio da abertura das chaves A e B.
+Contudo, os setores 7 e 8, que não possuem defeitos,
+ficaram dentro da área sem energia. Esse problema
+pode ser resolvido, por exemplo, através do fechamento da chave C, conforme Fig. 1b. Entretanto,
+para essa solução ser realmente factível, é necessário
+avaliar o atendimento de algumas restrições operativas, como, por exemplo (i) manter a estrutura radial
+da rede (ii) não violar os limites de corrente em
+linhas e equipamentos e (iii) atender os limites de
+queda de tensão. Além dessas restrições, alguns objetivos geralmente são considerados no problema de
+restauração_de_energia, tais como (i) minimização do
+número de manobras em chaves e (ii) minimização
+dos setores sem defeito fora de serviço.
+
+e as arestas, interligando os nós, representam chaves
+seccionadoras. Consequentemente, cada árvore representa um alimentador ligado em uma subestação
+ou em uma área fora de serviço
+- E ( F ) - função objetivo
+- I ( F ) - restrições de desigualdade representando as
+restrições operacionais da rede
+-  - é uma matriz diagonal cujos elementos são
+fatores de penalidade para as configurações da rede
+que violarem as restrições operacionais e . é a norma finita usual (norma
+
+L1 ) de um vetor (lembrando
+
+que a norma L1 de um vetor z de tamanho n é dada
+n
+
+por
+
+ Z
+
+r
+
+ ).
+
+r 1
+
+Para o problema de restabelecimento_de_energia, a
+função E ( F ) contém, em geral, os seguintes componentes
+-  F - número de barras com cargas fora de serviço
+para uma determinada topologia radial da rede (uma
+floresta F )
+Figura 1. Restabelecimento do fornecimento de energia
+
+Antes de apresentar a formulação matemática do
+problema em pauta, importa destacar que para tratar
+computacionalmente o problema de restabelecimento
+de energia em SDs, o primeiro passo e representar
+tais sistemas computacionalmente. Para isso utilizase, usualmente, grafo.
+Um grafo G é composto pelo par , ,
+onde  é um conjunto de elementos_finitos chamados nós e  é um conjunto de elementos_finitos chamados de arestas.
+Conforme pode ser observado na Fig. 1, um SD
+pode ser representado por grafo, onde os nós representam os setores e subestações e as arestas (linhas
+conectando os nós do grafo) representam as chaves
+seccionadoras. Dessa forma, cada alimentador será
+representado por uma árvore de grafo e o SD será
+uma floresta.
+2.2 Formulação Matemática
+Fazendo uso da RNP, que armazena as barras no
+MPF e que possuí operadores genéticos que produzem exclusivamente configurações factíveis, é possível formular o problema de reconfiguração de redes
+para restabelecimento_de_energia da seguinte forma
+(Santos et al, 2010)
+.  + 
+  
+
+. . 
+ é     ,
+
+(1)
+
+onde,
+- F - floresta de grafo correspondente a uma configuração do sistema, onde cada nó representa um setor
+
+ISBN 978-85-8001-069-5
+
+-
+
+ F - perdas resistivas no sistema para F 
+
+- ( F , F0 ) - número de operações de chaveamento
+necessário para obter uma dada configuração F , a
+partir da configuração original
+
+F0
+
+.
+
+I (F )
+
+As restrições operacionais
+incluem
+
+geralmente
+
+- Um limitante superior para magnitude de corrente
+
+x j , para cada magnitude de corrente de linha x j , na
+linha j. A maior razão X ( F ) 
+
+xj
+xj
+
+é denominada
+
+carregamento da rede da configuração F 
+- A máxima magnitude de injeção de corrente
+
+bi
+
+possível para cada subestação i. A maior razão
+b
+B( F )  i
+é denominada carregamento da subesbi
+tação da configuração F 
+- Um limitante inferior para magnitude de tensão
+nodal. Seja vk a magnitude de tensão nodal na barra
+
+k e vb a tensão base do sistema, a menor razão
+V ( F )  1  vk vb é denominada razão de tensão da
+configuração F .
+O vetor de tensão v é dado por Yv  b , sendo que Y
+é a matriz de admitância nodal, que pode ser calculada por meio da expressão Y  AYx At , sendo Yx a
+matriz de admitância diagonal, e
+
+b é um vetor que
+
+4559
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+contém as correntes complexas nas barras bk
+injetadas nas subestações
+
+ 0 ou
+
+bk > 0 .
+
+A matriz diagonal  é dada como segue
+  
+
+ , ,  > 1 
+0,  á
+
+  
+
+ , ,  > 1 
+0,  á
+
+  
+
+ , ,  > 0.1
+0,  á
+
+onde os pesos w11, w22 e w33 são valores positivos.
+Por outro lado, a fim de tratar vários objetivos o
+NSNP proposto em (Mansour et. al., 2009) decompõe a função agregação apresentado em (1) da seguinte maneira
+.    
+  
+
+. . 
+ é     ,
+
+(2)
+
+sendo E um vetor de duas funções objetivo e1(F) é o
+número de operações de chaveamentos e I  ( F ) é
+uma função agregação composta pelas demais restrições operacionais e objetivos. Observe que nessa
+formulação prioriza-se a minimização do número de
+manobras, uma vez que o mesmo influencia diretamente no tempo necessário para implantação de um
+plano de restabelecimento_de_energia. Vale lembrar
+que usualmente a maioria das chaves disponíveis em
+um SD são manobradas manualmente.
+3 Representação Nó-Profundidade (RNP)
+A RNP baseia-se nos conceitos de caminho e
+profundidade de nó em um grafo (árvore), e consiste
+basicamente de uma lista contendo os nós da árvore e
+suas respectivas profundidades, formando pares do
+tipo (nx px), onde nx é o nó da árvore e px a profundidade do nó (ver Fig. 2). A ordem em que os pares são
+dispostos na lista é importante. A representação de
+uma árvore é obtida a partir de uma busca em profundidade.
+Para representar uma floresta possuindo nA
+árvores, teremos um conjunto de nA RNPs.
+Dois operadores foram criados para facilitar a
+manipulação da floresta armazenada em RNPs, realizando operações como poda ou enxerto nas arvores
+gerando florestas modificadas (PAO - Preserve Ancestor Operator) e (CAO  Change Ancestor Operator). A poda e enxerto é equivalente a nova geração
+da RNP. Os operadores podem construir RNPs das
+florestas modificadas usando um tempo de execução
+relativamente baixo. Mais informações sobre RNP e
+seus operadores, aplicados ao problema de reconfiguração de redes em sistemas_de_distribuição, podem
+ser encontrados em (Santos et. al., 2010).
+
+ISBN 978-85-8001-069-5
+
+Figura 2. SDR com três alimentadores. Grafo com três árvores.
+
+4 AE Multi-Objetivo com RNP e Soluções Não
+Dominadas (AEMT-SND)
+A metodologia proposta para tratamento do problema de restabelecimento_de_energia em SDs de
+grande porte, denominada AEMT-SND, combina as
+principais características das metodologias AEMT
+(Santos et. al., 2010) e NSNP (Mansuor et. al., 2009).
+Tal qual a AEMT e a NSNP, a AEMT-SND utiliza a
+RNP e seus operadores.
+A AEMT-SND baseia-se na utilização de tabelas
+de subpopulação, proveniente da metodologia
+AEMT. Entretanto, a AEMT-SND utiliza novas
+tabelas de subpopulações, chamadas de tabelas de
+subpopulações não-dominadas, que utiliza o conceito
+de dominância de Pareto (Deb, 2001) para comparar
+duas soluções factíveis de um problema. Por exemplo, duas soluções  e , diz-se que  domina  se as
+seguintes soluções forem satisfeitas (i) a solução  é
+não pior que  em todos os objetivos (ii) a solução 
+é melhor que  em pelo menos um objetivo. Com
+isso, com o uso da técnica de não dominância, procura-se garantir a diversidade entre as soluções.
+As tabelas de subpopulações relativas s funções
+objetivos e restrições operativas são preenchidas
+como proposto na AEMT, onde um indivíduo novo
+gerado (Inovo) é incluído na tabela Pi, caso esta não
+esteja completa ou se Inovo for melhor que a pior
+solução em Pi, substituindo a pior solução dessa
+tabela. Entretanto, as tabelas de subpopulação nãodominadas são preenchidas de acordo com o grau de
+não-dominância de cada solução, por exemplo, soluções que não são dominadas por outras soluções são
+armazenadas em F1 soluções que são dominadas
+somente por soluções contidas em F1 são armazenadas na tabela F2 e soluções que são dominadas somente por soluções contidas nas tabelas F1 e F2 são
+armazenadas na tabela F3. A função distância de
+multidão proposta em (Deb, 2001) é usada para garantir a diversidade entre as soluções contidas nas
+tabelas de subpopulação não-dominada. Contudo,
+alguns parâmetros devem ser estabelecidos
+
+4560
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Gmax - o máximo número de indivíduos gerados pelo AEMT-SND. Este também é usado como critério de parada
+ Spi - é o tamanho da tabela de subpopulaçao
+Pi, indicando quantos indivíduos podem ser
+armazenados em Pi, com i  1, ..., 5. As cinco tabelas de subpopulação Pi são P1 - indivíduos com menores perdas P2  indivíduos
+com menores quedas de tensão P3 - indivíduos com menores carregamentos da rede
+P4  indivíduos com os menores carregamento da subestação e P5  indivíduos com
+menores valores de função agregação. A
+função agregação envolve perdas, operação
+de chaves e restrições operacionais (queda
+de tensão, carregamento da rede, equipamentos e subestação).
+ Sfi - é o tamanho da tabela de subpopulação
+não-dominada Fi, indicando quantos indivíduos podem ser armazenados em Fi, com i 
+1, 2, 3.
+O operador PAO da RNP é utilizado para conectar uma área interrompida por meio de outro alimentador gerando o primeiro indivíduo da população. A
+partir deste indivíduo, outros indivíduos são gerados
+para preencher a população inicial.
+O algoritmo 1 demonstra o pseudocódigo da metodologia AEMT-SND.
+
+
+Algoritmo 1 Pseudocódigo da AEMT-SND
+Início
+Inicia o contador de gerações g
+Gera a população inicial Pi(g0) com base na árvore original F0
+Avalia os indivíduos da população incial
+Classifica P(g) por não-dominância
+Cria a tabela na-dominante de F(i)
+Enquanto critério de para não for alcançado faça
+Selecione estocasticamente a população Pi e Fi
+Selecione estocasticamente um indivíduo (Is) na população selecionada
+Decide entre PAO e CAO e armazene em OP
+Aplique OP para produzir um indivíduo Ig de Is
+Avalie o novo indivíduo Ig
+Selecione deterministicamente os sobreviventes de P(g) e Ig e armazene
+em P(g+1)
+Verifique se Ig é dominado por soluções em
+P(g+1) e Fi pelo algoritmo de não-dominância
+Aplique o algoritmo distancia de multidão em
+F(i) e Ig
+Atualize a tabela de não-dominância Fi
+Incremente o contador de geração g
+Fim
+
+5 Testes e Resultados
+Com o intuito de analisar o desempenho da metodologia AEMT-SND, para tratamento do problema
+de restabelecimento_de_energia em SDs de grande
+porte, realizar-se-á uma análise comparativa da
+mesma com as metodologias AEMT e NSNP.
+Importa destacar que em (Santos et. al., 2010) o
+desempenho do método AEMT foi comparado com
+outras abordagens encontradas na literatura. Com
+isso, o método AEMT é utilizado neste trabalho para
+
+ISBN 978-85-8001-069-5
+
+uma análise comparativa com a metodologia proposta.
+Para tanto, serão utilizados dois sistemas de
+distribuição. O primeiro sistema, Sistema 1, corresponde ao sistema_de_distribuição real da cidade de
+São Carlos  SP (sistema em operação em 1994). O
+segundo sistema, Sistema 2, é uma composição de
+dois Sistemas 1, interconectados pelo nó 13, por
+meio da inserção de uma nova chave para fazer a
+interligação. Maiores detalhes sobre esses sistemas
+podem ser encontrados em Santos, et. al., (2010).
+Os sistemas utilizados apresentam as seguintes
+características
+Sistema 1 3.860 barras, 532 setores, 632 chaves
+(509 NF e 123 NA), 3 subestações e 23 alimentadores
+Sistema 2 7720 barras, 1064 setores, 1277 chaves
+(1018 NF e 259 NA), 6 subestações e 46 alimentadores
+Os testes foram realizados utilizando um computador Core 2 Quad 2.4GHz, 8G RAM, com sistema
+de operação Linux Ubuntu versão 10.04 e a linguagem de programação C com o compilador gcc-4.4.
+Os parâmetros utilizados nas simulações foram
+ NSNP N  200 e Gmax  70.000
+ AEMT-SND  Sp1,...,p5  5, Gmax  70.000,
+Sf1  20, Sf2  40 e Sf3  20 (definidos empiricamente)
+ AEMT  Sp1,...,p5  5, Gmax  70.000.
+Os valores dos pesos w11, w22 e w33 utilizados
+nas simulações foram
+  
+
+100,   > 1
+
+0,  á
+
+100,   > 1
+  
+0,  á
+100,   > 0,1
+  
+0,  á
+O AEMT-SND é muito robusto em relação  variação dos pesos wii. Portanto, estes valores devem
+ser altos o suficiente para penalizar soluções infactíveis. Valores de pesos entre 10 a 100 são adequados
+em geral.
+O AEMT-SND utiliza duas funções de minimização como um critério para a solução entrar na
+tabela de subpopulação não-dominada 1) número de
+operações de chaves e 2) a função agregação. A
+função agregação é descrita como
+    +   +  
+
+(3)
+
+onde, X(F), B(F) e V(F) foram definidos na seção 2.
+A fim de avaliar o desempenho das três metodologias (AEMT, NSNP e AEMT-SND), foram realizados testes considerando duas situações aplicação
+de uma falta no sistema 1 e aplicação de uma falta no
+sistema 2.
+
+4561
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+No AEMT-SND, o indivíduo considerado como
+a melhor solução deve apresentar, ao mesmo tempo,
+o menor número de operações em chaves e o menor
+valor da função agregação quando o processo é terminado. A mesma estratégia foi utilizada para as
+demais metodologias (AEMT e NSNP).
+5.1 Simulação de uma falta simples no Sistema 1
+Inicialmente os algoritmos foram avaliados considerando a ocorrência de uma falta na saída (setor
+504) do maior e mais carregado alimentador do Sistema 1 (com 231 barras e 33 chaves NF). Essa falta
+acarreta a interrupção de todo o fornecimento de
+energia para os consumidores deste alimentador.
+A Fig. 3 ilustra as fronteiras de Pareto obtidas através das tabelas de subpopulações não-dominadas
+(F1, F2 e F3) da metodologia AEMT-SND. É importante observar a alta diversidade entre as soluções
+contidas nas três tabelas de subpopulações nãodominadas, a qual é obtida utilizando a função de
+distância de multidão.
+
+Figura 5. Queda de Tensão por iteração para reconfiguração do
+Sistema 1 sob falta
+
+A Tabela 1 sintetiza os resultados obtidos pelas
+três metodologias. Os resultados referem-se aos valores médios e desvios padrão calculados para os objetivos e restrições com base em 100 execuções de
+cada algoritmo. Nota-se que a metodologia AEMTSND obteve o melhor valor médio para os quesitos
+menor número de manobras (11) e queda de tensão
+máxima (3,83). Já as metodologias AEMT e NSNP
+obtiveram, respectivamente, os seguintes resultados
+número de manobras (24, 16) e queda de tensão
+(3,49, 4,21).
+5.2 Simulação de uma falta simples no Sistema 2
+
+Figura 3. Fronteiras de pareto obtidas das tabelas de subpopulações não-dominadas (F1, F2 e F3)
+
+Na Fig. 4 apresenta-se o número de manobras
+em chaves enquanto que a Fig. 5 apresenta a máxima
+queda de tensão na rede, para as configurações de
+rede apontadas como solução pelas metodologias em
+análise. Destaca-se que os melhores resultados forma
+obtidos pela metodologia AEMT-SND.
+
+Neste teste, de forma análoga a primeira situação, foi aplicada uma falta simples no mesmo setor,
+considerando agora o sistema 2. A utilização do
+sistema 2 aumenta a complexidade da busca pela
+melhor solução, visto que o sistema 2 é duas vezes
+maior que o Sistema 1.
+Na Fig. 6 apresenta-se o número de manobras
+em chaves enquanto que a Fig. 7 apresenta a máxima
+queda de tensão na rede, para as configurações de
+rede apontadas como solução pelas metodologias em
+análise.
+
+Figura 6. Número de Manobras por iteração para reconfiguração
+do Sistema 2 sob falta
+
+Figura 4. Número de Manobras por iteração para reconfiguração
+do Sistema 1 sob falta
+
+ISBN 978-85-8001-069-5
+
+4562
+
+AEMT
+
+NSNP
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Total de Perdas (KW)
+Máx. Queda de tensão ()
+
+628.15
+
+30.99
+
+4.04
+
+0.87
+
+Máx. Carregamento da Rede ()
+
+87.18
+
+8.39
+
+54.13
+
+1.40
+
+22
+7.44
+
+11.22
+
+Total de Perdas (KW)
+Máxima Queda de tensão ()
+
+555.78
+
+16.92
+
+3.35
+
+0.33
+
+Máx. Carregamento da Rede ()
+
+79.74
+
+8.99
+
+Máx. Carregamento dos Transformadores ()
+
+54.56
+
+16.92
+
+40
+
+6.30
+
+Máx. Carregamento dos Transformadores ()
+Operações de Manobras
+Tempo (sec.)
+
+Operações de Manobras
+Tempo (sec.)
+
+Figura 7. Queda de Tensão por iteração para reconfiguração do
+Sistema 2 sob falta.
+
+A Tabela 2 sintetiza os resultados alcançados pelas metodologias apresentadas. Os resultados referem-se aos valores médios e desvios padrão calculados para os objetivos e restrições com base em 100
+execuções de cada algoritmo. Novamente pode-se
+observar que a metodologia AEMT-SND obteve os
+melhores resultados em relação ao número de manobras (16 operações) e queda de tensão (3,83). As
+metodologias AEMT e NSNP obtiveram, respectivamente, os seguintes resultados número de manobras (40, 22 operações) e queda de tensão (3,35,
+4,04).
+TABELA I
+
+AEMT
+
+NSNP
+
+AEMT-SND
+
+RESULTADO OBTIDOS- UM FALTA NO SISTEMA 1
+
+Total de Perdas (KW)
+Máx. Queda de tensão ()
+Máx. Carregamento da Rede ()
+Máx. Carregamento dos Transformadores ()
+Operações de Manobras
+Tempo (sec.)
+Total de Perdas (KW)
+Máx. Queda de tensão ()
+Máx. Carregamento da Rede ()
+Máx. Carregamento dos Transformadores ()
+Operações de Manobras
+Tempo (sec.)
+Total de Perdas (KW)
+Máx. Queda de tensão ()
+Máx. Carregamento da Rede ()
+Máx. Carregamento dos Transformadores ()
+Operações de Manobras
+Tempo (sec.)
+
+Média
+
+DP*
+
+353.37
+3.83
+82.78
+
+33.96
+0.84
+5.51
+
+52.96
+
+2.18
+
+11
+8.89
+361.79
+4.21
+86.56
+
+2.78
+38.96
+0.83
+8.17
+
+52.77
+
+3.02
+
+16
+5.11
+312.06
+3.49
+84.60
+
+12.21
+23.56
+0.50
+12.79
+
+54.30
+
+23.56
+
+24
+11.45
+
+2.61
+
+* Desvio Padrão
+TABELA II
+
+AEMT-SND
+
+RESULTADO OBTIDOS- UM FALTA NO SISTEMA 2
+Média
+
+DP*
+
+Total de Perdas (KW)
+Máx. Queda de tensão ()
+
+626.24
+
+44.53
+
+3.83
+
+0.85
+
+Máx. Carregamento da Rede ()
+
+84.27
+
+7.74
+
+54.89
+
+1.76
+
+16
+
+9.53
+
+Máx. Carregamento dos Transformadores ()
+Operações de Manobras
+Tempo (sec.)
+
+ISBN 978-85-8001-069-5
+
+8.46
+
+10.70
+
+* Desvio Padrão
+
+6 Conclusões
+Este artigo apresentou uma nova metodologia,
+denominada AEMT-SND, para tratamento do problema de restabelecimento_de_energia em SDs de
+grande porte.
+A metodologia AEMT-SND combina as melhores características de outras duas metodologias desenvolvidas para o mesmo fim (AEMT e NSNP).
+Assim como a metodologia AEMT (Santos et al,
+2010), a metodologia AEMT-SND trabalha em paralelo com várias subpopulações armazenadas em
+tabelas, onde as melhores soluções (ou configurações
+do SD), para cada característica do problema, são
+armazenadas em suas respectivas tabelas. Entretanto,
+a AEMT-SND faz uso de tabelas adicionais de subpopulações não dominadas, que armazenam as soluções não dominadas obtidas durante as gerações
+(calculadas da mesma forma que no NSNP (Mansour
+et al, 2009)).
+Para possibilitar o tratamento de SDs de grande
+porte, sem a exigência de simplificações em relação
+ao número de barras e chaves, assim como as metodologias AEMT e NSDS a metodologia AEMT-SND
+faz uso da estrutura de dados RNP e de seus operadores. Conforme apresentado neste artigo, a RNP e seus
+operadores possibilitam um tratamento mais adequado para algumas restrições do problema de restabelecimento_de_energia, aumentando a eficiência computacional dessas metodologias.
+Para comprovar a eficiência da metodologia
+proposta, realizou-se uma análise comparativa com
+as metodologias AEMT e NSNP. Analisando os
+resultados obtidos verifica-se que a AEMT-SND é
+melhor que as outras duas em termos de número de
+operações de chaveamento e perfil_de_tensão. Face ao
+exposto, pode-se dizer que dentre essas três metodologias a AEMT-SND é a melhor para tratamento do
+problema de restabelecimento_de_energia, pois, para
+esse problema, os principais objetivos são reduzir o
+número de consumidores interrompidos e o número
+de operações de chaveamento.
+Importa destacar ainda que a metodologia proposta não prioriza o restabelecimento para cargas
+especiais, mas em trabalhos futuros pretende-se rea-
+
+4563
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+lizar tal inclusão além de incorporar um estudo sobre
+curvas típicas de carga.
+Agradecimentos
+Os autores agradecem cordialmente  FAPESP,
+CAPES e ao CNPq pelo suporte financeiro.
+Referências Bibliográficas
+Carreno, E. Romero, R. and Padilha-Feltrin, A. An
+efficient codification to solve distribution network
+reconfiguration for loss reduction problem, Power
+Systems, IEEE Transactions on, vol. 23, no. 4, pp.
+1542 1551, nov. 2008.
+Deb, K  Sundar, J.  Udaya B R, N.  Chaudhuri, S., 2006.
+Reference point based multi-objective optimization
+using evolutionary algorithms International Journal
+of Computational Intelligence Research, 2 (3). pp.
+273-286.
+
+data structure, Power and Energy Society General
+Meeting - Conversion and Delivery of Electrical
+Energy in the 21st Century, 2008 IEEE, pp. 18, July
+2008.
+Schmidt, H.P. et al., 2005. Fast Reconfiguration of
+Distribution Systems Considering Loss Minimization.
+Power Systems, IEEE Transactions on, 20(3),
+pp.1311-1319.
+Shirmohammadi, D. Hong, H. Semlyen, A. and G. Luo,
+A compensation-based power flow method for
+weakly meshed distribution and transmission
+networks, Power Systems, IEEE Transactions on,
+vol. 3, no. 2, pp. 753762, May 1988.
+Zhu,
+
+J. Z. Optimal reconfiguration of electrical
+distribution network using the refined genetic
+algorithm, Electric Power Systems Research, vol. 62,
+no. 1, pp. 3742, 2002.
+
+Deb, K. Multi-objective optimization using evolutionary
+altorithms. New York Wiley, 2001.
+Delbem, A. de Carvalho, A. and Bretas, N. Main chain
+representation for evolutionary algorithms applied to
+distribution system reconfiguration, Power Systems,
+IEEE Transactions on, vol. 20, no. 1, pp. 425436,
+Feb. 2005.
+Delbem, A. C. B. Carvalho, A. C. P. L. F. Policastro, C.
+Pinto, A. K. O. Garcia, A. Honda, K. Node-depth
+Encoding for Evolutionary Algorithms Applied to
+Network Design, Genetic and Evolutionary
+Computation Conference, 2004.
+Fantin, C. A.  Sanches, D. S.  London Jr., J.B. A. 
+Delbem A.C.B Santos, A. C. . Reconfiguração de
+Redes Para Melhoria do Perfil de Tensão e Redução
+de Perdas em Sistemas de Distribuição de Grande
+Porte. In IX Conferência Brasileira sobre Qualidade
+da Energias Elétrica, 2011, Cuiabá. Anais (Digital
+Artigo 838521 6 páginas), 2011.
+Kumar, Y. Das, B. and Sharma, J. Multiobjective,
+multiconstraint service restoration of electric power
+distribution system with priority customers, Power
+Delivery, IEEE Transactions on, vol. 23, no. 1, pp.
+261270, Jan. 2008.
+Mansour, M. Santos, A. London, J. Delbem, A. and
+Bretas, N. Energy restoration in distribution systems
+using multi-objective evolutionary algorithm and an
+efficient data structure, in IEEE PowerTech 2009,
+Bucharest - Romania, pp. 1 7.
+Mendoza, F., Garcia, A.  Bernal-Agustin, J.L., 2006.
+Application of the NPGA to the Design of Power
+Distribution Systems. In Transmission  Distribution
+Conference and Exposition Latin America, 2006.
+TDC 06. IEEEPES. pp. 1-5
+Santos, A. Delbem, A. London, J. and Bretas, N. Nodedepth encoding and multiobjective evolutionary
+algorithm applied to large-scale distribution system
+reconfiguration, Power Systems, IEEE Transactions
+on, vol. 25, no. 3, pp. 1254 1265, aug. 2010.
+Santos, A. Delbem, A. and Bretas, N. Energy restoration
+for largescale distribution system using ea and a new
+
+ISBN 978-85-8001-069-5
+
+4564

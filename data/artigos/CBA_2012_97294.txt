@@ -1,0 +1,825 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+OTIMIZAÇÃO DO CONTROLE DE ATITUDE DE VANTS POR MEIO DA REALIMENTAÇÃO DA
+POSIÇÃO DOS SERVOS
+ADRIANO BITTAR, NEUSA M.F. OLIVEIRA
+Instituto Tecnológico de Aeronáutica
+Pça Mal. Eduardo Gomes, 12.228-900, São José dos Campos, SP.
+E-mails bittar@ita.br, neusa@ita.br
+Abstract Autonomous vehicles allow execution of missions where you do not want a human pilot, either by risk or repetition.
+They are being studied by several research and development groups in the world today. Particularly unmanned aerial vehicles
+(UAVs) are the subject of attention, in civil and military area, where they are being used in diverse applications.This paper proposes the design and implementation of control laws for attitude of a fixed-wing small unmanned aircraft. Three closed control
+loops are presented, ensuring stabilization of roll and, pitch. These control loops must act in the aircraft control surfaces, namely,
+ailerons, elevator and rudder. The project proposal is presented, such that, the overall control law consists of two hierarchical
+layers. The first layer calculates the deflection which should be applied in the control surfaces, using a Proportional-Derivative
+controller fed by two feedback lines, one containing the current values of the Euler angles, and another containing the respective
+angular velocities. The second layer, which is the main focus of this work, performs the calculation of the next position of the actuators (the control surfaces) through the feedback from the current servos position of the aircraft. In order to test this proposed
+control, a simulation software-in-the-Loop (SIL) is performed. It uses the flight simulator X-Plane, which models the behavior of
+the target aircraft, and MatlabSimulink, in which the control loops are implemented. The test results of the SIL project proposal
+are presented. They demonstrate the smoothness of the response that aircraft reaches by feedbacking servos position.
+Keywords UAVs, Attitude Control, SIL, X-Plane, Matlab.
+Resumo Os veículos_autônomos, que permitem a execução de missões onde não se deseja um piloto humano, seja por risco ou
+por repetição, estão sendo estudados pelos mais diversos grupos de pesquisa e desenvolvimento no mundo atualmente. Particularmente os veículos_aéreos_não_tripulados (VANTs) estão sendo objeto de atenção, seja na área militar, seja na civil, sendo suas
+aplicações as mais diversas. Neste trabalho é proposto o projeto e implementação de leis de controle_de_atitude para veículos_aéreos_não_tripulados de pequeno porte, do tipo asa fixa. Duas malhas_de_controle fechadas são propostas, garantindo estabilização
+dos ângulos de rolagem e arfagem. Estas malhas_de_controle devem atuar nas superfícies de comando da aeronave, nominalmente, ailerons e profundor. A proposta de projeto apresentada é tal que a lei global de controle consiste em duas camadas hierárquicas. A primeira camada calcula a deflexão que deve ser aplicada nas superfícies de controle, utilizando um controlador do tipo
+Proporcional-Derivativo e duas linhas de realimentação, uma contendo os valores atuais dos ângulos de Euler, e outra contendo
+as respectivas velocidades angulares. A segunda camada, que é o foco principal deste trabalho, realiza o cálculo da próxima posição dos atuadores através da realimentação da posição atual dos servos da aeronave. Para teste desta proposta de controle é realizado uma simulação Software-In-the-Loop (SIL), utilizando o simulador de voo X-Plane, que modela o comportamento da aeronave utilizada, e o MatlabSimulink onde foram implementadas as malhas_de_controle. Os resultados dos testes SIL da proposta
+de projeto apresentada são mostrados, evidenciando-se a suavidade da resposta_da_aeronave alcançada com a realimentação dos
+servos.
+Palavras-chave .
+
+1
+
+Introdução
+
+Os Veículos Aéreos Não Tripulados (VANTs)
+vêm sendo cada vez mais aplicados no cenário da
+aviação moderna, seja pelo fato de evitar riscos desnecessários de vidas humanas, seja pelo custo reduzido de execução de uma missão (Garcia, 2009).
+Tarefas que antigamente eram realizadas por pilotos
+humanos, como por exemplo, reconhecimento de
+território, atualmente podem ser executadas por uma
+aeronave não tripulada dotada de equipamentos que
+permitam o envio de imagens instantaneamente para
+uma central em terra. Esse tipo de aeronave tem sido
+empregado em vários tipos de aplicações comerciais
+(pulverização agrícola, aerofotogrametria, topografia,
+contagem de gado e plantações, inspeção de dutos de
+petróleo, gás e água), civil (vigilância e policiamento
+de perímetros urbanos e rurais, monitoramento de
+tráfego em rodovias e cidades), militares (vigilância
+de regiões de combate, rastreamento_de_veículos) e
+paramilitares (missões de resgates, controle e mapeamento de incêndios em florestas), como em expla-
+
+ISBN 978-85-8001-069-5
+
+nado em Cox (Cox. et al. (2004) e Rasi (Rasi,
+2008).Um VANT é constituído de quatro sistemas
+para sua operação, de acordo com Santos (Santos,
+2011) sendo eles a própria aeronave, os sensores,
+uma estação terra e um sistema de comunicação com
+a terra. A operação de um sistema desse porte necessita de uma tripulação em solo constituída por cinco
+pessoas um comandante, que é o responsável por
+toda a missão, um piloto, que controla a aeronave
+através de um rádio controle, um operador de sistemas, responsável por administrar a estação terra,
+assim como controlar equipamentos instalados, como, por exemplo, câmeras e radares, um operador de
+inteligência, cuja função é fazer uma analise preliminar e estratégica das informações obtidas, e um engenheiro de voo, responsável pela manutenção e
+supervisionamento de toda a missão (Cenciotti,
+2011). Existem vários tipos de aeronaves que são
+construídas especificamente para sua missão. Missões em que se é necessário percorrer um grande
+percurso em pouco tempo são executadas por aeronaves de asa fixa com motor a combustão, enquanto
+que missões de vigilância e monitoramento são exe-
+
+1
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+cutadas preferencialmente por aeronaves de asas
+rotativas, como helicópteros e quadricópteros, com
+motores a bateria. Missões mais simples, como aerofotogrametria podem ser executadas por aeromodelos
+comerciais adaptados, reduzindo os custos iniciais de
+um projeto de VANT (Beard et al, 2005). Os sensores instalados em uma aeronave não tripulada são
+divididos em dois conjuntos o sistema de navegação
+e os sensores específicos para uma missão. O sistema
+de navegação é constituído pelos sensores imprescindíveis para a operação de um VANT, disponibilizando informações de atitude, posição geográfica
+(latitude e longitude), altitude nível de combustível
+ou de bateria. Os sensores específicos dependem da
+missão e vão desde sensores de humidade para aplicações meteorológicas a satélites SAR, para reconhecimento de território (Young, 2007).
+A estação terra é um computador, ou um conjunto
+destes, dedicado a receber informações dos sensores
+da aeronave. Além de permitir gravar as informações
+para análise posterior, elas devem ser disponibilizadas pra toda a tripulação de modo a monitorar o
+estado da aeronave, atualizando em tempo_real a
+autonomia de voo e a qualidade do link de comunicação com a terra. A estação terra é também responsável por alterar a trajetória modificando os pontos
+geográficos (longitude, latitude e altitude) que a
+aeronave deve atingir, assim como enviar sinais de
+controle para equipamentos da missão. Um exemplo
+clássico seria enviar comando para ligar uma câmera
+de vídeo, movimentar essa câmera, e desligá-la para
+economizar energia, tudo remotamente através da
+estação solo.
+O sistema de comunicação estabelece o contato entre
+a tripulação e a aeronave, e deve ser robusto o suficiente para possibilitar um alto tráfego de informações.
+Existem várias arquiteturas, que empregam um ou
+mais links de comunicação. Para o funcionamento
+básico é necessário pelo menos um link que estabeleça comunicação entre a estação terra e o VANT e
+outro entre o rádio controle e a aeronave. Outros link
+adicionais são implementados em situação em que o
+tráfego de dados é intenso como no imageamento em
+tempo_real.
+Três tipos de piloto são empregados em VANTs o
+piloto manual, o piloto semi-automático e o piloto
+automático. O piloto manual é constituído por um
+operador em terra que envia comandos de deflexão
+das superfícies de controle (aileron, profundor e
+leme) através de um rádio controle. Neste tipo de
+piloto o operador em terra tem total controle da aeronave. O piloto semi-automático realiza o controle de
+atitude da aeronave, limitando o controle do operador
+em terra, sendo que este deixa de atuar diretamente
+nas superfícies e passa a enviar referências para os
+ângulos de atitude ( rolagem, arfagem e guinada). O
+piloto semi-automático, embarcado na aeronave,
+recebe essas informações e através de um gerenciador de superfícies de controle gera os estímulos necessários a fazer a aeronave alcançar os valores impostos pelo operador em terra atendendo as limitações da aeronave. O piloto_automático, sendo uma
+
+ISBN 978-85-8001-069-5
+
+extensão do piloto semi-automático citado, controla
+todos os movimentos da aeronave completando uma
+missão sem a necessidade de um operador em terra.
+Logo, o piloto semi-automático pode ser entendido
+como um controlador de atitude, enquanto que o
+piloto_automático controla todas as variáveis da aeronave, desde a atitude a até a altitude e velocidades
+horizontais e verticais.
+Várias topologia de pilotos semi-automáticos e automáticos podem ser encontrados (Chao et al, 2010).
+Pilotos semi-automáticos podem ser encontrados em
+Santos (Santos, 2009) e Ribeiro (Riberio, 2010).
+Tais sistemas foram desenvolvidos a fim de controlar
+um movimento especifico da aeronave, arfagem e
+rolamento, respectivamente. Em ambos os trabalhos
+a aeronave a ser controlada foi um Boing 747. Em
+Santos (Santos, 2009), é desenvolvido um sistema de
+controle do ângulo de arfagem. O sistema é testado
+através de uma plataforma de Hardware-In-The-Loop
+(HIL), entre piloto embarcado e o simulador de voo
+X-Plane. Em Riberio (Ribeiro, 2010) uma plataforma
+para controle do ângulo de rolagem é montada através de uma simulação em Software-In-the-Loop
+(SIL), usando o MATLABSIMULINK e o mesmo
+simulador X-PLANE.
+Agregando os conceitos de Santos (Santos, 2009) e
+Ribeiro (Ribeiro, 2011), esse artigo propõe uma nova
+abordagem para controle da atitude de um VANT,
+constituindo um piloto semi-automático. Como aeronaves de grande porte apresentam maior estabilidade,
+pequenas variações em sua atitude não representam
+um problema significativo, porém ao se utilizar a
+mesma malha_de_controle para aeronaves menores
+como VANTs de pequeno porte essas variações no
+controle_de_atitude acabem por deixar a aeronave
+instável a ponto de se perder controle desta. Deste
+modo é apresentado um sistema, abrangendo os controladores necessários para manter a aeronave estável
+e com variações mínimas quanto aos movimentos de
+rolagem, arfagem e guinada. Através uma aplicação
+SIL entre o MATLABSIMULINK e o simulador de
+voo X-Plane, é realizado um estudo comparativo do
+comportamento de um VANT utilizando um controle
+convencional e o controle proposto neste trabalho.
+2 O Simulador X-Plane e a Aeronave Alvo
+A escolha do simulador X-Plane é baseada no
+seu princípio de funcionamento que consiste na aplicação da teoria do Blade Element, onde cada parte
+da aeronave é dividida em outras dez partes e assim
+são calculada as forças em cada uma essas partes
+garantindo uma resposta mais confiável em relação a
+outros simuladores de voo, que preveem o comportamento do avião através das derivadas de estabilidade, de acordo com Meyer (Meyer, 2011). O X-Plane
+pode ser executado em Linux, Windows, ou Macintosh OS e é o único simulador que provê certificações da Agencia Americana de Aviação (FAA 
+Federal Aviation Administration), dando mais credibilidade nos resultados. Além disso, os controladores
+
+2
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+desenvolvidos e testados na plataforma X-Plane têm
+obtido sucesso quando levados a campo e embarcados em aeronaves reais (Garcia, 2009).
+O aeromodelo escolhido foi um PIPER J-3 CUB 48S
+16 de escala, fabricado pela The World Models.
+As principais características dele, mostradas abaixo,
+são encontradas no manual do fabricante do aeromodelo real
+1. Envergadura 1.800mm 71.0 in
+2. Área da Asa 45.0 dm2 698 sq in
+3. Peso 2500g 5.5lbs
+4. Comprimento 1.200mm 47in
+5. Motor Brushless (540W )
+Essa aeronave foi escolhida devido a sua facilidade
+de aquisição, fácil manobrabilidade, capacidade de
+carga (suportando até um quilograma de eletrônica
+embarcada) e por haver um piloto humano com experiência com a mesma.
+O modelo X-Plane dessa aeronave foi desenvolvido
+através do Plane-Maker (Versão 9.22), que é uma
+ferramenta especifica para construção de aeronaves
+voltada para esse simulador. O Plane-Maker disponibiliza uma interface_gráfica que permite projetar a
+aeronave baseada em suas especificações físicas, tais
+como peso, envergadura, comprimento, potência do
+motor, etc. O simulador X-Plane prevê o comportamento em voo da aeronave construída baseado nas
+características estruturais do modelo. A Fig. (1.a)
+ilustra o Modelo Real, enquanto a Fig. (1.b) ilustra o
+Modelo construído no PLANE  MAKER.
+O X-plane fornece um meio de comunicação nativo
+através de sua porta ethernet utilizando o protocolo
+UDP (User Datagram Protocol). O UDP é o protocolo de comunicação padrão para jogos e videoconferências. É uma forma de comunicação rápida, porém sem garantia de recebimento de dado, pois não
+conta com estruturas de controle, tais como timeouts,
+retransmissões, acknowlegdments, controle_de_fluxo.
+Apesar de este poder apresentar dados corrompidos,
+as simulações de controle de aeronave não têm sofrido com esse problema (Garcia, 2008).
+
+Através da porta UDP do X-Plane é possível enviar
+até 99.9 pacotes por segundo que pode ser configurado no menu Setting  Data Input  Output. A taxa
+de transmissão tem um grande impacto na simulação
+de controle, pois, segundo Santos et al (2011b), o
+controle deve ser realimentado com uma taxa mínima
+para poder funcionar corretamente. A taxa definida
+neste trabalho é de 20 pacotes por segundo, fazendo
+que a malha_de_controle seja executada a uma taxa de
+20 Hz. Taxas maiores que 45 pacotes por segundo
+podem ocasionar erros inesperados no processamento
+de dados, pois o controle não conseguiria processar
+os dados na mesma velocidade em que eles chegam,
+criando uma fila de espera de mensagens na comunicação UDP, fazendo com que o sistema deixe de
+operar em tempo_real. Isto acarreta que dados antigos
+sejam processados erroneamente, gerando comandos
+equivocados, e consequentemente movimentos indesejáveis da aeronave. Através do menu de configurações é possível escolher as variáveis que serão
+enviadas pela porta UDP do X-Plane (Ribeiro, 2010),
+como ilustrado pela Fig. (2).
+O pacote de dados do X-Plane é formado por um
+cabeçalho geral de cinco bytes seguidos dos conjuntos de dados selecionados. O cabeçalho apresenta os
+dizeres DATA, nos quatro primeiro bytes, sendo o
+quinto byte, I, uma diretiva interna. Cada conjunto
+de dados tem um rótulo de quatro bytes e oito dados
+também de quatro bytes cada. Esta estrutura permite
+que os dados do X-Plane são representados no formato de ponto_flutuante de 32 bits, sendo o primeiro
+bit o sinal, os próximos oito o expoente base, e os 23
+últimos a mantissa (IEEE Standard 754 ,2008). Uma
+explicação completa do pacote UDP do X-Plane e de
+suas peculiaridades pode ser encontrada em Ribeiro
+(Ribeiro, 2010).
+A deflexão das superfícies de comando do aeromodelo construído no Plane-Maker é configurável de
+acordo com a variação da superfície no avião real.
+Para a aeronave modelada, uma deflexão de -1 no XPlane corresponde a uma deflexão de -20 graus na
+superfície do avião modelado, ou do avião real, enquanto que +1 corresponde a 20 graus.
+
+Figura 1.a. Aeronave REAL
+
+Figura 1.b. Aeronave X-PLANE
+
+ISBN 978-85-8001-069-5
+
+Figura 2. Configurações do X-Plane
+
+3
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+3 O Controle de Atitude
+O controle_de_atitude da aeronave é responsável
+por manter a aeronave estabilizada em seus eixos
+transversal, vertical e longitudinal, como mostrado
+na Fig. (3). Isto significa que dada uma referência
+para um dos ângulos de Euler (rolagem, arfagem), a
+aeronave deve atingir e manter esse ângulo até que
+nova referencia seja dada. As malhas_de_controle
+geram estímulos para serem aplicadas nas superfícies
+de controle da aeronave. Em VANTs de pequeno
+porte encontramos as seguintes superfícies de controle, os ailerons, o profundor, e o leme.
+3.1 Controle do Ângulo de Rolagem
+O controle do eixo transversal implica em manter a aeronave com um ângulo de rolagem determinado, por meio da deflexão das superfícies de controle dispostas nas asas, os ailerons. O controle do ângulo é feito por meio de um controlador P-D, com ganho proporcional ( ) e ganho derivativo (
+.
+Enquanto que uma malha convencional do ângulo de
+rolagem, ilustrada na Fig. (4.a), apresenta somente
+duas linhas de realimentação, conforme Nelson
+(1998) e a malha de atitude proposta nesse trabalho,
+ilustrada pela Fig.(4.b), apresenta três linhas de realimentação. As duas malhas necessitam da realimentação do ângulo de rolagem (
+) a ser controlado
+e da velocidade_angular (p) deste. A malha proposta
+apresenta uma terceira realimentação provinda da
+posição atual dos ailerons (
+) da aeronave.
+Quando aplicada uma referência na entrada (
+da
+malha convencional do ângulo de rolagem o valor da
+saída do controlador é atribuído diretamente  superfície de comando (
+), como descrito em (1).
+Como dito anteriormente, este trabalho agrega conceitos de trabalhos anteriores, Santos (Santos, 2009)
+e Ribeiro (Ribeiro, 2010). Nestes trabalhos, a aeronave a ser controlada era um Boing 747 e o controle
+foi realizando utilizando-se apenas dois laços aninhados em cada malha_de_controle. Como o Boing
+747 é uma aeronave de grande porte e, consequentemente, de dinâmica mais lenta que o aeromodelo
+alvo do presente trabalho, as malhas implementadas
+resultaram em um controle satisfatório. Implementando-se estas estruturas de malhas_de_controle, que
+chamaremos daqui em diante de malha convencional,
+no controle do VANT agora em questão, o comportamento da aeronave mostrou-se bastante insatisfatório.
+
+Aeronave
+
+ref
+
+ a conv
+
+err
++
+
++
+
+Kp
+
+-
+
+
+
+a
+
+-
+
+ atual
+
+Kd
+
+
+
+p
+
+p
+
+Figura 4.a. Malha convencional para de controle do ângulo de
+rolagem
+
+ref
+
+ a
+
+err
++
+
++
+
+Kp
+
+-
+
+Aeronave
+
+a prop
++
+
+-
+
+ atual
+
+
+
+a
+
++
+
+p
+
+
+
+ a atual
+
+ a atual
+Kd
+
+p
+
+Figura 4.b. Malha proposta para de controle do ângulo de rolagem
+
+Isto nos conduziu a uma nova estrutura de malha de
+controle, que a chamaremos de malhas proposta. A
+apresentação da estrutura da malha proposta e os
+resultados alcançados com sua implementação são as
+contribuições deste trabalho.
+No controle proposto nesse trabalho, quando submetido a uma referencia (
+, a saída dos controladores gera uma deflexão (
+) que deve ser somada a
+posição atual dos ailerons (
+), gerando o estímulo que deve ser aplicado na superfície de comando
+(
+), conforme (2) e (3).
+(
+
+)
+
+
+(1)
+
+(
+
+)
+)
+
+
+(2)
+
+(
+
+(
+
+(3)
+3.2 Controle do Ângulo de Arfagem
+O ângulo de arfagem da aeronave é controlado
+por meio da deflexão do profundor, localizado no
+estabilizador vertical. A malha_de_controle do ângulo
+de arfagem, assim como o ângulo de rolagem, apresenta um controlador P-D.
+As malhas convencionais e proposta neste trabalho
+podem ser vista na Fig. (5.a) e Fig. (5.b), respectivamente. O cálculo do estímulo aplicado no profundor
+na malha convencional é apresentado em (4), enquanto que (5) apresenta o cálculo na malha proposta.
+
+ref
++
+
+err
+-
+
+atual
+
+Kp
+
++
+
+ econv
+-
+
+Aeronave
+
+
+e
+Kd
+
+q
+
+
+
+q
+
+Figura 5.a. Malha convencional para de controle do ângulo de
+arfagem
+Figura 3. Superfícies de controle de um VANT
+
+ISBN 978-85-8001-069-5
+
+4
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ref
+
+Aeronave
+
+err
++
+
+-
+
+Kp
+
++
+
+e
+-
+
+e prop
++
+
++
+
+ e atual
+
+atual
+
+Kd
+
+e
+
+
+q
+
+
+
+ e atual
+
+q
+
+Figura 5.b. Malha proposta para de controle do ângulo de arfagem
+
+(
+(
+
+)
+
+
+(4)
+
+(
+
+)
+(5)
+
+)
+
+
+
+(
+
+)
+
+Onde
+e
+
+representam o valor aplicado no
+
+profundor.
+é o angulo de arfagem de referência.
+é a angulo de arfagem atual da aeronave.
+é a velocidade_angular no eixo transversal.
+e
+representam o ganho proporcional da malha de arfagem.
+e
+representam o ganho derivativo da malha de arfagem.
+
+Figura 6. Interface gráfica para ajuste dos parâmetros de voo
+
+Os ganhos foram calculados primeiramente através
+da técnica de Ziegles-Nichols e depois empiricamente, foi feito uma sintonia ajuste fina dos ganhos até se
+chegar a valores que apresentassem uma resposta
+satisfatória. Os ganhos ajustados são ilustrados na
+Tab. (1).
+Tabela 1. Ganhos das malhas_de_controle
+
+Kp
+Kd
+
+Rolagem
+Conv.
+Prop.
+0.29015 0.01675
+0.0086
+0.0032
+
+Arfagem
+Conv.
+Prop.
+0.2198
+0.05065
+0.05412
+0.0162
+
+4 Implementação
+
+5 Resultados
+
+A implementação do sistema para realização dos
+testes foi feita através de uma simulação SoftwareIn-the-Loop entre o MatlabSimulink, onde foram
+implementados os controladores , e o simulador de
+voo X-plane, utilizando a aeronave modelada no
+Plane-Maker.
+O Simulink apresenta blocos prontos para realizar
+uma comunicação UDP, necessitando somente da
+criação de um bloco de funções do tipo S-Built
+para traduzir o protocolo do X-Plane (Ribeiro, 2010).
+Esse tipo de bloco permite a escrita de trechos de
+código em vários tipos de linguagem de programação
+dentro do ambiente Simulink. O bloco de função para
+traduzir o protocolo do X-Plane foi escrito em Linguagem C, e foi pré-compilado antes de se iniciar
+uma simulação.
+Para facilitar o ajuste dos ganhos foi criada uma
+interface_gráfica para o usuário, que permite escolher
+quais os controles serão avaliados, e qual malha será
+executada (sem realimentação da superfície de controle ou com realimentação da superfície de controle). O painel de controle, ilustrado pela Fig. (6), também permite alterar em tempo_real os ganhos dos
+controladores, assim como os valores de referência
+aplicados na entrada das malhas. No caso do piloto
+semi-automático, o operador em terra geraria os
+valores de referência para os ângulos de Euler através
+de um rádio controle. Nesta implementação isto é
+feito alterando os valores de referência ilustrados
+pela Fig. (6).
+
+Inicialmente foram testadas as malhas individualmente, logo em seguida foi realizado um teste em
+voo em cruzeiro com todas as malhas sem realimentação dos servos, seguido por um voo com todas as
+malhas com realimentação.
+
+ISBN 978-85-8001-069-5
+
+5.1 Testes das malhas individualmente
+Para testar as malhas individualmente, a aeronave foi estabilizada com seus ângulos de Euler próximos de zeros graus. Foi, então, aplicado um degrau
+positivo de 5 graus com duração de poucos segundos,
+seguido por um degrau negativo de 5 graus. A referência aplicada (os degrais positivos e negativos) são
+ilustrado em tracejado pelos gráficos dessas secção,
+enquanto que a resposta_da_aeronave é ilustrada pela
+linha contínua.
+A Fig. (7.a) ilustra o ângulo de rolagem (gráfico
+superior) quando utilizando a malha sem realimentação, Fig. (4.a) O comportamento do aileron é ilustrado pelo gráfico inferior da mesma figura. Com a Fig.
+(7.b) verifica-se uma melhora significativa no comportamento do aileron (gráfico inferior) quando utilizando a malha com realimentação dos servos, Fig.
+(4.b). O gráfico superior da Fig. (7.b) ilustra o ângulo
+de rolagem utilizando a malha com realimentação do
+aileron. As Fig (8.a) e Fig. (8.b) apresentam uma
+ampliação da resposta_da_aeronave para pulso positivo.
+5
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 8.b. Resposta ampliada do ângulo de rolagem da malha
+com realimentação
+Figura 7.a. Resposta do ângulo de rolagem da malha sem realimentação
+
+As repostas do ângulo de arfagem (gráfico superior)
+e do comportamento do profundor (gráfico inferior)
+são ilustrados pelas Figs. (9.a) e (9.b), para a malha
+sem realimentação e a malha com realimentação,
+respectivamente.
+
+Figura 7.b. Resposta do ângulo de rolagem da malha com realimentação
+Figura 9.a. Resposta do ângulo de arfagem da malha sem realimentação
+
+Figura 8.a. Resposta ampliada do ângulo de rolagem da malha sem
+realimentação
+
+ISBN 978-85-8001-069-5
+
+Figura 9.b. Resposta do ângulo de arfagem da malha com realimentação
+
+6
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+As Figs. (10.a) e (10.b) apresentam uma ampliação
+da resposta_da_aeronave para o primeiro degrau positivo. Nota-se que a malha sem realimentação apresenta grandes dificuldades em controlar o ângulo de
+arfagem, e quando controlado apresenta um grande
+erro estacionário.
+A Tab. (2) ilustra os parâmetros de desempenho para
+cada malha individualmente. Onde
+UP significa ultrapassagem percentual,
+Ts é o tempo de subida
+Te é o tempo de estabilização
+Erro é o erro estacionário.
+Tabela 2. Parâmetros de desempenhos das malhas estudadas
+
+UP()
+Ts(s)
+Te (s)
+Erro (graus)
+
+Rolagem
+Conv. Prop.
+14.9
+8.5
+1.3
+1.3
+7.2
+10.4
+-0.1
+1e-05
+
+Arfagem
+Conv.
+Prop.
+18.8
+0.89
+0.98
+2.7
+7.1
+5.1
+-0.5
+-9e-04
+
+5.1 Testes em voo de cruzeiro
+Dois voos de cruzeiro, ilustrados pela Fig. (11),
+foram realizados, um com todas as malhas com realimentação dos servos ligadas (gráfico superior) e
+outro com todas as malhas sem realimentação (gráfico inferior) dos servos ligadas. A duração de voo foi
+de aproximadamente 40 minutos. A referência de
+rolagem foi de zero grau, a de arfagem de 5 graus, e a
+de guinada de 10 graus. Verificou-se uma diferença
+considerável entre a resposta do controle convencional e do controle proposto neste trabalho. Note que
+enquanto a malha com realimentação dos servos
+permanece com os ângulos de Euler praticamente
+constantes, a malha convencional apresenta grandes
+variações principalmente no ângulo de arfagem da
+aeronave. Pela reposta apresentada percebe-se que
+quando simuladas as três malhas operando em conjunto um movimento brusco de uma pode causar uma
+desestabilização de outra
+6 Discursão e Trabalhos Futuros
+
+Figura 10.a. Resposta ampliada do ângulo de arfagem da malha
+sem realimentação
+
+Figura 10.b. Resposta ampliada do ângulo de arfagem da malha
+com realimentação
+
+ISBN 978-85-8001-069-5
+
+Este trabalho propõe uma metodologia diferente
+para controle da atitude de um VANT. O controle
+apresentado necessita de uma realimentação a mais
+que os controladores convencionais, que seria a posição atual dos servos da aeronave. Utilizando o simulador de voo, a realimentação pode ser obtida facilmente pelo X-Plane que fornece a capacidade de
+leitura da posição dos servos a todo instante.
+O controle proposto melhora consideravelmente a
+resposta dos atuadores, passando estes a realizar
+movimentos mais suaves. Pensando em uma aeronave real isso resultaria em menor esforço do atuador e
+consequentemente menor desgaste das escovas do
+motor do servo. Além disso, conseguiu-se um erro
+estacionário próximo de zero com a utilização de
+controladores simples do tipo proporcional. Um
+controlador mais complexo como um PID poderia ser
+empregado para eliminar o erro em regime, porém
+demandaria mais processamento por parte do piloto
+automático. A malha de arfagem apresentou uma
+melhora significativa na ultrapassagem percentual, o
+que garante menos variação na atitude da aeronave,
+causando um voo mais estável. A malha de guinada
+teve um tempo de estabilização duas vezes maior que
+o do controle convencional, o que poderia ser encarado com uma desvantagem, porém isto garantiu
+mais suavidade para atingir a referência, impedindo
+que a aeronave realizasse movimentos acentuados.
+A implementação do sistema para realização dos
+testes foi realizada através de uma simulação Software-In-the-Loop entre o MatlabSimulink. Apesar de
+ser uma aeronave não tripulada, e problemas como
+conforto de passageiros não serem levados em consideração, movimentos bruscos podem ocasionar desgastes da fuselagem, e aumenta o risco de danos a
+eletrônica embarcada.
+
+7
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 11. Voo de cruzeiro. Gráfico Superior Malhas com realimentação. Gráfico Inferior Malhas sem realimentação.
+
+Quando utilizando uma aeronave real, a realimentação dos servos poderia ser feita de duas maneias. A
+primeira e mais simples seria armazenar o ultimo
+valor enviado a superfície de comando, e usá-lo como realimentação. Esse tipo de abordagem facilitaria
+a manufatura do sistema, porém, quando em voo,
+devido s forças externas, a posição real da aeronave
+pode estar levemente diferente da posição setada pelo
+piloto_automático, causando erros de controle. A
+segunda alternativa seria ler o potenciômetro interno
+do servo que fornece a deflexão exata da superfície
+de comando, e realimentar o controle com esse valor.
+Esse segundo método exige uma linha de realimentação física a mais, e todos os servos teriam de ser
+adaptados para fornecer corretamente o seu valor de
+deflexão. Para trabalhos futuros pretende-se realizar
+um estudo de como seria o melhor modo de obter
+essa realimentação, considerando eficiência, custo e
+desempenho.
+Referências Bibliográficas
+Beard, R., Kingston D., Quigley M., Snyder D.,
+Christiansen R., Johnson W., McLain T., and
+Goodrich M. A., (2005). Autonomous Vehicle
+Technologies for Small Fixed-Wing UAVs. J.
+Of Aerospace Computing, Information, And
+Communication, Vol.2, pp. 92-108.
+Cenciotti, D., (2011). Behind the Scenes What Its
+Like Inside a Predator Drone Control Station.
+Tech News Daily.
+Disponível em
+<httpwww.technewsdaily.com2862-behindthe-scenes-what-its-like-inside-an-unmannedaircraft-system-station.html>. Acessado em
+012012.
+Chao,H., Cao Y., and Chen, Y., (2010). Autopilots
+for Small Unmanned Aerial Vehicles A
+Survey., Int. J. Control, Automation and
+Systems, vol. 8, pp. 36-44.
+Cox, H. T Nagy, J.C. Skoog, A.M Somers, A.I.,
+(2004) Civil UAV Capability Assessment.
+Intern Report NASA Aeronautics Research
+Mission Directorat.
+
+ISBN 978-85-8001-069-5
+
+IEEE Standard 754, (2008). IEEE Floating-Point
+Arithmetic (Standards style),
+Garcia R., and Barnes L., (2009) Multi-UAV
+Simulator Utilizing X-Plane, IEEE J. Intelligent
+ Robotic Systems, vol. 57, pp. 393-406.
+Meyer, A., (2011). X-Plane 9. X-Plane Operation
+Manual.
+Nelson, R. C. (1998). Flight Stability and Automatic
+Control. McGraw-Hill, Second Edition.
+Rasi, J. R., (2008). Desenvolvimento de um veículo
+aéreo não-tripulado para aplicação de
+pulverização
+agrícola.
+Monografia
+(especialização). Departamento de engenharia
+rural da Universidade Federal de Pelotas.
+Pelotas.
+Ribeiro L. R., and Oliveira, N. M. F., (2010). UAV
+(Unmanned
+Aerial
+Vehicle)
+Autopilot
+Controllers Test Platform using MatlabSimulink
+and X-Plane. Proccedings of ASEEIEEE
+Frontiers in Education Conference, Washington
+DC.
+Santos, S. R. B.  Oliveira, N. M. F., (2009). Testbed
+for Controllers of Longitudinal Movements of
+Aircraft. Anais do 20 Congresso Internacional
+de Engenharia Mecânica, 2009, Gramado. 20
+Congresso
+Internacional
+de
+Engenharia
+Mecânica, 2009.
+Santos, S. R. B., and Oliveira, N. M. F., (2011).
+Longitudinal
+Autopilot Controllers Test
+Platform Hardware in the Loop. Proceedings of
+2011 IEEE International Systems Conference,
+Montreal  Quebec, Canada, 2011
+Santos S. R. B., Nascimento Jr. C. L., Givigi Jr. S.
+N., Bittar A., and Oliveira. N. M. F., (2011b).
+Modeling of a Hardware-In-The-Loop Simulator
+For Uav Autopilot Controllers. Proceedings of
+21th International Congress of Mechanical
+Engineering, Natal, Brazil.
+Young, S. O. Hubbard, P. Raven, (2007). A
+Maritime Surveillance Project Using Small
+UAV. Proceedings of IEEE Conference on
+Emerging
+Technologies
+and
+Factory
+Automation, pp 904 -907.
+
+8

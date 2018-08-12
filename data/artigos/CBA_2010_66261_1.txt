@@ -1,0 +1,759 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+BANG-BANG CONTROL OF SERVO-HYDRAULIC TESTING MACHINES USING LEARNING
+TECHNIQUES
+JUAN G.C. ALVA, MARCO A. MEGGIOLARO, JAIME T.P. CASTRO
+Departamento de Engenharia Mecânica,Pontifícia Universidade Catolica de Rio de Janeiro
+Rua Marques de São Vicente 255 Gávea, Rio de Janeiro, RJ, Brazil, 22453-900
+E-mails gcastillo@aluno.puc-rio.br, meggi@puc-rio.br, jtcastro@puc-rio.br
+
+TIMOTHY H. TOPPER
+Department of Civil and Environmental Engineering, University of Waterloo
+200 University Avenue West, Waterloo, Ontario, N2L 3G1, Canada
+E-mail topper@uwaterloo.ca
+Abstract For a given material resistance and magnitudes of alternate and mean stresses, the fatigue life depends essentially on
+the number of applied load cycles on the tested material. For this reason, working with a materials testing machine at high frequencies brings advantages of time and cost reduction, without altering the results. To achieve such frequencies, it is necessary to
+use an efficient control system. The present work shows learning control techniques developed and implemented in a materials
+testing machine, allowing the application of constant or variable amplitude loads at high frequencies. The proposed methodology
+consists of implementing a bang-bang type control to restrict the system servo-valve to permanently work at its extreme limits of
+operation, always completely opened in either direction. As the servo-valve works at its operating limits, the learning algorithm
+tries to obtain the optimal instants for the valve reversions, associating them to a non-dimensional variable, stored in a specific
+table. The table values are constantly updated for the learning law during the test execution, improving the system response. The
+experimental validation of this method is performed with a 100kN servo-hydraulic testing machine. A control system is especially developed to operate the machine, with real time control software implemented in a CompactRIO computational system.
+The experimental results show that the test frequency can be significantly increased with the proposed learning control technique.
+Keywords frequency increase, learning control, bang-bang control, servo-hydraulic system.
+Resumo A vida  fadiga para uma dada resistência de material e magnitudes de cargas médias e alternadas depende essencialmente do número de ciclos de carregamentos aplicados ao material testado. Por este motivo, trabalhar com uma máquina de ensaios de fadiga a altas frequências traz a vantagem de reduzir o tempo e custo do ensaio, sem a alteração dos resultados. Para atingir tais frequências é necessário um sistema_de_controle_eficiente. O presente trabalho apresenta técnicas de controle_por_aprendizado desenvolvidas e aplicadas em máquinas de ensaios de materiais, permitindo a aplicação de carregamentos de amplitude variável ou constante a altas frequências. A metodologia proposta consiste na aplicação de um sistema_de_controle do tipo
+bang-bang que restrinja a servo-válvula a trabalhar em seus limites extremos de operação. O algoritmo de aprendizado irá obter
+os instantes ótimos de reversão da válvula, associando-os a variáveis adimensionais, armazenadas em uma tabela específica. Os
+valores da tabela são constantemente atualizados mediante as leis de aprendizado durante o teste, melhorando a resposta do sistema. A validação experimental deste método é feita em uma máquina servo-hidráulica de ensaios com capacidade de 100 kN. O
+sistema_de_controle é especialmente desenvolvido para operar a máquina, com um software_de_controle_em_tempo_real implementado em um sistema computacional CompactRIO. Os resultados experimentais mostram que a freqência dos testes pode ser significativamente aumentada com as técnicas de controle propostas.
+Palavras chave .
+
+1
+
+typical fatigue test, it is necessary to have an efficient
+control system.
+In traditional control methods, all information
+from the process is known in advance, deterministically, as described by (Doebelin, 1976). If the initial
+information is unknown, a controller may be designed to estimate the information during the operation. This information could be used for future control decisions, a process known as learning control.
+The literature related to the control of servohydraulic systems presents many developments applied to industrial manipulators used to perform repetitive tasks (Sun and Chiu, 1999). One of these
+works is based on a Lyapunov controller, where an
+adaptive law is also proposed to remove uncertainties
+in the hydraulic parameters (Sirouspour and Salcudean, 2000). A second work uses a non-linear controller that presents a better performance in both
+
+Introduction
+
+Hydraulic systems are widely used in industrial
+systems in applications such as automated plants,
+robotics, motion simulators, metal processing plants,
+mineral exploration, presses, heavy machinery and
+materials fatigue test systems (Merritt, 1967). In general, hydraulic systems are used in applications
+where relatively high forces, torques and accelerations are required. Machinery used in materials fatigue testing is based on servo-hydraulic systems, to
+provide useful information about the materials life
+in service by applying load cycles. The applied load
+may be repeated millions of times in typical frequencies up to one hundred times per second for metals.
+To achieve these relatively high frequencies in a
+
+2324
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+simulations and experiments than the results obtained
+using the proportional-derivative controller (Jelali
+and Kroll, 2003). Another work uses a robust controller and disturbance rejection for servo-hydraulic
+systems (Ching Lu and Wen Chen, 1993). In this
+case, the results of simulations and experiments show
+that this controller has the ability to maintain the load
+accuracy in the presence of very large variations of
+the plant parameters andor external disturbances.
+In the present work, a learning control technique
+is developed to increase the frequency of the applied
+load cycles in fatigue tests. An experimental control
+system is developed and applied to a fatigue test machine in order to assess and evaluate the performance
+of the proposed methodology.
+
+when controlling a force cycle from 10 to 110kN, a
+value UIJ  0.8 would be equivalent to reversing the
+valve when 80 of the path between 10 and 110kN
+has passed, i.e., when the measured force is equal to
+10 + 0.8(11010)  90kN. In this same example,
+when returning from 110 to 10kN, the same value UIJ
+ 0.8 would be equivalent to reversing the valve at
+110  0.8(11010)  30kN.
+This UIJ is a parameter that depends on several
+factors such as the amplitude and mean value of the
+applied load, and it is also influenced by dead zones
+caused in some cases by slack in the test specimen
+fixtures. The objective of the proposed approach is to
+learn the values of UIJ as a function of the load amplitude, mean, and direction (either from peak to valley or from valley to peak), as described next.
+
+2 Learning Control
+
+2.1 Learning tables
+Figure 2 shows a table that stores nondimensional numbers Ui,j (with the indexes in lowercase) associated with the learning process. These
+numbers are the discrete values of UIJ for several
+combinations of load amplitude and mean. The columns show the values of the gamma (or range, equal
+to twice the amplitude) of the physical variable to be
+controlled, while the rows show the minimum value
+of the peak-valley half-cycle. Note that this table can
+be divided into two parts, one associated to when the
+system is going from a valley to a peak, and another
+when it is going from a peak to a valley. In order to
+join both tables, the concept of negative gamma is
+used, which indicates the transition from a peak to a
+valley.
+
+The learning process can be seen as a problem of
+estimation or successive approximations of unknown
+quantities or an unknown function (King-Sun, 1970).
+In this case, the unknown quantities that are estimated or learned by the controller are parameters that
+are governed by the control laws.
+The block diagram shown in Fig. 1 represents
+the learning control process. In each cycle, the system uses the information of the variables UIJ stored
+in its memory for feedback control. The errors measured during each cycle are used to update the parameters UIJ through a learning law. The learning law
+is applied only at the end of each learning cycle k,
+which updates the values UIJ(k) with UIJ(k+1) based
+on the errors e(k). In the present application in fatigue testing, each learning cycle is associated with
+each reversal of the controlled parameter, e.g., after
+one peak and one valley of the applied force history.
+Memory
+UIJ(k), e(k)
+
+Rows (minimum)
+
+Memory
+UIJ(k+1), e(k+1)
+
+Columns (gamma)
+
+Learning law
+
+Desired
+force
+
+Control
+law
+
+Servo-Hydraulic
+system
+
+Figure 1. Block diagram of the learning control
+
+The learning control methodology presented in
+this work aims to maintain the servo-valve working
+in its extreme operation limits, keeping the valve
+most of the time in the fully open position in either
+direction. This type of control is known as bang-bang
+(O Brien, 2006). Due to the system dynamics, the
+servo-valve reversion instants must be chosen to happen before the desired peaks and valleys of force or
+stress.
+This instant of reversion is represented by a nondimensional variable UIJ, which is defined as the
+fraction of the peak-valley (or valley-peak) path
+where the valve should be reversed. For instance,
+
+25
+
+15
+
+5
+
+5
+
+15
+
+25
+
+25
+
+0,9810
+
+0,9602
+
+0,8795
+
+0,8016
+
+0,8712
+
+0,9475
+
+15
+
+0,9688
+
+0,9415
+
+0,8854
+
+0,8245
+
+0,9005
+
+0,9516
+
+5
+
+0,9520
+
+0,9230
+
+Uij
+
+0,8429
+
+0,9005
+
+0,9712
+
+5
+
+0,9256
+
+0,8910
+
+0,7415
+
+0,9038
+
+0,9406
+
+0,9856
+
+15
+
+0,9086
+
+0,8723
+
+0,6879
+
+0,9312
+
+0,9688
+
+0,9901
+
+25
+
+0,8865
+
+0,8549
+
+0,6218
+
+0,9537
+
+0,9765
+
+0,9936
+
+Figure 2. Learning table
+
+As a result, Ui,j is defined as an element associated with the row i (minimum value mini) and the
+column j (associated with the gamma gamaj). For a
+loading with a minimum value mini and gamma
+equal to gamaj, then UIJ  Ui,j. If the minimum and
+gamma values are between two consecutive values in
+the table, i.e., mini < min < mini+1 and gamaj < gama
+< gamaj+1, then UIJ is obtained from an interpolation
+(see Figure 3)
+2325
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+U IJ  a + (b  a) 
+
+( gama  gama j )
+
+( gama
+
+where
+a  U i , j + (U i +1, j  U i , j ) 
+
+j +1
+
+ gama j )
+
+(min  mini )
+min
+( i +1  mini )
+
+b  U i , j +1 + (U i +1, j +1  U i , j +1 ) 
+
+ing decreases, then x > xd, and therefore e > 0. Similarly, for an overshoot, e < 0.
+As a result, positive errors are always associated
+with undershoots, and negative ones with overshoots,
+no matter if the transition is from a valley to a peak
+or from a peak to a valley. Clearly, if an overshoot
+happens, then the approach is to reverse the valve
+sooner in future similar events, which implies in decreasing UIJ for that combination of (min, gamma).
+On the other hand, in the case of an undershoot, it
+would be necessary to increase UIJ.
+Assuming that any undershoot or overshoot will
+remain below 100, then 1 < e < 1, and a learning
+law can be proposed
+
+(1)
+
+(2)
+
+(min  mini )
+
+( mini+1  mini )
+
+(3)
+
+Rows (minimum)
+
+Columns (gamma)
+gamaj
+
+gamaj+1
+
+0,9810
+
+0,9602
+
+0,8795
+
+0,8016
+
+0,8712
+
+0,9475
+
+mini
+
+0,9688
+
+0,9415
+
+Ui,j Ui,j+1
+
+0,9005
+
+0,9516
+
+mini+1
+
+0,9520
+
+0,9230
+
+Ui+1,j Ui+1,j+1
+
+0,9005
+
+0,9712
+
+0,9256
+
+0,8910
+
+0,7415
+
+0,9038
+
+0,9406
+
+0,9856
+
+0,9086
+
+0,8723
+
+0,6879
+
+0,9312
+
+0,9688
+
+0,9901
+
+0,8865
+
+0,8549
+
+0,6218
+
+0,9537
+
+0,9765
+
+0,9936
+
+U IJ  U IJ  (1 + e)
+
+The above learning law does not need adjustable
+gains. It is associated with an increment of UIJ by a
+factor (1+e) in the case of an undershoot (e > 0), and
+a decrease in its value for an overshoot (e < 0). It is
+possible to introduce a gain to multiply the error in
+equation (6), in order to tune the learning rate. Nevertheless, a unitary gain was enough in this work to
+achieve a stable and fast learning law.
+Since the learning table only stores discrete values of UIJ, the values Ui,j, Ui,j+1, Ui+1,j, Ui+1,j+1 that
+generated UIJ(min, gamma) by interpolation must
+also be updated according to the learning law, where
+mini < min < mini+1 and also gamaj < gama < gamaj+1.
+This update process is also made using weight factors, i.e., the neighboring cell closer to UIJ shall be
+updated in a greater degree than the other three
+neighbor cells. This process is easily implemented
+with the learning law
+
+Figure 3. Procedure for interpolation when the values of gamma
+and minimum are between two cells
+
+Once the value of UIJ is calculated from Eqs. (13), the servo-valve reversal point can be calculated
+from
+( from valley to peak)
+min +UIJ  gama
+
+reversal  
+( from peak to valley)
++
+
+
+(
+min
+gama
+)
+U
+gama
+IJ
+
+
+(4)
+
+2.2 Learning law
+The learning law governs how the Ui,j values are
+updated after each load reversion in the test. Thus,
+the new value of UIJ is calculated using the error between the measured peak (or valley) x and the desired peak (or valley) xd
+
+e
+
+xd  x
+xd  x 
+
+(6)
+
+(5)
+
+U i , j  U i , j  1 + (1   )  (1   )  e 
+
+(7)
+
+U i , j +1  U i , j +1  1 + (1   )    e
+
+(8)
+
+U i +1, j  U i +1, j  1 +   (1   )  e 
+
+(9)
+
+U i +1, j +1  U i +1, j +1  1 +     e 
+
+(10)
+
+where
+
+where x is the valley or peak measured in the last
+reversion. Note that the defined error is dimensionless, and that x can be any variable to be controlled in the tests, such as applied force, test specimen deformation, or hydraulic piston displacement.
+In the case where x and xd are peaks, x will be a
+valley, and the difference (xd  x) will be positive.
+Thus, if there is an undershoot in this event, then
+x < xd, resulting in e > 0. Analogously, if an overshoot happens, then e < 0.
+On the other hand, if x and xd are valleys, then x
+will be a peak, and the difference (xd  x) will be
+negative. In the case of an undershoot when the load-
+
+
+
+
+
+min  mini
+, 0 < <1
+mini +1  mini
+gama  gama j
+gama j +1  gama j
+
+, 0 <  <1
+
+(11)
+
+(12)
+
+Note that Eqs. (1-3) may be rewritten in terms of the
+above defined  and  as follows
+
+U IJ  U i , j  (1   )  (1   ) + U i +1, j    (1   ) +
+U i , j +1  (1   )   + U i +1, j +1    
+
+2326
+
+(13)
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+3
+
+Simulations
+
+Response of learning control
+30
+
+Simulations of the proposed control system applied to a servo-hydraulic testing machine were performed in MATLABTM. The simulation includes the
+modeling of a 100kN servo-hydraulic machine, including detailed models for the servo-valve
+(Viersma, 1980 Thayer, 1965). The system model is
+too lengthy to be included in this work however, its
+full description can be seen in Alva (2008).
+The simulations for the servo-hydraulic machine,
+performed for constant and variable amplitude load
+histories, show excellent results for the proposed
+learning control law. Figures 4 and 5 show how the
+controller learns by changing the location of the
+servo-valve reversion points (represented by an x)
+at each load cycle. The learning process starts assuming UIJ equal to 0.5 for any value of (min, gama).
+
+25
+20
+
+Force (kN)
+
+15
+
+5
+0
+
+-10
+0
+
+Force (kN)
+
+6
+5
+4
+3
+2
+1
+0
+0.04
+
+0.06
+
+0.08
+
+0.1
+
+0.12
+
+0.14
+
+Time (s)
+
+Figure 4. Learning control responses for a constant amplitude
+history from 0 to 10kN
+
+0.4
+
+0.5
+
+0.6
+
+Output values
+Desired values
+Reversion Point
+
+10
+8
+
+4
+2
+0
+-2
+-4
+-6
+-8
+-10
+0.05
+
+0.1
+
+0.15
+
+0.8
+
+The proposed methodology is applied to a fatigue
+test machine INSTRON model 8501, with a servovalve MOOG D562 and a current signal command of
+40 mA, see Figure 7.
+
+6
+
+0
+
+0.7
+
+4. Experiments
+
+Response of learning control
+
+Force (kN)
+
+0.3
+
+Note also from Fig. 6 that the frequency of the
+system response depends on the desired amplitude.
+The blocks 1 and 3, which have the same amplitude
+10  (10)2  30  102  10kN, result in a higher frequency than block 2, with a lower amplitude
+25  102  7.5kN. This variable frequency is not
+an issue in fatigue testing, because the fatigue life of
+most materials under room temperature depends only
+on the load amplitude and mean, not on its frequency. These frequencies, on the other hand, are the
+highest achievable for a given system and load history, since the servo-valves are always operating at
+their operational limits and their reversion has been
+optimized due to the learning law.
+
+7
+
+0.02
+
+0.2
+
+Figure 6. Learning control responses for a variable amplitude
+input.
+
+8
+
+0
+
+0.1
+
+Time (s)
+
+Output values
+Desired values
+Reversion point
+
+9
+
+Output values
+Desired values
+Reversion point
+
+-5
+
+Response of learning control
+10
+
+10
+
+0.2
+
+Time (s)
+
+Figure 5. Learning control responses for a constant amplitude
+history from 10 to 10kN
+
+As shown in Fig. 6, the learning process also presents good results for variable amplitude histories. In
+this example, three blocks with different (min, gama)
+values were applied to the specimen. In the first
+block, the learning process takes about 5 to 6 cycles
+to converge. The second block also needs 6 blocks to
+converge, because its (min, gama) is very different
+from the one from the first block, updating a very
+different section of the learning table. But the learning in the third block converges in only 2 cycles,
+because it could benefit from the updated Uij values
+learned from the second block, which had similar
+(min, gama) values.
+
+Figure 7. Experimental system
+
+2327
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+The piston from this machine can generate forces
+up to 100 kN with a displacement amplitude of 50
+mm (from a central position). The fatigue test machine has a force sensor (load cell) to control force
+histories, and a LVDT for displacement commands.
+A strain-gage or clip-gage attached to the test specimen also allows the control of a deformation history.
+The hydraulic fluid is supplied by a hydraulic pump
+at the pressure of 190 bar.
+The learning control is implemented in a CompactRIO cRIO9004 computational system, from National Instruments. This system includes modules for
+analog outputs (NI9263), analog inputs, exciter module for strain_gages (NI9237), and a voltage-tocurrent converter, see Figure 7.
+The tests are run for zero mean loads and force
+amplitudes of 10 kN, 20 kN, 30 kN and 40 kN, all of
+them using 20mA of current in the servo-valve. The
+tests are performed using N test specimens with
+12mm in diameter in its thinnest section.
+Figure 8 compares the performance of the proposed learning control implemented at the CompactRIO using lower 20mA currents and the traditional
+one from the Instron controller hardware using
+40mA, for the servo-hydraulic machine under several load amplitudes. It is possible to observe a better
+performance of the learning control for low amplitudes and an equal performance for high amplitudes,
+even though the learning control only needs half the
+current to operate the servo-valve. The traditional
+control is only able to outperform the proposed learning control when it is allowed to use currents beyond
+40mA in the servo-valve (overdrive).
+
+5. Conclusions
+
+In this work, it was shown that it is possible to increase the work frequency of a fatigue test machine
+using a learning control technique applied to servohydraulic systems. Both the bang-bang control and
+proposed learning laws do not need adjustable gains,
+simplifying their implementation. The proposed control system was simulated and applied to a fatigue
+testing machine, implemented in a CompactRIO
+computational system. The results showed that the
+proposed control was capable to generate frequencies
+higher than those obtained with the original controller from the testing machine manufacturer, even using lower currents for the servo-valve triggering.
+Acknowledgments
+
+To CAPES, Coordenação de Aperfeiçoamento de
+Pessoal de Nível Superior, for financial support.
+References
+
+Alva J.G.C., Controle por Aprendizado de Sistemas
+Servo-Hidráulicos de Alta Frequência, M.Sc.
+thesis, Pontifical Catholic University of Rio de
+Janeiro, in Portuguese, 2008.
+Ching Lu H., Wen Chen L., Robust Controller with
+Disturbance Rejection for Hydraulic Servo
+Systems, IEEE Transactions on Industrial
+Electronics, vol. 40, pp. 152-162, 1993.
+Doebelin, E.O., System Dynamics System Modeling
+and response. Prentice Hall, 1976.
+King-Sun F., Learning Control System, IEEE
+Transactions on Automatic Control, pp. 210221, 1970.
+Jelali M., Kroll A., Hydraulic servo-systems
+modeling, identification and control. New York.
+Springer, 2003.
+Merritt H.E., Hydraulic Control Systems. John Wiley
+and Sons, 1967.
+O Brien R.T., Bang Bang Control for Type-2
+Systems, 38th Southeastern Symposium System
+Theory, Tennessee, USA, 2006.
+Sirouspour M., Salcudean S., On the Nonlinear
+Control of Hydraulic Servo-Systems, IEEE
+International Conference on Robotics and
+Automation, San Francisco, 2000.
+Sun H., Chiu G., Nonlinear Observer Based Force
+Control of Electro Hydraulic Actuators,
+American Control Conference. San Diego, CA,
+USA, 1999.
+Thayer W.J., Transfer Functions for MOOG
+Servovalves, Technical Bulletin. New York,
+NY, USA, 1965.
+Viersma T.J., Analysis, Synthesis and Design of
+Hydraulic Servosystems and Pipelines. Elsevier,
+1980.
+
+Figure 8. Performance comparison between the proposed learning
+control limited to 20mA with the traditional Instron Controller at
+40mA or beyond 40mA limits
+
+It is expected that using a current of 40mA in
+the proposed learning control process it will be possible to obtain even better results. Learning control
+with currents beyond 40mA (overdrive) will also be
+investigated in future work. The use of only 20mA
+for the learning control was due to a limitation of the
+voltage-to-current system of the CompactRIO.
+
+2328

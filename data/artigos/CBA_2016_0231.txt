@@ -1,0 +1,1170 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+MODELAGEM MATEMATICA PARA PROJETO DE SENSORES VIRTUAIS DE
+PRESSAO DE FUNDO DE POCOS DE PETROLEO
+Bruno O. S. Teixeira, Lucas B. Proenca, Mario C. M. M. Campos
+
+
+
+Dep. de Eng. Eletronica, Universidade Federal de Minas Gerais (UFMG), Belo Horizonte, Brasil
+
+Centro de Pesquisas e Desenvolvimento (CENPES), Petroleo Brasileiro S.A., Rio de Janeiro, Brasil
+Emails brunoot@ufmg.br, lucasbpro@gmail.com, mariocampos@petrobras.com.br
+Abstract This paper employs soft sensing techniques based on system identification and hybrid stochastic
+filtering to determine the downhole pressure of gas-lift oil wells. Linear mathematical models are obtained for
+five oil wells. Next, such models are used in Kalman filters, which are combined in a bank of interacting multiple
+models, covering different operating scenarios for each oil well. Also, we investigate and implement strategies for
+dual state and parameter estimation, allowing the soft sensor to be more robust to time-varying dynamics.
+Keywords
+
+Soft sensor, system identification, stochastic filtering, downhole pressure.
+
+Resumo Este trabalho aplica tecnicas de instrumentacao virtual baseadas em identificacao_de_sistemas e
+filtragem_estocastica hbrida para a determinacao da pressao_de_fundo_de_poco em pocos de extracao de petroleo.
+Modelos matematicos lineares sao obtidos para cinco pocos. Em seguida, tais modelos sao usados em filtros
+de Kalman, os quais sao utilizados para compor um banco de multiplos_modelos_interativos, tratando assim
+diferentes cenarios de operacao dos pocos. Tambem sao investigadas e implementadas estrategias de estimacao
+dual de estados e parametros do sistema, tornando o sensor_virtual mais robusto a variacoes temporais dos pocos.
+Palavras-chave
+
+.
+
+Introducao
+
+Sensores virtuais sao modelos_matematicos preditivos que inferem os valores de uma dada variavel de processo a partir de medicoes de outras variaveis (Kadlec et al., 2009 Khatibisepehr
+et al., 2013). Eles vem sendo aplicados na industria petroqumica como alternativa a sensores fsicos (Domlan et al., 2011 Fujiwara et al., 2012).
+Ha duas categorias de sensores_virtuais orientados a modelos e orientados a dados (Kadlec
+et al., 2009). Os primeiros empregam modelos
+fenomenologicos, ao passo que os ultimos fazem
+uso de modelos caixa preta. Considerando que
+os processos_industriais sao descritos por fenomenos nao-lineares, modelos nao-lineares (Pagano
+et al., 2006 Riccio et al., 2015) ou lineares por partes (Domlan et al., 2011) sao geralmente obtidos
+para produzir sensores_virtuais.
+A pressao_de_fundo_de_poco e uma grandeza
+extremamente importante para engenheiros de petroleo porque e usada no monitoramento, controle
+e otimizacao dos pocos perfurados. Todavia, dar
+manutencao ou substituir sensores de fundo de
+poco (PDG, do ingles, permanent downhole pressure) e uma tarefa desafiadora em pocos offshore
+(Eck et al., 1999). Nesse contexto, tecnicas de
+sensoreamento virtual sao uma opcao promissora.
+Este trabalho da continuidade aos estudos de
+(Teixeira et al., 2014 Riccio et al., 2015). Utilizase uma metodologia de duas etapas para estimar
+de forma online a pressao_de_fundo_de_poco de
+cinco diferentes pocos. Primeiramente, modelos
+lineares polinomiais sao obtidos a partir de dados
+historicos, para diferentes configuracoes de sinais
+
+ISSN 2525-8311
+
+de entrada e sada. Em seguida, bancos de filtros
+de Kalman sao implementados com esses modelos.
+Ou seja, modelos lineares locais sao combinados
+em malha_fechada a fim de produzir estimativas da pressao_de_fundo_de_poco que sejam mais
+acuradas e precisas que aquelas produzidas pela
+simulacao livre de modelos (em malha_aberta).
+Em (Riccio et al., 2015), verificou-se que o
+emprego de modelos nao-lineares nao causou melhoria significativa na acuracia das estimativas
+quando comparado ao caso em que somente modelos lineares eram testados. Assim, como e mais
+facil estender uma mesma estrutura de modelos
+lineares para diferentes pocos, garantindo estabilidade_global de tais modelos, este trabalho opta
+por obter apenas modelos lineares para os cinco
+pocos investigados. Aqui, uma mesma estrutura
+de modelos e proposta para todos os pocos, a
+fim de tornar mais facilmente replicavel a metodologia usada para outros pocos. Alem disso,
+investiga-se a possibilidade de atualizar recursivamente tais modelos a fim de tratar o envelhecimento do poco, bem como outros fenomenos dinamicos nao previstos nos dados de identificacao.
+Este artigo reporta os principais resultados obtidos por (Proenca, 2015).
+2
+
+Descricao do Processo
+
+Gas lift e um processo de elevacao_artificial usado
+em pocos de petroleo de aguas profundas. Um
+diagrama simplificado de um poco deste tipo e
+mostrado na Figura 1. A Tabela 1 lista algumas
+das variaveis de processo frequentemente medidas.
+O processo e resumido como a seguir. Gas
+
+744
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+choke valve
+TT3 PT3
+production
+manifold
+
+produce (liquid)
+(Qliq+Qg)
+injected gas (Qginj)
+
+Gas Lift
+Header
+
+Wet Christmas Tree
+TT4
+
+PT4
+
+TT2
+platform
+PT2
+
+Na plataforma, uma valvula do tipo SDV (PT3a)
+pode interromper a producao durante uma situacao de emergencia e a valvula de choke de producao (PT3 e TT3) regula a taxa de producao na
+plataforma. Diferentes regimes dinamicos de fluxo
+sao atingidos, dependendo dos valores das valvulas de gas lift (PT4 e PT4a) e pressao de fundo do
+poco (PT1).
+
+seabed
+
+TT1
+PT1
+
+3
+
+Considere o sistema_dinamico linear discreto
+
+(a)
+PT3
+
+TT3
+
+SDV (onoff)
+
+Choke valve
+
+PT4a
+
+TT4
+
+PT4
+
+FT4
+Gaslift
+Header
+Gaslift Choke
+
+SDV (onoff)
+
+TT2
+PT2
+
+TT1
+PT1
+
+(b)
+Figura 1
+
+Diagrama PID de um poco de petroleo com
+gas-lift, em que TT e PT sao os transmissores de temperatura e pressao. Uma visao geral e mostrada em (a), ao
+passo que a plataforma e detalhada em (b). Os numeros
+1 (fundo de poco) e 2 (arvore de natal molhada) representam variaveis no leito marinho, enquanto 3 (producao) e
+4 (gas lift) tratam variaveis da plataforma. A direcao do
+fluxo e 4-1-2-3. As variaveis do fundo do poco sao medidas
+proximas a sada do reservatorio.
+
+Tabela 1
+Tag
+PT1
+TT1
+PT2
+TT2
+PT3a
+PT3
+PT3b
+TT3
+FV3
+PT4b
+PT4a
+TT4
+FT4
+FV4
+PT4
+
+Variaveis de processo.
+
+Descricao
+Pressao de fundo de poco (PDG)
+Temp. de fundo de poco (PDG)
+Pressao da arvore de natal molhada
+Temp. da arvore de natal molhada
+Pressao mont. da valv. SDV
+Pressao mont. da valv. choke prod.
+Pressao jus. da valv. choke prod.
+Temp. mont. da valv. choke prod.
+Abertura da valv. choke prod.
+Pressao jus. da valv. SDV gas lift
+Pressao mont. da valv. SDV gas lift
+Temp. mont. da valv. SDV gas lift
+Vazao instantanea de gas lift
+Abertura da valv. de gas lift
+Pressao jus. da valv. choke gas lift
+
+Unidade
+kgfs2
+C
+kgfs2
+C
+kgfcm2
+kgfcm2
+kgfcm2
+C
+
+kgfcm2
+kgfcm2
+C
+m3 h
+
+kgfcm2
+
+pressurizado flui atraves da tubulacao de gas lift
+na direcao da plataforma (tag 4) rumo a arvore
+de natal no leito marinho, onde ele e injetado na
+sada do reservatorio. A densidade do fluido e
+entao reduzida tal que a pressao no reservatorio
+torna-se alta o suficiente para transportar a mistura de petroleo, gas e agua ate a plataforma. No
+leito marinho, um conjunto de valvulas chamadas
+de arvore de natal molhada (PT2 e TT2) regulam o fluxo de producao do leito a plataforma.
+
+ISSN 2525-8311
+
+Metodologia
+
+xk
+
+ Ak1 xk1 + Bk1 ufk1 + wk1 , (1)
+
+yk
+
+ Ck xk + Dk uhk + vk ,
+
+(2)
+
+em que xk1  Rn e o vetor_de_estados yk  Rm
+e a variavel de observacao Ak1 , Bk1 sao matrizes associadas a um modelo de processo f  Ck e
+Dk sao matrizes que representam
+ f
+ um modelo de
+4
+uk1
+observacao h uk 
+ Rp e o vetor
+uhk
+das entradas dos modelos de processo e observacao wk1  Rn e vk  Rm sao os rudos de processo e medicao com media nula e covariancia Q
+e R, respectivamente. Neste trabalho, xk e definido como a sequencia dos n ultimos valores da
+pressao_de_fundo_de_poco. O projeto de sensores
+virtuais de pressao_de_fundo_de_pocos de petroleo e aqui dividido em duas etapas conforme Figura 2. Utiliza-se a mesma metodologia usada em
+(Teixeira et al., 2014). Cinco pocos sao considerados E, M, N, P, e R.
+Na etapa de identificacao_de_sistemas, sao estimados tres pares modelos de processo e observacao, fs ,hs , s  1,2,3, de forma offline para
+cada poco. Cada par de modelos utiliza diferentes
+configuracoes de sinais de entrada usk e sada yks de
+acordo com a Tabela 2. Tais modelos sao identificados na representacao ARX polinomial (do ingles, AutoRegressive with eXogenous inputs) como
+T
+z(k)   (k  1), em que z(k) e a sada, (k  1)
+e o vetor de regressores dado por valores passados
+da sada com atraso maximo nz e das entradas
+com atraso maximo nu e  e o vetor de parametros, conforme (Aguirre, 2005) e reescritos em espaco_de_estados como (1)-(2). Os modelos de cada
+par sao obtidos a partir de um conjunto de dados
+dinamicos uk ,xk ,yk , k  1, . . . ,N , recuperados
+de um sistema historico PIMS a um perodo de
+amostragem de 1min. Janelas de dados com transientes em diferentes pontos de operacao sao detectadas usando o algoritmo proposto em (Ribeiro
+e Aguirre, 2015) e usadas para identificacao ou validacao dos modelos. Para cada par de modelos,
+as matrizes Q e R sao obtidas a partir do calculo
+2
+das variancias w
+e v2 dos erros de simulacao livre
+dos respectivos modelos.
+Na etapa de banco de filtros, os pares de modelos fs ,hs  sao combinados conforme Tabela 2
+
+745
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Figura 2
+
+Metodologia de desenvolvimento de sensor_virtual de pressao_de_fundo_de_poco em pocos de petroleo.
+
+Diferentes estruturas utilizadas para composicao dos pares de modelos fs ,hs . A pressao_de_fundo_de_poco
+s
+(PT1) e utilizada sempre como sada xk nos modelos de processo fs e como entrada uh
+k nos modelos de observacao h .
+
+Tabela 2
+Par s
+1
+2
+3
+
+Tipos de variaveis utilizadas
+Variaveis da arvore de natal molhada
+Variaveis da linha de producao
+Variaveis da linha de producao e gas lift
+
+para implementar tres filtros de Kalman paralelos
+(aqui designados por KFs, s  1,2,3), cada um gerando recursivamente estimativas xskk com covaxx,s
+riancia Pkk
+a partir de medicoes usk , yks , k > 0.
+Esses filtros tem suas estimativas combinadas por
+meio de um banco de filtros IMM (do ingles, Interacting Multiple Models) para cada poco, gerando
+uma estimativa online xkk mais precisa para a
+pressao_de_fundo_de_poco. Tambem se investiga a
+possibilidade de estimar um ou todos os parametros dos modelos de cada filtro por meio de uma
+abordagem dual, na qual um estimador recursivo
+de mnimos_quadrados com fator de esquecimento
+e usado para estimar o(s) parametro(s) paralelamente a cada filtro.
+E importante destacar que x e assumidamente
+conhecido durante intervalo N apenas na etapa de
+identificacao_de_sistemas. Observe que, por meio
+da abordagem de banco de filtros, a variavel x e
+estimada por meio de um esquema em malha_fechada, no qual a correcao e feita por meio do modelo de observacao. Maiores detalhes da metodologia sao apresentados em (Teixeira et al., 2014).
+4
+4.1
+
+Resultados Experimentais
+
+Modelagem
+
+Neste trabalho, a fim de definir uma metodologia mais facilmente reproduzvel em varios pocos,
+buscou-se definir uma estrutura comum aos modelos de todos os cinco pocos. Assim, inicialmente,
+desenvolveu-se uma criteriosa analise de (i) quais
+variaveis entre aquelas listadas na Tabela 1 deve-
+
+ISSN 2525-8311
+
+ufk de f s
+PT2, TT2
+PT3, TT3
+PT4, TT3
+
+xk de f s
+PT1
+PT1
+PT1
+
+uhk de hs
+PT1, TT2
+PT1, PT3a
+PT1, PT3a
+
+ykh de hs
+PT2
+PT3
+PT3
+
+PT4b
+
+PT2
+
+PT3a
+
+PT2 PT4b
+PT4a
+
+PT4a
+PT3
+
+PT3a
+TT4
+PT3
+
+TT4
+PT3b
+
+FV4
+
+FV4
+
+FT4
+
+FT4
+
+PT3b
+
+TT3
+
+TT3
+
+(a) Poco E
+PT3a
+
+FV3
+
+TT2
+
+FV3
+TT2
+
+(b) Poco M
+
+PT2 PT4b
+
+PT4
+PT2
+
+PT4a
+
+FV4
+FT4
+
+TT4
+PT3
+
+TT2
+
+FV4
+PT3a
+PT3b
+FT4
+
+TT4
+PT3b
+
+TT2
+
+FV3
+TT3
+
+(c) Poco N
+
+PT3
+
+TT3
+
+(d) Poco R
+
+Figura 3 Relevancia das variaveis candidatas para a explicacao de PT1 a partir de testes de correlacao.
+
+riam compor cada modelo fs ou hs por meio de
+testes de correlacao conforme (Aguirre, 2005 Khatibisepehr et al., 2013) e (ii) qual o maximo atraso
+na sada nz e na entrada nu de cada modelo (ordem) usando o criterio de informacao de Akaike.
+A Figura 3 sugere que existem caractersticas
+em comum entre os pocos. A fatia de correlacao ocupada pelo conjunto das variaveis medidas
+na arvore de natal, PT2 e TT2, e sempre consideravel. Quanto as variaveis de producao, as
+entradas PT3 e TT3 parecem ser uma escolha interessante para compor entradas de modelos. Fi-
+
+746
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+z(k)  1,629 z(k  1)  0.826 z(k  2)
+0,07676 u2 (k  1) + 0,02513 u2 (k  3)
+0,02802 u2 (k  7)  0,01276 u1 (k  2)
++0.716102 u1 (k  4) + 0,04621 u2 (k  9)
+0,05507 u2 (k  8),
+
+(3)
+
+em que u1 (k) e dado por PT3, u2 (k) por TT3 e
+z(k) por PT1. Para o poco P, tem-se h2 
+z(k)  0,5191 u2 (k  5) + 2,795 u1 (k  2)
+4,392 u1 (k  3) + 0,07645 u2 (k  8)
++0,3517 z(k  2)  0,1518 u2 (k  9)
++0,1637 z(k  1)  0,04635 u2 (k  7)
++1,606 u1 (k  4).
+
+(4)
+
+em que u1 (k) e dado por PT1, u2 (k) por PT3a e
+z(k) por PT3. A Figura 4 mostra a validacao de
+alguns modelos, incluindo-se os supracitados.
+4.2
+
+Estimacao de estados
+
+Os filtros implementados sao divididos em tres tipos, KF1, KF2 e KF3, conforme Tabela 2. As
+
+ISSN 2525-8311
+
+158
+Medidas
+Mf1
+Mf2
+
+157
+
+3
+
+Mf
+
+2
+
+PT1k (kgfcm )
+
+156
+
+155
+
+154
+
+153
+
+152
+
+0
+
+500
+
+1000
+k
+
+1500
+
+2000
+
+(a) Poco M
+22
+Medidas
+Ph2
+
+21
+20
+19
+
+PT3k (kgfcm2)
+
+nalmente, analisando-se as variaveis medidas na
+linha de injecao de gas lift, percebe-se que os dados de pressao sao mais relevantes para composicao de modelos do que aqueles relacionados a vazao ou a abertura de valvulas de gas lift. Assim,
+foram testadas diversas combinacoes de entradas
+para modelos, tentando-se padronizar ao maximo
+a estrutura dos mesmos para os cinco pocos de
+interesse. Ao final desses testes, conseguiu-se generalizar a estrutura dos modelos diferenciando-os
+nos tres tipos descritos na Tabela 2. Observe que
+os tipos 2 e 3 so utilizam variaveis da plataforma.
+Em alguns pocos, nao ha medicoes de variaveis
+na arvore de natal, cujos instrumentos estao localizados no leito marinho (tipo 1). Em (Teixeira
+et al., 2014 Riccio et al., 2015), observou-se que as
+variaveis do leito marinho nao sao indispensaveis
+para estimacao na pressao_de_fundo_de_poco.
+A partir de conhecimento previo do processo,
+vale destacar que nao e interessante a utilizacao
+de variaveis de gas lift como unicas entradas de
+modelos. Isso porque as mesmas nao conseguem
+explicar as flutuacoes das variaveis da producao,
+embora sejam importantes na explicacao das variacoes no ponto de operacao em estado estacionario. Isso justifica o tipo 3 de modelos. O chamado
+regime de golfadas severas, por exemplo, provoca
+oscilacoes de pressao e temperatura nas variaveis
+de producao (tipos 2 e 3), mas nao nas variaveis
+de gas lift.
+A partir do criterio de Akaike, verificou-se
+que, de uma forma geral, 9 termos mostraramse suficientes para composicao dos varios tipos de
+modelos com nz  2 e nu  9.
+Para ilustrar, sao apresentados dois modelos
+ARX polinomais obtidos. Para o poco M, tem-se
+o modelo f2 
+
+18
+17
+16
+15
+14
+13
+
+0
+
+500
+
+1000
+
+1500
+k
+
+2000
+
+2500
+
+3000
+
+(b) Poco P
+
+Figura 4
+
+Validacao de modelos de processo e observacao
+por simulacao livre. Modelos de (a) processo f1 , f2 e f3
+do poco M e de (b) observacao h2 do poco P.
+
+estimativas dos KFs implementados para os pocos E, R e P estao representadas na Figura 5.
+Percebe-se, primeiramente, grande diferenca no
+comportamento da pressao de fundo nos tres pocos. Por exemplo, enquanto no poco E ela varia
+muito pouco (variancia de 20 kgf 2 cm4 ), no poco
+R sao observados diversos transientes e mudancas
+de patamar (variancia de 334 kgf 2 cm4 ).
+A presenca de poucos transientes na pressao
+de fundo e a principal dificuldade para a obtencao de modelos. Nota-se que, para o poco R, os
+tres filtros de Kalman se ajustam bem aos dados
+historicos, ao passo que, para o poco E, o erro de
+estimacao dos filtros obtidos e maior.
+Na Figura 5a percebe-se a ocorrencia dos
+eventos de fechamento de poco. Tal fenomeno produz uma elevacao repentina no valor de PT1, representando uma dinamica que os modelos obtidos
+nao conseguem explicar. Claramente, as estimativas dos filtros KF1 e KF2 divergem bastante do
+valor real da pressao de fundo durante o fechamento, porem, a partir da reabertura, os filtros
+convergem para valores proximos das medidas.
+Para o poco P foi observada uma divergencia
+entre as estimativas dos filtros a partir da segunda
+metade do grafico (vide Figura 5). A pressao de
+fundo apresenta uma leve tendencia de diminuicao, a qual tambem e observada com maior ou menor intensidade em outras variaveis do processo.
+Da a diferenca entre as estimativas dos filtros e
+a justificativa de se utilizar um banco de filtros
+
+747
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+200
+
+PT1k (kgfcm2)
+
+Tabela 3
+
+Diferentes estrategias de estimacao dual de
+estados e parametros utilizadas. Comparam-se os ndices
+RMSE globais verificados para cada poco.
+Bancos de filtros IMM
+Poco
+sem est.
+com estim.
+com estim. de
+de param. de um param. todos os param.
+E
+8,1
+8,2
+nao convergiu
+M
+8,5
+9,5
+5,5
+N
+2,9
+3,1
+nao convergiu
+R
+4,3
+4,2
+20,5
+P
+10,4
+13,3
+16,7
+
+Medidas
+KF1
+KF2
+KF3
+Banco
+
+220
+
+180
+
+160
+
+140
+
+120
+
+100
+
+0
+
+2
+
+4
+
+6
+
+8
+
+10
+
+12
+
+14
+
+16
+
+k
+
+4
+
+x 10
+
+(a) Poco E
+150
+Medidas
+KF1
+KF2
+KF3
+Banco
+
+PT1k (kgfcm2)
+
+100
+
+50
+
+0
+
+0
+
+0.5
+
+1
+
+1.5
+k
+
+2
+
+2.5
+5
+
+x 10
+
+(b) Poco R
+280
+Medidas
+KF1
+KF2
+KF3
+Banco
+
+260
+240
+
+PT1k (kgfcm2)
+
+220
+200
+180
+160
+140
+120
+100
+
+0
+
+5
+
+10
+k
+
+15
+4
+
+x 10
+
+(c) Poco P
+
+de identificacao usados para construir os modelos,
+investiga-se a possibilidade de estimar parametros
+dos modelos de processo junto com o vetor_de_estados por meio de uma abordagem dual. Para tal,
+o fator de esquecimento de   0,9999 e sintonizado para o algoritmo de mnimos_quadrados recursivo, de forma que apenas mudancas de longo
+prazo e persistentes na dinamica da pressao de
+fundo tenham alguma influencia na estimacao dos
+parametros.
+Primeiramente, e testado o caso em que somente um parametro de cada modelo e estimado
+recursivamente. Nesse caso, escolhe-se o parametros associado ao regressor z(k1) de cada modelo
+ARX, pois o mesmo tem grande importancia na
+explicacao de z(k). Em geral, como sugere a Tabela 3, a ressintonia de um parametro dos modelos
+piorou levemente as estimativas de PT1.
+Em seguida, investigou-se a estrategia de estimacao de todos os parametros dos modelos de processo. Foi verificado que, assim como na estimacao
+de apenas um parametro, a pouca persistencia de
+excitacao dos dados pode levar a estimativas piores do que aquelas verificadas sem a atualizacao
+de parametros do sistema. Em alguns casos (vide
+Tabela 3), as estimativas chegaram a divergir.
+
+Figura 5
+
+Estimativa da PT1 para os pocos E, R e P.
+Comparam-se as estimativas dos filtros KFs, s  1,2,3, e
+do banco de filtros IMM. As linhas horizontais representam
+os limites das janelas consideradas no calculo dos ndices
+RMSE (vide Figura 6).
+
+IMM para a estimacao da pressao de fundo.
+Os ndices RMSE do erro de estimacao dos filtros e bancos de filtros, para cada poco analisado
+nesse trabalho, estao representados na Figura 6.
+Tais ndices sao calculados para diferentes janelas
+de dados, numeradas de 1 a 6 no topo dos graficos.
+Observa-se que o ndice RMSE torna-se mais elevado em janelas onde ocorre fechamento de poco,
+como e o caso dos pocos E e P. Faz-se, portanto,
+necessario o tratamento desses eventos.
+4.3
+
+Estimacao dual de estados e parametros
+
+A fim de tornar a metodologia mais robusta as
+variacoes temporais da dinamica e ao tratamento
+de pontos de operacao nao visitados pelos dados
+
+ISSN 2525-8311
+
+5
+
+Conclusoes
+
+Este trabalho desenvolveu sensores_virtuais para
+estimacao de pressao_de_fundo_de_pocos de petroleo. A partir de dados historicos, foram identificados modelos ARX para cinco pocos. Tais modelos
+foram utilizados na composicao de filtros de Kalman e bancos de filtros IMM.
+Com o objetivo de padronizar a estrutura dos
+modelos para os diferentes pocos, foram testadas
+varias combinacoes de variaveis para obtencao de
+modelos, priorizando-se aquelas mais correlacionadas com a pressao de fundo. Definiu-se, ao final desse procedimento, tres tipos diferentes de
+filtros os que utilizam variaveis do leito submarino os que utilizam variaveis da linha de producao os que utilizam variaveis da linha de producao e injecao de gas lift. As estruturas definidas e
+os modelos lineares obtidos se mostraram adequados para o sistema. As estimativas obtidas por
+meio dos bancos de filtros lineares produziram re-
+
+748
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+1
+
+2 3
+
+4
+
+5
+
+14
+
+6
+
+KF1
+KF2
+KF3
+Banco
+
+20
+
+1
+
+2
+
+3
+
+10
+
+9.2823
+8.133
+
+0
+0
+
+2
+
+4
+
+6
+
+8
+
+10
+
+12
+
+14
+
+8.5499
+
+8
+
+6.6989
+6
+4.8759
+3.0212
+
+1
+
+2
+
+3
+
+0
+0
+
+0.5
+
+1
+k
+
+4
+
+x 10
+
+4
+
+1.5
+
+40 1
+
+6
+
+9
+
+2
+
+3
+
+4
+
+5
+
+2
+
+RMSE (kgfcm2)
+
+5.2755
+4.8028
+4.3277
+4.2989
+
+4
+3
+
+KF1
+KF2
+KF3
+Banco
+
+2
+1
+0
+0
+
+RMSE (kgfcm )
+
+30
+
+5
+
+0.5
+
+1
+
+1.5
+k
+
+2
+
+25
+
+4.6789
+
+4
+
+0.5
+
+1
+
+1.5
+k
+
+0
+
+2
+5
+
+x 10
+
+20
+17.1597
+15
+
+13.0458
+10.3935
+
+5
+0
+0
+
+3.8315
+5
+
+10
+k
+
+5
+
+x 10
+
+(d) Poco R
+
+6
+
+(c) Poco N
+
+10
+
+2.5
+
+8
+
+KF1
+KF2
+KF3
+Banco
+
+8
+
+6
+
+10.7554
+
+10
+
+6
+
+35
+
+7
+
+KF1
+KF2
+Banco
+
+12
+
+0
+0
+
+2
+5
+
+x 10
+
+(b) Poco M
+5
+
+6
+
+2
+
+(a) Poco E
+10
+
+5
+
+2.8959
+
+2
+
+16
+
+k
+
+4
+
+4
+
+5.5438
+4.4504
+
+5
+
+2 3
+
+14
+
+2
+
+RMSE (kgfcm )
+
+15
+
+1
+
+16
+
+KF1
+KF2
+KF3
+Banco
+
+10
+RMSE (kgfcm2)
+
+18
+
+4
+
+12
+
+RMSE (kgfcm2)
+
+25
+
+15
+4
+
+x 10
+
+(e) Poco P
+
+Figura 6
+
+Estimacao de estados para os cinco pocos. Comparacao entre os ndices RMSE dos filtros KFs, s  1,2,3,
+e bancos de filtros IMM. Os ndices sao calculados para diferentes janelas de dados, destacadas pelas linhas verticais da
+Figura 5. As linhas horizontais representam a media global do ndice RMSE para os respectivos filtros ou banco de filtros.
+
+sultados competitivos a aqueles apresentados em
+(Riccio et al., 2015). No entanto, quando pontos
+de operacao nao presentes nos dados de identificacao eram testados, o desempenho da estimacao
+do banco de filtros foi prejudicado.
+Foram investigadas tecnicas de estimacao
+dual de estados e parametros. Tal proposta permite a ressintonia dos modelos obtidos offline, tornando o sensor_virtual mais robusto a variacoes
+temporais na dinamica do poco. Foi implementado, entao, o algoritmo de mnimos_quadrados recursivo com fator de esquecimento, buscando fazer
+as amostras mais recentes de medicoes do processo
+terem mais influencia sobre a sintonia de parametros. Percebeu-se, contudo, que para dados com
+pouca persistencia de excitacao o desempenho do
+algoritmo diminui consideravelmente.
+Agradecimentos
+O presente trabalho foi realizado com o apoio financeiro da Petrobras, CNPq e FAPEMIG.
+Referencias
+L.A. Aguirre (1995). A nonlinear correlation function for
+selecting the delay time in dynamical reconstructions.
+Physics Letters A, 203(2-3) 88-94.
+E. Domlan, B. Huang, F. Xu, and A. Espejo (2011). A
+decoupled multiple model approach for soft sensors
+design. Control Engineering Practice, 19 126134.
+J. Eck, U. Ewherido, et al. (1999). Downhole Monitoring
+The Story So Far. Oilfield Review, 11(4) 2033.
+
+ISSN 2525-8311
+
+K. Fujiwara, M. Kano, and S. Hasebe (2012). Development of correlation-based pattern recognition algorithm and adaptive soft-sensor design. Control Engineering Practice, 20 371378.
+P. Kadlec, B. Gabrys, and S. Strandt (2009). Data-driven
+soft sensors in the process industry. Computers and
+Chemical Engineering, 33(4) 795814, 2009
+S. Khatibisepehr, B. Huang and S. Khare (2013). Design of
+inferential sensors in the process industry A review
+of Bayesian methods. Journal of Process Control,
+23(10) 15751596.
+D.J. Pagano, V. Dallagnol Filho and A. Plucenio (2006).
+Identification of Polinomial NARMAX Models for an
+Oil Well Operating by Continuous Gas-Lift. IFAC
+Intern. Symp. on Advanced Control of Chemical Processes, Gramado, Brazil, 11131118.
+L.B. Proenca (2015). Modelagem Matematica para Projeto
+de Sensores Virtuais de Pressao de Fundo de Pocos de
+Petroleo. Monografia de Graduacao em Engenharia
+de Controle e Automacao, Universidade Federal de
+Minas Gerais.
+A.H. Ribeiro and L.A. Aguirre (2015). Selecting transients
+automatically for the identification of models for an
+oil well 2nd IFAC Workshop on Automatic Control
+in Offshore Oil and Gas Production, Florianopolis,
+Brasil, 154158.
+B.F. Riccio, A. F. Teixeira, and B. O. S. Teixeira (2015).
+Downhole Pressure Soft-Sensing using Interacting
+Multiple Modeling 2nd IFAC Workshop on Automatic Control in Offshore Oil and Gas Production,
+Florianopolis, Brasil, 298303.
+B.O.S. Teixeira, W.S. Castro, A.F. Teixeira and L.A.
+Aguirre (2014). Data-driven soft sensor of downhole
+pressure for a gas-lift oil well. Control Engineering
+Practice, 22(1) 3443.
+
+749

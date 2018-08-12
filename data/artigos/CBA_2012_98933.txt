@@ -1,0 +1,1443 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+CONTROLE PI COM SINTONIA VIA MPC POR ZONAS APLICACAO EM UM
+SEPARADOR TRIFASICO
+Paulo Renato da Costa Mendes, Julio Elias Normey-Rico, Agustinho Plucenio
+
+
+Campus Universitario Reitor Joao David Ferreira Lima - Trindade
+Departamento de Automacao e Sistemas da Universidade Federal de Santa Catarina
+Florianopolis, Santa Catarina, Brasil
+Emails paulorcm@hotmail.com, jnormeyrico@gmail.com, plucenio@das.ufsc.br
+Abstract This paper presents the development and application of a set of PI controller which tuning is
+derived using a zone model predictive strategy. The proposed controller was applied to the control problem of a
+three-phase separator used in petroleum industry, to improve the disturbance rejection performance against load
+oscillations know as slugs. The performance of the proposed strategy is compared to other controllers proposed
+in literature using a complete phenomenological nonlinear model of the separator. The obtained results shows
+that the proposed strategy could be a good and simple to implement solution for practical applications.
+Keywords
+
+Three-phase Separation, PI control, Predictive Control, Disturbances Damping.
+
+Resumo Este trabalho apresenta o desenvolvimento e aplicacao de um controlador PI sintonizado utilizando
+uma estrategia_de_controle_preditivo por zonas. Este controlador foi aplicado ao problema de controle de um
+separador trifasico utilizado na industria do petroleo, para melhorar o amortecimento das oscilacoes de carga
+quando o processo e submetido a uma entrada oscilatoria conhecida como golfada. O desempenho do controlador
+proposto se compara a outros controladores da literatura utilizando simulacoes com um modelo fenomenologico completo do separador. A partir destes resultados conclui-se que a estrategia proposta pode ser uma boa
+alternativa para aplicacoes reais de baixo_custo de implementacao.
+Palavras-chave
+
+.
+
+Introducao
+
+Os reservatorios de petroleo produzem fluidos em
+tres diferentes fases gas, oleo e agua. Quando
+esse fluido chega a superfcie ele ascende na forma
+de emulsoes e deve ser tratado por um sistema
+de tratamento primario que consiga separar com
+eficiencia as tres fases do fluido e tambem amortecer as oscilacoes de carga provenientes dos pocos,
+tambem conhecidas como golfadas (Nunes, 2004).
+E expressa nos trabalhos de ((Filgueiras,
+2005) (Silveira, 2006) (Jr. and Sotomayor, 2010)
+(Ribeiro, 2009)) entre outros, a preocupacao com
+o amortecimento na vazao de sada de agua, uma
+vez que esta alimenta a entrada dos hidrociclones e influencia diretamente o comportamento dos
+mesmos. Se as perturbacoes forem repassadas aos
+hidrociclones, estes terao seu funcionamento comprometido do ponto de vista da eficiencia de separacao.
+Usualmente, o controle de separadores trifasicos na industria e realizado por tradicionais controladores SISO (Single Input Single Output) PI,
+cada um controlando uma das fases do fluido. Um
+exemplo de aplicacao desta tecnica pode ser encontrado em (Filgueiras, 2005). Apesar dessa estrategia_de_controle ser a mais utilizada na industria, ela apresenta deficiencias em relacao ao
+amortecimento de oscilacoes de carga. Uma solucao mais apropriada para o separador, visando o
+amortecimento das oscilacoes causadas pelas golfadas e apresentado em (Nunes, 2004). Neste trabalho se implementa uma estrategia_de_controle
+
+ISBN 978-85-8001-069-5
+
+por bandas ainda baseada em controladores PI.
+As duas solucoes anteriormente mencionadas
+utilizam tecnicas de controle SISO, apesar de que
+o separador e um sistema MIMO. Visando controlar o separador considerando-o um processo multivariavel e ao mesmo tempo conseguir tratar as restricoes nas diferentes variaveis envolvidas, alguns
+trabalhos da literatura tem proposto o uso de controle_preditivo (MPC - Model Predictive Control)
+((Nunes, 2001) e (Silveira, 2006)).
+As aplicacoes de controle citadas anteriormente sao baseadas em metodos_lineares. E de
+amplo conhecimento que modelos lineares representam bem um processo em uma zona proxima
+a um ponto de equilbrio. As perturbacoes atuantes no processo provocam alteracoes no seu funcionamento, ocasionando oscilacoes que tendem
+a afasta-lo do ponto de operacao. Modelos nao
+lineares podem representar melhor o funcionamento do processo e sua utilizacao permite um
+melhor desempenho dos controladores baseados
+nestes modelos.
+Buscando melhorar o desempenho dos controladores classicos em (Mendes et al., 2011) e
+(Mendes et al., 2012) sao apresentadas aplicacoes de MPC nao linear ao separador trifasico baseadas no controlador_preditivo pratico PNMPC
+((Plucenio, 2010), (Plucenio et al., 2007)) e utilizando modelos_nao_lineares como Hammerstein
+e um modelo fenomenologico simplificado. Nestes
+trabalhos a configuracao do controlador PNMPC
+por zonas foi a que obteve melhor desempenho,
+permitindo o funcionamento do separador em uma
+
+4674
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+faixa de operacao ao inves de um ponto de operacao fixo.
+Os controladores preditivos citados anteriormente possuem elevada complexidade e por sua
+vez a implementacao requer um alto custo_computacional. Em muitos casos e conveniente a utilizacao de um controlador simples e que ao mesmo
+tempo propicie um bom desempenho do processo.
+Para atender estes requisitos este trabalho desenvolve um controlador PI com sintonia via MPC
+por zonas. Este controlador foi concebido com o
+intuito de proporcionar as mesmas caractersticas
+do controle MPC por zonas a um controlador PI.
+Desse modo e possivel obter um controlador simples e eficiente que amorteca adequadamente oscilacoes de carga provenientes da operacao dos pocos e linhas de alimentacao do separador. Pela sua
+simplicidade o controlador proposto se torna uma
+alternativa aos controladores preditivos em casos
+onde a capacidade computacional e limitada.
+Na sequencia a presente introducao, sao apresentados na secao 2 o modelo do separador trifasico e seus objetivos de controle. Na secao 3 e
+apresentado o modelo simplificado do separador e
+sua linearizacao. Na secao 4 e apresentado o desenvolvimento teorico do controlador PI com sintonia via MPC por zonas. Em seguida, na secao 5,
+sao apresentados os resultados de simulacao. Posteriormente, na secao 6, sera realizada uma analise
+dos resultados. Finalmente, na secao 7, sao apresentadas as conclusoes deste trabalho.
+2
+
+Modelo do Separador Trifasico e
+Objetivos de Controle
+
+Como comentado anteriormente os separadores
+trifasicos sao concebidos para separar o fluido multifasico e tambem para amortecer a oscilacao de
+carga provenientes da alimentacao do poco. Existem varias concepcoes de separadores com diferentes formas e tipos de dispositivos internos. Os separadores horizontais do tipo mostrado na figura
+1 sao os mais utilizados na industria.
+
+Como pode ser visto na figura, a vazao de entrada de oleo, agua e gas (Win , Lin , Gin ) entra
+no separador e a fase lquida vai para o camara
+de separacao, onde um conjunto de placas paralelas sao instaladas de forma a ajudar na separacao
+agua-oleo. O oleo passa para a segunda camara (a
+camara de oleo) e uma valvula (Sl ) e usada para
+extrai-lo do vaso. Ao mesmo tempo, as valvulas
+Sg e Sw sao, respectivamente, utilizadas para controlar a extracao de gas e agua.
+Varios fatores afetam a eficiencia de separacao
+e tambem o comportamento do fluido dentro do
+tanque ((Nunes, 1994 Filgueiras, 2005)). O processo e modelo utilizados neste trabalho nao considera os efeitos termicos, a influencia dos agentes emulsificantes naturais do oleo e geracao de
+espuma, sendo apenas modelada a influencia das
+placas coalescedoras na separacao. Portanto, o
+controle da separacao e realizado usando Sl , Sg
+e Sw como variaveis manipuladas para controlar,
+respectivamente, o nvel de fase oleosa (hl ), a pressao do tanque (p) e o nvel da fase aquosa na camara de separacao (hw ).
+Em operacao normal, quando a vazao de entrada varia lentamente e possui pequenas oscilacoes, a separacao desejada das tres fases e obtida
+com a manutencao das tres variaveis controladas
+no ponto de funcionamento. No entanto, quando a
+vazao de alimentacao possui oscilacoes com amplitude elevada, estas podem afetar o funcionamento
+do processo, e o controle do separador deve ser
+realizado de forma a evitar a transmissao destas
+oscilacoes para a vazao de sada, principalmente a
+vazao de agua Wout , que pode comprometer fortemente o funcionamento dos processos a jusante.
+O modelo fenomenologico do separador trifasico, utilizado neste trabalho para a simulacao do
+processo, e composto pelo conjunto de equacoes
+dos balancos de massa na camara de separacao,
+camara de oleo e tambem no espaco ocupado pelo
+gas, apresentadas a seguir. O calculo completo das
+eficiencias de separacao podem ser encontrados em
+((Nunes, 1994 Filgueiras, 2005)). Utilizando a lei
+de conservacao de massa pode-se obter
+ Variacao da altura total na camara de separacao
+
+Win + Lin  Lweir  Wout
+dht
+p
+
+dt
+2  Ccs  ht  (D  ht )
+
+(1)
+
+onde Win e Lin sao as vazoes de alimentacao de
+agua e oleo respectivamente, Lweir e a vazao da
+chicana, Wout e a vazao de sada de oleo, Ccs e
+o comprimento da camara de separacao e D e o
+diametro do separador.
+Figura 1 Esquema das variaveis envolvidas no separador trifasico.
+
+ISBN 978-85-8001-069-5
+
+ Variacao da altura da fase oleosa na camara
+de oleo
+
+4675
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Lweir  Lout
+dhl
+p
+
+dt
+2  Ccl  hl  (D  hl )
+
+3
+(2)
+
+onde Lout e a vazao de sada de agua e Ccl e o
+comprimento da camara de oleo.
+ Variacao da altura da fase aquosa na camara
+de separacao
+
+dhw
+Win  Wout
+p
+
+dt
+2  Ccs  hw  (D  hw )
+
+(3)
+
+ Variacao do volume de agua na fase oleosa da
+camara de separacao
+
+dVwf lcs
+ Lin  BSW  (1  EF W L)
+dt
+Lweir  CON Cwf lcs
+
+Em (Mendes et al., 2012) foi utilizado um modelo
+fenomenologico simplificado para realizar as predicoes no controlador PNMPC. A diferenca entre
+este modelo e o modelo utilizado para simulacao
+do processo, e que este despreza os calculos das eficiencias de separacao e o conhecimento de BSW e
+T OG na entrada do separador. Considera-se a que
+a variacao do nvel de agua na camara de separacao depende somente da diferenca entre a vazao de
+entrada e de sada. Este modelo e descrito pelas
+equacoes (8), (9), (10) e (11).
+
+(4)
+
+onde BSW e a concentracao volumetrica de agua
+na fase oleosa, EF W L eficiencia global de separacao de agua da fase oleosa e CON Cwf lcs e a fracao
+volumetrica de agua na fase oleosa da camara de
+separacao.
+
+(5)
+
+onde T OG e a concentracao volumetrica de oleo
+na fase aquosa na alimentacao e CON Clf wcs e
+a fracao volumetrica de oleo na fase aquosa da
+camara de separacao.
+ Variacao do volume de agua na fase oleosa da
+camara de oleo
+
+dVwf lcl
+ Lweir  CON Cwf lcs
+dt
+Lout  CON Cwf lcl
+
+ Variacao da pressao no vaso
+
+(7)
+
+onde Gin e Gout sao as vazoes de gas de alimentacao e de sada respectivamente, Vt e o volume
+total do separador, Vcl e o volume da camara de
+oleo, Vcs e o volume da camara de separacao.
+
+ISBN 978-85-8001-069-5
+
+(8)
+
+dhw
+Win  Wout
+p
+ f1 
+dt
+2  Ccs  hw  (D  hw )
+
+(9)
+
+dp
+(Gin + Win + Lin )  p
+ f3 
+dt
+Vt  Vcl  Vcs
+(Gout + Wout + Lout )  p
+
+Vt  Vcl  Vcs
+
+(10)
+
+(11)
+
+Para ajustar o controlador PI com sintonia via
+MPC por zonas e necessario somente um modelo
+linear que relacione as tres entradas, no caso as
+vazoes de sada, com as tres sadas do processo.
+Para a obtencao deste modelo_linear foi realizado
+um procedimento de linearizacao no modelo fenomenologico simplificado. O modelo_linearizado e
+apresentado na equacao 12.
+
+
+ 
+G11
+hw
+ hl    0
+p
+G31
+
+0
+G22
+G32
+
+(6)
+
+onde CON Cwf lcl e a fracao volumetrica de agua
+na fase oleosa da camara de oleo.
+
+(Gin + Win + Lin )  p
+dp
+
+dt
+Vt  Vcl  Vcs
+(Gout + Wout + Lout )  p
+
+Vt  Vcl  Vcs
+
+Win + Lin  Lweir  Wout
+dht
+p
+
+dt
+2  Ccs  ht  (D  ht )
+
+dhl
+Lweir  Lout
+p
+ f2 
+dt
+2  Ccl  hl  (D  hl )
+
+ Variacao do volume de oleo na fase aquosa da
+camara de separacao
+
+dVlf wcs
+ Win  T OG  (1  EF W L)
+dt
+Wout  CON Clf wcs
+
+Modelo Simplificado do Separador
+
+ 
+
+Wout
+0
+0    Lout 
+G33
+Gout
+(12)
+
+Analisando a matriz de transferencia deste
+modelo e possivel verificar que existem acoplamentos somente entre as tres vazoes de sada e a pressao do tanque, sendo que os nveis de agua e oleo
+sofrem somente a influencia das vazoes de sada de
+agua e oleo respectivamente. Dessa forma e natural a escolha da vazao Wout para controlar o nvel
+da agua e de Lout para controlar o nvel do oleo,
+sobrando apenas Gout para controlar a pressao.
+Dessa forma apenas as funcoes de transferencia
+G11 , G22 e G33 serao utilizadas para a sintonia
+do controlador PI via MPC por zonas. A seguir
+sao apresentadas as equacoes destas tres funcoes
+de transferencia.
+G11 
+
+K11
+s
+
+(13)
+
+4676
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+G22
+
+K22
+
+s
+
+(14)
+
+K33
+s
+
+(15)
+
+G33 
+onde
+
+K11 
+
+K22 
+
+f1
+Wout
+
+f2
+Lout
+
+K33 
+
+4
+
+
+eq
+
+
+eq
+
+f3
+Gout
+
+1
+2  Ccs 
+
+p
+
+hw  (D  hw )
+(16)
+
+1
+p
+(17)
+2  Ccl  hl  (D  hl )
+
+
+eq
+
+p
+Vcl + Vcs  Vt
+
+O esquema de controle do controlador PI com
+sintonia via MPC por zonas e apresentado na figura 2. O controlador proposto conta com dois
+nveis hierarquicos de controle sendo eles local e
+mestre. Alem desses nveis existe um supervisorio
+que tem a funcao de alterar o valor dos parametros do controlador mestre com base nos dados
+dos nveis de agua e oleo (dentro ou fora da zona).
+O nvel mestre e composto por tres controladores
+PI com sintonia via MPC por zonas e sua acao de
+controle serve como setpoint para os controladores
+do nvel local. O nvel local, por sua vez, e composto por tres controladores PI e tem a funcao de
+implementar as vazoes enviadas pelo controlador
+mestre.
+
+(18)
+
+Desenvolvimento Teorico do
+Controlador
+
+Em (Mendes et al., 2011) e (Mendes et al.,
+2012) sao apresentadas aplicacoes do controlador
+PNMPC por zonas visando o amortecimento das
+oscilacoes de carga no separador trifasico, provocadas pelo regime de golfadas severas. No controle
+por zonas, e permitido que as variaveis controladas do processo oscilem dentro de uma faixa, ao
+inves de serem mantidas num unico ponto de funcionamento.
+Dado o bom desempenho desta estrategia, o
+objetivo deste trabalho e aproximar os resultados
+obtidos com o PNMPC (Plucenio, 2010) usando
+um controle baseado em tres PI ajustados por zonas com tecnicas preditivas. Para isso sao usadas duas ideias principais, a primeira consiste em
+aproveitar que um controle_preditivo linear sem
+restricoes, como por exemplo o GPC (Generalized
+Predictive Controller), e equivalente a uma estrategia composta por um preditor e um controle com
+dois_graus_de_liberdade de mesma ordem que a
+planta. No caso de um modelo do processo sem
+atraso e de primeira ordem o controlador equivalente do GPC e um PI. Neste caso, o calculo das
+predicoes no controlador GPC e realizado atraves
+de modelos lineares que descrevem bem o processo
+proximo a um ponto de operacao e o ajuste do PI
+equivalente se realiza por um procedimento de otimizacao.
+A segunda ideia consiste em adicionar as caractersticas do controlador PNMPC por Zonas ao
+controlador PI e para isso serao utilizados tres modelos linearizados nos limites superiores e inferiores da zona, e num ponto intermediario entre os
+dois limites, de forma tal que a sintonia do GPC
+em cada zona permitira um resultado similar ao
+obtido pelo PNMPC.
+
+ISBN 978-85-8001-069-5
+
+Figura 2 Esquema do Controlador PI via MPC por
+Zonas
+
+O controle por zonas e utilizado somente no
+nvel de agua e oleo, sendo que a pressao e mantida constante por um controlador PI de setpoint
+fixo. O desenvolvimento matematico para a sintonia do controlador PI via MPC sera demonstrado
+apenas para uma das funcoes de transferencia da
+matriz de transferencia apresentada na equacao
+12. Assume-se que o processo e descrito pela seguinte funcao de transferencia
+K
+s
+
+(19)
+
+Kd z 1
+1  z 1
+
+(20)
+
+G(s) 
+Discretizando tem-se
+G(z) 
+
+Como o controlador GPC utiliza o modelo
+CARIMA, entao o modelo e reescrito como
+A(z 1 )y(t)  B(z 1 )z d u(t  1) + e(t) (21)
+onde A(z 1 )  A(z 1 ). Para o modelo da equacao 20 temos A(z 1 )  (1  z 1 )(1  z 1 ) 
+1  2z 1 + z 2 , B(z 1 )  Kd  b0 e d  0. As
+predicoes podem ser obtidas resolvendo seguinte
+equacao Diofantina
+1  A(z 1 )Ej (z 1 ) + zj Fj (z 1 )
+
+(22)
+
+onde Ej (z 1 ) possui o grau j1 e Fj (z 1 ) possui o
+grau na. Resolvendo recursivamente a Diofantina
+
+4677
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+N vezes, onde N e o horizonte de predicao, obtemse
+
+
+
+
+
+
+y(t + 1t)
+y(t + 2t)
+..
+.
+
+
+
+
+
+u(t)
+u(t + 1)
+..
+.
+
+
+
+
+
+  G
+
+
+
+y(t + N t)
+
+
+
+
+
+ (23)
+
+
+u(t + Nu  1)
+
+
+y(tt)
+ y(t  1t)
+
++S 
+..
+
+.
+y(t  nat)
+
+
+
+  Gu + Sy1
+
+
+5
+
+onde G e S sao matrizes constantes com dimensoes N  Nu e N  2. De acordo com (NormeyRico and Camacho, 2007) a funcao objetivo a ser
+minimizada e descrita por
+T
+
+J   (Gu + Sy1  w) (Gu + Sy1  w) (24)
++uT u
+onde  e  sao as ponderacoes. Minimizando J
+em relacao a u, tem-se
+Mu  P0 y1 + P2 w
+
+(25)
+
+onde M  GT G + I e P2  GT  sao de dimensao N  N e P0  GT S possui dimensao
+N  na. Em um algoritmo de horizonte deslizante
+e calculado somente o valor de u(t), e se m e a
+primeira linha da matriz M1 , u(t) e dado por
+u(t)  mP0 y1 + mP2 w
+
+(26)
+
+onde mP0  ly1 ly2  e mP2  f1 f2 . . . fN . Os
+coeficientes ly e f sao funcao de ai , bi , N ,  e
+. Segundo (Normey-Rico and Camacho, 2007) a
+funcao de transferencia discreta do controlador PI
+e dada por
+C(z)  
+
+Para os dois modelos linearizados nos limites superiores e inferiores da faixa, o controlador
+obtido e o mesmo da equacao 28. Neste caso o
+controle e realizado em malha_fechada da mesma
+forma que o MPC por zonas. Como ja explicado
+para implementar esta estrategia_de_controle se faz
+necessario um controle_supervisorio que monitora
+o valor da variavel controlada e determina qual
+das acoes de controle deve ser aplicada.
+
+ly1 + ly2 z 1
+1  z 1
+
+Resultados
+
+Nas secoes anteriores foram abordados a linearizacao do modelo simplificado do separador trifasico
+e o desenvolvimento teorico do controlador PI com
+sintonia via MPC por zonas. A seguir serao apresentados os resultados de simulacao obtidos nos
+ensaios de controle. Foram realizados comparacoes entre o controlador proposto e os controladores PNMPC por zonas utilizando modelo fenomenologico e PI por bandas, ambos apresentados em
+(Mendes et al., 2012). Para a simulacao do processo foi utilizado o modelo fenomenologico completo do separador apresentado em (Nunes, 1994)
+e os dados utilizados na simulacao sao encontrados em (Filgueiras, 2005). Os sinais das vazoes de
+alimentacao utilizados nos ensaios de controle foram obtidos atraves de uma simulacao no software
+Olga (SCANDPOWER, 2003). Para a realizacao
+destes ensaios foi utilizado um perodo de amostragem de 1 segundo para simular o processo e os
+controladores PI locais e um perodo de 10 segundos para simular os controladores mestre.
+5.1
+
+Ensaio com PNMPC Modelo Fenomenologico por Zonas
+
+Primeiramente foi realizado um ensaio de controle utilizando o controlador PNMPC por Zonas
+(Mendes et al., 2012). Este controlador utiliza a
+seguinte funcao objetivo
+
+(27)
+
+O controlador da equacao 27 pode ser representado pela seguinte equacao a diferencas
+
+J (N, Nu ) 
+
+N
+X
+
+y (t + jt)  y b (t + jt)
+
+(28)
+
+onde q0  ly1 e q1  ly2 .
+No controle MPC por zonas a ponderacao 
+e zerada se a variavel controlada esta dentro da
+faixa e assume um valor ajustado se a variavel
+controlada sai para fora da faixa. O efeito obtido
+com esta tecnica e que dentro da faixa o controle
+fica livre, ou seja, em malha_aberta e permite a
+oscilacao da variavel controlada. Fora da faixa o
+controlador pondera o erro sendo que o setpoint e
+o limite da faixa, nessa situacao o controle e feito
+em malha_fechada.
+
+ISBN 978-85-8001-069-5
+
+R
+
+(29)
+
+j1
+
++
+u(k)  u(k  1) + q0 e(k) + q1 e(k  1)
+
+2
+
+Nu
+X
+
+2
+
+ku (t + j  1)kQ
+
+j1
+
+onde N e o horizonte de predicao, Nu e o horizonte de controle, R a ponderacao do erro e Q a
+ponderacao do incremento de controle. O ajuste
+dos parametros do controlador e apresentado na
+tabela 1. O controle por faixas foi aplicado somente aos nveis da agua e do oleo, sendo que
+para pressao foi utilizado setpoint fixo.
+E apresentada na figura 3 a resposta das variaveis de processo com suas respectivas faixas. Na
+figura 4 sao apresentadas as vazoes de alimentacao
+e as vazoes de sada.
+
+4678
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+tabela 2. O controle_por_bandas foi aplicado somente aos nveis da agua e do oleo, sendo que para
+pressao foi utilizado setpoint fixo.
+
+0.6
+
+hw
+
+0.5
+0.4
+0.3
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+4
+
+5
+
+tempo (horas)
+0.7
+0.6
+
+hl
+
+0.5
+
+Tabela 2 Parametros de Ajuste do Controlador
+
+0.4
+0.3
+0
+
+1
+
+2
+
+3
+
+tempo (horas)
+13
+
+p
+
+12.5
+12
+
+Variaveis
+hw
+hl
+p
+
+11.5
+11
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+tempo (horas)
+
+Figura 3 Variaveis de Processo - Controlador
+PNMPC por Zonas
+Win
+Wout
+
+Win e Wout
+
+0.014
+0.0135
+0.013
+0.0125
+0.012
+0.0115
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+tempo (horas)
+0.019
+Lin
+Lout
+
+Lin e Lout
+
+0.018
+0.017
+0.016
+
+Dentro da Zona
+Kc
+Ti
+0, 001
+125
+0, 01
+125
+0, 03
+50
+
+Fora da Zona
+Kc
+Ti
+0, 1
+50
+0, 02
+50
+0, 03
+50
+
+E apresentada na figura 5 a resposta das variaveis de processo com suas respectivas faixas. Na
+figura 6 sao apresentadas as vazoes de alimentacao
+e as vazoes de sada.
+
+0.015
+0.014
+0
+
+1
+
+2
+
+3
+
+4
+
+0.8
+
+5
+
+tempo (horas)
+0.6
+Gin
+Gout
+
+0.13
+
+hw
+
+Gin e Gout
+
+0.14
+
+0.4
+
+0.12
+0.11
+
+0.2
+
+0.1
+0.09
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+4
+
+5
+
+4
+
+5
+
+tempo (horas)
+0
+
+1
+
+2
+
+3
+
+4
+
+0.8
+
+5
+
+tempo (horas)
+
+hl
+
+0.6
+
+Figura 4 Vazoes e alimentacao e sada do separador
+- Controlador PNMPC por Zonas
+
+0.4
+
+0.2
+
+0
+
+1
+
+2
+
+3
+
+tempo (horas)
+12.8
+
+p
+
+12.6
+12.4
+12.2
+12
+
+Ensaio com Controlador PI por Bandas
+
+Tabela 1 Parametros de Ajuste do Controlador
+Parametro
+N
+Nu
+R
+Q
+
+ISBN 978-85-8001-069-5
+
+Valor
+20 20 20
+5 5 5
+5 3 20
+1000000 100 1
+
+0
+
+1
+
+2
+
+3
+
+tempo (horas)
+
+Win e Wout
+
+Figura 5 Variaveis de Processo - Controlador PI por
+Bandas
+
+Win
+Wout
+
+0.014
+0.0135
+0.013
+0.0125
+0.012
+0.0115
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+tempo (horas)
+Lin
+Lout
+
+0.02
+
+Lin e Lout
+
+E apresentado por (Nunes, 2004) uma estrategia
+de controle denominada controle_por_bandas. Esta
+tecnica consiste em manter a variavel controlada
+dentro de uma banda de forma a permitir o amortecimento das perturbacoes atuantes no processo.
+O controle_por_bandas pode ser implementado
+atraves de um controlador PI e acrescentado de
+uma acao hierarquicamente superior que enquanto
+o nvel estiver dentro da banda a sintonia do PI e
+ajustada de forma a permitir a oscilacao do nvel
+dentro da banda. Quando o nvel do vaso ultrapassa os limites da banda, e assumida uma sintonia mais drastica para o controlador PI, que se
+encarrega de levar o sistema ao seu valor desejado,
+dentro da banda. A sintonia do PI, quando o nvel
+esta dentro da banda, e realizada de forma que a
+vazao de sada seja a media dos valores da golfada
+na vazao de alimentacao e os parametros devem
+ser ajustados de forma que Kc  K e T i  T 2.
+O desenvolvimento teorico completo deste controlador e apresentado em (Nunes, 2004).
+A seguir sao apresentados os resultados obtidos com o controlador PI por bandas. O ajuste
+dos parametros do controlador e apresentado na
+
+11.8
+
+0.018
+0.016
+0.014
+0.012
+0.01
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+tempo (horas)
+0.18
+
+Gin e Gout
+
+5.2
+
+Gin
+Gout
+
+0.16
+0.14
+0.12
+0.1
+0.08
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+tempo (horas)
+
+Figura 6 Vazoes e alimentacao e sada do separador
+- Controlador PI por Bandas
+
+5.3
+
+Ensaio com controlador PI com sintonia via
+MPC por zonas
+
+O ajuste dos parametros do controlador e apresentado na tabela 3. Para a sintonia dos parametros
+do controlador foram utilizados os mesmos horizontes e ponderacoes do controlador PNMPC por
+zonas (tabela 1). Esta tecnica de controle foi aplicada somente aos nveis da agua e do oleo, sendo
+que para pressao foi utilizado um controlador PI
+com setpoint fixo.
+E apresentada na figura 7 a resposta das variaveis de processo com suas respectivas faixas. Na
+figura 8 sao apresentadas as vazoes de alimentacao
+e as vazoes de sada.
+
+4679
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+0.8
+
+hw
+
+0.6
+
+0.4
+
+0.2
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+4
+
+5
+
+4
+
+5
+
+tempo (horas)
+0.8
+
+hl
+
+0.6
+
+0.4
+
+0.2
+
+0
+
+1
+
+2
+
+3
+
+tempo (horas)
+12.4
+
+p
+
+12.2
+
+12
+
+11.8
+
+0
+
+1
+
+2
+
+3
+
+tempo (horas)
+
+Figura 7 Variaveis de Processo - Controlador PI viz
+MPC
+Win
+Wout
+
+0.014
+
+Wout
+
+0.0135
+0.013
+0.0125
+0.012
+0.0115
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+tempo (horas)
+0.02
+Lin
+Lout
+
+Lout
+
+0.018
+0.016
+0.014
+0.012
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+tempo (horas)
+0.14
+Gin
+Gout
+
+Gout
+
+0.13
+0.12
+0.11
+0.1
+0.09
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+tempo (horas)
+
+Figura 8 Vazoes e alimentacao e sada do separador
+- Controlador PI viz MPC
+
+6
+
+Analise dos Resultados
+
+Nas tabelas 4 e 5 mostram-se dados referentes
+as oscilacoes percentuais das vazoes de entrada
+e sada do separador trifasico e a variancia das
+vazoes de sada para cada ensaio de controle realizado. Nota-se tanto nos resultados graficos como
+nos dados apresentados nas tabelas 4 e 5, que em
+todos ensaios as vazoes de entrada e sada de gas
+sao as mesmas. Isto ocorre devido a preocupacao
+de manter a pressao constante no interior do separador. Em contrapartida, diferentes resultados
+para as vazoes de oleo e agua foram obtidos com
+os diferentes controladores.
+Atraves dos dados apresentados nas tabelas 4
+e 5 e possvel verificar que o controlador PI com
+sintonia via MPC por zonas obteve otimos resul-
+
+tados com amortecimento das oscilacoes com um
+fator de 5, 6 e uma variancia de 1, 4793  1010 . Se
+comparado com os resultados dos outros controladores, pode-se afirmar que este foi o controlador
+que obteve melhor desempenho no amortecimento
+de oscilacoes de carga.
+A principal vantagem deste controlador e o
+fato de ser de facil implementacao, uma vez que
+nao exige otimizacao online, e pode ser implementado em dispositivos programaveis como um CLP.
+A desvantagem deste controlador e que este nao
+trata o problema de controle atraves de uma estrategia multivariavel e nao utiliza as restricoes
+fsicas do processo. O controlador PI com sintonia via MPC por zonas pode ser uma alternativa
+ao controlador PNMPC por zonas em situacoes
+onde o poder computacional seja limitado.
+O controlador proposto neste trabalho tem
+por objetivo apenas amortecer as oscilacoes de
+carga quando o separador atua sob a presenca de
+golfadas. Para os casos onde a vazao de alimentacao do separador e constante ou possui pequenas variacoes, esta estrategia_de_controle provavelmente nao obtera bons resultados, uma vez que
+nestas situacoes a melhor opcao de controle e manter as variaveis controladas em um ponto de operacao fixo. Em (Mendes, 2012) foi desenvolvido
+um detector de perturbacoes que atua como supervisorio, modificando a largura da zona do controlador PNMPC de acordo com a existencia ou
+nao de golfadas na alimentacao do separador. O
+mesmo detector poderia ser utilizado em conjunto
+com o controlador proposto para alternar a estrategia por zonas para para um PI com setpoint fixo
+dependendo das caractersticas da alimentacao do
+separador.
+7
+
+Conclusoes
+
+Neste trabalho foi discutido o desenvolvimento
+matematico do controlador PI com sintonia via
+MPC por zonas. Foram realizados ensaios de siTabela 4 Indices de Desempenho
+
+Tabela 3 Parametros de Ajuste do Controlador
+
+Variaveis
+hw
+hl
+p
+hw
+hl
+p
+hw
+hl
+p
+
+q0
+q1
+Dentro da Zona
+0
+0
+0
+0
+0.124366
+0.062195
+Limite superior da Zona
+0.018277
+0.017027
+0.218717
+0.135130
+0.124366
+0.062195
+Limite Inferior da Zona
+0.022873
+0.017027
+0.182294
+0.107990
+0.124366
+0.062195
+
+ISBN 978-85-8001-069-5
+
+Controlador
+
+
+PNMPC Zona
+
+Bandas
+
+PI via MPC
+
+Vazao
+
+Oscilacao ()
+
+Win
+Lin
+Gin
+Wout
+Lout
+Gout
+Wout
+Lout
+Gout
+Wout
+Lout
+Gout
+
+21, 01
+15, 29
+32, 45
+4, 00
+31, 00
+32, 45
+6, 27
+65, 76
+32, 45
+3, 74
+36, 06
+32, 45
+
+4680
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+mulacao visando avaliar o desempenho do controlador com o sistema operando sob o regime de
+golfadas. Os resultados obtidos foram comparados com os controladores PNMPC por zonas e PI
+por bandas que e atualmente utilizado pela Petrobras para o amortecimento de oscilacoes de carga.
+Verificou-se que o controlador PI com sintonia via
+MPC por zonas obteve os melhores resultados em
+termos de amortecimento de oscilacoes de carga,
+obtendo ndices proximos aos do PNMPC e muito
+superiores aos do PI por bandas. Alem de obter
+melhores ndices de desempenho possui grau de
+complexidade matematica semelhante ao do controlador PI por bandas. Aliando os otimos resultados obtidos a a simplicidade de implementacao,
+podendo ser facilmente programado em dispositivos como os CLPs, este controlador pode ser
+considerado forte candidato a aplicacoes praticas
+e substituto do PI por bandas no controle de separadores.
+Agradecimentos
+Os autores agradecem a Petrobras pelo financiamento do projeto de pesquisa no qual este trabalho esta inserido. Julio E. Normey-Rico tambem
+agradece ao CNPq e a Agencia Nacional de Petroleo, Gas Natural e Biocombustveis (ANP) pelo
+apoio financeiro recebido do Programa de Recursos Humanos PRH-34 ANPMCT.
+Referencias
+Filgueiras, N. G. T. (2005). Modelagem, analise e controle de um processo de separacao
+Oleoagua, Masters thesis, COPPEUFRJ,
+Rio de Janeiro.
+Jr., D. O. A. and Sotomayor, O. A. Z. (2010).
+Controle de escoamentos no regime de golfadas em processos de producao de petroleo,
+Mecanica Computacional XXIX 84478461.
+Mendes, P. R. C. (2012). Controle avancado de
+um sistema de separacao_trifasica e tratamento de Agua, Masters thesis, Programa de
+Tabela 5 Indices de Desempenho
+
+Controlador
+
+Vazao
+
+Variancia
+
+Wout
+Lout
+Gout
+Wout
+Lout
+Gout
+3, 74
+Lout
+Gout
+
+5, 7803  109
+2, 5111  106
+1, 4590  104
+3, 5313  108
+1, 5216  106
+1, 6118  104
+1, 4793  1010
+2, 2177  106
+2, 3666  104
+
+PNMPC Zona
+
+Bandas
+
+PI via MPC
+
+ISBN 978-85-8001-069-5
+
+Pos-Graduacao em Engenharia de Automacao e Sistemas, DAS, Universidade Federal
+de Santa Catarina, Florianopolis.
+Mendes, P. R. C., Carvalho, R. L. and NormeyRico, J. E. (2011). Nonlinear predictive control applied to load oscillations damping in
+a three phese separator, Rio Pipeline 2011,
+Rio de Janeiro Brasil .
+Mendes, P. R. C., Normey-Rico, J. E., Plucenio, A. and Carvalho, R. L. (2012). Disturbance estimator based non linear mpc of a
+three phase separator, International Symposium on Advanced Control of Chemical Processes, Simgapore .
+Normey-Rico, J. E. and Camacho, E. F. (2007).
+Control of Dead-Time Processes, Springer,
+Berlin.
+Nunes, G. (2004). Controle por bandas Conceitos basicos e aplicacao no amortecimento de
+oscilacoes de carga em unidades de producao
+de petroleo, Technical report, Comunicacao
+Tecnica - PETROBRAS.
+Nunes, G. C. (1994). Modelagem e simulacao dinamica do separador Agua Oleo gas, Masters thesis, COPPEUFRJ, Rio de Janeiro.
+Nunes, G. C. (2001). Design and Analysis of Multivariable Predictive Control Applied to an
+Oil-Water-Gas Separator A Polynomial Approach, PhD thesis, University of Florida.
+Plucenio, A. (2010). Desenvolvimento de Tecnicas de Controle Nao Linear para Elevacao de
+Fluidos Multifasicos, PhD thesis, Programa
+de Pos-Graduacao em Engenharia de Automacao e Sistemas, DAS, Universidade Federal de Santa Catarina.
+Plucenio, A., Normey-Rico, J. E., Pagano, D. J.
+and Bruciapaglia, A. H. (2007). Controle preditivo nao linear na industria do petroleo e
+gas, 4o Congresso Brasileiro de Pesquisa e
+Desenvolvimento em Petroleo e Gas .
+Ribeiro, C. H. P. (2009). Simulacao e avaliacao
+de controle_preditivo aplicado a sistemas de
+tratamento primario de petroleo, Technical
+report, Monografia de Graduacao - Universidade Federal do Rio de Janeiro.
+SCANDPOWER (2003). Users Manual OLGA
+2000, Scandpower, Kjeller Norway.
+Silveira, M. A. C. R. (2006). Controle de um
+processo de tratamento primario de petroleo,
+Masters thesis, COPPEUFRJ, Rio de Janeiro.
+
+4681

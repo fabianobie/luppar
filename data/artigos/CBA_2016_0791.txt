@@ -1,0 +1,823 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+SLIDING MODE CONTROL APPLIED TO WAYPOINT-BASED GUIDANCE OF A
+MULTIROTOR AERIAL VEHICLE
+Jose Agnelo Bezerra , Igor Afonso Acampora Prado , Davi Antonio dos Santos
+
+
+Praca Marechal Eduardo Gomes, 50
+Vila das Acacias
+Sao Jose dos Campos, Sao Paulo, Brasil
+Email agnelo@ita.br, igorap@ita.br, davists@ita.br
+Abstract The present paper deals with the waypoint-based guidance of a multirotor aerial vehicle in the
+presence of a bounded wind disturbance. A discrete-time quasi-sliding mode control (SMC) strategy is adopted,
+which assures finite-time stability to the guidance. In the proposed control loop, the position command is
+transmitted to the controller as a sequence of tridimensional waypoints. The current waypoint of the sequence is
+detected as soon as the vehicle enters inside a virtual sphere centered at it. At this moment, the next waypoint
+commanded is made active. This switching-waypoint rule is repeated until the final waypoint is activated, at
+which the vehicle is commanded to hover. The finite-time stability is assured by the reaching law of SMC, which
+keeps the multirotors position close to the next waypoint of the reference trajectory. The resulting control law
+is simple to implement in an embedded real-time system. The proposed method is evaluated on computational
+simulations and trajectories very close to the reference were achieved, proving its efficiency and robustness against
+a bounded random wind disturbance.
+Keywords
+
+Robust control, sliding mode control, multirotor aerial vehicles, waypoint-based guidance.
+
+Resumo Este artigo lida com o problema de guiamento  de veculos aereos multirotores na
+presenca de um disturbio de vento. A fim de solucionar o problema, propoe-se a formulacao de um controlador
+por modos_deslizantes em tempo_discreto. A entrada de comando para o controlador consiste em uma sequencia
+de waypoints tridimensionais. Um waypoint e detectado assim que o veculo entra em uma esfera virtual com
+centro neste ponto e raio especificado. No mesmo instante, o algoritmo ja passa a buscar o proximo waypoint da
+trajetoria. Essa regra e repetida ate que o veculo alcance o ultimo waypoint, onde ele e comandado a manter-se
+em voo pairado. A regra de aproximacao utilizada garante ao sistema estabilidade_em_tempo_finito, o que implica
+que a posicao do robo e levada e mantida numa regiao em torno do proximo waypoint da trajetoria de referencia.
+A lei de controle resultante e simples de ser embarcada em um sistema fsico em tempo_real. O metodo proposto e
+avaliado em simulacoes computacionais e foram obtidas trajetorias muito proximas a referencia, o que comprova
+sua eficiencia e robustez contra uma perturbacao aleatoria e limitada de vento.
+Palavras-chave
+.
+
+1
+
+Introduction
+
+Waypoint-based guidance for multirotor aerial vehicles (MAV) is already a popular technology, being available even in open-sourceopen-hardware
+autopilots systems, such as the Mission PlannerArdupilot Mega. Basically, it consists in controlling the position of a vehicle so as to make
+it approximately pass through desired positions,
+which we call waypoints.
+Many papers have investigated the waypointbased guidance, however considering other types
+of autonomous vehicles (Petersen et al., 2013
+Lenain et al., 2006 Almeida, 2008 Bousson and
+Machado, 2013 Richards and How, 2002). The
+paper (Nagaty et al., 2013) used a nonlinear
+control technique to solve the multirotor trajectory tracking problem. In this work, the outer
+loop controller generates the reference trajectories for the inner loop controller in order to reach
+the desired waypoint. More recently, (Santos
+et al., 2015) treated the problem of waypointbased guidance an MAV using a model predictive
+controller (MPC) and introduced a strategy for
+avoidance of a static obstacle. This technique is
+able to respect constraints on the vehicles posi-
+
+ISSN 2525-8311
+
+tion and thrust vector during the guidance mission. The present paper proposes a method based
+on the sliding model control (SMC) strategy for
+waypoint-based guidance of an MAV subject to a
+bounded wind disturbance. Different of the MPC
+method investigated in (Santos et al., 2015), the
+proposed control law assures robustness against
+bounded disturbances.
+The remaining text is organized in the following manner. Section 2 enunciates the waypointbased multirotor guidance problem. Section 3
+presents a sliding mode controller for solving the
+guidance problem defined in Section 2. Section 4
+shows the simulation results. Finally, Section 5
+presents the concluding remarks.
+
+2
+
+Problem Definition
+
+Consider a quadrotor and two Cartesian Coordinate Systems (CCS) (see Figure 1). The body
+CCS SB  XB , YB , ZB  is fixed on the vehicles
+frame at its center of mass (CM). The ground CCS
+SG  XG , YG , ZG  is fixed at a known point O
+on Earth. For simplicity, the time dependence of
+all vectors will be omitted from now on.
+
+2772
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+c
+
+
+5
+2
+
+1
+
+B
+d
+
+CM
+
+4
+
+B
+
+G
+
+
+
+
+
+G
+
+Figure 2 A waypoint-based reference trajectory
+for a multirotor aerial vehicle.
+
+G
+
+
+
+q
+
+3
+
+B
+
+3
+
+Problem Solution
+
+Figure 1 Cartesian coordinate systems and forces
+acting on a multirotor aerial vehicle.
+
+This section presents a solution to Problem 1
+based on a discrete-time SMC strategy proposed
+by (Bartoszewicz, 1998).
+
+Assume that SG is an inertial frame. In this
+case, an immediate application of the second Newtons law gives the following dynamics model for
+the translational motion of the vehicle represented
+in SG 
+
+1  c
+FG + FdG + gG ,
+(1)
+rG 
+m
+
+3.1
+
+FcG  DT FcB ,
+
+(2)
+
+where rG  R3 denotes the position r of CM represented in SG  FcG , FcB  R3 are the total thrust
+force vector Fc represented in SG and SB , respectively FdG  R3 is the disturbance force vector
+
+T
+Fd represented in SG  gG , 0 0 g
+is
+the gravitational acceleration vector represented
+in SG , with g denoting its magnitude m is the
+mass of the vehicle and D  SO(3) is the attitude matrix representing the attitude of SB w.r.t.
+SG .
+Assume that the unknown disturbance force
+is limited, i.e.,
+Fdmin
+
+
+
+FdG
+
+
+
+Fdmax ,
+
+State-Space Model
+
+In order to obtain the design model, consider the
+following assumption.
+Assumption 1.
+Let F  R3 denote the
+thrust command computed by the guidance law
+defined in Problem 1. Assume that there is no
+deviation between this command and the real
+thrust force, i.e., FcG  F.
+The following design model can be defined
+from equation (1) and Assumption 1
+1
+1
+F + FdG + gG .
+(4)
+m
+m
+
+
+T T
+Define the state vector x , rT
+, the
+G rG
+controlled output vector y , rG , and the control
+input vector
+rG 
+
+u,
+(3)
+
+where Fdmin , Fdmax  R3 are, respectively, the
+minimum and maximum disturbance forces represented in SG . These bounds are assumed to be
+known.
+Define the jth waypoint wj  R3 as a
+position vector represented in SG . Assume that
+a sequence w1 , w2 , ..., wq  of q waypoints is
+known before-hand. Therefore, define the reference trajectory r for the vehicles flight as the
+sequence of line segments linking the waypoints,
+as illustrated in Figure 2.
+
+ISSN 2525-8311
+
+(5)
+
+The following discrete-time translational dynamics model can be obtained by discretizing (4)(5) with the ZOH method
+xk+1  Axk + Buk + fk ,
+
+(6)
+
+yk  Cxk ,
+
+(7)
+
+where T  R+ is the sampling time and
+
+
+I3
+T I3
+A
+ R66 ,
+033 I3
+
+
+Problem 1. Consider an MAV with translation dynamics described by (1)-(2), subject to
+a disturbance force FdG modeled by (3). The
+waypoint-based guidance problem consists in
+finding a feedback control law for FcG that makes
+the vehicles position rG follow the reference
+trajectory r.
+
+1
+F + gG .
+m
+
+B
+C
+
+
+
+I3
+
+T2
+2 I3
+T I3
+
+
+
+033
+
+ R63 ,
+
+
+ R36 .
+
+(8)
+
+(9)
+(10)
+
+The vector fk is the discrete-time disturbance. It
+is given by
+1
+fk  BFdG .
+(11)
+m
+
+2773
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+3.2
+
+Sliding Surface
+
+3.4
+
+Consider the vector sk  R3 as the composition of
+three sliding surfaces for the model (6), each one
+related to a component of the control input uk .
+
+Control Law
+
+Consider
+the
+following
+(Bartoszewicz, 1998)
+
+reaching
+
+sk+1  sk+1 + dk  d0 ,
+T
+
+sk   (xk  xk ) ,
+
+(12)
+
+T
+
+
+
+I3 I3
+with  
+ R63 and xk 
+ T
+T
+wj 013
+ R6 .
+Define a disturbance vector dk  R3 to be
+dk   T fk .
+
+(
+sik
+
+T
+
+dmin  dk  dmax ,
+
+(14)
+
+
+
+ i +kj1 k i
+s0 ,
+i
+
+0,
+
+i <
+1 T
+ BFdmin ,
+m
+
+(15)
+
+dmax ,
+
+1 T
+ BFdmax .
+m
+
+(16)
+
+From the bounds dmin and dmax , one can define a mean d0  R3 and a deviation  d  R3
+as
+dmax + dmin
+d0 ,
+,
+(17)
+2
+d ,
+
+3.3
+
+dmax  dmin
+.
+2
+
+(18)
+
+if k <  i + kj1
+if k   i + kj1
+
+(21)
+
+where si0 and sik represent the i-th element of the
+vectors s0 and sk , respectively, for i  1, 2, 3.
+  R3 is a vector of discrete times that must
+satisfy the condition
+
+where
+dmin ,
+
+(20)
+
+where sk+1  R3 is the desired trajectory for sk+1 .
+The vector sk+1 is a predefined function in discrete time. It must satisfy some conditions to assure robustness for details, see in (Bartoszewicz,
+1998). In this paper, it is assumed that
+
+(13)
+
+Once  B is positive definite, it is possible to
+rewrite the boundaries of the disturbance force FdG
+in terms of dk . Therefore, we left-multiply both
+1 T
+ B, yielding
+sides of equation (3) by the term m
+
+law
+
+si0
+.
+2di
+
+(22)
+
+where di is the ith component of  d .
+One can see, by equation (21), that the parameter  determines how fast sk must converge
+to zero, which establishes the vehicles speed.
+From now on, it will be called as the time of convergence.
+In order to obtain the control law, equation
+(6) is left-multiplied by  T and the result is an
+expression for sk+1 . Replacing this equation into
+(20) and isolating the control input uk , we obtain
+
+
+uk  ( T B)1 sk+1   T Axk +  T xk+1  d0 .
+(23)
+
+Waypoint Commutation
+3.5
+
+Consider that, at a certain instant k, the current
+waypoint of the vehicles flight is wj . Also, we define the discrete time kj  Z+ at which the waypoint wj is detected by the system. Initially, we
+set j  1 and k0  0.
+Before presenting the waypoint detection rule,
+define a waypoint detection sphere Bwj ()  R3
+as an Euclidean ball centered at wj , with radius
+  R+ , and consider that from now on,  will be
+called the waypoint detection radius. Therefore,
+as soon as the following condition is verified
+yk  Bwj () ,
+
+(19)
+
+the waypoint wj is detected and the system starts
+to pursuit the next waypoint wj+1 . This rule is
+repeated up to the last waypoint wq . At this
+moment, the parameter kj is set as the current
+time k and the reference state vector is updated
+
+T
+013
+to xk  wT
+.
+j
+
+ISSN 2525-8311
+
+Computation of the Commands to the Plant
+
+As soon as the control input vector uk is calculated, it can be converted into the corresponding
+thrust command F by using equation (5). However, this force command is not sufficient as an
+output of a guidance law for a multirotor aerial vehicle. In fact, the system has to provide two commands for the quadrotors internal control loop
+a reference for the magnitude of the total thrust
+vector and an attitude reference. The complete
+explanation of how these commands are calculated
+by the controller can be found in (Prado and Santos, 2014).
+4
+
+Simulation Results
+
+This section aims at evaluating the proposed guidance method using computational simulations.
+Subsection 4.1 describes the simulation environment, while Subsection 4.2 presents the results.
+
+2774
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+4.1
+
+represent the subset of states such that sik  0
+relative to some waypoint, for i  1, 2, 3.
+
+System Simulation
+
+The proposed guidance system is simulated in
+MATLABSimulink with a six-degree-of-freedom
+dynamics model of attitude and position, considering a quadrotor in plus configuration with the
+parameters listed in Table 1.
+In the (internal) attitude_control loop, a saturated proportional-derivative control law with
+proportional gain Kp  40 and derivative gain
+Kd  2 is used. On the other hand, in the (external) position control loop, the SMC proposed in
+Section 3 is adopted. Table 2 presents the SMC
+parameters used in the simulations.
+The disturbance force FdG is chosen to simulate a moderate wind.
+It is modeled by
+a zero-mean Gaussian noise trucated by the
+bounds established in (3), with covariance Q 
+diag(0.01, 0.01, 0.005625).
+4.2
+
+1
+0.8
+0.6
+0.4
+
+vx ms
+
+0.2
+0
+-0.2
+-0.4
+-0.6
+-0.8
+-1
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+rx m
+
+Figure 4 Phase diagram in the XG direction. The
+green line represents the sliding surface relative to
+w2 and the black one refers to w4 .
+
+Simulation results
+
+The proposed guidance strategy is evaluated in
+the simulation of a complete mission, with takeoff, tracking of some given waypoints and landing. So, at the start time, the quadrotor rests at
+point O and the mission consists of tracking the
+following five waypoints w1   0 0 3 T m,
+w2   3 0 3 T m, w3   3 3 3 T m,
+w4   6 3 3 T m, and w5   6 3 0 T m.
+The time of convergence  is chosen in order
+to respect the condition (22) for all the trajectory
+segments.
+Figure 3 shows the trajectory executed by
+the vehicle as a continuous blue line. The waypoints are represented by stars, with the last one
+in red. The reference trajectory is represented by
+the dashed red lines.
+
+1
+0.8
+0.6
+0.4
+
+vy ms
+
+0.2
+0
+-0.2
+-0.4
+-0.6
+-0.8
+-1
+-0.5
+
+0
+
+0.5
+
+1
+
+1.5
+
+2
+
+2.5
+
+3
+
+3.5
+
+ry m
+
+3
+
+Figure 5 Phase plane in the YG direction. The
+black line represents the sliding surface relative to
+w3 .
+
+2
+
+Z G m1
+0
+-1
+4
+3
+2
+1
+
+YG m
+
+0
+-1
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+XG m
+
+Figure 3 3D path performed by the quadrotor in
+simulation.
+Figures 4, 5, and 6 presents the evolution of
+each component of the vector sk during the simulation (continuous red lines). The straight lines
+
+ISSN 2525-8311
+
+7
+
+One can note that the controller effectively
+conducts the states to the sliding lines sik  0,
+which corresponds to tracking the vehicle toward
+the next waypoint. Figure 7 presents a detail of
+Figure 6 with the behavior of states near a sliding
+surface. One can be seen that the SMC maintains
+the states inside a bounded region close to a given
+waypoint, since di  sik  di , i  1, 2, 3.
+Figure 8 shows the control input values calculated by the SMC during the simulation. The continuous black lines represent the desired bounds to
+the control input in XG and YG directions. The
+resulting controls respect the tight limits on XG
+and YG directions, which are set for safety and
+maneuverability reasons. On the ZG direction,
+the vehicle commonly has a higher propulsion capability, so the respective controls are inside the
+
+2775
+
+4
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Table 1 Parameters of the quadrotor considered on simulations.
+Mass m  1 kg
+Inertia matrix J  diag 0.0171, 0.0171, 0.0286 kgm2
+Frame radius l  0.2 m
+Motor-drive time constant   0.01 s
+Motors maximum speed max  10000 rpm
+Rotors force constant kf  3.13  105 Ns2
+Rotors moment constant kt  7.5  107 Nms2
+Table 2 Parameters of the SMC controller used in the position control.
+Sampling time T  0.1 s
+Waypoint detection radius   0.5 m
+T
+Minimum disturbance force Fdmin  0.2, 0.2, 0.15 N
+T
+d
+Maximum disturbance force Fmax  0.2, 0.2, 0.15 N
+T
+Time of convergence   60, 60, 60 s
+
+vz ms
+
+-0.1
+-0.2
+-0.3
+-0.4
+-0.5
+0.1
+
+Figure 6 Phase diagram in the ZG direction. The
+blue line represents the sliding surface relative to
+w1 (takeoff) and the black one refers to w5 (landing).
+bounds. For more information about thrust vector
+constraints, see the references (Santos et al., 2013)
+and (Prado and Santos, 2014).
+5
+
+Conclusions and Future Works
+
+The present paper proposed a sliding mode controller (SMC) for waypoint-based guidance of a
+multirotor aerial vehicle subject to a bounded
+wind disturbance force.
+The results presented in section 4 show that
+the strategy was able to guide the quadrotor along
+the waypoints. Even in the presence of random
+external disturbance, the obtained trajectory has
+good quality, with no overshoots and fast time response.
+It was also verified that the proposed controller took and maintained the states in a band
+close to sik  0, i  1, 2, 3, for each one of the
+
+ISSN 2525-8311
+
+0.2
+
+0.3
+rz m
+
+0.4
+
+0.5
+
+Figure 7 Detail of Figure 6 which refers to the
+landing (waypoint w5 ). The external continuous
+black lines represent the surfaces with s3k  d3 and
+s3k  d3 .
+waypoints. This fact indicates the robustness of
+the SMC against the external disturbance fk .
+Otherwise, it is important to note that the
+proposed controller doesnt consider any constraint (on position or thrust force) in the guidance algorithm, which is an important requirement of a MAV position control.
+For further investigation of the proposed guidance method, an interesting future work would
+be its experimental test in a laboratory with controlled wind. Other interesting future work would
+be the study of a robust controller that also respect constraints on the thrust vector. For example, a mixed controller which combines the model
+predictive control (MPC) strategy with SMC.
+Acknowledgment
+We would like to thank Conselho Nacional de Desenvolvimento Cientfico e Tecnologico (CNPq)
+
+2776
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Richards, A. and How, J. P. (2002). Aircraft trajectory planning with collision avoidance using mixed integer linear programming, Proceedings of the American Control Conference,
+Anchorage, USA.
+
+2.5
+control in X
+
+G
+
+control in Y G
+
+2
+
+control in ZG
+
+control ms 2
+
+1.5
+1
+
+Santos, D. A., Prado, I. A. A. and Bezerra, J. A.
+(2015). Waypoint-Based Guidance with Obstacle Avoidance for Multirotor Vehicles Using a Model Predictive Controller, ABCM
+International Congress of Mechanical Engineering, Rio de Janeiro, Brazil.
+
+0.5
+0
+-0.5
+-1
+-1.5
+0
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+
+35
+
+40
+
+time s
+
+Figure 8 Control inputs in the three directions of
+SG calculated by the sliding mode controller.
+
+Santos, D. A., Saotome, O. and Cela, A. (2013).
+Trajectory control of multirotor helicopters
+with thrust vector constraints, 21st Mediterranean Conference on Control and Automation, Platanias, Greece.
+
+(Grant 4752512013).
+References
+Almeida, F. (2008). Waypoint navigation using constrained infinite horizon model predictive control, AIAA Guidance, Navigation and
+Control Conference and Exhibit, Honolulu,
+Hawaii.
+Bartoszewicz, A. (1998). Discrete-Time QuasiSliding-Mode Control Strategies, IEEE
+Transactions on Industrial Electronics
+45(4) 633637.
+Bousson, K. and Machado, P. F. F. (2013). 4d trajectory generation and tracking for waypointbased aerial navigation, WSEAS Transactions on Systems and Control 3(8) 105119.
+Lenain, R., Thuilot, B., Cariou, C. and Martinet,
+P. (2006). High accuracy path tracking for
+vehicles in presence of sliding Application to
+farm vehicle automatic guidance for agricultural tasks, Autonomous Robots 21 7997.
+Nagaty, A., Saeedi, S., Thibault, C., Seto, M. and
+Li, H. (2013). Control and navigation framework for quadrotor helicopters, Journal of Intelligent and Robotic Systems 70(8) 112.
+Petersen, C., Baldwin, M. and Kolmanovsky, I.
+(2013). Model predictive control guidance
+with extended command governor inner-loop
+flight control for hypersonic vehicles, AIAA
+Guidance, Navigation, and Control (GNC)
+Conference, Boston, USA.
+Prado, I. A. A. and Santos, D. A. (2014). A Safe
+Position Tracking Strategy for Multirotor Helicopters, 22st Mediterranean Conference on
+Control and Automation (MED), Palermo,
+Italy.
+
+ISSN 2525-8311
+
+2777

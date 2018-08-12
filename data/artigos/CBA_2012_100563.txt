@@ -1,0 +1,760 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+APRENDIZADO DE COORDENACAO VISOMO NO COMPORTAMENTO DE
+APONTAR EM UM ESPACO 3D
+Ananda Freire, Andre Lemme, Jochen Steil, Guilherme Barreto
+
+
+Universidade Federal do Ceara - Departamento de Teleinformatica
+Av. Mister Hull, SN - Bloco 725, Campus do Pici, Fortaleza, Ceara
+
+
+Research Institute for Cognition and Robotics (CoR-Lab)
+Bielefeld University, Universitatsstr. 25, 33615, Bielefeld, Alemanha
+Emails anandalf@gmail.com, alemme@cor-lab.uni-bielefeld.de,
+jsteil@cor-lab.uni-bielefeld.de, guilherme@deti.ufc.br
+Abstract Pointing gesture refers to orienting a hand, arm, head or body towards an object and is possible
+without calculating the objects depth or 3D position. In this work, we show that pointing can be learned as
+a direct mapping from an objects pixel coordinates in the visual field of a robot to its joint angles. For this
+achievement, real world and noisy training images are recorded together with the corresponding robot pointing
+postures for the humanoid robot iCub. We then learn and comparatively evaluate pointing with an Multilayer
+Perceptron, an Extreme Learning Machine and a reservoir network.
+Pointing Gesture, Direct Mapping, Artificial Neural Networks, Visuo-Motor Coordination.
+
+Keywords
+
+Resumo O gesto_de_apontar refere-se a orientacao da mao, braco ou corpo em direcao a um objeto, sendo isto
+possvel sem a necessidade de calcular a profundidade em que o objeto se encontra ou mesmo suas coordenadas
+no espaco 3D. Neste artigo, mostramos que este comportamento pode ser alcancado atraves de um mapeamento
+direto dos pixels referentes ao objeto para os angulos das juntas de um robo. Com esse intuito, sao coletadas
+imagens ruidosas do mundo real e as correspondentes posicoes do braco do robo humanoide iCub para treinamento.
+Dessa maneira, o treinamento e realizado e o comportamento resultante e comparativamente avaliado com as redes
+Perceptron Multicamadas, Maquina de Aprendizado Extremo e pela Computacao Estatica em Reservatorio.
+Palavras-chave
+.
+
+1
+
+Gesto de Apontar, Mapeamento Direto, Redes Neurais Artificiais, Coordenacao Visomo-
+
+Introducao
+
+Nao se sabe ao certo onde o planejamento dos
+comportamentos visualmente guiados e realizado,
+contudo, sabe-se da existencia de mapeamentos
+sensorio-motores que permitem a execucao dos
+gestos de alcancar, apontar e manipular objetos
+(Feng, 2004). Diferentes abordagens podem ser
+encontradas na literatura, em que esses comportamentos sao modelados em um cenario robotico.
+No entanto, a maioria dessas implementacoes sao
+sistemas baseados em modelos, fazendo uso de
+metodos complexos e que normalmente envolvem
+algoritmos de correspondencia estereoscopica para
+o calculo da profundidade, os quais requerem uma
+calibracao precisa do sistema de cameras, alem de
+terem um alto custo_computacional (Jones and
+Vernon, 1994 Barreto et al., 2003).
+Outras abordagens para aprender tais mapeamentos sao baseadas em redes_neurais artificiais, as quais mostraram-se uteis em diferentes
+plataformas e cenarios. Como exemplo, podemos
+citar o controle_servo_visual (Ramachandram and
+Rajeswari, 2003), mapeamentos diretos (Sun and
+Scassellati, 2005) ou mapas organizaveis (Ritter
+et al., 1989). Entretanto, os pontos em comum na
+sua maioria sao o foco em tarefas de alcancar um
+objeto e a utilizacao de outras informacoes de entrada, como angulos das juntas, coordenadas 3D
+e informacoes para correcao de movimento, alem
+
+ISBN 978-85-8001-069-5
+
+dos descritores de imagem.
+Ainda que os comportamentos de alcancar
+e apontar sejam geralmente considerados um
+mesmo comportamento, e portanto, o ultimo
+sendo pouco explorado, este relaciona-se com
+uma variedade de respostas comportamentais, tais
+como reflexos para protecao (e.g. interceptar
+um objeto que se move na sua direcao), bloquear
+algo de sua visao (e.g. uma luz brilhante) ou
+ser capaz de atingir uma area fora de seu alcance usando um apontador laser ou um bastao,
+por exemplo (Marjanovic et al., 1996 Shademan
+et al., 2009). Alem disso, apontar para algo nao
+implica na necessidade de calcular a profundidade, apenas a sua orientacao ao longo de uma
+direcao precisa ser ajustada. Essa caracterstica
+distingue o apontar do alcancar, motivando o fato
+de que uma implementacao neural direta desta habilidade basica seja possvel. Trabalhos de Marjanovic et al (1996) and Shademan et al (2009)
+tambem exploram esse comportamento, todavia
+utilizam informacao visual como sinal de erro em
+um controlador de laco fechado. Marjanovic utiliza dois mapeamentos (das imagens para os motores dos olhos e, em seguida, para as coordenadas
+dos motores dos bracos) e Shademan nao utiliza
+redes_neurais e faz uso de uma configuracao onde
+a camera esta montada no final do manipulador.
+No trabalho apresentado neste artigo,
+abordou-se o aprendizado do gesto_de_apontar
+
+4881
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+por meio de um mapeamento_direto realizado
+por redes_neurais_artificias, como Perceptron
+Multicamadas (MLP), Maquina de Aprendizado
+Extremo (ELM) e a recem proposta Computacao
+Estatica em Reservatorio (SRC), utilizando
+apenas coordenadas de pixels como informacao
+de entrada e angulos das juntas do braco do robo
+iCub simulado como informacao de sada.
+2
+
+T
+v(k)  Wout
+h(k),
+
+Perceptron Multicamadas
+
+Considere uma rede MLP com p unidades de entradas, uma camada oculta com q neuronios e
+uma camada de sada com m neuronios. Todos os
+neuronios ocultos e de sada usam a funcao tangente_hiperbolica como funcao de ativacao. Assim,
+o vetor v(k)  Rm contendo as sadas da rede na
+iteracao k e dado por
+
+T
+v(k)  f Wout
+(k)h(k)  out (k) ,
+
+(1)
+
+em que f  Rq  Rm simboliza o mapeamento
+nao-linear implementado pelas funcoes de ativacao
+dos neuronios de sada, h(k)  Rq representa
+o vetor de sadas dos neuronios ocultos, Wout
+simboliza a matriz de pesos de dimensao q  m
+que conecta os neuronios ocultos aos de sada, e
+ out (k) denota o vetor de limiares dos neuronios
+de sada. O sobrescrito T denota a matriz transposta. O vetor h(k) e calculado como
+
+T
+h(k)  g Win
+(k)u(k)  in (k) ,
+
+(2)
+
+em que g  Rp  Rq simboliza o mapeamento naolinear implementado pelas funcoes de ativacao dos
+neuronios ocultos (em geral, f  g), u(k)  Rp e o
+vetor de entrada na iteracao k, Win e a matriz de
+pesos de dimensao p  q que conecta as unidades
+de entrada aos neuronios ocultos, e in (k) denota
+o vetor de limiares dos neuronios ocultos.
+Como regra de ajuste dos pesos, usa-se a versao batch do algoritmo de retropropagacao dos erros (da Silva et al., 2010), em que alteracoes nos
+valores dos pesos sao efetuadas somente ao final
+de cada epoca de treinamento.
+
+ISBN 978-85-8001-069-5
+
+Maquina de Aprendizado Extremo
+
+Em essencia, a rede ELM (Huang et al., 2006
+Huang et al., 2012) e uma arquitetura neural
+equivalente a rede MLP com uma camada oculta
+e com neuronios de sada lineares. Neste sentido, para uma rede com p unidades de entrada, q
+neuronios ocultos e m neuronios de sada, o vetor
+de sadas na interacao k e calculado por meio da
+seguinte expressao
+
+Redes Neurais Avaliadas
+
+Faz-se a seguir uma breve descricao das principais caractersticas das arquiteturas de redes_neurais artificiais avaliadas neste artigo. Os modelos neurais serao avaliados com relacao aos seus
+desempenhos no aprendizado do gesto_de_apontar descrito na secao anterior. Para este fim,
+tres diferentes paradigmas de aprendizado neural serao implementados atraves das seguintes
+arquiteturas neurais perceptron_multicamadas
+(MLP), maquina_de_aprendizado_extremo (ELM)
+e computacao estatica por reservatorio (SRC).
+2.1
+
+2.2
+
+(3)
+
+em que o vetor de sadas dos neuronios ocultos,
+h(k)  Rq , e a matriz de pesos Wout , de dimensao q  m, possuem o mesmo significado que para
+a rede MLP. O vetor h(k)  Rq , para um dado
+padrao de entrada u(k)  Rp , e calculado como
+
+T
+h(k)  g Win
+(k)u(k) ,
+(4)
+onde a matriz Win , de dimensao p  q, conecta as
+p unidades de entrada aos q neuronios ocultos.
+Diferentemente da rede MLP, nao ha necessidade de treinamento recursivo da rede ELM.
+Isto decorre basicamente do fato de a matriz Win
+ser especificada aleatoriamente, com amostras geradas a partir de uma distribuicao uniforme (ou
+normal). Feito isso, o passo seguinte consiste em
+apresentar um-a-um os padroes de treinamento da
+rede, acumulando os vetores h(k) como colunas de
+uma matriz H.
+Mais formalmente, seja N o numero de
+padroes de treinamento disponveis para treinamento da rede ELM. Da, constroi-se a matriz
+H  h(1) h(2)    h(N ) de dimensao qN , cuja
+k-esima coluna, k  1, . . . , N , corresponde ao vetor de sada dos neuronios ocultos h(k) resultante
+da apresentacao do k-esimo vetor de treinamento.
+De
+modo
+similar,
+seja
+T
+
+t(1) t(2)    t(N ) uma matriz m  N
+cuja k-esima coluna e o vetor-alvo t(k)  Rm
+associado ao k-esimo padrao de entrada u(k),
+k  1, ..., N . Assim, a matriz de pesos Wout pode
+ser facilmente estimada pelo metodo dos mnimos
+quadrados regularizado
+
+1
+Wout  HHT + Iq
+HTT .
+(5)
+em que  > 0 e o parametro de regularizacao e Iq
+e a matriz identidade de dimensao q  q.
+2.3
+
+Computacao Estatica por Reservatorio
+
+O paradigma de aprendizado da rede computacao
+estatica por reservatorio (SRC, static reservoir
+computing) foi proposto recentemente por Emmerich et al. (2010), sendo tambem conhecido por
+computacao baseada em atratores implementados
+por reservatorios de dinamicas (Lukosevicius and
+Jaeger, 2010). Em essencia, a rede SRC consiste
+em uma rede recorrente com neuronios ocultos
+
+4882
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+nao-lineares. A matriz de pesos da entrada para
+os neuronios ocultos (Win ) e a matriz de conectividade entre os neuronios do reservatorio (Wres )
+devem ser esparsas e definidas de forma aleatoria,
+nao sendo alteradas posteriormente. A dinamica
+da rede SRC e descrita pela seguinte equacao
+h(k)  f (Win u(k) + Wres h(k  1)),
+
+(6)
+
+onde o mapeamento f () e implementado por meio
+de funcoes sigmoides logsticas. A sada da rede
+e calculada tambem por meio da Eq. (3). Para
+estimacao da matriz Wout , primeiro removem-se
+os transientes iterando-se a dinamica da rede com
+a entrada u(k) fixa ate que a variacao do estado
+da rede h(k)  kh(k)  h(k  1)k2 alcance valor
+proximo de zero. Depois deste passo, os vetores de
+estado h(k), k  1, ..., q, sao agrupados na matriz
+H e os vetores-alvo correspondentes armazenados
+na matriz T. Finalmente, a matriz Wout e computada como na Eq. (5).
+2.4
+
+Os parametros foram escolhidos empiricamente por meio uma procura em grid, em que o
+numero de neuronios ocultos variaram de 5 a 500,
+sendo incrementados por 10, o fator de regularizacao e de decaimento variaram de 101 a 106
+escalonados por 101 , a taxa de aprendizagem variou de 101 a 0.005 tambem escalonado por 101 ,
+a densidade da matriz de pesos de entrada variou
+de 20 a 100 sendo incrementados por 10 e a
+densidade do reservatorio variou de 10 a 20,
+incrementados por 5.
+2.5.1
+
+MLP configuration
+
+As entradas foram normalizadas dentro do intervalo 0.9, 0.9 com bias 1. As sadas desejadas (angulos das juntas do braco, em radianos) sao escalonadas por 0.1. A melhor realizacao foi alcancada com apenas 5 neuronios na camada oculta, com uma taxa de aprendizagem de
+0.005. Foi necessario 222 epocas para estabilizar
+o erro de treinamento.
+
+Plasticidade Intrnseca
+
+O metodo conhecido como plasticidade_intrnseca
+(IP) (Triesch, 2005) pode ser usado para melhorar os desempenhos das redes ELM e SRC.
+Trata-se de uma regra de aprendizado_online naosupervisionada para ajuste do limiar (bi ) e da inclinacao (ai ) das funcoes de ativacao dos neuronios
+ocultos (e.g. sigmoide logstica1 )
+
+2.5.2
+
+ELM configuration
+
+Os seguintes parametros foram usados a matriz
+de pesos de entrada (Winp ) e inicializada por valores aleatorios entre 0.5, 0.5 de uma distribuicao
+uniforme e com 50 de densidade. A camada
+oculta consiste de 30 neuronios com funcao de ativacao ajustada pelo aprendizado IP com   0.2
+e parametro de regressao   0.01.
+
+1
+, (7)
+1 + exp(ai neti (k)  bi )
+2.5.3 SRC configuration
+i  1, ..., q,
+O reservatorio da rede SRC possui 50 neuronios
+em que neti e a ativacao do i-esimo neuronio. O
+com densidade de 20, valores compreendidos enobjetivo e ajustar os parametros (ai , bi ) de totre 1, 1 e raio_espectral de 0.99. A matriz de
+dos os neuronios ocultos da rede movendo-os para
+pesos de entrada Winp e tambem inicializada com
+regimes nais adequados, maximizando a transmisvalores aleatorios e uniformes entre 0.5, 0.5,
+sao de informacao e atuando como um regularmas com 100 de densidade e parametro de reizador de atributos (Triesch, 2005). Em outras
+gressao   106 .
+palavras, a ideia e ajustar (ai , bi ) a fim de minimizar o divergente de Kullback-Leibler da dis3 Robo humanoide iCub
+tribuicao da sada do i-esimo neuronio com relacao a uma distribuicao exponencial com nvel
+medio de ativacao desejavel. Neste trabalho, a
+versao batch deste algoritmo de aprendizagem e
+utilizado (Neumann and Steil, 2011).
+hi (k)  f (neti (k)) 
+
+2.5
+
+Treinamento e Teste dos Modelos Neurais
+
+Os conjuntos de dados de treinamento e teste
+foram divididos de forma que a cada tres amostras,
+uma e determinada para o conjunto de teste e todas as redes sao treinadas e testadas 50 vezes.
+Para cada uma dessas repeticoes, sao calculadas
+estatsticas sobre seu desempenho e tambem eleita
+a melhor destas.
+1 Tambem
+
+chamada no contexto da plasticidade_intrnseca de funcao de Fermi parametrizada.
+
+ISBN 978-85-8001-069-5
+
+(a)
+
+(b)
+
+Fig. 1 (a) Robo humanoide iCub nas instalacoes
+do CoR-Lab e (b) o simulado.
+
+4883
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+O robo humanoide iCub (Fig. 1) foi desenvolvido como um dos objetivos do projeto
+RobotCub, iniciado em 2004, o qual e financiado
+pela Comissao Europeia atraves de sua Unidade
+de Sistemas Cognitivos e Robotica (ES) sob a Information Society Technologies, componente do
+Sixth Framework Programme (FP6). Esse consorcio e composto por dez centros de pesquisa
+europeus e complementado por tres centros de
+pesquisa nos Estados Unidos e tres no Japao,
+sendo liderados pela Universidade de Genoa
+(Italia) (RobotCub An International Project on
+Humanoid Cognitive Systems, 2009).
+O robo desenvolvido possui 53 graus-deliberdade e o tamanho de uma crianca de tres anos
+e meio. Ele e capaz de engatinhar e sentar, possui
+maos que permitem manipulacao habil, cabeca e
+olhos completamente articulados, com cameras em
+cada olho permitindo uma visao_estereoscopica,
+alem de capacidades auditivas e tateis. E uma
+plataforma livre, onde desenvolvedores de diferentes disciplinas, como Psicologia, Neurociencia e
+Robotica, podem usa-lo e adapta-lo a vontade sob
+uma licenca GPL. Dessa forma, esses desenvolvedores podem explora-la facilmente, compartilhar
+resultados, bem como se beneficiar do trabalho de
+outros usuarios (Metta et al., 2010).
+Uma outra grande contribuicao desse projeto
+e a disponibilizacao tambem livre do simulador
+do iCub, mostrado na Fig. 1(b). Tal plataforma
+foi utilizada neste projeto para coleta de dados e
+para verificacao do comportamento do robo com
+os codigos desenvolvidos.
+4
+
+Fig. 2 A caracterstica de injetividade do
+problema de mapeamento dos pixels (u 
+(iL , jL , iR , jR )T ) para os angulos das juntas (q 
+(1 , ..., 7 )).
+
+70cm3 . As posicoes do braco esquerdo do iCub
+tentando alcancar esta bola sao coletadas. Para
+tanto, sao utilizados metodos de estado da arte,
+disponveis no repositorio de software do iCub,
+que reconstroem a posicao 3D da bola a partir da imagem de uma de suas cameras (Taiana
+et al., 2010), e so entao, o braco e movimentado.
+As seguintes informacoes sao colhidas os pares
+de pixels referentes ao centro da bola em ambas
+as cameras (iE , jE ) e (iD , jD ), coordenadas 3D
+da bola (xb , yb , zb ), angulos das juntas do braco
+(1 , ..., 7 ) e a posicao final da mao (xm , ym , zm ),
+representadas na Fig. 4(b). O conjunto de dados resultante tem 491 amostras, divididas em 391
+para treinamento das redes e 100 para teste.
+
+Coleta de dados
+
+O objetivo deste trabalho se concentra no mapeamento_direto de coordenadas de pixels, obtidas a
+partir da visao binocular do robo humanoide iCub
+para os angulos das juntas de seu braco esquerdo.
+Como exibido na Fig. 2, varias posicoes ao longo
+de uma mesma direcao sao mapeadas para uma
+unica postura, mostrando que a posicao objetivo
+da mao e projetada para fora do envoltorio da
+egosfera, o qual define a area alcancavel.
+Portanto, era necessario criar uma estrutura
+de coleta com o simulador, que permitisse a interacao com o robo simulado sem que fossem criados objetos virtuais e que ficasse fora de sua area
+alcancavel. Com esse intuito, montou-se uma configuracao onde qualquer usuario pode interagir diretamente por meio de uma webcam, que projeta
+o vdeo dentro do simulador numa estrutura tao
+proxima do robo, que todo o seu campo de visao
+e abrangido por ela. Assim, a realidade e transferida em tempo_real, como mostrado na Fig. 4(a).
+Os dados coletados consistem na apresentacao
+de uma bola vermelha, a qual e movimentada
+em um movimento espiral dentro do campo visual do robo, em um espaco de aproximadamente
+
+ISBN 978-85-8001-069-5
+
+Fig. 3 Baseado no software disponvel no Wiki
+do iCub, os parametros de avaliacao sao exemplificados pelas duas posicoes do braco, em que a
+linha vermelha completa representa o eixo x do
+sistema de referencia da mao na posicao desejada
+e a linha tracejada na posicao determinada pela
+rede_neural. Os crculos azuis claros representam
+as projecoes das coordenadas da bola, os crculos
+pretos representam a posicao da mao e o crculo
+vermelho indica a posicao do centro da bola vermelha.
+
+4884
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+(a)
+
+(b)
+
+Fig. 4 (a) Configuracao para coleta de dados onde o usuario move a bola diante de uma webcam e (b)
+no simulador, os dados sao coletados enquanto o robo tenta alcanca-la.
+
+Treinamento
+posicionamento
+precisao
+
+MLP
+melhor
+geral
+media
+var.
+media
+var.
+2,537
+2,614
+3.073
+6,017
+7,397
+19,76
+8,441
+33,61
+
+ELM
+melhor
+geral
+media
+var.
+media
+var.
+1,575
+1,291
+1,606
+1,345
+6,252
+17,293
+6,265
+17,24
+
+Teste
+posicionamento
+precisao
+
+media
+2,813
+7,013
+
+media
+1,893
+5,810
+
+var.
+2,692
+12,62
+
+media
+3,399
+8,019
+
+var.
+5,401
+23,69
+
+var.
+2,195
+9,142
+
+media
+1,989
+5,904
+
+var.
+2,198
+8,610
+
+Tab. 1 Media e variancia dos resultados de treinamento e teste para a melhor repeticao e para todas as
+repeticoes das redes MLP e ELM sobre o desempenho para o posicionamento da mao e da precisao da
+direcao do movimento de apontar (em centmetros).
+5
+
+Resultados
+
+Ainda que a precisao de apontar sao seja o objetivo neste momento, e necessario verificar a capacidade do mapeamento_direto de reproduzir
+uma posicao. Para tanto, como forma de avaliacao
+do gesto resultante do mapeamento, dois metodos sao adotados o erro de posicionamento da
+mao quando conduzida pela rede_neural, e o erro
+de precisao dado pela distancia entre dois pontos
+gerados pela projecao da posicao da bola interceptando a projecao da direcao do apontamento
+definida pela rede_neural. A primeira e calculada
+a partir da distancia_euclidiana entre a posicao
+final desejada da mao (coletada juntamente com
+os dados) e a posicao estimada pela sada das redes_neurais. Uma vez que a sada destas redes
+sao os angulos das juntas do braco, e feito o calculo da cinematica direta com o software fornecido
+pelo repositorio do iCub (ICub Forward Kinematics, 2012) para determinar as coordenadas estimadas. A segunda metrica e uma comparacao entre distancias euclidianas da projecao da posicao
+da bola na reta formada pelo eixo x do sistema de
+referencia da mao do robo, quando esta esta na
+posicao desejada, e da projecao na reta formada
+pelo mesmo eixo quando a mao esta posicionada
+de acordo com a rede. Essas projecoes nada mais
+sao que o ponto nas respectivas retas que seja perpendicular ao ponto que representa a posicao da
+
+ISBN 978-85-8001-069-5
+
+bola nesse espaco. A ilustracao dessas metricas
+pode ser vista na Fig. 3.
+
+Treinamento
+posicionamento
+precisao
+
+SRC
+melhor
+geral
+media
+var.
+media
+var.
+1,431
+1,085
+1,415
+1,092
+5,854
+16,34
+5,8
+16,39
+
+Teste
+posicionamento
+precisao
+
+media
+1,870
+5,902
+
+var.
+2,352
+9,453
+
+media
+1,948
+6,091
+
+var.
+2,341
+9,521
+
+Tab. 2 Media e variancia dos resultados de treinamento e teste para a melhor repeticao e para todas as repeticoes da rede SRC sobre o desempenho
+para o posicionamento da mao e da precisao da direcao do movimento de apontar (em centmetros).
+A partir da Tabela 1 e 2, percebe-se que os
+erros de posicionamento da mao sao em media
+menores que dois centmetros no melhor desempenho. Isso e qualitativamente razoavel, dada
+a grande quantidade de rudo nos dados de entrada, gerado, em sua maioria, pela computacao
+da posicao 3D feita pelo iCub. Alem disso, mesmo
+um pequeno erro de posicionamento ocasiona um
+grande erro entre a respectiva direcao encontrada
+e a direcao desejada, como pode ser observado na
+Fig. 3. A precisao do comportamento mostra uma
+media de erro em torno de 6cm para as redes SRC
+
+4885
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+nao-linear de padroes de entrada, executada pela
+dinamica em seu reservatorio. Pelos valores observados na Tabela 3 onde a media de erros esta
+em torno de 14cm, alem de uma grande variancia, e possvel perceber que esse mapeamento nao
+aprende a informacao de profundidade contida nas
+coordenas 3D. Na Fig. 5, verifica-se que as respostas se concentram em torno do valor medio da
+profundidade (eixo x da figura). Com base nesses
+resultados, e inconsistente dizer que a operacao
+de correspondencia estereoscopica e realizada durante o mapeamento_direto, visto os erros obtidos
+em torno de 2cm e o fato de que a reconstrucao
+das coordenadas e um problema mal-posto.
+Fig. 5 Desempenho da rede SRC na correspondencia estereoscopica, em que os valores das
+profundidades ficam aproximadamente na media
+dos dados de treinamento.
+
+Treinamento
+Teste
+
+Pixels  Coord. da Bola
+media
+variancia
+11.1818
+50.4705
+media
+variancia
+14.0733
+68.1853
+
+Tab. 3 Erro de posicionamento em centmetros
+durante treinamento e teste do mapeamento para
+reconstrucao das coordenadas 3D da bola a partir
+das coordenadas em pixels.
+
+e ELM. Esse valor aumenta a medida que o objeto
+se afasta do robo, o que explica a grande variancia.
+As redes SRC e ELM obtiveram desempenhos semelhantes, sendo a ultima ligeiramente melhor no quesito precisao do gesto. A rede ELM
+forneceu um erro medio de posicionamento em todas as repeticoes realizadas de 1, 6cm no treinamento e de aproximadamente 2cm no teste, enquanto a rede SRC apresentou um erro de 1, 4cm
+e 1, 95cm respectivamente. Com as melhores redes
+encontradas nestas repeticoes, para ELM, 1, 5cm
+e aproximadamente 1, 9cm, para SRC, 1, 4cm e
+aproximadamente 1, 9cm. Sobre o erro de precisao
+do gesto, a rede SRC mostrou um melhor desempenho no treinamento, conseguindo uma media de
+valores abaixo de 6cm em todas as repeticoes, mas
+nos testes, mesmo a rede de melhor desempenho
+tem valores ligeiramente acima dos respectivos da
+ELM.
+Alem da averiguacao da capacidade de apontar com apenas um mapeamento_direto, foi levantada tambem a hipotese de que esse mapeamento
+nao executa a correspondencia estereoscopica.
+Para tanto, foi realizado tambem outro mapeamento das coordenadas de pixels para as coordenadas 3D da bola. Utilizou-se a rede SRC por
+ser a mais poderosa entre as tres abordadas, devido a sua maior complexidade atraves da mistura
+
+ISBN 978-85-8001-069-5
+
+6
+
+Conclusoes
+
+Em geral, verifica-se que o mapeamento_direto
+e possvel sem a necessidade de reconstruir as
+coordenadas 3D da bola e a rede SRC e ELM
+obtiveram os melhores desempenhos. Dentre as
+metricas de avaliacao, o erro de posicionamento
+teve uma media pouco expressiva de 2cm, especialmente por se tratar de um conjunto de dados
+ruidoso. No entanto, mesmo pequenos erros na
+posicao, desencadeiam um erro maior de precisao
+no gesto_de_apontar, sendo isso demonstrado pela
+media de 6cm deste.
+Dentre outras hipoteses levantadas, foi avaliada a nao-possibilidade de realizar um mapeamento que executasse a correspondencia estereoscopica diretamente. Em outras palavras, utilizar como informacao de entrada, os dois pares
+de pixels e receber como sada, as coordenadas da
+posicao da bola. Essa hipotese pode ser verificada
+pela Fig. 5, onde se percebe a tendencia da rede
+em aprender apenas a media dos dados. Dessa
+forma, pode-se afirmar que o mapeamento_direto
+proposto nao necessita da reconstrucao da posicao
+3D.
+Para as proximas fases do projeto, um novo
+conjunto de dados foi coletado, desta vez com
+o robo real, por meio do metodo de ensino
+cinestesico. Com esse metodo, e possvel diminuir
+o erro de precisao do gesto_de_apontar, visto
+que e executado com o robo em estado passivo
+(compliant ) e manipulado diretamente, utilizando
+um feixe laser para garantir a precisao do gesto.
+Uma vez que um bom mapeamento for aprendido, este pode se tornar um importante componente para robos cognitivos na implementacao da
+atencao, que seleciona para onde o robo deve olhar, e conecta-la com outras camadas cognitivas,
+que permitirao apontar, rastrear e alcancar um
+objeto de forma a exigir menos recursos computacionais.
+
+4886
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Agradecimentos
+Este trabalho foi apoiado pelo convenio
+DAADCNPq e pela Comunidade Europeia
+FP7, sob o acordo da bolsa de numero 248311 AMARSi.
+References
+Barreto, G., Araujo, A. and Ritter, H. (2003).
+Self-organizing feature maps for modeling and control of robotic manipulators,
+Journal of Intelligent and Robotic Systems
+36(4) 407450.
+da Silva, I. N., Spatti, D. H. and Flauzino, R. A.
+(2010). Redes Neurais Artificiais para Engenharia e Ciencias Aplicadas Curso Pratico,
+ArtLiber Edi.
+Emmerich, C., Reinhart, F. and Steil, J. (2010).
+Recurrence enhances the spatial encoding of
+static inputs in reservoir networks, Proceedings of the 20th International Conference on
+Artificial Neural Networks (ICANN10), Vol.
+LNCS 6353, Springer, pp. 148153.
+Feng, J. (2004). Computational Neuroscience
+A Comprehensive Approach, Chapman 
+HallCRC.
+Huang, G.-B., Zhou, H., Ding, X. and Zhang,
+R. (2012). Extreme learning machine for regression and multiclass classification, IEEE
+Transactions on Systems, Man, and Cybernetics - Part B 42(2) 513529.
+Huang, G.-B., Zhu, Q.-Y. and Siew, C.-K. (2006).
+Extreme learning machine Theory and applications, Neurocomputing 70(1-3) 489501.
+ICub
+
+Forward
+Kinematics
+httperis.liralab.itwiki
+ICubForwardKinematics.
+
+(2012).
+
+Jones, M. and Vernon, D. (1994). Using neural networks to learn hand-eye co-ordination,
+Neural Computing  Applications 2(1) 212.
+Lukosevicius, M. and Jaeger, H. (2010). Reservoir computing approaches to recurrent neural network training, Computer Science Review 3(3) 127149.
+
+The iCub humanoid robot An open-systems
+platform for research in cognitive development, Neural Networks 23(8-9) 11251134.
+Neumann, K. and Steil, J. (2011). Batch intrinsic plasticity for extreme learning machines, Proceedings of the 21th International
+Conference on Artificial Neural Networks
+(ICANN10), Vol. LNCS 6791, Springer,
+pp. 339346.
+Ramachandram, D. and Rajeswari, M. (2003). A
+short review of neural network techniques
+in visual servoing of robotic manipulators,
+Malaysia - Japan Seminar On Artificial Intelligence Applications In Industry, Kuala
+Lumpur, Malaysia, pp. 2425.
+Ritter, H., Martinetz, T. and Schulten, K.
+(1989). Topology conserving maps for learning visuomotor-coordination, Neural Networks 2 159168.
+RobotCub An International Project on Humanoid
+Cognitive Systems (2009).
+httpwww.
+robotcub.org.
+Shademan, A., Farahmand, A.-M. and Jagersand,
+M. (2009). Towards learning robotic reaching
+and pointing An uncalibrated visual servoing approach, Proceedings of the 2009 Canadian Conference on Computer and Robot Vision (CRV09), pp. 229236.
+Sun, G. and Scassellati, B. (2005). A fast and
+efficient model for learning to reach, International Journal of Humanoid Robotics
+2(4) 391413.
+Taiana, M., Santos, J., Gaspar, J., Nascimento, J.,
+Bernardino, A. and Lima, P. (2010). Tracking objects with generic calibrated sensors
+An algorithm based on color and 3D shape
+features, Robotics and Autonomous Systems
+58 784795.
+Triesch, J. (2005). A gradient rule for the plasticity of a neurons intrinsic excitability, Proceedings of the 15th International Conference
+on Artificial Neural Networks (ICANN05),
+Vol. LNCS 3696, Springer, pp. 6570.
+
+Marjanovic, M., Scassellati, B. and Williamson,
+M. (1996). Self-taught visually-guided pointing for a humanoid robot, From Animals
+to Animats Proceedings of 1996 Society of
+Adaptive Behavior, MIT Press, pp. 3544.
+Metta, G., Natale, L., Nori, F., Sandini, G.,
+Vernon, D., Fadiga, L., von Hofsten, C.,
+Rosander, K., Lopes, M., Santos-Victor, J.,
+Bernardino, A. and Montesano, L. (2010).
+
+ISBN 978-85-8001-069-5
+
+4887

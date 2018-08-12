@@ -1,0 +1,673 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ATTITUDE CONTROL OF A NANO QUADROTOR
+Luis Otavio Guedes Lobo e Silva, Antonio Eduardo Carrilho da Cunha
+
+
+Programa de Pos Graduacao em Engenharia Eletrica (PGEE)
+Instituto Militar de Engenharia (IME)
+Praca Gen. Tiburcio, 80, Praia Vermelha
+22290-270, Rio de Janeiro, RJ, Brazil
+Emails luis.cefet.rj@gmail.com, carrilho@ime.eb.br
+
+Abstract This paper presents a proposal for attitude_control of a quadrotor using a cascade_control architecture. The control objective is to maintain the quadrotor at a fixed position in three-dimensional space using
+the available onboard sensors. The control strategy consists of using an inner loop to stabilize the orientation
+and the height of the quadrotor and an outer loop to stabilize the horizontal position using the linear speeds as
+reference signals.
+Keywords
+
+Attitude Control, Quadrotor.
+
+Resumo Este artigo apresenta uma proposta para o controle_de_atitude de um quadricoptero usando uma
+arquitetura_de_controle do tipo cascata. O objetivo e manter o quadricoptero no ar em uma posicao fixa no
+espaco tridimensional, usando os sensores embarcados disponveis. A estrategia_de_controle consiste em utilizar
+uma malha interna para estabilizar a orientacao e a altura do quadricoptero e uma malha externa para estabilizar
+a posicao horizontal, utilizando as velocidades lineares como sinais de referencia.
+Palavras-chave
+
+.
+
+Introduction
+
+The widespread and increasing use of drones in
+many different applications is now a reality. We
+are concerned with the high number of accidents
+already reported with both civilian and military
+drones. For instance, from 2003 to 2013 US military drones were involved in around 400 accidents
+during operations (Whitlock, 2014). Among the
+causes, the premature deployment of not enough
+tested devices and the suppression of some security subsystems or sensors in order to get quickly
+a new product with less cost are noteworthy in
+the engineer perspective. We consider thus that
+the investigation of drone technology and control
+techniques is a relevant task.
+One of the most fundamental control task
+when considering a drone system is the attitude
+control. It is an essential control loop that regulates angular orientations and linear speeds of
+the device in order to make it more stable to perform high level control tasks. For instance, by
+making first the drone being stable in a fixed 3D
+space position it is possible to, in a higher level
+control loop, make it move from one point to the
+other or to follow a specified trajectory. The attitude_control is fundamental for both remote piloting and autonomous flight. It relies mostly onboard sensors like an inertial measurement unit
+(IMU), equipped accelerometers, rate gyros and
+magnetometers, or additional onboard sensors like
+barometers or sonars.
+We work with quadrotors for some reasons.
+First, currently there are many affordable drone
+systems based on quadrotors. Second, because
+the control actuation is relatively simple, based
+
+ISSN 2525-8311
+
+on the speeds of the rotors. Nevertheless, the task
+to control them is still a challenge. Quadrotors are
+underactuated nonlinear_systems with coupling of
+control modes and many difficulties in modelling,
+like the aerodynamics of propellers. Third, when
+compared with other drone systems, the quadrotor can perform interesting maneuvers like vertical
+take off and landing (VTOL) or hovering. Moreover, they are suitable for indoors or outdoors environments. We work with the Crazyflie platform
+from Bitcraze 1 , a light (19g) and very small (9
+cm from rotor to rotor) open source platform.
+We can find a lot of works that deal with
+attitude_control of quadrotors such as (Mueller
+and DAndrea, 2014 Tayebi and McGilvray, 2006
+Raffo et al., 2009 Basri et al., 2014 Martin and
+Salaum, 2010 Bouabdallah, 2007 Hanna, 2014
+Costa, 2012 Borges et al., 2015 Lebedev, 2013).
+Our model is based on the modelling presented
+in (Beard, 2008 Lebedev, 2013). However, we
+have obtained a relatively satisfactory control result by ignoring the air resistance and the rotor drag proposed on (Hanna, 2014 Leishman
+et al., 2014 Martin and Salaum, 2010), the uncertainties in (Basri et al., 2014) and the quaternions in (Tayebi and McGilvray, 2006 Borges
+et al., 2015).
+In this work we propose an attitude_controller
+that tries to exploit the maximum possible from
+the quadrotor onboard sensors by maintaining the
+quadrotor at a stable 3D position in space. The
+control objective is to maintain the quadrotor at
+a fixed position in three-dimensional space using
+the available onboard sensors. For instance, the
+1 httpswww.bitcraze.iocrazyflie
+
+1052
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Crazyflie has an accelerometer, a rate gyro, a magnetometer and a barometer. Using the onboard
+sensor fusion routines (Martin and Salaum, 2010)
+we can obtain relatively accurate estimates of the
+quadrotor angular orientation and height. We
+propose a two layered attitude_control where we
+use additional information on the linear speeds.
+It can be shown that without the feedback of the
+linear speeds, it is not possible to attain to a fixed
+3D position (Lobo e Silva, 2016).
+This paper is organized as follows In section
+2 we report the modelling of the quadrotor. In
+section 3 we describe the linearization of the system. In section 4 we explain the synthesis of the
+inner and outer loops controls. In section 5 we
+show the simulation results of the outer loop control. In section 6 we present a tracking test of the
+controllers implemented on the Crazyflie and in
+section 7 we show our conclusion.
+
+where kf and kt are the thrust and torque constants.
+For control purposes, we define the total
+thrust (F) and the roll ( ), pitch( ) and yaw
+( ) torques as
+F  F1 + F2 + F3 + F4
+  l(F4  F2 )
+  l(F1  F3 )
+  1 + 3  2  4
+
+where l is the distance from the rotors to the center of mass.
+The following set of nonlinear equations that
+describes the quadrotor dynamics can be obtained
+by application of Newton-Euler or Lagrangian
+methods as can be followed in (Beard, 2008).
+pn
+pe
+
+2
+
+Mathematical Modelling of the
+Crazyflie
+
+Figure 1 shows a schematic model of a quadrotor
+frame in the cross + configuration . There are
+four motors Ri , i  1...4. The front rotor R1 and
+the back rotor R3 spin clockwise, the right rotor
+R2 and the left rotor R4 spin counter-clockwise.
+Figure 1 also shows the main coordinates frames
+in this work, the body frame (xb , yb , zb ) attached
+to the body of the device and the inertial frame
+(xi , yi , zi ) attached to a fixed ground reference.
+
+Figure 1 Crazyflie top view.
+The motors generate at the frame a thrust Fi
+and a torque i according to the direction of rotation. We suppose that the thrust Fi and toque i
+are related to the PWM duty cycle of the actuators i , with i  0, 1, by Fi  kf i and i  kf i ,
+
+ISSN 2525-8311
+
+(1)
+
+h
+u
+v
+w
+
+
+
+p
+q
+r
+
+
+
++
+
++
+
+
+
+
+
+
+
+
+
+
+
+
+u(cos()cos()) + v(sin()sin()cos()
+cos()sin())  w(sin()sin()
+cos()cos()sin())
+u(cos()sin()) + v(sin()sin()sin()
+cos()cos())  w(cos()sin()sin()
+cos()sin()
+wcos()cos()  usin() + vcos()sin()
+rv  qw  gsin()
+pw  ru + gcos()sin()
+qu  pv  Fm + gcos()cos()
+p + rcos()tan() + qsin()tan()
+qcos()  rsin()
+rcos()cos() + qsin()cos()
+ Jx + qr(Jy  Jz )Jx
+ Jy + pr(Jx  Jz )Jy
+ Jz + pq(Jx  Jy )Jz
+
+(2)
+
+The state variables are the following The
+Inertial Positions P  pn pe hT measured in
+meters with respect to the inertial frame, where
+pn is the north position, pe is the east position
+and h is the height position. The Linear speeds
+  u v wT measured in meters per second
+V
+with respect to the body frame, where u is the
+longitudinal speed, v is the lateral speed and w
+is the vertical speed. The angular orientations
+
+    T represented by the Euler angles,
+measured in radians with respect to a sequence of
+rotations in order to obtain the body frame from
+the inertial frame (Beard, 2008), where  is the
+roll angle,  is the pitch angle and  is the yaw
+  p q rT measured
+angle. The angular rates 
+in radians per second with respect to the body
+frame, where p is the roll rate, q is the pitch rate
+and r is the yaw rate.
+The parameters for the Crazyflie 1.0 are The
+mass of quadrotor (m  1.875  102 Kg), the
+acceleration of gravity (g  9.81 ms2 ), the distance from the rotor to the center of mass (l 
+4.25  102 m ), the thurst constant of rotor
+(kf  8.62  102 Nunits), the torque constant of rotor (kt  4.2823  104 N.munits)
+and the moments of inertia with respect to xb
+(Jx  1.81  105 ), yb (Jy  1.82  105 ) and
+zb (Jz  1.92  105 Kg.m2 ). The constants kf
+and kt were obtained from experiments in (Borges
+et al., 2015). The other parameters were either directly measured or estimated.
+
+1053
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+3
+
+Linearization
+
+ 
+For control purpose, we define a state vector X
+T
+pn pe h u v w    p q r and an input vector
+  F 0  0  0  0 T .
+U
+  
+The nonlinear equations can be linearized
+ 0, U
+ 0 ) for small
+around an equilibrium point (X
+signals, with the state x and the input u for the
+ X
+ 0 + x and U
+ U
+ 0 + u, where x and
+system X
+u are the linearized state and input respectively.
+Lets start the definition of an equilibrium
+point corresponding to the quadrotor at a static
+position in the 3D space by arbitrating
+u0  v0  w0  0 ms
+p0  q0  r0  0 rads
+
+The linearized model is composed of simple
+first order differential equations. The decoupling
+of the variables in (9) is exploited in the control
+design. Observe there are four main decoupled
+modes, as shown figure 2.
+
+(3)
+
+By applying the above conditions to the non  f (X,
+ U
+ ), the followlinear system equations X
+ing values turn the remaining derivatives null
+0 0
+
+F00  mgkf
+
+ 0 0  0
+0   0  0
+0 0
+
+N 
+N.m
+rad
+
+(4)
+
+Note that the derivatives are null independently from the value of pn , pe , h and . The
+equilibrium point is then
+ 0  pn pe h0 0 0 0 0 0 0 0 0 0T
+X
+0
+0
+(5)
+ 0  mgkf 0 0 0T
+U
+where (pn0 , pe0 , h0 )  R3 , in meters, and 0  R.
+We have arbitrated 0  0 rad.
+We follow a procedure indicated in (Borges
+et al., 2015) by defining lumped parameters
+ , lkf Jx
+ , lkf Jy
+
+ , kt Jz
+h , kf m
+
+(6)
+
+0 ,  lkf
+0 ,  kt
+
+(7)
+
+and generalized forces
+F 0 , Fkf
+0 ,  lkf
+
+As doing this we will concentrate all the model
+parametric uncertainty into single lumped parameters, allowing us to analyse the robustness of our
+controller design in future steps. Second, the generalized forces are now defined in units compatible
+to the dimension of the PWM duty cycle.
+With these equations we have that
+F 0  1 + 2 + 3 + 4
+0  1 + 3  2  4
+
+0  1  3
+0  4  2
+
+(8)
+
+Applying a linearization method around the
+equilibrium point, as indicated in (Franklin et al.,
+2013), the linear state equations are
+pn  u
+pe  v
+h  w
+
+u  g
+v  g
+w  h F 0
+
+ISSN 2525-8311
+
+  p
+  q
+  r
+
+p   0
+q   0
+r   0
+
+(9)
+
+Figure 2 Linear model block diagram.
+We call these modes as follows. The height
+mode connects the thrust F00 to the vertical speed
+w and the height h. The yaw mode connects the
+yaw torque 0 to the yaw rate r and yaw angle .
+The lateral mode connects the roll torque 0 to the
+roll rate p, roll angle  and lateral speed v. The
+longitudinal mode connects the pitch torque 0 to
+the pitch rate q, pitch angle  and longitudinal
+speed u. We will exploit this decomposition in
+the controller design.
+4
+4.1
+
+Controller Design
+
+Overview
+
+We work with a cascade_control architecture. An
+inner loop is responsible for stabilization by regulation the Euler angles , ,  and the vertical height h. It can be shown that this controller
+solely is unable to stabilize the quadrotor at a horizontal position. Considering the possibility of estimating the linear speeds u and v from accelerometer data, as indicated in (Leishman et al., 2014),
+we propose an external control loop to regulate the
+horizontal speeds u and v. The outer loop uses u
+and v as reference to determine the set point for
+the inner loop. Besides, it is possible to use different control strategies for the outer loop unaffecting the inner loop. The proposal architecture is
+then shown in figure 3.
+4.2
+
+Inner Loop
+
+We consider the following controllers for the inner
+control loop the Pitch control regulates the pitch
+angle  the Roll control regulates the roll angle
+ The Yaw control regulates the yaw angle .
+These three controllers use data from the sensor
+fusion algorithm. Finally, Height control uses the
+vertical speed to stabilize the height.
+
+1054
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+can be decoded into the rotors PWM duty cycle 1  F00 + 0 and 3  F00  0 , where we use
+F00 , mgkf as the standard value to maintain the
+quadrotor in the air. From this, we can see that
+the control action of the other controller loop act
+as disturbances. In order to make the integral control, all the system were augmented of one integral
+state as indicated in (Franklin et al., 2013). The
+controllers gains and closed loop poles are shown
+in table 1.
+Table 1 Table of poles and gains for inner loop.
+Figure 3 Decoupling mode.
+
+In this paper we describe only the pitch mode
+synthesis. The roll, yaw and height modes are
+analogous to the pitch mode.
+According with equation (9), the pitch mode
+corresponds to the following state-space representation
+  
+  
+
+0 1
+
+0
+
+
++
+0
+(10)
+0 0
+q
+
+q
+The structure of the pitch controller is defined
+in figure 4 that corresponds to a full state feedback
+with robust tracking by integral error (Franklin
+et al., 2013). This control scheme leads to zero
+steady state error for steps reference input. The
+reference r is given to the desired pitch angle .
+
+Figure 4 Block diagram for pitch control.
+
+Mode
+poles
+KI
+KP
+KD
+Roll 0.86638  0.50061i 0.1 0.17801 0.10844
+20.216
+Pitch 0.86638  0.50062i 0.1 0.17804 0.10848
+20.0104
+Yaw 0.88626  0.56825i 0.1 0.20962 0.16970
+2.0123
+H 0.83460  0.66885 0.31623 0.71026 0.63952
+1.2709
+
+4.3
+
+Outer Loop
+
+For the outer control loop we consider the following modes The U controller inspired in the dependence of u and  in equation (9), and the V
+controller inspired in the dependence of v and 
+in equation (9).
+The structure of the U controller is defined in
+figure 5. As well as pitch controller, the U control
+has a full state feedback with robust tracking by
+integral error. The reference ur is given to the
+desired longitudinal speed u. The main idea is to
+use the output of the U controlles r as a reference
+to the pitch controller. The V mode is analogous
+to the U mode.
+
+In the control scheme of figure 4, the integral
+state is defined by
+I    r
+
+(11)
+
+Then, the resulting control law is
+0  KIP I  KP P   KDP q
+
+(12)
+
+Observe that the control law consists implicity
+of a proportional action KP P , an integral action
+KIP and a derivative action KDP .
+The inner loop controllers were sinthesized using the LQR techniques (Franklin et al., 2013).
+The LQR weighting matrices were adjusted by
+checking the steps response of the system. One
+of the main constrains was to maintain the control action 0 in order to maintain the PWM duty
+cycles i in the range 0,1. From equation 8, we
+can estimate that the generalized pitch torque 0
+
+ISSN 2525-8311
+
+Figure 5 Block diagram for U control.
+The U and V controllers were also sinthesied
+by LQR. The weighting matrices were adjusted by
+trial and error, by observing system step response.
+The restriction were to make the U and V dynamics slower than the inner loop and the restriction
+on the value as the outputs r and r based on the
+typical values of the inner loop controller. The results are in table 2.
+
+1055
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Table 2 Table of poles and gains for outer loop.
+Mode
+U
+
+poles
+0.10647
+0.29138
+0.10647
+0.29138
+
+V
+
+5
+
+KI
+3.1623  103
+
+KP
+4.0555  102
+
+3.1623  103
+
+4.0555  102
+
+Simulations
+
+We perform a simulation of the controllers in
+closed loop against the nonlinear model.
+As an initial condition to the simulation we
+define the following pn  pe  h  0 m, u 
+v  w  0 ms,   0.1 rad,   0.3 rad,
+  0.2 rad and p  q  r  0 rads. The
+reference inputs are ur  vr  hr  0 ms and
+r  0 rad. The simulation time is 40s.
+The simulation responses of the outer loop
+system are shown in figures 6, 7 and 8.
+We conclude that the quadrotor hovers in a
+fixed position. After 20 seconds, the positions pn
+and pe remain in a fix value. All the Euler angles
+and all the angular rates have the same settling
+time in 5 seconds. Also, due to integral action,
+the steady state errors for the linear speeds, the
+euler angle and the angular rates are all null. Finally, the values of 1 , 2 , 3 and 4 are between
+0 and 1. It can be shown that, without the U and
+V controllers, the horizontal position cannot be
+stabilized (Lobo e Silva, 2016).
+
+Figure 7 Euler angles and angular rates.
+
+Figure 8 PWM Duty Cycles
+
+Despite of the wind force generated by the
+rotation of the propellers causes oscillations at the
+quadrotor, observe that the recorded  tracks the
+reference signals.
+
+Figure 6 Positions and linear speeds.
+Figure 9 Crazyfle tied between to columns for
+pitch control test.
+6
+
+Implementation and Tests
+
+We have implemented the roll, pitch and yaw controllers on the real quadrotor. First, we tied the
+quadrotor between two support columns in a way
+to allow only the pitch movement, as in figure 9.
+The main idea is to check if the output 
+tracks the reference input r . Finally, we have
+compared the results of the simulation with the
+real recorded data. The results are shown in figure 10. We have obtained similar result for the
+roll and yaw controllers.
+
+ISSN 2525-8311
+
+The figure 11 shows a flying performance
+data for the attitude_control. The results show
+that the h state tracks the reference hr and the
+speeds u and v oscillate around the reference signal with maximum values of umax   0.4 ms
+and vmax   0.7 ms. Although the outer loop
+replaces r and r for ur and vr respectively, the
+Euler angles states oscillate close to zero rad.
+Due to the arguments presented, the outer loop
+provides a good regulation of the position.
+
+1056
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+mizing the dynamics responses. Also, utilizing the
+longitudinal and lateral speeds as reference signals
+allow the quadrotor hovers in a fixed height in 3D
+space without using external position sensors.
+In future work, the authors intend to implement a Kalman Filter for estimating the longitudinal and lateral speeds to improve the performance
+of the controller.
+Acknowledgements
+
+Figure 10 Comparison between measured data
+and simulation (pitch mode).
+
+We expose our acknowledgements to the technician Victor Luiz Dias de Castro for support
+and maintenance of Crazyflies and Coordenacao
+de Aperfeicoamento de Pessoal de Nvel Superior
+(CAPES) for financial support of research.
+References
+Basri, M. A. M., Husain, A. R. and Danapalasingam, K. A.
+(2014). Intelligent Adaptive Backstepping Control for
+MIMO Uncertain Nonlinear Quadrotor Helicopter System, pp. 311  314. DOI 10.11770142331214538900.
+Beard, R. W. (2008).
+Quadrotor Dynamics and Control, Brigham Young University.
+Available at
+httphdl.lib.byu.edu1877624b.
+Borges, L. M., de Moura Magalhaes, G. and dos Santos, E. G.
+(2015). Controle de Atitude de um Quadricoptero, Instituto Militar de Engenharia.
+Bouabdallah, S. (2007). Design and Control of Quadrotors
+with Application to Autonomous Flying, Masters thesis,
+Ecole Polytechnique Federale de Lausanne.
+Costa, E. B. (2012). Algoritmos de Controle Aplicados a Estabilizacao do Voo de um Quadrotor, Masters thesis,
+Universidade Federal de Juiz de Fora.
+Franklin, G. F., Powell, J. D. and Emami-Naenini, A. (2013).
+Sistemas de Controle para Engenharia, Bookman.
+Hanna, W. (2014). Modelling and Control of an Unmanned
+Aerial Vehicle, Masters thesis, Charles Darwin University.
+Lebedev, A. (2013). Design and Implementation of a 6DOF
+Control System for an Autonomous Quadrocopter, Masters thesis, Universitat Wurzburg.
+Leishman, R. C., Jr., J. C. M., Beard, R. W. and Mclain,
+T. W. (2014). Quadrotors and Accelerometers - State
+Estimation with and Improved Dynamic Model, 34 28
+ 41. DOI 10.1109MCS.2013.2287362.
+Lobo e Silva, L. O. G. (2016). Attitude control of a nano
+quadcopter, Masters thesis, Instituto Militar de Engenharia.
+Martin, P. and Salaum, E. (2010). The True Role of Acceleration Feedback in Quadrotor Control . Available at
+httpshal.archives-ouvertes.frhal-00422423v2.
+Mueller, M. W. and DAndrea, R. (2014). Stability and control
+of a quadrocopter despite the complete loss of one, two
+or three propellers. DOI 10.1109ICRA.2014.6906588.
+
+Figure 11 Real flight data.
+
+7
+
+Conclusion
+
+This paper presents an attitude_control using decoupling modes to perform each movement of the
+quadrotor independently. A LQR controller with
+integral action was designed for each mode to opti-
+
+ISSN 2525-8311
+
+Raffo, G. V., Ortega, M. G. and Rubio, F. R. (2009). An
+integral predictivenonlinear H control structure for
+a quadrotor helicopter, Automatica 46 29  39. DOI
+10.1016j.automatica.2009.10.018.
+Tayebi, A. and McGilvray, S. (2006). Attitude Stabilization of a VTOL Quadrotor Aircraft, IEEE Transactions
+on Control Systems Magazine 14(3) 562  571. DOI
+10.1109TCST.2006.872519.
+Whitlock,
+C. (2014).
+When Drones Fall from
+the Sky,
+Washington Post .
+Available at
+httpwww.washingtonpost.comsfinvestigative2014
+0620when-drones-fall-from-the-sky.
+
+1057

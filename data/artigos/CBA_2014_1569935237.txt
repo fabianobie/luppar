@@ -1,0 +1,631 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+MODELAGEM E IMPLEMENTAÇÃO EM FPGA DO CONTROLE DISCRETO DE UMA PLANTA
+DIDÁTICA DE SEPARAÇÃO DE ITENS
+JEFERSON LUIZ CURZEL
+Instituto Federal de Santa Catarina
+R. Pavão, 1337, 89220-618, Joinville, SC, BRASIL
+E-mails jlcurzel@ifsc.edu.br,
+RICARDO LDERS
+CPGEIDAINF, Universidade Tecnológica Federal do Paraná
+Av. Sete de Setembro, 3165, 80230-901, Curitiba, PR, BRASIL
+E-mails luders@utfpr.edu.br
+OS ACEITOS É QUE INCLUIRÃO TODAS AS INFORMAÇÕES DOS AUTORES
+Abstract
+ This paper describes the development of an academic experiment using a training kit for discrete control of a virtual plant
+represented by a sorting system. The control is implemented in FPGA (Field-Programmable Gate Array). After modeling the
+controlled plant using finite state machines (FSM), FSM functional blocks available in a software package for FPGA design are used
+for implementation. Therefore, no translation is necessary between design and implementation representations of the controlled plant.
+Both FPGA and the virtual environment provide the necessary flexibility to develop the experiment which can be immediately
+verified. Some implementation difficulties are also presented, but they can be overcome with simple techniques, showing that FPGA
+can be considered as an alternative to PLC for discrete control.
+Keywords
+ Virtual learning environment, discrete event systems, control, finite state machine, FPGA.
+Resumo
+ Este trabalho descreve as etapas de desenvolvimento de uma montagem didática para controle de uma planta virtual de
+separação de itens implementado em FPGA (Field-Programmable Gate Array). Após a modelagem por máquinas de estados finitos
+(FSM) da planta controlada, blocos funcionais FSM do ambiente de projeto da FPGA são utilizados para implementação. Com isso,
+mostra-se que não é necessária tradução alguma entre representações de projeto e implementação do controle da planta. Tanto a
+FPGA quanto o ambiente_virtual fornecem a flexibilidade necessária para experimentação didática, que pode ser verificada imediatamente após a sua implementação. Algumas dificuldades de implementação são apresentadas, mas que podem ser contornadas por
+técnicas simples, mostrando a viabilidade da aplicação da FPGA para controle_discreto como alternativa ao uso do CLP.
+Palavras-chave .
+
+1
+
+O objetivo deste trabalho é o de investigar possibilidades de implementação do controle_discreto a
+partir de um exercício didático implementado e testado em uma planta virtual, ou seja, uma planta simulada num ambiente_virtual. Mais especificamente,
+apresenta-se uma implementação do controle_discreto de uma planta de transporte de itens, cuja operação é diferente para diferentes tamanhos dos itens
+transportados. A modelagem é feita por máquinas de
+estados finitos (Finite State Machines  FSM) implementadas em FPGA (Field-Programmable Gate
+Array). Em (Curzel e Lders, 2014) foram apresentados parte do problema de controle e a modelagem
+utilizada. No presente trabalho, a modelagem é detalhada e as dificuldades de implementação são discutidas.
+Este artigo está organizado da seguinte forma.
+A Seção 2 apresenta os principais componentes da
+montagem de laboratório utilizada e as interfaces
+desenvolvidas. A Seção 3 descreve os subsistemas da
+planta utilizada de separação de itens, assim como
+os modelos desenvolvidos usando FSM. A Seção 4
+apresenta os resultados obtidos, seguidos da conclusão do trabalho na Seção 5.
+
+Introdução
+
+O ensino de princípios de automação, em particular
+do controle_discreto (a eventos_discretos), ou seja, do
+controle de plantas industriais que requerem coordenação de ações ou tarefas, frequentemente utilizam
+montagens de laboratório representadas por kits didáticos de diferentes propósitos e fabricantes, como é
+o caso do Interactive Training System (ITS PLC,
+2011). Cabe ao aluno programar e analisar o comportamento de exemplos de plantas construídas especificamente para exercitar uma ou várias situações
+práticas do projeto_de_controle.
+Estes sistemas tem sido modelados e analisados
+como Sistemas a Eventos Discretos (SED) (Cassandras and Lafortune, 2008). Embora resultados teórico-formais tenham sido desenvolvidos nas últimas
+três décadas usando diferentes abordagens, sua introdução no dia a dia de engenheiros de automação
+tem se mostrado um desafio (Queiroz et al., 2001),
+(Bouzon et al., 2004), (Curzel e Leal, 2006), (Moraes e Leal, 2006), (Holanda et al., 2012).
+
+4195
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+2 Descrição dos componentes_principais da montagem
+2.1 O kit ITSPLC
+O kit_didático utilizado neste trabalho é comercializado pela Real Games como parte do pacote
+ITSPLC (Real Games, 2011). O ITSPLC é uma
+ferramenta de ensino e desenvolvimento que disponibiliza casos específicos de problemas comumente
+encontrados no sequenciamento de operações em
+sistemas_a_eventos_discretos implementados com
+PLC. Cinco processos virtuais pré-programados
+(modelados em um ambiente_virtual de simulação)
+são disponibilizados para estudo, incluindo sensores
+e atuadores que podem ser manipulados (virtualmente) pelos dispositivos_de_controle. O objetivo é controlar uma planta virtual da mesma forma que seria
+feito numa planta real. Dentre os cinco casos disponibilizados, escolheu-se uma planta de processamento de itens (sorting system). Do ponto de vista didático, esta planta é escolhida quando se deseja exercitar linhas de produção onde itens precisam ser
+transportados e manipulados em uma determinada
+ordem. Esta planta é composta por uma esteira alimentadora, três mesas deslizantes, dez sensores,
+uma mesa giratória com roletes e dois elevadores,
+distribuídos conforme mostra a Fig. 1.
+
+Figura 2. Conexões do sistema_de_controle (da esquerda para direita) planta virtual, placa DAQ e placa DE2
+
+2.2 Kit de desenvolvimento DE2 Altera
+O uso de FPGA tem se tornado frequente em diversas aplicações antes implementadas por software,
+contribuindo para a rápida difusão desta tecnologia
+(Costa, 2006). Dentre suas vantagens estão um melhor desempenho de processamento e possibilidade
+de uso intenso de paralelismo das ações executadas.
+Com isso, tem se desenvolvido um conjunto de competências no uso de FPGA, surgindo como alternativa ao uso de controladores_lógicos_programáveis ou
+PLC, que são em geral são equipamentos caros e
+especializados.
+O kit de desenvolvimento DE2-35 vem equipado
+com uma FPGA Altera Cyclone II (Altera Corporation, 2010) com 35.000 elementos lógicos, possuindo recursos de armazenamento de dados, multimedia
+e interfaces de rede. A Fig. 3 mostra uma foto da
+placa DE2 com seus componentes e interfaces principais. Os dois slots de comunicação (JP1 e JP2)
+permitem a interface com dispositivos externos.
+
+Figura 1. Ambiente virtual da planta_didática de separação de itens
+(sorting system)
+
+O sistema é colocado em movimento através de
+motores atuadores localizados na esteira, mesas e
+elevadores. Os itens transportados possuem dois
+tamanhos pequenos e grandes. Isso introduz uma
+dificuldade no controle, uma vez que os tamanhos
+diferentes dos pacotes devem ser monitorados, pois
+produzem diferentes comandos para os atuadores. A
+planta virtual interage com os dispositivos_de_controle através de uma conexão USB  uma placa de aquisição_de_dados (DAQ) de 16 canais isolados de
+entrada e 16 de saída. Isso é mostrado na Fig. 2.
+
+Figura 3. Placa DE2 da Altera
+
+2.3 Interface de adequação de sinais
+Devido  diferença de padrão das interfaces das placas DAQ e DE2, foi necessário construir uma placa
+de adequação dos sinais, através de acopladores opto-eletrônicos que permitem não apenas conectar
+sinais de diferentes níveis de tensão, mas também
+isolá-los eletricamente. Dessa forma, os sensores da
+planta virtual são enviados como entradas para a
+placa DE2 que, por sua vez, envia comandos para os
+atuadores da planta através de suas interfaces de
+saída.
+
+4196
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+3.1 Contador
+
+3 Modelagem usando FSM
+
+Nos modelos das FSM apresentadas foi adotada a
+simbologia do software de programação Quartus II
+(Altera Corporation, 2010). Para um melhor entendimento das FSM modeladas para este projeto, os
+círculos representam os estados dos subsistemas e os
+arcos entre os estados indicam as transições ou eventos. Arcos direcionados para o próprio estado (selfloop) representam que o sistema não evolui de estado, e são marcados como OTHERS. Por exemplo,
+na FSM do Contador, mostrada na Fig. 6, para que
+ocorra a transição do estado A para o estado B é
+necessária a combinação dos sinais dos sensores
+S0S3, porém, na representação gráfica do software Quartus II, a nomenclatura para a lógica AND
+é representada pelo símbolo  e o estado do sensor_em nível lógico 0 é representado pelo símbolo
+ antes do rótulo dado para o sensor. Assim, estando o contador inicializado no estado A e ocorrendo a combinação de eventos dada pela lógica
+S0S3 onde S01 e S30, ocorre a transição
+para o estado B, senão, permanece no estado A
+pois a ocorrência de outros eventos é prevista pelo
+self-loop OTHERS.
+Desta forma, neste subsistema que é o responsável pela contagem do número de itens introduzidos
+na planta, é utilizado o sinal do sensor S0 para incremento do contador e S3 para seu decremento.
+Este contador é necessário pois, limita em 3 (três) a
+quantidade máxima de itens em circulação na planta.
+
+Para a modelagem_e_controle da planta, cada subsistema foi modelado separadamente através de uma
+máquina_de_estados_finitos (Finite State Machine ou
+FSM). Nas subseções seguintes, cada subsistema é
+apresentado e ao final é mostrada sua FSM. Dada a
+simplicidade da planta, os modelos das FSM foram
+obtidos de maneira empírica, usando a experiência
+do programador.
+A Fig. 5 mostra a disposição dos subsistemas e a
+localização dos dez sensores de posição (0-10) e dos
+seis atuadores da planta.
+
+Figura 5. Subsistemas, sensores e atuadores da planta
+
+As Tabelas 1 e 2 fornecem as descrições detalhadas de sensores e atuadores, respectivamente.
+Tabela 1. Descrição detalhada dos sensores.
+Sensor
+
+Rótulo
+nas FSM
+
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+
+S0
+S1
+S2
+S3
+S4
+S5
+S6
+S7
+S8
+S9
+S10
+
+Descrição
+Detector de saída da Esteira 0
+Detector de item pequeno
+Detector de item grande
+Detector de saída da esteira 1
+Detector de carregamento da mesa
+Detector de descarregamento da mesa
+Detector de item na mesa (vazia ou não)
+Detector de entrada da esteira 6
+Detector de entrada da esteira 5
+Detector de saída da esteira 6
+Detector de saída da esteira 5
+
+Tabela 2. Descrição detalhada dos atuadores.
+Figura 6. Máquina de estados do Contador
+Atuador
+
+Rótulo nas
+FSM
+
+0
+1
+2
+3
+4
+5
+6
+
+A0
+A1
+A2
+A3
+A4
+A5
+A6
+
+Descrição
+Alimentador da esteira 0
+Alimentador da esteira 1
+Rolete de carga da mesa giratória
+Rolete 3 da mesa giratória
+Rolete 2 da mesa giratória
+Saída da esteira 5
+Saída da esteira 6
+
+3.2 Esteira 0
+Este subsistema controla a operação da esteira 0 que
+introduz itens no sistema. As entradas Start, Stop e
+Mode (presentes no ambiente_virtual) são usadas
+para habilitar ou desabilitar a movimentação da esteira. Observa-se nesta FSM mostrada na Fig. 7,
+
+4197
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+que, após a transição do estado Início para o estado E0D dada pela combinação de eventos (ModeStart(N0N1S0)), há a introdução de
+uma nova notação, que refere-se  lógica OR, representada pelo símbolo . Assim, para que ocorra a
+transição do estado de esteira desligada E0D para
+o estado de esteira ligada E0L, faz-se necessária
+a combinação de eventos dada pela lógica
+Start((N0N1)(N0N1)(N0N1)).
+Desta forma, após a transição negativa do botão
+Start (indicado por Start), é verificado o estado do
+contador. Caso o valor do contador seja igual a zero
+(N0N1), um (N0N1) ou dois (N0N1), a
+esteira é acionada. Ao receber uma sinalização do
+sensor S0 e se o limite de três itens for atingido
+(N1N0S0), a esteira pára de funcionar, deixando
+de introduzir novos itens. A parada da esteira também pode ser feita pelo acionamento da entrada
+Stop.
+
+3.4 Mesa giratória
+Este subsistema controla o giro da mesa. Quando um
+item é carregado na mesa, o sensor S6 sinaliza seu
+carregamento e a rotação da mesa é acionada. Em
+seguida, os roletes são acionados para retirar o item
+da mesa, o que é detectado pelos sensores S7 e S8.
+Na transição negativa de S7 ou S8, a mesa retorna
+para sua posição original. A FSM correspondente é
+mostrada na Fig. 9.
+
+Figura 9. Máquina de estados da Mesa giratória
+
+3.5 Roletes 2 e 3 da mesa giratória
+A função dos roletes 2 e 3 é descarregar o item da
+mesa de acordo com seu tamanho. A informação de
+tamanho do item necessária nesta FSM é oriunda de
+um registrador de deslocamento que será apresentado na seção seguinte. Assim, se o tamanho do item é
+pequeno (CX1), os roletes são acionados na direção
+da esteira 5. Caso contrário (CX2), na direção da
+esteira 6. Para a coordenação deste acionamento
+ainda se faz necessário o uso dos sensores S7 e S8,
+que verificam a ausência de item na entrada das Esteiras 5 e 6. A FSM correspondente é mostrada na
+Fig. 10.
+
+Figura 7. Máquina de estados da Esteira 0
+
+3.3 Esteira 1
+A Esteira 1 é a alimentadora da mesa giratória, sendo controlada por uma entrada Start que habilita ou
+desabilita sua movimentação. Quando o sensor S3
+sinaliza a saída de um item da Esteira 1, os valores
+dos sensores S4 (posição da mesa) e S6 (mesa vazia)
+são verificados. Se a mesa giratória está apta a receber um item (S4) e está vazia (S6), então é ativado o
+carregamento de um item na mesa giratória. A FSM
+correspondente é mostrada na Fig. 8.
+
+Figura 10. Máquina de estados dos Roletes 2 e 3
+
+3.6 Esteira 5
+Figura 8. Máquina de estados da Esteira 1
+
+A Esteira 5 é acionada pela sinalização da retirada
+de um item pequeno da mesa através do sensor S8
+que aciona a movimentação da esteira até atingir o
+sensor S10. Após a passagem do item pequeno pelo
+sensor S10, a esteira é desligada. A FSM correspondente é mostrada na Fig. 11.
+4198
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Basicamente, nesta figura são mostradas as
+FSM definidas na Seção 3 que são programadas diretamente na FPGA usando blocos FSM acrescidos
+de uma lógica combinacional. Como o objetivo deste
+projeto não foi a utilização de uma metodologia, mas
+sim a utilização da FPGA como um ferramenta de
+projeto, tanto a criação das FSM quanto o arranjo
+lógico e os ajustes foram feitos de forma sucessiva,
+até se chegar a um refinamento que ao ver do projetista, traduzisse a lógica de funcionamento desejada.
+Na Fig. 14 é mostrado o quadro Detalhe A
+marcado na Fig. 13, na qual é possível observar a
+relação lógica existente entre os blocos FSM do Contador, da Esteira 0 e da Esteira 1. É possível observar que o bloco Contador recebe sinais dos sensores
+S0 e S3, responsáveis por incrementar ou decrementar o valor deste contador. Como resultado de saída
+do bloco tem-se dois bits, N0 e N1, que são interligados s entradas do bloco Esteira 0.
+Conforme a FSM da Esteira 0, mostrada na Fig.
+7, a mesma só é ativada caso o número acumulado
+no contador seja menor que três e também é possível
+observar as entradas de controle do painel virtual do
+sistema (Start, Stop e Mode), cujos estados são avaliados para permitir ou não o funcionamento da
+esteira. No caso do bloco da Esteira 0, o resultado do
+processamento se dá através da saída A0.
+Ainda nesta figura, pode-se observar o bloco
+FSM da Esteira 1, mostrada anteriormente na Fig 8,
+onde é possível verificar que o resultado de saída A1
+depende basicamente do estado dos sensores S3, S4
+e S6 e da entrada Start do painel virtual do sistema.
+Nestes blocos foram incluídas ainda as entradas Reset e o Clock do programa.
+
+Figura 11. Máquina de estados da Esteira 5
+
+3.7 Esteira 6
+De maneira semelhante  Esteira 5, a Esteira 6 é
+controlada pela saída de um item grande da mesa,
+sinalizada pelo sensor S7, que aciona a movimentação da esteira até atingir o sensor S9, desligando-a
+após a passagem do item grande por este sensor. A
+FSM correspondente é mostrada na Fig. 12.
+
+Figura 12. Máquina de estados da Esteira 6
+
+4 Resultados da implementação em FPGA
+A programação em FPGA foi feita usando o pacote
+de software Quartus II (Altera Corporation, 2010),
+ilustrado na Fig. 13.
+
+Figura 14. Detalhe A do Projeto no pacote Quartus II
+
+De forma similar, a coordenação do restante do
+sistema é feita seguindo uma lógica combinacional
+estabelecida em função dos sinais dos sensores e
+atuadores do sistema virtual. Os blocos cujas FSM
+foram descritas na seção 3 são apresentados na
+Fig.15.
+
+Figura 13. Projeto no pacote Quartus II
+
+4199
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+período), o que acarretava em ruído devido a interface física do sistema. A solução adotada foi reduzir o
+valor do clock para aproximadamente 12 Hz, valor
+este que foi estabelecido após testes experimentais.
+Assim, o registrador q é de 22 bits e a máquina de
+estados fica no estado atual por aproximadamente
+83ms antes de obter sinais estáveis. Considerando
+que o objetivo deste projeto foi a utilização da FPGA
+como um ferramenta de projeto, a velocidade de
+processamento neste caso particular não foi o fator
+determinante para o uso desta tecnologia. Na Fig. 17
+é mostrado o divisor de clock, para o qual foi utilizada a instrução up counter.
+
+Figura 15. Blocos do Projeto no Quartus II
+
+Na Fig. 16 é mostrado o quadro Detalhe B da
+Fig. 14, que é o registrador de deslocamento para os
+itens que estão sobre a Esteira 1.
+
+Figura 17. Divisor de clock no Quartus II
+
+Como conseqência desta divisão do clock original, os efeitos dos ruídos oriundos das transições
+da interface física foram eliminados. Estes ruídos
+são gerados no momento em que um sensor_virtual é
+ativado ou desativado e seu sinal é convertido pela
+interface na placa de opto-acoplamento. Ao reduzir
+o clock do processamento, os efeitos dos ruídos cessaram e o sistema se comportou de acordo com o
+esperado na lógica do projeto. A redução do valor do
+clock não acarretou atrasos no processamento dos
+sinais, apenas na sua leitura.
+Uma alternativa para eliminar os efeitos dos ruídos dos sinais dos sensores é avaliada em (Wang,
+2013), onde um circuito de estabilização é projetado
+para ignorar o valor do sinal de entrada por 20 ms
+(valor experimental proposto) depois que o sinal já
+está estabelecido.
+O mapeamento entre os sensores e atuadores da
+planta virtual com os pinos do slot JP1 da placa DE2
+é mostrado na Tabela 3.
+
+Figura 16. Detalhe B do Projeto no pacote Quartus II
+
+Este registrador é composto por flip-flops que são
+acionados cada vez que um item deixa o sensor S0, e
+conforme as entradas S1 ou S2 estiverem acionadas,
+o valor do registrador é deslocado. Desta forma,
+quando da ocorrência da terceira transição negativa
+do sensor S0, a informação do item (pequeno ou
+grande) está disponível para ser enviada para o último estágio do registrador. Esta última transição do
+registrador depende do sensor S3, que é o sensor de
+saída da Esteira 1. Assim, quando o item deixa a
+Esteira 1 para entrar na mesa giratória, o bloco Roletes 2 e 3 recebe a informação do registrador em
+suas entradas CX1 (item pequeno) ou CX2 (item
+grande) e de acordo com a lógica da FSM da Fig.
+10, é acionada a saída A2 ou A3, responsáveis por
+direcionar o item para a Esteira 5 ou para a Esteira
+6.
+Com relação  entrada Clock dos blocos, foi necessário utilizar um divisor para este sinal, pois o
+valor original da placa DE2 é de 50 MHz (20ns por
+
+Tabela 3. Mapeamento de sensores e atuadores entre DAQ e DE2.
+ITSPLC
+
+Sensor 0
+Sensor 1
+Sensor 2
+Sensor 3
+Sensor 4
+Sensor 5
+Sensor 6
+Sensor 7
+Sensor 8
+Sensor 9
+Sensor 10
+ManualAuto
+Start
+Stop
+4200
+
+DAQ(output)
+
+IDO0
+IDO1
+IDO2
+IDO3
+IDO4
+IDO5
+IDO6
+IDO7
+IDO8
+IDO9
+IDO10
+IDO11
+IDO12
+IDO13
+
+DE2
+
+PINU24
+PINU23
+PINU25
+PINU26
+PINT20
+PINT21
+PINT18
+PINT25
+PINT24
+PINT23
+PINT22
+PINR20
+PINR24
+PINR25
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+ITSPLC
+
+Atuador 0
+Atuador 1
+Atuador 2
+Atuador 3
+Atuador 4
+Atuador 5
+Atuador 6
+
+DAQ(input)
+
+IDI0
+IDI1
+IDI2
+IDI3
+IDI4
+IDI5
+IDI6
+
+Referências Bibliográficas
+
+DE2
+
+PINW23
+PINW25
+PINV26
+PINU21
+PINV25
+PINV23
+PINV24
+
+Actel Corporation (1997). Designing State Machines
+for FPGA - Application Note AC130, vol. 5, pp.
+89-96.
+Altera Corporation (2010). Introduction to Quartus
+II Software. Disponível em
+httpwww.altera.comliteraturemanualquartus
+2introduction.pdf acesso em 05032014.
+Bouzon, G. Oliveira, M. L. Vallim, M. B.
+Lacombe, J. P. Freiras, G. M. Cury, J.E.R.
+Farines, J.M. (2004). CEBE uma plataforma
+para experimentação real aplicada ao ensino
+de sistemas_a_eventos_discretos. Anais do
+Congresso Brasileiro de Automática CBA.v. 1.
+p. 724-729.
+Cassandras, C. G. and Lafortune, S. (2008).
+Introduction to Discrete Event Systems, 2 ed.,
+Springer, New York, NY.
+Costa, C. da (2006). Controladores Lógicos
+Programáveis Baseados em FPGA O Futuro
+dos CLPs Industriais. In 6.o Congresso
+Internacional de Automação, Sistemas e
+Instrumentação, São Paulo - ISA - Distrito 4.
+Curzel, J. L. Leal, A.B. (2006). Implementação de
+controle_supervisório em linguagem Ladder
+para uma célula flexível de manufatura
+didática. In XVI Congresso Brasileiro de
+Automática. Bahia, Brasil, p.2700-2705.
+Curzel, J. L.  Luders, R. (2014). Using FPGA to
+Control a Virtual Sorting System. In 11th
+International
+Conference
+on
+Remote
+Engineering and Virtual Instrumentation
+(REV), Porto  Portugal.v. 14. p. 167-171.
+DE2 Development and Education board (2007).
+User Manual, Version 1.41.
+Holanda, R.S., Oliveira, A., Xavier, T., Neto, A.,
+Sena, D. (2012). Modelagem de Célula de
+Manufatura Didática em Redes de Petri. In VII
+SEPRONE, Mossoró, RN
+Moraes, W.R. e Leal, A.B. (2006). Controle
+Supervisório do Transportador de Entrada de
+um Sistema Flexível de Manufatura.
+Proceedings of the VII International Conference
+on Industrial Applications-Induscon. Recife,
+Brasil.
+Queiroz, M.H., Santos, E.A.P. e Cury, J.E.R. (2001).
+Síntese modular do controle_supervisório em
+diagrama escada para uma célula de
+manufatura. Anais do V Simpósio Brasileiro de
+Automação Inteligente, Vol. 5, p. 1072.
+Real Games LTDA (2011). User guide for ITS PLC
+PROFESSIONAL EDITION, rev. 1.3, pp. 27-32.
+Wang, Yujuan (2013). Instrumentação optoeletrônica em Hardware implementação de algoritmos
+otimizados em sensoriamento a FBG.
+Dissertação (mestrado)  Universidade do
+Estado de Santa Catarina, Centro de Ciências
+
+5 Conclusão
+Uma montagem experimental para ensino de princípios de automação foi apresentada. Esta montagem
+utiliza um kit_didático Interactive Training System
+que fornece uma planta virtual de separação de itens
+numa linha de montagem, assim como as interfaces
+de sensores e atuadores para controle desta planta.
+Os subsistemas foram modelos através de FSM implementadas em FPGA.
+A etapa de modelagem das FSM requer a experiência do programador. Embora não haja uma separação clara entre modelagem da planta e controle,
+para plantas didáticas simples isso pode ser contornado com a orientação do instrutor. Além disso,
+testes realizados na planta em estudo contribuem
+para uma melhor compreensão da operação do sistema.
+Algumas dificuldades de implementação foram
+encontradas em relação ao ruído causado pela elevada taxa de relógio da FPGA em geral. Porém, isso
+pode ser adequadamente contornado através de técnicas simples, tais como divisores de sinal por registradores. A utilização da FPGA ao invés dos já consolidados controladores lógicos industriais tem neste
+trabalho um caráter didático e investigativo. Uma
+das vantagens de se usar FPGA é que as FSM obtidas na etapa de modelagem podem ser diretamente
+programadas através de blocos FSM prontos para
+utilização no ambiente de projeto da FPGA. Isso é
+um elemento facilitador da implementação. Além
+disso, a FPGA têm a flexibilidade necessária para
+modificar o projeto implementado e testar novas
+alternativas. Some-se a isso, a possibilidade de usar
+FPGA em outras disciplinas do curso, tais como
+projeto de sistemas digitais, tornando-a um investimento atrativo em substituição ao CLP.
+Trabalhos futuros deverão envolver a aplicação
+desta mesma metodologia em outras plantas didáticas, além de investigar a possibilidade de aplicação
+dos recursos de processamento_paralelo da FPGA
+nas tarefas de monitoramento e controle.
+Agradecimentos
+Este trabalho tem apoio CAPES através do DINTER
+CPGEIUTPRIFSC.
+
+4201
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Tecnológicas,
+Mestrado Acadêmico
+Engenharia Elétrica, Joinville, SC.
+
+em
+
+4202

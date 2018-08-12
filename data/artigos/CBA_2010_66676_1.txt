@@ -1,0 +1,800 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+PROJETO DE UM CONTROLADOR ADAPTATIVO ROBUSTO POR MODELO DE REFERÊNCIA
+APLICADO A UMA FONTE DE POTÊNCIA CA
+Rodrigo V. Tambara, Hilton A. Grndling, Leandro Della Flora*
+Grupo de Eletrônica de Potência e Controle, Universidade Federal de Santa Maria
+Centro de Tecnologia, Av. Roraima 1000, Camobi, CEP 97105-900, Santa Maria, RS, Brazil
+*Grupo de Pesquisa em Análise e Processamento de Energia, Universidade Tecnológica Federal do Paraná,
+Campus Pato Branco, Via do Conhecimento km 1, CEP 85503-390, Pato Branco, PR, Brazil
+E-mails rodvarella@yahoo.com.br, ghilton03@yahoo.com.br,
+leandrodf@utfpr.edu.br
+Abstract
+ This paper presents the design and implementation of a robust model reference adaptive_controller applied to control an
+AC power source developed to drive electrical and electromechanical plants. The power source is comprised of a 1kVA full bridge inverter capable of generating alternating waveforms with frequencies up to 2kHz. The controller is designed and implemented to adjust
+the power source output voltage. Additionally, the AC power source elements and its interface with a digital signal processor employed
+to control the inverter are specified and presented. The controller is developed in discrete-time using the delta operator.
+Keywords
+ AC Power Source, Robust Adaptive Control, Pulse Width Modulation, Delta operator, Digital Signal Processor
+Resumo Este trabalho apresenta o projeto e a implementação de um controlador_adaptativo robusto por modelo_de_referência aplicado a uma fonte de potência CA utilizada no acionamento de plantas elétricas e eletromecânicas. Essa fonte possui um inversor em
+ponte_completa com potência nominal de 1kVA e é capaz de gerar formas de onda alternadas de até 2kHz. O controlador é projetado e
+implementado para ajuste da tensão de saída da fonte de potência. Adicionalmente, são especificados e apresentados os elementos da
+fonte e a interface com um processador_digital_de_sinais empregado para fins de controle e acionamento do inversor. O controlador é
+desenvolvido em tempo_discreto utilizando o operador_delta.
+Palavras-chave
+ . Um dos principais focos desse trabalho é o
+ensaio de fontes ininterruptas de tensão, onde se analisa o desempenho do equipamento quando sujeito 
+variação do nível de tensão e freqência. No mesmo
+rastreamento de FPCAs, Montagner (2000) utilizou
+um regulador_linear_quadrático associado a um controlador_repetitivo para controlar FPCAs. Nesse trabalho, os ganhos do controlador foram calculados de
+modo a minimizar uma determinada função custo que
+reduz o erro de rastreamento e a energia do sinal de
+controle. Reguladores lineares quadráticos permitem
+ponderar as variáveis de estado do sistema, bem como as variáveis de controle, de modo a obter respostas satisfatórias para o projetista. Leis de controle
+repetitivas permitem controlar cargas com comportamento cíclico, tais como retificadores com filtro
+capacitivo. No entanto, pelo fato dos ganhos do controlador serem fixos, dinâmicas não-modeladas podem comprometer o desempenho do controlador.
+Carati (2000) desenvolveu um controlador implementado em plataforma DSP para ajustar a tensão
+de saída de uma FPCA monofásica. Com o objetivo
+de garantir boa resposta e robustez  presença de
+variações paramétricas e dinâmicas não modeladas,
+Carati utilizou um Controlador RMRAC (Robust
+Model Reference Adaptive Control). No entanto, uma
+vez que o sistema opera com freqência de comutação relativamente baixa (1,8kHz), não é possível
+gerar formas de onda com freqências mais elevadas,
+
+1 Introdução
+Um equipamento que é apropriado s tarefas de
+ensaio e acionamento de plantas elétricas é a chamada Fonte de Potência CA (FPCA). Este equipamento
+deve ter a capacidade de gerar diversos tipos de formas de onda alternadas, incluindo sinais com componente senoidais e contínuas. De um modo geral, a
+operação da FPCA deve permitir ser pré-programada
+pelo usuário para gerar formas de onda com variação
+de amplitude e freqência - vide Stefanello (2006).
+Pela necessidade de se solucionar problemas no controle de FPCAs, tais como rastrear formas de onda
+com amplitudes e freqências variadas em diversos
+tipos de cargas (lineares e não_lineares), o sistema de
+controle deve ser robusto para compensar as distorções que afetam o desempenho das fontes. Essas distorções podem ser causadas pela presença de distúrbios, dinâmicas não modelas e não-linearidades 
+vide Della Flora (2009).
+Em Low (1999) foi implementado, em plataforma DSP (Digital Signal Processor) um controlador
+preditivo generalizado combinado a um sistema de
+controle_em_modos_deslizantes para uma FPCA que
+utiliza inversor de fonte de tensão. Esta fonte é capaz
+de gerar formas de ondas com amplitude e freqência
+variáveis. A comutação do inversor é realizada em
+
+3537
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+inversor_monofásico em ponte_completa e filtro passa-baixas de segunda ordem LC (indutor-capacitor).
+
+na faixa de kilohertz. Na mesma linha, Della Flora
+(2008) projetou um controlador RMRAC para regular a forma de onda da tensão de saída de uma FPCA
+utilizada no acionamento de uma máquina de vibração eletrodinâmica. Com esse controlador, obteve-se
+bom rastreamento da referência e estabilidade numa
+ampla faixa de freqências e amplitudes. O sistema
+foi implementado em uma plataforma PC (Personal
+Computer) e resultados experimentais incluíram a
+geração de formas de onda periódicas de até 2kHz.
+Entretanto, considerando que a plataforma PC ocupa
+um volume relativamente grande e necessita de interface específica para comunicação com a FPCA, tal
+solução se torna menos atraente comercialmente.
+A principal motivação para este trabalho é o desenvolvimento de uma FPCA de fácil programação
+das formas de onda e para aplicações tanto na indústria como em ensaios em laboratório. Estes objetivos
+podem ser alcançados se a fonte for controlada por
+um DSP, já que o uso deste permite maior flexibilidade para programar as formas de onda desejadas do
+que a implementação analógica.
+Este trabalho propõe a utilização de um controlador RMRAC implementado em plataforma DSP
+para regular a tensão de saída de uma FPCA monofásica de 1kVA. A fonte deverá ser capaz de gerar formas de onda alternadas com freqências de até 2kHz,
+principalmente tensões senoidais puras ou com harmônicas da freqência fundamental. A técnica de
+modulação é do tipo PWM (Pulse Width Modulation)
+e um algoritmo de controle RMRAC garantirá a estabilidade frente a dinâmicas não modeladas e a variações paramétricas presentes na planta. O inversor
+empregado na FPCA é projetado para operar com
+freqência de comutação igual a 50kHz, o que visa
+diminuir o volume do filtro de saída e minimizar a
+THD (Total Harmonic Distortion).
+O sistema_de_controle é discretizado utilizando o
+operador_delta. Essa técnica vem se tornando popular
+devido as suas vantagens em relação a utilização do
+operador deslocamento que são possibilidade de
+aumento da freqência de amostragem sem comprometimento com a estabilidade do sistema discretizado
+e maior facilidade na implementação de controladores em processadores de baixo_custo com aritmética
+de ponto-fixo.
+
+Figura 1. Diagrama esquemático da FPCA
+
+O circuito de comando é responsável por ligar a
+FPCA e reduzir o elevado pico de corrente causado
+pelo carregamento do banco_de_capacitores do barramento CC durante o período de inicialização da
+fonte. O filtro EMI tem a função de reduzir interferências geradas pela própria fonte, permitindo que a
+mesma opere em conformidade com as normas vigentes e dentro dos limites legais. É conectado na saída
+do filtro um transformador trifásico que proporciona
+isolamento galvânico e torna adequada a tensão para
+alimentar o inversor. Para a conversão CACC, foi
+especificada uma ponte retificadora trifásica a diodos
+modelo 36MT120 fabricada por IRF (International
+Rectifier). A utilização de retificação a partir de uma
+rede_trifásica deve-se  minimização do ripple da
+tensão de saída do retificador e melhor qualidade do
+barramento CC, isto é, menor ondulação da tensão
+retificada. Um banco_de_capacitores é utilizado para
+filtragem da tensão de saída do retificador.
+Nesse trabalho, o inversor opera numa freqência de comutação de 50kHz. Portanto, é necessária
+uma escolha adequada dos interruptores que compõe
+o inversor. Especificou-se a chave semicondutora de
+potência do tipo IGBT, modelo IRGB20B60PD1
+fabricado por IRF. Esse IGBT é da classe de chaves
+ultra-rápidas que operam em freqências de até 150
+kHz. Para o acionamento da chave, foi selecionado o
+Driver IR2110PBF fabricado pela IRF. O Driver
+escolhido tem a função de adequar o nível de tensão
+para a comutação da chave de potência (normalmente
+entre 10 a 20V), sendo adequado para trabalhar na
+freqência de interesse (50kHz) e não possuindo
+tempo_morto, o qual será programado no DSP. Um
+tempo_morto programado otimiza o inversor de modo
+a diminuir a taxa de distorção_harmônica das formas
+de onda de saída, principalmente em sinais com baixas amplitudes e freqências mais elevadas. Em baixas amplitudes, a passagem da tensão de saída por
+
+2 Estrutura da FPCA
+A Figura 1 apresenta um diagrama esquemático
+de uma FPCA. O estágio de entrada da FPCA é formado por um circuito de comando, um filtro para
+atenuar interferências eletromagnéticas, EMI (Electromagnetic Interference) e um transformador de
+isolação trifásico. O estágio de conversão CACC é
+formado por um retificador trifásico a diodos e um
+banco_de_capacitores para filtragem. Opcionalmente,
+algumas estruturas de FPCAs possuem correção de
+fator_de_potência de entrada  vide Stefanello (2006).
+O estágio de conversão CCCA é formado por um
+3538
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+sante escolha para tais variações do modelo da planta
+- vide Della Flora (2008).
+Pelas características do controlador, essas incertezas do modelo da planta são compensadas através
+de um algoritmo de adaptação paramétrica. Deste
+modo, o modelo pode ser simplificado, já que o esforço do controlador é elevado. Um controlador
+RMRAC aplicável a plantas de ordens reduzidas com
+erros de modelagens estáveis multiplicativas e aditivas foi desenvolvido em Iannou (1986).
+A Figura 2 apresenta o esquema elétrico do filtro
+de saída da FPCA e da carga. Este modelo elétrico
+representa o modelo reduzido da planta a ser controlada.
+
+zero gera pulsos PWM muito estreitos que podem
+não serem implementados quando existe um elevado
+tempo_morto. Assim, através do DSP, pode-se gerar
+um tempo_morto mínimo, que atenda s especificações de atrasos da chave e que minimize as distorções de tensão no cruzamento_por_zero.
+O filtro passa-baixas de saída da FPCA (ver Fig.
+1) tem a função de minimizar o conteúdo_harmônico
+originado da comutação do inversor. Este filtro é
+formado pela associação de um indutor e um capacitor, caracterizando um filtro de segunda ordem com
+atenuação de -40dB por década a partir da freqência
+de corte projetada. Alguns procedimentos de projeto
+de filtros LC são apresentados na literatura, como no
+trabalho de Michels (2005), que apresenta uma metodologia sistematizada de projeto do filtro que atenda a máxima THD admissível para inversores com
+modulação PWM. Neste trabalho o projeto do filtro
+de saída foi realizado de um modo mais simplificado.
+Os parâmetros L e C são calculados a partir da especificação da banda passante e da taxa de amortecimento em condições nominais de carga. A banda
+passante deve ser maior que a máxima freqência a
+ser sintetizada (2kHz). Neste projeto, especificou-se
+uma banda passante de 3,2kHz. A taxa de amortecimento possui um valor de 0,15. Analisando as equações do filtro LC (na próxima sessão), vê-se que
+quanto menor a taxa de amortecimento, menor é o
+valor da indutância, e deste modo a construção do
+indutor é facilitada.
+Um sistema de medição de tensão foi projetado
+para fins de controle da FPCA. Para a medir a tensão
+de saída e adequá-la aos níveis de tensão dos conversores AnalógicosDigitais do DSP (0 a 3V), foi projetado um sistema de condicionamento_de_sinais com
+capacidade de operação entre -180 e +180V, o qual
+possui entrada diferencial e filtro passa-baixas para
+minimização de ruídos.
+Para controle da FPCA, foi escolhido o DSP
+TMS320F28335 desenvolvido por Texas Instruments. Este é um dispositivo da família
+TMS320C2000 que combinam a integração dos
+periféricos de controle (conversão AD e geração de
+sinais PWM) e a facilidade de um microprocessador
+com alto poder de processamento e possibilidade de
+cálculos com aritmética em ponto-flutuante.
+
+Figura 2. Modelo elétrico reduzido da planta
+
+A saída, sendo representada por uma resistência
+R, é uma simplificação do modelo da carga. Sabe-se
+que muitas cargas possuem indutâncias eou capacitâncias em sua estrutura, porém esses parâmetros
+farão parte das dinâmicas não modeladas que o controlador RMRAC terá que compensar.
+O modelo contínuo da planta, apresentada na
+Figura 2, é expressa pela seguinte equação
+2
+
+G p ( s) 
+
+p
+Vo (s )
+ 2
+V pwm ( s) s + 2 p p s +  p 2
+
+(1)
+
+onde
+
+p 
+p 
+
+1
+
+, freqência de ressonância da planta
+
+LC
+1
+, taxa de amortecimento da planta
+2 p RC
+
+A variável Vo(s) é a tensão de saída do sistema e
+VPWM(s) é a tensão de saída do inversor.
+Para a utilização da técnica de controle RMRAC,
+o modelo da planta a ser controlada deve ser um sistema SISO (Single Input  Single Output), dado por
+y( s)
+G(s) 
+ G p ( s )1 +  m ( s) +  a ( s)
+(2)
+u (s)
+
+3 Controlador de tensão adaptativo robusto por
+modelo_de_referência
+
+e
+
+3.1 Considerações acerca do controlador
+
+G p (s)  k p
+
+Técnicas de controle com ganhos fixos, largamente utilizadas na indústria, tais como PI (Proporcional-Integral) e PID (Proporcional-IntegralDerivativo), não garantem bom rastreamento de referências senoidais e seu desempenho é afetado por
+variações paramétricas ou presença de dinâmicas não
+modeladas. Deste modo, o uso de uma técnica de
+controle adaptativa, como o RMRAC, é uma interes-
+
+Z o ( s)
+Ro ( s )
+
+(3)
+
+onde G(s), em (2), é a função_de_transferência do
+sistema, Gp(s) é a parte modelada da planta, a(s) e
+m(s) são dinâmicas não modeladas do tipo aditivas
+e multiplicativas, respectivamente, Zo(s) e Ro(s) são
+polinomiais mônicas de graus m e n, respectivamente. A variável y é a saída e u é a entrada da planta (e
+
+3539
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+chamada de Lei de controle no sistema em Malha
+Fechada).
+Esse controlador é aplicável somente quando a
+parte modelada do sistema Gp(s) satisfaz as seguintes
+condições
+A1 Zo(s) é um polinômio Hurwitz de grau mn1
+A2 O limite inferior pO>0 para a margem de
+estabilidade p>0, para o qual os pólos de a(s-p) e
+m(s-p) são estáveis, é conhecido
+A3 O sinal de kp e os valores de m e n são conhecidos
+A4 m(s) é uma função_de_transferência estável
+A5 a(s) é uma função_de_transferência estável
+estritamente própria
+Para a parte modelada do sistema, as condições
+A2, A4 e A5 são satisfeitas analisando as dinâmicas
+não modeladas (a(s) e m(s)) do sistema a ser controlado. As condições A1 e A3 são satisfeitas analisando (3).
+O objetivo do controle_adaptativo é determinar
+um conjunto de parâmetros , tal que a saída y do
+sistema em malha_fechada siga a saída ym de um modelo_de_referência pré-determinado. As características de desempenho do sistema em malha_fechada
+deverão ser iguais s características de desempenho
+do modelo_de_referência, o qual é definido como
+
+W ( s) 
+
+ym ( s )
+Z ( s)
+ km m
+r (s )
+Rm ( s)
+
+utilizando a transformada Z. Uma técnica de discretização em Z popularmente utilizada é a transformação
+bilinear (Tustin) - vide Newman (2003), que é realizada utilizando a seguinte igualdade
+2 z 1
+s
+
+(7)
+Ts z + 1
+O modelo da planta Gp(s) é expresso na sua forma discreta em Z na seguinte forma
+
+G p ( z )  G p ( s)
+
+s
+
+2 z 1
+
+Ts z +1
+
+ k pd
+
+z 2 + b1 z + b2
+z 2 + a1 z + a2
+
+(8)
+
+Utilizando a relação apresentada em (6), obtémse a função_de_transferência em 
+
+G p ( )  G p ( z ) z 1+  k pd
+
+ 2 + 1 +  2
+ 2 + 1 +  2
+
+(9)
+
+O mesmo procedimento usado para encontrar o
+modelo da planta no domínio  é também usado para
+discretizar o modelo_de_referência.
+A entrada u e a saída y são usadas para gerar os
+seguintes vetores auxiliares 1 e 2 em espaço de
+estados
+1 (k )  F 1 (k ) + q u (k )
+(10)
+1 (k + 1)  1 ( k ) + 1 (k )
+ 2 (k )  F  2 (k ) + q y (k )
+ 2 (k + 1)   2 ( k ) +  2 (k )
+
+(4)
+
+onde Zm(s) e Rm(s) são polinômios Hurwitz mônicos
+arbitrários de grau m e n, respectivamente, e r é uma
+referência uniformemente limitada.
+Objetivando implementar o controlador em plaforma digital, todo sistema é desenvolvido em tempo
+discreto.
+
+(11)
+
+Onde F é
+ e FTs  I 
+F  
+
+  
+
+(12)
+
+ e FTs  I 
+q  F 1 
+q
+  
+
+(13)
+
+e q
+
+3.2 Estrutura do controlador em tempo_discreto
+
+onde F é uma matriz estável (n-1)x(n-1) e (F,q) é
+um par controlável. F é a freqência de corte dos
+filtros 1 e 2 e Ts é o período de amostragem do
+sistema.
+As equações discretas de (10) e (11) são representações em espaços de estados do filtro (s)(s)
+ ( s) 1  2
+( sI  F ) 1 q 
+
+
+(14)
+
+Neste trabalho, é realizada a discretização através do operador_delta. A utilização dessa técnica deve-se s suas grandes vantagens, tais como bom desempenho em amostragem em alta freqência e minimização de erros devido a truncamento de coeficientes, como foi estudado no trabalho de Newman
+(2003).
+Há uma relação direta do operador deslocamento
+q (relacionado  transformada Z) com o operador
+ (relacionado  transformada ). Essa relação se
+dá de duas formas
+i) Tempo discreto
+q  1 + 
+(5)
+ii) Freqência discreta
+z  1 + 
+(6)
+O parâmetro  pode ser visto como um parâmetro de otimização do sistema e pode assumir qualquer
+valor, mas normalmente é associado a freqência de
+amostragem do sistema_de_controle.
+O primeiro passo da técnica de discretização
+utilizando o operador_delta é discretizar o sistema
+
+( s )
+
+u
+
+y
+
+onde (s) é um polinômio Hurwitz mônico arbitrário
+de grau n cujas raízes (F) são projetadas baseadas na
+banda passante do sistema em malha_fechada. O parâmetro q é projetado de modo que esse filtro tenha
+ganho unitário em baixas freqências e atenue os
+ruídos gerados pela lei de controle em altas freqências.
+A lei de controle, em tempo_discreto, é definida
+como
+u (k )   T (k ) (k ) + co r (k )
+(15)
+onde  T (k )  1T (k )  2T ( k )  3T (k ) é o vetor de
+parâmetros de controle de ordem (2n-1),
+
+3540
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+onde 2 é uma constante positiva e 1>qo>0 é tal que
+os pólos de Wm(s-qo) e (s-qo)I-F -1 são estáveis, po é
+definido em A2 e a função -modification é dada por
+
+ T (k )  1T (k )  2T (k ) y(k ) é o vetor dos filtros da
+saída y e da lei de controle u e co é um parâmetro
+escalar de alimentação direta.
+O parâmetro escalar de alimentação direta co é
+
+k
+co  md
+k pd
+
+
+0
+   (k )
+
+ 
+ 1
+   0 
+
+  M0
+
+
+0
+
+(16)
+
+onde kmd é o ganho do modelo_de_referência no domínio discreto e kpd é o ganho da planta, também no
+domínio discreto.
+O erro aumentado 1 utilizado para adaptação
+paramétrica é expresso como
+ 1 (k )  y (k )  y m (k ) +  T (k ) (k )  v(k )
+(17)
+
+se
+
+ (k ) < M 0
+
+se M 0   (k )  2M 0
+se
+
+ (k ) > 2M 0
+
+(20)
+
+onde M0 é um limite superior para a norma do vetor
+de parâmetro de controle desejado *.
+
+3.3 Implementação Digital da Transformada Gama
+
+onde ()Wm()I() e v()Wm()T().
+A Figura 3 apresenta um diagrama_de_blocos do
+controlador de tensão adaptativo robusto por modelo
+de referência.
+
+Para implementação_de_filtros_digitais com a
+transformada , algumas topologias foram apresentadas na literatura, tais como DFI (Direct Form I),
+DFIT (Direct Form I Transposed), DFII (Direct
+Form II) e DFIIT (Direct Form II Transposed), que
+são citados em Newman (2003). No entanto, a estrutura que produz melhores resultados referentes a erros de quantização é a estrutura DFIIT (Figura 4),
+que será utilizada neste trabalho.
+
+Figura 3. Diagrama de blocos do sistema_de_controle
+
+A variável e1 é denominada erro de rastreamento
+entre a saída da planta e a saída do modelo_de_referência. O sistema_de_controle é baseado na sintonização dos parâmetros  através do algoritmo de adaptação paramétrica que será descrito a seguir.
+3.2.1 Algoritmo de adaptação paramétrica
+Figura 4. Filtro digital DFIIt
+
+Um algoritmo do tipo mínimos_quadrados submetidas s condições A1 a A5 é apresentado em Lozano-Leal (1990). A solução proposta possui rápida
+convergência e robustez. Uma forma recursiva deste
+algoritmo pode ser obtida usando uma aproximação
+por equação diferença
+P (k )
+ (k + 1)   I  PTs  (k )  Ts
+ 1 (k )
+(18)
+2
+
+3.4 Projeto do Controlador
+O primeiro passo para o projeto do controlador
+proposto é a escolha de um modelo_de_referência que
+possua características de desempenho desejadas no
+sistema em malha_fechada. Um procedimento usual
+para a escolha do modelo_de_referência é a análise da
+resposta do modelo a uma entrada do tipo degrau
+unitário e a resposta em freqência (Bode, por exemplo). Deseja-se um modelo com pequena sobreelevação e com pequeno tempo de acomodação. O
+projeto do controlador considera os parâmetros nominais da planta apresentados na Tabela 1.
+
+m
+
+O normalizador m, responsável pela robustez do
+controlador, é obtido resolvendo a equação diferença
+m(k + 1)  (1  Ts  o )m(k ) + Ts 1 ( u (k ) + y (k ) + 1)
+
+m ( 0) >
+
+1
+0
+
+(19)
+
+Tabela 1. Parâmetros nominais da planta
+
+onde o e 1 são constantes positivas, tal que o1 e
+1<1 satisfazendo
+
+L(H)
+250
+
+ 0 2 > máx p 0 , q 0 
+
+3541
+
+C(F)
+10
+
+R()
+16
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Baseado nos parâmetros da Tabela 1, a equação
+(1) retorna o modelo da planta
+
+G p ( s) 
+
+Vo ( s)
+4  10 8
+ 2
+V pwm ( s ) s + 6250s + 4  108
+
+modo que os erros de arredondamentos em microprocessadores de ponto-fixo são minimizados.
+Neste trabalho, a escolha do parâmetro  foi
+feita de modo a limitar a faixa dos coeficientes das
+funções_de_transferência que compõe o controlador.
+Definidas as funções_de_transferência da planta e do
+modelo_de_referência, projeta-se o filtro (s)(s). Os
+parâmetros F e q, definidos em (12) e (13), respectivamente, são projetados, basicamente, a partir da
+escolha de F e q. Escolheu-se F igual a q para que o
+filtro tenha ganho unitário em baixas freqências e
+atenue os ruídos gerados pela lei de controle em altas
+freqências. Foi escolhido uma freqência de corte
+F8000, pelo fato de apresentar uma resposta satisfatória em malha_fechada.
+Para acelerar a convergência dos parâmetros 
+do controlador, devem ser calculados seus valores
+iniciais, isto é, calcular (0). Um método alternativo
+para seleção de (0), que foi utilizado nesse trabalho,
+é fazer várias simulações do algoritmo realimentando
+os valores finais de . O parâmetro P é basicamente
+um ganho no algoritmo de adaptação paramétrica. O
+valor de Mo é escolhido como sendo um limitante
+superior do valor de *. A Tabela 2 apresenta os
+valores dos parâmetros do controlador.
+
+(21)
+
+O modelo_de_referência escolhido possui uma
+freqência de ressonância 1,5 vezes maior que o modelo da planta e a taxa de amortecimento é 4 vezes
+maior que o modelo da planta. Esse modelo_de_referência W(s) é apresentado a seguir
+
+W (s) 
+
+y m ( s)
+9  10 8
+ 2
+r ( s)
+s + 37500s + 9  108
+
+(22)
+
+A Figura 5 apresenta a resposta ao degrau tanto
+da planta (y) quanto do modelo_de_referência (ym).
+Pode-se notar que a saída do modelo_de_referência
+possui uma sobre-elevação e tempo de acomodação
+bem menores que a saída do modelo da planta.
+
+Tabela 2. Parâmetros do controlador
+
+Parâmetros do Controlador
+(0)
+-3,159 3,306 -0,841T
+P
+1 1 1T
+(0)
+0,1 0,1 0,1T
+F
+8000
+q
+8000
+(0)
+0 0 0T
+o
+0,7
+1
+1
+Ts
+20s
+co
+1,693
+
+Figura 5. Resposta do modelo da planta e do modelo_de_referência
+a uma entrada do tipo degrau unitário
+
+A Figura 6 apresenta o diagrama de Bode do
+modelo_de_referência e da planta. O modelo_de_referência projetado possui ganho de 0dB em toda faixa
+de freqência de interesse (no caso, até 2kHz ou
+12.566,37rads).
+
+4 Implementação e Resultados Experimentais
+Para obtenção de resultados experimentais, foi
+construído um protótipo de uma FPCA de 1kVA com
+as características apresentadas na seção 2. Para o
+acionamento e controle da fonte, é utilizado o kit de
+desenvolvimento do DSP TMS320F28335, fabricado
+por Spectrum Digital, Inc. Para o controle do sistema
+é realizada a medida da tensão do capacitor de saída
+da FPCA, através de um sistema de condicionamento
+de medidas e dos canais de aquisição AD do DSP,
+enquanto a síntese da lei de controle é realizada através das saídas PWM do kit. A fim de testar o desempenho do controlador com dinâmica não-modelada,
+utilizou-se uma carga RL (Figura 7) , deste modo,
+tem-se a presença de um parâmetro não modelado, no
+caso a indutância Lx.
+
+Figura 6. Diagrama de Bode do modelo_de_referência e da planta
+
+A amostragem do sistema é realizada na mesma
+freqência utilizada para comutação do inversor
+(50kHz). Com isso, tem-se um período de amostragem (Ts) de 20s. Para a escolha do parâmetro ,
+não há um método padrão de projeto. Entretanto, há
+trabalhos que propõe um método para seleção desse
+parâmetro (tal como em Kaurariemi (1996)) de tal
+3542
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Figura 7. Planta a ser acionada com dinâmica não modelada
+
+A Tabela 3 apresenta os parâmetros do sistema
+para obtenção dos resultados experimentais.
+
+Figura 9. Saída do sistema e saída do modelo_de_referência em
+malha_aberta numa freqência de 2kHz com uma referência de
+40V de pico  Medida pelo DSP TMS320F28335
+
+Tabela 3. Parâmetros do protótipo para obtenção dos resultados
+experimentais
+
+Parâmetro do sistema
+Barramento CC
+Resistência de saída (R)
+Indutância série de carga (Lx)
+Indutor do Filtro de saída
+Capacitor do Filtro de saída
+Freqência de Chaveamento
+Freqência de Amostragem
+Potência Nominal da fonte
+Freqência máxima da tensão de saída
+
+As Figura 10 e 11 apresentam a saída do modelo
+de referência ym e a saída do sistema y operando em
+malha_fechada, com freqências de 1kHz e 2kHz,
+respectivamente. A tensão de referência possui uma
+amplitude de 40V de pico.
+
+Valor
+60V
+20
+2,5mH
+250H
+10F
+50kHz
+50kHz
+1kVA
+2kHz
+
+Para comparar o efeito do sistema_de_controle no
+seguimento da referência senoidal, este artigo apresenta alguns resultados da fonte em malha_aberta e
+malha_fechada.
+As Figuras 8 e 9 apresentam a saída do modelo
+de referência ym e a saída do sistema y (tensão de
+saída da FPCA) operando em malha_aberta em freqências de 1kHz e 2kHz, respectivamente. As medidas foram realizadas pelo DSP TMS320F28335. A
+tensão de referência possui uma amplitude de 40V de
+pico.
+
+Figura 10. Saída do sistema em malha_fechada numa freqência
+de 1kHz com uma referência de 40V de pico  Medida pelo DSP
+TMS320F28335
+
+Figura 11. Saída do sistema em malha_fechada numa freqência
+de 2kHz com uma referência de 40V de pico  Medida pelo DSP
+TMS320F28335
+
+Figura 8. Saída do sistema e saída do modelo_de_referência em
+malha_aberta numa freqência de 1kHz com uma referência de
+40V de pico  Medida pelo DSP TMS320F28335
+
+Na Figura 8, pode-se notar que a tensão de saída
+segue a saída do modelo_de_referência em malha_aberta, pois nessa freqência (1kHz), não há diferença
+de fase e ganho entre o modelo da planta e o modelo
+de referência. Isso não ocorre na Figura 9, onde nota-
+
+3543
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Iannou, P. Tsakalis, K. (1986). A Robust Direct
+Adaptive Controller, IEEE Transactions on
+Automatic Control, vol. 31, no. 11, pp. 10331043
+Kauraniemi, J. Laakso, T.I. Hartimo, L. Ovaska,
+S.J. (1996). Roundoff noise minimization in a
+direct form delta operator structure. ICASSP96. Conference Proceedings. IEEE International Conference on. Vol. 3, pp. 1371-1374
+Lozano-Leal, R. Collado, J. Mondié, S. (1990).
+Model Reference Adaptive Control Without a
+Priori Knoeledge of the High Frequency Gain.
+IEEE Transactions on Automatic Control, vol.
+35, no. 1, pp. 71-78
+Low, K. S. (1999). A DSP-based single-phase AC
+power source. Industrial Electronics, IEEE
+Transactions on Vol. 46, no. 5, pp. 936-941
+Michels, L. De Camargo, R. F. Botterón, F.
+Pinheiro, H. (2005) Metodologia de Projeto de
+Filtros de Segunda Ordem para Inversores de
+Tensão com Modulação PWM Digital. Controle  Automação, São José dos Campos, SP,
+v. 16, no. 2, p. 221-242
+Montagner, V. F. Carati, E. G. Grundling, H. A.
+(2000). An AC Power Source Using a Linear
+Quadratic Regulator and a Repetitive Controller. In II Conferência Internacional de Aplicações Industriais, Porto Alegre. Anais da II
+Conferência Internacional de Aplicações Industriais, pp. 281-285.
+Newman, M. J. Holmes, D. G. (2003) Delta Operator Digital Filters for High Performance Inverter Applications, IEEE Transaction on
+Power Electronics, Vol. 18, no. 1, pp. 477-454
+Stefanello, M. (2006). Projeto e desenvolvimento de
+uma Fonte de Potência CA Trifásica a quatro
+fios. Dissertação. Mestrado. Universidade Federal de Santa Maria, Santa Maria, UFSM,
+Brasil.
+
+se, com evidência, a diferença de fase e ganho, o que
+provoca amplificação e defasagem na saída da planta.
+As Figuras 9 e 10 mostram a atuação do controlador RMRAC, porém com mais evidência na Figura
+10, onde a freqência de saída é de 2kHz (mais próxima da freqência de ressonância do filtro).
+
+5 Conclusão
+Este trabalho apresentou o projeto de um controlador_adaptativo robusto por modelo_de_referência
+aplicado para ajustar a tensão de saída de uma fonte
+de potência CA utilizada no acionamento de plantas
+elétricas e eletromecânicas. A fonte emprega um inversor em ponte_completa de 1kVA com comutação
+em 50kHz para permitir a síntese de tensões alternadas com freqências de até 2kHz. Devido  robustez
+do algoritmo adaptativo aos efeitos de dinâmicas não
+modeladas e de variações paramétricas, o controlador
+foi projetado admitindo um modelo_dinâmico simplificado da carga, o que reduziu o esforço de projeto.
+Para implementar a lei de controle numa plataforma
+DSP, efetuou-se a dicretização do sistema_de_controle
+empregando o operador_delta. Desta forma, foi possível aumentar a freqência de amostragem sem comprometer a estabilidade, além de facilitar a implementação digital do algoritmo.
+Resultados experimentais mostraram que o controlador garante bom desempenho em malha_fechada
+para rastrear referências senoidais até a freqência
+máxima de operação (2kHz), mesmo na presença de
+dinâmicas não-modeladas.
+
+Agradecimentos
+Os autores agradecem a Capes (Coordenação de
+Aperfeiçoamento de Pessoal de Nível Superior) e o
+CNPq (Conselho Nacional de Desenvolvimento Científico e Tecnológico) pelo apoio financeiro.
+
+Referências Bibliográficas
+Carati, E. G. Montagner, V. F. Grndling, H. A.
+(2000). A Single-Phase AC Power Source Using Robust Model Reference Adaptive Control. In IEEE International Conference on Industrial Eletronics, Control and Instrumentation. pp. 1428-1432.
+Della Flora, L. Grndling, H. A. (2008). Design of a
+Robust Model Reference Adaptive Voltage
+Controller for an Electrodynamic Shaker. Eletrônica de Potência, vol. 13, no. 3, pp. 133140.
+Della Flora, L. (2009). Contribuição ao Controle de
+Máquinas de Vibração Eletrodinâmicas. Tese.
+Universidade Federal de Santa Maria, UFSM,
+Brasil.
+
+3544

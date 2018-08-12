@@ -1,0 +1,818 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+3D LINE ESTIMATION FOR MOBILE ROBOTICS VISUAL SERVOING
+M ARIANA C OSTA B ERNARDES, G EOVANY A RAÚJO B ORGES
+ Group
+
+of Robotics, Automation and Vision (GRAV), Departamento de Engenharia Elétrica, Universidade de
+Brasília, Caixa Postal 4386, CEP 70919-970, Brasília, DF - Brazil
+Emails bernardes@unb.br, gaborges@unb.br
+
+Abstract Classicaly, visual servoing is applied in deterministic methods that use parameters extracted directly from images to
+define control action. However, these methods are very sensitive to measurement noise and not tolerant to fail situations like loss
+of tracking or obstruction of visual features. Such problems could be minimized with a stochastic approach that uses the evolution
+model of image features and additional sensor information to estimate scene parameters and reconstruct them in 3D space. This
+article presents a 3D reconstruction method based on Plcker lines which has fast convergence, suitable for simultaneous use
+with visual control in mobile robotics. The approach uses extended Kalman filtering to estimate parameters over time using only
+information provided by odometry and a binocular camera system. Simulations were made to evaluate filter convergence and
+experiments made with an indoor robot had satisfactory results, attesting the viability of this approach.
+Keywords
+
+Plcker lines, Extended Kalman Filter, 3D reconstruction.
+
+Resumo Classicamente, o controle_servo-visual é aplicado em métodos determinísticos que utilizam parâmetros extraídos
+diretamente das imagens para definir a ação de controle. No entanto, esses métodos são bastante sensíveis a ruídos de medição e
+não são tolerantes a situações de falha como perda do rastreamento ou obstrução das características visuais. Tais problemas podem
+ser minimizados com uma abordagem estocástica que utiliza o modelo de evolução das características da imagem e informação
+sensorial adicional para estimar os parâmetros da cena e reconstruí-los no espaço tridimensional. Este artigo apresenta um método
+de reconstrução 3D baseado em retas de Plcker que tem convergência rápida, tornando-o adequado para uso simultâneo com
+tarefas controle_servo-visual. Esta abordagem utiliza um Filtro de Kalman Extendido para estimar os parâmetros ao longo do
+tempo utilizando apenas informação de odometria e um sistema binocular de câmeras. Simulações foram realizadas para avaliar a
+convergência do filtro e os experimentos realizados com um robô indoor tiveram resultados satisfatórios, atestando a viabilidade
+desta aborgadem.
+Palavras-chave
+
+.
+
+Introduction
+
+The autonomy of a robot is related to its ability to observe the surroundings and adapt itself to changes in
+the scene. Hence, robot control in a dynamic background is a challenging field of research that has been
+the focus of many studies, especially those concerning
+autonomous tasks such as detection and avoidance of
+obstacles, object tracking and navigation. Sensor integration allows robots to deal with unknown environments and is fundamental in applications that demand
+great interaction with the scene.
+Video cameras are considered efficient low cost
+sensors that provide rich information on the environment, making it very attractive for mobile robot navigation, particularly in situations that require accurate
+movements like approaching and docking tasks. However, they are affected by measurement noise and fail
+situations like loss of object tracking or obstruction of
+visual features are important issues. Such problems
+may jeopardize the efficiency of visual control tasks,
+which traditionally use parameters extracted directly
+from images to define the control action.
+Robustness issues in visual servoing could be
+minimized if instead of direct image features, we
+used a stochastic approach that considers the evolution
+model of image features and additional sensor information to estimate scene parameters and reconstruct
+them in 3D space. The idea is similar to that of Visual Simultaneous Location and Mapping (vSLAM)
+methods, but with the addition of strong performance
+
+requirements such as small computing times and fast
+convergence so it can be used simultaneously with a
+visual control task. Some recent works based on point
+features have gone toward this direction, like Wilson
+et al. (1996), Deng et al. (2005) and Alkkiomki et al.
+(2008). Nevertheless, up to authors knowledge, none
+has explored the use of robust line segments for visual
+servoing.
+The majority of visual servo control methods are
+based on points as visual features, wasting visual information that could be used to improve the system
+stability and robustness. Also, some of these approaches rely on artificial landmarks, which reduces
+the generality of the solution. Examples of the use
+of point as visual features can be found in Luo et al.
+(2005) and Pan-Mook et al. (2003).
+As compared to point features, line segment features are more interesting in building a representation
+of the environment because they are robust to partial
+occlusion and are more invariant with respect to viewpoint changes, noise and measure uncertainties inherent to video camera images. So far, few works have
+explored visual servoing from lines such as Mezouar
+et al. (2004), Malis et al. (2002) and Andreff et al.
+(2002). However, these methods are deterministic and
+visual feature parameters are extracted directly from
+images, without considering uncertanties.
+In this paper, we focus on developing a 3D reconstruction method for line segments that is suitable for
+simultaneous use with demanding tasks such as tracking or docking. Unlike other 3D line reconstruction
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Figure 1 Plcker coordinates 3D representation for a
+line.
+methods already proposed, our algorithm is computationally efficient and has fast convergence, allowing the estimation results to be used simultaneously
+in visual servoing control tasks. We follow a classical
+framework based on Extended Kalman Filter (EKF) to
+estimate feature parameters over time using only information provided by odometry and a binocular camera
+system.
+The use of binocular vision improves convergence when compared to monocular reconstruction
+approaches without the computational burden of image rectification and pixel matching required in many
+stereo applications. Thanks to the prediction step from
+EKF, this strategy also makes the system fail tolerant
+to situations when there is no visual information available due to obstruction or line falling out of the field of
+view. Additionally, the stochastic filter leads to a flexible approach, with minimum need of a priori information about the object of interest since control reference
+can be determined from parameter estimates.
+2 Problem Statement
+The problem of interest is described as follows with
+minimum a priori knowledge of the workspace and
+using only information provided by odometry and a
+binocular camera system, a mobile robot must perform
+a local reconstruction of the scene by estimating 3D
+parameters of those lines that represent the structure
+of the object of interest for its specific application.
+The initial position of the lines is unknown. However, the lines should appear in both cameras field
+of view. The initialization step consists on indicating
+which line segments in the first image pair are relevant to the estimation process. As the robot evolves,
+the selected lines are tracked and their 3D Plcker coordinates are continuously estimated. In order to do
+this, the robot makes use of odometry measurements
+to predict line parameters, which are corrected every
+time a new image pair is available.
+3
+
+Line Representation
+
+There are several possible representations for lines in
+3D space. Making a good choice will have great effect
+on the design and performance of the reconstruction
+system. Some recent studies focused in representing
+line segments by its extremities points like Marzorati
+et al. (2007) and Gee and Mayol-Cuevas (2006). However their extraction from images is not stable and depends on the view point because of occlusions. A rep-
+
+resentation with one point and one direction vector has
+also been explored in Eade and Drummond (2006) and
+Nguyen et al. (2008), but the choice for the point is arbitrary and it is not observable since a point cannot
+be distinguished on the line. Another approach to the
+line feature problem was proposed by Chaumette et al.
+(1996) using the intersection of two planes, but it results in complex highly non-linear equations relating
+line motion and camera velocity.
+An alternative to reduce the impact of such problems is to make use of Plcker coordinates representation for lines, that has interesting properties in the
+camera projective space. Rives and Espiau (1987) and
+Weng et al. (1992) were some of the first to discuss this
+kind of representation in mobile robotic context, investigating a kinematic model for the Plcker parameters and proposing a method for deterministic estimation of motion and structure through three perspective views, respectively. Plcker coordinates have also
+been used in visual servoing applications like in Andreff et al. (2002), where a docking strategy was successfully developed with visual servoing control, although
+the visual reconstruction of the lines must be supplemented with rangefinders to determine depth information. More recently, Lemaire and Lacroix (2007) finally proposed a stochastic estimation for Plcker coordinates for vSLAM applications. Unfortunately, the
+choice of a monocular scheme presents some drawbacks such as slow filter convergence and dependancy
+of robot trajectory to correctly estimate depth information, making it not suitable for parallel use in visual
+servoing tasks.
+3.1 Plcker line coordinates
+Among the various minimal or non-minimal possible representations proposed for a 3D lines (Roberts,
+1988), the Plcker coordinates representation has been
+chosen due to its projective nature. The representation
+of a line L in Plcker coordinates (see Fig. 1) consists
+of a vector   R6 with two components expressed in
+the left camera reference frame Oc 
+T
+ u h
+,
+(1)
+where u  (ux , uy , uz )T is the line direction unitary
+vector and h  (hx , hy , hz )T is given by
+h  p  u,
+
+(2)
+
+with p being the coordinates of any given point in L .
+From (2) we find that h is a vector normal to the plane
+which contains both L and the origin of the left camera frame. As consequence of this representation, we
+have the constraints
+hT u  0
+
+and u  1 .
+
+(3)
+
+It should be noticed that h does not depend on the
+choice of p. Moreover, h is the distance between
+L and the origin of the reference frame O c , i.e., it is
+equal to the depth of the line. The projection of a 3D
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+line L in an image is a 2D line  which is defined
+by the intersection of the image plane and the plane
+defined by h. A possible representation of  is given
+by the vector  i 3 
+T
+i  a b c
+,
+(4)
+
+where a point pi  (x, y)T   is constrained to ax +
+by + c  0, with  i   1 and a  0 to ensure uniqueness of representation.
+One advantage of using Plcker coordinates representation for a 3D line L is that its projected line 
+is related to h where h  h khk. Indeed, considering 
+represented as in (4), one has (Andreff et al., 2002)
+h   i.
+
+(5)
+
+3.2 Plcker coordinates kinematic equations
+The velocity skew for the binocular camera system is
+expressed on the left camera frame and denoted by
+T
+ v 
+,
+(6)
+
+ 
+where
+v  ( vx vy vz )T
+and
+T
+( x y z ) are, respectively, the instantaneous translational and rotational velocities provided
+by odometry.
+3D line motion is related to camera velocity skew
+by (Rives and Espiau, 1987)
+u u   ,
+h  u  v + h ,
+that can be written in terms of a Jacobian matrix as
+
+
+
+
+u
+033 As(u)
+
+
+ L  ,
+L 
+.
+As(u) As(h)
+h
+(7)
+with the operator As() represents the corresponding
+skew-symmetric matrix of its argument vector. From
+(7) we have a very interesting property of Plcker
+coordinates representation translational velocity has
+no influence on the behavior of u. Such decoupling
+makes it possible to use very simple control laws in
+visual servoing approaches, making the Plcker representation even more attractive for mobile robot applications.
+4 Line reconstruction method
+In this paper, an alternative line-based approach for 3D
+reconstruction is proposed. From odometry measurements, an EKF predicts image feature parameters. A
+binocular camera system provides visual information
+of the scene. A line extraction algorithm is used to
+find the line segments present in the image pairs and a
+tracking system determinates which of these lines are
+relevant to the current application. From those line
+features, we extract visual observations that are used
+in the filter to correct the predicted 3D feature parameters. A diagram is presented in Fig. 2 and each block
+is detailed below.
+
+Figure 2 Diagram of the 3D line reconstruction approach.
+4.1 Line extraction and tracking
+Line extraction and tracking considers only the projected lines in image, i.e., the 3D is not considered
+here since its convergence only occurs when few images are processed.
+The binocular camera system provides an image
+pair left and right images, since the cameras are
+mounted just like a stereo vision system. For each
+continuous image, the first processing procedure consists in applying Canny edge detector. Next, for each
+contour in the image, a split-and-merge clustering algorithm is employed to find all line segments (Borges
+and Aldon, 2004). This technique presents robustness
+with respect to occlusion and the number of clusters do
+not need to be known in advance. Thus, the line extraction procedure returns all lines of each image (left
+and right), as well as their support pixels.
+The feature tracking algorithm is relatively simple. For the first image, the user selects with the mouse
+the lines he wants to be tracked in each image. Tracking is performed independently for each line and for
+each camera, which means that a given line in the left
+camera will be tracked in the sequence of images provided by that camera only. And only one feature in image k will be associated with a feature in image k  1.
+Thus, given a line in image k  1, it is matched against
+(i)
+all lines in a search region in image k. Let k1 be the
+i-th tracked line in image k  1. Given all lines in the
+search region at image k (test lines) the matching procedure computes the following similarity measures
+(i)
+
+ Line segment distance to k1 . This measure is is
+the smallest Euclidean distance between all pix(i)
+els in k1 and pixels in the test line at image k.
+It should be pointed out that if the two line segments cross, this measure is zero
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+points belonging to a projected line , it is possible
+to calculate parameters a, b and c by solving a linear
+equation of the type Ax  0, where x  (a, b, c)T , A 
+Rn3 whose rows are pixel coordinates (xi , yi , 1) for
+each point i  1, .., n and 0  Rn1 . This can be determinated using singular value decomposition of A
+(a) Extraction
+
+A  UDVT ,
+
+(b) Tracking
+
+Figure 3 Example of lines extracted from images and
+the corresponding tracking result.
+(i)
+
+ Orientation distance to k1 . It is the angle between
+
+(i)
+k1
+
+and the test line.
+(i)
+
+ Side region distance to k1 . The side region of
+each line is given by all pixels within 15 pixel
+distance in both sides of the line. Indeed, the side
+region is a rectangle, with the line in its middle.
+The side region distance is a metric between the
+histograms of the side regions of two lines. It has
+been observed in image sequences that the length
+of extracted lines changes too much in consecutive images. Since the length of a line also has
+effect in the size of side regions, any metric using
+side regions should not be too sensitive to line
+length. Hence, the center of the side region of
+(i)
+k1 is moved over each pixel in the test line. In
+this way, the side region of the test line in image
+k is given by all pixels inside the limits of the side
+(i)
+region of k1 . The distance between the side
+regions is computed using cvMatchTemplate
+function of OpenCV. The side region distance to
+(i)
+k1 is given by the smallest distance computed
+(i)
+
+by moving the center of the side region of k1
+over all points over the test line.
+(i)
+
+At the end of this process, the matched line k
+is the test line of image k with line segment distance
+smaller than 15, orientation distance smaller that 15o
+and smaller side region distance, all computed with re(i)
+spect to k1 . When no test line satisfy the thresholds
+for segment and orientations distances, the tracker returns no match and the system continues by prediction.
+Figure 3 shows examples of line features extracted and being tracked. In Figure 3(a) all extracted
+lines are shown, and Figure 3(b) the sides of a door being tracked. In this figure, the rectangles corresponding to the side regions are shown.
+4.2 Visual observations
+Although it is possible to compute a, b and c parameters of an image projected in a 2D line using only
+two points, noisy measurements associated with image resolution result in larger uncertainty in these parameters. Instead, we prefer a redundant approach that
+employs an over determinated system using all pixels
+associated to the line to extract h. From a set of n
+
+(8)
+
+where U  Rn3 and V  R33 are both orthogonal
+with unitary norm and D  R33 is diagonal. The
+least-square solution for Ax  0 is given by the last
+column of matrix V associated to the smallest singular
+value (Hartley and Zisserman, 2000).
+In order to completely recover the value of h from
+camera images, it is necessary to compute khk. Consider the coordinate transformation from left camera
+frame to right camera frame defined in terms of a rotation matrix R and a translation vector t. With h
+obtained from the left camera image and hr obtained
+from the corresponding line in the right camera image
+we have (Weng et al., 1992)
+khk  h  (R)1 hr 
+
+1
+
+(hr )T t .
+
+(9)
+
+Concerning the line orientation vector, we have
+that the slope of  provides information about the coordinates of u in X and Y axis of the left camera frame.
+The angle  makes with the positive X axis is
+ 
+
+
+uy
+a
+  arctan
+ arctan
+.
+(10)
+ux
+b
+Hence, for each extracted line, we have two associated visual observations h and  . There is an uncertainty associated to each pixel coordinate for every
+point extracted from the camera images due to the nature of the image capture process. Using these points
+to determinate h and  propagates an error to the obtained solution. The uncertainty associated to both
+visual observations are then estimated using the Unscented Transform (Borges, 2002). Since each line
+may have more then 100 points associated to each
+camera image, we used a bootstrap strategy where a
+reduced set of points is randomly chosen for the Unscented Transform uncertainty propagation.
+4.3 Extended Kalman Filter
+Image pixels are influenced by noise that associate uncertainties to parameters obtained directly from them.
+Instead, we can use image information combined to
+another source of data to estimate these parameters
+more robustly. In the case of 3D lines, their Plcker
+coordinates are related to camera motion by L as described in Eq. (7). This allows us to use odometry
+information to make a prediction on how  changes
+as the camera moves. As long as the door lines are
+available in the image pairs, visual observations can be
+used to correct the prediction so that as time evolves,
+we have a reasonable estimation  for 3D line Plcker
+coordinates.
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+The system formed by a set of n 3D line parameters x  ( T1 , . . . ,  Tn )T , camera velocity skew  and a
+set of n outputs y  (yT1 , . . . , yTn )T is described in state
+space as
+
+
+
+f( 1,k1 ,  k1 )
+
+
+
+
+
+
+..
+
+xk  
+
+ + wk
+.
+
+
+
+ f( n,k1 ,  k1
+ )
+(11)
+g(
+
+)
+
+1,k1
+
+
+
+
+
+..
+
+y 
+
+ + rk
+
+.
+ k
+
+g( n,k1 )
+
+with wk  N(0, Qk ) and rk  N(0, Rk ) uncorrelated.
+From (7), f( i,k1 ,  k1 ) is approximately
+f( i,k1 ,  k1 )   i,k1 + T L i,k1  k1 ,
+
+(12)
+
+where T is the sampling period, i  1, ..., n is the
+line number and L i is given by (7). Each output
+yi,k  (i,k , hTi,k , 1, 0)T corresponds to a visual observation including constraints 1 and 0 for u with unitary
+norm and u and h orthogonal.
+Function g( i,k ) correspondent to output yi,k is
+given by
+
+ 
+
+uyi,k
+ arctan uxi,k 
+
+
+
+hi,k
+g( i,k )  
+(13)
+
+
+
+
+ui,k 
+hTi,k ui,k
+where the two last components are almost-zero variance pseudomeasures, corresponding to constraints
+given in (3).
+The update steps for the filter are not described
+here as they correspond to the usual EKF update equations. The odometry uncertainty is also a source of
+error in f( i,k1 ,  k1 ), thus it should be considered
+when calculating covariance matrix for the prediction
+step. For our case, the appending of pseudomeasures
+(Alouani and Blair, 1991) to ensure that estimates satisfy existing constraints had no negative effect on EKF
+numerical stability. It has been noticed that the odometry uncertainty added in every prediction step prevents estimate covariance matrix of getting close to
+singular.
+Each output yi,k is an independent measure thus,
+they are applied in correction step separetely. However, since the 3D lines cross-covariances obtained in
+the prediction step are not zero, the correction relative
+to one output affects all other estimates. Consequently,
+even when a feature has no observations in the current
+image, its estimate is indirectly corrected by other features visual observations.
+It should be noted that measurement hk in (13)
+is obtained from left and right camera images, where
+the line is being tracked in frame sequences. This is
+only possible by using at least one image pair. The total observability of h represents a real advantage over
+monocular systems, leading to very fast convergence
+
+in few processed images. In monocular systems, the
+user has to wait much time for convergence on estimates before really being safe to use them, mainly
+due to weak observability and the need to generate
+trajectories which excite the line parameters (Lemaire
+and Lacroix, 2007). For instance, in monocular systems, whether a line is continuously observed in the
+same column of the images, there is no way to recover
+depth. Since this occurs when the robot moves toward
+the object which generates the line, there is a need to
+change robot trajectory in order to avoid divergence in
+estimates. Otherwise, as there is no real contribution
+of visual measurements in parameters related to line
+distance to camera system, they are only updated by
+odometry and error integrates over time. For SLAM
+applications, changing trajectory to improve observation is not a major problem, but this is not the case
+for a simultaneous reconstruction and trajectory control system. Faster and guaranteed feature parameters
+convergence is worth the cost of installing a camera in
+order to have a binocular setup.
+5
+
+Evaluation
+
+To validate our method and check its viability for use
+in visual servoing applications, we proposed a docking task in front of a door whose initial position is
+unknown, and so is the initial posture of the robot.
+The door is modeled by two vertical lines corresponding to its lateral edges and represented in 3D space
+by Plcker coordinates. The parameters of both lines
+are initially unknown and for the first image pair, both
+lines should appear in the left and right cameras field
+of view. The initialization step consists on the user indicating the two line segments extracted from the first
+image pair that correspond to the target1 .
+The robot moves towards the door while capturing
+image pairs with the binocular camera system. The
+cameras are already calibrated and the usual pinhole
+model is used to compute metric observations from
+pixel coordinates, which have a typical uncertainty of
+0.5 pixel standard-deviation in X and Y axis.
+5.1 Computer Simulation
+First, we reproduced the described situation in computer simulation to adjust filter parameters and also
+verify the convergence of the estimation, since in simulation we have access to real parameter values to
+perform numerical comparison about the consistence
+of the EKF. Different initial positions and trajectories
+were proposed for the robot and for all of them, the
+EKF converged after few steps, presenting final positioning errors smaller than 1 centimeter.
+Here, we present the simulation results obtained
+for an intricate situation. In this setup, the robot follows a straight trajectory towards the door. To make
+one of the lines pass exactly on the optical axis of a
+1 The initialization step is supposed to be performed by a recognition task, beyond the scope of this work.
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Left Camera
+
+Right Camera
+
+u estimation error
+
+error (m)
+
+1
+
+0
+0.5
+
+(a) t0s
+Left Camera
+
+ux
+uy
+uz
+
+0.5
+
+0
+
+5
+
+10
+
+15
+
+time (s)
+Right Camera
+
+(a) Estimation error for parameter u
+h estimation error
+
+error (m)
+
+6
+
+(b) t15s
+
+2
+0
+2
+
+Figure 4 Camera simulated images during proposed
+test. Blue lines are projections of the door edges and
+green lines are the estimate projections
+camera during all simulation (see Fig. 4), we initially
+positioned the robot so that the left camera is exactly
+in front of the left door edge. This kind of positioning is critical in a monocular approach since it does
+not provide good excitation for the EKF filter, making
+it impossible to correct depth information for h from
+one single camera.
+Fig. 5 presents the results obtained along a 5 m
+displacement of the robot in straight trajectory. Odometry measurements were available every 5 ms with
+standard deviation of 0.05 ms for translational velocity and 1 degs for angular velocity and 0.5 pixels
+for point coordinates in the camera frame. EKF estimates for both lines have been initialized with an arbitrary angle   60 , which was an arbitrary choice
+and could be any other angle without estimation drawbacks, and h  10 m, an acceptable first guess for an
+indoor workspace, and uz  0, another reasonable first
+guess for a perpendicular surface such as a wall or
+door.
+The algorithm converges in a few iteration steps.
+After convergence, the standard deviation of detected
+features are quite small being the largest one correspondent to hz in camera z-axis and approximately 0.3
+cm. Overall, we consider this accuracy to be very
+good, even for simulation. The proposed reconstruction method has also been simulated with a simultaneous visual servoing algorithm and presented encouraging results indicating that the obtained convergence
+period is sufficient for simultaneous navigation tasks.
+Instigated by consistent simulation results, we
+proceeded to tests in a real robotic platform.
+5.2 Mobile Robot Application
+The proposed method has been implemented on the
+omnidirectional mobile robot Omni (Borges, 2002).
+Since this platform has been developed for research
+purposes, it is equipped with many sensor devices as
+illustrated in Fig. 6. However, in our application we
+
+hx
+hy
+hz
+
+4
+
+0
+
+5
+
+10
+
+15
+
+time (s)
+
+(b) Estimation error for parameter h
+
+Figure 5 Estimation errors for 3D line parameters
+from right door edge in computer simulation.
+only make use of the pair of cameras and the optical
+encoders.
+In total, there are nine optical encoders that provide odometry information every 5 ms with standard
+deviation of 0.05 ms for translational velocity and
+1 s for angular velocity. The binocular camera system consists of Videre Design FireWire wide-angle
+cameras, model STH-MDCS3, used with baseline rig
+of approximately 23.34 cm, 320 x 240 resolution at
+15 f ps. For security reasons, the robots velocity and
+aceleration modules have been limited respectively to
+0.20 ms and 0.04 ms2 for translation and 10 s and
+2 s2 for rotation. The EKF parameters were initiated
+with the same values used for computer simulations.
+In Fig. 7 we have a sequence of the reconstruction
+process. We can notice that the projection of EKF estimates coincide almost exactly with the door edges and
+that they follow the displacement of the door in the images as the robot moves. At the end of the experiment,
+the robot was positioned approximately 2 m from the
+door with nearly perpendicular orientation. The EKF
+estimates obtained in the final position were
+uleft
+
+ (0.0005, 0.9985, 0.0011)T
+
+hleft
+
+ (1.9974, 0.0098, 0.5141)T
+
+uright
+
+ (0.0025, 0.9990, 0.0009)T
+
+hright
+
+ (1.9536, 0.0021, 0.3958)T
+
+For both features, u is close to vertical (uy  1)
+and h is approximately perpendicular to it, with khk 
+2 m. The mean processing time computed over 100
+images is 274.45 ms (see Table 1). Most part of this
+time is due to feature tracking procedure, which is
+247.13 ms. Total processing time obtained is compatible for use with concurrent control tasks as initially
+proposed.
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Figure 6 Omni platform and its components.
+
+(a) t  0s
+
+(b) t  1.805s
+
+(c) t  7.410s
+
+(d) t  12.615s
+
+(e) t  17.625s
+
+(f) t  20.060s
+
+(g) t  23.070s
+
+(h) t  28.060s
+
+Figure 7 Image sequence from left camera. The two plotted lines correspond to EKF current estimate projection.
+
+Table 1 Mean processing time for each iteration
+Line extraction
+Feature tracking
+Observation computation
+EKF
+Total
+
+6
+
+17.62 ms
+247.13 ms
+9.40 ms
+0.30 ms
+274.45 ms
+
+Conclusion
+
+In this paper we presented an EKF 3D reconstruction method for visual servoing based on Plcker line
+features. The use of line features provides stability
+over a wide range of viewpoints and robustness to
+partial occlusion unlike point-based algorithms. Obtained results show that the method is efficient and
+suitable for simultaneous use with other time demanding tasks such as control applications for object tracking or docking. Although it has been evaluated under a
+door approaching situation, many other line-based applications are possible, making this approach extensible to several mobile robot navigation problems. Since
+the estimation process is based on Plcker coordinates,
+the obtained state variables are very attractive to visual
+servoing control techniques because of its decoupling
+
+properties.
+Preliminary tests in computer simulation have
+successfully implemented a visual servoing control algorithm running simultaneously with our estimator.
+The next step is to evaluate reconstruction and simultaneous visual servoing in a real application with a mobile robot platform. A possibility for future work is to
+integrate trajectory control and 3D reconstruction in
+order to obtain performance gain in both tasks estimate convergence could be improved if the controller
+took stochastic observability in consideration and the
+control law could use features uncertainties, resulting
+in more prudent trajectories.
+7
+
+Acknowledgements
+
+The authors are supported by research grants funded
+by CNPq, Brazil, under processes 1334902008-4 and
+3049992008-3. We thank LIRMM (Université Montpellier 2) for lending us the Omni platform.
+References
+Alkkiomki, O., Kyrki, V., Klviinen, H., Liu, Y.
+and Handroos, H. (2008). Challenges of vision
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+for real-time sensor based control, Computer and
+Robot Vision, Canadian Conference 0 4249.
+Alouani, A. T. and Blair, W. D. (1991). Use of a kinematic constraint in tracking constant speed, maneuvering targets, IEEE Conference on Decision
+and Control 2 20552058.
+Andreff, N., Espiau, B. and Horaud, R. (2002). Visual servoing from lines, Int. Journal of Robotics
+Research 21 679700.
+Borges, G. A. (2002).
+Cartographie de
+lenvironnement et localization robuste pour
+la navigation de robots mobiles, PhD thesis,
+Université Montpellier II, Montpellier, France.
+Borges, G. A. and Aldon, M.-J. (2004). Line extraction in 2D range images for mobile robotics,
+Journal of Intelligent and Robotic Systems
+40(3) 267297.
+Chaumette, F., Boukir, S., Bouthemy, P. and Juvin, D.
+(1996). Structure from controlled motion, IEEE
+Transactions on Pattern Analysis and Machine
+Intelligence 18(5) 492504.
+Deng, L., Wilson, W. and Janabi-Sharifi, F. (2005).
+Decoupled EKF for simultaneous target model
+and relative pose estimation using feature points,
+Control Applications, 2005. CCA 2005. Proceedings of 2005 IEEE Conference on, pp. 749754.
+Eade, E. and Drummond, T. (2006). Edge landmarks
+in monocular SLAM, Proceedings of British Machine Vision Conference 1 469  476.
+Gee, A. and Mayol-Cuevas, W. (2006). Real-time
+model-based SLAM using line segments, Advances in Visual Computing pp. 354  363.
+Hartley, R. and Zisserman, A. (2000). Multiple View
+Geometry, Cambridge University Press.
+Lemaire, T. and Lacroix, S. (2007). Monocular-vision
+based SLAM using line segments, IEEE International Conference on Robotics and Automation
+pp. 27912796.
+Luo, R. C., Liao, C. T., Su, K. L. and Lin, K. C.
+(2005). Automatic docking and recharging system for autonomous security robot, IEEERSJ International Conference on Intelligent Robots and
+Systems pp. 29532958.
+Malis, E., Borrelly, J.-J. and Rives, P. (2002).
+Intrinsics-free visual servoing with respect to
+straight lines, Intelligent Robots and Systems,
+2002. IEEERSJ International Conference on,
+Vol. 1, pp. 384389 vol.1.
+Marzorati, D., Matteucci, M., Migliore, D. and Sorrenti, D. (2007). Integration of 3D lines and
+points in 6dof visual SLAM by uncertain projective geometry, Proceedings of European Conferenve on Mobile Robots .
+
+Mezouar, Y., Abdelkader, H., Martinet, P. and
+Chaumette, F. (2004). Central catadioptric visual servoing from 3d straight lines, Intelligent
+Robots and Systems, 2004. (IROS 2004). Proceedings. 2004 IEEERSJ International Conference on, Vol. 1, pp. 343348.
+Nguyen, X., You, B. and Oh, S. (2008). A simple framework for indoor monocular SLAM, International Journal of Control, Automation and
+Systems 6 6275.
+Pan-Mook, L., Bong-Hwan, J. and Sea-Moon, K.
+(2003). Visual servoing for underwater docking of an autonomous underwater vehiclewith
+one camera, Proceedings of MTSIEEE OCEANS
+2 677682.
+Rives, P. and Espiau, B. (1987). Estimation récursive de primitives 3D au moyen dune caméra
+mobile, Technical Report 652, INRIA, 35042
+Rennes Cedex, France.
+Roberts, K. (1988). A new representation for a
+line, Proceedings of Computer Society Conference on Computer Vision and PatternRecognition 1 635640.
+Weng, J., Huang, T. S. and Ahuja, N. (1992). Motion and structure from line correspondences
+closed-form solution, uniqueness and optimization, IEEE Transactions on Pattern Analysis and
+Machine Intelligence 14(3) 318336.
+Wilson, W., Williams Hulls, C. and Bell, G. (1996).
+Relative end-effector control using cartesian position based visual servoing, Robotics and Automation, IEEE Transactions on 12(5) 684696.

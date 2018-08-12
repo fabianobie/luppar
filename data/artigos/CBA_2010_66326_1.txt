@@ -1,0 +1,544 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+ENSAIO EM VOO DE RASTREIO VISUAL POR CORRELAÇÃO COM JANELA ADAPTATIVA
+TIAGO BCKER, JACQUES WALDMANN
+Instituto Tecnológico de Aeronáutica, Divisão de Engenharia Eletrônica, Departamento de Sistemas e Controle
+12228-900 São José dos Campos, SP, BRASIL
+E-mail tiagobucker@yahoo.com.br, jacques@ita.br
+Abstract This work describes the analysis and implementation of a target tracking algorithm for lower cost UAVs (unmanned
+air vehicles). We choose to apply the MITSA algorithm (Monotonic-Increasing Threshold Sequence Algorithm) in a gray scale
+image, preceded by low-pass filtering to reduce clutter noise. This tracking method uses a variable limit for the accumulated error and makes use of random points in the correlation process. In this manner the savings in computation time are significant. Inaccurate target selection and zooming effects due to relative motion along the line of sight to the target were taken into account
+by use of an adaptive window sizing method, which is based on the gradient-image mean gray level both inside and outside the
+limits of the present tracking window. From these data, sizing vectors indicating the tendency of tracking window expansion or
+shrinking are computed. The algorithm was implemented both in MATLAB and C language, using Mex-files. In the process of
+validation real images acquired from an imaging pod in a mini-UAV were used.
+Keywords Image processing, visual template, correlation, gray-level image, gradient image, UAV
+Resumo Este trabalho descreve a análise e implementação de um algoritmo de rastreio visual para VANTs (veículo aéreo não
+tripulado) de baixo_custo. Optou-se pelo método MITSA (Monotonic-Increasing Threshold Sequence Algorithm) em imagens
+em nível de cinza, precedido de um pré-tratamento com filtragem passa-baixas para atenuar o efeito de ruído. Valendo-se de
+pontos de comparação aleatórios e um limite variável para o erro acumulado durante o processo de rastreio, o método reduz significativamente a carga_computacional requerida se comparado  correlação clássica. A imprecisão na seleção do alvo e a sua
+aproximação ou afastamento foram consideradas quando da adaptação da janela de rastreio, baseada no nível_médio de cinza da
+imagem_gradiente em regiões dentro e fora da janela. A partir destes dados, calculam-se vetores que indicam a tendência  expansão ou compressão da janela de rastreio. O algoritmo proposto foi implementado em ambos MATLAB e linguagem C por
+meio de Mex-files. Para fins de validação utilizaram-se vídeos reais de uma câmera embarcada no imageador móvel de um miniVANT.
+Palavras-chave 
+
+1
+
+algoritmo de rastreio que não só apresente resultados
+satisfatórios, como também o faça com grande eficiência computacional.
+Este trabalho vai ao encontro do problema descrito
+nos parágrafos anteriores. Propõe-se aqui um algoritmo de rastreio de alvos, ou assinaturas visuais, que
+possa ser utilizado em auxílio para navegação_autônoma em VANTs. As imagens foram obtidas de ensaios reais a partir de uma câmera móvel posicionada
+na parte inferior de um mini-VANT e transmitidas 
+estação em solo através de um link analógico de frequência 900 MHz. Na seção 2, é descrito o método
+de rastreio utilizado, o qual apresenta significativa redução da carga_computacional quando comparado 
+correlação clássica. Na seção 3, é analisada uma proposta de ajuste adaptativo da janela da assinatura, visando reduzir os efeitos ocasionados pela imprecisão
+na seleção do alvo ou pela aproximação ou afastamento do mesmo. Por fim, na seção 4, têm-se as considerados finais. Os algoritmos propostos foram desenvolvidos em linguagem C. As simulações foram
+executadas em ambiente MATLAB, do qual também
+se obteve as funções de manipulação de vídeos e tratamento de imagens.
+
+Introdução
+
+O rastreio visual é um dos principais problemas
+da área de processamento_de_imagens. A grande maioria dos algoritmos propostos apresenta resultados
+satisfatórios quando utilizado em imagens provenientes de câmeras estacionárias de boa resolução, caso
+no qual não se enquadram os vídeos obtidos de
+VANTs de baixo_custo. O processamento destes é especialmente complicado devido a movimentos bruscos do veículo, baixa resolução das imagens, ruído,
+variações de luminosidade e ao pequeno tamanho dos
+objetos de interesse. Acrescenta-se a estes a dificuldade do operador manual em selecionar uma janela
+de assinatura que envolva com exatidão o alvo visado, além dos efeitos de aproximação ou afastamento
+da aeronave deste ponto de interesse. Tais características tornam o processo bastante desafiador e até hoje
+pouco investigado.
+O processamento das imagens obtidas de VANTs, em
+sua grande maioria, tem como finalidade questões de
+vigilância ou navegação por imagem. Ambas aplicações possuem requisitos tempo-real, sendo a carga
+computacional um dos fatores limitantes do projeto.
+Tais fatores tendem a se agravar caso se opte pela
+implementação em um sistema_embarcado, o qual
+além de contar com capacidade de processamento
+bastante restrita, possui limitações de peso, volume e
+consumo que devem ser cuidadosamente avaliadas.
+Essas restrições tornam obrigatória a escolha de um
+
+2 Processo de Rastreio
+Usualmente algoritmos de rastreio de alvos baseiam-se nas metodologias de rastreio de pixels, rastreio do centróide, ou detecção de similaridades, con2247
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+forme descrito por Blackman e Popoli (1999). Devido  facilidade de implementação e vasta documentação associada, a detecção de similaridades é ainda
+hoje o método mais comumente utilizado (Zitová e
+Flusser, 2003). Nesta abordagem, escolha-se inicialmente uma assinatura_visual que envolva algum objeto que sobressaia na imagem, contendo assim textura
+suficiente que permita seu rastreio nos quadros seguintes. A partir de então, se aplica alguma das variantes de detecção de similaridades, que pode, por
+exemplo, envolver correlação.
+Numa aplicação real, deve-se primeiramente coletar os diversos quadros que compõem o vídeo da
+câmera acoplada ao VANT. Aqui, os quadros possuem o formato RGB, ou seja, três matrizes com informações acerca da intensidade luminosa das cores vermelha, verde e azul (red, green, blue). Com o intuito
+de reduzir o custo_computacional da correlação, trabalha-se com imagens em nível de cinza, de forma
+que as informações de intensidade luminosa estejam
+contidas em uma única matriz. A seleção de um objeto destacado na imagem e o posterior ajuste da janela
+da assinatura tendem a amenizar os problemas dessa
+abordagem, citados por Wong (2005). A conversão
+para a escala de cinza dá-se através da equação
+K  0,3R + 0,59G + 0,11B
+
+A partir deste ponto a janela de rastreio da assinatura
+pode ser referenciada somente por meio de suas dimensões (Mi, Mj) e da posição da sua extremidade superior esquerda (i, j). O processo de correlação consiste na busca de um par de coordenadas (i*, j*) que
+apresente o menor erro possível entre os elementos
+SMi,j e W.
+2.1 Pré-tratamento da Imagem
+Devido  presença de ruídos interferentes, tornase necessário o pré-tratamento da imagem antes de
+realizar o rastreio da assinatura. Normalmente, estes
+ruídos apresentam componentes de alta freqência e
+a escolha usualmente feita é a filtragem passa-baixas
+por meio de um filtro Gaussiano, cujo kernel é definido conforme as equações abaixo
+
+hg (n1 , n2 )  e
+h(n1 , n2 ) 
+
+2
+
+(5)
+
+
+
+hg
+
+n2
+
+O filtro deve ser ajustado de forma a não interferir
+demasiadamente nas bordas dos objetos, as quais indicam transições de alta freqência (Ballard e Brown,
+1982). Após muitos testes, optou-se por realizar a filtragem com kernel com suporte 3x3 pixels e desvio
+padrão unitário (  1).
+
+(1)
+
+2.2 Monotonic-Increasing Threshold Sequence Algorithm (MITSA)
+O método comumente utilizado para rastreio de
+assinaturas é a correlação normalizada. Esta, no entanto, requer uma busca por toda a área da imagem,
+demandando elevada capacidade computacional. Barnea e Silverman (1972) apresentaram uma série de algoritmos que visavam reduzir a carga_computacional
+do processo de detecção de similaridades. Tais algoritmos ainda hoje são amplamente difundidos, conforme demonstrado nos trabalho de Brown (1992) e
+Zitová e Flusser (2003). Dentre os algoritmos analisados em seu trabalho, optou-se pelo uso do método
+MITSA, o qual, segundo reportado, proporciona uma
+redução de, no mínimo, 50 no tempo de computação quando comparado ao método de correlação clássico.
+Para cada ponto de referência (i, j) há MixMj pontos
+da sub-imagem SMi,j que podem ser comparados com
+os MixMj pontos correspondentes de W. Cada conjunto de pontos para comparação (e.g. SMi,j(l,m),
+W(l,m) ) será chamado doravante par de janelamento. Assim como na correlação clássica, o método
+MITSA faz uma busca por todos os pontos de S candidatos a se correlacionar com W no entanto, o critério de similaridade adotado é significativamente diferente. Os pares de janelamento são comparados de
+
+1  i  Li
+1  j  Lj
+
+De forma análoga tem-se a matriz de intensidade W
+representada por uma matriz MixMj
+(3)
+
+1 m  M j
+M i < Li
+M j < Lj
+
+A matriz contendo o subconjunto de S, candidato a
+ser correlacionado com W, será denotada SM, conforme equação 4.
+S Mi , j (l , m)  S (i + l  1, j + m  1)
+
+2
+
+hg (n1 , n2 )
+n1
+
+e K indica a intensidade em escala de cinza e R, G e
+B, as três cores primárias vermelho, verde e azul, respectivamente. Com um byte para armazenar a informação de cada pixel, K varia de 0 (preto) a 255
+(branco).
+Definem-se então duas imagens S, a área de busca e
+W, a janela da assinatura. A imagem S é representada
+por uma matriz de intensidade de cinza com LixLj pixels
+0  S (i, j )  255
+(2)
+
+0  W (l , m)  255
+1  l  Mi
+
+ ( n12 + n22 )
+
+(4)
+
+1  l  Mi
+1 m  M j
+1  i  Li  M i + 1
+1  j  Lj  M j + 1
+
+2248
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+O tamanho mínimo da assinatura foi definido como
+16x12 pixels, representando, em cada eixo, 5 das
+dimensões da imagem original.
+
+forma aleatória. Dessa maneira, em geral, uma grande quantidade de novas informações é considerada a
+cada teste. Conforme Barnea e Silverman (1972), o
+erro de comparação entre os pares de janelamento em
+sua forma normalizada é
+
+
+e(i , j , l x , m y ) 
+
+S Mi , j (l x , m y )  S (i, j )  W (l x , m y )
+
+ T + r  t , se 0  r  rMAX
+T (r )   0
+TMAX , se r  rMAX
+
+TMAX  T0
+rMAX 
+t
+
+(6)
+
+
+
+ W (i, j )
+
+A sequência de figuras a seguir mostra os resultados
+obtidos para três situações distintas. Na figura 1, no
+quadro inicial do primeiro vídeo, um avião parado
+em solo é selecionado como alvo. Na figura 2, o resultado do rastreio após 3,5 segundos de vídeo, caracterizado por um movimento do VANT com o consequente afastamento do alvo. Na figura 3, há a superfície de correlação do quadro, onde se vê destacado o pico indicando a posição atual do alvo.
+Nas figuras 4 a 6, outro vídeo é tomado como exemplo. Novamente, seleciona-se um avião como alvo,
+conforme mostrado na figura 4. A figura 5 apresenta
+o resultado após 8 segundos de vídeo, intervalo no
+qual o VANT se aproxima consideravelmente do
+alvo. A figura 6 ilustra a superfície de correlação
+para este último quadro.
+Nas figuras 7 a 9 um terceiro vídeo é analisado. Na
+figura 7, o alvo é inicialmente selecionado. A figura
+8 mostra o rastreio após 7,5 segundos sob um forte
+movimento de rotação do VANT. Na figura 9, em
+destaque, o pico de correlação.
+
+sendo
+
+
+W
+
+1
+Mi  M j
+
+Mi M j
+
+
+
+W (l , m)
+
+(7)
+
+l  1 m 1
+
+e
+
+
+S
+
+1
+Mi  M j
+
+Mi M j
+
+
+
+l  1 m 1
+
+S Mi , j (l , m)
+
+(8)
+
+Os subscritos x e y indicam os pontos de referência
+aleatoriamente selecionados (x  1, 2, ... , Mi, y  1,
+2, ... , Mj).
+A comparação é repetida até que o erro acumulado
+atinja um certo limiar T. Quando isso ocorre, o processo é interrompido e armazena-se o valor r, o número da iteração na qual o fato ocorreu, formando assim uma superfície de correlação I(i, j). Os pontos de
+referência onde I(i, j) for grande (aqueles que necessitaram de muitos pares de janelamento para ultrapassar o limiar T) são considerados pontos de similaridade.
+Como o próprio nome indica, o limiar de erro no método MITSA cresce  medida que o número de amostras aumenta. Dessa forma o limite de corte é baixo
+para uma pequena quantidade de iterações, eliminando candidatos fracos, enquanto que candidatos fortes
+tendem a demandar uma quantidade maior de iterações.
+2.3 Implementação e Resultados
+O algoritmo MITSA foi implementado e testado
+em diversos vídeos com taxa de frames de 30 quadros por segundo e resolução 320x240 pixels. A seqência contínua de quadros garante que o deslocamento da assinatura de um quadro ao outro se dê de
+forma suave, permitindo reduzir a área de busca para
+25 da imagem original. Esta passa a ser delimitada
+pelos pontos (ia, ja) e (ib, jb) conforme abaixo
+1  ia  i  ib  Li  M i + 1
+
+(10)
+
+Figura 1. Quadro inicial
+
+(9)
+
+1  j a  j  jb  L j  M j + 1
+
+O limiar de erro foi definido como uma função linear
+conforme a equação 10, sendo os parâmetros T0100,
+Tmax600 e t20. Caso o erro não atinja o valor limite
+após todos os MixMj pares de janelamento terem sido
+analisados o processo é automaticamente finalizado.
+
+Figura 2. Quadro 104
+
+2249
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Figura 3. Superfície de correlação I(i, j) do quadro 104
+
+Figura 7. Quadro inicial
+
+Figura 4. Quadro inicial
+
+Figura 8. Quadro 224
+
+Figura 5. Quadro 241
+Figura 9. Superfície de correlação I(i, j) do quadro 224
+
+3 Adaptação da Janela de Rastreio
+Ao final do processo de correlação, se vê que a
+janela de rastreio possui tamanho incompatível ao
+objeto selecionado como alvo, ora maior que este (figura 2), ora menor (figura 5). Mesmo no quadro inicial a janela engloba além do alvo outras áreas de
+pouco interesse, fato recorrente em aplicações reais,
+onde um operador deve fazer a seleção manual do
+objeto. Além de comprometer o aspecto visual do
+rastreio mudanças de tamanho, forma ou orientação
+do objeto entre os quadros tendem a acumular erro de
+walk-off (Chien e Sung 2000). Estas observações in-
+
+Figura 6. Superfície de correlação I(i, j) do quadro 241
+
+2250
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+A magnitude e direção dos vetores de dimensionamento são determinadas a partir da análise do nível
+médio de cinza das subdivisões. Calcula-se I, M e
+O, referente aos níveis médios de cinza nas subdivisões interna, mediana e externa, respectivamente, e
+aplica-se a heurística apresentada no fluxograma da
+figura 11.
+
+dicam a necessidade de adaptação da janela de rastreio ao objeto alvo.
+Vários trabalhos da literatura abordam o tema em
+questão, dentre os quais podemos citar Sung et al.
+(1997), Chien e Sung (2000), Zhang (2005) e Ahmed
+e Jafri (2007). Os primeiros propuseram um método
+de ajuste baseado no nível_médio de cinza da imagem
+de borda nas fronteiras do objeto a ser rastreado. Esta
+foi a metodologia base para o desenvolvimento desta
+etapa do trabalho.
+3.1 Geração das Imagens Gradiente
+A produção das imagens gradiente fez uso do
+operador Sobel (Ballard e Brown, 1982). O operador
+realiza a convolução de kernels 3x3 com a imagem
+original para calcular aproximações das derivadas
+parciais. Aqui, devido s imagens estarem sujeitas a
+todo tipo de movimento, optou-se por enfatizar as
+bordas horizontais. Assim, sendo I a imagem original, a imagem_gradiente Is com ênfase nas variações
+horizontais será dada por
+2
+1
+ 1
+I s   0
+0
+0  * I
+  1  2  1
+
+(11)
+
+onde * indica o operador de convolução bidimensional.
+
+Figura 11. Fluxograma para determinar o vetor de crescimento em
+determinada região
+
+3.2 Processo de Ajuste
+
+A condição I considera o caso em que a média da
+subdivisão interna é menor que da externa. Em condições normais, o que ocorre é exatamente o contrário. Tal condição, portanto, alerta para uma situação
+inesperada, causada pela presença de ruído ou de objetos em movimento no entorno da região externa, e
+desabilita automaticamente o processo de ajuste. A
+condição II representa a situação de compressão da
+janela de rastreio, na qual a diferença absoluta da média entre as regiões mediana e interna é maior que
+aquela entre as subdivisões mediana e externa. Já a
+condição III detecta a situação oposta. Para reduzir a
+sensibilidade do ajuste acrescenta-se um fator marginal  s condições II e III. Os vetores de dimensionamento diagonais também estão sujeitos a um fator de
+balanceamento wc devido  maior tendência das regiões laterais englobarem os objetos de interesse.
+Após a análise descrita acima, deve-se decompor o
+vetor diagonal em componentes vertical e horizontal.
+Os quatro vetores finais que irão indicar o redimensionamento de cada borda da janela são obtidos como
+a soma do vetor lateral correspondente com os dois
+componentes vizinhos do vetor diagonal.
+Por último os vetores devem ser convertidos em unidades de pixels. Para tal definem-se dois novos fatores de ponderação, wb e ws, cujas finalidades são, respectivamente, o redimensionamento mais acentuado
+para janelas maiores e o favorecimento  expansão
+em detrimento da compressão.
+
+No processo de ajuste proposto por Chien e
+Sung (2000) são definidas três regiões no entorno do
+objeto a ser rastreado interna (I), mediana (M) e externa (O). Os limites da região mediana são dados pelas dimensões da assinatura original. As informações
+extraídas dessa região serão utilizadas como critério
+para determinar quais pixels da área fazem parte do
+objeto a rastrear. De forma a extrair dados acurados
+no entorno deste, a área da região mediana deve ser a
+menor das três.
+Cada região é então subdividida em oito partes
+iguais, quatro laterais e quatro diagonais, conforme
+ilustrado na figura 4. A cada conjunto de regiões é
+associado um vetor de dimensionamento (Ss e Sc),
+que indicará a tendência a crescimento ou a redução
+da área da assinatura.
+
+Figura 10. Regiões para ajuste
+
+2251
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Ao final, a variação da assinatura em pixels na i-ésima direção será dada por (Chien e Sung, 2000)
+ S i  wsi  wbi  S i
+
+(12)
+
+onde Si indica o módulo do vetor de redimensionamento da i-ésima lateral da janela (i  0, ... ,3). Após
+o redimensionamento deve-se recalcular a nova posição do par de coordenadas (i*, j*) obtido durante o
+processo de correlação
+(13)
+
+i*  i *   S 2
+j*  j *   S
+
+Figura 12. Quadro inicial com janela de tamanho 30x17 pixels
+
+1
+
+3.3 Implementação e Resultados
+O ajuste da assinatura foi testado em conjunto
+com o algoritmo de rastreio descrito na seção 2. O tamanho da janela foi limitado a no mínimo 16x12 pixels e no máximo 60x80 pixels. Definindo wc0,7 e
+B40 (Chien e Sung, 2000), faz-se a magnitude do
+redimensionamento Si variar entre -3 a +6 pixels na
+dimensão vertical e -4 a +8 pixels na dimensão horizontal. As regiões interna e externa foram calculadas
+aplicando fatores de dimensionamento de 15 e
+20, respectivamente. Dessa forma se garante que a
+região mediana será a de menor área, mesmo no caso
+da janela com tamanho mínimo. O fator marginal 
+foi estipulado como 10 para os vetores laterais e
+20 para os diagonais.
+Na implementação em questão, o ajuste do tamanho
+da assinatura foi realizado somente a cada 10 quadros, de forma a proporcionar uma melhor visibilidade ao usuário. Diversos vídeos obtidos da câmera
+acoplada ao VANT foram utilizados para o teste do
+algoritmo. A seguir, serão analisados os resultados
+obtidos para as mesmas três situações descritas no
+item 2.3.
+As figuras 12 e 13 mostram os quadros inicial e final
+do primeiro vídeo. A figura 12 ilustra a área inicialmente selecionada, de tamanho 30x17 pixels. Na figura 13, após certo afastamento do veículo, nota-se
+claramente o ajuste da assinatura em torno do objeto
+visado, este agora de tamanho 19x15 pixels.
+As figuras 14 e 15 analisam a situação oposta, onde o
+VANT se aproxima do alvo. A figura 14 mostra o objeto inicialmente selecionado, de tamanho mínimo
+16x12 pixels. Na figura 15 o quadro final, com assinatura de tamanho 27x14 pixels corretamente ajustada ao alvo.
+Nas figuras 9 e 10, o terceiro vídeo é analisado. No
+quadro inicial seleciona-se uma área de 36x31 pixels
+que, além do objeto visado, engloba outras áreas de
+nenhum interesse. No quadro final, somente o alvo
+está enquadrado pela janela da assinatura, mesmo
+após o forte movimento de rotação da câmera.
+
+Figura 13. Quadro 104 com janela de tamanho 19x15 pixels
+
+Figura 14. Quadro inicial com janela de tamanho 16x12 pixels
+
+Figura 15. Quadro 241 com janela de tamanho 27x14 pixels
+
+2252
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+rastreio tornou-se ineficiente. Tal observação indica a
+necessidade de par transmissor-receptor de vídeo
+com qualidade adequada para as distâncias a que o
+mini-UAV deve operar em relação  posição do controle em solo.
+Os efeitos de aproximação e afastamento do alvo foram levados em conta na segunda parte do trabalho,
+onde se propôs a utilização de um algoritmo de ajuste
+da janela da assinatura. A proposta mostrou-se extremamente válida quando do afastamento do objeto visado ou nas situações em que a área selecionada inicialmente é demasiada grande e engloba, além do
+alvo, outras regiões de pouco interesse. Nos casos de
+aproximação os resultados foram menos satisfatórios,
+porém ainda válidos. O ajuste dos parâmetros do algoritmo está sendo investigado de forma a melhorar
+os resultados.
+Apesar de ter sido desenvolvido visando uma futura
+aplicação em um sistema_embarcado de tempo_real,
+não se fez qualquer estimativa mais apurada acerca
+da carga_computacional demandada pelo algoritmo.
+No entanto, em uma primeira análise, pode-se afirmar
+que tal implementação é viável devido ao desempenho observado. A implementação do programa em
+Mex-files permite uma fácil migração para as bibliotecas OpenCV, com as quais no futuro se poderá avaliar precisamente a real capacidade de processamento
+requerida.
+
+Figura 16. Quadro inicial com janela de tamanho 36x31 pixels
+
+Figura 17. Quadro 241 com janela de tamanho 16x24 pixels
+
+Agradecimentos
+4 Conclusão
+
+Os autores agradecem ao apoio logístico e financeiro do projeto SIA (Sistemas Inerciais para Aplicação Aeroespacial), fomentado pela FINEP (Financiadora de Estudo e Projetos).
+
+Este trabalho analisou a viabilidade de implementação de um algoritmo de rastreio de alvos, ou
+assinaturas visuais, em vídeos obtidos de uma câmera
+acoplada a um mini-VANT. O método escolhido baseou-se em técnicas amplamente difundidas na literatura de detecção de similaridades e ajuste adaptativo
+do tamanho da janela, mas que aqui foram testadas
+em imagens reais coletadas durante ensaios_em_voo.
+Ao final obtiveram-se resultados satisfatórios mesmo
+para as condições adversas a que este tipo de imagem
+normalmente está submetida.
+Para o rastreio do alvo, buscou-se um método de fácil
+implementação e baixa carga_computacional. Daí a
+escolha do método MITSA em detrimento da correlação clássica. O processo mostrou-se bastante robusto
+e forneceu bons resultados mesmo para assinaturas
+muito pequenas, da ordem de 5 das dimensões da
+imagem original. Em situações em que o veículo
+apresenta movimentos suaves, pôde-se aplicar a abordagem a cada 5 quadros apenas, sem prejudicar os resultados. Essa estratégia proporcionou uma redução
+adicional na carga_computacional do método.
+O pré-tratamento das imagens com filtragem passabaixas forneceu boa imunidade a ruídos interferentes
+e variações de luminosidade. No entanto, na presença
+de ruídos intensos causados pelo afastamento gradual
+da aeronave do equipamento receptor de vídeo ou
+por quaisquer interferências externas, o processo de
+
+Referências Bibliográficas
+Ahmed, J. e Jafri, N. (2007). Best-Match Rectangle
+Adjustment Algorithm for Persistent and Precise
+Correlation Tracking. IEEE International Conference on Machine Vision, pp. 91-96, Islamabad, Paquistão.
+Ballard, D.H. e Brown, C.M. (1982). Computer Vision. Prentice-Hall, New Jersey, EUA.
+Barnea, I.B. e Silverman, H.F. (1972). A Class of Algorithms for Fast Digital Image Registration.
+IEEE Transactions on Computers, Vol. C-21,
+No. 2, pp. 179-186.
+Blackman, S. e Popoli, R. (1999). Design and Analysis of Modern Tracking Systems. Artech
+House, Boston.
+Brown, L.G. (1992). A Survey of Image Registration
+Techniques. ACM Surveys, Vol. 24, No 4, pp.
+325-376.
+Chien, S.I. e Sung, S.H. (2000). Adaptive Window
+Method with Sizing Vectors for Reliable Correlation-Based Target Tracking. Pattern Recognition, 33, pp. 237-249.
+
+2253
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Sung, S.-H. Chien, S.-I. Kim, M.-G. e Kim, J.-N.
+(1997). Adaptive Window Algorithm with FourDirection Sizing Factors for Robust CorrelationBased Tracking. Proceedings of the Ninth IEEE
+International Conference on Tools with Artificial
+Inteligence, pp. 208-215, New Port Beach, EUA.
+Zitová, B. e Flusser J. (2003). Image Registration
+Methods a Survey. Image and Vision Computing, 21, pp. 977-1000.
+Wong, S. (2005). Advanced Correlation Tracking of
+Objects in Cluttered Imagery. Proceedings of
+SPIE Acquisition, Tracking and Pointing XIX,
+pp. 158-169, Orlando, EUA.
+Zang, S. (2005). Object Tracking in Unmanned Aerial Vehicle (UAV) Videos Using a Combined
+Approach. IEEE International Conference on
+Acoustics Speech and Signal Processing, pp.
+681-684, Philadelphia, EUA.
+
+2254

@@ -1,0 +1,1318 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+TRATAMENTO DE INVIABILIDADES NO FLUXO DE POTÊNCIA ÓTIMO POR MÉTODOS DE
+PONTOS INTERIORES
+V ICENTE R. S IMONI ,
+
+G ERALDO L. T ORRES 
+
+ Universidade Federal
+
+de Pernambuco
+Departamento de Engenharia Elétrica
+Recife, Pernambuco, Brasil
+
+Emails vicente.simoni@gmail.com, gltorres@ufpe.br
+Abstract The optimal power flow (OPF) problem has been studied since the 1960s and several solution methods
+are available in the literature. In spite of the great development achieved, application of OPF in real time depends
+on the treatment of several requirements. One requirement is the capacity to deal with infeasible cases. A problem
+instance is infeasible when one or more constraints cannot be satisfied, resulting in convergence failure of the solution
+algorithm. However, it is better to have an approximated solution, where constraints violations are minimized, than
+having no solution at all. In this paper, it is proposed a methodology for infeasibility detection and handling, based on
+information gathered from slack variables and Lagrange Multipliers followed by a relaxation of the infeasible limits.
+The proposed methodology is tested in the IEEE test systems of up to 300 buses and two actual systems.
+Keywords
+
+Optimal Power Flow, Interior Point Methods, Infeasibility Handling.
+
+Resumo O problema_de_fluxo_de_potência ótimo (FPO) vem sendo estudado desde a década de 1960 e vários
+métodos de solução são encontrados na literatura. Apesar do grande avanço alcançado na formulação e resolução,
+o uso do FPO em tempo_real requer o atendimento de vários requisitos. Um desses requisitos é o tratamento de
+problemas inviáveis. Um problema é inviável se uma ou mais restrições não podem ser atendidas, resultando na
+não-convergência do algoritmo de solução. Em vez da simples informação de não-convergência é desejável que o
+programa de FPO obtenha um ponto de operação em que as restrições são minimamente violadas. Nesse artigo, é
+proposta uma metodologia para identificação da inviabilidade durante o processo iterativo, utilizando um indicador
+obtido a partir das variáveis de folga e dos multiplicadores de Lagrange, e o posterior tratamento pela relaxação dos
+limites causadores da inviabilidade. São realizados testes computacionais com os sistemas do IEEE de até 300 barras e
+dois sistemas reais.
+Palavras-chave
+
+.
+
+Introdução
+
+Há diversas dificuldades no uso do FPO em
+tempo_real (Stott et al., 1987 Papalexopoulos
+et al., 1989 Vaahedi and El-Din, 1989 Bertram
+et al., 1990 Momoh et al., 1997). A principal delas
+é que o FPO em tempo_real é matematicamente e
+computacionalmente muito diferente da formulação clássica, principalmente porque em aplicações práticas os problemas não são contínuos e
+suaves. Por exemplo, alguns controles movemse apenas em passos discretos (como tapes de
+transformadores e susceptâncias em paralelo), e
+esses passos algumas vezes são muito grandes e
+irregulares (vários tamanhos de passo para uma
+mesma variável de controle). Infelizmente, não
+há uma técnica de solução que possa tratar esses tipos de problemas eficientemente com todo
+rigor na modelagem. Por isso, a prática universal tem sido aproximar a formulação de tal modo
+que o problema possa ser resolvido pelas técnicas
+de otimização disponíveis.
+
+O controle freqente da operação de um sistema_elétrico_de_potência, almejando a operação
+econômica e segura, é uma tarefa extremamente
+complexa, devido a dimensão e a complexidade
+dos sistemas_elétricos atuais, e ao número elevado de controles envolvidos. A decisão sobre
+uma ação de controle ótima pode ser tomada de
+forma eficiente, tanto em modo de planejamento
+quanto em tempo_real, com o auxílio de um programa computacional de fluxo_de_potência_ótimo
+(FPO), o qual é parte integrante de um Sistema
+de Gerenciamento de Energia.
+Embora FPO tenha sido um tema de intensa
+pesquisa desde a década de 1960, a última palavra sobre modelagem e solução de problemas de
+FPO ainda não foi escrita (Momoh et al., 1997).
+Em especial, com relação a satisfação de vários
+requisitos críticos para o uso de programas de
+FPO em tempo_real. Devido  grande complexidade, conhecimento científico e valor comercial
+agregados as ferramentas de FPO, metodologias
+para tratamento de requisitos para uso do FPO
+em tempo_real são implementadas em programas
+comerciais sem a divulgação desses métodos e
+técnicas na literatura especializada. Dessa forma,
+há pouca literatura abordando o tratamento de
+requisitos para uso do FPO em tempo_real.
+
+Um aspecto muito importante de um FPO
+em tempo_real é como ele se comporta quando
+o problema é matematicamente inviável, ou seja,
+quando uma ou mais restrições do problema não
+podem ser respeitadas. Num caso de inviabilidade, ao invés de finalizar o processo como não
+resolvido, é desejável que o programa de FPO
+forneça um ponto de operação no qual os limites inviáveis sejam minimamente violados, com
+
+4585
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+ou sem instruções interativas. Ou seja, o algoritmo de FPO deve ser capaz de identificar a inviabilidade do problema de forma decisiva e rápida, bem como tratá-la da melhor maneira possível. No entanto, a maioria dos algoritmos de
+solução são deficientes neste propósito. A melhor
+maneira de abordar a detecção e o tratamento de
+inviabilidades é altamente dependente da forma
+que o FPO é formulado e da técnica de otimização utilizada na solução.
+Uma forma simples e convencional de lidar
+com inviabilidade é classificar as restrições como
+tipo firme ou suave, e então incluir na funçãoobjetivo uma penalidade para violações das restrições suaves (Stott et al., 1987 Chang et al., 1990
+Wills and Heath, 2003). As restrições firmes (por
+exemplo, limites físicos de tapes) devem ser estritamente satisfeitas, enquanto algumas violações
+de restrições suaves (por exemplo, limites de tensões e de fluxos) podem ser aceitas. Portanto,
+quando pontos viáveis do problema inexistem
+mas as restrições firmes ainda podem ser satisfeitas, o algoritmo deveria retornar um ponto de
+operação com a mínima violação das restrições
+suaves.
+Chang et al. (1990) propôs uma metodologia
+para remoção de violações de magnitude de tensão para uso em tempo_real. Um método Simplex
+Revisado de programação_linear é utilizado na
+identificação da inviablidade do problema, que
+é então modificado de maneira a minimizar as
+violações, sujeito apenas s restrições que não
+seriam violadas no problema original. Adicionalmente, s variáveis de controle correspondentes s restrições que não seriam violadas no problema original, deve-se impor termos de mínimo
+movimento a partir da posição original, evitando
+o reajuste de um grande número de controles do
+sistema na solução do problema modificado.
+Um método de otimização baseado no método primal-dual de pontos-interiores (PI), conjuntamente com um modelo para identificação e
+tratamento_de_inviabilidades no FPO baseado na
+teoria Fuzzy, foi utilizado por Ding et al. (2000).
+A estratégia Fuzzy é empregada com o objetivo
+de acelerar o processo de otimização, evitando a
+utilização dos termos quadráticos de desvio sugeridos por Chang et al. (1990). A identificação
+da inviabilidade do problema de FPO é realizada
+a partir de informações sobre as variáveis duais e
+as condições de complementaridade.
+O presente artigo apresenta uma abordagem
+para detecção e tratamento_de_inviabilidades no
+problema de FPO, particularmente na solução via
+o método primal-dual de PI e suas variantes. Um
+algoritmo de solução unificado capaz de tratar
+tanto casos viáveis quanto inviáveis é descrito. A
+metodologia emprega um chaveamento de algoritmos de solução quando uma dificuldade de
+convergência surge e inviabilidade é detectada.
+
+Devido a formulação e a resolução de um sistema linear de grande porte em cada iteração ser
+a tarefa mais dispendiosa no algoritmo de PI, a
+metodologia proposta mantém a estrutura desse
+sistema linear inalterada. A ideia de preservação da estrutura do problema de FPO é motivada
+por estratégias de partida quente (warmstarting)
+em programação_quadrática sequencial (Gondzio
+and Grothey, 2003), e ela torna a comutação dos
+algoritmos bastante simples.
+O artigo é organizado como segue. Na seção
+2, a forma padrão do problema geral de FPO e
+o algoritmo básico de PI são apresentados. Na
+seção 3 é descrita a metodologia para detecção
+e tratamento_de_inviabilidades. Na seção 4 detalhes da implementação computacional e resultados numéricos para vários sistemas testes são
+apresentados e discutidos. A seção 5 resume as
+principais contribuições do artigo.
+2
+
+Solução do Fluxo de Potência Ótimo via
+Métodos de Pontos-Interiores
+
+Neste artigo o problema de FPO não-linear é formulado na seguinte forma geral
+min
+sujeito a
+
+f (x)
+g( x )  0
+lxu
+
+(1)
+
+em que x  R n é um vetor de variáveis de decisão, incluindo as variáveis de controle e de estado g  R n  R m é um vetor de funções nãolineares incluindo as equações de balanço de potência nas barras e outras restrições de igualdade
+como balanço de potência entre sistemas interligados, etc e l e u são limites mínimos e máximos
+sobre as variáveis x, correspondentes a limites físicos e operacionais do sistema.
+O método primal-dual de PI (Wright, 1997)
+tem tido sucesso na solução de problemas de FPO
+(Granville, 1994 Torres and Quintana, 1998 Barboza et al., 1998). Para resolver (1) ele opera sobre
+o problema modificado
+min
+sujeito a
+
+n
+
+f ( x )  k
+
+ (ln si + ln zi )
+
+i 1
+
+g( x )  0,
+
+(2)
+
+l + s  x  0, s > 0,
+x + z  u  0, z > 0,
+em que s e z são vetores n-dimensionais de variáveis de folga que transformam as restrições
+de limites simples em restrições de igualdade, e
+k > 0 é um parâmetro de barreira que é monotonicamente reduzido a zero quando as iterações
+progridem. As condições de estrita positividade
+sobre as variáveis de folga, s > 0 e z > 0, são
+tratadas implicitamente por meio do controle de
+passo na atualização das variáveis.
+
+4586
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Dado que a qualificação das restrições é observada, se x é um mínimo local de (2) então
+existem vetores de multiplicadores de Lagrange
+  R m ,   R n+ e   R n+ , que satisfazem as condições necessárias de otimalidade de
+primeira-ordem de Karush-Kuhn-Tucker (KKT)
+(Fletcher, 1987 Nocedal and Wright, 1999)
+
+
+S  k e
+
+
+Z  k e
+
+
+
+
+l+sx
+
+0
+y L(y k )  
+
+x+zu
+
+
+
+
+g( x )
+ f ( x ) +  g( x )   + 
+(3)
+em que y  (s, z, , , , x ), S e Z são matrizes
+diagonais com Sii  si e Zii  zi , e e é um vetor n-dimensional de 1s. Os passos principais do
+algoritmo de PI são mostrados no Alg. 1.
+A tarefa mais dispendiosa no algoritmo de
+PI é a montagem e solução do sistema linear, indefinido, esparso, e de grande porte, no passo 2,
+como segue
+
+
+
+0
+
+I
+
+0
+
+0
+0
+
+0
+
+0
+I
+0
+0
+
+S
+0
+0
+0
+0
+I
+
+
+
+
+
+ 
+
+
+
+
+0
+Z
+0
+0
+0
+I
+
+0
+0
+0
+0
+0
+ g( x )
+
+Substituindo (8) e (9) na última equação de (4),
+fornece
+S1 x  r + Z 1 x + r +  g( x )
+
++ 2xx L( x, )x  ( f ( x ) +  g( x )   + ),
+(10)
+Finalmente, juntando (10) com a quinta equação
+de (4), o seguinte sistema reduzido equivalente é
+obtido
+ 2
+ 
+ xx L( x, ) + S1  + Z 1   g( x ) x
+
+ g( x ) T
+0
+
+
+ f ( x ) +  g ( x )    +   r + r
+
+,
+g( x )
+(11)
+Assim, y é obtido primeiro resolvendo-se (11)
+para x e , e então substituindo de volta x
+em (6), (7), (8) e (9) para obter s, z,  e ,
+respectivamente.
+
+ 
+0
+s
+  z 
+0
+ 
+  
+I
+ 
+   
+I
+ 
+T
+ g( x )    
+x
+2xx L( x, )
+
+
+S  k e
+Z  k e
+l+sx
+x+zu
+g( x )
+ f ( x ) +  g( x )   + 
+
+
+
+
+
+
+
+
+
+(4)
+
+em que  e  são matrizes diagonais com ii 
+i , e ii  i , e 2xx L( x, ) é a Hessiana da função de Lagrange
+m
+
+2xx L( x, )  2 f ( x ) +  i 2 gi ( x ),
+
+(5)
+
+1. Faça k  0, escolha 0 > 0 e um ponto inicial y0 tal que (s0 , z0 , 0 , 0 ) > 0.
+2. Obtenha o sistema de Newton (4) para (3)
+no ponto yk , e resolva
+
+2yy L(yk , k )y  y L(yk , k ),
+para a direção de busca y.
+3. Calcule a nova estimativa da solução de
+yk+1  yk + k y
+em que k é o menor dos passos primal e
+dual
+) )
+(
+(
+ski zki
+P
+k  min  min
+,
+,1
+si zi
+ i <0
+(12a)
+(
+(
+) )
+k
+k
+  i  i
+kD  min  min
+,
+,1
+i i
+ i <0
+(12b)
+
+i 1
+
+4. Se yk+1 satisfaz o teste de convergência
+
+Alternativamente, y pode ser calculado por
+meio de um sistema reduzido equivalente que é
+obtido como segue A terceira e quarta equações
+lineares em (4) fornecem
+s  x  l  s + x,
+z  x  x  z + u,
+
+ky L(yk+1 , k )k  
+
+então FIM. Senão, calcule k+1 < k , faça
+k  k + 1, e retorne para o Passo 2.
+
+(6)
+(7)
+
+Alg. 1 Algoritmo de PI para resolver (1).
+
+Substituindo (6) e (7) na primeira e segunda
+equações de (4), fornece
+  S
+
+1
+
+1
+
+x + S
+
+ S
+
+1
+
+x + r ,
+
+3 Tratamento de Inviabilidades
+
+(k e + (l  x ))
+
+A metodologia para tratamento_de_inviabilidades
+descrita nesta seção consiste na identificação, durante o processo iterativo, de limites inviáveis e
+o posterior tratamento dessas inviabilidades por
+meio da relaxação desses limites.
+
+(8)
+
+  Z 1 x + Z 1 (k e + ( x  u))
+
+ Z 1 x + r ,
+
+(13)
+
+(9)
+
+4587
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+mais multiplicadores, grande em módulo, representando a pressão do processo de convergência de ir além, no sentido de ultrapassar o limite
+imposto pelo problema.
+Na metodologia aqui proposta, o procedimento de detecção de inviabilidade inicia o monitoramento de inviabilidade quando o comprimento de passo k torna-se demasiadamente pequeno ( 0). Mais especificamente, se k 
+0,0001 durante 3 ou mais iterações consecutivas,
+então o problema de FPO possivelmente é inviável, e os conjuntos de índices dos limites inferiores e superiores possivelmente inviáveis são definidos como segue
+
+3.1 Identificação da Inviabilidade
+O conjunto V de todos os pontos viáveis para (1)
+é definido como
+
+V   x  g( x )  0, l  x  u
+
+(14)
+
+Se o problema (1) não possui pontos viáveis, ou
+seja, se V  , então ele é dito inviável.
+Se a restrição de limite inferior li  xi é viável então há duas possibilidades (i) li < xi , e o
+limite inferior é dito inativo, ou (ii) li  xi , e o
+limite é dito ativo. No caso (i) a variável de folga
+si no algoritmo de PI é não nula e o multiplicador de Lagrange i correspondente é nulo. No
+caso (ii) tem-se si  0 e i  0 e finito. Condições semelhantes são observadas com relação a
+restrição de limite superior xi  ui , neste caso envolvendo a variável de folga zi e o multiplicador
+de Lagrange i correspondente.
+No caso de inviabilidade do limite inferior
+li  xi , a correspondente transformação em
+igualdade li + si  xi  0 em (2) somente pode
+ser verificada com si < 0. No entanto, a barreira logarítmica no algoritmo de PI impede que
+as variáveis de folga tornem-se negativas. Nesse
+caso, a variável de folga si tende rapidamente
+para zero durante o processo iterativo, na tentativa de tornar-se negativa, enquanto o multiplicador de Lagrange i cresce rapidamente. Como
+consequência do rápido decaimento da variável
+de folga si , o comprimento de passo k tende para
+zero, tornando assim praticamente nula a atualização das variáveis, o que impede o progresso
+do processo iterativo. Condições semelhantes são
+observadas com relação a inviabilidade do limite
+superior xi  ui , neste caso envolvendo a variável de folga zi e o multiplicador de Lagrange i
+correspondente.
+De forma geral, o primeiro sintoma de um
+problema inviável, no contexto da solução via o
+método primal-dual de PI, consequência direta
+da aproximação brusca para zero de uma ou mais
+variáveis de folga, é a tendência a zero do comprimento de passo primal definido pela equação
+(12), o que resulta na estagnação do processo iterativo. Em implementações computacionais sofisticadas, providas de monitoramento dos comprimentos de passo, a tendência a zero do comprimento de passo primal e a permanência do
+mesmo nesse valor são, usualmente, as primeiras
+manifestações da inviabilidade do problema.
+Adicionalmente, como os multiplicadores de
+Lagrange podem ser interpretados como a sensibilidade da função-objetivo s variações nos níveis das restrições do problema de otimização, a
+inviabilidade de um problema também está relacionada com o comportamento do multiplicador
+de Lagrange correspondente ao limite que está
+provocando a inviabilidade. Esse multiplicador
+terá um valor não nulo e, relativamente aos de-
+
+V L  i  si  1 e i  2 , i  1, 2, . . . , n (15)
+VU  i  zi  1 e i  2 , i  1, 2, . . . , n (16)
+O desejável é que todos os limites inviáveis estejam incluídos nos conjuntos V L e VU , e que nenhum limite viável seja incorretamente incluído
+num desses conjuntos. Assim, a tolerância 1
+sobre as variáveis de folga não deve ser muita
+pequena (tipicamente 1  0,001), caso contrário limites inviáveis podem não ser incluídos, e
+a tolerância 2 sobre os multiplicadores de Lagrange deve ser suficientemente grande (tipicamente 2  2), caso contrário limites viáveis podem ser incluídos por engano.
+3.2 Tratamento da Inviabilidade
+Quando inviabilidade no FPO é detectada ela é
+geralmente tratada aumentando-se o número de
+controles, modificando a função- objetivo, ou relaxando algumas das restrições (Stott et al., 1987).
+Esta é a abordagem natural a seguir uma vez que
+o vazio do conjunto viável (inexistência de pelo
+menos um ponto viável) é a origem do problema.
+A ideia de modificar a função-objetivo e relaxar
+restrições também é seguida neste trabalho. O
+objetivo é desenvolver um procedimento unificado capaz de lidar com casos viáveis e inviáveis.
+Sejam V L e VU conjuntos de índices trabalháveis de limites inferiores e superiores inviáveis.
+Uma vez que uma variável não pode violar os
+dois limites ao mesmo tempo então V L  VU  .
+Um problema modificado para obter uma violação de mínimos_quadrados dos limites suaves é
+definido como segue
+min
+
+f (x) + c
+
+ w i ( x i  l i )2 + c  w i ( x i  u i )2
+i V L
+
+s. a
+
+i VU
+
+g( x )  0,
+li  x i  ui ,
+
+para i 6 V L  VU ,
+(17)
+
+em que c é um número positivo grande, balanceando minimização da função-objetivo contra minimização das violações de limites, e os wi s são
+
+4588
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+pesos para diferenciação da importância dos limites violados. Essa relaxação do problema de
+FPO (utilizando notação diferente) é conhecida
+na literatura (Stott et al., 1987).
+A escolha de c é arbitrária. A solução exata
+pode ser obtida atribuindo um valor suficientemente grande para c de forma que a soma dos
+quadrados das violações seja o termo dominante
+na função-objetivo modificada. Entretanto, como
+ressaltado nas discussões em (Chang et al., 1990),
+a busca por violações rigorosamente mínimas
+pode requerer modificações excessivas de controles, muitas das quais provendo apenas reduções
+marginais nas violações. Portanto, a escolha de c
+deve ser feita com grande cuidado.
+Uma implementação prática de PI de (17)
+mantém todas as restrições de limites na formulação para preservar o tanto quanto possível a
+estrutura do sistema de Newton (4), e simular
+a remoção dos limites inviáveis pela expansão
+dos limites (ou seja, diminuindo o limite inferior
+ou aumentando o limite superior). Em resumo,
+resolve-se o problema modificado
+min
+
+f (x) +
+
+
+i V L
+
+s. a
+
+w i ( x i  l i )2 +
+
+
+
+transmissão. As restrições de igualdade incluem
+as equações de balanço de potência_ativa e reativa
+para todas as barras do sistema, e as restrições de
+desigualdade incluem limites inferiores e superiores sobre magnitudes de tensão nas barras, tape
+de transformadores e compensação_reativa paralela. A formulação do problema é como segue
+min
+
+PPerdas(V, , t)
+
+s. a
+
+Pi (V, , t) + PD  PG  0, i  N
+i
+i
+Qi (V, , t) + Q D  Q G  0, i  G
+i
+i
+Qi (V, , t) + Q D  Q G  0, i  F
+i
+
+i
+
+i
+
+Vimin  Vi  Vimax , i  N
+Pimin  PG  Pimax , i  G
+i
+
+Qmin
+ Q G  Qmax
+,
+i
+i
+
+tmin
+ij
+bmin
+i
+
+
+
+
+i
+
+tij  tmax
+ij ,
+sh
+bi  bmax
+,
+i
+
+i  G
+(i, j)  T
+i  C
+
+(19)
+
+em que
+Pi (V, , t)  Vi
+
+w i ( x i  u i )2
+
+i VU
+
+g( x )  0,
+e
+l  x  ue,
+
+i
+
+Qi (V, , t) + Q D  Q G  bish Vi2  0, i  C
+
+Qi (V, , t)  Vi
+
+
+j N i
+
+
+j N i
+
+
+
+Vj Gij cos ij + Bij sin ij
+
+(20)
+
+
+
+
+Vj Gij sin ij  Bij cos ij
+
+(21)
+Vi e i são a magnitude da tensão e o ângulo de
+fase (ij  i   j ), PG e PD são a geração ativa
+i
+i
+e a demanda ativa, Q G e Q D são a geração re-
+
+(18)
+
+em que e
+li  li   se i  V L e uei  ui +  se
+i  VU , e  é o valor da relaxação nos limites violados.
+O sistema linear (4), resultante da aplicação
+do método de Newton s equações (3) na solução
+do problema original (1), e o sistema linear similar que resulta da solução do problema modificado (18) têm exatamente a mesma estrutura de
+esparsidade, e assim podem ser resolvidos pela
+mesma rotina computacional. Devido (1) e (18)
+serem problemas relacionados, os algoritmos de
+solução podem ter partida quente de um para
+o outro. Adicionalmente, se inviabilidade é reportada na solução de (1), as iterações de PI podem ser comutadas para a solução do problema
+modificado (18) sem maiores modificações na estrutura do sistema de Newton. Se inviabilidade é
+incorretamente reportada e os desvios dos limites
+tornam-se nulos durante as iterações de PI na solução de (18), então o processo iterativo pode ser
+comutado de volta para a solução do problema
+original (1).
+
+i
+
+i
+
+ativa e a demanda reativa e bish é a susceptância
+paralela na barra i, respectivamente. N é o conjunto de todas as barras do sistema, G o conjunto
+de todas as barras de geração, F o conjunto das
+barras de carga com compensação paralela fixa,
+C o conjunto das barras candidatas a controle da
+compensação paralela, e T o conjunto dos transformadores com dispositivo LTC.
+As implementações foram realizadas em
+MATLAB R e os parâmetros dos algoritmos de PI
+utilizados são 0  0,01,   0,99995,   0,2
+e   104. Além disso, foram utilizados os valores 1  104 e 2  2, para as tolerâncias das
+variáveis de folga e multiplicadores de Lagrange,
+respectivamente, e c  1 e i  100, para todo
+i. Foi considerado apenas o tratamento de violações em limites de módulo de tensão nas barras. A relaxação dos limites utilizada foi 0,1 p.u.,
+tanto para o limite inferior quanto para o superior. Os resultados apresentados são oriundos
+de simulações nas quais o carregamento do sistema foi aumentado gradativamente, mantendose constante o fator_de_potência, até gerar inviabilidades.
+Os dados gerais sobre o tamanho dos sistemas utilizados nos testes, bem como a dimensão
+do problema de FPO padrão (1) para o objetivo
+
+4 Resultados Numéricos
+O algoritmo proposto foi testado nos sistemas
+IEEE 30, 57, 118 e 300 barras e nos sistemas reais REAL-A e REAL-R. O problema de FPO resolvido é o de minimização das perdas_ativas na
+
+4589
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+de minimização das perdas podem ser visualizados na Tabela 1. O carregamento ativo e reativo
+total para cada um dos sistemas e as perdas_ativas totais são apresentadas na Tabela 2. A Tabela
+3 apresenta o número de iterações realizadas até
+a convergência pelo método primal-dual de PI,
+os valores mínimos de perdas_ativas, a redução
+percentual das perdas_ativas e uma estimativa do
+tempo de solução, para uma implementação em
+MATLAB R , para cada sistema utilizado.
+
+Tabela 4 Resumo dos resultados da metodologia de
+tratamento_de_inviabilidades.
+Sistema
+Perdas (MW)
+IEEE 30
+31,38
+IEEE 57
+68,20
+IEEE 118
+218,62
+IEEE 300
+REAL-A
+9,79
+REAL-R
+2,62
+
+k
+20
+27
+44
+25
+18
+
+Tempo (s)
+0,82
+1,76
+7,44
+1,29
+0,88
+
+percebe-se o aumento do passo primal e restabelecimento do processo de convergência.
+
+Tabela 1 Tamanho dos sistemas e dimensão do problema padrão.
+Sistema
+IEEE 30
+IEEE 57
+IEEE 118
+IEEE 300
+REAL-A
+REAL-R
+
+N 
+30
+57
+118
+300
+47
+42
+
+G
+6
+7
+54
+69
+1
+1
+
+C
+5
+5
+12
+23
+13
+11
+
+T 
+4
+17
+9
+35
+12
+5
+
+n
+75
+143
+311
+727
+120
+101
+
+m
+60
+114
+236
+600
+94
+84
+
+p
+46
+87
+194
+428
+74
+60
+
+Tabela 5 Processo iterativo para o sistema REAL-R
+em uma condição de carregamento inviável.
+k
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+
+Tabela 2 Carregamento e perdas_ativas iniciais.
+Sistema
+IEEE 30
+IEEE 57
+IEEE 118
+IEEE 300
+REAL-A
+REAL-R
+
+PD (MW)
+283,40
+1250,80
+3668,00
+23247,00
+91,25
+80,59
+
+Q D (MVAr)
+126,20
+336,40
+1438,00
+7788,00
+38,08
+37,44
+
+Perdas (MW)
+17,64
+27,86
+132,86
+408,31
+9,65
+2,54
+
+Tabela 3 Número de iterações, perdas_ativas mínimas
+Perdas (MW)
+17,34
+24,34
+118,03
+378,02
+9,33
+2,52
+
+k
+10
+11
+14
+16
+13
+10
+
+Tempo(s)
+0,46
+0,83
+2,57
+11,26
+0,72
+0,53
+
+Via. Dual
+3,11102
+1,97102
+9,66103
+3,96103
+2,52103
+1,49103
+8,51104
+4,40104
+3,58101
+2,30101
+6,64102
+1,21104
+4,16105
+6,46105
+2,28105
+6,58106
+1,55106
+1,81106
+
+k
+4,15101
+2,88101
+1,79101
+1,01101
+8,86102
+8,52102
+8,47102
+8,46102
+1,2010+0
+3,33101
+1,09101
+2,24102
+5,36103
+1,39103
+2,98104
+6,21105
+1,27105
+2,64106
+
+kP
+0,7657
+0,3790
+0,4538
+0,5253
+0,1454
+0,0417
+0,0051
+0,0008
+0,0000
+0,8770
+0,8522
+1,0000
+0,9530
+0,9433
+1,0000
+1,0000
+1,0000
+1,0000
+
+A título de exemplo, as indicações de violações inferiores e superiores para o IEEE 118
+barras podem ser visualizadas nas Tabelas 6 e
+7. Os valores em negrito destacam as indicações
+de violações de limites que não se concretizaram
+na solução. Apesar de atenderem s tolerâncias
+que indicam a inviabilidade de um limite e determinam sua relaxação, as tensões nas barras
+77 e 113 permaneceram dentro dos limites préestabelecidos na solução ótima encontrada.
+
+e tempo de solução.
+Sistema
+IEEE 30
+IEEE 57
+IEEE 118
+IEEE 300
+REAL-A
+REAL-R
+
+Via. Primal
+7,03103
+5,46103
+2,73103
+1,33103
+1,18103
+1,15103
+1,15103
+1,15103
+6,30104
+2,62104
+5,56104
+3,14106
+8,48106
+2,96105
+3,84106
+4,41106
+8,22106
+5,75106
+
+Red. ()
+1,68
+12,62
+11,16
+7,42
+3,36
+0,75
+
+Para os sistemas IEEE 30, 57, 118 e 300 barras, REAL-A e REAL-R multiplicou-se o carregamento por 1,30, 1,25, 1,225, 1,05, 1,02 e 1,02, respectivamente, de forma a obter casos inviáveis.
+O resumo dos resultados encontrados é apresentado na Tabela 4. A metodologia proposta não foi
+capaz de tratar a inviabilidade do sistema IEEE
+300 barras com relaxação apenas dos limites de
+tensão e no montante relaxado, porém, obteve
+sucesso no tratamento da inviabilidade dos sistemas IEEE 30, 57 e 118 barras, REAL-A e REAL-R.
+Na Tabela 5, é ilustrado o processo de convergência do sistema REAL-R para a situação de carregamento inviável testada. Nota-se que o passo
+primal decresce rapidamente nas primeiras iterações, enquanto o resíduo de complementaridade
+k cresce em virtude do aumento dos multiplicadores de Lagrange. A rotina de mínima violação foi ativada na iteração 9 e, já na iteração 10,
+
+Tabela 6 Indicações de violações inferiores para sistema IEEE 118 barras.
+Barra
+li0
+u0i
+42
+0,9840 1,0404
+77
+0,9996 1,0404
+113
+0,9920 1,0404
+
+li
+0,8840
+0,8996
+0,8920
+
+xi
+0,9839
+1,0066
+0,9984
+
+ui
+1,0404
+1,0404
+1,0404
+
+Na Figura 1, é ilustrado o comportamento do
+comprimento do passo primal em função do número de iterações realizadas para o sistema IEEE
+118 barras. Nota-se a tendência a zero do passo
+primal a partir da iteração 12 e a atuação da metodologia de tratamento de inviabilidade a partir
+da iteração 26. Antes de convergir, há uma oscilação e redução do comprimento do passo primal
+na iteração 36, indicando possíveis dificuldades
+
+4590
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+são os multiplicadores de Lagrange associados s
+variáveis de folga que tendem para zero abruptamente nas primeiras iterações. Espera-se que
+nos casos inviáveis esses multiplicadores atinjam
+valores elevados, tendendo para o infinito caso
+as iterações não sejam interrompidas por malcondicionamento do sistema de Newton.
+Os resultados numéricos apresentados são
+apenas preliminares e não consideraram como
+variável de controle, para os casos mais críticos,
+o corte de carga, a medida mais severa na busca
+da viabilidade do FPO.
+
+Tabela 7 Indicações de violações superiores para sistema IEEE 118 barras.
+li0
+0,9996
+0,9996
+0,9996
+0,9996
+0,9996
+0,9996
+0,9996
+0,9996
+0,9996
+0,9894
+0,9996
+0,9996
+0,9996
+0,9996
+
+Barra
+4
+10
+24
+25
+26
+34
+59
+65
+66
+69
+72
+81
+89
+116
+
+u0i
+1,0404
+1,0404
+1,0404
+1,0404
+1,0404
+1,0404
+1,0404
+1,0404
+1,0404
+1,0506
+1,0404
+1,0404
+1,0404
+1,0404
+
+li
+0,9996
+0,9996
+0,9996
+0,9996
+0,9996
+0,9996
+0,9996
+0,9996
+0,9996
+0,9894
+0,9996
+0,9996
+0,9996
+0,9996
+
+xi
+1,0419
+1,0424
+1,0431
+1,0422
+1,0422
+1,0413
+1,0411
+1,0428
+1,0439
+1,0547
+1,0422
+1,0418
+1,0453
+1,0414
+
+ui
+1,1404
+1,1404
+1,1404
+1,1404
+1,1404
+1,1404
+1,1404
+1,1404
+1,1404
+1,1506
+1,1404
+1,1404
+1,1404
+1,1404
+
+Agradecimentos
+Os autores agradecem o apoio do CNPq por meio
+da concessão de uma bolsa de mestrado (Edital
+MCTCNPq 272007).
+
+de convergência para uma condição de carregamento superior a 1,225 p.u., mesmo com a utilização da metodologia.
+
+Referências
+
+1
+
+Passo primal ( k )
+
+0.9
+
+Barboza, L. V., Almeida, K. C. and Salgado, R.
+(1998). An interior point optimization approach for loadability limit studies, Proc. of
+the VI SEPOPE, Salvador BA, Brazil.
+
+0.8
+0.7
+0.6
+0.5
+0.4
+
+Bertram, T. J., Demaree, K. D. and Dangeimaier,
+L. C. (1990). An integrated package for realtime security enhancement, IEEE Trans. on
+Power Systems 5(2) 592600.
+
+0.3
+0.2
+0.1
+0
+0
+
+2
+
+4
+
+6
+
+8
+
+10
+
+12
+
+14
+
+16
+
+18
+
+20
+
+22
+
+24
+
+26
+
+28
+
+30
+
+32
+
+34
+
+36
+
+38
+
+40
+
+42
+
+44
+
+Iteração ( k)
+
+Chang, S.-K., Marks, G. E. and Kato, K. (1990).
+Optimal real-time voltage control, IEEE
+Trans. on Power Systems 5(3) 750758.
+
+Figura 1 Comportamento do passo primal na condição inviável do sistema IEEE 118 barras.
+
+Ding, Q., Li, N. and Wang, X. (2000). Implementation of interior point method based voltagereative power optimization, Proc. of the
+IEEE PES General Meeting, Edmonton, Canada.
+
+5 Conclusões
+A metodologia proposta neste trabalho para o
+tratamento_de_inviabilidades no FPO, no contexto da solução via métodos de PI, explora o fato
+de que um primeiro sintoma numérico de inviabilidade numa restrição de limite é a variável
+de folga correspondente mover-se rapidamente
+para zero. Consequentemente, o comprimento
+de passo na atualização das variáveis torna-se demasiadamente pequeno, levando o processo iterativo  falha de convergência.
+Infelizmente, situações em que variáveis de
+folga movem-se abruptamente para zero e o comprimento de passo anula-se podem também ocorrer em problemas viáveis, como consequência de
+inicialização inadequada do algoritmo de PI, escolha inadequada de parâmetros do algoritmo,
+centralidade ruim das iterações de PI, etc. Assim, no evento de não-convergência, o algoritmo
+de solução deve ser capaz de identificar se o caso
+tratado é de fato inviável.
+No presente trabalho especula-se que o que
+possivelmente distingue um caso viável de um
+inviável, num processo falho de convergência,
+
+Fletcher, R. (1987). Practical Methods of Optimization, John Wiley  Sons.
+Gondzio, J. and Grothey, A. (2003). Reoptimization with the primal-dual interior point
+method, SIAM J. on Optimization 13 842
+864.
+Granville, S. (1994). Optimal reactive dispatch through interior point methods, IEEE Trans. on
+Power Systems 9(1) 136146.
+Momoh, J., Koessler, R. G., Bond, M. S. and Stott,
+B. (1997). Challenge to optimal power flow,
+IEEE Trans. on Power Systems 12(1) 444455.
+Nocedal, J. and Wright, S. J. (1999). Numerical Optimization, Springer.
+Papalexopoulos, A. D., Imparato, C. F. and Wu,
+F. F. (1989). Large scale optimal power flow
+
+4591
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Effects of initialization, decoupling and discretization, IEEE Trans. on Power Systems
+4 748759.
+Stott, B., Alsac, O. and Monticelli, A. J. (1987).
+Security analysis and optimization, Proceedings of the IEEE 75(12) 16231644.
+Torres, G. L. and Quintana, V. H. (1998). An
+interior point method for nonlinear optimal power flow using voltage rectangular
+coordinates, IEEE Trans. on Power Systems
+13(4) 12111218.
+Vaahedi, E. and El-Din, H. M. Z. (1989). Considerations in applying optimal power flow
+to power systems operation, IEEE Trans. on
+Power Systems 4(2) 694703.
+Wills, A. G. and Heath, W. P. (2003).
+An
+exteriorinterior-point approach to infeasibility in model predictive control, Proc. of the
+42nd IEEE Conference on Decision and Control,
+Maui, Hawaii USA.
+Wright, S. J. (1997).
+Methods, SIAM.
+
+Primal-Dual Interior-Point
+
+4592

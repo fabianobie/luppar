@@ -1,0 +1,517 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+CONTROLE DE INVERSORES SENOIDAIS ATRAVÉS DA TÉCNICA DOS MODOS DESLIZANTES UTILIZANDO
+FPGA
+FERNANDO H. M. ROCHA, ERNANE A. A. COELHO, JOÃO B. VIEIRA JÚNIOR, LUIZ C. FREITAS, VALDEIR J. FARIAS
+Núcleo de Pesquisa em Eletrônica de Potência, Faculdade de Engenharia Elétrica, Universidade Federal de
+Uberlândia
+Av. João Naves de Ávila 2121,Santa Mônica, 38400-902, Uberlândia-MG
+E-mails fernandorocha@usp.br, ernane@ufu.com.br, batista@ufu.br,
+freitas@ufu.br, valdeir@ufu.br
+Abstract This paper discusses the design and implementation of sliding mode control for single-phase sine inverters using
+FPGA. The control by sliding mode is the actuation in a variable structure system, defining the existence of a surface in phase
+plane, where the motion states of the system, from anywhere in the considered universe, when reaching the surface, it slips in
+convergence to the origin, which is designed to be a desirable position for the system states. For the practical implementation of
+this controller, techniques are required to limit the frequency. Several techniques for frequency limiting used in other works were
+presented and one of them was chosen for implementation. To check the operation of the system, simulations were carried out
+with the right system and with limited frequency, which demonstrated the efficiency of the controller to force the controlled variable after the reference. Prototype was implemented, including the IGBT inverter bridge, gate drivers, filter and output circuits,
+sampling and signal conditioning and control unit in FPGA. Experimental results are presented in order to verify the performance
+of the controller.
+Keywords Slinding Mode Controller, Sinusoidal PWM Inverter, FPGA.
+Resumo Este trabalho aborda o projeto e a implementação do controle_por_modos_deslizantes de inversores_monofásicos senoidais utilizando FPGA. O controle_por_modos_deslizantes consiste na atuação em um sistema de estrutura_variável, definindo a
+existência de uma superfície no plano de fase, cujo movimento dos estados do sistema, a partir de qualquer ponto dentro do universo considerado, ao atingir a superfície deslizaem convergência para a origem, a qual é projetada para ser a posição desejável
+para os estados do sistema. Para a implementação prática deste controlador, são necessárias técnicas de limitação da freqência
+de chaveamento. Foram apresentadas diversas técnicas de limitação de freqência utilizadas em outros trabalhos e uma delas foi
+escolhida para a implementação. Para verificar o funcionamento do sistema, simulações foram realizadas com o sistema ideal e
+também com limitação da freqência, as quais demonstraram a eficiência do controlador em forçar a variável controlada a seguir
+a referência. Foi implementado um protótipo, incluindo a ponte inversora a IGBT, gate drivers, filtro e saída, circuitos de amostragem e condicionamento_de_sinais e a unidade de controle em FPGA. São apresentados resultados experimentais visando
+verificar a performance do controlador.
+Palavras-chave .
+
+1
+
+de deslizamento para aplicação em controle de inversores podem ser vistas em (Zadravec  Jeremik
+1990) e (Coelho, et al., 1998).
+Esta técnica de controle se apresenta como uma
+alternativa eficiente na dinâmica de atracamento da
+saída do sistema na referência, proporcionando excelente desempenho e robustez s perturbações de carga e a variações de parâmetros (Utkin 1992).
+A partir de tais considerações, o objetivo deste
+trabalho consiste na implementação de um controlador em modos_deslizantes, na plataforma FPGA, para
+inversores_monofásicos com tensão de saída senoidal, visando agregar as vantagens deste tipo de controlador, no aspecto dinâmico, e as facilidades oferecidas pela tecnologia FPGA para a implementação do
+hardware de controle através de ferramentas de software. Na atualidade, tal tecnologia contempla uma
+capacidade que vai muito além dos primeiros chips
+programáveis, onde se observava apenas a construção de funções lógicas, hoje é possível a construção
+de hardware para a elaboração de cálculos matemáticos. Este artigo visa contribuir neste sentido, mostrando uma aplicação onde uma superfície de deslizamento é calculada, enfatizando que os FPGAs
+permitem muito mais do que a simples implementação de funções lógicas.
+
+Introdução
+
+O controle_em_modos_deslizantes consiste em
+um tipo de controle de estrutura_variável (VSC) em
+que a dinâmica do sistema é alterada pela aplicação
+de um chaveamento de alta freqência (Pinheiro, et
+al., 1994). Em sistemas_de_controle de estrutura_variável, o intervalo de tempo de chaveamento da função
+de controle depende do estado atual do sistema. Esta
+característica distingue o controle_por_modos_deslizantes dos demais sistemas_de_controle usados em
+inversores de freqência (Zadravec  Jeremik 1990).
+O controle_por_modos_deslizantes vem ganhando
+importância como ferramenta de projeto para o controle_robusto de sistemas_lineares e não_lineares. Sua
+força vem da facilidade e flexibilidade da metodologia para o projeto e sua implementação (Ahmed, et
+al., 2003).
+O projeto do controle_por_modos_deslizantes se
+baseia na existência de uma superfície de deslizamento que garanta a convergência do erro de saída
+para zero. Não basta a existência da superfície, é ainda necessário que a lei de controle imposta garanta a
+atratividade da origem da superfície considerada em
+um tempo finito. Maiores detalhes sobre as condições para a existência e convergência da superfície
+
+3154
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+iniciais específicas, como o exemplo mostrado na
+Figura 2, onde x é a tensão no capacitor e  a corrente no capacitor, cuja escala relaciona-se com a tensão
+pelo fator definido pela impedância_característica do
+filtro de saída.
+No plano de fase da Figura 2, a dinâmica do inversor é representada como um conjunto de trajetórias, as quais convergem para +E ou E conforme a
+estrutura corrente (posição das chaves), a partir de
+uma condição inicial qualquer no plano. São apresentadas trajetórias para 3 condições iniciais distintas de
+tensão no capacitor.
+A superfície de deslizamento pode ser descrita
+pela equação (1),
+
+Obviamente, um controlador em modos_deslizantes pode ser facilmente construído com circuitos
+analógicos. Além disso, o custo da tecnologia FPGA
+e a necessidade de conversores AD colocam a proposta em questão numa condição desfavorável. Mas
+é preciso ter em mente que o custo desta tecnologia
+apresenta uma redução gradativa e ainda, a implementação digital traz vantagens significativas, como
+a imunidade a ruído, diferente dos amplificadores
+operacionais da versão analógica, os quais são susceptíveis aos ruídos do ambiente industrial e também a facilidade de implementação das referências,
+as quais são geradas internamente no FPGA e livre
+de interferências.
+Além do controlador, foram projetados também
+os circuitos para aquisição_de_dados e condicionamento_de_sinais.
+
+.
+
+  x kx
+.
+
+2 Desenvolvimento Teórico
+2.1 Controle em Modos Deslizantes
+O controle de um sistema de estruturas variáveis
+consiste na alteração da estrutura do sistema de acordo com uma regra predeterminada descrita por uma
+lei de controle. Neste trabalho, a técnica de controle
+por modos_deslizantes será utilizada para regular a
+tensão de saída de um inversor_monofásico.
+
+.
+
+(1)
+
+.
+
+x  vref  vout
+
+(2)
+
+x  vref  vout
+
+(3)
+
+Onde
+
+vref  Tensão de referência.
+vout  Tensão de saída do inversor.
+k  Constante proporcional.
+O controle utiliza duas grandezas do sistema para saber seu estado atual. Como pode ser visto nas
+equações (2) e (3), as variáveis de estado selecionadas para representar a dinâmica de um inversor foram o erro da tensão de saída, calculado através da
+tensão no capacitor, , que é igual  tensão de saída
+, e também o erro de sua derivada, devido  interdependência direta entre a tensão e corrente do
+capacitor, como pode ser visto na equação (4). Estas
+grandezas são então subtraídas da tensão de referência e da derivada desta. Essas diferenças são somadas
+e o sinal resultante representa o estado atual do sistema, que serve de base para a decisão do controle de
+comutar ou não as chaves.
+
+Figura 1. Diagrama do inversor_monofásico
+
+ic (t )  C
+
+dvc
+dt
+
+(4)
+
+Onde
+
+ic  Corrente no capacitor.
+C  Capacitância.
+vc  Tensão no capacitor.
+Na Figura 3, tem-se o plano de fase já com a superfície de deslizamento. Pode-se ver que a superfície divide o plano de fase em dois subplanos,  > 0 e
+ < 0, a partir dos quais se pode definir uma superfície de deslizamento. A reta   0 representa a subdivisão das duas subestruturas que compõe o sistema
+em análise.
+
+Figura 2. Plano de fase de um sistema inversor
+
+Na Figura 1 observa-se o diagrama esquemático
+de um inversor_monofásico. Pode-se considerar a
+operação em modo complementar, de forma que
+S1S4 estão conduzindo e S3S2 estão abertas, ou o
+contrário. Tais estruturas definem os caminhos descritos pelos estados do sistema a partir de condições
+3155
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+qual é permitido ao estado do sistema oscilar. O tamanho da vizinhança é determinado de forma a obter
+a freqência de chaveamento desejada. A freqência
+de chaveamento não é constante.
+A ação de controle é dada por
+
+Freqência de amostragem constante O sinal de
+é avaliado em instantes de tempo_discretos. A freqência de amostragem é definida como duas vezes a
+freqência de chaveamento desejada. É importante
+notar as mudanças na ação de controle, que só poderá
+ocorrer nos instantes de tempo
+(k  N,
+éo
+período de amostragem).
+A ação de controle é dada por
+
+Figura 3. Plano de fase com a superfície de deslizamento (Zadravec  Jeremik 1990).
+
+A partir da equação (1), pode-se definir uma lei
+de controle para o inversor, mostrada na equação (5)
+ON-Time Constante É aplicada tensão positiva
+sempre que
+. Uma vez que este estado é atingido, ele é mantido por um intervalo de tempo constante
+. O sinal de é verificado novamente após
+. A variável t é utilizada
+o término do intervalo
+para contar o tempo entre a mudança para o estado
+em que U+E e
+.
+A ação de controle é dada por
+
+(5)
+Onde
+U  Tensão aplicada no circuito inversor.
+E  Tensão de entrada do bloco de controle.
+De acordo com a lei de controle definida na equação (5), pode-se definir também uma superfície
+de comutação, mostrada na Figura 4.
+
+Freqência de chaveamento constante É aplica. A tensão é
+da tensão positiva sempre que
+invertida em intervalos de tempo
+(k  N,
+é
+o inverso da freqência de chaveamento desejada) se
+nesses intervalos de tempo. Se
+em
+qualquer tempo
+, o estado será mantido no
+mínimo até
+.
+A ação de controle é dada por
+
+Figura 4. Diagrama de bloco para o cálculo da superfície de comutação.
+
+2.2  Técnicas de Limitação da Freqência de Chaveamento
+Freqência de chaveamento máxima limitada
+As chaves são comutadas em qualquer instante de
+tempo. A única restrição é que uma comutação só
+pode ser realizada após um intervalo
+a partir
+da última comutação. Neste método,
+é metade
+do período de chaveamento desejado.
+A ação de controle é dada por
+
+O sistema_de_controle_em_modos_deslizantes
+ideal opera em uma freqência de comutação infinita,
+o que não pode ser alcançado na prática. Portanto,
+alguma ação deve ser realizada para reduzir a freqência de comutação, tentando manter o comportamento do sistema real o mais próximo possível do
+ideal (Cardoso, et al., 1992).
+Muitos métodos de redução de freqência
+de chaveamento utilizados atualmente na Eletrônica
+de Potência podem ser empregados para resolver o
+problema. Alguns deles serão apresentados abaixo
+Histerese É estabelecida uma região simétrica
+não-nula, vizinha  superfície de deslizamento, na
+
+Onde t indica o tempo decorrido desde a última
+comutação.
+
+3156
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+3 Simulações
+Em (Cardoso, et al., 1992) pode ser visto que a
+limitação da freqência de chaveamento através da
+histerese apresenta a melhor resposta_dinâmica e em
+regime_permanente, limita o erro de tensão a uma
+vizinhança da superfície de deslizamento mais próxima da origem. Entretanto, considerando a proposta
+de implementação do controlador em FPGA, a técnica de freqência de amostragem constante, mesmo
+não possuindo uma resposta tão boa quanto a histerese, possui implementação mais simples, e será adotada no presente trabalho.
+
+Para a comprovação da eficiência do controle em
+modos_deslizantes, foram realizadas simulações digitais do circuito do inversor controlado por modos
+deslizantes utilizando o simulador de circuitos eletrônicos PSIM. O circuito utilizado nas simulações
+pode ser visto na Figura 5.
+
+2.3 Dispositivos FPGA
+O FPGA (field-programmable gate array) é um
+dispositivo semicondutor que apresenta uma estrutura em hardware configurável via software conforme
+a aplicação. O primeiro FPGA disponível comercialmente foi desenvolvido pela empresa Xilinx Inc.,
+em 1983.
+Um FPGA basicamente é constituído de um
+grande arranjo de blocos lógicos, blocos de entrada e
+saída, e chaves de interconexão. Os blocos lógicos
+formam uma matriz bidimensional, e as chaves de
+interconexão são organizadas como canais de roteamento horizontal e vertical entre as linhas e colunas
+dos blocos lógicos. Os canais de roteamento possuem
+chaves de interligação programáveis que permitem
+conectar os blocos lógicos de maneira conveniente,
+permitindo a implementação de funções complexas
+específicas para cada projeto.
+No interior de cada bloco lógico do FPGA existem vários modos possíveis para implementação de
+funções lógicas. O mais utilizado pelos fabricantes
+de FPGA como, por exemplo, a empresa Altera
+Corp., é o bloco de memória LUT (Look-Up Table).
+Esse tipo de bloco lógico contém células de armazenamento que são utilizadas para implementar pequenas funções lógicas. Além dos blocos LUTs, existem ainda blocos como portas lógicas, Flip-Flops,
+multiplicadores e blocos RAM da ordem de kB, fato
+que permite a implementação de funções lógicas e
+aritméticas complexas.
+Nos FPGAs disponíveis comercialmente, os blocos lógicos LUTs possuem geralmente quatro ou
+cinco entradas, o que permite endereçar 16 ou 32
+células de armazenamento. Quando um circuito lógico é implementado em um FPGA, os blocos lógicos
+são programados para realizar as funções específicas,
+e os canais de roteamento são estruturados de forma
+a realizar as interconexões necessárias entre os blocos lógicos (Brown  Rose 2000).
+Diferente dos microprocessadores, os FPGAs
+possuem naturalmente uma característica operação
+paralela, pois cada tarefa é executada em seções dedicadas do dispositivo semicondutor, o que implica
+elevada performance, principalmente nas aplicações
+onde a dependência seqencial do cálculo é pequena.
+
+Figura 5. Circuito do sistema inversor senoidal.
+
+Para demonstrar a robustez do controle_por_modos_deslizantes, uma carga 100 vezes maior é adicionada em 90 e depois removida em 270, simulando
+um transiente de carga.
+Na Figura 6, tem-se o gráfico da tensão e corrente de saída do inversor. Nos pontos em que a carga
+adicional é inserida e removida, a tensão de saída do
+inversor, variável controlada, sofre uma pequena
+distorção, sendo esta pouco relevante se comparada 
+intensidade da carga adicionada, demonstrando a
+capacidade do controle na rejeição do distúrbio.
+
+Figura 6. Tensão e corrente de saída do inversor com transitório.
+
+Na Figura 7, tem-se o plano de fase para os transitórios de carga. Observa-se a evolução do sistema
+para a entrada de carga (distúrbio com maior afastamento da origem e retirada de carga (menor afastamento da origem). Nota-se em ambos os eventos, que
+ao encontrar a superfície após o distúrbio, o estado
+do sistema desliza sobre esta em direção  origem.
+Como dito anteriormente, para a implementação
+prática é absolutamente necessária a adoção de uma
+estratégia de limitação da freqência de chaveamen3157
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+to, neste caso, foi utilizada a freqência de chaveamento constante, a qual é simplesmente vinculada 
+taxa de amostragem do controle. Para verificar a resposta do sistema com limitação de freqência de
+chaveamento, foram realizadas duas simulações utilizando a técnica de freqência de amostragem constante, uma com o limite de freqência de 25kHz e
+outra a 50kHz. Tipicamente, inversores de média
+potência a IGBT operam em freqências não superiores a 20kHz. A adoção de uma freqência de amostragem para o controlador em modos_deslizantes de
+50kHz implica uma freqência máxima de comutação de 25kHz, ou seja, próximo a limiar típico.
+Figura 9. Plano de fase do sistema com limitação em 25kHz.
+
+Na Figura 10, são apresentados os gráficos de
+tensão e corrente na carga com limitação da freqência de chaveamento em 50kHz. Com o aumento da
+freqência de chaveamento houve uma melhora significativa na forma de onda de tensão. O ripple de
+tensão reduzido torna o transitório da carga mais
+aparente.
+
+Figura 7. Plano de fase do sistema ideal.
+
+As simulações com limitação de freqência foram realizadas nas mesmas condições que a simulação ideal, com o mesmo transitório de carga. Na Figura 8 pode-se ver a tensão e corrente na carga para
+uma freqência de chaveamento limitada em 25kHz,
+em que a forma de onda da tensão fica distorcida,
+pois a comutação ocorre com atraso em relação ao
+instante em que o estado do sistema cruza a superfície de deslizamento.
+
+Figura 10. Tensão e corrente de saída do sistema com limitação
+em 50kHz.
+
+O plano de fase do sistema é apresentado na Figura 11, na qual se observam as oscilações geradas
+pela limitação da freqência de chaveamento. Apesar
+do transitório de carga estar mais aparente, a superfície de deslizamento não é tão visível quanto na Figura 7.
+
+Figura 8. Tensão e corrente de saída com limitação de freqência
+em 25kHz.
+
+Na Figura 9 é mostrado o plano de fase do sistema com a freqência limitada em 25kHz. Nota-se
+nas Figuras 8 e 9 que o ripple de tensão causado pela
+estratégia de limitação da freqência se confundem
+com as distorções causadas pelo transitório de carga,
+impedindo identificação dos eventos nos gráficos.
+
+Figura 11. Plano de fase do sistema com limitação em 50kHz.
+
+3158
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Na Figura 12 têm-se as formas de onda de tensão
+e corrente na carga para a situação de regime_permanente.
+Na Figura 13 é apresentado o ensaio de transitório de carga. Observa-se que o transitório de carga se
+confunde com o ripple de chaveamento resultante. É
+importante salientar que o ruído de chaveamento
+contamina as amostras de corrente e tensão. O uso de
+filtros neste caso provoca um efeito negativo, principalmente para a amostra da derivada de tensão, onde
+atrasos de fase penalizam significativamente a dinâmica de controle. Este ponto ainda carece de maiores
+estudos, visando soluções com relação custobenefício favoráveis.
+
+3 Resultados Experimentais
+O circuito do inversor de tensão implementado
+corresponde ao esquema mostrado na Figura 5, com
+o filtro de saída composto por um capacitor de 60uF
+e indutor de aproximadamente 800uH. Para o transitório foram utilizadas cargas resistivas com potência
+de aproximadamente 1kW.
+O controlador em modos_deslizantes foi implementado utilizando-se a ferramenta de desenvolvimento Spartan-3AN Starter Kit, da fabricante Xilinx,
+a qual contempla o FPGA XC3S700AN-FG484, da
+família de dispositivos de médio desempenho Spartan-3AN da mesma fabricante e ainda os conversores
+AD LTC1407A, de 14 bits e comunicação SPI, utilizados na aplicação.
+O FPGA foi programado utilizando a ferramenta
+System Generator, da Xilinx, um conjunto de blocos
+de funções lógicas e aritméticas com parâmetros configuráveis, inseridos no módulo Simulink do ambiente MatLab. Esta ferramenta permite a implementação
+de programas complexos através de uma interface
+visual, bastando fazer a interconexão de blocos de
+funções. O System Generator então utiliza o diagrama_de_blocos para gerar um conjunto de arquivos de
+código VHDL que, após ser compilado, pode ser
+gravado no chip FPGA. O esquema correspondente
+ao cálculo da superfície programado na FPGA é
+mostrado na Figura 15.
+Foi implementado um bloco, em linguagem
+VHDL, que realiza a leitura das amostras de tensão
+de saída e corrente do capacitor dos canais AD conectados ao FPGA. Baseado na taxa de amostragem
+definida no gerador de clock, as amostras são comparadas com vetores de referência previamente estabelecidos em blocos de memória para a determinação
+dos erros e assim, a superfície é calculada em aritmética de ponto_fixo. A partir do cálculo da superfície
+os sinais de controle das chaves são definidos e enviados s linhas digitais de saída, as quais estão conectadas aos gate drivers.
+
+Figura 13. Tensão e corrente de saída durante o transitório de
+carga.
+
+Para indicar a composição da forma de onda da
+tensão de saída, realizou-se a transformada de Fourier, que pode ser vista na Figura 14. Baseado na Figura 14, pode-se confirmar a existência da superfície de
+deslizamento e que o sistema opera na vizinhança
+desta com um ripple de chaveamento com espectro
+significativo a partir de 2kHz. Próximo da componente fundamental, não se observa harmônicos importantes. Espera-se que a melhoria da medição possa reduzir o ripple observado.
+
+Figura 12. Tensão e corrente de saída do inversor em regime_permanente.
+
+Figura 14. Valores das componentes da tensão de saída.
+
+3159
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Figura 15  Software de controle da FPGA
+
+3160
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Annual, Volume 2, Issue, June 2003 Page(s)
+634 - 637 vol.2, ISBN 0-7803-7754-0
+Brown, S. Rose, J. Architecture of FPGAs and
+CPLDs A Tutorial Department of Electrical
+and Computer Engineering, University of
+Toronto, 2000.
+Cardoso, B.J. Moreira, A.F. Menezes, B.R.
+Cortizo, P.C., Analysis of switching frequency
+reduction methods applied to sliding mode
+controlled DC-DC converters, Applied Power
+Electronics Conference and Exposition, 1992.
+APEC92. Conference Proceedings 1992, pp.
+403  410, ISBN 0-7803-0485-3, Boston,
+U.S.A.
+Coelho, E.A.A., Menezes, B.R., Cortizo, P.C.,
+Donoso Garcia, P.F., Sliding mode controller
+for parallel connected inverters, CIEP 98 (1998
+VI IEEE International Power Electronics
+Congress), Out98, pp. 96-102, ISBN 0-78035006-5, Morelia, Mexico.
+Jezernik, K., Zadravec, D., Sliding mode controller
+for a single phase inverter, Proceedings of
+APEC 90 (1990 Fifth Annual Applied Power
+Electronics Conference and Exposition), Mar90,
+pp. 185-190, Los Angeles, CA, USA.
+Ordonez, E. D. M. Pereira, F. D. Penteado, C. G.
+Pericini, R. A. Projeto, Desempenho e
+Aplicações de Sistemas Digitais em Circuitos
+Programáveis (FPGAs). Ed. Bless, 1 Ed, 2003,
+239f.
+Perry, D. L. VHDL Programming by Example. Ed.
+McGraw-Hill, 4 Ed, 2002, 497f.
+Pinheiro, H. Martins, A.S. Pinheiro, J.R., A Sliding
+Mode Controller in Single Phase Voltage Source
+Inverters, IECON 94, (1994 20th International
+Conference on Industrial Electronics, Control
+and Instrumentation), Set94, pp. 394-398 vol.1,
+ISBN 0-7803-1328-3, Bologna, Italy.
+Utkin, V. I., Sliding Modes and their Application in
+Variable Structure Systems. Moscow Mir
+Publishers (English translation), 1978.
+Utkin, V.I., "Sliding Modes in Control and
+Optimization", Springer-Verlag, 1992, ISBN
+9780387535166.
+
+4 Considerações Finais
+Nos dias atuais, o uso de inversores é bastante
+disseminado na indústria, principalmente no acionamento de motores, havendo casos em que, se os
+mesmo não fossem utilizados, não seria possível a
+construção de algumas máquinas.
+Através das simulações, pôde-se perceber que o
+controle_por_modos_deslizantes correspondeu s expectativas de eficácia no controle da tensão de saída
+de um inversor senoidal, até mesmo em situações de
+intenso transitório de carga.
+Em sistemas reais, a operação livre sobre a superfície, geraria como conseqência freqências de
+comutação das chaves extremamente elevadas, razão
+da necessidade de limitação desta sob pena de dano
+aos semicondutores. A imposição de uma freqência
+máxima de chaveamento ocorre naturalmente na medida em que as comutações são comandadas pelo
+controle_digital nos instantes de amostragem. Apesar
+da simplicidade de implementação digital, esta técnica implica em erros de regime(Cardoso, et al., 1992).
+Através dos resultados experimentais observa-se
+que o sistema opera em modos_deslizantes, com alta
+capacidade de rejeição aos distúrbios da carga e com
+seguimento da referência satisfatório, não havendo a
+presença de harmônicos importantes próximo da
+fundamental.
+O ripple presente na tensão de saída possui um
+espectro espalhado a partir de 2kHz, sendo que este
+não pode ser atribuído somente  técnica de limitação
+da freqência de comutação. Observou-se que os
+próprios filtros de aquisição (anti-aliasing) possuem
+impacto na dinâmica do controle, principalmente na
+introdução de atraso de fase na medição da derivada
+da tensão. É necessário um estudo para a melhoria do
+sistema de medição visando a redução do ripple.
+Os resultados demonstraram a viabilidade do uso
+de um dispositivo FPGA na implementação de um
+controlador_digital com cálculo em aritmética de
+ponto_fixo. No caso de alteração na planta, como por
+exemplo a modificação do limite freqência de comutação, ou mesmo a alteração da freqência da referência, o dispositivo FPGA pode ser facilmente
+reprogramado para atender s novas especificações.
+Agradecimentos
+Os autores agradecem  Universidade Federal de
+Uberlândia e  FAPEMIG - Fundação de Amparo 
+Pesquisa do Estado de Minas Gerais pelo suporte
+financeiro para a realização deste trabalho.
+Referências Bibliográficas
+Ahmed, M. Kuisma, M. Tolsa, K. Silventoinen, P.
+Implementing Sliding Mode Control for Buck
+Converter,
+Power
+Electronics
+Specialist
+Conference, 2003. PESC03. 2003 IEEE 34th
+3161

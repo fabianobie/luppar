@@ -1,0 +1,527 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+SISTEMA EMBARCADO DE NAVEGAÇÃO AUTÔNOMA - DETECÇÃO DE VIAS NAVEGÁVEIS
+UTILIZANDO CRESCIMENTO DE REGIÕES E ALGORITMOS GENÉTICOS
+
+LUCIANO H. D. RAMIRES JUNIOR, ANDRÉ C. HERNANDES, MARCELO BECKER
+Laboratório de Robótica Móvel, Departamento de Engenharia Mecânica, Escola de Engenharia de São Carlos
+Universidade de São Paulo
+Av. Trabalhador Sãocarlense, 400, Pq. Arnold Schimidt, CEP 13566-590, São Carlos - SP
+E-mails luciano.jr@usp.br,andre.hernandes@usp.br,becker@sc.usp.br
+Abstract
+ This paper aims to design a system that will increase the security to the motorists and pedestrians as it displays the
+trafficable road to the semiautonomous or autonomous cars, utilizing images collected by a monocular camera previously calibrated . The collected images are filtered and have their colour space swapped from RGB to HSV. After , it is applied the image
+segmentation method known by Region Growth, which is, in short terms, an expansion of a small region made by pixels-seeds
+towards the surrounding pixels that are similar to previous one within a determined tolerance. Therefore, the corresponding region of the road is defined. In addition, the present work shows that the parameters used in the method of region growth can be
+optimized by a genetic algorithm. The latter can be roughly defined as an algorithm based on the ideas of species evolution that
+is able to improve a given situation. It is noteworthy that it is a cheap alternative to an important issue within the context of embedded_systems to define the navigable area. Post processed tests show that the street detection system is efficient, although it is
+sensitive to brightness variation as a major part of computer_vision.
+Keywords
+ Road detection, Computational Vision, Genetics Algorithm, Embedded System
+Resumo
+ O presente trabalho objetiva a concepção de um sistema que aumente a segurança para os motoristas e pedestres a
+medida que apresenta a via transitável ao sistema_embarcado (neste caso, veículos assistidos ou possivelmente autônomos), utilizando imagens coletadas por uma câmera_monocular previamente calibrada. As imagens coletadas passam por filtragem e mudança de espaço de cor para o espaço HSV, e em seguida é aplicado nelas o método de segmentação de imagens conhecido como Crescimento de Regiões, no qual uma pequena região formada por pixels-semente é expandida enquanto os pixels a sua volta forem semelhantes aos anteriores dentro de uma determinada tolerância, de forma que a região correspondente  rua é definida. Além disso, o projeto prevê que os parâmetros utilizados no método de crescimento de regiões sejam otimizados por meio de
+um algoritmo_genético, uma rotina baseada na idéias de evolução das espécies capaz de melhorar uma determinada situação. Vale ressaltar que trata-se de uma alternativa barata para uma questão importante dentro do contexto dos sistemas_embarcados definir a área navegável. Testes pós-processados mostram que o sistema de detecção de rua é eficiente, embora seja sensível  variação de luminosidade, como grande parte da visão_computacional.
+Palavras-chave
+ .
+
+1
+
+Introdução
+
+O número de acidentes de trânsito no Brasil e no
+mundo aumenta ano após ano. Fatores como imprudência, más condições dos automóveis, ingestão de
+bebidas alcoólicas e condições climáticas desfavoráveis são os principais responsáveis por grande parte
+dos acidentes. Pode-se observar também que a frota
+de veículos no país, que em fevereiro de 2011 chegou
+a aproximadamente a 37.570.000 automóveis (Denatran, 2011), aumentou excessivamente. Segundo (Fenabrave, 2010), entre 2003 e 2009 o Brasil passou da
+10 posição mundial em número de vendas de automóveis por ano para a 4 posição mundial. Esse fator
+também contribui para a elevação do número de acidentes, gerando prejuízos mundiais da ordem de bilhões de dólares. O Brasil gasta anualmente R35
+bilhões com todo o mecanismo que envolve os acidentes de trânsito, desde danos materiais a serviços
+médicos. Mas esse não é apenas um problema do
+Brasil A situação é tão crítica, de forma global, que
+a ONU identificou a década 2011-2020 como a Dé-
+
+ISBN 978-85-8001-069-5
+
+cada de Ação pelo Trânsito Seguro (Década de Ação
+pelo Trânsito Seguro, 2011).
+Por outro lado, a indústria automobilística investirá
+cerca de 11,2 bilhões de dólares nos próximos anos
+no desenvolvimento de seus produtos (Folha, 2010),
+principalmente em tecnologias que aumentem a segurança ao dirigir, como, por exemplo, os freios ABS,
+cintos de segurança retráteis e air-bags. Observa-se
+também que lançamentos automotivos a serem realizados num futuro próximo já prometem incorporar
+tecnologias inéditas, como, por exemplo, a detecção
+de mudança de faixa no Ford Fusion 2013 (Ford Lane Keeping System, 2012), utilizando visão_computacional. Isto mostra que a combinação entre normas
+de segurança e consumidores mais exigentes está
+forçando a indústria automobilística a se adequar a
+esta nova situação.
+É nesse cenário que o Laboratório de Robótica Móvel do Grupo de Mecatrônica da EESC-USP, fazendo
+uso de técnicas de robótica_móvel como inteligência
+artificial e visão_computacional, desenvolve desde
+meados de 2008 o Projeto SENA - Sistema Embarcado de Navegação Autônoma - que objetiva a criação de um veículo capaz de se movimentar de forma
+autônoma em ambiente urbano ou rodovias (Projeto
+
+4888
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Sena, 2012). Além disso, a pesquisa inclui um possível controle assistivo do veículo em situações nas
+quais o motorista não pode agir de forma eficiente
+(por exemplo, em condições climáticas desfavoráveis, devido  falta de atenção ou, até mesmo, devido
+ imprudência do motorista), fazendo com que a ação
+de dirigir seja monitorada pelos computadores embarcados. Deste modo, em caso de emergência, será
+possível intervir nos comandos do veículo evitando
+acidentes. Na figura 1, pode ser visto uma ilustração
+do veiculo de testes do projeto SENA, um Fiat Stilo
+1.8 Dual Logic apelidado de GISA, onde se destacam
+os sensores que serão embarcados no mesmo.
+
+um sistema_embarcado autônomo (ou semiautônomo), como detecção de faixa, detecção de placas de trânsito e, eventualmente, contribuir para estimar a curvatura de uma suposta curva na via (HE,
+2004) ou determinar seu formato (Rasmussen, 2003).
+Vale ressaltar que a utilização de visão_computacional se mostra uma opção relativamente barata de
+aquisição_de_dados para um sistema_embarcado, pois
+seu hardware é menos custoso do que outros tipos de
+sensores, como, por exemplo, os sensores baseados
+em laser, de forma que pode contribuir significativamente para a redução de custos de sistemas autônomos a serem incorporados aos veículos comerciais.
+Trata-se também de uma área que vem sendo pesquisada e aperfeiçoada em todo o mundo a fim de criar
+funções para sistemas_embarcados ou de navegação
+assistida, como, por exemplo, o auxilio de navegação
+noturna (Chen, 2010).
+2 Metodologia
+
+Figura 1. Ilustração dos sensores embarcados no veiculo de
+testes do projeto SENA
+
+Tais pesquisas, envolvendo carros autônomos, estão
+sendo realizadas e incentivadas em todas as partes do
+mundo. Esse assunto ganhou visibilidade mundial em
+2003 quando a agência DARPA (Defense Advanced
+Research Projects Agency) propôs uma competição
+na qual carros autônomos deveriam percorrer um
+circuito off-road. Na figura 2 abaixo vemos exemplos de carros autônomos que estão sendo desenvolvidos em outros países.
+
+Figura 2. Carros autônomos que estão sendo desenvolvidos.
+O veículo desenvolvido pela IFSTTAR (2012) a esquerda e o
+veículo desenvolvido pela Oxford (2011) a direita.
+
+O objetivo desse artigo é expor um método de detecção de vias transitáveis, tanto em ambientes urbanos
+quanto em rodovias, utilizando imagens pósprocessadas coletadas por uma câmera_monocular.
+Deve-se frisar que essa uma tarefa tem grande importância no contexto dos sistemas de navegação autônomos e assistidos já que define a área navegável na
+região entorno do veículo. Isso permitirá que, além
+de cumprir a tarefa de detecção das vias de forma
+eficiente, os dados extraídos possam ser posteriormente empregados em outras rotinas necessárias para
+
+ISBN 978-85-8001-069-5
+
+A detecção de vias transitáveis foi buscada
+por meio do método de segmentação de imagens conhecido como Crescimento de Regiões (Gonzalez,
+2007), no qual um pixel semente (seed) é convenientemente escolhido na imagem e expande-se agregando a si os pixels a sua volta que possuam uma determinada característica parecida com a sua, dentro de
+uma certa tolerância (threshold). Tal método também
+pode ser utilizado para detecção de vias em ambientes rurais (Gao, 2010). A fim de verificar numericamente a eficiência do método desenvolvido, utilizamse figuras como fundo-verdade das imagens a serem
+testadas. Assim, cada imagem possui seu gabarito,
+na forma de outra imagem que representa a região
+navegável, criada quase manualmente. Por fim utiliza-se um algoritmo_genético para otimizar o threshold envolvido na segmentação de imagens visando
+otimizar o processo. Todas as imagens foram utilizadas no tamanho 640x480, pois se trata da resolução
+que apresenta melhor desempenho na relação resultados vs. custo_computacional (Khalifa, 2010).
+Além disso, fez-se testes a fim de verificar
+qual dessas opções seria a mais robusta com relação
+s sombras e forneceria melhor detecção de via utilizar a componente Saturação do espaço de cores HSV
+(supostamente invariante a iluminação) ou utilizar a
+remoção de sombras no espaço RGB proposta por
+(Finlayson, 2002). Todos os algoritmos foram implementados em MatLab pois se trata de um software
+de alto_desempenho largamente utilizado em engenharia e muito eficiente para se trabalhar com matrizes. Oferece todos os subsídios necessários, portanto,
+para a realização dos testes que se pretendia fazer.
+2.1 Segmentação de Imagens
+Para a segmentação de imagens foi desenvolvida
+uma rotina própria baseada no método de Crescimento de Regiões com as seguintes características
+
+4889
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+a)
+
+Assume-se que a região imediatamente
+a frente do carro seja uma via
+transitável livre. Tal fato pode ser
+confirmado na prática através das
+informações coletadas por outros
+sensores embarcados. De posse de tal
+informação, pode-se confinar todas as
+sementes
+(seeds)
+na
+região
+imediatamente a frente do carro,
+denominada Região de Interesse
+(Region of Interest - ROI). Assim, temse a certeza de que a segmentação se
+expande a partir da área navegável.
+Dentro da ROI as sementes se
+posicionam de maneira aleatória.
+b) A imagem original é reduzida para
+diminuir o custo_computacional.
+c) O processo de expansão para gerar a via
+transitável baseia-se em pixels 4conectados a semente pode se expandir
+para cima, baixo, esquerda ou direita e
+nunca para as diagonais. Testes
+preliminares indicaram que essa forma
+de expansão, mais controlada, seria
+melhor para gerar resultados mais
+confiáveis e menor taxa de falsopositivo.
+d) A imagem é dividida em quadrados e é
+feita a média de pixels classificados
+como via transitável dentro do
+quadrado. Se ele estiver acima da
+média, o quadrado todo é classificado
+como via transitável e pintado de
+verde na imagem original. Assim, podese
+acompanhar
+visualmente
+o
+desenvolvimento do algoritmo e a
+detecção em si.
+e) Por fim utiliza-se um processo de
+fechamento morfológico na imagem
+(utilizando a função imclose do
+MatLab) a fim de gerar uma região mais
+uniforme e com menos erros.
+Além disso, deve-se especificar que todas as
+imagens foram cortadas em 20 pixels na sua parte superior, como forma de reduzir a influencia
+do horizonte, caso ele esteja na mesma. Existem
+técnicas mais refinadas para detecção da linha do
+horizonte caso seja necessário realizar essa remoção de forma mais sistemática. (Zhang, 2009).
+2.2 Geração de Fundo-Verdade
+Como explicado na seção 2.1, foram utilizados
+fundos verdade no formato de imagens, sendo a versatilidade do ambiente desenvolvimento a inspiração
+tal decisão. Para geração do fundo-verdade foi desenvolvida uma rotina na qual o usuário precisa apenas clicar sobre os vértices da região correspondente  via transitável na imagem para gerar uma imagem correspondente, de mesmo tamanho que a origi-
+
+ISBN 978-85-8001-069-5
+
+nal, que contém em branco a região destacada como
+área navegável. A criação desse algoritmo foi muito
+importante na pesquisa pois permitiu otimizar consideravelmente o tempo disponível e o custo_computacional, visto que anteriormente pensou-se em gerar
+um fundo verdade com a descrição matemática da via
+transitável.
+O fundo verdade é peça chave na utilização de
+otimização por meio de um algoritmo_genético, tendo
+em vista que permite a pontuação de cada indivíduo,
+como será mostrado a seguir.
+2.3 Algoritmos Genéticos
+De modo geral, algoritmos_genéticos (AGs) pertencem a uma família de modelos computacionais
+inspirados na evolução biológica. AGs têm
+despertado grande interesse nos últimos anos por
+causa da sua flexibilidade e versatilidade na
+resolução de problemas_de_otimização nos quais os
+métodos tradicionais encontram muita dificuldade.
+Na literatura, é possível encontrar aplicações em
+diversas áreas do conhecimento, como Engenharia,
+Robótica, Biologia, Medicina e Teoria de Controle.
+Eles são capazes de identificar e explorar fatores
+ambientais e convergir para soluções em níveis globais (Pearson, 1995).
+A rotina de funcionamento de um AG consiste basicamente em
+a) Gerar uma população aleatória de
+indivíduos que possuam em seus genes
+os parâmetros a serem otimizados  Tem-se
+que quanto mais aleatório dentro de
+determinados valores, melhor. E quanto
+maior o número de indivíduos, maiores as
+chances de se obter uma boa solução.
+b) Testar e avaliar o desempenho de cada
+indivíduo  Nesta fase o fundo verdade é de
+extrema importância pois permite criar uma
+pontuação para cada indivíduo, de acordo
+com sua taxa de acerto. Esta é a parte do AG
+mais delicada e mais difícil de ser
+implementada.
+c) Verificar o Critério de Parada  Nesta fase,
+interrompe-se ou não o loop de acordo com
+uma condição pré-definida de eficiência ou
+número de interações
+d) Realizar cross-over entre os indivíduos e
+introduzir pequenas mutações na tentativa
+de melhorar o desempenho  Este é um dos
+fatores fundamentais para o método dos
+AGs. Vale a pena sempre manter intacto o
+melhor indivíduo de cada população para
+garantir que a próxima geração não será pior
+do que a anterior.
+e) Introduzir os novos indivíduos na
+população, ocupando o lugar de seus
+geradores  Trata-se da introdução da nova
+geração de indivíduos a população.
+Voltar para o item (b).
+
+4890
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Assim, de posse da imagem da detecção da via
+navegável, obtida por meio da segmentação de imagens, e da sua respectiva imagem de fundo verdade,
+pode-se implementar o AG. O papel do algoritmo
+genético neste trabalho é otimizar o parâmetro
+threshold relativo ao processo de segmentação de
+imagens de forma a obter melhores resultados. Foi
+utilizado como banco_de_dados um grupo de imagens
+coletadas pela equipe por meio do veículo de testes
+do Projeto SENA.
+A forma de avaliação de cada individuo, que é
+a chave da evolução dos parâmetros no AG, é a seguinte
+a) Cada indivíduo começa com pontuação
+igual a zero
+b) A cada pixel classificado como rua que
+realmente está na rua, o indivíduo ganha um
+ponto (acerto).
+c) A cada pixel classificado como rua que
+não está na rua, o individuo perde um ponto
+(falso positivo).
+d) A pontuação final de cada um indivíduo corresponde a porcentagem de acertos menos a
+porcentagem de falsos positivo.
+Para introduzir novas linhagens no sistema, conserva-se o melhor individuo de cada geração e foi
+realizada média simples de seus genes com os de
+todos os outros indivíduos.
+Com isso espera-se otimizar os parâmetros de
+forma a maximizar a porcentagem de acerto e minimizar a taxa de falsos positivo, obtendo assim uma
+detecção mais robusta e confiável.
+3 Resultados
+Explicados os métodos utilizados, é possivel agora analisar os testes e resultados. Inicialmente é
+preciso comparar qual das seguintes técnicas forneceria uma detecção por crescimento de regiões mais
+confiável transformar a imagem original para o espaço de cores HSV e utilizar a componente Saturação
+ou utilizar a remoção de sombras no espaço RGB.
+Ambas as técnicas tem o intuito de reduzir a influencia da iluminação e das sombras na segmentação de
+imagens.
+Testes preliminares mostraram que aplicando a
+remoção de sombras no espaço de cores RGB na
+imagem pode-se obter resultados melhores para esse
+tipo de segmentação de imagens. Na figura 3 é possivel observar um exemplo de cada uma das técnicas
+citadas seguida do mesmo processo de segmentação
+de imagens. A região em verde representa a área
+classificada pelo algoritmo como navegável.
+
+ISBN 978-85-8001-069-5
+
+Figura 3. Detecção de via utilizando a componente Saturação do espaço de cores HSV a esquerda e utilizando remoção de
+sombras em RGB a direita.
+
+Como fica claro pelas imagens acima, a região navegável está bem mais próxima da real na
+imagem  direita o que indica que o processo de remoção de sombras em RGB é mais vantajoso. Além
+de apresentar melhores resultados, esse processo
+também é menos custoso computacionalmente falando. O único inconveniente que esse processo ocasiona é que, caso haja uma sombra localizada no limiar
+entre a rua e a calçada, é possível que o algoritmo
+seja levado a crer que parte da região não-navegável
+é navegável. Ainda assim, foi adotada tal técnica como procedimento padrão antes de segmentar a imagem.
+Foram realizados então alguns testes utilizando as imagens coletadas com o veículo de testes
+pela equipe e foi possivel analisar os resultados da
+detecção, proveniente do processo de segmentação
+de imagens. Todas as imagens foram obtidas em situações normais de iluminação. O veículo de testes
+estava a cerca de 40kmh em ambientes urbanos e
+60kmh em rodovias. No total foram analisadas 44
+imagens, igualmente divididas nas duas situações
+citadas (ambiente urbano  campus da USP de São
+Carlos  e rodovias). Com a ajuda dos fundos verdade, e fixando manualmente o parâmetro threshold em
+seis unidades, obtivemos as porcentagem referentes 
+eficiência e s taxa de falsos positivos para duas situações distintas ambiente urbano e rodovias. Tal procedimento foi adotado pois foi preciso estimar a eficiência do método se segmentação de imagens independentemente das características implementadas no
+algoritmo_genético, de forma que o ajuste do parâmetro citado foi puramente visual. A figura 3 abaixo
+mostra imagens da detecção, onde a área classificada
+como navegável está em verde
+
+4891
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 4. Exemplos de detecção de via navegável em reta, curva a
+esquerda, curva a direita e junção respectivamente.
+
+Seguem abaixo os resultados
+Eficiência Média em Rodovias 77,6
+Taxa média de Falsos positivo em Rodovias
+13,81
+Eficiência Média em Ambiente Urbano 66,4
+Taxa de Falsos positivos em Ambiente Urbano
+17,3
+Como previsto anteriormente, o algoritmo apresenta melhores resultados em rodovias do que em
+ambiente urbano. Isso ocorre porque em rodovias
+observa-se menor presença de ruídos (principalmente
+sombras) e o asfalto geralmente é mais uniforme.
+Fazendo as médias dos dados acima, podemos definir
+a eficiência média geral do algoritmo e sua taxa geral
+de falsos positivo
+Eficiência Média Geral 72
+Taxa Média Geral de Falsos Positivo 15,55
+Deve-se frisar que esses resultados de detecção de via navegável foram obtidos com parâmetros
+escolhidos a mão pela equipe de acordo com testes
+visuais, de forma que até aqui não foi utilizado o algoritmo_genético já desenvolvido. O parâmetro threshold, que deverá ser otimizado pelo AG, foi definido manualmente e fixado em seis unidades. Além
+disso, os resultados dependem de condições ambientais, podendo apresentar variações.
+Analisando agora apenas os resultados referentes
+ otimização por algoritmo_genético, executamos o
+AG com dez indivíduos, um número máximo de interações fixado em 20 e utilizando as 44 imagens. Como já dito anteriormente, deseja-se otimizar apenas
+um o parâmetro, o threshold. Tal parâmetro consiste
+em um número inteiro e a rotina desenvolvida arredonda esse número para inteiro quando trata-se de
+um numero não inteiro. A Tab. (1) mostra a primeira
+população, obtida randomicamente, bem como sua
+respectiva pontuação.
+Tabela 1. Parâmetros iniciais randomizados a serem otimizados pelo AG
+
+Threshold
+6
+1
+5
+7
+1
+Pontuação 0.6428 0.4484 0.6218 0.6423 0.4484
+Threshold
+3
+4
+9
+3
+6
+Pontuação 0.5875 0.6109 0.6389 0.5875 0.6428
+
+Após 11 gerações pudemos observar que tanto
+os parâmetros quanto a pontuação obtida por eles já
+haviam se estabilizado e convergido, de forma que
+obtivemos os seguintes resultados, expressos na Tab.
+(2)
+
+ISBN 978-85-8001-069-5
+
+Tabela 2. Threshold e respectiva pontuação após 11 gerações
+de otimização por AG
+
+Threshold
+6
+5,9961
+Pontuação 0.6428 0.6246
+Threshold 5,9971 5,999
+Pontuação 0.6246 0.6235
+
+6,0011 5,9951 5,997
+0.6420 0.6246 0.6247
+6,0042 5,999 5,9971
+0.6425 0.6246 0.6246
+
+Como é possível observar pelas tabelas acima, o
+algoritmo_genético cumpriu sua função de otimização, tendo em vista que o parâmetro a ser otimizado
+claramente convergiu para seis unidades, como suposto anteriormente que ocorreria com base nos testes visuais.
+4 Conclusões
+O desempenho do método de detecção de
+vias navegáveis desenvolvido pela equipe, associado
+ao processo de remoção de sombras, foi considerado
+satisfatório, com eficiência média de 72 e chegando
+a cerca de 77 em rodovias. Trata-se de uma técnica
+que está apta para ser traduzida para uma linguagem
+de resposta mais rápida (como C ou C++) e implementada em um sistema_embarcado a fim de cumprir
+sua função de detecção vias navegáveis a frente do
+veículo, dentro de suas limitações. O tempo de processamento do algoritmo não é relevante nessa fase
+da pesquisa pois, quando o algoritmo for de fato embarcado, será utilizada uma linguagem de programação de resposta mais rápida bem como um hardware
+mais robusto.
+A otimização por AG foi bem sucedida embora o resultado por ela apresentado seja relativamente previsível. Nas condições trabalhadas, de otimização de apenas um parâmetro e sem especificar as
+condições ambientais, é relativamente supérflua a
+presença de um algoritmo_genético. Tal artifício, porém, poderia ser muito melhor empregado caso desejássemos otimizar também outros parâmetros envolvidos no processo ou realizar um treinamento de
+segmentação de imagens para condições ambientais
+bem específicas.
+A partir dos resultados obtidos, podemos
+pensar em criar um algoritmo_genético mais robusto e
+eficiente no futuro e conseguir, com isso, otimizar um
+maior numero de parâmetros, específicos para determinadas condições ambientais, principalmente no
+que diz respeito a condições de iluminação (chuva,
+entardecer, etc), de forma que o sistema_embarcado,
+ao perceber pelos seus sensores que encontra-se em
+uma determinada condição altera seus parâmetros
+para se adaptar e tal situação. Além disso, podemos
+avançar um pouco na área de cognição e usar o IPM
+(Inverse Perspective Mapping) e seus histogramas
+como forma de analisar os resultados da detecção de
+via navegável e conseguir, dessa forma, informações
+importantes para a navegação local como o padrão da
+via a frente do sistema_embarcado (reta, curva para
+
+4892
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+esquerda, curva para direita, etc..) bem como estimar
+um suposto raio de curvatura da via, contribuindo
+significativamente para as tomadas de decisões do
+veículo.
+Assim, a utilização de um algoritmo embarcado
+em um veículo que possua como base as ideias desenvolvidas e aperfeiçoadas pela equipe contribuiria
+para a redução dos acidentes de trânsito, notadamente
+aqueles que ocorrem devido a imprudência, a medida
+que forneceria informações importantes para manter
+o veículo em sua área navegável, protegendo a vida
+de motoristas, passageiros e pedestres.
+Agradecimentos
+A equipe gostaria de agradecer imensamente 
+FAPESP, ao INCT INOF e  FIAT AUTOMÓVEIS
+SA pelo apoio e também  EESC - USP.
+Referências Bibliográficas
+Chen, Y., Chiang, C. 2010, Embedded Vision-based
+Nighttime Driver Assistance System, 2010 International Symposium on Computer, Communication, Control and Automation.
+Década de Ação pelo Trânsito Seguro 2011-2020 é
+lançada oficialmente hoje em todo o mundo. online
+Disponível
+em
+<httpwww.onu.org.brdecada-de-acao-pelotransito-seguro-2011-2020-e-lancadaoficialmente-hoje-11-em-todo-o-mundo>.
+Acesso em 11 mar. 2012.
+Denatran. Fevereiro 2011. Frota Regiões Tipo UF
+FEV2011.
+online
+Disponível
+em
+<httpwww.denatran.gov.brfrota.htm>. Acesso
+em 23 mar. 2011.
+Fenabrave (Brasil). 2010. Distribuição de Veículos
+Automotores no Brasil.online Disponível em
+<httpwww.fenabrave.org.brprincipalpubImag
+e20110614100628anuario2010.pdf >. Acesso
+em agosto de 2011.
+Finlayson, G.D., Hordley, S.D. and Drew, M.S.,
+2002. Removing Shadows from Images, ECCV
+2002 European Conference on Computer Vision. vol. 4, pp. 823836.
+Folha (Brasil). 30042010. Indústria automotiva investirá US 11,2 bilhões até 2012, diz Anfavea.
+online
+Disponível
+em
+<httpwww1.folha.uol.com.brfolhadinheiroult
+91u728367.shtml>. Acesso em 14 fev. 2012.
+Ford Lane Keeping System Helps Fusion Drivers
+Stay Alert and Between the Lines. online
+Disponível
+em
+<httpmedia.ford.comarticledisplay.cfm?articl
+eid35776>. Acesso em 13 fev. 2012.
+Gao, F., Xun, Y., Wu, J., Bao, G., Tan, Y., 2010,
+Navigation Line Detection Based on Robotic Vision
+
+ISBN 978-85-8001-069-5
+
+in Natural Vegetation-embraced Environment,
+2010 3rd International Congress on Image and
+Signal Processing (CISP2010).
+Gonzalez, R.C. and Woods, R.E, 2007 Digital Image
+Processing. Pearson Prentice Hall, 3th. Edition
+He, Y., Wang, H and Zhang, B. Color-Based Road
+Detection in Urban Traffic Scenes, 2004 IEEE
+Transactions On Intelligent Transportation Systems, Beijing, n. , p.309-318
+Khalifa, Othman O. et al. 2010 A Hyperbola-Pair
+Based Lane Detection System for Vehicle Guidance. World Congress On Engineering And
+Computer Science, São Francisco, p. 1-4. 20 out.
+2010.
+Pearson, David W., Steele, Nigel C. and Albrecht,
+Rudolf F. 1995. Artificial Neural Nets and Genetic Algorithms. New York Springer Verlag
+Wien, 522 p.
+Projeto Sena . online. Disponível em
+<httpwww.eesc.usp.brsenaurlptindex.php>
+Acesso em 14 fev. de 2012
+Rasmussen, C. - Road Shape Classification for Detecting and Negotiating Intersections 
+Disponível
+em
+httpieeexplore.ieee.orgstampstamp.jsp?tpa
+rnumber1212948  acessado em 14 fev. 2012
+Zhang, G., Zheng, N., Cui, C., Yan, Y., Yuan, Z.,
+2009. An Efficient Road Detection Method In
+Noisy Urban Environment. 2009 IEEE.
+
+4893

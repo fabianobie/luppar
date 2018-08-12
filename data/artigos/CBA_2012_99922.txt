@@ -1,0 +1,789 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+MODELANDO NUVENS DE PONTOS TRIDIMENSIONAIS COMO MISTURAS DE
+GAUSSIANAS
+Sidnei da Silva Filho, Paulo Drews Jr., Silvia Botelho, Pedro Nunez
+
+
+
+
+Centro de Ciencias Computacionais, Universidade Federal de Rio Grande (FURG)
+Rio Grande, RS, Brasil
+
+Dpto. Tecnologa de los Computadores y las Comunicaciones, Universidade de Extremadura
+Caceres, Espanha
+Emails sidneifilho123@gmail.com, paulodrews@furg.br, silviacb@furg.br,
+pnuntru@unex.es
+
+Abstract This paper proposed an adaptable model applied to 3D data using Gaussian Mixture Models.
+Nowadays, scanner capable to acquire large point cloud are accessible. However, it is a hard tasks deal with this
+information due the amount of points and the redundancy. Thereby, this paper presents an efficient preprocessing
+step using the Point Cloud Library, focused in point simplification and noise removal. An algorithm based in
+split-and-merge approach is proposed in order to estimate a Gaussian Mixture Model. It aim to deal with local
+minimum and initialization problem of the classic Expectation-Maximization algorithm. This approach also aim
+to improve the performance and repeatability. Several model selection criteria are evaluated in order to improve
+the efficiency of the method. The results show the system is able to estimate Gaussian Mixture Models, with a
+reduced computational cost.
+Keywords Expectation-Maximization, Gaussian Mixture Models, 3D Point Cloud, Change Detection, Object Segmentation.
+Resumo Este artigo propoe o uso de misturas de Gaussianas como um modelo adaptavel para dados tridimensionais. Hoje em dia, equipamentos com capacidades de obter grandes nuvem de pontos estao cada vez mais
+acessveis. Porem, e uma tarefa difcil lidar com a grande quantidade de informacao e a redundancia desses dados.
+Assim, o presente trabalho apresenta uma etapa de pre-processamento de maneira eficiente usando a Point Cloud
+Library, focado no algoritmo de simplificacao e reducao de rudo. Um algoritmo baseado em uma abordagem
+split-and-merge e utilizado para estimar Misturas de Gaussianas, visando ultrapassar restricoes de mnimo local
+e inicializacao do algoritmo Expectation-Maximization, bem como melhorar o desempenho e repetibilidade do
+metodo. Diversos criterios de selecao_de_modelos foram avaliados, levando em conta as misturas estimadas e o
+custo_computacional. Os resultados mostram que o sistema proposto consegue estimar de maneira satisfatoria
+as Misturas de Gaussianas, com custo_computacional reduzido.
+Palavras-chave .
+
+1
+
+Introducao
+
+O problema de modelar nuvem de pontos tridimensionais e importante em diferentes contextos, dentre eles destaca-se a robotica (Drews Jr
+et al., 2010). Obter uma informacao de mais alto
+nvel se torna necessario, visto o tamanho tipico de
+nuvens de pontos, milhares de pontos, as vezes milhoes. Assim, obter uma abordagem que permita
+tratar nuvem de pontos em mais alto nvel pode
+reduzir o custo_computacional de diversas aplicacoes como deteccao de lugares XX, de mudancas
+(Andreasson et al., 2007).
+Nos campos de processamento de informacao
+e analise de dados, as Misturas de Gaussianas sao
+estudadas e aplicadas (Bishop, 2007). No contexto
+de nuvem de pontos tridimensionais surge como
+uma alternativa de modelagem, dada a complexidade tpica desse tipo de dado. Alem disso, ela
+ainda fornece um modelo probabilstico dos dados de maneira compacta (Drews Jr et al., 2010).
+Porem, uma das limitacoes e o alto custo_computacional para obter a mistura de uma nuvem
+tridimensional tpica, como mostrado em (Nunez
+et al., 2010).
+
+ISBN 978-85-8001-069-5
+
+Quando o numero de componentes da Mistura de Gaussianas e conhecido a priori o problema e reduzido e o custo_computacional tambem, consequentemente. Nesse caso, pode-se aplicar o algoritmo Expectation-Maximization (EM)
+(Dempster et al., 1977). Embora, tal algoritmo
+nao garanta um mnimo global, ou seja, a melhor
+representacao. Ele tipicamente converge para modelos representativos, mesmo quando a inicializacao e aleatoria (Figueiredo and Jain, 2002).
+Porem, em nuvens de pontos tridimensionais
+adquiridas por sensores de uso tpico em robotica,
+como laser scanner, par estereo ou sensores de
+profundidade, nao se tem conhecimento algum sobre o numero de formas a serem modeladas, nem
+mesmo uma estimativa. Assim, de modo a ultrapassar essa limitacao, bem como a restricao de
+otimo local do algoritmo EM, foi proposto recentemente uma abordagem baseada em split-andmerge (Li and Li, 2009).
+Tal abordagem sofreu alteracoes de modo a
+melhor se aplicar ao presente problema. Ainda
+assim, esse metodo e dependente de alguma metrica que indique o momento exato para parar o
+
+3073
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+processo de split-and-merge. Logo, alguns criterios de selecao mais importantes da literatura serao comparados de modo a mostrar qual e mais
+adequado ao algoritmo proposto.
+Este trabalho esta dividido da seguinte maneira. Na Secao 2, sao discutidos os trabalhos
+para modelagem de nuvem de pontos. Na Secao 3, e feita uma breve revisao sobre Mistura de
+Gaussianas e sobre o algoritmo EM. Na Secao 4,
+e abordado o algoritmo proposto para estimar os
+parametros da Mistura. Na Secao 5, avalia o algoritmo e os criterios de selecao utilizados em alguns
+experimentos realizados com nuvens de pontos tridimensionais adquiridas em ambientes reais. Finalmente, na Secao 6, sao discutidas conclusoes e
+direcoes futuras.
+2
+
+Trabalhos Relacionados
+
+O problema de modelar nuvem de pontos tridimensionais e tratado em diferentes areas com destaque para a computacao grafica, visao_computacional e robotica. Dentro da computacao grafica,
+as abordagens tpicas utilizam triangulacao, de
+modo a construir malhas. Essas permitem uma representacao detalhada da nuvem, porem, quando
+nao se conhece a normal e a vizinhanca, sua construcao acaba ficando custosa. Outro problema que
+aparece e a presenca de rudo e outliers que corrompem a construcao. Em (Vieira et al., 2010) foi
+proposto um metodo para remocao de rudo em
+uma malha, com ela ja construda, o que embora
+melhore suas caractersticas ainda fica sujeito as
+dificuldades de obtencao.
+Outra abordagem para representar nuvem de
+pontos tridimensionais e a construcao de superfcies implcitas (Bloomenthal, 1997). Ele permite
+extrair as bordas das superfcies representadas por
+nuvem de pontos com custo_computacional muito
+baixo, como mostrado em (Vieira et al., 2012),
+alem de permitir operacoes sobre conjuntos e segmentacao de uma maneira eficiente. Embora seja
+um metodo interessante, em situacoes quando a
+superfcie nao e fechada o metodo pode encontrar
+dificuldade de representacao. Alem disso, o metodo utiliza uma grade_de_ocupacao tridimensional
+que pode restringir a representacao a um bounding
+box limitado.
+O uso de formas basicas (Schnabel et al.,
+2007), quadricas (Pauling et al., 2009) e superquadricas (Drews Jr et al., 2010) pode ser
+uma possibilidade, embora o custo de estimacao
+seja elevadssimo, sendo assim restrito a um pequeno subconjunto como mostrado em (Drews Jr
+et al., 2010).
+Nesse contexto, agrupamentos utilizando misturas de Gaussianas surgem como uma alternativa. Embora as maiores restricoes ao uso desse
+metodo estejam relacionadas com o tempo de processamento, principalmente pelo uso do algoritmo
+
+ISBN 978-85-8001-069-5
+
+EM (Dempster et al., 1977). Alem disso, o metodo sofre com a necessidade de se conhecer previamente o numero de Gaussianas presentes nos
+dados, o que nao e conhecido tipicamente.
+Nesse caso, algumas abordagens como o trabalho de (Figueiredo and Jain, 2002) propoem metodologias iterativas que sao muito custosas para
+grandes volumes de dados, caso das nuvem de
+pontos tridimensionais. O problema de overfitting tambem e um problema, devido a suposicao
+da misturas de Gaussianas de que os dados foram
+gerados por fontes Gaussianas. Assim, o presente
+trabalho busca alternativas ao EM para estimar a
+mistura, bem como um criterio de selecao de um
+bom modelo (Hu and Xu, 2004).
+3
+
+Estimando Misturas de Gaussianas
+
+Uma breve revisao sobre mistura de Gaussianas e
+sobre o algoritmo de estimacao EM sera feita.
+3.1
+
+Mistura de Gaussianas
+
+Dado um conjunto X de variaveis aleatorias
+de dimensao d e uma Mistura de Gaussianas com
+K componentes. A funcao de densidade de probabilidade da Mistura pode ser definida por
+(X  xk ) 
+
+k
+X
+
+i (X  xi ),
+
+x  <d ,
+
+i1
+
+(1)
+onde cada i corresponde ao conjunto de parametros definidas pela i-esimoPcomponente, e i 
+K
+(0, 1)(i  1, 2, .., K), onde
+i1 i  1. O vetor k  (1 , 2 , ..., k , 1 , 2 , ..., k ) e o conjunto
+de todos os parametros da Mistura. Na mistura,
+cada componente (xi ) e uma funcao de probabilidade Gaussiana definido como
+(xi ) 
+
+1
+d
+2
+
+t
+
+1
+
+(2 )i 
+
+1
+2
+
+e 2 (xi )
+
+1
+i (xi )
+
+,
+
+(2)
+
+onde i e um vetor media e a i e a matriz de
+covariancia definida positiva e i  (i , i ) representa os parametros das Gaussianas.
+Especificamente, dado um conjunto de dados
+S  xt N
+t1 de uma Mistura de Gaussianas com
+tamanho N , os parametros de k sao estimados
+maximizando o logaritmo da seguinte funcao de
+verossimilhanca, a qual pode ser expressa como
+
+L(Sk )
+
+ logp(Sk )
+ log
+
+N
+Y
+
+(xt k )
+
+(3)
+
+t1
+
+
+
+N
+X
+t1
+
+log
+
+K
+X
+
+i (xt i).
+
+i1
+
+3074
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+3.2
+
+O Algoritmo EM
+
+O Expectation-Maximization (EM) (Dempster
+et al., 1977) e um algoritmo capaz de encontrar
+o maximo local da funcao de maxima_verossimilhanca das Misturas de Gaussianas. O EM possui
+duas etapas iterativas
+
+locais e obter o numero correto de Gaussianas da
+Mistura. Porem, uma dificuldade e determinar o
+criterio_de_parada do algoritmo. Logo, e feita uma
+comparacao entre tres criterios de selecao mais
+aceitos na literatura, identificando qual deles e o
+melhor para estimar a mistura de Gaussianas em
+uma Nuvem de Pontos, com overfitting de modelo.
+
+ E-Step Nessa etapa e determinada a probabilidade a posteriore de cada ponto pertencer a cada Gaussiana da Mistura, alem
+disso e feita uma nova estimativa para o valor da funcao de verossimilhanca, para tal
+sao utilizadas as equacoes 1 e 2. Uma pequena variacao foi usada denominada Deterministic Annealing EM (DAEM) (Ueda and
+Nakano, 1998), que realiza alteracoes apenas nesse passo do EM. Esse metodo adiciona um parametro 1  1, ) na equacao
+para calcular a probabilidade dos pontos, denominado temperatura, onde k e uma das K
+Gaussianas da mistura
+P (kxi )
+
+
+
+(k (xi , k ))
+. (4)
+PN
+( t1 k (xi , t ))
+
+A medida que 1 aumenta, P (kxi )  1N ,
+ou seja, um determinando ponto tende a pertencer a todas as Gaussianas com a mesma
+probabilidade. Geralmente se inicializa o  
+0.9 ate a convergencia, logo incrementa-se o
+valor de  em 0.05 ate o valor de   1.
+
+Figura 1 Visao Geral da Metodologia Proposta
+
+4.1
+ M-Step Nessa etapa, maximiza-se os valores das componentes da Mistura, com base
+nas probabilidades calculadas pela equacao
+4. A atualizacao dos valores das componente e dado pelas seguintes equacoes, para
+cada componente
+N
+
+k
+
+
+
+k
+
+
+
+k
+
+
+
+4
+
+1 X
+P (kxi ),
+N i1
+PN
+i1 P (kxi )xi
+,
+(5)
+PN
+i1 P (jxi )
+PN
+t
+i1 P (kxi )(xi  k )(xi  k )
+.
+PN
+i1 P (kxi )
+Abordagem proposta
+
+O presente trabalho se baseia em uma variacao do algoritmo EM, porem busca uma maneira de determinar o numero de componentes das
+Gaussianas K. A Figura 1 ilustra a abordagem
+proposta. Inicialmente, em uma etapa de preprocessamento, a nuvem de pontos e simplificada
+e rudos sao removidos usando a biblioteca PCL
+(Rusu and Cousins, 2011).
+Apos, e utilizada uma versao do algoritmo
+Split-EM (Li and Li, 2009) com uso do DAEM
+(Ueda and Nakano, 1998), para se evitar otimos
+
+ISBN 978-85-8001-069-5
+
+Pre-processamento de Nuvem de Pontos 3D
+
+O metodo utilizado se baseia em uma etapa previa de pre-processamento. Na qual, algoritmos
+de simplificacao e remocao de rudo das nuvens
+sao responsaveis por remover pontos redundantes
+e rudosos. Uma nuvem de pontos e uma estrutura de dados nao ordenada, na qual nao se tem
+informacao a respeito da topologia, assim esse problema de remocao torna-se difcil.
+Essas nuvens tambem possuem um grande
+quantidade de pontos, afetando assim o tempo de
+execucao de algoritmos, mesmo esses tendo baixa
+complexidade computacional. Alem disso, mesmo
+com sensores precisos como laser scanners modernos, existem outliers e rudo nas leituras, o que
+deve ser tratado visto que afetam em muito a estimativa da mistura de Gaussiana.
+Esse trabalho baseou-se no uso da biblioteca
+para fazer a manipulacao da nuvem de pontos chamada PCL (Rusu and Cousins, 2011), essa possui
+varios algoritmos para manipulacao, com implementacoes eficientes e estado-da-arte.
+Para diminuir a quantidade de pontos da nuvem, foi utilizado um algoritmo de simplificacao
+que utiliza Voxel Grid 3D (caixas 3D no espaco)
+(Rusu and Cousins, 2011), esse e utilizado para
+representar conjuntos de pontos da nuvem. Apos
+a criacao dos voxels, calcula-se o centroide dos
+mesmos, onde este ira substituir o conjunto de
+
+3075
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+pontos do respectivo voxel. Quanto maior o voxel maior sera o conjunto de pontos, consequentemente maior sera a simplificacao. O tamanho do
+voxel foi encontrado com base em experimentos,
+considerando para tal a resolucao do sensor utilizado nos mesmos. Os valores simplificam uma
+grande quantidade de pontos sem perder excessivamente informacao geometrica. Foram encontrados os seguintes valores, que indicam a largura do
+voxel no espaco (65cm no plano x, 65cm no plano
+y, 65cm no plano z ).
+Para remover os rudos e outliers, foi utilizado
+o algoritmo Statistical Outlier Removal proposto
+por (Rusu et al., 2008). Esse algoritmo propoe
+uma analise_estatstica sobre a vizinhanca de cada
+ponto, e remove aqueles que nao satisfazem o criterio proposto. Este baseia-se no calculo da distribuicao de probabilidade dos pontos. Para cada
+ponto, calcula-se a distancia media para todas as
+distribuicoes vizinhas que sao criadas. Assumindo
+que a distribuicao e uma distribuicao Gaussiana
+com media e desvio padrao. Todos os pontos cuja
+posicao estao fora dos intervalos definidos pelas
+distribuicoes, podem ser considerados como rudo
+ou outlier. Este algoritmo precisa de dois parametros para ser executada,a quantidade de distribuicoes e o desvio padrao das mesmas. Esse
+valores foram baseados em valores determinados
+por (Rusu et al., 2008). O numero de distribuicoes considerados e igual a 80 e o desvio padrao
+igual a 1.
+4.2
+
+Algoritmo do Split-EM
+
+Este trabalho propos uma alteracao no algoritmo
+SplitMerge-EM proposto por (Li and Li, 2009),
+para se adaptar melhor ao problema de estimar a
+mistura de gaussianas de uma nuvem de pontos
+tridimensional.
+Como foi comentando em secoes anteriores,
+nao se conhece a priori o numero de Gaussianas
+da Mistura. Assim, o trabalho propos a inicializacao da mistura inicial, com apenas um componente, com  igual a 1,  igual a media dos pontos
+da nuvem e  a matriz de covariancia da nuvem
+de pontos.
+Para se obter o numero correto de Gaussianas
+da Mistura, divide-se dinamicamente as Gaussianas que nao foram estimadas corretamente. Para
+isso, e necessaria uma distincao entre a estimacao
+correta e a errada. Utiliza-se um criterio de separacao de uma Gaussiana com base em entropia.
+Entropia e uma medida de desordem de um
+sistema. E aplicada em campos da fsica, teoria da
+informacao e matematica (P. Antonio and Juan,
+2006). Em geral, a entropia de uma variavel X
+pode ser dada pela seguinte equacao
+H(X)  Ex log(p(X)).
+
+(6)
+
+De forma similar, para um ponto que per-
+
+ISBN 978-85-8001-069-5
+
+tence a uma Gaussiana Y , esta tem uma entropia maxima em relacao a todas as distribuicoes de
+igual variancia. A entropia maxima e dada pela
+seguinte equacao
+1
+Hmax   log(2)d 
+2
+
+(7)
+
+Dado um conjunto de pontos S  xi N
+i1 e a
+densidade local estimada (xi ) da i-esima componente da mistura. A entropia da i-esima componente e a entropia maxima da i-esima componente
+podem ser representadas pelas seguintes equacoes,
+respectivamente
+
+Hi
+i
+Hmax
+
+
+
+
+
+Ni
+1 X
+log(xt i )
+Ni t1
+
+1
+  log(2)d 
+2
+
+(8)
+(9)
+
+A taxa de Spi entre Hi (X) e Hmax i(X), pode
+ser usada para medir a diferenca entre a densidade estimada anteriormente (x k ) e a densidade atual (xi ) da i-esima componente da mistura. A Gaussiana da mistura que possuir a menor
+taxa e que for menor que 1, sera dividida em outras duas Gaussianas, com split  2i , as medias
+serao calculadas usando o algoritmo do K-means
+(Ueda and Nakano, 1998) e a matriz de covariancia sera calculada usando a Equacao 5.
+O algoritmo proposto neste trabalho tem a
+seguinte estrutura
+1. Iniciar a mistura de Gaussianas com 1 componente, atualizar os valores usando o EM e
+computar o valor de Lk .
+2. Split Dado o k atual e os parametros k ,
+separar a Gaussiana de menor taxa Spi , em
+duas Gaussianas. Entao usar o EM para atualizar os parametros da split e para a mistura atual de k+1 Gaussianas. E computar o
+valor de Lsplit .
+3. Se Lsplit > Lk , aceita a nova mistura, e
+atualiza a mistura para 0k+1 e volta para o
+passo anterior.
+A cada ciclo atualiza-se os valores da mistura,
+identificando qual Gaussiana ira ser separada, baseado na medida de entropia. No final do ciclo
+utiliza-se um criterio de selecao para identificar
+se a mistura esta representando bem a nuvem de
+pontos.
+4.2.1
+
+Criterios de Selecao
+
+Os criterios de selecao sao utilizados na literatura
+para se determinar quando obtem-se um bom modelo, onde o numero de parametros e reduzido e
+a representacao e otimizada. Na verdade, esses
+
+3076
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+metodos buscam um bom trade-off entre numero
+de parametros do modelo e precisao de representacao.
+Para o caso de modelos de misturas, o objetivo
+e minimizar a equacao abaixo
+k  argmin(L(Sk )),
+
+(10)
+
+onde L(Sk ) e o resultado do criterio de selecao e
+k e a mistura de Gaussianas com k componentes.
+Esses criterios tem a seguinte forma
+L(Sk )  log(p(Sk )) + P (k), onde S e
+o conjunto de dados, no caso a nuvem, e P e
+uma funcao de penalizacao que e incrementada
+a medida que o k aumenta. Estes tem como
+caracterstica fundamental otimizar uma funcao
+que relaciona o logaritmo da verossimilhanca
+(calculado com o EM), com o numero de parametros da mistura, afim de evitar o overfitting. Tres
+criterios mostrados abaixo sao avaliados neste
+trabalho.
+ BIC (Bayesian Information Criterion) (Fraley
+and Raftery, 1998)
+n
+L(Sk )  logp(Sk ) + ln(N ). (11)
+2
+
+Figura 2 Plataforma de Experimentos robo Robex e o sistema de percepcao 3D baseado no scanner laser Hokuyo URG-30LX.
+
+ MDL (Minimum Description
+(Figueiredo and Jain, 2002)
+
+5.1
+
+Length)
+
+L(Sk )  logp(Sk ) + (12)
+n
++
+2
+
+k
+X
+
+N i
+k
+N
+k(n + 1)
+log(
+)  log( ) 
+.
+12
+2
+2
+2
+i1
+
+ AIC (Akaike Information Criterion) (Akaike,
+1974)
+L(Sk )  logp(Sk ) + 2n.
+
+(13)
+
+Cada um desses criterios possuem uma equacao que o caracteriza. O n e o numero de parametros da mistura (Ververidis and Kotropoulos, 2005) e o N e a quantidade de pontos na
+nuvem. Esses criterios sao aplicados dentro do
+algoritmo do Split-EM como condicao de parada.
+5
+
+Experimentos
+
+Resultados com a PCL
+
+Nesta secao iremos mostrar os resultados que foram obtidos com a PCL, na simplificacao e remocao de rudos de uma nuvem de pontos, capturada
+dem um ambiente real pelo robo Robex.
+Na Figura 3 tem-se a nuvem de pontos inicial
+que foi capturada com o robo Robex, com todos
+os pontos. Depois de fazer a simplificacao e remocao dos rudos com a PCL, obtem-se a nuvem de
+pontos da Figura 4.
+Na tabela 1 ilustra alguns dados que foram gerados, analisando o numero de iteracoes do EM e
+o tempo de execucao para estimar a mistura com e
+sem a PCL. Com base nos dados identificamos que
+com o uso da PCL, obteve-se uma grande reducao
+no custo_computacional e tambem no numero de
+iteracoes do algoritmo EM padrao.
+
+Os experimentos foram realizados em um PC
+com processador Intel Core2Duo 2.4GHz, memoria DDR2 4GB e sistema operacional Ubuntu
+11.10. A plataforma de robotica_movel utilizadas
+para capturar as nuvens de pontos tridimensionais
+em ambientes reais foi o sensor 3D do robo Robex
+(Gutierrez et al., 2011). Este sensor consiste de
+um laser Hokuyo URG-30LX rotacionado por um
+motor_de_passo, onde sua resolucao e configuravel
+pelo sistema de percepcao que o robo possui. Fig.
+2 ilustra o robo Robex e um sensor 2D de baixocusto, baseado no laser de alcance 2D Hokuyo 1 .
+1 Uma simples camera USB e usada para adquirir as
+informacoes RGB de cada ponto 3D, mas esta informacao
+nao e usada no algoritmo de estimacao.
+
+ISBN 978-85-8001-069-5
+
+Figura 3 Nuvem de Pontos com 88.642 pontos.
+
+3077
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 4 Nuvem de Pontos depois de ser feita
+a simplificacao e remocao dos rudos com 12.219
+pontos.
+
+Tabela 1 Resultados com a PCL.
+Iteracoes EM Tempo (seg)
+Sem PCL
+475
+120.10
+Com PCL
+215
+5.45
+
+5.2
+
+Comparacao entre os Criterios de Selecao
+
+Foram capturadas duas nuvens de pontos em ambientes reais com o robo Robex para fazer os experimentos de validacao do algoritmo proposto e
+dos criterios de selecao. Foi utilizado o algoritmo
+proposto para estimar as misturas de Gaussianas
+junto com cada criterio de selecao. Na figuras 5 e
+6 sao mostradas imagens do ambiente que foi capturada a Nuvem de Pontos, de maneira a permitir um melhor entendimento da nuvem de pontos
+adquirida. Nas figuras, sao mostrados resultados
+das mistura de Gaussianas que foram estimadas
+usando cada criterio de selecao. Os elipsoides coloridos nas imagens correspondem as Gaussianas
+2
+.
+No experimento A, obtido em um ambiente
+de escritorios no qual foi colocada uma caixa mostrado na Figura 5, o criterio BIC encontrou uma
+Mistura com 15 Gaussianas, o AIC com 15 Gaussianas e o MDL com 8 Gaussianas. Pode-se notar
+que a representacao obtida pelo MDL e mais compacta mas mesmo assim, consegue representar os
+objetos presentes nos dados de maneira distintiva.
+No experimento B, obtido em um ambiente de
+escritorios no qual foi colocada uma pessoa mostrado na Figura 6. O criterio BIC encontrou uma
+Mistura com 15 Gaussianas, o AIC com 15 Gaussianas e o MDL com 10 Gaussianas. Embora, a
+representacao obtida pelo MDL nao seja tao compactada quanto no resultado anterior, ainda assim
+e menor e mais representativa.
+Assim, o criterio que melhor identificou as
+misturas foi o MDL proposto por (Figueiredo and
+2 As imagens das Misturas de Gaussianas foram geradas
+utilizando o software Matlab, onde foram utilizados 1.5
+desvios padroes para definir o volume das Gaussianas
+
+ISBN 978-85-8001-069-5
+
+Figura 5 Experimento A a) Imagem de uma
+sala com uma caixa, b) Nuvem de Pontos 3D do
+ambiente, capturada com o robo Robex, c) Mistura estimada com BIC, d) Mistura estimada com
+AIC, e) Mistura estimada com MDL.
+
+Jain, 2002). Este conseguiu identificar uma mistura que representa bem a nuvem de pontos, com
+um numero menor de componentes em relacao aos
+outros criterios analisados.
+A Tabela 2 ilustra alguns dados com relacao
+ao numero de Iteracoes do EM e ao tempo de estimacao da mistura.
+Tabela 2 Comparacao entre os Criterio de Selecao.
+CriteriosExp.
+BIC
+MDL
+AIC
+
+Iteracoes EM
+A
+B
+404
+415
+291
+171
+375
+345
+
+Tempo
+A
+13.1
+8.69
+13.71
+
+(seg)
+B
+14.72
+5.37
+15.01
+
+Com base nos dados da tabela 2, confirmou-se
+que o MDL e o melhor criterio de selecao dentre
+os outros que foram comparados. Este conseguiu
+obter a melhor mistura de Gaussianas das Nuvens
+de Pontos, com o menor numero de Gaussianas e
+com o menor custo_computacional.
+
+3078
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+MDL (Figueiredo and Jain, 2002), BIC (Fraley
+and Raftery, 1998) e AIC (Akaike, 1974). O MDL
+foi o que obteve o melhor resultado nos experimentos, sendo capaz de identificar uma boa mistura
+Mistura com menor custo_computacional.
+Trabalhos futuros serao guiados na implementacao eficiente do algoritmo utilizando paralelismo
+em placas graficas, na utilizacao do presente algoritmo para representacao de nuvem de pontos 3D
+servindo como base para algoritmos de SLAM e
+de deteccao_de_mudanca. Alem disso, um estudo
+mais detalhado da precisao do presente metodo
+tambem sera avaliado, bem como a utilizacao de
+algoritmos incrementais.
+Agradecimentos
+Este trabalho contou com o apoio da
+ANEELCEEE-D, FURG, dos colegas do
+NAUTEC - Grupo de Automacao e Robotica
+Inteligentes da FURG e do Robolab - Robotics
+and Artificial Vision Laboratory da Universidad
+de Extremadura.
+Referencias
+Akaike, H. (1974). A new look at the statistical
+model identification, IEEE Transactions on
+Automatic Control 19(6) 716  723.
+Figura 6 Experimento B a) Imagem de uma
+sala com uma pessoa, b) Nuvem de Pontos 3D do
+ambiente, capturada com o robo Robex, c) Mistura estimada com BIC, d) Mistura estimada com
+AIC, e) Mistura estimada com MDL.
+
+6
+
+Conclusoes
+
+Este trabalho propos uma metodologia para representacao de nuvem de pontos tridimensionais
+baseada em mistura de Gaussianas. Algoritmos
+no estado-da-arte foram utilizados para realizar
+um pre-processamento na nuvem de pontos tridimensionais, onde se consegue simplificar uma
+grande quantidade de pontos sem perda excessiva
+de informacao geometrica, com custo_computacional baixo.
+Um novo algoritmo baseado em ExpectationMaximization, metodologia split-and-merge e otimizacao foi proposta para estimar uma mistura
+de Gaussianas. Esta nao sofre com problemas de
+mnimos locais, alem de ser eficiente na estimacao, visto os tempos considerados em trabalhos
+no estado-da-arte (Drews Jr et al., 2010).
+Alem disso uma comparacao entre criterios de
+selecao, utilizados para identificar a melhor Mistura de Gaussianas de uma Nuvem de Pontos 3D,
+tambem foi efetuado. Os algoritmos escolhidos sao
+os algoritmos mais utilizados na literatura da area
+
+ISBN 978-85-8001-069-5
+
+Andreasson, H., Magnusson, M. and Lilienthal,
+A. J. (2007). Has something changed here?
+autonomous difference detection for security
+patrol robots, Proceedings of the IEEERSJ
+International Conference on Intelligent Robots and Systems (IROS), pp. 34293435.
+Bishop, C. M. (2007). Pattern Recognition and
+Machine Learning, Springer.
+Bloomenthal, J. (1997). Introction to Implicit Surfaces, Morgan Kaufmann Publishers Inc.
+Dempster, A. P., Laird, N. M. and Rubin, D. B.
+(1977). Maximum Likelihood from Incomplete Data via the EM Algorithm, Journal of the Royal Statistical Society. Series B
+(Methodological) 39(1) 138.
+Drews Jr, P., Nunez, P., Rocha, R., Campos, M.
+and Dias, J. (2010). Novelty detection and
+3D shape retrieval using superquadrics and
+multi-scale sampling for autonomous mobile
+robot, Proceedings of the IEEE International Conference on Robotics and Automation
+(ICRA), Anchorage, Alaska, USA, pp. 3635
+3640.
+Figueiredo, M. and Jain, A. (2002). Unsupervised learning of finite mixture models, IEEE
+Transactions on Pattern Analysis and Machine Intelligence 24(3) 381396.
+
+3079
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Fraley, C. and Raftery, A. E. (1998). How
+Many Clusters? Which Clustering Method?
+Answers Via Model-Based Cluster Analysis,
+The Computer Journal 41(8) 578588.
+Gutierrez, M., Martineta, E., Sanchez, A., Rodrguez, R. and Nunez, P. (2011). A costefficient 3D sensing system for autonomous
+mobile robots, Proc. of XII Workshop of Physical Agents 2011 (WAF2011), Albacente,
+Spain.
+Hu, X. and Xu, L. (2004). Investigation on several
+model selection criteria for determining the
+number of cluster, Neural Information Processing - Letters  Reviews 4(1) 110.
+Li, Y. and Li, L. (2009). A novel split and merge
+EM algorithm for Gaussian mixture model,
+Fifth Internacional Conference on Natural
+Computation, 2009. ICNC 09 6 479483.
+
+Ververidis, D. and Kotropoulos, C. (2005). Emotional speech classification using gaussian mixture models, Circuits and Systems, 2005. ISCAS 2005. IEEE International Symposium
+on, pp. 2871  2874 Vol. 3.
+Vieira, A. W., Alves Neto, A., Guimaraes Macharet, D. and Campos, M. F. M. (2010). Mesh
+denoising using quadric error metric, XXIII
+Brazilian Symposium on Computer Graphics
+and Image Processing (SIBGRAPI10), Gramado, RS, Brazil.
+Vieira, A. W., Drews Jr., P. and Campos, M.
+(2012). Efficient change detection in 3D environment for autonomous surveillance robots
+based on implicit volume, The 2012 IEEE International Conference on Robotics and Automation, (ICRA12).
+
+Nunez, P., Drews Jr, P. Bandera, A., Rocha, R., Campos, M. and Dias, J. (2010).
+Change detection in 3D environments based on Gaussian Mixture Model and robust
+structural matching for autonomous robotic
+applications, Proceedings of IEEERSJ International Conference on Intelligent Robots
+and Systems (IROS), pp. 26332638.
+P. Antonio, E. F. and Juan, M. S. (2006). Color image segmentation through unsupervised gaussian mixture models, Lecture Notes
+in Computer Science 4140 149158.
+Pauling, F., Bosse, M. and Zlot, R. (2009). Automatic segmentation of 3D laser point clouds
+by ellipsoidal region growing, in S. Scheding
+(ed.), Australasian Conference on Robotics
+and Automation (ACRA).
+Rusu, R. B. and Cousins, S. (2011). 3D is here
+Point Cloud Library (PCL), IEEE International Conference on Robotics and Automation
+(ICRA), Shanghai, China.
+Rusu, R., Marton, Z., Blodow, N., Dolha, M.
+and Beetz, M. (2008). Towards 3D point
+cloud based object maps for household environments, Robotics and Autonomous Systems
+56(11) 927941.
+Schnabel, R., Wahl, R. and Klein, R. (2007). Efficient RANSAC for point-cloud shape detection, Computer Graphics Forum 26(2) 214
+226.
+Ueda, N. and Nakano, R. (1998). Deterministic annealing EM algorithm, Neural Networks
+11(2) 271  282.
+
+ISBN 978-85-8001-069-5
+
+3080

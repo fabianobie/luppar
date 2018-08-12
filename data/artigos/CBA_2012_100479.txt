@@ -1,0 +1,799 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+SÍNTESE E IMPLEMENTAÇÃO DE CONTROLE SUPERVISÓRIO MONOLÍTICO PARA UM ICE
+MAKER
+*
+
+*
+
+DANIEL N. MAAS , ALEXANDRE J. PINOTTI , ANDRÉ B. LEAL
+
++
+
++
+
+Departamento de Engenharia Elétrica, Universidade do Estado de Santa Catarina
+Campus Universitário Prof. Avelino Marcante sn, Bom Retiro, 89223-100, Joinville, SC, Brasil
+*
+
+Whirlpool Latin America
+Rua Dona Francisca 7200, Zona Industrial, 89219-900, Joinville, SC, Brasil
+E-mails noronha.maas@gmail.com, ajpinotti@gmail.com, leal@joinville.udesc.br
+Abstract This paper presents the implementation of a controller that automatizes the ice cubed production in a domestic refrigerator, known as Ice Maker, using the Discrete Event System Supervisory Control Theory through the monolithic approach and compares
+it with an implementation based on state machine. The work explores the system and specifications modeling and synthesizes a su pervisor that attends the specifications. The supervisor was implemented in a microcontroller using ANSI-C language and embedded
+to control a real system.
+Keywords Discret event system, supervisory control, monolithic supervisor, microcontroller, ice_maker
+Resumo Este artigo apresenta a implementação de um controlador para um dispositivo que automatiza a produção de gelos em
+cubos em um refrigerador doméstico, conhecido como Ice Maker, utilizando a Teoria de Controle Supervisório a Sistemas de
+Eventos Discretos através da abordagem monolítica e mostra uma comparação com a técnica de implementação baseada em máquina
+de estados. O trabalho explora a modelagem do sistema e das especificações de controle e síntetiza um supervisor que atende as
+especificações. O supervisor foi implementado em um microcontrolador utilizando linguagem ANSI-C e embarcado para controlar
+um dispositivo real.
+Palavras-chave 
+
+1
+
+Introdução
+
+A Teoria de Controle Supervisório (Ramadge e
+Wonham, 1989) visa resolver problemas de controle
+empregando
+autômatos finitos para obter o
+supervisor minimamente restritivo que respeite as
+especificações de controle.
+Um sistema a ser controlado ou planta
+corresponde, em geral a um conjunto de subsistemas
+arranjados segundo uma distribuição
+especial dada.
+Cada um desses sub-sistemas, apresentam
+isoladamente um comportamento básico e único,
+mas que, quando atuando em conjunto com os
+demais sub-sistemas, deve ser restringido de forma a
+cumprir com a função coordenada a ser executada
+pelo sistema. A composição dos comportamentos de
+cada sub-sistema pode ser identificado como planta
+(G) e a composição do conjunto de restrições de
+coordenação como especificação de controle (E).
+De modo a fazer com que os sub-sistemas atuem
+de forma coordenada, indroduz-se um agente de
+controle denominado Supervisor, denotado por S.
+O supervisor S interage com a planta G, numa
+estrutura de malha_fechada onde S observa os
+eventos ocorridos em G e define quais eventos dentre
+os fisicamente possíveis de ocorrer no estado atual,
+são permitidos de ocorrer a seguir. O conjunto de
+eventos habilitados num dado instante pelo
+supervisor define uma entrada de controle. Esta
+
+ISBN 978-85-8001-069-5
+
+entrada é atualizada a cada ocorrência de um novo
+evento observado em G (Cury, 2001).
+2 Problema Motivador
+Para atender um mercado consumidor cada vez
+mais exigente e competitivo, é comum hoje
+encontrar refrigeradores que possuam um sistema
+automatizado para produção de gelo em cubo,
+comumente chamado de Ice Maker (Máquina de
+fazer gelo).
+Esse dispositivo deve garantir a produção
+constante de gelo bem como identificar quando a
+capacidade máxima para armazenamento de gelo
+pronto foi alcançada e assim interromper
+temporariamente a produção, até que se tenha
+espaço disponível para armazenamento novamente.
+Deve também considerar as variáveis envolvidas
+para se garantir que se tenha gelo pronto e questões
+de segurança na interação do consumidor com esse
+dispositivo.
+A metodologia normalmente usada na indústria
+para se controlar esse tipo de dispositivo baseia-se
+em modelagem por máquinas de estado, que
+posteriormente é transcrita em uma linguagem de
+baixo nível, C (Ritchie, 1988) ou C++ (Stroustrup,
+1997), por exemplo, para ser embarcada em um
+microcontrolador.
+
+5294
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Em contrapartida a tal método este trabalho
+apresenta uma implementação de controle para esse
+dispositivo, utilizando a Teoria de Controle
+Supervisório (TCS).
+A TCS vem sendo aplicada em implementações
+de
+controle
+em
+sistemas
+embarcados
+microcontrolados ao longo dos últimos anos. O
+objetivo é se obter um procedimento formal de
+modelagem, que permita o desenvolvimento de
+soluções confiáveis
+possibilitando uma maior
+flexibilidade de criação e variação de plataformas e
+ainda a possibilidade de geração automática de
+código. Dentre esses trabalhos podemos citar Silva
+et al (2010) e no controle de eletrodomésticos
+Teixeira et al (2006, 2008).
+2.1 Descrição do Ice Maker
+O Ice Maker que cuja modelagem é apresentada
+nesse artigo é composto por um Ice Tray (bandeja de
+gelo), um sensor de temperatura, um motor, um Bin
+Level Arm (braço de nível da vasílha), um Ice Bin
+(vasilha de gelo), uma bomba e um sensor de
+Bin(vasilha) presente, conforme ilustrado na Figura
+1. A seguir é apresentado uma breve descrição da
+dinâmica de funcionamento do Ice Maker em
+questão.
+
+Figura 1. Sistema do Ice Maker
+
+Quando acionada, a bomba drena a água do
+Container (reservatório) até o Ice Tray, onde
+permanecerá até que o sensor de temperatura acuse
+que a temperatura de referência de gelo pronto foi
+atingida. Em seguida, o motor gira o Ice Tray para
+que o gelo seja desenformado e colocado no Ice Bin.
+Durante o giro do Ice Tray o Bin Level Arm checa
+se o nível máximo de gelo no Ice Bin já foi atingido.
+Caso já tenha sido atingido, o motor retornará para a
+posição inicial, abortando o processo de desenformar
+o gelo. O motor não é acionado novamente até que o
+tempo para se realizar uma nova tentativa seja
+atingido.
+Porém, caso o nível máximo de gelo no Ice Bin
+ainda não tenha sido atingido o motor continuará o
+movimento para desenformar o gelo. Uma vez
+
+ISBN 978-85-8001-069-5
+
+desenformado, o motor retornará o Ice Tray para a
+posição inicial e um novo ciclo se iniciará com o
+acionamento da bomba.
+2.2 Detalhamento do Funcionamento do Ice Maker
+O diagrama de estados da Figura 2 ilustra o
+comportamento do Ice Maker. Uma descrição
+detalhada de cada etapa, considerações de controle,
+termos e definições que serão adotados neste artigo,
+são apresentado apresentados a seguir.
+Assim que habilitado para o uso, o Ice Maker
+realiza um movimento de homing (posicionamento
+inicial) para garantir a posição inicial do Ice Tray
+(estado IMHOMMING). Durante esse processo
+verificasse através de um sensor a presença do Ice
+Bin, caso o sensor não identifique sua presença, o
+Ice Maker irá para um estado de espera
+(IMHOMMINGPAUSED) permanecendo nesse
+estado até que a presença do Ice Bin seja identificada
+pelo sensor.
+Com o auxílio da bomba a água é retirada do
+container e levada até o Ice Tray. O tempo em que
+essa bomba fica ligada determina o volume de água
+necessário para se encher completamente o Ice Tray.
+Para esse processo se define o estado IMFILLING.
+Com o Ice Tray abastecido, é iniciado o
+processo de congelamento da água (estado
+IMFREEZING). Esse processo se mantém até que
+a temperatura no sensor seja inferior a uma dada
+temperatura de referência. Quando isso ocorre, temse gelo pronto no Ice Tray , levando o Ice Maker
+para o estado de IMICEREADY. Neste momento
+o sistema está pronto desenformar o gelo e
+dispensá-lo no Ice Bin . Porém o gelo só pode ser
+dispensado no Ice Bin se o mesmo estiver
+devidamente posicionado, indicado pelo sensor de
+Ice Bin presente. Caso o Ice Bin não esteja presente,
+o Ice Maker permanecerá no estado de
+IMICEREADY.
+Quando
+o
+processo
+de
+dispensamento
+do
+gelo
+inicia
+(estado
+IMHARVESTING), o Bin Level Arm checa o nível
+de gelo presente no Ice Bin, caso a quantidade seja
+inferior a quantidade máxima, o dispensamento do
+gelo é completado, caso contrário, o Ice Maker
+retorna para o estado de IMICEREADY, e somente
+após o tempo de espera para uma nova tentativa
+tiver esgotado, um novo dispensamento será tentado.
+Uma vez feito o dispensamento, o Ice Maker
+retorna para o estado IMFILLING e um novo ciclo
+se inicia.
+Sempre que o Ice Maker estiver no estado
+IMICEREADY, caso a temperatura fique acima da
+temperatura de referência, o Ice Maker retorna para
+o estado de congelamento (IMFREEZING), até que
+a condição de temperatura seja novamente satisfeita.
+Se
+durante
+o
+dispensamento
+(IMHARVESTING) o Ice Bin for removido, o Ice
+Maker interrompe o movimento de dispensamento
+
+5295
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+indo
+para
+um
+estado
+de
+espera
+(IMHARVESTINGPAUSED), até que o Ice Bin
+seja devidamente recolocado.
+
+(d)- Sensor de Temperatura
+(e)- Chave de Ice Bin PresenteNão Presente
+(f)- Chave de Nível do Ice Bin.
+A lista de eventos e seus significados é descrito
+na Tabela 1
+
+Figura 3. Modelo Ice Maker
+Figura 2. Funcionamento do Ice Maker
+
+3 Síntese do Supervisor
+A metodologia para a síntese dos supervisores
+ótimos  minimamente restritivos e não bloqueantes
+ proposta por Ramadge e Wonham (1989)
+segue três etapas modelagem da planta a ser
+controlada, modelagem das especificações a serem
+respeitadas e síntese de uma lógica de controle
+ótima. Nas subseções seguintes são descritas estas
+etapas.
+3.1 Modelagem da Planta
+
+Tabela 1. Lista de Eventos
+Sigla
+IMEN
+IMHM
+IMHMP
+IMFIL
+IMFRZ
+IMIR
+IMHVT
+IMHVTP
+TON
+TOFF
+PON
+POFF
+TA
+TB
+BP
+BNP
+BF
+BNF
+
+Evento
+IMEnabled
+IMHoming
+IMHommingPaused
+IMFilling
+IMFreezing
+IMIceReady
+IMHarvesting
+IMHarvestingPaused
+TimerOn
+TimerOff
+PumpOn
+PumpOff
+TempAbove
+TempBelow
+BinPresent
+BinNotPresent
+BinFull
+BinNotFull
+
+O modelo do Ice Maker foi dividido em 6 subsistemas, mostrados na Figura 3, sendo estes
+(a)- Estados do Ice Make
+(b)- Temporizador de Ice Bin Cheio
+(c)- Bomba
+
+ISBN 978-85-8001-069-5
+
+5296
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+3.2 Modelagem das Especificações
+Para garantir a coordenação dos sub-sistemas de
+modo a atender o comportamento desejado descrito
+na Seção 2.1, foram geradas 8 especificações de
+controle, descritas a seguir
+E1 (Figura 4) Se um evento de IMFilling
+ocorrer, o evento de IMFreezing só será permitido
+após ligar e desligar a bomba. A bomba não pode ser
+ligada sem que tenha ocorrido o evento de
+IMFilling.
+E2 O Timer só pode ser iniciado após ocorrer
+um evento de BinFull. Na ocorrência do evento
+BinFull, devem ser proíbidos os eventos IMFilling
+e IMHarvesting, porém IMIceReady deve ser
+permitido, conforme modelado na Figura 4.
+E3 (Figura 5) Ocorrendo o evento de
+BinNotPresent,
+os
+eventos
+IMFilling,
+IMHomming, IMIce Ready e IMHarvesting
+devem ser proibidos e somente os eventos de
+IMHommingPaused
+e
+IMHarvestingPaused
+devem ser permitidos.
+E4 (Figura 5) Proíbe o início do Timer
+(temporizador) antes da ocorrerência de um evento
+IMHarvesting.
+E5 (Figura 6) Proíbe a ocorrência de
+IMHomming sem antes ter ocorrido um evento de
+IMEnable e BinPresente.
+E6 Proíbe a ocorrência de IMFilling sem antes
+ter ocorrido um evento de IMHomming
+ou
+BinNotFull.
+Assim
+como
+proíbe
+IMHarvestingPaused enquato não há geração do
+evento IMHarvesting. Por fim,
+o evento
+IMHommingPaused é proibido sem que haja
+ocorrência do evento IMHomming, conforme
+modelado na Figura 6.
+E7 Proíbe IMHarvesting e IceReady se o
+evento de TempAbove ou PumpOff ocorrer, além de
+proibir o evento IMFreezing se um evento de
+TempAbove ou PumpOff não ocorrer, conforme
+modelado na Figura 7
+E8 (Figura 7) Proíbe a geração do evento Ice
+Ready sem antes ocorrer um evento de TempBelow
+
+em um autômato
+de 464 estados com 2236
+transições.
+Por fim, calculou-se a máxima linguagem
+controlável, denotada SupC(G,K) e obteve-se um
+autômato de 464 estados com 2236 transições, que
+neste case é o próprio K, (SupC(G,K)  K). Logo
+não há nenhum mal estado em K.
+
+Figura 4. Especificações de Controle E1 e E2
+
+3.2 Cálculo do Supervisor
+Com o auxílio do software IDES (2008),
+primeiramente foi determinado o autômato (E)
+formado pela composição síncrona das 8
+especificações de controle.
+(E  E1E2E3E4E5E6E7E8), que resultou em
+um autômato de 904 estados com 8587 transições.
+Em seguida, determinou-se a composição
+síncrona dos modelos das planta (Cury, 2001) (G 
+G1G2G3G4G5G6) , que resultou em um
+autômato G de 256 estados com 1920 transições.
+A composição síncrona de G com E, para
+obentencão da linguagem alvo (K GE), resultou
+
+ISBN 978-85-8001-069-5
+
+Figura 5. Especificações de Controle E3 e E4
+
+5297
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+4 Implementação do Surpevisor
+A implementação do Supervisor calculado, foi
+realizada em um microcontrolador STM8S207 de
+128KB de memória Flash, utilizando linguagem
+ANSI-C.
+A implementação do supervisor segue a
+estrutura mostrada na Figura 8. O módulo do
+software denominado Automata Player (Jogador de
+Autômato) contém as definições dos estados do
+modelo do supervisor, gerencia e manipula todas as
+transições.
+
+Figura 8. Estrutura do Software de Implementação do Supervisor
+
+Figura 6. Especificações de Controle E5 e E6
+
+No módulo Automata Tasks (Tarefas do
+Autômato), foram implementadas as funções
+responsáveis por executar as tarefas relacionadas
+com os eventos controláveis. A Figura 9 lista o
+protótipo dessas funções.
+No
+módulo
+Events(Eventos),
+foram
+implementados os métodos para ler e colocar em um
+buffer todos os eventos da planta, descritos na
+Tabela 1.
+4.1 Sincronização Inexata
+
+Figura 7. Especificações de Controle E7 e E8
+
+ISBN 978-85-8001-069-5
+
+Para se evitar o problema de sincronização
+inexata (Fabian e Hellgren, 1998) entre supervisor e
+planta, o evento controlável só é gerado após a
+tarefa relacionada a esse evento ter sido executada,
+assim o supervisor somente evolui de estado se a
+planta realmente executou a tarefa. Caso a tarefa
+requisitada pelo supervisor não tenha sido executada
+pela planta devido a ocorrência de um evento não
+controlável, o evento gerado será o do evento não
+controlável e não do evento controlável, assim
+supervisor e planta estarão sempre em sincronismo.
+Na ocorrência de um evento não controlável
+durante a execução de uma tarefa de evento
+controlável, cujo evento somente será gerado ao
+finalizar a tarefa, supervisor e planta seguirão
+caminhos
+inicialmente
+diferentes,
+porém
+convergirão para o mesmo estado, mantendo o
+sincronismo. Essa propriedade é abordada por Basile
+e Chiacchio (2007). Um trecho do supervisor
+mostrado
+na
+Figura
+10,
+demostra
+esse
+comportamento.
+Por exemplo, no caso em que o supervisor
+esteja com o estado 3 ativo o único evento
+controlável permitido neste estado é o evento TON.
+
+5298
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Assim a tarefa relacionada a esse evento será
+executada,
+neste
+caso
+a
+função
+void
+SetBinFullRetryTimer(void), tal tarefa
+requisita que a planta inicie o timer. Apenas após a
+transição na planta ocorrer (timer já iniciado) será
+gerado o evento TON, fazendo o supervisor transitar
+para o estado 7. Caso o evento não contolável BNF
+ocorra antes que a tarefa relativa a TON seja
+completada, a planta irá gerar o evento de BNF e
+não de TON, fazendo o supervisor transitar para o
+estado 8, porém quando a tarefa relativa ao timer for
+finalizada, a planta irá gerar o evento TON, fazendo
+o supervisor transitar para o estado 14. Partindo do
+estado 3, a caminho esperado seria estado 7, com a
+ocorrência de TON e em seguida o estado 14, com a
+ocorrência de BNF, porém o caminho seguido foi o
+estado 8 devido a ocorrência de BNF e em seguida o
+estado 14, devido ao evento TON, contudo a estado
+final para ambos caminhos foi o estado 14,
+mantendo o sincronismo entre planta e supervisor.
+
+Figura 9. Protótipo das funções que implementam as tarefas
+relacionadas aos eventos controláveis
+
+mesmo, dizemos que o supervisor é insensível ao
+entrelaçamento de eventos não controláveis.
+O supervisor aqui implementado, apresenta essa
+característica, conforme mostrado na Figura 10.
+Por exemplo, para o caso em que o supervisor
+esteja com o estado 8 ativo, digamos que na planta
+ocorra os eventos não controláveis IMEN e em
+seguida BF, isso leva a planta para o estado 12 e 6
+respectivamente, porém digamos que a sequência
+detectada pelo supervisor seja BF primeiramente e
+IMEN posteriormente, isso leva o supervisor
+transicionar pelos estados 3 e 6 respectivamente.
+Contudo o estado final será o estado 6, satisfazendo
+assim a condição de insensibilidade ao
+entrelaçamento.
+4.3 O Automata Player
+O módulo Automata Player utiliza a técnica de
+ponteiro de função, onde para cada estado há uma
+lista de transições que contém o evento e o estado de
+destino e, em toda lista existe uma transição de
+fechamento para terminar a busca, utilizando um
+evento
+não
+possível
+chamado
+de
+EVENTNOEVENT conforme o diagrama de
+atividade mostrado na Figura 11.
+Para o supervisor existe uma lista que aponta
+para um determinado estado conforme mostra o
+código a seguir
+AUTOMATAPLAYERTRANSITIONTYPE
+*const AutomataStates 
+
+State0EventList,
+State1EventList,
+State2EventList,
+...
+
+
+Assim quando o supervisor estiver no estado 0
+(AutomataStates0) ele estará apontando para a
+lista State0EventList. Quando algum evento
+ocorre o software faz uma busca na lista deste
+estado, caso este evento esteja presente, o estado
+atual passa a ser o estado de destino definido na lista
+de transição, conforme mostrado no trecho de código
+a seguir
+
+Figura 10. Trecho do Supervisor
+
+4.2 Entrelaçamentos de eventos
+Segundo Basile e Chiacchio (2007), o
+supervisor é insensível ao entrelaçamento quando a
+ordem de ocorrência destes, não afeta o estado final,
+assim por exemplo mesmo que na planta tenham
+ocorrido os eventos x e em seguida o evento y,
+porém o supervisor tenha detectado a ocorrência do
+evento y primeiramente e em seguida o o evento x,
+desde que o estado final para ambos caminhos seja o
+
+ISBN 978-85-8001-069-5
+
+eventcount  0
+if(event ! EVENTSNOEVENT)
+
+while(AutomataStatesAutomataState
+eventcount.Event ! EVENTSNOEVENT)
+
+if(AutomataStatesAutomataState
+eventcount.Event  event)
+
+newstate  AutomataStatesAutomataStateeventcount.TargetState
+if(newstate !
+AutomataState)
+
+AutomataState 
+newstate
+PUBLISHNEWSTATE()
+
+
+
+5299
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+eventcount++
+
+
+
+5 Discusão de Resultados
+Uma comparação do consumo de memória do
+microcontrolador, entre a abordagem usando
+autômatos e uma abordagem utilizando máquina de
+estados para o mesmo problema proposto nesse
+artigo é mostrado na Tabela 2.
+Embora o consumo de memória para a
+implementação supervisor modelado por autômatos
+tenha sido consideravelmente superior ao método
+utilizando máquinas de estados, podemos citar as
+seguintes vantagens em se utilizar a modelagem com
+autômatos
+a) Oferece um método formal para se obter o
+supervisor.
+b) Possibilidade de se usar um código único, neste
+caso o Automata Player, que é capaz de executar
+qualquer supervisor implementado, enquanto que
+com implementação por máquinas de estados temos
+um novo código para cada novo controle
+implementado.
+c) Modificações nas especificações de controle não
+afetam o código base ( Automata Player), afetam
+apenas as tabelas de constantes geradas
+automaticamente, enquanto a implementação com
+máquinas de estados teremos modificações diretas
+na lógica do código.
+d) Redução do tempo de teste e validação do
+software, uma vez que temos um código padrão para
+executar a lógica de controle (Automata Player),
+enquanto com máquinas de estados temos que
+validar cada nova rotina implementada.
+
+Figura11. Diagrama de Atividades do Automata Player
+
+Para executar os eventos controláveis foi
+adotada uma estratégia parecida, porém as listas
+apontam para funções que deverão executar a ação
+determinada pelo evento conforme o diagrama de
+atividades da Figura 12
+
+Tabela 2. Comparação Consumo de Memória.
+Implementação com Máquinas de Estados
+Module
+IceMakerStateController
+IceMakerEnabled
+IceMakerFilling
+IceMakerFreezing
+IceMakerHarvesting
+IceMakerHarvestingPaused
+IceMakerHom ing
+IceMakerHom ingPaused
+IceMakerIceReady
+Total
+
+RAM(Bytes) ROM(KBytes)
+2
+0.41
+0
+0.16
+1
+0.17
+3
+0.35
+2
+0.9
+1
+0.34
+1
+0.49
+0
+0.25
+0
+0.23
+10
+3.31
+
+Implementação com Autômatos
+Module
+RAM(Bytes) ROM(KBytes)
+AutomataPlayer
+4
+27.94
+AutomataTasks
+0
+0.07
+Events
+22
+0.07
+Total
+26
+28.08
+
+6 Conclusão
+Figura 12. Diagrama de Atividades para Eventos Controláveis
+
+ISBN 978-85-8001-069-5
+
+Nesse artigo apresentou-se uma metodologia para
+implementação do controle de um Ice Maker em um
+sistema_embarcado microcontrolado, usando a
+
+5300
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+abordagem monolítica da Teoría de Controle
+Supervisório.
+Testes realizados com um Ice Maker real,
+mostraram que o supervisor implementado teve um
+comportamento conforme o esperado, segundo as
+especificações de controle.
+Embora a modelagem por autômatos ofereça
+dentre outras vantagens, um procedimento formal
+que facilita a geração automática de código, essa
+abordagem tem uma desvantagem quanto ao
+consumo de memória de código, tornando-se
+bastante custosa para uma produção em massa,
+devido ao maior valor do microcontrolador.
+Como proposta de trabalhos futuros, pode-se
+remodelar a planta sem considerar os eventos
+IMHM, IMFIL, IMFRZ, IMHVT, IMHMP,
+IMHVTP e modelar apenas os sensores de Ice
+Bin Present, Ice Bin Full, Temperatura, bomba e
+timer, para se reduzir assim o tamanho do
+supervisor, diminuindo o consumo de memória do
+microcontrolador.
+Além disso a implementação utilizando a
+abordagem Modular Local (Queiroz e Cury, 2000),
+onde o consumo de memória de código pode ser
+menor, uma vez que os supervisores locais tendem a
+ser menores (Ferigollo, 2011), pode aumentar a
+viabilidade de substituição  implementação baseada
+em máquinas de estados. Aliado  abordagem
+modular local, trabalhos vêm sendo realizados para
+reduzir o consumo de memória na implementação de
+supervisores como Lopes et al (Lopes, 2011).
+Agradecimentos
+Os autores agradecem ao Programa de PósGraduação em Engenharia Elétrica (PPGEEL), da
+Universidade do Estado de Santa Catarina (UDESC)
+e a Whirlpool Latin Amárica pelo apoio para a
+execução deste trabalho
+Referências Bibliográficas
+Basile F. Chiacchio P., 2007, On the
+Implementation of Supervised Control of
+Discret Event Systems. In IEEE Transactions
+on Control Systems Techology, Vol. 15, N. 4,
+July 2007, pp 728-730
+Cury, J. E. 2001, Teoria de Controle Supervisório de
+Sistemas a Eventos Discretos. V Simpósio de
+Automação Inteligente
+Fabian, M. Hellgren, A., 1998. PLC-based
+Implementation of Supervisory Control for
+Discrete Event Systems. In Proceedings of the
+37th Conference on Decision and Control.
+Tampa, USA., pp 11.
+Ferigollo, C.  Torrico, C. R. C.  Leal, A. B. .
+Análise de desempenho das abordagens
+monolítica e modular local da teoria_de_controle
+
+ISBN 978-85-8001-069-5
+
+supervisório
+implementada
+em
+microcontroladores. In X Simpósio Brasileiro
+de Automática - SBAI 2011, 2011, São João
+del-Rei. Anais do X Simpósio Brasileiro de
+Automática - SBAI 2011, 2011. v. 1.
+IDES (Integrated Discrete-Event Systems), 2008.
+Disponível
+em
+httpjoy.ece.queensu.cadeslabsoftware.php
+Último Acesso 20 Abril 2012.
+Queiroz, M. H. and Cury, J. E. R., 2000. Modular
+supervisory control of large scale discrete-event
+systems. In Discrete Event Systems Analysis
+and Control. Proceedings of the WODES 2000.
+Ghent, Belgium. Kluwer Academic Publishers.
+Lopes, Y. K.  Harbs, E.  Leal, A. B.  Rosso Jr., R.
+S. U. . Proposta de Implementação de Controle
+Supervisório em Microcontroladores. In X
+Simpósio Brasileiro de Automática - SBAI
+2011, 2011, São João del-Rei. Anais do X
+Simpósio Brasileiro de Automática - SBAI
+2011, 2011. v. 1.
+Ramadge, P. J. G. e Wonham, W. M. (1989). The
+control of discrete event systems. Proceedings
+of the IEEE, 77, pp. 81-98.
+Ritchie D. M. e Kernighan B. W. (1988). The C
+Programming Language 2rd. ed., Prentice Hall
+Software Series
+Silva, Y. G., Queiroz, M. H., Cury, J. E.(2010).
+Síntese e Implementação de Controle
+Supervisório Modular Local Para Um Sistema
+AVG. In XVIII Congresso Brasileiro de
+Automática - CBA 2010, Bonito - MS. Anais do
+XVIII Congresso Brasileiro de Automática,
+2010
+Stroustrup, B. (1997). The C++ Programming
+Language 3rd. ed., Addison-wesley-Br
+Teixeira, C. A.  Leal, A. B.  Sousa, A. H. de .
+Implementação
+de
+Supervisores
+em
+Microcontroladores Uma Abordagem Baseada
+na Teoria de Controle de Sistemas a Eventos
+Discretos. In XVI Congresso Brasileiro de
+Automática, 2006, Salvador, BA. Anais do XVI
+Congresso Brasileiro de Automática, 2006. p.
+2772-2777
+Teixeira, C. A. (2008). Aplicação da Teoria de Controle Supervisório no Projeto de Controladores
+para Eletrodomésticos. Dissertação (Mestrado),
+Programa de Pós-Graduação em Engenharia
+Elétrica, PPGEEL, da Universidade do Estado
+de Santa Catarina (UDESC), 2008
+
+5301

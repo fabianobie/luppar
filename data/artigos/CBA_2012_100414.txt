@@ -1,0 +1,1176 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+PLANEJAMENTO DE TRAJETÓRIA APLICADO A UMA MÁQUINA DE CONTROLE NUMÉRICO
+COMPUTADORIZADO
+PAULO A. S. ROCHA JR., ROGÉRIO D. S. SILVA, VITOR S. KATAOKA , M. EMÍLIA L. TOSTES
+Laboratório de Sistemas Motrizes, Instituto de Tecnologia, Universidade Federal do Pará
+Av. Augusto Correga n 1, 66075-110, Belém, PA, Brasil
+E-mails paulosherring@yahoo.com.br, rogeriodss@gmail.com,
+vitorkataoka@gmail.com, tostes@ufpa.br
+Abstract  Computer Numerical Control is a technology made up of several blocks. Among these blocks lies the
+Trajectory Planning block, which is responsible for reference profile generation that are fed to position control loops.
+The need for Trajectory Planning arises from the mechanical constraints inherent to every plant to which is applied the
+technology. The present paper presents an algorithm to generate references for Cartesian based systems. Although the
+provided solution has shown not to be time optimal, the observed results with the technique described were positives and
+no violation of the imposed constraints was found.
+Keywords
+ Computer, Numerical, Control, Trajectory, Planning.
+Resumo  O Controle Numérico Computadorizado é uma tecnologia composta por diversos blocos. Dentre estes
+blocos está o Planejamento de Trajetória, que é responsável gerar perfis de referência para as malhas_de_controle de
+posição. A preocupação com o Planejamento de Trajetória existe devido s diversas restrições mecânicas existentes nas
+plantas controladas pela tecnologia em questão. O presente trabalho apresenta um algoritmo para gerar referências para
+máquinas que operam com sistema cartesiano. Apesar de se observar que a solução proposta não é de tempo ótimo, os
+resultados obtidos com a técnica computacional desenvolvida apresentam resultados favoráveis, não apresentando
+violações s restrições impostas.
+Palavras-chave
+ .
+
+1
+
+Introdução
+
+Controle Numérico é uma forma específica de
+controlar sistemas onde o posicionamento é a
+variável principal a ser controlada (Madison, 1996).
+Como o nome sugere, valores numéricos
+representam os pontos desejados do atuador e
+também codificam informações simbólicas com
+funções secundárias. Estes valores são codificados
+em números e letras, ou seja, em códigos
+alfanuméricos.
+O controle numérico foi originalmente
+utilizado pela aeronáutica dos Estados Unidos, na
+década de 1940. Sua aplicação inicial era para a
+usinagem de hélices de helicópteros e aerofólios de
+aviões, devido  dificuldade de realizar a usinagem
+destas peças manualmente dado o seu tamanho, que
+então chegava a até 3 metros de comprimento.
+Nesta ocasião, os computadores eletrônicos ainda
+eram apenas projetos, de forma que as tecnologias
+utilizadas eram cartões perfurados, fitas magnéticas
+ou perfuradas, dentre outras possibilidades
+tecnológicas que o tempo permitiu (Groover, 2008).
+Com a introdução dos computadores
+eletrônicos no meio industrial, emergiu o controle
+numérico computadorizado  CNC  que veio a
+suceder a tecnologia de controle numérico.
+Contudo, durante aproximadamente vinte anos esta
+tecnologia se restringiu ao uso industrial, devido ao
+seu custo de implantação, de operação e de
+manutenção. Um projeto do National Institute of
+
+ISBN 978-85-8001-069-5
+
+Standards and Technology  NIST  dos Estados
+Unidos gerou um software de domínio público
+intitulado Enhanced Machine Controller, cuja
+documentação está disponível em (Kramer, et al.,
+1994). Este programa foi desenvolvido para o
+sistema operacional Linux e foi através dele que foi
+possível aplicar a tecnologia do CNC em pequenas
+máquinas de baixo_custo
+Como um sistema de CNC envolve diversas
+áreas do conhecimento, como controle_de_sistemas,
+eletro-mecânica, mecânica e programação de
+computadores, as linhas de pesquisa dentro deste
+tópico são muito diversas. Um dos tópicos mais
+ativos de pesquisa na área é o de planejamento de
+trajetória e implementação dos comandos de
+controle. A referência (Biagiotti  Melchiorri,
+2008) apresenta conceitos básicos e discute diversas
+técnicas de planejamento_de_trajetórias. O trabalho
+de (Loyd  Hayward, 1991) apresenta um conjunto
+de técnicas para permitir a união de trajetórias
+distintas. Diversas publicações acadêmicas também
+alavancam e adicionam a este tópico, das quais se
+destacam (Lambrechts, et al., 2004), (C. Liangji,
+2009), (S. Yeh, 2007) e (Melchiorri  Biagiotti,
+2006).
+O objetivo do presente trabalho é o
+desenvolvimento e aplicação de uma técnica
+computacional para geração de trajetórias em tempo
+real para máquina de controle numérico
+computadorizado de pequena escala, respeitando
+restrições mecânicas, como limitações de
+velocidade, aceleração, primeira e da segunda
+
+3087
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+derivada da aceleração. Será apresentada a
+definição formal do problema, seguido da
+implementação e finalmente dos resultados obtidos.
+Pôde-se perceber uma melhoria teórica na
+suavização do perfil de planejamento de posição,
+contudo, ainda não se tem resultados práticos
+destes.
+2
+
+Planejamento de trajetória com Restrições
+dinâmicas
+
+O planejamento_de_trajetória consiste na
+computação do perfil de movimento desejado para
+a realização de uma determinada tarefa, como por
+exemplo, deslocar um corpo de uma posição A até
+B (Biagiotti  Melchiorri, 2008). Porém, este
+movimento
+está
+sujeito
+a
+determinadas
+características dinâmicas, como máxima velocidade
+permitida, e de regime_permanente, como condições
+iniciais e finais do sistema.
+O planejamento_de_trajetória consiste de dois
+elementos principais as leis de movimento e a
+trajetória geométrica. A trajetória geométrica é
+definida como uma curva paramétrica no espaço.
+Esta curva pode ser definida por duas formas
+distintas pode ser definida em função da posição
+do atuador-ferramenta ou em função das posições
+das juntas.
+Em máquinas com cinemática não trivial, como
+é o caso de braços robóticos, as duas formas
+diferem muito e estão relacionadas por uma matriz
+de transformação. No caso das máquinas de CNC, a
+posição do atuador-ferramenta coincide com a
+posição da junta, quando não está apenas deslocado
+por um valor fixo e conhecido. Dessa forma, não se
+tratará do caso de máquinas com cinemática não
+trivial e toda referência a um ponto no plano
+cartesiano será referente  posição do atuadorferramenta efetivamente.
+Em uma máquina de CNC, uma trajetória pode
+ser definida como
+(1)
+  (, , , )
+onde x, y e z são as coordenadas cartesianas e c é
+um parâmetro. Esta trajetória pode ser reescrita
+como
+(2)
+  ((), (), ())
+O parâmetro c é justamente função do tempo.
+Assim, a lei de movimento é obtida
+(3)
+  ( )
+(4)
+  ((( )), (( )), (( )))
+Existem diversas possibilidades para resolver
+este problema. Dentre estas, três mais comuns são
+polinômios, trapezoidal (curvas lineares por partes)
+e splines, como apresentado por (Biagiotti 
+Melchiorri, 2008). O método descrito neste trabalho
+será o trapezoidal, devido a sua flexibilidade em
+incluir restrições e facilidade de implementação.
+
+ISBN 978-85-8001-069-5
+
+2.1
+
+Planejamento de trajetória através do
+método trapezoidal
+
+O planejamento_de_trajetória deve ser realizado
+considerando as restrições da máquina. Estas
+restrições podem incluir desde a aceleração máxima
+e velocidade máxima até a i-ésima derivada da
+posição.
+O método do planejamento_de_trajetória
+trapezoidal, descrito em (Biagiotti  Melchiorri,
+2008), consiste em separar a curva de posição em
+estados distintos. Estes estados são marcados pelo
+fato de somente uma das derivadas da posição ser
+constante e diferente de zero. O número de estados
+dependerá da máxima ordem da restrição
+considerada, através da relação
+
+
+
+
+
+
+2
+
+(5)
+
+Onde n é o número de intervalos na curva de
+posição e i é a ordem da máxima restrição
+considerada.
+O objetivo é obter os instantes de chaveamento,
+onde o sistema permanece em um estado por um
+determinado período. No final, de posse dos tempos
+de chaveamentos, o algoritmo constrói uma função
+da forma de onda no tempo da derivada de maior
+restrição. Esta deverá então ser integrada
+consecutivamente até se obter o sinal da posição no
+tempo. Este então será utilizado como trajetória no
+tempo de referência e será tal que todas as
+restrições sejam satisfeitas.
+Tomando como exemplo restrições de segunda
+ordem, encontradas nos sistemas mais comuns de
+controle, como é o caso dos softwares EMC,
+MACH 3 e TurboCNC, a curva de posição terá três
+estados distintos, quais sejam aceleração constante
+I, velocidade constante, aceleração constante II. A
+Figura 1 apresenta os perfis resultantes de restrições
+de segunda ordem de posição (a), velocidade (b) e
+aceleração (c).
+Na Figura 1, são apresentados gráficos
+resultantes de um planejamento_de_trajetória de
+segunda ordem com parâmetros
+ 
+30 á  10   !á  10  " .
+Por se tratar de um planejamento com restrições de
+segunda ordem observam-se perfil de aceleração é
+simétrico e assume três valores somente +!á , 0
+e !á  perfil de velocidade nunca é maior do que
+a velocidade máxima, á .
+Observa-se na Figura 1, contudo, que existem
+descontinuidades no perfil de aceleração e de
+velocidade, apesar do perfil de posição ser
+contínuo. Estas descontinuidades podem levar a
+efeitos indesejados, como vibrações excessivas e
+aumento do erro de rastreamento em um sistema de
+alto_desempenho.
+
+3088
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Neste método, obter-se-ão quatro períodos de
+dinâmica constante, 6 , onde somente a quarta
+derivada da posição permanece constante,  , onde
+somente a terceira derivada da posição permanece
+constante, , , onde somente a aceleração
+permanece constante e 7 , onde somente a
+velocidade permanece constante.
+Conforme dito anteriormente, o objetivo deste
+método é construir um perfil da quarta derivada da
+posição que respeite as restrições impostas. O
+método é dado como segue (Lambrechts, et al.,
+2004) e (Biagiotti  Melchiorri, 2008)
+1.
+
+6
+
+Figura 1  Formas de onda no tempo dos sinais de (a) posição
+(b) velocidade e (c) aceleração.
+
+Para que estas falhas sejam corrigidas, as
+restrições devem chegar a até a segunda derivada da
+aceleração. Em outras palavras deve-se escolher e
+respeitar um valor máximo para até a quarta
+derivada da posição, que leva a um sistema de
+quarta ordem.
+2.2
+
+2.
+
+!
+
+"
+ "
+
+!( )  ) ( ) 
+
+
+
+
+
+( )  ) !( ) 
+
+( ) ) ( ) + *+,-
+
+E Ainda
+  .0!. 0 ..!0
+á  1. 12çã0 !1! ! 51! .! 
+
+ISBN 978-85-8001-069-5
+
+(16)
+
+8
+
+!á
+á
+
+6 como
+
+(18)
+
+4.
+
+Calcular o máximo valor da terceira derivada
+da posição obtido com 6 anteriormente
+calculado, como
+(19)
+j>?  dAáB t D
+Se +,-+ > á , recalcular 6 como
+á
+(20)
+6 
+á
+Este valor calculado é o valor final de 6 .
+
+5.
+
+Determinar  , desconsiderando qualquer
+restrição de ordem menor. Para este cálculo,
+deve-se determinar a única raiz positiva e real
+da equação_polinomial de terceira ordem em  
+(
+"
+ + (5 6 )  + (8 6 )  +
+(21)
+
+F4 6 
+L0
+
+(10)
+
+(13)
+
+6 como
+
+Calcular o máximo valor de aceleração obtido
+com o 6 anteriormente calculado, como
+(17)
+!+,-+  á 6 "
+6
+
+(9)
+
+(12)
+
+ á
+8
+2 á
+
+Se !+,-+ > !á , recalcular
+
+(8)
+
+(11)
+
+(14)
+
+Calcular o máximo valor de velocidade obtido
+com o 6 anteriormente calculado, como
+(15)
++,-+  2 á 6 (
+6
+
+3.
+
+( )  ) ( ) 
+
+
+
+8
+8 á
+
+Se +,-+ > á , recalcular
+
+Planejamento de trajetória através do
+método trapezoidal de quarta ordem
+
+Para restrições de segunda ordem e uma
+dimensão, o planejamento da trajetória é bastante
+trivial. Para ordens maiores, o planejamento é ainda
+trivial, contudo, envolve a solução de equações
+polinomiais de ordem elevada. No caso de
+restrições de quarta ordem, esta equação é cúbica,
+ainda tendo soluções analíticas bem conhecidas.
+A notação utilizada é como segue
+ 
+(6)
+ 
+
+(
+(7)
+ (
+
+
+Determinar 6 , de modo que ( ) cause o
+deslocamento desejado,  , desconsiderando
+qualquer restrição de ordem menor, como
+
+" 6HáI JK
+
+A equação em questão pode ser resolvida como
+segue
+
+3089
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+N
+
+
+
+1
+9
+
+6
+
+"
+
+1 (
+
+6 
+27
+4 á
+P  ( + N "
+
+(22)
+(23)
+
+6
+
+(24)
+
+1  QN + P
+
+
+(25)
+
+ 5
+(26)
+
+1 3 6
+6. Calcular o máximo valor de velocidade obtido
+com o 6 .  anteriormente calculados, como
++,-+  á S2 6 ( + 3 6 "  +
+(27)
+"
+6  T
+Se +,-+ > á , recalcular  como a solução
+real e positiva de
+
+
+
+
+
+
+1
+2
+
+1
+
+6
+
+U
+
++8
+
+6
+
+"
+
+4
+
++
+
+á
+á 6
+
+(28)
+
+7.
+
+Calcular o máximo valor de aceleração obtido
+com o 6 .  anteriormente calculados, como
+!+,-+  á 6 " + á 6 
+(29)
+Se !+,-+ > !á , recalcular  como a solução
+real e positiva de
+!á
+ 6
+(30)
+ 
+á
+Este valor calculado é o valor final de  .
+
+8.
+
+Determinar , , desconsiderando qualquer
+restrição de ordem menor. Para este cálculo,
+deve-se determinar a única raiz positiva e real
+da equação_polinomial de segunda ordem em
+,
+S 6 " + 6  T , " + S6 6 ( +
+9 6 "  + 3 6  " T , +
+X(8
+
+S10
+F
+
+9.
+
+
+
+6
+
+6
+
+6HáI
+
+)
+"
+
++ S16
+
+
+
+"
+
+6
+
+T + S2
+
+LY  0
+
+(
+
+T
+
+6 
+
+(
+
++
+
+(31)
+
+T
+
+,
+
+2.2.1
+
+Implementação do método
+
+O método apresentado na segunda seção
+propõe uma forma de onda da quarta derivada da
+posição que respeita cinco restrições, quais sejam
+valor limite das quatro primeiras derivadas da
+posição e o deslocamento desejado. Impõe, ainda,
+que os valores dessas derivadas no instante inicial e
+no instante final sejam todas iguais a zero.
+Obtenção do sinal de posição no tempo
+
+Para obter-se a forma de onda da posição, que é
+o que se deseja de fato, precisa-se integrar quatro
+vezes o sinal da quarta derivada, recuperando assim
+o sinal ( ) . O diagrama_de_blocos para esta
+operação é mostrado na Figura 2.
+
+como
+
+7HáI "6HáI JK  (6HáI JK U JZ 6HáI JK JZ
+
+(33)
+
+6HáI JK U 6HáI JK JZ
+
+Este valor calculado é o valor final de
+
+ISBN 978-85-8001-069-5
+
+E, finalmente, o valor de 7 é calculado como
+   
+(35)
+7 
+á
+Com estes dez passos, a função d(t) está
+completamente definida. Deve-se, contudo, levar
+em consideração que a implementação do
+algoritmo, descrita no tópico a seguir, é feita em
+tempo_discreto. Dessa forma, todos os tempos
+calculados, 6 ,  , , . 7 devem ser recalculados
+para coincidirem exatamente com múltiplos inteiros
+do período de amostragem utilizado no modelo
+discretizado do tempo. Após efetuar o
+arredondamento para cima dos tempos, o valor de
+á deve ser corrigido. É de importância ressaltar
+que se o arredondamento for feito para menos
+infinito ou para o inteiro mais próximo, o efeito das
+quatro integrais sucessivas para chegar ao sinal da
+posição no tempo poderá infringir as restrições.
+
+2.2.2
+
+Calcular o máximo valor de velocidade obtido
+com o 6 ,  . , anteriormente calculados,
+como
++,-+  á S2 6 ( + 3 6 "  +
+(32)
+"
+"
+6  + 6 , + 6  ,T
+
+Se +,-+ > á , recalcular
+, 
+
+10. O valor de 7 pode ser definido como a
+diferença entre o deslocamento desejado e o
+deslocamento realizado até agora durante as
+três fases anteriores, cujos tempos já foram
+calculados. O deslocamento realizado é dado
+por
+   á  6 " , " + 6  , " +
+6 6( , + 9 6"  , + 3 6 " , +
+(34)
+8 6  + 16 6 (  + 10 6 "  " +
+2 6  (
+
+,.
+
+Figura 2  Diagrama de blocos do processo de integração do
+perfil de quarta ordem criado.
+
+O sistema desenvolvido funciona com
+discretização do tempo  do espaço também, como
+será mostrado a seguir. Para realizar o processo de
+
+3090
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+integração, utilizou-se a aproximação de Tustin
+para o integrador. A função integração no domínio
+de Laplace é dada por
+()
+f()
+(36)
+( )  ) ( ) abc d(e) 
+
+Discretizando e aproximando o domínio de
+Laplace pelo método de Tustin, ter-se-á
+2 1   
+(37)
+
+g,h 1 +  
+Logo
+
+f() lmJ*
+d(e) 
+abbbc d(n)
+
+g,h 1 +  
+
+f()
+2 1   
+
+o p 
+
+lqrHs (o*po*p)" to*p
+
+(38)
+4.
+
+o p 
+
+lqrHs (6o*p6o*p)" o*p
+
+"
+
+(39)
+
+A equação (39) foi aplicada s equações (8),
+(10), (12) e (13), obtendo-se, finalmente
+
+o p 
+o p 
+
+"
+lqrHs (o*po*p)" ,o*p
+
+(40)
+
+"
+lqrHs (7o*p7o*p)" o*p
+
+(42)
+
+"
+lqrHs (,o*p,o*p)" 7o*p
+"
+
+(41)
+
+(43)
+
+Este conjunto de equações, juntamente com as
+durações de cada estado obtidos no tópico 2.2,
+permite o cômputo da forma de onda no tempo,
+sujeito s restrições de dinâmica.
+2.2.3
+
+3.
+
+iéJk6k
+
+Aplicando a transformada Z inversa, obtém-se
+a equação de diferenças
+
+!o p 
+
+2.
+
+Movimento em múltiplos eixos
+
+Até agora, obteve-se o sinal da posição, em
+uma dimensão, no tempo. Entretanto, as máquinas
+de CNC possuem, em média, pelo menos três eixos.
+Deve-se, portanto, estender o procedimento de 2.2
+para três dimensões.
+Para tal, duas soluções foram analisadas gerar
+uma estrutura de dados para cada eixo e as operar
+de forma independente e gerar uma única estrutura
+de dados e distribuir os esforços em cada eixo
+através de uma decomposição vetorial do
+movimento.
+A primeira solução, apesar de mais flexível,
+apresentou problemas para os quais não se
+encontraram soluções. Estes problemas dizem
+respeito  sincronização dos movimentos de cada
+eixo.
+A segunda solução foi a escolhida e incluída no
+software_de_controle. Sua lógica de funcionamento
+é como segue
+1. Armazena-se o valor inicial da posição antes de
+iniciar o movimento, ( ,  ,  ).
+
+ISBN 978-85-8001-069-5
+
+Calcula-se o módulo do movimento
+desejado, 1 . Este módulo será o
+deslocamento utilizado como entrada para o
+algoritmo delineado em 2.2
+1 
+(44)
+"
+w(x   ) + (x   )" + (x   )"
+Calculam-se as projeções do movimento em
+cada um dos três eixos orto-normais, 1 , 1t . 1y ,
+como segue
+(x   )
+(45)
+1 
+
+(x   )
+(46)
+1t 
+
+(x   )
+(47)
+1y 
+
+Efetua-se a integração da trajetória, obtendo-se
+a forma de onda da posição no tempo, aqui
+denotado por ( ), e calcula-se a posição no
+espaço de acordo com
+(, , , )  ( + ( )1 )!
+zzzz +
+(48)
+S + ( )1t T!
+zzzz
+zzzzy
+t + ( + ( )1y )!
+
+2.2.4
+
+Discretização da posição ( )
+
+Após o cálculo da posição no tempo, ainda é
+necessário levar mais um fator em consideração,
+que é a resolução da do sistema de acionamento. Os
+sistemas eletromecânicos utilizados nas máquinas
+de CNC podem ser de dois tipos de malha_aberta,
+normalmente baseados em motores de passo, e de
+malha_fechada, normalmente baseados em
+servomecanismos, com máquinas de corrente
+contínua ou máquinas_síncronas de magnetos
+permanentes.
+De modo mais comum, os sistemas de
+acionamento de máquinas de CNC utilizam um
+sistema de pulsos para realizarem os movimentos.
+Invariavelmente, as máquinas utilizadas nos
+mecanismos de posicionamento destes sistemas
+possuem resolução finita. No caso dos sistemas de
+malha_aberta, os valores variam entre 200 a até 800
+passos por rotação, com acionamento do tipo fullstep. Em mecanismos de malha_fechada, a
+resolução é definida pelo sensor, normalmente do
+tipo encoder, utilizado para o fechamento da malha.
+Existem soluções comerciais que vão desde 100
+passos por revolução até 10000 passos por
+revolução.
+A resolução mecânica da máquina não
+depende, contudo, somente da resolução do sistema
+de acionamento. O fuso, um dos dispositivos
+responsáveis pela conversão do movimento rotativo
+em movimento linear, também tem papel definitivo
+na resolução da máquina. Devido ao seu
+funcionamento
+mecânico, é imposto um
+deslocamento linear por revolução. Dessa forma, a
+resolução da mecânica de cada eixo da máquina é
+dada por
+
+3091
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+1-*. 
+
+1xmk
+1,+k*.
+
+(49)
+
+Onde
+1.0çã0 2 .!1 .  .20,
+.20
+1-*. 
+!! . !0
+1.0çã0 0 0,
+1xmk 
+!! . 1..
+1.0çã0 0 !20 !. 0,
+0
+1,+k*. 
+!! . !01...
+Para comandar os sistemas de acionamento de
+cada eixo da máquina, o controlador deve enviar
+pulsos para o sistema eletrônico de acionamento. A
+cada pulso recebido, o sistema rotativo se desloca,
+imprimindo um movimento linear no eixo de
+amplitude igual a 1-*. .
+De posse da resolução linear da máquina, para
+cada ponto do espaço livre calculado, deve-se
+deve
+calcular o número de passos necessários para
+realizar aquela determinara tarefa. Este cálculo é
+dado por
+ Jh 
+
+Onde
+
+k 
+
+ o
+-7
+
+!11.. 
+
+1
+
+p
+
+-*.
+k 
+
+ o
+,-
+
+ 1pY
+
+(50)
+
+ú.10 . !0 ..á120
+..
+!1!
+1.!2!1
+0
+.0!.
+0
+0
+k 
+ çã0 !11.0 !1 !1!
+!11.. ( ) 
+2 .210 !2 1ó20
+20
+02çã0 21. !!!,
+!!!
+  o p
+0 .20 2, 0 2  ! . 
+-7
+02çã0 1.! (! í.
+.) !
+  o p
+áN2 !, 0 2  ! . o  1p
+,.0çã0 2 .!1 ! áN2
+N2 !
+1 -*. 
+0 .20 2
+k 
+
+ Jh 
+
+3
+
+Figura 3  Planta eletromecânica que foi aplicada a estratégia
+delineada na sessão 2.
+
+Para avaliar o desempenho do código
+desenvolvido, foi realizado um teste, cujo
+cu objetivo
+é analisar o efeito do planejamento_de_trajetória nas
+formas de onda obtidas. Os parâmetros do primeiro
+teste foram os seguintes
+*+,-  0 
+*J.  18 
+x*,-  24 
+á  5 
+!á  10  "
+(
+á  50 
+á  1000  
+As Figuras 4 até 10 são os resultados obtidos a
+partir do teste realizado. As figuras 4 até 8
+apresentam, respectivamente
+espectivamente a forma de onda da
+quarta derivada da posição em relação ao tempo
+temp a
+forma de onda da terceira derivada da posição em
+relação ao tempo a forma de onda da aceleração a
+forma de onda da velocidade e a forma de onda da
+posição.
+
+Resultados
+
+O planejamento_de_trajetória na sessão 2
+delineado foi desenvolvido utilizando a linguagem
+li
+de programação C++
+++ e é o responsável pelo
+controle de uma máquina de CNC, cuja ilustração é
+mostrada na Figura
+igura 3. A Tabela 1 resume as
+características da máquina.
+Tabela 1  Características da Máquina.
+Excursão (X,Y,Z)
+Torque
+nominal
+dos
+motores de passo
+Tipo de ligação dos
+motores de passo
+Parâmetros elétricos dos
+motores (Bipolar)
+Resolução dos motores
+Forma de acionamento
+Características do Fuso
+Atuador
+
+ISBN 978-85-8001-069-5
+
+(400,, 350,50) (mm)
+(
+10 kgf.cm (unipolar)
+Bipolar
+
+Figura 4  Forma de onda da quarta derivada da posição em
+relação ao tempo, ( ).
+
+L  0.020 H, R  4 
+200 passos por revolução
+Half step
+Trapezoidal diâmetro 14 mm
+passo 3 mm
+Máquina de Indução 1CV
+Rotação nominal 18000 RPM
+
+3092
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A Figura 9 apresenta a posição no tempo antes
+da discretização, em linha contínua, e depois da
+discretização, em linha tracejada. A Figura 10
+apresenta o módulo daa diferença entre a trajetória
+com espaço não discretizado e a posição com
+espaço discretizado.
+
+Figura 5  Forma de onda da terceira derivada da posição em
+relação ao tempo, j( ).
+
+Figura 9  Posição ao longo do tempo, antes e depois da
+discretização.. O sinal apresentado em linha contínua apresenta
+valores não discretizados.. O sinal tracejado ilustra os valores
+com o espaço discretizado.
+discretizado
+
+Figura 6  Forma de onda da aceleração, !( ).
+
+Figura 10  Valor absoluto da diferença
+ferença entre o sinal de posição
+antes e depois da discretização.
+
+A Figura 9 é referente ao segundo teste e
+ilustra o caminho realizado pelo sistema
+Figura 7  Forma de onda da quarta derivada da posição em
+relação ao tempo, ( ).
+
+Figura 8  Forma de onda da posição, ( ).
+
+ISBN 978-85-8001-069-5
+
+3.1
+
+Análise dos resultados
+
+Na Figura 4 pode-se observar o padrão de
+chaveamento na forma de onda de ( ). Verifica-se
+que a mesma não é contínua. Os resultados obtidos
+a partir da integração da forma de onda apresentada
+na Figura 4 são apresentados nas figuras 5, com a
+primeira integral, resultando em ( ), até 8, com a
+quarta integral, resultando em ( ).
+Analisando os resultados apresentados nas
+Figuras 4 até 8, nota-se
+se uma redução nas
+descontinuidades ao passo que se efetua o processo
+de integração. De fato, até a forma de onda de ( ),
+Figura 5, ainda apresenta descontinuidades.
+descontinuidade Já nas
+Figuras 6, 7 e 8, as descontinuidades foram
+completamente eliminadas.
+
+3093
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+O fato da forma de onda da aceleração ser
+contínua é altamente desejável, já que uma
+aceleração finita resulta em um torque finito, o que
+reduz a possibilidade da perda de sincronismo dos
+motores de passo.
+De maneira geral, pode-se constatar (1) a
+efetividade do planejamento em realizar
+determinada tarefa respeitando os limites impostos
+(2) viabilização do controle do sistema operando
+com vibrações mitigadas, devido  suavização da
+forma de onda da posição promovida pela
+imposição de restrições.
+A Figura 8 apresenta uma desvantagem do
+algoritmo de planejamento, devido ao seu
+funcionamento ser de ponto a ponto, ou seja,
+desenvolvido e otimizado para movimentos
+baseados em partes de ponto inicial e ponto final.
+Como se realiza um movimento que parte de A até
+B e para completamente em B, para realizar a
+trajetória de A até C, passando por B, a máquina
+para completamente ao chegar em B, de onde então
+reinicia o movimento até chegar a C.
+A forma de onda de espaço discretizado,
+apresentado na Figura 9 em linhas tracejadas,
+evidencia um efeito adicional de vibração. Este
+efeito não é desejável, porém inevitável, devido 
+forma de acionamento utilizada.
+Observou-se na Figura 9 um padrão irregular
+nos passos. Acreditou-se a isso o fato da função
+arredondamento apresentar uma característica
+descontínua. O mesmo se pôde verificar na Figura
+10, evidenciado pelas grandes variações observadas
+em quase todas as etapas, com exceção da etapa de
+velocidade constante, onde o efeito foi uma
+diferença constante. O período de velocidade
+constante
+compreende
+o
+intervalo
+de
+aproximadamente 0,8 < < 3,6 . 5,1 < < 5,9.
+Verificou-se também que somente a velocidade
+alcançou o seu valor limite, de onde se pode
+implicar que a resposta obtida não é de tempo
+ótimo. Contudo, a solução observada obedece
+estritamente a todas as restrições. Analisando os
+resultados obtidos passo a passo do algoritmo,
+constatou-se que ( ), ( ) . !( ) não alcançaram
+seus valores limites por conta a discretização do
+tempo, uma vez que esta leva a uma alteração do
+valor máximo de d(t). Esta redução se propaga para
+as outras grandezas, reduzindo também os seus
+valores máximos alcançados.
+4
+
+Conclusão
+
+A metodologia de planejamento_de_trajetória
+considerando restrições de quarta ordem e de
+ordens inferiores apresentada neste trabalho foi
+aplicada a um sistema de CNC. Com a técnica, foi
+possível planejar e comandar os movimentos
+tridimensionais da máquina, respeitando suas
+limitações mecânicas de acionamento e atuação.
+
+ISBN 978-85-8001-069-5
+
+Nos experimentos realizados, observou-se que
+a solução proposta respeitou todas as restrições
+impostas. Nestas condições a máquina pode operar
+com
+maior
+confiabilidade,
+mitigando
+a
+possibilidade de erros nos deslocamentos
+realizados.
+5
+
+Agradecimentos
+
+Os autores agradecem ao Conselho Nacional
+de Desenvolvimento Científico e Tecnológico pelo
+apoio a esta pesquisa  Oyamota do Brasil, pelo
+auxílio na usinagem das peças mecânicas utilizadas
+aqui ao Centro de Excelência em Eficiência
+Energética da Amazônia, pelo apoio ao
+desenvolvimento de pesquisas e de recursos
+humanos no Norte do Brasil.
+6
+
+Bibliografia
+
+Biagiotti, L.  Melchiorri, C., 2008. Trajectory
+Planning for Automatic Machines and Robots.
+Berlin Springer.
+C. Liangji, L. H., 2009. NURBS Interpolation
+Method with Feedrate Correction in 3-axis CNC
+System. Computer Engineering and Technology, 22
+Jan, pp. 565-568.
+Groover, M. P., 2008. Automation, Production
+Systems, and Computer-Integrated Manufacturing.
+Upper Saddle River Pearson.
+Kramer, T. R., Proctor, F.  Michaloski, J. L.,
+1994. The NIST RS274NGC Interpreter - Version
+1.
+Online
+Available
+at
+httpwww.isd.mel.nist.govdocumentskramerRS2
+74NGC1.pdf
+Accessed 15 10 2010.
+Lambrechts, P., Boerlage, M.  Steinbuch, M.,
+2004. Trajectory planning and feedforward design
+for electromechanical motion systems. Elsavier Control Engineering Practice, Volume 13, pp. 145
+- 57.
+Loyd, J.  Hayward, V., 1991. Real-Time
+Trajectory Generation Using Blend Functions.
+Proceedings of IEEE Intemational Conference on
+Robotics and Automation, Apr.
+Madison, J., 1996. CNC Machining Handbook.
+New York Industrial Press Inc..
+Melchiorri, C.  Biagiotti, L., 2006. Smooth
+Trajectories For High-Performance Multi-axes
+Automatic Machines. 4th IFAC Symposium on
+Mechatronic Systems.
+S. Yeh, S. S., 2007. Design of NURBS Curve
+Fitting Process on CNC. American Control
+Conference, 9 Jul, pp. 3612-3617,.
+
+3094

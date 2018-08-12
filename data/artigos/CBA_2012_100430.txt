@@ -1,0 +1,788 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+PROJETO E IMPLEMENTACAO DE UM SISTEMA DE DETECCAO COM
+PROBABILIDADE DE FALSO ALARME AJUSTAVEL
+Marcos Vincius Silva Oliveira, Bernardo Sotto-Maior Peralva, Luciano Manhaes de
+Andrade Filho, Augusto Santiago Cerqueira
+
+
+Laboratorio de Processamento de Sinais e Telecomunicacoes
+Programa de Pos-Graduacao de Engenharia Eletrica
+Universidade Federal de Juiz de Fora
+Juiz de Fora, Minas Gerais, Brasil
+
+Emails marcos.oliveira@engenharia.ufjf.br, bernardo.peralva@ice.ufjf.br,
+luciano.andrade@ufjf.edu.br, augusto.santiago@ufjf.edu.br
+Abstract This work proposes an implementation of a robust signal-to-noise detection system that ensures a
+constant level of contamination based on an adaptive threshold, even though the contamination level may change
+according to a set of constraints adopted. Traditional methods of signal-to-noise detection take into account a
+constant level of contamination to perform the classification of events. However, as the scenario may change,
+these methods can lead to higher false alarm rate since the level of contamination varies. By monitoring the
+noise variance in real-time, the proposed method implements a trigger system where its decision threshold is
+proportional to the noise standard deviation, therefore, it ensures a constant false alarm rate. The algorithm
+implemented in FPGA is presented as well as the simulation results for an optimum signal detector.
+Signal detection, adjustable probability of false alarm, scientific instrumentation and particle
+
+Keywords
+physics.
+
+Resumo Propoe-se neste trabalho a implementacao de um sistema de deteccao_de_sinais que, a partir
+de um limiar adaptativo, garanta nvel de contaminacao constante, mesmo que o cenario se altere dentro de
+um conjunto de restricoes adotadas. Os metodos tradicionais de deteccao adotam um limiar constante para
+realizar a classificacao dos eventos, no entanto, com a mudanca de cenario, o nvel de contaminacao pode variar
+consideravelmente. Monitorando-se a variancia do rudo de forma online, o metodo proposto implementa um
+sistema decisor cujo o limiar de decisao e proporcional ao desvio padrao do rudo, garantindo uma probabilidade
+de falso alarme constante. O algoritmo, implementado em FPGA, e apresentado, assim como os resultados de
+simulacoes para um detector otimo de sinais.
+Palavras-chave
+.
+
+1
+
+Deteccao de sinais, probabilidade de falso alarme ajustavel, instrumentacao cientfica e
+
+Introducao
+
+A evolucao da instrumentacao cientfica causa
+impacto em diversas areas do conhecimento, proporcionando significativo desenvolvimento em diversos ambientes, como por exemplo, processos_industriais, materiais na area da saude, aplicacoes
+de bens de consumo, entre outros. Diversas areas
+do conhecimento fazem uso da instrumentacao cientfica para coletar, processar e tirar conclusoes
+a respeito das grandezas de um determinado ambiente. Dentre elas, existe a fsica experimental
+que, a partir de uma extensa analise de dados, procura confirmar conclusoes teoricas ou, em outros
+momentos, ate descobrir efeitos ainda desconhecidos. Dentro deste vasto campo existe o estudo
+de  que procura detectar sinais
+presentes em um determinado experimento (The
+Atlas Collaboration, 2008). Normalmente estes sinais possuem baixa intensidade e surgem com rara
+ocorrencia (de Andrade Filho, 2009).
+Um dos principais desafios da instrumentacao
+cientfica e separar os sinais de interesse dos demais, com o maior nvel de certeza possvel. Na
+busca deste objetivo, inumeras aplicacoes cientficas utilizam filtros que, em suma, sao capazes
+
+ISBN 978-85-8001-069-5
+
+de distinguir sinal do rudo, quando condicoes necessarias sao atendidas. Neste contexto, os Filtro
+Otimos (Trees, 2001) sao muito utilizados, uma
+vez que eles podem aumentar significativamente a
+SNR (do ingles signal-to-noise ratio) e beneficiar a
+deteccao do sinal e a estimacao dos parametros em
+meio ao rudo. No caso destes sistemas, e desenvolvido um filtro baseado no conhecimento previo
+das estatsticas do rudo e dos sinais envolvidos.
+Em seguida, surge o processo de decisao, que
+utiliza um parametro chamado limiar de decisao
+para distinguir as amostras vinculadas ao banco
+de sinal, das amostras vinculadas ao banco de
+rudo. Durante este processo, e utilizado um simples criterio que classifica como sinal, amostras
+que atinjam ou ultrapassem este limiar, e como
+rudo, amostras que nao atinjam o mesmo. A Figura 1 descreve as etapas de um sistema de deteccao_de_sinais contra rudo.
+Apesar do sistema exposto na Figura 1 apresentar enorme aceitacao por parte dos profissionais da area de processamento_de_sinais, em contextos onde a energia do rudo pode variar em funcao do tempo o sistema pode apresentar resultados indesejaveis. Estas incertezas refletem diretamente nos ndices de eficacia do sistema discutido,
+
+498
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+F iltragem
+
+Decisao Sim
+
+o teste_de_hipoteses supracitado, como mostrado
+abaixo
+fRH1 (rH1 ) H1
+
+(2)
+(r) 
+fRH0 (rH0 ) H0
+
+Banco
+de sinal
+
+N ao
+Banco
+de ruido
+Figura 1 Representacao do funcionamento do detector com decisor de limiar fixo.
+entre eles, Pd e Pf , que denotam probabilidade de
+deteccao e probabilidade de falso alarme, respectivamente. Pode-se perceber que para ambientes
+em que a energia do rudo e variante no tempo
+e heterogenea entre os canais, estes ndices vao
+acompanhar tal diversidade e apresentarao flutuacao em funcao destas propriedades estocasticas,
+sobre as quais o sistema nao possui qualquer tipo
+de controle. Nao possuindo controle perante as
+mesmas, resta somente intervir no processo de decisao que surge logo apos o processo de filtragem.
+Neste trabalho e proposto um detector que e
+capaz de redefinir seu limiar de decisao em funcao
+do desvio padrao do rudo de forma que se garanta
+constante a probabilidade de falso alarme. Na Secao 2, sao apresentados os conceitos basicos de
+filtragem_otima. Na Secao 3, a teoria do metodo
+proposto neste trabalho e descrita em detalhes e
+na Secao 4, a implementacao proposta do sistema
+e apresentada. Os resultados de simulacoes sao
+mostrados na Secao 5. Finalmente, as conclusoes
+sao derivadas na Secao 6.
+2
+
+Deteccao por Filtro Otimo
+
+A teoria_de_deteccao_de_sinais e baseada no
+teste_de_hipoteses (Shanmugan, 1988). A partir
+do mesmo e realizado um teste em uma sequencia
+de N amostras, correspondendo a um sinal temporal digitalizado. Neste trabalho, sera abordado
+o ambiente onde o sinal de interesse e determinstico e o rudo aditivo, Gaussiano e branco. Neste
+cenario, deve-se escolher entre duas hipoteses a
+hipotese H0 , em que somente rudo eletronico de
+media zero e distribuicao Gaussiana ni esta presente, ou a hipotese H1 , em que o sinal determinstico procurado si esta adicionado ao rudo,
+conforme indicado na seguinte equacao
+H0 
+H1 
+
+ri 
+ri 
+
+ni
+si + ni
+
+(1)
+
+em que ri denota a sequencia de entrada do processo de filtragem com amostras compreendidas
+no intervalo 1  i  N .
+No intuito de decidir entre uma das duas hipoteses anteriores, utiliza-se a razao de semelhanca,
+(r), que maximiza a eficiencia de deteccao para
+
+ISBN 978-85-8001-069-5
+
+em que, r  r1 , r2 , ..., rN  e os parametros fRH1
+e fRH0 sao as funcoes densidade de probabilidade
+(fdp) do sinal recebido R dado que H1 e H0 ocorreram, respectivamente. Ja o parametro  esta
+relacionado com a probabilidade de falso alarme
+(Pf ) requerida. Desta forma a Equacao (2) pode
+ser interpretada da seguinte maneira se a razao
+(r) for maior que , escolhe-se por H1 , senao, H0
+e escolhido. Supondo-se que a sequencia i com distribuicao Gaussiana e com suas amostras descorrelacionadas entre si, pode-se obter fRH1 e fRH0
+a partir do produtorio das distribuicoes individuais de cada amostra, conforme descrito na equacao
+seguinte
+
+(r) 
+
+QiN
+
+ 1 e
+i1
+2
+
+QiN
+
+(ri si )2
+2 2
+
+1 e
+i1
+2
+
+r2
+ 2i2
+
+H1
+
+
+
+(3)
+
+H0
+
+Aplicando-se logaritmo natural nos dois termos da
+igualdade e efetuando algumas manipulacoes algebricas, obtem-se a seguinte equacao
+N
+X
+i1
+
+H1
+
+ri si   0
+
+(4)
+
+H0
+
+em que  0 corresponde ao limiar de decisao resultante que devera ser avaliado na sada do filtro.
+Com esse desenvolvimento, conclui-se que o
+resultado do filtro apresentado, pode ser representado simplesmente pelo produto interno entre
+a sequencia adquirida pelo detector ri e o sinal determinstico procurado si . Este filtro e conhecido
+como Filtro-Casado (Shanmugan, 1988).
+3
+
+Deteccao com Limiar de Decisao
+Adaptativo
+
+Nota-se que o projeto do limiar  0 , apresentado na Secao 2, esta relacionado ao valor de n0
+e a relacao
+q entre Pd e Pf desejado. Em que,
+
+
+n0  En0 2i , representa o desvio padrao do
+rudo apos a passagem pelo filtro_casado e n0 i , representa as amostras de rudo apos a passagem
+pelo mesmo filtro. No cenario em que n0 varie
+com o tempo, haverao diferentes combinacoes para
+Pd e Pf .
+Em algumas aplicacoes, se deseja que Pd , Pf
+ou a relacao de maior eficiencia entre Pd e Pf ,
+seja controlavel, ou seja, que a partir da observacao de algum parametro do sistema, se firme o
+controle de alguma das variaveis citadas anteriormente. Este trabalho ira se ater em manter fixo o
+nvel de contaminacao da deteccao, fixando Pf .
+
+499
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+O diagrama de processos do sistema proposto
+com limiar de deteccao adaptativo e ilustrado na
+Figura 2. Nota-se que existe a inclusao de um
+processo chamado Estimacao de n0 , visto que o
+detector com decisao adaptativa necessita deste
+parametro para firmar o controle perante a variavel Pf .
+
+A partir das equacoes 5, 8 e 10, deduz-se a seguinte
+expressao
+Pf (adapt )
+
+adapt
+)
+n 0
+kn0
+F(  0 )
+n
+
+F(
+
+
+
+
+(11)
+
+F(k)
+
+Neste sentido, para uma determinada probabilidade de falso alarme desejada Pf d deve ser escolhido um k que obedeca a relacao definida pelas
+expressoes que se seguem.
+
+enable
+Estimacao
+de n0
+Decisao
+Sim Banco
+adaptativa
+de sinal
+
+F iltragem
+
+
+
+N ao
+Banco
+de ruido
+
+Figura 2 Representacao do funcionamento do detector com decisor adaptativo.
+
+F (k)
+1  F (k)
+F (k)
+
+
+Pf d
+
+Pf d
+ 1  Pf d
+
+(12)
+
+A fim de ilustrar o comportamento da funcao
+F (k), e ilustrado na Figura 3 a relacao entre Pf d
+e k, para 4  k  4.
+1
+
+Nota-se que Pf possui uma simples relacao
+com n0 , de forma que um novo limiar adaptativo
+adapt pode ser dado pela seguinte relacao
+
+0.9
+
+adapt  kn0
+
+0.6
+
+Dessa forma a Equacao (4) pode ser reescrita conforme descrito abaixo
+N
+X
+
+0.7
+
+Pf d
+
+(5)
+
+0.8
+
+0.5
+0.4
+0.3
+0.2
+
+H1
+
+(6)
+
+ri si  adapt
+H0
+
+i1
+
+0
+4
+
+Para a escolha de k deve-se fixar a Pf desejada.
+No intuito de relacionar k e Pf , inicialmente devese conhecer a Funcao Distribuicao de Probabilidade Acumulativa (Papoulis, 1991) Fn0 (x) do
+rudo n0 i , que e representada pela expressao
+Fn0 (x)  p
+
+1
+2n2 0
+
+Zx
+
+e
+
+
+
+2
+2 2 0
+n
+
+d
+
+(7)
+
+
+
+Fn0 (x)  F(
+Zx
+
+x
+)
+n0
+
+e
+
+2
+2
+
+(8)
+
+d
+
+(9)
+
+
+
+Desta forma, e possvel definir Pf para detector com decisor adaptativo (Trees, 2001), a partir
+da relacao compreendida a seguir
+Pf (adapt )  Fn0 (adapt )
+
+ISBN 978-85-8001-069-5
+
+3
+
+2
+
+(10)
+
+1
+
+0
+
+k
+
+1
+
+2
+
+3
+
+4
+
+Figura 3 Relacao entre Pf d e k correspondente.
+
+4
+
+A fim de se obter Fn0 (x) generalizada para variados valores de n2 0 determina-se as Equacoes (8) e
+(9), em que F(x) representa a Funcao Distribuicao
+de Probabilidade normalizada (Papoulis, 1991).
+
+1
+F(x)  
+2
+
+0.1
+
+Implementacao
+
+O detector proposto na Secao 3 foi implementado em um chip FPGA (Brown, 2000) do fabricante Altera, famlia Cyclone III e codigo de identificacao EP3C40F484C6. O circuito sintetizado
+e mostrado no diagrama da Figura 2. Para o decisor foi adotado k  4 (deteccao em 4n0 ), de
+forma que conciliasse o par de Pd e Pf desejado e
+simplicidade de implementacao, visto que a multiplicacao por um numero potencia de 2 pode ser
+implementado facilmente a partir de um simples
+deslocamento de bit.
+No processo de estimacao de n0 , foi adotado
+um estimador conforme Figura 4, em que o parametro trigger esta relacionado com o resultado
+da deteccao. Desta forma, ele esta ativo sempre
+quando um evento e classificado como sinal. No
+caso de eventos classificados como rudo, o parametro enable se mantem ativado, habilitando o
+incremento no acumulador.
+
+500
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Contador
+modulo L
+
+1
+0.9
+0.8
+
+L
+
+0.7
+
+An
+
+0.6
+0.5
+
+reset sncrono enable
+
+0.4
+
+entrada
+
+Registrador
+
+Acumulador
+
+sada
+0.3
+0.2
+
+enable
+0.1
+
+trigger
+
+0
+
+Verifica-se, a partir da Figura 4, que o circuito
+de estimacao de n0 faz uso de um multiplicador,
+calculando o quadrado do sinal de entrada, e um
+acumulador, em conjunto com um contador e um
+comparador configurados de forma que o acumulador reinicie a cada L eventos. Com isso, o estimador oferece na sada uma nova estimacao de
+n2 0 , multiplicada por L, a cada L eventos, em que
+o parametro reset da Figura 4 e ativado quando
+o limite L de eventos e alcancado.
+Nota-se ainda a ausencia do circuito de raiz
+quadrada e de divisao por L para a estimacao
+de n0 . Isto se deve pela estrategia de simplificacao adotada, uma vez que o resultado na sada
+sera utilizado apenas para realizar a comparacao
+definida no processo de decisao. Neste sentido,
+verifica-se que e possvel manipular o outro termo
+da comparacao afim de se obter o mesmo resultado
+esperado. A manipulacao mencionada pode ser
+numericamente representada pela Equacao (13),
+para L  210 .
+
+5
+
+10
+
+15
+
+20
+
+i
+
+25
+
+30
+
+Figura 5 Sinal determinstico si , em que a amplitude normalizada An esta representada no eixo
+da ordenada e o ndice de amostra i na abcissa.
+O rudo possui caracterstica estocastica
+Gaussiana, branca e de media zero, ou seja,
+E nk   0. O desvio padrao do rudo foi modelado de forma variante no tempo, possuindo intervalo 1  n  3, esta variacao possuiu forma
+orientada pela imagem de sin(), para 0    ,
+conforme Figura 6.
+3
+2.8
+2.6
+2.4
+2.2
+
+n
+
+Figura 4 Circuito implementado para a estimacao
+de n0 .
+
+2
+1.8
+1.6
+1.4
+
+N
+P
+
+ri si
+2
+ i1
+N
+P
+ri si
+i1
+2
+
+N
+P
+6
+ri si
+2
+i1
+
+1.2
+
+4n0
+
+>
+
+1
+
+>
+
+16n2 0
+
+>
+
+210 n2 0
+
+(13)
+
+Verifica-se que multiplicando o termo referente ao quadrado da sada do filtro por 26 , e comparando com 210 n2 0 , se equivale a comparacao definida pela Equacao (6), para k  4, evitando os
+circuitos de divisao e radiciacao antes necessarios.
+5
+
+Simulacao
+
+Para realizar a simulacao, foi adotada uma
+sequencia de N  30 amostras do sinal determinstico normalizado mostrado na Figura 5. Trata-se
+de uma forma de sinal tpico, normalmente encontrado em experimentos de fsica de altas energias.
+
+ISBN 978-85-8001-069-5
+
+0
+
+2
+
+4
+
+6
+
+Amostras
+
+8
+
+10
+6
+
+x 10
+
+Figura 6 Ilustracao da variacao temporal sofrida
+pelo n , em que n esta representado no eixo da
+ordenada e o ndice de amostra k na abcissa.
+Vale ressaltar que o intervalo de atualizacao desta estimacao deve ser projetado de forma
+que o desvio padrao real permaneca estacionario para uma determinada janela de estimacao de
+n0 . A partir da observacao do cenario proposto,
+verificou-se que um intervalo L  1024 amostras e
+suficiente para realizar a estimacao do parametro
+supracitado.
+Apos a simulacao com o total de 8  105 eventos, distribudos igualmente para sinal e rudo, foi
+possvel gerar as curvas ROC (do ingles Receiver
+Operating Curve) (Trees, 2001) para cada tipo de
+
+501
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+0.44
+
+0.42
+
+0.4
+
+Pf
+
+detector. O resultado pode ser conferido na Figura 7. Nota-se que nao existe uma diferenca consideravel de desempenho entre o detector de limiar
+adaptativo e limiar fixo, uma vez que, esta sendo
+utilizado um filtro otimo. Conforme visto na Figura 7, nao se esperava incremento de desempenho, por parte do detector de decisao adaptativo,
+mas o que se pode perceber e uma suave perda
+de desempenho do mesmo visto a dificuldade em
+estimar n0 .
+
+0.38
+
+0.36
+
+Detecção com patamar adaptativo
+Detecção com patamar fixo
+
+0.34
+1
+0.32
+
+0.95
+
+Detecção com patamar adaptativo
+Detecção com patamar fixo
+
+0.9
+0.85
+
+4
+
+6
+
+Po
+
+8
+
+10
+
+12
+
+Figura 8 Comportamento da variavel Pf em 12
+pontos de observacao Po diferentes.
+
+0.8
+
+Pd
+
+2
+
+0.75
+0.7
+0.65
+0.6
+0.55
+0.5
+
+0
+
+0.2
+
+0.4
+
+Pf
+
+0.6
+
+0.8
+
+1
+
+Figura 7 Curva de desempenho dos detectores
+com decisao adaptativa e nao adaptativa, em que
+Pd esta representado no eixo da ordenada e Pf no
+eixo da abcissa.
+No entanto, a motivacao de se utilizar a decisao adaptativa confere ao controle da variavel
+Pf , para visualizar tal comportamento, e necessario buscar valores de  0 e adapt , que levem a um
+mesmo conjunto de Pd e Pf resultante. Devido a
+ligeira variacao de desempenho entre os dois detectores e impossvel encontrar pares identicos de
+Pd e Pf resultante. No entanto, conforme pode
+ser observado na Tabela 1 foi encontrado pares Pd
+e Pf resultantes aproximadamente iguais. Neste
+sentido o comportamento de Pf para ambos os
+detectores pode ser visualizado na Figura 8.
+Tabela 1 Valores adotados de Pf e seus consequentes Pd ,  0 e k .
+Pf
+39, 94
+39, 97
+
+Tipo de decisao
+Adaptativa
+Fixa
+
+Pd
+99, 66
+99, 73
+
+0
+
+1.36
+
+k
+0, 25
+
+
+falso alarme ou nvel de contaminacao em funcao
+do desvio padrao do rudo resultante na sada do
+filtro.
+Foi ilustrada a efetividade deste controle e
+tambem foi abordado a equivalencia dos ndices
+Pf e Pd resultantes para detectores com limiar fixo
+e adaptativo. Como resultado, a versao adaptativa oferece como motivacao a nao flutuacao de
+Pf , ao contrario da versao nao adaptativa, que
+demonstra intensa flutuacao de Pf em funcao da
+mudanca das caractersticas estocasticas do rudo,
+conforme mostrado nas Figuras 6 e 8.
+Conclui-se tambem que a parametrizacao do
+decisor pode ser facilmente efetuada, para cenario
+com qualquer n , uma vez que, para a configuracao do detector, seja necessario apenas a escolha
+do Pf d . Uma vez escolhido o Pf d , resta apenas encontrar o parametro k correspondente de acordo
+com a Equacao (12) ou atraves de consulta ao grafico da Figura 3. A partir dos dados simulados
+foi possvel verificar uma variacao da Pf em ate
+6, para o detector com limiar nao adaptativo nos
+pontos de observacao adotados. Enquanto no detector com limiar adaptativo verificou variacao de
+Pf sempre menor que 0, 5.
+Aplicacoes que desejam nvel de contaminacao
+constante podem fazer uso da estrategia abordada
+neste trabalho, e a partir da mesma, assegurar
+um nvel constante para Pf , mesmo que o rudo
+presente possua desvio padrao variante no tempo.
+
+Agradecimentos
+6
+
+Conclusao
+
+Neste trabalho foi discutido uma das motivacoes para adotar um limiar de decisao adaptativo
+na classificacao de eventos em sistemas de deteccao, destacando o controle da probabilidade de
+
+ISBN 978-85-8001-069-5
+
+A Coordenacao de Aperfeicoamento Pessoal
+de Nvel Superior (CAPES), ao Conselho Nacional de Desenvolvimento Cientfico e Tecnologico
+(CNPq) e a Fundacao de Amparo a Pesquisa do
+Estado de Minas Gerais (FAPEMIG) pelo suporte
+financeiro.
+
+502
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Referencias
+Brown, S. (2000). Fundamentals of Digital Logic
+with VHDL Design, McGraw Hill.
+de Andrade Filho, L. M. (2009). Deteccao e Reconstrucao de Raios Cosmicos Usando Calorimetria de Altas Energias, Tese de doutorado, Universidade Federal do Rio de Janeiro
+UFRJ, Rio de Janeiro, Brasil.
+Papoulis, S. (1991). Probability, Random Variable
+and Stochastic Processes, McGraw Hill.
+Shanmugan, K. S. (1988). Detection, Estimation
+and Data Analysis, John Wiley and Sons.
+The Atlas Collaboration (2008). The atlas collaboration at cern large hadron collider, Journal of Instrumentation .
+Trees, H. L. V. (2001). Detection, Estimation and
+Modulation Theory, Wiley-Interscience.
+
+ISBN 978-85-8001-069-5
+
+503

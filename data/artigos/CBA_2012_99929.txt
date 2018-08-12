@@ -1,0 +1,683 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+UTILIZANDO REPRESENTACOES MULTI-SEMANTICAS PARA MAPEAMENTO
+TOPOLOGICO EM ROBOTICA MOVEL.
+Monica Figueiredo, Celina Haffele, Silvia Botelho, Paulo Drews, Gabriel Leivas
+
+
+Av. Italia km 8
+Universidade Federal do Rio Grande
+Rio Grande, RS, Brasil
+
+
+Av. Antonio Carlos, 6627
+Universidade Federal de Minas Gerais
+Belo Horizonte, MG, Brasil
+Emails monica.sfigueiredo@hotmail.com, celinahaffele@yahoo.com.br, silviacb@furg.br,
+paulodrews@furg.br, gabrielleivas@gmail.com
+Abstract Mapping is a technique used by robots and autonomous vehicles to build up a map within an
+unknown environment (without a priori knowledge), or to update a map within a known environment (with a
+priori knowledge from a given map). It is the problem of integrating the information gathered by a set of sensors
+into a consistent model and depicting that information as a given representation. Central aspects in mapping
+are the representation of the environment and the interpretation of sensor data. Geometrical approaches must
+held geometrically consistent maps of the environment. Moreover Topological Maps are a method of environment representation which capture the connectivity (i.e., topology) of the environment rather than creating a
+geometrically accurate map. In the case of multiple sensors different algorithms should be used for extraction
+of information acquired. This information may result in different levels of semantic meaning leading to different
+maps representing perceptions of the environment navigated. In this context, this paper proposes a method
+for mapping generic environments (structured or not) based on several semantic maps. In our implementation
+each map can be described as a topological map (Self-Organizing Maps and Growing Cell Structures), which are
+modeled like neural networks. The results obtained on different dynamic and ambiguous environments show the
+generalization and compactation power of the proposed method.
+Keywords
+
+Hybrid Maps Topological Mapping Neural Networks
+
+Resumo Mapeamento e uma tecnica usada por robos e veculos_autonomos para elaborar um mapa dentro
+de um ambiente desconhecido (sem conhecimento a priori), ou para atualizar um mapa dentro de um ambiente
+conhecido (com um conhecimento a priori a partir de um determinado mapa). Deve-se integrar a informacao
+adquirida por um conjunto de sensores em um modelo consistente, conduzindo a uma representacao adequada
+do ambiente navegado. Aspectos centrais de mapeamento sao a interpretacao dos dados adquiridos pelos sensores e a representacao destes em algum tipo de modelo_matematico e computacional. Abordagens geometricas
+surgem fornecendo mapas exatos e geometricamente consistentes do ambiente. Por outro lado Mapas Topologicos apresentam metodos de representacao capazes de capturar a conectividade (ou seja, topologia) do meio
+ambiente ao inves de criar um mapa geometricamente preciso. No caso de varios sensores, diferentes algoritmos
+devem ser usados para a extracao da informacao adquirida. Esta informacao pode resultar em diferentes nveis
+de significado semantico, conduzindo a diferentes mapas representativos da percepcao do ambiente navegado.
+Neste contexto, este trabalho propoe um metodo para o mapeamento_de_ambientes genericos (estruturado ou
+nao) com base em varios mapas semanticos. Em nossa implementacao, cada mapa e descrito como um mapa
+topologico, modelado atraves de duas tecnicas Mapas Auto-Organizaveis e Estruturas Celulares Crescentes. A
+implementacao e validada em varios testes realizados por um robo_movel dotado de diferentes sensores navegando
+em um ambiente simulado no Simulador Fsico Webot. Os resultados obtidos em diferentes ambientes dinamicos
+e ambguos mostram a capacidade de generalizacao e poder de compactacao do metodo proposto.
+Palavras-chave
+
+
+
+Introducao
+
+Robos moveis tem como caracterstica intrnseca a possibilidade de navegar no ambiente o qual
+estao imersos. Ao realizar missoes estes veculos
+deverao ser capazes de tratar uma ampla variedade de informacoes incertas e dinamicas, interagir inteligentemente com humanos e outros sistemas roboticos, e garantir sua propria seguranca,
+assim como das pessoas ao seu redor (Bensalem
+et al., 2009). Para tal, a habilidade de estimar sua
+localizacao, mapear o ambiente navegavel e planejar a sua trajetoria sao pre-condicoes basicas para
+a concepcao de sistemas roboticos autonomos.
+
+ISBN 978-85-8001-069-5
+
+O processo de estimar a pose de um robo em
+um ambiente, por meio de informacoes obtidas de
+seus sensores, e denominado de localizacao. O mapeamento tem o objetivo de criar, tambem atraves dos dados adquiridos de seus sensores, uma
+representacao do ambiente navegado pelo robo.
+Por fim, o planejamento_de_trajetoria e responsavel por enviar comandos motores ao robo fazendo com que ele navegue de forma segura, desviando de obstaculos, ate um local determinado
+(Oliveira, 2010).
+O mapeamento robotico tem sido uma area
+bastante explorada em robotica e inteligencia_artificial ha pelo menos duas decadas (Thrun, 2002).
+
+5254
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A obtencao do modelo representativo advindo de
+tal mapeamento dependera das caractersticas do
+ambiente e dos sensores utilizados para a sua percepcao. Varios sao os aspectos que tornam esse
+problema complexo (Thrun, 2002), dentre eles
+ A alta dimensionalidade, m, das entidades
+a serem mapeadas a complexidade do mapa a
+ser gerado depende do nvel de detalhamento escolhido para representar o ambiente, podendo ter
+que lidar com milhoes de elementos descritivos
+ Problema de correspondencia tambem conhecido como problema de associacao de dados,
+onde busca-se obter diferentes modelos de representacao para relacionar percepcoes semelhantes
+encontradas em diferentes localizacoes espaciais.
+ Dinamicidade do ambiente A dinamicidade
+dos ambientes onde o robo esta inserido acarreta
+no desenvolvimento de tecnicas de deteccao e representacao de modificacoes. Por exemplo, devese admitir que o status de uma porta possa ser
+aberta ou fechada, admitindo-se diversas hipoteses ao longo da montagem do mapa  ou o estado
+da porta mudou, ou o robo nao esta no lugar que
+ele acredita (Vasudevan et al., 2007).
+ Incerteza dos sensores Os sensores nao sao
+totalmente precisos, podendo existir discrepancia
+entre os valores percebidos e o verdadeiro estado
+do ambiente.
+Na literatura, diferentes abordagens de mapeamento sao propostas tratando as questoes acima.
+E crescente o uso de tecnicas probabilsticas de
+SLAM (Simultaneous Localization and Mapping)
+as quais associam o problema de mapeamento ao
+de localizacao visando minimizar os efeitos cumulativos de imprecisao de localizacao na obtencao do mapa, e vice-versa. Ao mapear o ambiente o robo devera realizar duas tarefas sintetizacao do mapa e sua exploracao. A sntese
+de mapa, etapa na qual focaliza-se este trabalho,
+caracteriza-se pela construcao de um modelo que
+represente o ambiente, criado por meio de informacoes sensoriais, que representam a lista destas
+impressoes e suas localizacoes no ambiente. Na exploracao o robo navega no ambiente de forma a obter informacoes suficientes para possibilitar a sua
+modelagem, como em (Durrant-Whyte and Bailey, 2006a), (Durrant-Whyte and Bailey, 2006b),
+(Thrun et al., 2005), (Blanco et al., 2009).
+Metodos bio-inspirados buscam desenvolver
+modelos de representacao que permitam fornecer
+subsdios a exploracao e ao registro do ambiente
+navegavel sem a necessidade de descricoes exatas de seus componentes (Hafner, 2000),(Hafner,
+2008),(Oliveira, 2010), (Zimmer, 1996) e capazes
+de representar diferentes nveis de abstracao necessarios a realizacao de missoes de diferentes naturezas em tempo habil. Para tal, pode-se citar
+o uso de Mapas Topologicos baseados em Redes
+Auto-Organizaveis (Self-organized Maps - SOM)
+(Kohonen, 2001). Tais mapas permitem a repre-
+
+ISBN 978-85-8001-069-5
+
+sentacao de grupos de informacoes de dimensao m
+em representacoes topologicas de menor dimensao,
+n. No caso de n  2, grades bidimensionais congregam topologicamente as percepcoes advindas
+da exploracao do robo, fornecendo mapas representativos do ambiente navegavel.
+A capacidade de representacao topologica,
+adaptabilidade, generalizacao e tolerancia a rudos, proprias das SOMs, sao caractersticas relevantes para a sua utilizacao (Kohonen, 2001). A
+complexidade decorrente de valores de m muito
+grandes, devido a escalabilidade e diversividade
+dos multi-sensores (caracterstica intrnseca das
+tecnologias para percepcao) e a dificuldade em relacionar os mapas obtidos com informacoes espaciais sao aspectos que podem ser adequados a um
+tratamento atraves de SOMs. Trabalhos recentes
+exploram diferentes nveis semanticos de representacao (Hafner, 2008), dividindo a informacao a ser
+mapeada em diferentes nveis de abstracao, indo
+de informacoes geometricas espaciais de baixo nvel a informacoes cognitivas de alto nvel dependentes do contexto (Hafner, 2000),(Hafner, 2008).
+Diferentes tecnicas de mapeamento topologico podem ser empregadas para mapaer os diferentes nveis cognitivos existentes.
+O principal objetivo desse trabalho e averiguar o uso de tecnicas de mapeamento topologico para a representacao perceptiva em multinveis do ambiente navegado. Propoe-se um metodo original para o tratamento de dados advindos de varios sensores baseado em diferentes nveis
+de Mapas Auto-organizaveis (Redes de Kohonen
+(Kohonen, 2001) e Estruturas Celulares Crescentes (Fritzke, 1993)), resultando em diferentes representacoes semanticas dos dados capturados. A
+arquitetura e implementada e seu desempenho e
+verificado no que tange as questoes de escalabilidade, correspondencia, presenca de rudos, dinamicidade do ambiente e estrategias de exploracao.
+O artigo esta organizado em 5 secoes. A secao 2 apresenta um overview da arquitetura multinveis proposta. A seguir sao apresentadas as tecnicas utilizadas na implementacao desenvolvida e
+o conjunto de testes realizados . Finalmente a sessao 5 apresenta as conclusoes do metodo.
+2
+
+Metodologia
+
+Requisitos Dada a complexidade do problema
+de mapeamento, a proposta apresentada visa tratar, de forma mais especfica, as seguintes questoes
+ incertezas das medicoes A dependencia
+probabilstica das medicoes conduz a erros incrementais relativos a espacialidade das impressoes
+sensoriais
+ escalabilidade permitir a sua tratabilidade
+em termos de tempo de processamento e espaco
+de armazenamento
+
+5255
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ correspondencia tratar os aspectos de percepcao similares ao longo do ambiente, detectando
+correspondencias e otimizando seu tratamento
+ dinamicidade a arquitetura devera apresentar plasticidade ao longo de processo de construcao dos mapas, sendo tolerante a possveis modificacoes do ambiente navegado.
+A Proposta Conceitual Generico O problema de Mapeamento pode ser resumido em se
+obter uma representacao que descreva a lista de
+percepcoes realizadas e seu local no espaco. Supondo que o robo possui um determinado grau de
+autonomia, estas percepcoes serao uteis para a realizacao de missoes que envolvam tanto tarefas de
+baixo nvel de execucao. Por exemplo controlar
+seus atuadores de forma a executar uma determinada trajetoria ou tarefas de alto nvel cognitivo,
+como escolher o caminho entre dois corredores de
+cores diferentes.
+Nesta proposta apresenta-se uma arquitetura
+capaz de conviver com os diferentes nveis cognitivos associados ao mapeamento_de_ambientes.
+O ambiente sera descrito atraves de um conjunto
+de mapas. Estes mapas representarao individualmente os diferentes elementos e graus cognitivos percebidos, associados ao contexto por onde o
+robo navega.
+Cada nvel cognitivo sera representado por um
+grafo nao orientado, onde os nodos representarao
+diferentes impressoes sensoriais e suas arestas representarao as possveis relacoes cognitivas entre
+estas. Estas arestas surgem de forma dinamica podendo conduzir o sistema como um todo a estruturas hierarquicas capazes de reproduzir diferentes
+nveis cognitivos de representacao do ambiente.
+A Arquitetura Desenvolvida Devido as caractersticas adaptativas de redutores dimensionais do tipo Mapas Auto-organizaveis (Kohonen,
+2001), estes serao atualmente escolhidos como estrutura para registro dos mapas. Assim, propoese um sistema capaz de fornecer diferentes mapas descritivos do ambiente, a partir de diferentes
+fontes sensoriais, utilizando SOMs. De forma a
+integrar informacoes metricas de localizacao com
+abstracoes topologicas advindas de diferentes percepcoes do ambiente, a Figura 1 apresenta uma
+visao geral do sistema proposto. Nela divide-se o
+problema de mapeamento em duas categorias
+Mapas perceptivos (Mp) estrutura de representacao responsavel pelo registro de cada nvel
+abstrato ou sensor perceptivo do robo utilizando
+Mapas Auto-Organizaveis. Para os mapas perceptivos a rede de Kohonen (Kohonen, 2001) foi escolhida, ja que o proposito desse mapa e simples
+agrupar informacoes semelhantes. Estabelece-se
+que cada fonte sensorial, Si, tera um respectivo
+mapa perceptivo M pi. Cada nodo no mapa representara uma percepcao possvel, de forma que o
+
+ISBN 978-85-8001-069-5
+
+Figura 1 As diversas informacoes perceptivas registradas em cada mapa perceptivo M pi sao associadas a diferentes regioes espaciais no mapa espacial M e por meio de arestas.
+
+mapa M pi resultante registrara o universo de possveis impressoes sensoriais daquele sensor, permitindo o estabelecimento de grupos perceptivos
+representativos dos diferentes elementos que compoem o ambiente. Diferentes Mapas Perceptivos
+poderao existir em funcao das distintas naturezas perceptivas (dimensao e significado), permitindo a representacao de sistemas multi-sensoriais.
+Tambem diferentes Mapas Perceptivos poderao
+representar camadas de processamento de informacao conduzindo a representacoes cognitivas de
+maior nvel de abstracao. Por exemplo, num nvel teriam-se as representacoes dos descritores dos
+objetos pertencentes a cena (quinas, manchas), e
+num segundo nvel estariam representados apenas
+o conjunto de objetos existentes no ambiente. Assim, cada mapa perceptivo M pi estara associado a
+um significado semantico proprio (tipo de sensor,
+nvel de processamento da informacao, etc). Os
+parametros principais que precisam ser definidos
+nos mapas perceptivos sao a sua dimensao (n  n
+neuronios) , a taxa de aprendizado e a largura da
+vizinhanca.
+Mapa espacial (Me) estrutura de representacao responsavel por registrar informacoes espaciais associadas ao espaco de configuracao navegavel pelo robo, armazenando a localizacao do
+mesmo. Cada nodo no mapa representa o entorno
+espacial associado as impressoes sensoriais representadas nos Mapas perceptivos. Utiliza o metodo de Estruturas Celulares Crescentes (GCS)
+(Fritzke, 1993), visto que nao e possvel determinar a priori o numero de nodos que o mapa tera.
+Estas representacoes estarao associadas ao local
+no espaco onde as impressoes situam-se (metodologias de mapeamento baseadas no robo, bem
+como baseadas no ambiente). Alem de tratar a
+questao de espacialidade das percepcoes, o Mapa
+Espacial serve como elemento integrador entre os
+diferentes Mapas Perceptivos existentes no sistema. Os parametros definidos para construir este
+
+5256
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+mapa sao a taxa de aprendizagem, a qual influencia na adaptacao de pesos dos neuronios, e o
+limiar de insercao de um novo no, que verifica o
+erro maximo do neuronio vencedor, a fim de inserir um novo no.
+A associacao entre os mapas e dada entre a
+informacao espacial e as diferentes percepcoes obtidas no mesmo instante de tempo, ou seja, que
+representam a percepcao de um dado lugar. Os
+mapas sao associados de modo que ambiguidades
+perceptivas sejam conectadas a diferentes nodos
+do mapa espacial, enquanto dificuldades de localizacao podem ser resolvidas utilizando a informacao perceptiva.
+O sistema apresentado tem como base sensores de uso comum em robotica terrestre como camera de vdeo omnidirecional e escaner laser, alem
+de estimativa de posicao baseada em odometria
+das rodas do veculo. Entretanto, a proposta e
+generica o suficiente para que a arquitetura seja
+usada para o mapeamento com outros dispositivos
+sensoriais. A proxima secao descreve em detalhes
+as tecnicas utilizadas para a implementacao dos
+mapas perceptivos e espaciais.
+3
+3.1
+
+Tecnicas Utilizadas
+
+Implementacao dos mapas perceptivos
+
+Extracao de caractersticas Diferentes sensores
+fornecem Informacoes sensoriais que sao utilizadas para o mapeamento autonomo de robos. Geralmente, o tratamento de tais informacoes, de elevada dimensao m, e um problema complexo a ser
+resolvido. O aumento da escalabilidade do sistema impoe o emprego de tecnicas de selecao de
+informacao pertinentes, frente ao conjunto total
+de percepcoes captadas pelo robo.
+Inicialmente, para selecao de informacoes relevantes, um modulo de Extracao de Caractersticas
+e empregado, reduzindo a dimensao da informacao, Figura 2. Desta forma, cada mapa perceptivo
+M pni tera associado n dimensoes para representacao das informacoes do sensor. As entradas para
+tais mapas sao os descritores advindos do tratamento das informacoes sensoriais.
+
+retifica-se essas imagens transformando-as em panoramicas (Spacek, 2003), como mostrado por A
+na Figura 3. No processo, mostrado em B na Figura 3, cada imagem capturada e composta por k
+pxeis, agrupados em um gride de t linhas e q colunas. Para cada uma das q colunas de uma imagem
+calcula-se a media dos seus t pxeis. Apos, em C,
+e aplicado um filtro passa baixa para suavizacao
+atraves de uma janela de x elementos. Tal filtro
+e aplicado em todos pxeis da imagem calcula-se
+uma media dos tons de cinza dos x elementos da
+janela, salvando o valor no elemento central. Por
+fim, como mostrado em D, e feita uma reamostragem de modo a reduzir o tamanho do descritor
+para um numero de amostras y, que servem de
+entrada perceptiva para o mapa.
+
+Figura 3 Processo de Extracao de Caractersticas
+(Hafner, 2000).
+Outros extratores de caractersticas de imagens poderiam ser utilizados, como o SURF (Bay
+et al., 2006), SIFT (Lowe, 2004) ou modelo de
+saliencia (Itti et al., 1998). Porem o foco era
+manter uma abordagem bio-inspirada, sendo escolhida, portanto, a abordagem proposta por
+(Hafner, 2000).
+Com vistas a tratar a dinamicidade e redundancia associadas as informacoes sensoriais,
+propoem-se a implementacao dos mapas perceptivos M pni , que recebem entradas Sni do seu
+sensor i. Cada nodo do mapa tera igual dimensao
+dos descritores de entrada, ou seja tamanho y.
+A dinamica de adaptacao do mapa, frente a
+cada nova entrada perceptiva e estabelecida atraves da atualizacao dos pesos de cada nodo e de
+sua vizinhanca, ver (Kohonen, 2001).
+3.2
+
+Figura 2 Reducao Dimensional da Extracao de
+Caractersticas.
+A Figura 3 ilustra a implementacao atual do
+modulo de extracao_de_caractersticas (Hafner,
+2000). Primeiramente, obtem-se imagens omnidirecionais do ambiente percorrido pelo robo, apos
+
+ISBN 978-85-8001-069-5
+
+Implementacao dos mapas espaciais
+
+Informacoes associadas a localizacao do robo no
+espaco de configuracao sao tratadas pelo Mapa
+Espacial. Como no caso dos Mapas Perceptivos, o
+Mapa Espacial e implementado atraves de SOMs,
+porem utilizando a abordagem de Estruturas Celulares Crescentes (GCS) (Fritzke, 1993).
+O processo de aprendizado da GCS e descrito
+a seguir
+1. Inicializar o treinamento com um simplexo
+k  dimensional. Os (k + 1) nodos sao inicializados com valores aleatorios de vetores de
+pesos sinapticos.
+
+5257
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+2. Selecionar um sinal de entrada x, de acordo
+com o espaco de entrada P (x).
+3. Determinar o neuronio vencedor (BMU - bestmatching unit) s que possui o vetor peso wi
+mais similar com a entrada x. Geralmente,
+utiliza-se a medida da distancia Euclidiana,
+conforme Equacao 1.
+
+s  argminA kwc  xk (c  A) .
+
+(1)
+
+4. Somar o quadrado da distancia entre a entrada x e o vetor peso sinaptico do neuronio
+vencedor s, para obter a variavel de erro local
+Es , como mostra a Equacao 2.
+
+ws  b (x  ws ),
+
+(3)
+
+wi  n (x  wi ) (i  Ns ) .
+
+(4)
+
+onde Ns e o conjunto de vizinhos topologicos
+diretos da unidade c e b > n .
+6. Se o numero de sinais de entrada gerados, ate
+entao, for um inteiro multiplo de um parametro , onde  e um valor estipulado pelo
+usuario que representa o intervalo de iteracoes entre a insercao de um novo nodo, entao
+insere-se um novo neuronio, seguindo os seguintes passos
+ Determinar o nodo q que possui o maior
+erro acumulado, de acordo com a Equacao 5.
+
+(5)
+
+ Inserir um novo neuronio r dividindo a
+maior aresta que emana de q. Considerando que esta aresta leva ao nodo f , inserir duas novas conexoes (q, r) e (r, f ), e
+remover a conexao original (q, f ). Para
+reconstruir a estrutura de forma que ela
+continue consistindo apenas de simplexos k  dimensionais, o novo neuronio
+r deve estar conectado com todos os vizinhos comuns de q e f , ou seja, com todos
+os nodos dentro do conjunto Nq  Nf .
+ Interpolar o vetor de r dos vetores de q
+e f , conforme Equacao 6
+wr  0, 5 (wq + wf ).
+
+ISBN 978-85-8001-069-5
+
+
+Ei (i  Nr ) .
+Ni 
+
+(7)
+
+ Definir a variavel de erro do novo neuronio r, a partir do valor medio de seus
+vizinhos, conforme Equacao 8.
+Ei  
+
+ X
+Ei .
+Ni 
+
+(8)
+
+iNr
+
+7. Decrementar a variavel de erro de todos os
+neuronios, de acordo com a Equacao 9.
+(9)
+
+(2)
+
+5. Mover s e seus vizinhos topologicos diretos na
+direcao de x, por fracoes b e n , parametros
+da rede, como mostram as equacoes 3 e 4.
+
+q  argmaxi Ec  (c  A) .
+
+Ei  
+
+Ec  Ec (c  A) .
+
+2
+
+Es  kws  xk .
+
+ Decrementar o valor da variavel de erro
+de toda a vizinhanca de r, pela Equacao
+7.
+
+(6)
+
+8. Se o criterio_de_parada nao for satisfeito, voltar ao passo 2.
+E possvel incluir um criterio para remover
+neuronios.
+Remocao
+a partir de um tamanho de grade
+pre-definido, celulas podem ser excludas. O
+processo de exclusao permite que nodos muito
+distantes dos seus vizinhos sejam eliminados do
+mapa. Ao excluir um neuronio, e necessario percorrer os demais neuronios de sua vizinhanca, excluindo tambem os que possurem apenas uma conexao (assim nao mantendo a topologia triangular). Uma caracterstica dessa rede e sua formacao
+por superfcies k-dimensionais, e a remocao de um
+nodo pode modificar drasticamente a rede, visto
+que seus vizinhos podem ter que ser eliminados
+tambem.
+Os nodos da GCS representaram diferentes
+poses de dimensao p no espaco de configuracao
+do robo. Assim, a cada rodada de captura de informacoes sensoriais, a informacao espacial, Gp,
+e passada ao mapa espacial que se adapta para
+melhor representar a informacao espacial apresentada. A informacao espacial capturada e, entao,
+comparada com todos nodos ja existentes no mapa
+espacial. Dentre esses nodos e eleito um vencedor (BMU),cuja distancia_euclidiana e a menor
+quando comparada com a entrada, ou seja, o nodo
+que possui a maior semelhanca com a informacao
+apresentada. A adaptacao ocorre atraves dos operadores
+ cria nodo Depois de eleito um vencedor,
+verifica-se o modulo da distancia_euclidiana.
+Se o valor for maior que um limiar setado pelo
+usuario, um novo nodo sera criado a fim de
+representar a nova informacao, visto que as
+ja existentes nao sao capazes de representala. Esse novo nodo tera conexoes com os dois
+nodos mais proximos a ele, visto que a topologia triangular da rede deve ser mantida.
+
+5258
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ adapta nodo Se a distancia_euclidiana entre
+o BMU e a entrada for menor que o limiar setado, isso significa que existe um nodo similar
+o suficiente a ponto de representar satisfatoriamente aquela entrada. O nodo escolhido e
+entao adaptado para que se ajuste a informacao apresentada.
+Na sua atual implementacao, as conexoes cognitivas nao sao exploradas pela arquitetura. Restando ainda definir seus mecanismos de criacao e
+manipulacao.
+4
+
+Testes e Resultados
+
+A arquitetura proposta foi implementada em um
+sistema computacional desenvolvido em linguagem C o qual implementa o modulo de extracao de
+caractersticas e os Mapas de Representacao. Para
+a realizacao de testes e validacao da proposta, foi
+utilizado um robo_movel dotado de sensores para
+o mapeamento_de_ambientes a serem navegados
+por ele. Para este artigo, os testes foram realizados utilizando-se o ambiente_de_desenvolvimento
+e simulacao fsica Webots (Webots, n.d.), o qual
+permite simulacoes fisicamente realistas em ambientes 3D configuraveis. Dentre os modelos de
+robos, o simulador Webots disponibiliza o robo
+Pioneer, o qual foi utilizado nos testes. Foi desenvolvido um sistema_de_controle_de_navegacao que
+permite o controle_remoto do veculo pelo usuario.
+Para adquirir as informacoes do ambiente, foram utilizados dois tipos de sensores uma camera
+e um GPS. As informacoes de pose advindas do
+GPS sao encaminhadas ao mapa espacial, ao passo
+que as informacoes visuais processadas abastecem
+um mapa perceptivo. A camera captura imagens
+omnidirecionais de resolucao 128  128, ver Figura 4(a) ,as quais sao retificadas, resultando em
+imagens panoramicas, conforme secao 3.1. As
+imagens retificadas serao as entradas do modulo
+de extracao de descritores ver Figura 4(b). Nos
+exemplos realizados, cada imagem foi subdividida
+em 64 linhas e 400 colunas, as quais serao representadas por um vetor descritor de dimensao 16.
+Cada elemento do vetor descreve o valor medio
+dos pxeis da coluna Hafner, 2008, apos passada
+por uma suavizacao de um filtro passa baixa com
+janela de 7 elementos. Ja as informacoes advindas do GPS, correspondem as entradas do mapa
+espacial, uma vez que retornam a posicao (x, y)
+do robo.
+4.1
+
+Cenarios de teste
+
+O sistema foi testado em um conjunto de distintos cenarios, construdos de forma a verificar o
+desempenho da proposta frente a algumas das caractersticas, tais como tolerancia a rudos, correspondencia de pontos, escalabilidade, dinamica
+
+ISBN 978-85-8001-069-5
+
+(a) Imagem esferica
+
+(b) Imagem panoramica
+
+Figura 4 Imagens antes e apos retificacao
+do sistema, dentre outras. Os ambientes sao constitudos de cilindros de diferentes dimensoes, dispostos em varios arranjos espaciais, conduzindo a
+diferentes impressoes perceptivas ao longo da navegacao.
+4.1.1
+
+Calibracao dos Parametros - Cenario Base
+
+Um ambinte basico inicial foi desenvolvido para
+calibracao dos parametros do sistema, Figura 5.
+Para a avaliacao do desempenho dos mapas gerados foram utilizadas as medidas de Erro de Quantizacao e de Erro Topografico (Wu and Takatsuka, 2005) 1 . Com base nessas duas medidas, o
+sistema teve seus parametro calibrados resultando
+na seguinte configuracao uma SOM de 50x50
+neuronios representando o mapa perceptivo, com
+taxa de aprendizagem  0,5 e a largura da vizinhanca  8. Ja para o mapa espacial, foram escolhidos a taxa de aprendizagem  0,5 e o limiar
+de insercao 0,005.
+
+Figura 5 Cenario Base
+Com base nesses parametros, durante os experimentos no Cenario Base, foram obtidas as representacoes espaciais e perceptivas apresentadas na
+Figura 6(a). O mapa superior (mapa perceptivo) e
+visualizado utilizando a matriz de distancias unificadas (Ultsch, 1993). Ja o mapa inferior (mapa espacial) e a representacao da estrutura celular crescente. As conexoes existentes integram as percep1 Erro
+
+de Quantizacao - Fornece uma medida de erro associada ao quao um padrao de entrada e bem representado
+pelo seu neuronio vencedor (BMU) - e ao Erro Topografico
+- Medida da continuidade do mapeamento,analisa se dois
+vetores proximos no espaco de entrada podem ser mapeados por neuronios que distem de apenas uma unidade no
+espaco de sada ou que estejam em cantos opostos do mapa
+(Kiviluoto, 1996)
+
+5259
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+coes obtidas com sua localizacao espacial. A Figura 6(b) apresenta os grupos perceptivos formados, bem como associa, atraves de cores, o grupo
+perceptivo principal (aquele com menor erro de
+quantizacao) existente em uma determinada localizacao espacial. Percebe-se ao comparar a trajetoria realizada na Figura 5 que as percepcoes
+significativamente diferentes no incio (magenta)
+e final do mapa (verde e amarela) sao representadas pelo sistema, bem como percepcoes semelhantes (em verde) na sua bifurcacao sao igualmente
+representadas.
+
+(a) Mapas perceptivo e espacial obtidos apos navegacao orientada por joystick
+em ambiente Cenario Base.
+
+(a) Cenario repetitivo.
+
+(b) Resultados do Cenario
+de Correspondencia.
+
+Figura 7 Mapas gerados onde percebe-se que a divisao entre mapas de natureza distintas facilitam
+o tratamento de situacoes sensoriais semelhante
+em diferentes localizacoes, uma vez que estas sao
+representadas por diferentes nodos no mapa espacial. Alem de nao haver replicacao na representacao de informacoes perceptivas (visuais) semelhantes.
+
+(b) E escolhido o nodo perceptivo, dentre os que o espacial esta conectado, que
+e mais proximo de sua entrada original. Este nodo
+dara cor ao nodo espacial
+
+Figura 6 Resultados do Cenario de Calibracao
+
+4.1.2
+
+Cenario de Correspondencia
+
+O cenario da Figura 7(a) foi desenvolvido de forma
+a verificar o desempenho do sistema frente ao problema da correspondencia perceptiva. Por apresentar uma disposicao uniforme de obstaculos semelhantes, este cenario e propcio a existencia de
+muitas impressoes sensoriais semelhantes, Figura
+7(a). Ao total foram capturadas 605 amostras
+sensoriais, que foram representadas em 480 nodos espaciais. Por sua vez, percebe-se que o mapa
+perceptivo condensa a quantidade similar de percepcoes em um numero reduzido de 5 grupos, ver
+Figura 7(b), que sao conectados aos diferentes nodos do mapa espacial.
+4.1.3
+
+Figura 8 Cenario Base com a remocao de colunas.
+
+da reducao do numero de grupos do mapa perceptivo.
+
+Cenario de ambientes dinamicos
+
+Esse ambiente e identico ao cenario base, Figura
+5, no entanto, sao retirados, em determinado momento, alguns obstaculos. Nesse teste, sao apresentadas duas situacoes primeiramente, o robo
+percorre o ambiente com todos os obstaculos presentes apos, alguns desses sao removidos. O cenario resultante da remocao dos obstaculos e apresentado na Figura 8.
+Para o ambiente completo, foram apresentados 276 amostras, o sistema criou 77 nodos no
+mapa espacial e, no mapa perceptivo, formaramse 7 grupos. As figuras 9(a) e 9(b) apresentam os
+mapas perceptivos e espacial antes e apos a remocao. Percebe-se a adaptacao do mapa perceptivo a
+remocao dos obstaculos, manifestando-se atraves
+
+ISBN 978-85-8001-069-5
+
+(a) Cenario base apos remo- (b) Mapas finais adaptados
+cao de obstaculos.
+em funcao da dinamica do
+ambiente.
+
+Figura 9 Resultados do Cenario de Ambientes
+Dinamicos
+
+5
+
+Conclusao
+
+Este trabalho apresentou abordagem para a representacao de ambientes navegaveis por robos_moveis. A proposta e baseada no uso de diversos
+nveis de representacao das informacoes sensoriais
+associadas a diferentes naturezas e nveis de abstracao de informacoes perceptivas do ambiente.
+
+5260
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Um mapa espacial representa o espaco de configuracao navegado e mapas perceptivos representam diferentes sensores e nveis cognitivos utilizados para realizacao de missoes. Conexoes entre
+os mapas representam suas relacoes baseadas nos
+diferentes nveis de abstracao das informacoes manipuladas, bem como no contexto de aplicacao do
+sistema.
+Em sua atual implementacao a arquitetura foi
+implementada atraves do uso de GCS para o mapa
+espacial e SOMs para os mapas perceptivos. Um
+metodo de criacao de conexoes entre mapas relaciona informacoes espaciais as informacoes perceptivas existentes na SOM. A proposta foi utilizada
+em simulacoes realizadas em diferentes tipos de cenarios. O desempenho do sistema nos diferentes
+testes realizados atestou a adequacao do metodo,
+e que suas extensoes sao promissoras.
+Referencias
+Bay, H., Tuytelaars, T. and Gool, L. V. (2006).
+SURF Speeded up robust features, European
+Conference on Computer Vision, pp. 404
+417.
+Bensalem, S., Gallien, M., Ingrand, F., Kahloul,
+I. and Thanh-Hung, N. (2009). Designing
+autonomous robots - toward a more dependable software architecture., IEEE Robotics
+and Automation Magazine 16(1) 6777.
+Blanco, J., Fernandez-Madrigal, J. and Gonzalez,
+J. (2009). Toward a unified bayesian approach to Irbid Metric-Topological SLAM, Robotics and Autonomous Systems 57 6474.
+Durrant-Whyte, H. and Bailey, T. (2006a). Simultaneous localisation and mapping (SLAM)
+Part I the essential algorithms, IEEE Robotics and Automation Magazine 13 99110.
+Durrant-Whyte, H. and Bailey, T. (2006b). Simultaneous localization and mapping (SLAM)
+Part II state of the art, IEEE Robotics and
+Automation Magazine 13 108117.
+Fritzke, B. (1993). Growing cell structures - a
+self-organizing network for unsupervised and
+supervised learning., Technical report, University of California.
+Hafner, V. (2000). Learning places in newly explored environments, International Symposium
+for Adaptive Behavior, pp. 111120.
+Hafner, V. (2008). Robots as tools for modelling
+navigation skills a neural cognitive map approach, in M. Jefferies and W.-K. Yeap (eds),
+Robotics and Cognitive Approaches to Spatial Mapping, Vol. 38 of Springer Tracts in
+Advanced Robotics, Springer Berlin  Heidelberg, pp. 315324.
+
+ISBN 978-85-8001-069-5
+
+Itti, L., Koch, C. and Niebur, E. (1998). A
+model of saliency-based visual attention for
+rapid scene analysis, IEEE Transactions on
+Pattern Analysis and Machine Intelligence
+20 12541259.
+Kiviluoto, K. (1996). Topology preservation in
+self-organizing maps, Proc. IEEE International Conference on Artificial Neural Networks
+1 249254.
+Kohonen, T. (2001).
+Self-Organizing Maps,
+Springer-Verlag New York, Inc., Secaucus,
+NJ, USA.
+Lowe, D. G. (2004). Distinctive image features
+from scale-invariant keypoints, International
+Journal of Computer Vision 60(2) 91.
+Oliveira, J. (2010). Um sistema integrado para
+navegacao_autonoma de robos_moveis, Universidade de Sao Paulo .
+Spacek, L. (2003). Omnidirectional catadioptric
+vision sensor with conical mirrors, Towards
+Intelligent Mobile Robots.
+Thrun, S. (2002). Robotic mapping A survey, in
+G. Lakemeyer and B. Nebel (eds), Exploring
+Artificial Intelligence in the New Millenium,
+Morgan Kaufmann, pp. 163175.
+Thrun, S., Burgard, W. and Fox, D. (2005). Probabilistic Robotics (Intelligent Robotics and
+Autonomous Agents), The MIT Press.
+Ultsch, A. (1993).
+Self-Organizing neural
+networks for visualization and classification,
+in O. Opitz, B. Lausen and R. Klar (eds), Information and Classification, Springer, London, UK, pp. 307313.
+Vasudevan, S., Gachter, S., Nguyen, V. and Siegwart, R. (2007). Cognitive maps for mobile robots-an object based approach, Robotics and Autonomous Systems 55 359371.
+Webots (n.d.).
+httpwww.cyberbotics.com.
+Commercial Mobile Robot Simulation Software.
+Wu, Y. and Takatsuka, M. (2005). The geodesic self-organizing map and its error analysis.,
+ACSC05, pp. 343352.
+Zimmer, U. (1996). Robust world-modelling and
+navigation in a real world, NeroComputing
+13(2) 247260.
+
+5261

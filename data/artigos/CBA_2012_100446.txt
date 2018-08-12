@@ -1,0 +1,860 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+DETERMINAÇÃO DA ATITUDE UTILIZANDO RECEPTORES GPS ESTUDO COMPARATIVO
+ENTRE OS MÉTODOS MILES E DECOMPOSIÇÃO POR CHOLESKY APLICADO A DADOS REAIS
+LUCAS C. RIBEIRO, ELDER M. HEMERLY
+Departamento de Eletrônica, Instituto Tecnológico de Aeronáutica
+Pça. Mal. Eduardo Gomes, 50  Vila das Acácias 12228-900 São José dos Campos SP
+E-mails lucas.dcribeiro@gmail.com, hemerly@ita.br
+
+Abstract The attitude determination based on GNSS is just an extension of the method for differential positioning with the
+carrier phase, since it enables the obtention of the relative position, with sub-centimeter-level accuracy, between a pair of
+antennas. However, multiple receivers are needed and a special configuration of the antennas, which is known as multi-antenna
+GNSS system. Two baselines composed by three antennas fully defines the Euler angles associated with the vehicle attitude, but
+the baseline determination requires the solution of the integer ambiguity problem, from a basic relation involving also the carrier
+phase measurements. Least Squares (LS) methods are the most used techniques to solve the ambiguity problem. Two LS
+algorithms for solve the integer ambiguity problem are implemented, namely MILES and Cholesky Decomposition, and tested
+with real data.
+Keywords GPS, Ambiguity, Least Squares, On-the-fly, Cholesky, MILES
+Resumo A determinação da atitude baseada em GPS é apenas uma extensão do método de posicionamento diferencial sendo
+possível obter a posição relativa, com precisão de mm, entre um par de antenas, desde que as grandezas envolvidas sejam
+conhecidas. Esta posição relativa pode em seguida, ser traduzida em medidas angulares. Duas linhas de base composta por três
+antenas definem completamente os ângulos de Euler associados  atitude da aeronave. Entretanto, para determinação das linhas
+de base, é necessário que o problema da ambiguidade de fase da onda portadora seja resolvido. Técnicas baseadas em Mínimos
+Quadrados (MQ) são as mais utilizadas. Dois algoritmos foram implementados, a saber, MILES e Decomposição de Cholesky, e
+testados utilizando dados reais.
+Palavras-chave 
+
+1 Introdução
+Navegação consiste em determinar a posição de
+um usuário, num dado sistema de referência, e sua
+evolução ao longo do tempo. As informações sobre a
+atitude e posição do veículo são obtidas, em geral, a
+partir das medidas de velocidade_angular realizadas
+por giroscópios e de forças específicas medidas por
+acelerômetros. As tríades de giroscópios e
+acelerômetros constituem o denominado IMU
+(Inertial Measurement Unity), que é a base de um
+Sistema de Navegação Inercial (INS). Este sistema
+possuí elevada precisão, custando, em média, mais
+do que a maioria das pequenas aeronaves (Roger et
+al, 1998).
+A determinação da atitude baseada em GPS,
+acrônimo de Global Position System, é uma extensão
+do método de posicionamento diferencial sendo
+possível obter a posição relativa, com precisão de
+mm, entre um par de antenas, desde que as grandezas
+envolvidas sejam conhecidas. Esta posição relativa
+pode em seguida ser traduzida em medidas
+angulares, ou seja, na atitude do corpo em relação a
+um dado sistema de coordenadas.
+Hoje em dia, sistemas de navegação de alta
+precisão, baseados na integração INSGPS via Filtro
+de Kalman são amplamente utilizados em diversas
+aplicações. Os erros dos sensores_inerciais podem ser
+primariamente categorizados como bias de primeira
+ordem, fatores de escala e desalinhamentos. O Filtro
+de Kalman utiliza informações do GPS como
+posição, velocidade e, quando disponível,
+ISBN 978-85-8001-069-5
+
+atualizações de atitude, para estimar esses erros e
+corrigi-los (Hide et al, 2003). Entretanto, na maioria
+destes sistemas a fusão INSGPS é fraca, pois o filtro
+se limita a utilizar informações de velocidade e
+posição que o receptor GPS fornece como default.
+Os sinais GPS, assim como a maioria dos sinais
+de rádio, são transmitidos como ondas puramente
+senoidais. Embora a fase de um ciclo de uma onda
+portadora possa ser medido com grande precisão, é
+difícil saber exatamente quantos ciclos se
+propagaram entre a antena do satélite e a do receptor
+(Langley, 1996). O número de ciclos propagados é
+denominado Ambiguidade de Fase, e seu
+conhecimento a priori é fundamental para o sucesso
+na determinação da atitude utilizando receptores
+GPS. Adicionalmente, uma configuração especial
+das antenas dos receptores é necessária, conhecida
+como sistema multi-antena, formado por no mínimo
+três receptores de forma a compor dois vetores linha
+de base que cobrirão o sistema tri-ortogonal.
+Em aplicações dinâmicas a solução da
+ambiguidade de fase deve ser computada em tempo
+real. Tal conceito é conhecido como solução on-thefly da ambiguidade de fase e foi primariamente
+introduzido por Hatch (1989, 1991).
+A correta fixação da ambiguidade inteira não é
+uma tarefa fácil. A maioria dos algoritmos de busca
+são baseados na solução do problema imposto pelos
+mínimos_quadrados. Um estudo comparativo dos
+métodos utilizados neste trabalho, aplicados em
+dados simulados, foi apresentado em Ribeiro e
+Hemerly (2011) onde maiores detalhes podem ser
+
+5067
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+obtidos. No presente trabalho, os autores têm como
+objetivo verificar a viabilidade e robustez destes
+métodos aplicados em dados reais.
+Uma vez que os vetores linha de base são
+conhecidos, a atitude do veículo se restringe a um
+problema geométrico. Os ângulos de Euler
+associados  atitude são obtidos de forma direta e
+relativamente simples.
+Este trabalho está organizado da seguinte forma
+a seção 2 apresenta uma breve descrição da
+modelagem_matemática do problema a seção 3
+apresenta uma breve descrição dos métodos
+utilizados para resolver o problema da ambiguidade
+de fase da onda portadora a seção 4 apresenta a
+metodologia utilizada para se calcular a atitude a
+seção 5 apresenta os resultados obtidos utilizando as
+diferentes metodologias e, finalmente, a seção 6
+contém as conclusões obtidas considerando a análise
+dos resultados apresentados.
+2 Modelagem Matemática do Problema de
+Determinação da Atitude
+Sem perda de generalidade, considere a seguinte
+equação
+(1)
+      
+sendo  o vetor coluna -dimensional com as
+diferenças duplas de fase multiplicadas pelo
+comprimento de onda da portadora correspondente, 
+é o vetor coluna tri-dimensional com as coordenadas
+da antena referenciadas ao sistema de navegação,  é
+o vetor coluna -dimensional que contém as
+ambiguidades inteiras,  é nx3 conhecida como
+matriz
+design
+calculada
+utilizando
+as
+pseudodistâncias para os  satélites visíveis e,
+finalmente,  é a matriz que leva em consideração os
+parâmetros da ambiguidade de fase em relação a
+múltiplas épocas, também multiplicada pelo
+comprimento de onda da portadora.
+A Eq. (1) é matematicamente conhecida como
+um modelo_linear inteiro misto (Xu, 2006) e o
+critério dos mínimos_quadrados é frequentemente
+aplicado para resolvê-la por (Li and Shen, 2010)
+             (2)
+onde,  representa a matriz de peso do vetor de
+observação .
+A Eq. (2) é conhecida como um problema de
+mínimos_quadrados inteiros mistos (MILS  Mixed
+Integer Least Squares). Desprezando a informação
+contida na matriz A, tem-se um problema de mínimos
+quadrados inteiros (ILS  Integer Least Squares). Se
+o vetor de erros aleatórios  tiver uma distribuição
+normal, o problema de otimização representado pela
+Eq. (2) pode ser naturalmente derivado do principio
+de máxima verossimilhança (Artés et al, 2003
+Damen et al, 2003).
+
+ISBN 978-85-8001-069-5
+
+Embora o modelo_linear inteiro misto,
+representado pela Eq. (1), possua em sua estrutura
+uma parte que represente a parcela ruidosa da medida
+de fase, a solução da ambiguidade obtida pela Eq. (2)
+depende unicamente da ponderação feita pela matriz
+de peso do vetor de observação (Xu, 2012).
+A Eq. (1), também conhecida como equação
+básica, possui duas variáveis desconhecidas, a saber,
+x e z. Sendo que, para que os vetores linha de base
+sejam conhecidos, representado na equação básica
+por x, é necessário o conhecimento a priori da
+ambiguidade de fase da onda portadora, representado
+por z na mesma equação. A próxima seção descreve
+os métodos utilizados neste artigo para determinação
+do número de ciclos propagados da onda portadora.
+3 Métodos para Solução da Ambiguidade de
+Fase
+Os métodos de busca utilizados neste artigo são
+baseados em Mínimos Quadrados Inteiros e cada um
+deles utiliza informações e restrições diferentes para
+resolver o problema da ambiguidade de fase da onda
+portadora. A seguir, cada um é descrito.
+3.1 Decomposição por Cholesky
+A posição fixa das antenas impõe algumas
+restrições geométricas que devem ser respeitadas
+pelo conjunto de ambiguidades que será a solução do
+problema ILS. Neste método duas propriedades são
+utilizadas (1) apenas três diferenças duplas de fase
+são independentes, ou seja, são necessários apenas
+quatro satélites para formar o espaço de busca e (2) o
+conjunto de ambiguidades correta fornecerá a menor
+soma do ajuste mínimo quadrático desde que os
+resíduos tenham uma distribuição Gaussiana (Lu,
+1995). Os quatro satélites utilizados para formar o
+espaço de busca são conhecidos como primários e o
+restante, dos que estão ao alcance dos receptores, são
+conhecidos como secundários.
+A escolha do intervalo de busca da ambiguidade
+de fase pode ser corretamente computada a partir de
+um cubo de busca formado ao redor da antena do
+receptor GPS. Desde que apenas as ambiguidades
+dos satélites primários são procuradas, o espaço de
+busca formado é tridimensional, independente do
+número de satélites em vista. Cada interseção do
+cubo corresponde a uma trinca de ambiguidades
+inteiras que podem ser uma solução para a Eq. (2).
+Cada solução é posteriormente checada utilizando as
+observações dos satélites secundários, que se for
+correta terá o menor resíduo. Do ponto de vista
+estatístico, o acordo entre a observação medida e a
+ajustada relata a escolha do conjunto de
+ambiguidades a ser quantificado pela forma
+quadrática dos resíduos    , onde  é o vetor
+com as observações residuais ajustadas. Se o erro das
+observações é Gaussiano e o conjunto de
+ambiguidades testado é correto, a forma quadrática
+
+5068
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+residual terá uma distribuição chi-quadrada (Lu,
+1995).
+Então, o seguinte teste pode ser aplicado como
+um teste de discriminação das possíveis soluções
+
+     
+
+    
+
+   
+      
+         
+
+(3)
+
+
+sendo que 
+é o chi-quadrado percentil
+correspondente aos graus de liberdade  e nível de
+confiança   . Usualmente,      com 
+igual ao número de satélites em vista. Apesar do teste
+de discriminação ser aplicado, mais do que uma
+trinca de ambiguidades pode ser considerada como
+uma potencial solução por época. Neste caso, as
+ambiguidades potenciais são armazenadas e
+posteriormente submetidas ao teste de aceitação, que
+é representado pela Eq. (4).
+    
+
+Agora, definindo as quantidades ,  e  como
+
+ 
+
+(4)
+
+A forma quadrática residual relacionada ao
+conjunto de ambiguidades correta poderá ser
+relativamente menor que o valor obtido com o
+conjunto de ambiguidades incorreto se o acumulo de
+informações geométricas tiver sido o suficiente. A
+determinação do valor que deve ser atribuído ao
+limiar depende da magnitude do erro inerente a
+observação. Usualmente, é atribuído um valor entre 2
+e 3 a este parâmetro (Landau and Euler, 1992
+Lachapelle et al, 1993).
+Uma vez estabelecido o critério de seleção das
+ambiguidades que serão a solução da Eq. (2)
+podemos descrever como é o processo de construção
+do espaço de busca, fazendo uso da decomposição de
+Cholesky. Rearranjando os termos da Eq. (1) temos
+
+(9.a)
+(9.b)
+(9.c)
+
+a Eq.(8) torna-se
+         .
+
+(10)
+
+Considerando a Eq. (10) se pode concluir que as
+seguintes desigualdades devem ser asseguradas
+   
+
+(11)
+
+     
+
+(12)
+
+sendo que, tais restrições surgem devido ao fato da
+linha de base ter o comprimento fixo, onde d é o
+comprimento do braço de antena.
+Considerando as Eqs. (11) e (12) é possível
+construir os espaços de busca para cada uma das
+ambiguidades associadas aos satélites primários,
+como
+ 
+ 
+ 
+
+
+
+
+
+    
+ 
+
+
+
+
+
+
+
+ 
+
+  
+
+  
+
+ 
+ 
+ 
+
+
+
+(13.a)
+
+
+
+    
+ 
+
+
+
+
+
+
+
+     
+
+(13.c)
+
+
+
+
+sendo que            .
+
+
+     
+
+(5)
+
+sendo que           , a
+matriz design  e o vetor de medidas de fase da
+onda portadora  são formados apenas pelos
+satélites selecionados como primários. Isolando as
+coordenadas dos vetores linha de base, temos
+    
+
+(6)
+
+que, elevado ao quadrado
+
+
+             
+
+ISBN 978-85-8001-069-5
+
+       
+
+(14)
+
+sendo que,  é o vetor com as medidas de fase da
+onda portadora correspondente aos satélites
+secundários e    
+ é a matriz design que leva
+em consideração as pseudodistâncias dos satélites
+secundários e primários.
+
+(7)
+
+sendo que   é o quadrado do comprimento da linha
+de base conhecida e    é uma matriz 
+positiva definida que pode ser decomposta por
+Cholesky reduzindo-a a uma matriz triangulo  com
+     . Sendo assim, a Eq. (7) torna-se
+          
+
+Para cada conjunto de ambiguidades associadas
+aos satélites primários, um conjunto de ambiguidades
+correspondente aos satélites secundários pode ser
+calculado utilizando a equação (Kim and Langley,
+1999)
+
+(8)
+
+3.2 MILES
+O método proposto por Chang e Zhou (2006)
+apresenta a vantagem de se utilizar não apenas a fase
+da onda portadora, mas também, a pseudodistância
+para fornecer uma solução ótima ao problema da
+ambiguidade inteira imposto pelo MILS.
+Associado ao conjunto de ambiguidades inteiras
+z que resolvem a Eq. (2) tem-se as coordenadas da
+
+5069
+
+(13.b)
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+antena x. Neste sentido, o par x(j),z(j) será a j-ésima
+solução ótima se o resíduo associado for mínimo.
+Entretanto, para resolver o MILS, Chang e Zhou
+(2006) resolvem primeiro o ILS transformando-o em
+um sistema linear triangular superior real. Dado que
+a matriz    ,    e    , sendo m o
+número de satélites em vista, k3 o número de
+coordenadas das antenas e n o número de épocas
+consideradas, podemos realizar a decomposição QR
+da matriz A
+      
+
+
+
+
+
+(15)
+
+onde       é ortogonal e    é
+triangular superior não singular. Esta decomposição
+pode ser calculada utilizando a transformação de
+Householder de acordo com
+
+
+               
+
+
+
+
+
+
+ 
+             
+ 
+(16)
+     
+Entretanto, primeiro
+problema ordinário ILS
+  
+  
+
+devemos
+
+  
+
+resolver
+
+o
+
+(17)
+
+para obter a solução    e então resolver o
+sistema triangular superior
+       
+
+definindo um elipsóide de busca de acordo com a
+seguinte equação
+
+
+       
+
+(20)
+
+sendo  o kj-ésimo elemento da matriz R.
+Inicialmente,  é atribuído como infinito. Em
+seguida, a solução correspondente ao menor resíduo
+na época testada será o novo valor de  causando o
+encolhimento do elipsóide de busca até que a solução
+ótima seja encontrada. Uma vez encontrada a solução
+para o problema ILS podemos facilmente encontrar a
+solução correspondente ao MILS através da
+expressão   .
+4 Determinação da Atitude
+Uma vez que a ambiguidade de fase da onda
+portadora é conhecida a determinação da atitude do
+veículo se restringe a um problema geométrico. Se
+três antenas são montadas corretamente em uma
+plataforma e as medidas de posicionamento
+diferencial são coletadas, os vetores linha de base da
+antena 1 para as antenas 2 e 3 podem ser
+determinados e, consequentemente, a orientação da
+plataforma definida pelas antenas.
+Suponha que as antenas dos receptores GPS
+estão distribuídas de acordo com a Fig. (1) e que o
+sistema de coordenadas da plataforma é coincidente
+com o sistema de coordenadas do corpo. Os vetores
+linha de base são definidos por L12, L23 e L13, com a
+antena b1 centrada na origem, a antena b2 em
+(0,L12,0) e a antena b3 em (L13sen, L13cos,0).
+
+(18)
+
+e obter a real solução    .
+Para resolver o problema imposto pela Eq. (17),
+são necessários dois processos, a saber, redução e
+procura. A redução tem como objetivo reduzir o
+espaço de busca da ambiguidade para facilitar o
+processo de procura e torná-lo mais eficiente. Tal
+processo é realizado aplicando-se o método LLL de
+redução, proposto por Lenstra et al (1982), através da
+fatoração QRZ do problema ILS transformando a
+matriz B em triangular superior levando a seguinte
+expressão equivalente
+
+
+  
+
+ 
+
+
+
+(19)
+
+com a matriz R satisfazendo os dois critérios de
+redução LLL,     e     , sendo que as
+matrizes         e    são
+resultado da fatoração QRZ.
+O processo de procura é realizado através de
+uma modificação da estratégia de enumeração de
+Schnorr-Euchner (1994) que é aplicado as p-ésimas
+soluções do problema ILS reduzido pelo método
+LLL. Tal ordenação é feita de forma crescente,
+considerando a norma residual de  menores que ,
+
+ISBN 978-85-8001-069-5
+
+Figura 1 Sistema de coordenadas formado pela plataforma das
+antenas
+
+As coordenadas correspondentes das antenas b2
+e b3 no sistema de navegação local são  
+      e         . Matematicamente,
+o sistema de coordenadas local correspondente a
+cada antena escrava poderia ser rotacionado dentro
+do sistema de coordenadas do corpo pela matriz de
+atitude,
+     
+(21)
+
+5070
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+sendo, R213 a matriz de rotação na sequência y, x e z e
+que contem informações sobre a atitude do veículo.
+Substituindo as coordenadas da antena b2 e u2 na Eq.
+(21) e usando a ortogonalidade da matriz de atitude
+R213(y,p,r), as equações para computar os ângulos de
+arfagem e guinada são obtidas imediatamente como
+
+      
+
+(22.a)
+
+
+
+      
+
+
+  
+
+(22.b)
+
+
+
+
+
+Uma vez que os ângulos de guinada e arfagem
+foram determinados, as coordenadas da antena b3 no
+sistema de navegação local         podem
+ser primariamente rotacionadas em torno do eixo z
+do sistema de navegação local pela quantidade
+definida em y e então, rotacionadas novamente em
+torno do eixo x resultante da primeira rotação pela
+quantidade definida em p. As coordenadas
+resultantes da antena 3 após estas duas rotações são
+denotadas por      . A terceira rotação é feita
+em torno da posição da antena b3 no sistema de
+coordenadas do corpo, assim como
+
+ 
+    
+
+
+
+
+   
+
+   
+
+ 
+
+(23)
+
+Figura 2 a  Plataforma formada pelas antenas GPS, b 
+IMU 120 instalada no interior do veiculo de testes, c 
+Veículo de Testes utilizado no ensaio.
+
+A Fig. (3) apresenta uma imagem ilustrativa da
+plataforma formada pelas antenas.
+
+60c
+
+m
+
+60
+cm
+
+então, o ângulo de rolamento pode ser calculado
+como
+ 
+       
+
+
+Figura 3 Plataforma das antenas.
+
+(24)
+
+As Eqs. (22.a), (22.b) e (24) são utilizadas para
+computar diretamente os ângulos de guinada,
+arfagem e rolamento do veículo, lembrando que, as
+premissas adotadas no princípio da dedução destas
+equações devem ser respeitadas.
+
+O sistema de navegação local utilizado neste
+trabalho é o ENU (East-North-Up) com a antena 1
+como mestre. Os resultados obtidos, para cada um
+dos métodos de busca avaliados, são apresentados a
+seguir, considerando a atitude obtida pela IMU-120
+como referência.
+A Fig. (4) apresenta os valores angulares obtidos
+para o ângulo de Arfagem.
+
+5 Resultados Práticos
+Os dados utilizados neste trabalho foram obtidos
+através de um ensaio realizado pela empresa
+NAVCON, situada em São José dos Campos e
+especializada em sistemas de navegação e controle.
+A plataforma das antenas foi instalada em um
+veículo de testes conforme apresentado na Fig. (2) e
+possuía três antenas PinWheel Technology da
+fabricante Novatel, três receptores GPS DL-V3 da
+mesma marca instaladas no teto do veículo e uma
+unidade de media inercial IMU-120 da fabricante
+IXSEA OCEANO instalada em seu interior que
+possui bias de 0.003h 1 e 20g 1 para os
+giroscópios e acelerômetros respectivamente.
+ISBN 978-85-8001-069-5
+
+Figura 4 Arfagem.
+
+A Fig. (5) apresenta os valores angulares obtidos
+para o ângulo de Rolamento.
+
+5071
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 5 Rolamento.
+
+A Fig. (6) apresenta os valores angulares obtidos
+para o ângulo de Guinada.
+
+Figura 8 Erros angulares associados aos vetores linha de
+base obtidos a partir do método de busca MILES.
+
+É possível notar que o erro no ângulo de guinada
+foi elevado com uma variância alta. Deve ser
+lembrado que os sinais transmitidos pelos satélites
+GPS sofrem influencia de diversas fontes de erro,
+sendo o eixo z o mais afetado pelos oriundos da
+atmosfera, perdas de ciclos e multicaminho.
+Os tempos de processamento de cada um dos
+métodos, considerando apenas a tarefa de solução da
+ambiguidade de fase, executados por um computador
+DELL com processador Intel core i3, CPU de 2,27
+GHz, memória de 4 GB, utilizando a função tic toc
+do Matlab versão R2009b 32bits, são apresentados
+na Fig. (9).
+
+Figura 6 Guinada.
+
+É possível notar, a partir dos gráficos
+apresentados nas Fig. (4), Fig. (5) e Fig. (6) que a
+atitude computada utilizando o método MILES
+apresentou melhor desempenho quando comparada
+com a atitude calculada a partir do método da
+decomposição de Choleky. Os erros associados a
+cada um dos ângulos que definem a atitude do
+veículo, assim como suas médias e variâncias são
+apresentadas nas Fig. (7) e Fig. (8) para cada um dos
+métodos analisados.
+
+Figura 9 Tempos de processamento dos métodos MILES e
+decomposição de Cholesky.
+
+Analisando a Fig. (9) é possível notar que ambos
+os métodos apresentaram tempos satisfatórios para
+aplicações em tempo_real. Entretanto, o MILES foi
+mais constante, resolvendo o problema da
+ambiguidade de fase da onda portadora em menor
+tempo computacional.
+6 Conclusão
+
+Figura 7 Erros angulares associados aos vetores linha
+de base obtidos a partir do método de busca da
+decomposição de Cholesky.
+
+ISBN 978-85-8001-069-5
+
+Os resultados apresentados demonstram que a
+atitude computada utilizando a ambiguidade de fase
+calculada utilizando o método apresentado na seção
+3.2, MILES, foi mais robusta do que a obtida através
+do método apresentado na seção 3.1, Decomposição
+por Cholesky, com erros e variâncias menores
+quando comparados com a atitude obtida pela IMU120.
+Wang e Lachapelle (2002) fizeram um estudo
+com dados obtidos de forma semelhante ao
+apresentado neste trabalho, empregando receptores
+de baixo_custo, para analisar o nível de confiança na
+estimação da atitude utilizando, de forma iterativa,
+5072
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+altas taxas de amostragem das medidas de fase da
+onda portadora, restrições geométricas existentes nas
+plataformas multi-antena e o filtro de Kalman com
+controle estatístico de qualidade. Como resultado os
+autores chegaram  conclusão que as maiores fontes
+de erro nas medidas são o multicaminho, perda de
+ciclos e instabilidade do centro de fase das antenas
+neste tipo de receptores e que a abordagem adotada
+por eles aumenta significativamente o nível de
+confiança da atitude estimada.
+A magnitude do erro, do ângulo de guinada,
+apresentado por Wang e Lachapelle (2002) está em
+torno de 10, não muito longe do obtido utilizando o
+MILES demonstrando ser algo aceitável para este
+tipo de aplicação.
+A Fig. (9) demonstra que ambos os métodos têm
+potencial para serem utilizados em aplicações em
+tempo_real. Entretanto, nota-se que a decomposição
+de Cholesky apresentou alguns picos, demonstrando
+maior esforço computacional devido ao método de
+busca possuir loops de processamento. Este tipo de
+comportamento pode não ser desejado nestes tipos de
+aplicações, tendo em vista que o algoritmo de
+determinação da atitude precisa ser executado antes
+que as observáveis sejam atualizadas, o que ocorre a
+cada segundo.
+Agradecimentos
+Os autores gostariam de agradecer a empresa
+NAVCON por ceder os dados obtidos pelo ensaio e a
+fundação de amparo a pesquisa CAPES pelo apoio
+financeiro.
+Referências Bibliográficas
+ARTÉS, H., SEETHALER, D., HLAWATSCH, F.
+Efficient detection algorithms for MIMO
+channels an geometrical approach to
+approximate ML detection, IEEE Trans Signal
+Process 51(11)2808-2820, 2003.
+CHANG, X-W ZHOU, T. MILES MATLAB
+Package for Solving Mixed Integer Least
+Squares Problems, Theory and Algorithms,
+Scientific Computing Laboratory School of
+Computer Science McGill University, v.11, N.
+4, p.289-294, 2006.
+DAMEN, M., O., GAMAL, H., E., CAIRE, G. On
+maximum likelihood detection and the search for
+the closest lattice point, IEEE Trans Inf Theory
+492389-2402, 2003.
+HATCH R. Ambiguity Resolution in the Fast
+Lane, Proc ION GPS-89, Colorado Springs,
+27-29 Sept, pp 45-50, 1989.
+HATCH, R. Instantaneous Ambiguity Resolution,
+Proceedings of the international symposium on
+kinematic systems in geodesy, surveying, and
+remote sensing, Springer, Berlin Heidelberg
+New York, pp 299-308, 1991.
+
+ISBN 978-85-8001-069-5
+
+HIDE, C., MOORE, T., SMITH, M. Adaptative
+Kalman Filtering for Low-cost INSGPS, The
+Journal of Navigation, 2003.
+KIM, D. LANGLEY, R.B. A search space
+optimization technique for improving ambiguity
+resolution and computational efficiency, In
+International Symposium On Gps Application
+To Earth Sciences And Interaction With Other
+Space
+Geodetic
+Techniques,
+Tsukuba,
+Proceedings... S.l. s.n, p.18-22, 1999.
+LACHAPELLE, G., LIU, C., LU, G., TOWNSEND,
+B., CANNON, M., E., HARE, R. Precise
+Marine DGPS positioning using P code and
+high performance CA code technologies,
+Geomatica - Canadian Institute of Geomatics,
+Ottawa, v.47, n.2, p.117-128, 1993.
+LANGLEY, B. R. Propagation of the GPS signals,
+Lecture Notes in Earth Sciences, vol 60, 1996.
+LANDAU, H. EULER, H.J. On-the-Fly Ambiguity
+Resolution for Precise Differential Positioning,
+In International Technical Meeting Of The
+Satellite Division Of The Institute Of
+Navigation, Albuqerque. Proceedings... S.l.
+s.n., p.607-613, 1992.
+LENSTRA, A., K., LENSTRA, Jr., H., W.,
+LOVASZ, L. Factoring polynomials with
+rational coefficients Mathematische Annalen,
+261515-534, 1982.
+LI, B., SHEN, Y. Global Navigation Satellite
+System Ambiguity Resolution with Constraints
+from Normal Equations, Journal of Surveying
+Engineering, 2010.
+LU, G. Development of a GPS multi-antenna
+systems for attitude determination, Thesis
+(PhD) - Department of Geomatics Engineering,
+University of Calgary, Calgary, 1995.
+RIBEIRO, L., C., HEMERLY, E., M. GPS
+Ambiguity Resolution with Least Squares
+Methods, 21st Brazilian Congress of
+Mechanical Engineering - COBEM, 2011.
+ROGER C. HAYWARD, DEMOZ GEBREEGZIABHER, J. DAVID POWELL GPSBased attitude for aircraft, Stanford University,
+1998.
+SCHNORR, C., P., EUCHNER, M. Lattice basis
+reduction improved practical algorithms and
+solving subset sum problems Mathematical
+Programming, 66181-199, 1994.
+WANG, C. LACHAPELLE, G. GPS attitude
+determination
+reliability
+performance
+improvement using low cost receivers,
+Portland U.S. Institute of Navigation - GPS
+conference, p.1064-1074, 2002.
+XU, P. Voronoi cells, probabilistic bounds and
+hypothesis testing in mixed integer linear
+models, IEEE Trans Inf Theory 523122-3138,
+2006.
+XU, P. Parallel Cholesky-based reduction for the
+weighted integer least squares problem,
+Journal of Geodesy, Springer, 8635-52, 2012.
+
+5073

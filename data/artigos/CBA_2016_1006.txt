@@ -1,0 +1,821 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+APROXIMACAO PLANAR POR PARTES PARA RECONSTRUCAO 3D DENSA
+Leonardo de Assis Silva, Junia Gabriela Lube Pimentel, Raquel Frizera Vassallo
+
+
+Departamento de Engenharia Eletrica, Universidade Federal do Esprito Santo
+Vitoria, Esprito Santo, Brasil
+
+Emails leonardo.as.ufes@gmail.com, pimentel.junia@gmail.com, raquel@ele.ufes.br
+Abstract In this paper we propose a method to estimate prior knowledge of a scene before a 3D dense
+reconstruction is performed, aproximating homogeneous regions by planes. This is because usually it is not
+possible to estimate with precision the depth of homogeneous regions, due to the lack of good matches between
+pixels. The proposed approach was compared to the DTAM method, considering the recall (the amount of
+reconstructed pixels) and the absolute error in relation to the ground truth, by using synthetic images. In our
+best result, even before performing any 3D dense reconstruction, we achieved a recall of 92.3 against 100
+from DTAM, but with an average error seven times smaller.
+Keywords
+
+3D Reconstruction, Homogeneous regions.
+
+Resumo Neste artigo e proposta uma metodologia de se estimar conhecimentos previos da cena antes de
+se realizar a reconstrucao 3D densa propriamente dita, aproximando-se regioes_homogeneas por planos. Isso
+porque, normalmente nao e possvel se estimar com precisao a profundidade de regioes_homogeneas de uma
+imagem, devido a dificuldade de se encontrar boas correspondencias entre pixels. A abordagem proposta foi
+comparada com o metodo DTAM, em termos de recall (porcentagem de pixels reconstrudos) e erro absoluto em
+relacao ao ground truth, utilizando-se imagens sinteticas. Como melhor resultado, mesmo antes de se realizar a
+etapa final de reconstrucao densa, o metodo apresentou um recall de 92, 3 contra 100 do DTAM, mas com
+erro medio sete vezes menor.
+Palavras-chave
+
+.
+
+Introducao
+
+Cameras digitais estao entre os sensores mais
+utilizados, principalmente devido a riqueza de informacoes contidas em uma imagem e ao avanco
+tecnologico, que permitiu o seu barateamento. Assim, cameras se tornaram mais comuns em sistemas_embarcados, celulares, computadores, etc,
+podendo ser usadas, em muitos casos, para substituir sensores laser, que normalmente sao caros.
+Alem disso, com o aumento da capacidade de
+processamento dos dispositivos, imagens podem
+ser usadas para analisar cenas e extrair informacoes tridimensionais dos pixels em um espaco de
+tempo bem menor do que se conseguia fazer ha alguns anos atras. Esse processo de recuperacao da
+informacao tridimensional do meio recebe o nome
+de reconstrucao 3D.
+Mesmo assim, obter uma boa reconstrucao 3D
+do ambiente ainda e um processo computacionalmente custoso. Isso e um problema que a area de
+sistemas_embarcados enfrenta, ja que, geralmente,
+o tempo de processamento das informacoes deve
+ser baixo, para que os sistemas consigam responder rapidamente. Por isso, muitos trabalhos tentam equilibrar os ganhos em velocidade de processamento e qualidade da reconstrucao 3D.
+Newcombe et al. (2011) propoe um sistema
+chamado DTAM que, em tempo_real, faz a aquisicao de imagens com uma camera em movimento,
+estima a sua posicao corrente e realiza a reconstrucao 3D da cena filmada. Por outro lado, Wu et al.
+(2010) realiza a reconstrucao de imagens salvas
+em seu repositorio, com as posicoes ja estimadas
+
+ISSN 2525-8311
+
+(camera calibrada), por meio de uma tecnica com
+alto custo_computacional chamada Tensor-based
+Multiview Stereo (TMVS).
+A diferenca entre essas duas tecnicas esta no
+equilbrio entre velocidade e qualidade. Enquanto
+Newcombe et al. (2011) deu mais importancia ao
+tempo de processamento de seu sistema, Wu et al.
+(2010) escolheu ter uma maior precisao na reconstrucao 3D em seus testes. A mesma escolha por
+qualidade pode ser vista em (Pagani et al., 2011),
+que utiliza uma tecnica chamada Patch-based Multiview Stereo (PMVS) em imagens esfericas para
+a estimativa da profundidade de ambientes.
+Neste trabalho tambem sera dada prioridade
+a velocidade de reconstrucao. Desse modo, o objetivo e que posteriormente, o algoritmo implementado seja aprimorado e embarcado em um robo.
+O processo de reconstrucao do DTAM pode
+ser dividido em duas etapas estimativa densa discreta da profundidade dos pixels (estimativa grosseira) e estimativa densa contnua por meio de
+um processo iterativo de minimizacao (mais precisa). Para isso e necessario encontrar uma boa
+correspondencia entre os pixels das diferentes imagens para estimar corretamente a profundidade
+discreta. Isso fica facilitado quando as imagens
+possuem regioes com muita textura.
+Para regioes_homogeneas a ambiguidade e elevada, dificultando a correspondencia entre pixels
+cuja vizinhanca seja semelhante. Consequentemente, mesmo apos o processo completo de reconstrucao, a precisao do DTAM acaba sendo
+muito prejudicada por causa da profundidade estimada das areas sem textura.
+
+3500
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Esse problema e discutido em (Concha and
+Civera, 2015) e (Concha et al., 2015), que apresentam formas de se aumentar a precisao do DTAM
+em regioes_homogeneas, utilizando tecnicas que
+nao prejudiquem muito a velocidade do processo
+de reconstrucao 3D. Essas tecnicas adicionam informacoes de entendimento da cena a etapa de
+estimativa densa do DTAM como, por exemplo,
+aproximacao planar de areas homogeneas, e classificacao de regioes das imagens como sendo parte
+do teto, das paredes, do chao dentre outras.
+Neste trabalho e proposta uma outra metodologia de se estimar conhecimentos de entendimento da cena antes de se realizar a reconstrucao 3D densa propriamente dita. Vale ressaltar
+que tal reconstrucao densa nao e objeto direto de
+estudo deste trabalho, o qual esta focado na obtencao de um mapa de profundidades mais rico e
+preciso que favoreca a reconstrucao densa final.
+Na metodologia proposta, segmentam-se regioes_homogeneas assumindo-se planaridade. Inicialmente sao reconstrudos apenas os pixels que
+delimitam essas regioes e pixels de alto gradiente,
+para, depois, estimar os planos que as compoem.
+Os casos em que as regioes nao podem ser estimadas com planos sao tratados separadamente.
+O trabalho aqui proposto sera apresentado em
+cinco secoes. A Secao 2 traz a representacao do
+modelo pin-hole de camera e alguns termos adotados. A implementacao do algoritmo proposto
+esta explicado detalhadamente na Secao 3. Os resultados sao apresentados e discutidos na Secao 4.
+A conclusao, propondo alguns trabalhos futuros,
+e abordada na Secao 5.
+2
+
+Modelo de camera
+
+na qual zm e zc sao os valores de profundidade do
+ponto nas coordenadas das cameras m e c, respectivamente.
+zm um  K(Rmc K 1 zc uc + tmc ),
+
+(2)
+
+No processo de reconstrucao deste trabalho,
+sao utilizadas M imagens Im que possuem certa
+sobreposicao com uma imagem de referencia Ir ,
+apresentada na Figura 1. Todas as imagens utilizadas pertencem ao espaco de cor RGB.
+
+Figura 1 Imagem de referencia Ir .
+3
+3.1
+
+Metodologia
+
+Visao Geral
+
+A Figura 2 apresenta resumidamente o esquematico do algoritmo, dividido em 4 etapas.
+Ir
+Segmentação por SRM
+IL
+Ir
+
+Extração de pixels de borda e
+de alto gradiente
+.
+ub
+
+Para desenvolver e verificar o bom funcionamento do metodo proposto, o trabalho apresentado neste artigo utiliza imagens sinteticas fotorealistas geradas por um software chamado POVRay, disponibilizadas por (Handa et al., 2012).
+Esse banco_de_dados tambem fornece a matriz de
+parametros intrnsecos K, e extrnsecos da camera
+Twc (Equacao 1).
+
+
+
+
+f 0 cx
+Rwc twc
+Twc 
+K   0 f cy 
+(1)
+0T
+1
+0 0 1
+
+Figura 2 Esquematico resumido do algoritmo de
+reconstrucao.
+
+A matriz Twc descreve a transformacao de um
+ponto do referencial da camera c para o mundo w.
+Rwc e a matriz de rotacao e twc a de translacao. f
+e a distancia focal da camera expressa em pixels, e
+cx e cy sao as coordenadas x e y do ponto principal
+da imagem.
+A representacao de um pixel no sistema de
+coordenadas da camera c e uc  (u, v)T , sendo
+uc  (u, v, 1)T em coordenadas homogeneas. Assim, a relacao entre um pixel no referencial de c e
+seu correspondente em m e dada pela Equacao 2,
+
+Na primeira etapa (Secao 3.2), a imagem Ir e
+segmentada em regioes_homogeneas de cor similar
+utilizando Statistical Region Merging (SRM), que
+retorna uma matriz IL contendo os rotulos (labels)
+de cada regiao. IL e uma matriz 2D de mesmo
+tamanho que Ir . Esse processo de segmentacao
+servira para a reconstrucao de areas homogeneas
+que ocorre na ultima etapa do algoritmo.
+Considera-se neste processo que cada regiao
+de IL corresponde a uma area plana. Portanto,
+para descobrir a profundidade dos pixels contidos
+
+ISSN 2525-8311
+
+Tmr
+Im
+
+Reconstrução 3D esparsa
+.
+ub
+IL
+
+zb
+
+Estimação de planos
+zL
+
+3501
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+em cada regiao, so e preciso descobrir a profundidade dos pixels de suas bordas para estimar o
+vetor normal ao plano correspondente (n) e distancia do plano a camera (d). Dessa forma, na
+segunda etapa (Secao 3.3), os pixels da borda de
+cada area segmentada sao extrados (ub ).
+A terceira etapa (Secao 3.4) realiza a reconstrucao esparsa, estimando a profundidade dos pixels escolhidos na segunda etapa (ub ). Essa etapa
+tambem retira do conjunto pixels com possveis
+erros de correspondencia. A estimativa de profundidade zb0 e associada aos pixels u0b que nao
+foram descartados. Essa estimativa sera utilizada
+na ultima etapa (Secao 3.5) para a aproximacao
+de cada plano, usando o algoritmo do RANSAC
+para retirar possveis outliers.
+3.2
+
+Segmentacao por SRM
+
+Devido a falta de textura em regioes_homogeneas, a reconstrucao 3D dessas areas normalmente
+acumula muito erro, pois nao e possvel encontrar
+com precisao a correspondencia dos pixels dessas
+regioes em outras imagens.
+Trabalhos como (Fraundorfer et al., 2006),
+(Concha and Civera, 2015), (Concha et al., 2015) e
+(Concha et al., 2014) tentam nao apenas estimar
+a correspondencia de pixels entre imagens, mas
+tambem estimar a correspondencia de regioes para
+aumentar a precisao de seus resultados. Como estas regioes sao homogeneas, fica difcil saber exatamente o seu formato tridimensional. Por isso,
+estes trabalhos aproximam essas areas por regioes
+planares e depois as utilizam como uma hipotese
+inicial em um processo iterativo de minimizacao.
+Nesse contexto, torna-se importante segmentar a imagem em regioes_homogeneas, consideradas possivelmente planas. Li et al. (2015) mostra uma comparacao entre os metodos SLIC de
+(Achanta et al., 2010), SRM e o proposto por eles,
+que junta caractersticas dos dois metodos citados. Alem desses metodos, outro algoritmo que
+segmenta regioes_homogeneas e o MSER (Maximally Stable Extremal Regions).
+O SRM foi a tecnica escolhida para ser utilizada no processo de segmentacao deste trabalho.
+Ademais, antes da segmentacao, o metodo Tsmooth de (Xu et al., 2012) foi utilizado na imagem
+RGB Ir para filtrar rudos e ainda manter bordas bem definidas. O algoritmo do SRM recebe
+a imagem filtrada e retorna a matriz IL contendo
+os labels de cada regiao. A Figura 3 apresenta as
+regioes segmentadas pelo metodo de SRM (IL ).
+3.3
+
+Extracao de borda
+
+Com a matriz IL fornecida pela etapa de segmentacao, o proximo passo e a extracao dos pixels
+das bordas internas de cada regiao homogenea (ub ,
+no referencial de Ir ). Para isso, foram utilizadas
+tecnicas de morfologia_matematica.
+
+ISSN 2525-8311
+
+Figura 3 Matriz IL com as regioes segmentadas.
+Como foi dito na Secao 3.1, esses pixels terao
+a profundidade estimada na etapa de reconstrucao esparsa. Entretanto, adiciona-se tambem ao
+conjunto de ub outros pixels, do interior de cada
+regiao, com fortes caractersticas em relacao a sua
+vizinhanca, como os de alto gradiente. Se existem
+pixels com melhor chance de serem bem reconstrudos no interior de cada regiao, sua utilizacao
+pode ajudar na estimacao correta dos planos.
+Para saber qual metodo de extracao de pixels
+de alto gradiente escolher, foram comparadas algumas tecnicas pixels de alto gradiente, com e
+sem seus vizinhos, e pixels de borda encontrados
+pelo metodo de Canny, antes e depois da imagem
+Ir em escala de cinza ter passado por um filtro
+de media 3  3. Alem disso, tambem foram testadas a utilizacao de todos os pixels da imagem no
+conjunto de ub , e o caso de nenhum pixel de alto
+gradiente do interior das regioes ser adicionado a
+ub (Apenas bordas, Tabela 1).
+3.4
+
+Reconstrucao 3D esparsa
+
+Na etapa de reconstrucao esparsa, cada par de
+imagens Ir e Im e retificado, resultando em IrR e
+ImR . Os pixels ub tambem sao transformados para
+o referencial de IrR por meio da transformacao T1 ,
+obtida nesse processo de retificacao (Equacao 3).
+zrR urR  K(RK 1 zb ub ),
+T1  KRK 1
+
+(3)
+
+Como o processo de retificacao apenas rotaciona os referenciais, a distancia entre os centros oticos das duas cameras se mantem constante. Essa
+distancia, chamada de baseline, sera representada
+por b. Assim, os referenciais de IrR e ImR ficam
+com mesma orientacao e deslocados de b na direcao x (Figura 4).
+
+
+
+
+ 
+umR
+urR
+b
+zmR  vmR   zrR  vrR  + K 0 ,
+1
+1
+0
+bf
+(4)
+zmR  zrR  zR , umR  urR +
+zR
+A Figura 4 tambem apresenta as linhas epipolares do ponto P , projetado nas duas imagens.
+Pode-se notar que, apos a retificacao, as linhas
+epipolares ficam paralelas ao eixo horizontal. Isso
+acontece por causa da relacao entre os pixels de
+IrR e os de ImR , descrita pela Equacao 4.
+
+3502
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+o conjunto de inliers u0b , o novo valor estimado de profundidade zb0 sera a media entre
+esses valores semelhantes.
+
+P
+
+T1
+
+T2
+.
+urR
+
+.
+um
+
+.
+ur
+
+Or
+
+.
+umR
+
+b
+
+Om
+
+3.5
+
+Figura 4 Retificacao de Ir e Im .
+Note que, na Equacao 4, os pixels de IrR sao
+encontrados com mesma coordenada v em ImR ,
+diferindo apenas na coordenada u.
+Com as imagens retificadas, a profundidade
+zR pode ser estimada buscando a correspondencia
+do pixel urR sobre a linha epipolar em ImR que
+maximiza ncc(WmR , WrR ) (Equacao 5), que e a
+correlacao cruzada normalizada entre WmR e WrR
+(NCC, normalized cross correlation).
+zR  argmax ncc(WmR , WrR )
+
+da profundidade em areas homogeneas
+
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+
+Entrada u0b , zb0 , IL
+Sada k , inmax
+incio
+uk  u0b para IL (ub , vb )  k
+zk  zb0 para IL (ub , vb )  k
+inmax  0 * numero de inliers
+distin   * dist
+ancia
+k * Plano otimo
+
+up  uk , vk , zk T
+para n de 1 a 500 faca
+
+up  
+up * 3 pontos aleatorios
+v1  
+up (, 1)  
+up (, 2)
+v2  
+up (, 3)  
+up (, 2)
+
+n  v1  v2
+d
+nT 
+up (, 1)
+  
+n, d
+
+ Consistencia temporal uma estimativa de
+profundidade sera um inlier se, dentre as 10
+hipoteses, pelo menos 5 forem semelhantes.
+Para estes casos, a profundidade sera uma
+media desses valores semelhantes.
+ Consistencia espacial assumindo que a profundidade no mundo varia suavemente, a estimativa da consistencia temporal para cada
+pixel sera inlier se pelo menos um de seus vizinhos apresentar um valor semelhante. Para
+
+*
+
+(4)(1)uk (2)vk
+(3)
+
+zp 
+
+16
+
+dist  zk  zp 
+inliers  dist < 1, 5 cm
+n in * numero de inliers
+*
+condicao  (n in > inmax)  ((n in 
+inmax)  (dist(inliers) < distin))
+se condicao  TRUE entao
+inmax  n in
+distin  dist(inliers)
+k  
+fim
+
+17
+18
+
+20
+
+(6)
+
+*
+*
+*
+
+15
+
+19
+
+O processo de correspondencia e feito com 10
+imagens (M  10), obtendo-se assim 10 hipoteses
+de profundidade zb110 para cada pixel ub . Sao
+realizados ainda dois procedimentos adicionais em
+sequencia para a remocao de possveis outliers,
+como e proposto em (Concha and Civera, 2015).
+
+ISSN 2525-8311
+
+Algoritmo 1 Algoritmo para estimacao
+
+1
+
+WrR e WmR sao janelas de tamanho 7  7
+pixels em torno de urR em IrR e umR em ImR ,
+respectivamente. Os valores que umR pode apresentar para cada urR obedecem a Equacao 4
+variando-se zR de um valor mnimo de profundidade estipulado, ziniR , ate um valor maximo
+zendR . umR varia de pixel em pixel dentro dessa
+faixa. Isso reduz o universo de busca, dispensando
+a varredura por toda a linha epipolar.
+Escolheu-se os valores de ziniR e zendR , no
+referencial de Ir , iguais a 10 cm e 1000 cm, respectivamente. Desta forma, o fator  da a relacao
+entre a profundidade nos referenciais de Ir e IrR ,
+como mostra a Equacao 6.
+
+Estimativa da profundidade em regioes_homogeneas
+
+O processo de estimativa da profundidade em
+areas homogeneas comeca encontrando o plano
+que melhor se encaixa aos pontos de cada regiao
+segmentada. O Algoritmo 1 apresenta este procedimento, retornando o plano otimo k , em que k
+se refere ao label k.
+
+(5)
+
+z
+
+ u  T1 ub ,
+
+ rR
+
+ub
+urR
+ vrR   T 1  vb  , zR  zb
+
+1
+
+Para evitar o efeito de escada entre camadas
+estimadas de profundidade, antes do passo da consistencia espacial, a profundidade estimada pelo
+passo de consistencia temporal foi filtrada por um
+filtro de media em cada pixel com seus vizinhos
+de mesmo label definido em IL .
+
+21
+22
+23
+24
+
+fim
+retorna k , inmax
+
+25
+26
+27
+
+fim
+
+Encontrado o plano k , o proximo passo e
+calcular a profundidade dos pixels pertencentes a
+cada regiao k por meio da Equacao 7.
+zL (uk , vk ) 
+
+k (4)  k (1)uk  k (2)vk
+,
+k (3)
+
+(7)
+
+em que (uk , vk ) sao os pixels pertencentes a regiao
+de label k. Porem, somente as regioes cujo numero
+de inliers (inmax) seja de pelo menos 65 do numero total de pixels reconstrudos destas regioes
+(uk ) serao aproximadas por um plano. Isso ajuda
+a evitar que regioes nao planas sejam aproximadas
+grosseiramente.
+
+3503
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+4
+
+Resultados e discussoes
+
+Para testar o algoritmo, foram utilizadas imagens que apresentam, sobre uma mesa de madeira,
+uma impressora, um telefone, um calendario, uma
+revista, um copo, uma xcara, um teclado, uma
+caixa e uma laranja. Essa mesa se encontra em
+um escritorio com chao quadriculado.
+A profundidade real da cena (ground truth) e
+normalmente representada por meio de uma imagem em escala de cinza, denominada mapa de profundidade. Quanto mais proximo da camera, mais
+escura e a cor, como pode ser visto na Figura 5.
+
+Figura 5 Mapa de profundidade do ground truth.
+A analise do algoritmo foi feita em termos de
+recall (porcentagem de pixels reconstrudos) e erro
+absoluto em relacao ao ground truth. Para isso, os
+resultados obtidos com o metodo proposto foram
+comparados com os do DTAM.
+O DTAM estima, primeiramente, a profundidade de todos os pixels, e depois tenta encontrar
+a profundidade correta por meio de um processo
+iterativo de minimizacao. Dessa forma, seus resultados foram separados em a estimativa inicial
+(Rec. inicial) e o resultado apos o processo de minimizacao (Rec. final). Para testa-lo foram usadas
+30 imagens e 32 nveis discretos de profundidade.
+Os resultados deste trabalho foram separados
+de acordo com a tecnica utilizada para extracao de
+pixels de alto gradiente e subdivididos em etapa
+de reconstrucao esparsa (Esparso) e de estimativa
+por aproximacao de planos (Pre-denso). Todos
+esses resultados estao apresentados na Tabela 1.
+As medidas de erro sao dadas em centmetros e o
+recall em porcentagem.
+Verifica-se na Tabela 1 que o metodo do
+DTAM estima a profundidade de todos os pixels
+da imagem (recall de 100) mas, em media, seu
+erro medio e 5 vezes maior que os obtidos pelo
+algoritmo proposto, e sua mediana 9 vezes.
+Note que mesmo sem realizar a etapa de reconstrucao densa, o metodo proposto obtem resultados melhores que os apresentados pelo DTAM,
+que o faz completamente. Um dos motivos e que,
+mesmo reconstruindo mais pixels, a precisao do
+DTAM acaba sendo muito prejudicada pela profundidade estimada das areas homogeneas.
+A Figura 6 apresenta os mapas de profundidade encontrados utilizando o metodo do DTAM.
+
+ISSN 2525-8311
+
+(a) Rec. inicial
+
+(b) Rec. final
+
+Figura 6 Mapas de profundidade (DTAM).
+E possvel ver na Figura 6 erros altos de estimativa sobre diversas partes da impressora e proximo ao telefone (areas claras que deveriam ser escuras, vide Figura 5). Por nao possurem textura,
+essas regioes nao sao bem reconstrudas, e essa
+estimativa, quando muito grosseira, acaba sendo
+propagada para a reconstrucao final (de Rec. inicial para Rec. final).
+A Figura 7 apresenta os mapas de profundidade do resultado do metodo proposto neste trabalho considerando a reconstrucao de Todos os
+pixels. Pode-se perceber que as regioes cuja reconstrucao nao e confiavel (homogeneas) foram
+excludas, sendo representadas por pixels pretos
+na imagem.
+
+(a) Esparso
+
+(b) Pre-denso
+
+Figura 7 Mapas de profundidade (metodo proposto - Todos os pixels).
+Com a aproximacao por planos (Figura 7b), as
+areas homogeneas apresentaram uma melhor estimativa de profundidade, resultando, consequentemente, em uma melhor reconstrucao 3D final.
+Apesar desses resultados apresentarem erro
+maximo de 2 vezes menor que o do DTAM, ainda
+e alto. Isso se deve aos pixels de borda da
+mesachao, que pela oclusao, acabam reconstrudos de maneira errada, como parte da regiao vizinha, levando a erros altos.
+Tambem nota-se que, dentre os 6 resultados
+do algoritmo proposto, o ideal seria utilizar todos
+os pixels da imagem, afinal, os de reconstrucao duvidosa serao descartados pelo algoritmo. Usandose os pixels do interior de regioes com problemas
+de oclusao, que nao foram descartados, foi possvel obter uma estimativa menos grosseira, fato
+facilmente visto ao se comparar os resultados de
+Apenas bordas (Pre-denso)com de Todos os pixels (Pre-denso)na Tabela 1. A media, a mediana
+e o desvio padrao do erro apresentaram valores
+menores no segundo caso. Alem da precisao, o
+recall, consequentemente, aumenta.
+
+3504
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Tabela 1 Resultados da reconstrucao 3D.
+Metodo
+DTAM
+Apenas bordas
+Alto gradiente
+Alto gradiente
++ vizinhos
+Metodo de Canny
+Metodo de Canny
++ filtro de media
+Todos os pixels
+
+Etapa
+Rec. inicial
+Rec. final
+Esparso
+Pre-denso
+Esparso
+Pre-denso
+Esparso
+Pre-denso
+Esparso
+Pre-denso
+Esparso
+Pre-denso
+Esparso
+Pre-denso
+
+Media
+24,27
+23,09
+3,86
+9,93
+3,45
+9,73
+2,78
+5,79
+3,36
+3,87
+3,47
+3,95
+1,72
+3,31
+
+Mediana
+8,28
+4,06
+0,76
+0,88
+0,72
+0,72
+0,69
+0,57
+0,76
+0,59
+0,74
+0,58
+0,67
+0,46
+
+A Figura 8 apresenta a reconstrucao 3D referente aos mapas de profundidade apresentados na
+Figura 7.
+
+(a) Esparso
+
+(b) Pre-denso
+
+Figura 8 Reconstrucao 3D (metodo proposto).
+Nota-se que uma regiao do chao foi reconstruda no plano da mesa, Figura 8b. Isso ocorreu
+pois regioes de planos distintos foram segmentadas juntas. Entretanto, este erro sera corrigido na
+etapa de minimizacao.
+5
+
+Conclusao e trabalhos futuros
+
+Neste artigo foi proposta uma metodologia de
+se estimar conhecimentos previos da cena antes de
+se realizar a reconstrucao 3D densa propriamente
+dita. A intencao e aumentar a precisao da estimativa final, mantendo um baixo tempo de processamento.
+O metodo proposto foi testado com varias tecnicas de selecao de pixels e comparado com o metodo DTAM, o qual representa um bom compromisso entre tempo de processamento e qualidade
+de reconstrucao, sendo utilizado em aplicacoes de
+tempo_real.
+Mesmo sem realizar a etapa de reconstrucao
+3D densa, o metodo proposto se destaca por atingir uma taxa de recall de 92, 3 com uma precisao
+sete vezes maior que a conseguida pelo DTAM, o
+qual ainda realiza a etapa de minimizacao e reconstrucao densa. Tal resultado pode ser considerado promissor e sugere que, com a metodologia
+proposta, resultados ainda melhores poderao ser
+conseguidos apos a etapa final de reconstrucao.
+Como trabalho futuro, deve-se iniciar a analise de complexidade e tempo de processamento
+do metodo.
+
+ISSN 2525-8311
+
+Erro (cm)
+Desv. Padrao
+30,98
+45,39
+13,43
+23,95
+12,63
+24,25
+11,05
+20,94
+12,25
+15,49
+12,61
+15,56
+6,9
+15,27
+
+Mnimo
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+Maximo
+168,17
+222,37
+96,07
+96,6
+96,01
+96,44
+97,65
+104,25
+96,18
+96,61
+96,19
+96,26
+98,79
+102,19
+
+Recall
+()
+100
+100
+7,33
+53,69
+8,53
+53,85
+13,2
+72,52
+9,16
+49,97
+8,54
+49,55
+48,35
+92,29
+
+Referencias
+Achanta, R., Shaji, A., Smith, K., Lucchi, A., Fua,
+P. and Susstrunk, S. (2010). SLIC Superpixels,
+EPFL Technical Report 149300 (June) 15.
+Concha, A. and Civera, J. (2015). DPPTAM Dense
+Piecewise Planar Tracking and Mapping from a
+Monocular Sequence, Intelligent Robots and Systems (IROS 2015), 2015 IEEERSJ International Conference on pp. 56865693.
+Concha, A., Hussain, W., Montano, L. and Civera, J.
+(2014). Manhattan and Piecewise-Planar Constraints for Dense Monocular Mapping, Roboticsproceedings.Org .
+Concha, A., Hussain, W., Montano, L. and Civera, J.
+(2015). Incorporating scene priors to dense monocular mapping, Autonomous Robots 39(3) 279
+292.
+Fraundorfer, F., Schindler, K. and Bischof, H.
+(2006). Piecewise planar scene reconstruction
+from sparse correspondences, Image and Vision
+Computing 24(4) 395406.
+Handa, A., Newcombe, R. A., Angeli, A. and Davison,
+A. J. (2012). Real-time camera tracking When
+is high frame-rate best?, Proc. of the European
+Conference on Computer Vision(ECCV).
+Li, L., Sun, L., Guo, J. and Li, S. (2015). Image
+Segmentation Based on Superpixels and Region
+Merging, 23 87878797.
+Newcombe, R. A., Lovegrove, S. J. and Davison, A. J.
+(2011). DTAM Dense Tracking and Mapping
+in Real-Time, Int. Conf. on Computer Vision
+(ICCV) pp. 23202327.
+Pagani, A., Gava, C., Cui, Y., Krolla, B., Hengen,
+J.-M. and Stricker, D. (2011). Dense 3D Point
+Cloud Generation from Multiple High-resolution
+Spherical Images, International Symposium on
+Virtual Reality, Archaeology and Cultural Heritage (VAST) pp. 18.
+Wu, T.-P., Yeung, S.-K., Jia, J. and Tang, C.-K.
+(2010). Quasi-dense 3D reconstruction using
+tensor-based multiview stereo, 2010 IEEE Computer Society Conference on Computer Vision
+and Pattern Recognition, Vol. 4, IEEE, pp. 1482
+1489.
+Xu, L., Yan, Q., Xia, Y. and Jia, J. (2012). Structure
+extraction from texture via relative total variation, ACM Transactions on Graphics 31(6) 1.
+
+3505

@@ -1,0 +1,1134 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+SESAME SISTEMA DE RECONHECIMENTO DE COMANDOS DE VOZ UTILIZANDO PDS E RNA
+SERGIO A. CARDOSO, JOSÉ E. C. CASTANHO, MARCELO N. FRANCHIN, IVO R. FONTES
+Faculdade de Engenharia de Bauru, UNESP - Univ. Estadual Paulista, Departamento de Engenharia Elétrica,
+Av Eng. Luiz Edmundo C. Coube, 14-01, C.P. 473, 17033-360
+E-mails sergioac@lpnet.com.br, castanho@feb.unesp.br, franchin@feb.unesp.br,
+ivo@feb.unesp.br
+Abstract
+ The automatic speech recognition systems have wide range of applications, as in telephony, robotics, automation
+and human computer interface. The purpose of these systems is to identify the message contained in the human speech, and so,
+to start an action previously programmed, like speech-to-text transcriptions, to control devices or for language translation. This
+work describes the developing of the Sesame system which is an automatic speech recognition system based on artificial neural
+network. The neural networks are suitable to problems like automatic speech recognition, allowing efficient design. The system
+is capable of recognizing uttered isolated words and speaker-dependent with a six word set, useful to control the movements of a
+robot. The implementation described in this paper was carried out using a set containing a board with the DSP BF533, and a
+conditioning circuit, demonstrating that the adopted design approach has potential for being used in embedded applications. The
+paper also describes the development process that was made using the VisualDSP++, to implement the pre-processing step and
+the NN recognition module, and the Matlab to evaluate the algorithms and to train the neural network. Results of tests are presented and compared to references.
+Keywords
+ Automatic speech recognition, Artificial neural network, Digital signal processing, BF533, Embedded systems.
+Resumo
+ Os sistemas de reconhecimento_automático_de_voz têm possibilidades de aplicações diversas, como em telefonia, robótica, automação e interface para computador. O objetivo desses sistemas é reconhecer a mensagem contida na fala humana, e
+proceder a uma ação previamente programada, que pode ser a transcrição de um texto, acionamento de dispositivos ou tradução
+de línguas. Neste trabalho é apresentado o desenvolvimento do sistema Sesame, para reconhecimento_automático_de_voz utilizando uma rede_neural artificial. As redes_neurais se adaptam bem a problemas como o reconhecimento_de_voz, e permitem um
+projeto relativamente simples. O sistema apresenta a capacidade de identificar palavras pronunciadas de forma isolada e dependente do locutor, com vocabulário de seis palavras, destinado  aplicação em robótica. A implementação do sistema apresenta
+como particularidade a utilização de um processador_digital_de_sinais, BF533, e um condicionador de sinais, demonstrando que
+a abordagem de projeto adotada apresenta potencial de utilização em sistemas_embarcados. O processo de desenvolvimento do
+software utilizou o VisualDSP ++, para implementar as etapas de pré-processamento e reconhecimento, e o Matlab, para testar
+os algoritmos e treinar a rede_neural. Resultados dos testes são apresentados e avaliados.
+Palavras-chave .
+
+1
+
+restrições bem definidas de operação e implementação.
+As técnicas mais utilizadas para o reconhecimento de
+voz são as redes_neurais artificiais, o modelo oculto
+de Markov (HMM), o modelo híbrido e por áudiovisual. As redes_neurais lidam melhor com padrões
+estáticos, permitindo que uma palavra inteira possa
+ser reconhecida de forma simples e direta (Bourlard
+ Morgan, 1994).
+Um projeto, que tem por objetivo o reconhecimento
+de comandos feitos por palavras isoladas e com vocabulário pequeno, pode beneficiar-se pelo uso das
+redes_neurais, pelo seu bom desempenho e simplicidade de implementação nesse tipo de aplicação, diminuindo o tempo de desenvolvimento e permitindo
+a implementação em hardware limitado. Este tipo de
+abordagem é necessário, por exemplo, em sistemas
+embarcados.
+Este trabalho apresenta um sistema de reconhecimento_automático_de_voz usando redes_neurais artificiais.
+O sistema apresenta capacidade de identificar palavras pronunciadas de forma isolada e dependente do
+locutor, com um pequeno vocabulário, destinada 
+aplicação em robótica e sistemas_embarcados com
+
+Introdução
+
+Os sistemas de reconhecimento automático de
+voz (RAV ou ASR  Automatic Speech Recognition)
+têm várias aplicações práticas, como acionamentos
+de dispositivos em automóveis, atendimento telefônico para solicitação de serviços, programas utilitários
+em computadores, brinquedos e celulares. Têm também possibilidades de aplicações em robótica (Kubik
+e Sugisaka, 2001) e automação_hospitalar (Ben,
+2006). O objetivo desses sistemas é reconhecer a
+mensagem contida na fala humana, e proceder a uma
+ação previamente programada, que pode ser a transcrição de um texto, acionamento de dispositivos ou
+tradução de línguas.
+O uso de reconhecedores de voz tornou-se uma opção com vantagens significativas, por liberar o uso
+das mãos e não exigir espaço em aparelhos controladores na forma de botões.
+Com a utilização de técnicas de processamento_digital_de_sinais (PDS) e redes_neurais artificiais (RNA),
+é possível a implementação de um sistema de reconhecimento_automático_de_voz eficiente, dentro de
+
+1316
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+limitada capacidade de processamento, através de
+comandos simples.
+O software tem como principais componentes um
+módulo para a obtenção e geração de características a
+partir do sinal de voz digitalizado, denominado de
+Geravet, e outro módulo para o reconhecimento
+dos padrões, chamado de Sesame. Para suportar o
+software da rede_neural, desenvolvido em linguagem
+C, foi utilizada a placa de desenvolvimento EZ-KIT
+Lite com o processador_digital_de_sinais BF533, que
+demonstra a possibilidade de aplicação em sistemas
+embarcados.
+Na próxima seção é feita uma revisão dos conceitos
+associados ao reconhecimento_de_voz. Na sequência
+é apresentado o sistema desenvolvido com a descrição de métodos utilizados, e finalmente, os resultados
+obtidos.
+
+1  Pré-ênfase O sinal tem as frequências
+mais altas reforçadas ao passar por um filtro FIR de
+primeira ordem, conforme equação (1)
+
+H ( z )  1  az 1  0,9  a  1,0
+
+(1)
+
+2  Divisão em quadros O sinal é dividido
+em quadros sucessivamente. Cada quadro é composto por N amostras, que será processado individualmente. A cada número M de amostras, é tomado um
+novo quadro. Em geral, M é menor que N, o que
+resulta em uma sobreposição de quadros, garantindo
+a detecção de variações do sinal observado.
+3  Janelamento Cada quadro é multiplicado por uma função window, para reduzir os níveis
+nas primeiras e últimas amostras, minimizando as
+descontinuidades que geram distorções espectrais.
+2.1 Detecção da palavra (iníciofim)
+
+2 Reconhecimento automático de voz
+
+A detecção de palavra separa o sinal correspondente  voz de ruídos de fundo e períodos de silêncio.
+De acordo com Bechetti e Ricotti (1999), um detector baseado em energia pode ser utilizado em ambientes em que a relação_sinal-ruído não se altere significativamente.
+
+A voz humana é percebida como variações da
+pressão sonora, e deve ser convertida em sinal elétrico por meio de um transdutor eletroacústico, como o
+microfone. Após passar por um circuito condicionador, que garante nível e cortes de frequências adequados, o sinal é convertido de analógico para digital
+por um conversor AD.
+A variação temporal das amostras não é a informação
+de onde se interpreta o que foi falado. O sinal assim
+obtido é transformado para o domínio da frequência.
+Furui (2001) justifica o emprego desse domínio porque a informação está principalmente contida no espectro de frequências.
+A fig. 1 mostra um modelo para reconhecimento de
+padrão de voz. A partir de um sinal de voz, devem
+ser extraídos os parâmetros essenciais que representem a informação, realizada pelo bloco de medida de
+parâmetro. Esse bloco fornecerá uma saída, um vetor
+de características, que será comparado com padrões
+previamente armazenados. Com esse resultado, será
+tomada a decisão para identificar a mensagem contida na voz (Rabiner  Biing-hwang, 1993).
+
+2.2 Modelos de extração_de_características
+Há várias formas de representar a informação da
+voz. A seguir, temos três modelos para essa representação.
+O LPC é um modelo de codificação por predição
+linear que fornece coeficientes lineares que predizem
+o comportamento futuro do sinal. Em Vaseghi
+(2006), são citados os usos para esse modelo em reconhecimento_de_voz. Também são mostradas as
+formas de calcular o LPC usando o algoritmo de Levinson-Durbin. O modelo é dado pela relação da equação (2), em que o valor futuro x(m) é predito a
+partir de valores passados de x(m-k).
+P
+
+x(m)  ak x(m k)  a1x(m1) + a2 x(m 2) + L+ap x(m P) (2)
+k1
+
+Medida de parâmetro
+
+Comparação com padrão
+
+Regra de decisão
+
+Ao se tomar a resposta em frequência A(f) dos coeficientes a(k), temos a resposta do sinal excitador que
+contém a informação da fala (Vaseghi, 2006).
+O modelo Cepstral é definido como a transformada
+inversa de Fourier do logaritmo do espectro do sinal
+x(n) (Bechetti  Ricotti, 1999).
+
+Voz
+
+Padrões de referência
+
+
+
+
+
+x(n)  F 1 log X (e jw )
+
+Voz reconhecida
+
+(3)
+
+Furui (2001) mostra a obtenção de coeficientes cepstrais, a partir dos coeficientes LPC, por meio de um
+algoritmo recursivo de transformação.
+O terceiro modelo de extração_de_características é o
+banco de filtros. Esse modelo constitui-se de vários
+filtros de formato triangular passa banda, próximos
+um do outro, cobrindo a faixa de frequências perce-
+
+Figura 1  Reconhecimento (Rabiner  Biing-hwang, 1993).
+
+Antes de realizar a transformação para o domínio da
+frequência, o sinal amostrado e discretizado da voz
+passa por três processos básicos (Rabiner  Biinghwang, 1993)
+
+1317
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+bidas pelo ouvido. Rabiner  Biin-Hwang (1993)
+apresenta um banco de filtros seguindo a escala mel.
+
+O segundo sistema é constituído pelos mesmos microfone e condicionador, e ainda pelo extrator de
+características e o reconhecedor de comandos, ambos
+funcionando na placa de PDS. Esse sistema foi implementado em linguagem C no programa Sesame.
+Para identificar a saída, foram utilizados os leds disponíveis na placa do EZ-KIT Lite.
+
+2.3 Reconhecimento
+A forma mais simples de realizar reconhecimento de
+voz é transformar o padrão temporal da voz em espacial, através de um buffer. Colocando-se uma palavra
+inteira na entrada de uma rede de perceptrons multicamadas, pode-se efetuar diretamente o reconhecimento (Bourlard  Morgan, 1994).
+Tebelskis (1995) testou redes_neurais para ASR comparando o reconhecimento entre palavras inteiras e
+fonemas, constatando que as redes funcionam melhor
+na condição estática, ao reconhecer palavras inteiras.
+Pelos testes, verificou que o uso de função_de_transferência sigmoidal e de tangente hiperbólica é melhor e
+mais eficiente que função linear, acelerando o treinamento e a aprendizagem.
+
+3.3 Condicionador
+O circuito condicionador de sinais possui um estágio
+de amplificação do sinal, e dois filtros butterworth de
+2 ordem. O primeiro é um filtro passa altas com frequência de corte em 62 Hz, e o segundo, um filtro
+passa baixas, com frequência de corte em 6 KHz.
+3.4 Extrator de Características
+Neste bloco, é realizada a extração das características de cada palavra captada pelo microfone. A
+informação é obtida a uma taxa de amostragem de
+48KHz e 32 bits de resolução. Foram experimentados
+dois modelos de extrator de características Extração
+de coeficientes Cepstrais (modo CEPSTRAL) e FFT
+com banco de filtros (modo BFILTROS).
+No modo CEPSTRAL, os dados amostrados são reduzidos a um conjunto de 600 coeficientes cepstrais,
+que correspondem a 2.400 bytes. No modo
+BFILTROS (FFT), os dados são reduzidos a um conjunto de 400 valores de magnitude, que correspondem a 1.600 bytes. O fluxo do sinal pelo sistema extrator de características pode ser visto na figura 2 e
+cada um dos blocos apresentados é descrito na sequência.
+
+3 Desenvolvimento
+
+3.1 Materiais
+O projeto empregou o módulo EZ-KIT Lite, que
+é uma placa de desenvolvimento com o microprocessador ADSP-BF533 que possui arquitetura Harvard
+modificada. O módulo possui também 64MB de memória SDRAM, um CODEC (AD1836) de áudio com
+amostragem até 96KHz, LEDs e chaves para comunicação com o usuário e porta USB (Analog Devices, 2006). A placa EZ-KIT Lite é interligada com o
+microcomputador, com o ambiente_de_desenvolvimento VisualDSP++, onde é possível o desenvolvimento de projetos utilizando linguagem de programação C, C++ e Assembly. Para testes e treinamento
+das redes_neurais foi utilizado o software Matlab.
+3.2 Definição do sistema
+Para implementar um sistema ASR, foram adotadas as seguintes restrições
+ Vocabulário pequeno, com seis palavras Direita, Esquerda, Rápido, Devagar, Vai e Pára.
+ Formato da fala palavra isolada.
+ Grau de dependência do locutor dependente
+do locutor
+ Ruído ambiente moderado, com SNR maior
+que 10dB.
+O projeto foi dividido em dois sistemas, um de treinamento e outro de reconhecimento. O primeiro sistema consiste no microfone, condicionador, extrator
+de características e o ambiente MatLab com as suas
+ferramentas para redes_neurais. O extrator de características é implementado pelo programa em linguagem
+C Geravet, executado pelo BF533.
+
+Conversão
+AnalógicoDigital
+
+Endpoint
+
+Limiar de Voz
+
+Pré-ênfase
+
+Normalização
+
+Divisão de Quadros
+
+Decimação
+
+Hamming Window
+
+Modo CEPSTRAL
+
+Modo BFILTROS
+
+LPC
+
+FFT
+
+Cepstral
+
+Banco de filtros
+
+Figura 2  Fluxo do sinal pelo extrator de características.
+
+Conversão analógico  digital A conversão analógico  digital é feita pelo Codec AD1836 com frequência de amostragem de 48kHz. A cada conversão
+completada, o DMA gera uma interrupção e transfere
+o dado para um buffer, no formato de 24 bits. Com o
+dado disponível no programa principal, ele é reduzi-
+
+1318
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+do para uma resolução de 16 bits. A frequência de
+amostragem também é afetada, com a realização da
+operação Decimação, reduzindo-a para a metade.
+
+dos quadros. Já na fig. 4, a mesma palavra é dita mais
+lentamente, levando a uma sobreposição menor.
+Sinal 6.585 amostras
+
+Limiar de VozO programa só irá realizar o processamento do sinal (x(n)), se o mesmo for identificado
+como voz, determinado pelo cálculo do limiar de
+voz. Quando o programa é iniciado, obtém-se primeiramente uma amostra da referência de silêncio, que é
+um cálculo dado pela equação (4) , da energia E contida em um trecho do sinal amostrado sem voz.
+
+E
+
+0
+
+2000
+
+4000
+
+6000
+
+8000
+
+10000
+
+12000
+
+Intervalo entre os quadros 320 amostras
+
+1
+
+...
+
+3
+2
+
+4
+
+19
+20
+
+N
+
+1
+ x ( n )  x ( n)
+N n 0
+
+(4)
+
+Figura 3  Palavra direita, pronunciada rapidamente.
+Sinal 9.336 amostras
+
+Esse valor servirá para o cálculo do limiar de voz,
+que foi estabelecido empiricamente a 4 vezes a referência de silêncio, indicado na equação (5).
+LimiarVoz  4 x ReferênciaSilêncio
+
+0
+
+(5)
+
+2000
+
+4000
+
+6000
+
+8000
+
+10000
+
+12000
+
+Intervalo entre os quadros 465 amostras
+
+1
+
+Normalização A normalização é realizada para
+manter uma amplitude constante do sinal x(n), tornando-o insensível  intensidade do sinal captado
+pelo microfone. O bloco Normalização estipula o
+nível do sinal x(n) dentro do intervalo -1, 1.
+
+...
+
+19
+20
+
+O intervalo dos quadros é calculado de acordo com a
+duração do sinal ts
+
+M  (t s  t q ) (Quadros  1)
+
+(7)
+
+Onde M é o número de amostras que separa os pontos iniciais de cada quadro, ts o número de amostras
+do sinal, tq o número de amostras de um quadro e
+Quadros é a quantidade de quadros desejados. Para
+o exemplo da figura 3, M320.
+A variável M tem o formato de número inteiro, o que
+pode levar a um erro de truncamento, calculado pela
+equação (8).
+
+Pré-ênfase É feita uma pré-ênfase de acordo com a
+função de filtro FIR passa-alta (Bechetti  Ricotti,
+1999).
+
+SinalFiltro  (1  0,95 z ) SinalEntrada
+
+4
+
+Figura 4  Palavra direita, pronunciada lentamente.
+
+Endpoint Este bloco procura o final do sinal, iniciando a busca a partir do final da conversão em direção ao seu início. O algoritmo calcula a energia em
+cada trecho, até encontrar um que contenha energia E
+igual ou maior que o limiar de voz, previamente calculado, determinando neste ponto o tamanho real do
+sinal de voz.
+
+1
+
+3
+2
+
+Erro  t s  ( M  (Quadros  1) + t q )
+
+(8)
+
+(6)
+Por exemplo, na figura 3, o Erro  5 amostras. Isso
+significa que as 5 amostras finais do sinal foram descartadas, o que corresponde a um tempo de 0,4 ms.
+No modo Cepstral, a palavra deve ter a sua duração
+dentro do intervalo 23ms < ts < 1s, com M  1, 479.
+No modo Bfiltros, a palavra deve limitar sua duração
+em 43ms < ts < 832ms, com M 1, 499.
+
+Divisão dos Quadros No modo Cepstral, o sinal é
+dividido em 50 quadros com duração de 512 amostras para cada quadro, e no modo Bfiltros o sinal é
+dividido em 20 quadros com 500 amostras em cada
+quadro. Esses valores foram escolhidos para permitir
+que haja sobreposição dos quadros dentro dos limites
+da duração do sinal de voz.
+Mesmo com a variação na duração do tempo da palavra, o tamanho do vetor da informação de saída é
+constante. Isso foi alcançado através da variação da
+superposição dos quadros. Uma palavra mais extensa,
+com maior duração, gera uma sobreposição menor, e
+uma palavra mais curta gera sobreposição maior. O
+método também foi empregado por Martins (1997).
+As figuras 3 e 4 mostram um exemplo da pronúncia
+da palavra direita no modo Bfiltros, que trabalha
+com 20 quadros. Na fig. 3, a pronúncia é feita mais
+rápida, o que acarretou em uma sobreposição maior
+
+Hamming Window Neste bloco o sinal é multiplicado escalarmente pelo vetor previamente calculado
+do janelamento de Hamming.
+Autocorrelação e LPC Obtém-se um vetor de autocorrelação RL, realizada no sinal após o janelamento (Hamming Window). O vetor RL possui valores de
+autocorrelação até a ordem p. Esse vetor é necessário
+para calcular os coeficientes LPC até a ordem p12
+para cada um dos 50 quadros, resultando em uma
+matriz de dimensão 12x50. Foi utilizado o algoritmo
+
+1319
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+de Levinson-Durbin para obtê-los, conforme mostrado por Rabiner  Biing-Hwang (1993).
+
+tragem, e dessa forma obtém-se o valor ponderado
+para o filtro número 9.
+
+Cepstral Neste bloco os coeficientes cepstrais são
+obtidos iterativamente a partir dos coeficientes LPC,
+conforme mostrado por Rabiner  Biing-Hwang
+(1993). Os coeficientes cepstrais também são representados por uma matriz 12x50, que representa 600
+entradas para a rede de perceptrons multi camadas.
+
+3.5 Treinamento da rede_neural MLP
+O treinamento da rede_neural foi realizado no aplicativo Matlab, utilizando as funções de seu Toolbox para redes_neurais. Os dados de entrada da rede
+foram obtidos dos valores gerados pelo préprocessamento para cada palavra no programa Geravet. Para o modo de pré-processamento cepstral foram utilizadas 40 amostras para cada uma das palavras. Para o modo de pré-processamento banco de
+filtros, foram utilizadas 80 amostras para cada uma
+das palavras. Cada amostra foi pronunciada individualmente no microfone, pelo mesmo locutor em três
+seções em dias e horários diferentes, para cada modo
+de pré-processamento.
+Das amostras obtidas, metade foi separada para treinamento, e a outra metade foi reservada para teste.
+Foram realizados testes de treinamento para os dois
+modos de pré-processamento, cepstral e Bfiltros,
+utilizando rede de perceptrons multi-camadas. Para a
+sua estrutura, foi estabelecida uma rede com uma
+camada oculta, e uma camada de saída com seis neurônios, com função de ativação sigmóide utilizando
+tangente hiperbólica, e erro de 1e-03. Foi adotada
+uma metodologia de ensaios simulados no Matlab
+para definir a estrutura da rede. Dessa forma, para o
+modo cepstral foram agrupados ensaios com 10 e 20
+amostras da metade dedicada ao treinamento da rede.
+Em cada grupo foram definidas redes de 5 a 30 neurônios. Foram, então, testadas configurações diferentes, variando o número de amostras de treinamento
+(10 e 20) de entrada e a quantidade de neurônios na
+camada oculta. Para o modo banco de filtros, o número de neurônios da camada oculta variou de 2 a 8.
+Para cada ensaio, foram medidos os acertos para palavras pertencentes ao vocabulário, e para palavras de
+ruído, que são definidas como aquelas que não
+pertencem ao vocabulário escolhido.
+O algoritmo desenvolvido no Matlab toma a saída da
+rede e a converte para um valor de grau de certeza
+ident, dentro de uma escala normalizada no intervalo 0,1. O grau de certeza ident  0 equivale a
+nenhuma chance da palavra observada corresponder
+ palavra do vocabulário testada, e o valor 1 equivale
+a 100 de certeza de palavra reconhecida.
+Foram estabelecidas as seguintes heurísticas para o
+reconhecimento correto de uma observação
+1  A palavra observada deve estar na faixa
+0,8  ident  1 para uma palavra semelhante do vocabulário.
+2  Não pode haver nenhuma outra palavra
+com ident maior.
+3  Quanto s palavras de ruído, será considerado reconhecimento correto se o valor ident for
+inferior a 0,8 para todas as palavras testadas do vocabulário.
+
+FFT A transformada rápida de Fourier (FFT) é aplicada ao sinal, quadro por quadro, utilizando 256 pontos, e considerando frequência de amostragem de
+12KHz. A resolução em frequência é 46,9 Hz.
+Banco de filtros Foi utilizado um banco com 20
+filtros seguindo a escala Mel. O banco gera uma resposta para cada um dos 20 quadros do sinal de fala,
+gerando uma matriz de dimensão 20x20 para cada
+palavra, que representa 400 entradas para a rede de
+perceptrons de multi camada.O formato dos filtros
+adotado é triangular, com aumento da banda passante
+de acordo com o aumento das frequências centrais.
+Foi adotado o modelo de banco de filtros sugerido
+por Rabiner  Biing-Hwang (1993). Os valores estão
+na tabela 1. As frequências central, de corte inferior e
+superior foram indicadas por Fc Fci e Fcs.
+Tabela 1  Frequências no modelo de banco de filtros.
+Filtro
+
+Fc (Hz)
+
+Fci (Hz)
+
+Fcs (Hz)
+
+1
+
+50
+
+-
+
+100
+
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+
+150
+250
+350
+450
+570
+700
+840
+1K
+1,17K
+1,37K
+1,6K
+1,85K
+2,15K
+2,5K
+2,9K
+3,4K
+4K
+4,8K
+5,8K
+
+100
+200
+300
+400
+510
+630
+770
+920
+1,08K
+1,27K
+1,48K
+1,72K
+2K
+2,32K
+2,7K
+3,15K
+3,7K
+4,4K
+5,3K
+
+200
+300
+400
+510
+630
+770
+920
+1,08K
+1,27K
+1,48K
+1,72K
+2K
+2,32K
+2,7K
+3,15K
+3,7K
+4,4K
+5,3K
+6K
+
+Para exemplificar o processo de filtragem, considerese o filtro número 9, F9, que corresponde  frequência central de 1KHz. As frequências envolvidas na
+operação, já aproximadas para os valores discretos
+mais próximos, são 936Hz, 983Hz, e 1030Hz.
+
+F9  0,3F (936) + 0,83F (983) + 0,65F (1030)
+
+(9)
+
+Os coeficientes (0.3, 0.83 e 0.65) na equação (9) foram obtidos conforme um formato triangular de fil-
+
+1320
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Foram realizadas , para cada ensaio, 400 simulações
+com 400 diferentes conjuntos de pesos iniciais da
+rede de perceptrons de multi camadas, e foi selecionada aquela de melhor convergência, medida pelo
+índice de acertos global.
+
+direita, após a quantização feita pelo banco de filtros.
+
+0.06
+
+3. 6 Reconhecimento dos comandos vocais
+
+0.04
+
+A tabela 2 indica os tamanhos finais das redes_neurais
+para testes.
+
+0.02
+
+0
+50
+
+Tabela 2  Dimensões das redes_neurais artificiais.
+
+250
+
+20
+450
+
+15
+650
+
+Quantidade de entradas
+Neurônios ocultos
+Neurônios de saídas
+
+Cepstral
+600
+15
+6
+
+Banco de Filtros
+400
+4
+6
+
+10
+850
+
+Frequência (Hz)
+
+5
+Tempo (quadros)
+
+Figura 5  Características de amplitude obtidas pelo Banco de
+filtros para a palavra direita.
+
+O programa fonte, ao ser compilado no VisualDSP++, carrega os dados da rede em um vetor, de
+acordo com o modo especificado. Seu algoritmo está
+no quadro 1.
+
+4.1 Treinamento
+As redes_neurais foram avaliadas por meio de
+simulações no ambiente do Matlab para os dois modos de pré-processamento, em situações com quantidades diferentes de amostras e neurônios. Foram
+utilizadas palavras denominadas ruído, que correspondem a palavras que não pertencem ao vocabulário.
+
+Quadro 1 - Algoritmo do programa Sesame
+1  Inicialização de variáveis
+Vetor com pesos do banco de filtros.
+Vetor com weights e bias das camadas de neurônios.
+Vetor da janela de Hamming.
+Vetor de coeficientes para FFT de 256 pontos.
+Modo de pré-processamento (Cepstral ou Bfiltros).
+2  Inicialização dos periféricos do processador BF533
+Registradores de configuração do sistema.
+Memória SDRAM externa.
+Codec.
+DMA.
+3  Calcula variáveis do ambiente
+Nível de ruído.
+Estabelece limiar que separa ruído de voz.
+4  Converte sinal de voz em vetor de características
+Aguarda sinal de voz.
+Diminui resolução de 24 para 16 bits.
+Normaliza a amplitude.
+Decimação.
+Determina tamanho da palavra.
+Reforça frequências mais altas com filtro FIR.
+Se for modo Cepstral, calcula coeficientes cepstrais por meio
+de LPC.
+Se for modo Bfiltros, utiliza FFT e banco de filtros.
+5 - Aplicar as características do sinal de voz na entrada da rede
+neural.
+6  Identificar comando pela interpretação da saída da rede de
+neurônios.
+7  Visualização do resultado
+Acende Led 1 se comando  Direita
+Acende Led 2 se comando  Esquerda
+Acende Led 3 se comando  Rápido
+Acende Led 4 se comando  Devagar
+Acende Led 5 se comando  Vai
+Acende Led 6 se comando  Pára
+Fim
+
+4.2 Modo cepstral
+Foram realizados testes simulados no Matlab
+com 10 e 20 amostras para treinamento e número de
+neurônios variando de 5 a 30. As tabelas 3 e 4 indicam os resultados.
+Tabela 3  Acertos somente com palavras do vocabulário .
+Neurônios na
+camada oculta
+5
+10
+15
+20
+30
+
+Número de amostras para cada palavra
+(sem ruído)
+10
+20
+82,5
+92,5
+83,3
+95,8
+87,5
+99,2
+87,5
+98,3
+87,5
+98,3
+
+Tabela 4  Acertos com palavras do vocabulário + ruídos.
+Neurônios na
+camada oculta
+5
+10
+15
+20
+30
+
+Número de amostras para cada palavra
+(com ruído)
+10
+20
+80,0
+81,4
+77,1
+90,0
+84,3
+95,7
+81,4
+96,4
+87,1
+91,4
+
+4 Resultados e Discussão
+Menor número de amostras e poucos neurônios significam pior precisão. O aumento para 30 neurônios
+não trouxe melhoria significativa para a rede. Considerando apenas as palavras do vocabulário, o melhor
+
+Os resultados para o teste de reconhecimento
+estão separados para os dois modos, com e sem ruído. A figura 5 mostra o sinal obtido para a palavra
+
+1321
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+índice foi de 20 amostras e 15 neurônios com 99,2 
+de acerto.
+
+necessárias várias tentativas para alcançar um valor
+ótimo (pelo menos 400 simulações), com resultados
+parciais na faixa de 45 a 73. Esse fato indica uma
+dificuldade da rede encontrar padrões próprios para
+cada palavra.
+
+4.3 Modo banco de filtros
+Foram realizados testes variando-se o número de
+amostras para treinamento e os neurônios na camada
+oculta no ambiente Matlab. As tabelas 5 e 6 mostram
+os resultados em porcentagem de acertos.
+
+Tabela 7  Resultados para reconhecimento on-line.
+Somente com palavras do vocabulário
+Certo Errado
+ acerto
+Total
+
+2
+3
+4
+5
+6
+7
+8
+
+25
+
+62
+
+Palavras do vocabulário + Ruído
+Certo Errado
+ acerto
+
+Tabela 5  Acertos somente com palavras do vocabulário.
+Neurônios na
+camada oculta
+
+41
+
+Número de amostras de treinamento para cada
+palavra (sem ruído)
+10
+20
+30
+40
+80,0
+84,2
+84,2
+87,9
+88,7
+92,5
+97,5
+97,5
+91,2
+97,1
+92,9
+97,1
+90,4
+95,4
+95,0
+97,1
+92,9
+95,8
+97,5
+98,3
+94,8
+93,7
+98,3
+97,1
+91,2
+92,9
+98,3
+97,5
+
+Total
+
+50
+
+27
+
+65
+
+4.6 Modo Banco de filtros
+No modo Bfiltros, foi estabelecida uma rede com
+4 neurônios na camada oculta. Os resultados do teste
+on-line estão na tabela 8.
+Tabela 8  Resultados para reconhecimento on-line.
+
+Tabela 6  Acertos com palavras do vocabulário + ruído.
+Neurônios na
+camada oculta
+2
+3
+4
+5
+6
+7
+8
+
+Somente com palavras do vocabulário
+Certo
+Errado
+ Acerto
+Total
+86
+4
+96
+
+Número de amostras de treinamento para cada
+palavra (com ruído)
+10
+20
+30
+40
+72,1
+81,4
+81,8
+85,4
+84,6
+89,6
+91,8
+92,1
+88,2
+94,6
+92,9
+94,6
+87,9
+93,9
+94,3
+95,7
+89,3
+92,9
+95,0
+94,4
+92,1
+92,5
+95,4
+96,1
+90,0
+92,5
+96,8
+96,4
+
+Palavras do vocabulário + Ruído
+Certo
+Errado
+Total
+94
+11
+
+ Acerto
+90
+
+4.7 Comparação e discussão dos resultados
+O pré-processamento com Banco de filtros
+obteve melhor rendimento nos testes. Utilizou uma
+rede menor (com 4 neurônios contra 15 do Cepstral)
+e apresentou melhor índice de reconhecimento, 96
+contra 62 do Cepstral, uma diferença significativa.
+Em um levantamento das referências de outros trabalhos, foram encontradas algumas explicações para
+essa diferença. Kohonen (1988) cita que o uso de
+transformação FFT é melhor que aquele com transformação a partir de representação paramétrica LPC,
+para sistemas que utilizam agrupamento, como redes
+neurais. O ambiente moderadamente ruidoso nos
+testes contribui para a diferença, pois, de acordo com
+Rhee, Young-ik  Geon (2000), o processamento
+com LPC-Cepstral funciona bem em ambientes silenciosos, porém decai bastante na presença de ruídos
+significativos. Os mesmos autores realizaram testes
+com configurações de bancos de filtros com
+SNR10dB (voz masculina), resultando em acertos
+que variaram de 93 a 96.
+Para o pré-processamento, constatou-se que a utilização de banco de filtros, a partir de transformada rápida de Fourier, permite um índice de acerto maior que
+a utilização de coeficientes cepstrais, quando se utiliza rede_neural com perceptrons em multicamada.
+Também é possível a utilização de uma quantidade
+menor de neurônios e amostras.
+A principal deficiência do sistema é a pouca rejeição
+de palavras que não pertencem ao vocabulário, apre-
+
+Os resultados da simulação indicam que não há melhoria significativa no índice de acertos para mais que
+30 amostras e 4 neurônios.
+4.4 Reconhecimento
+Foram implementados os dois modos de préprocessamento no programa de reconhecimento Sesame. O tamanho da rede_neural escolhida procurou
+um equilíbrio entre precisão no índice de acertos e a
+quantidade de neurônios, de acordo com os resultados obtidos nas simulações na fase de treinamento. O
+teste foi feito diretamente na placa do EZ-KIT Lite.
+Uma palavra era falada no microfone, e anotava-se o
+resultado do reconhecimento visualizado nos leds.
+4.5 Modo Cepstral
+Para o modo Cepstral, foi definida uma rede com
+15 neurônios na camada oculta e treinada com 20
+amostras de cada palavra. O teste foi feito com 77
+amostras, com a pronúncia repetida 11 vezes para
+cada palavra (vocabulário mais ruído). Os resultados
+estão na tabela 7.
+Comparando os resultados on-line e simulado, notase uma diferença significativa. Na simulação, foram
+
+1322
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+sentando resultados apenas razoáveis, com 82 de
+acerto no modo Cepstral e 53 no modo Bfiltros,
+considerando um conjunto exclusivo com as palavras
+de ruído. Apesar desta deficiência, a adoção desta
+solução é possível em diversas aplicações.
+A tabela 9 mostra uma comparação com resultados
+obtidos em trabalhos que são dependentes de locutor.
+
+6 Referências
+Analog Devices, Inc. ADSP-BF533 EZ-KIT
+Lite Evaluation System Manual. Norwood
+Junho 2006. Revisão 3.0. Disponível em
+<www.analog.com> Acesso em 05 dez. 2008.
+Bechetti, C. , Ricotti, L. P. Speech Recognition
+Theory and C++ Implementation. West Sussex.
+John Wiley  Sons Ltd. 1999
+Ben, M. B. Speech Recognition for Disabilities
+People. In Information and Communication
+Technologies, 2006. ICTTA 06. 2nd..
+2006864-869. Vol 1
+Bourlard, H. A., Morgan, N. Connectionist Speech
+Recognition A Hybrid Approach. Boston
+Kluwer Academic Publishers. 1994.
+Fei L., Yonghong Y.. Correlation generated targets
+for neural network based speech recognition. In
+ICSP 98. 1998 Fourth International Conference
+on Signal Processing. Beijing 1998718-721.
+Furui, S. Digital Specch Processing, Synthesis, and
+Recognition. Tóquio. CRC Press. 2001. 2nd ed.
+Huang X., Lee K. On speaker-independent,
+speaker-dependent,
+and
+speaker-adaptive
+speech recognition. In Proceedings ICASSP
+91 1991 International Conference on Acoustics, Speech, and Signal Processing. Toronto.
+1991877-880.
+Kohonen, T. Self-Organizing Maps. Berlin
+Springer. 2001. 3rd ed.
+Kubik, T., Sugisaka, M. Use of a cellular phone in
+mobile robot voice control. In SICE 2001.
+Proceedings of the 40th SICE Annual Conference. International. Nagoya. 2001 106-111.
+Martins, J. A. Avaliação de diferentes técnicas para
+reconhecimento_de_fala. 174f. Tese de Doutorado. Universidade de Campinas. Campinas.
+Unicamp. 1997.
+Rabiner, R. L., Biing-hwang J. Fundamentals of
+speech recognition.Prentice Hall, c1993.507 p.
+Rhee M. K., Young-ik K., Geon H. L. A
+noise-robust front-end based on tree-structured
+filter-bank for speech recognition. In Neural
+Networks, 2000. IJCNN 2000, Proceedings of
+the IEEE-INNS-ENNS International Joint Conference on. 200081-86 vol.6.
+Tebelskis, J. Speech Recognition using Neural
+Networks. 1995. 188 f. PhD Thesis. Carnegie
+Mellon University. Pittsburg. 1995.
+Trentin E., Gori M. Robust combination of neural
+networks and hidden Markov models for
+speech recognition. Neural Networks, IEEE
+Transactions on. 200314(6)1519-1531 1.
+Vaseghi, S. V. Advanced Digital Signal
+Processing and Noise Reduction. Chichester.
+John Wiley and sons. 2006. 3rd ed. Cap. 8.
+
+Tabela 9  Comparativo com resultados dependentes de locutores.
+Origem
+
+Acertos
+96
+
+Características
+MLP, banco de filtros (400
+entradas e 4 neurônios ocultos)  6 palavras  dependente
+de 1 locutor
+
+93
+
+MLP (1280 entradas e 100
+neurônios ocultos)  50 palavras  dependente de 1 locutor
+HMM  fala contínua  dependente de 1 locutor
+
+Sesame
+
+Martins (1997)
+
+Huang  Lee (1991)
+
+96,9
+
+A tabela 10 mostra resultados obtidos em trabalhos
+que são independentes de locutor, ou com múltiplos
+locutores.
+Tabela 10  Resultados independente ou múltiplos locutores.
+Origem
+Acertos
+Rhee, Young-ik 
+96
+Geon (2000)
+
+Características
+MLP (256 entradas e 39 neurônios ocultos) com banco de
+filtros  dígitos em inglês  16
+locutores
+
+Trentin
+(2003)
+Fei 
+(1998)
+
+Híbrido  dígitos em italiano 
+40 locutores
+Híbrido  dígitos em inglês 
+independente de locutor
+
+
+
+Gori
+
+94,65
+
+Yonghong
+
+96,2
+
+5 Conclusão
+Neste artigo foi apresentada a implementação de
+um sistema de reconhecimento_de_voz utilizando redes_neurais implementada sobre uma plataforma de
+hardware limitada, baseada em microprocessador
+adequada a aplicações simples de comando de voz
+em sistemas_embarcados.
+Redes neurais são estruturas que exigem quantidade
+fixa de dados de entrada, o que pode representar um
+problema para dados com extensão variável, como no
+caso da voz. Entretanto, a técnica utilizada de sobreposição funcionou adequadamente para os objetivos
+propostos.
+Seguindo a estratégia de uma aplicação simples de
+controle com comandos robóticos, limitados a um
+vocabulário pequeno, dependente do locutor e com
+ruído moderado, obteve-se índice geral de acertos
+muito boa e compatível com os resultados obtidos em
+outros trabalhos. Cabe ressaltar que as seis palavras
+do vocabulário foram aprendidas mesmo utilizandose uma estrutura simples com apenas quatro neurônios em uma camada oculta, com mais seis neurônios
+de saída, com um neurônio para cada palavra.
+
+1323

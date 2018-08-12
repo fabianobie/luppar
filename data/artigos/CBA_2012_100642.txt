@@ -1,0 +1,868 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+VOO AUTÔNOMO E ESTABILIZAÇÃO DE CÂMERA EM UM VEÍCULO AÉREO
+NÃO-TRIPULADO TIPO QUADRIRROTOR
+A NDRÉ L UÍS DA S ILVA, A NDREI BATTISTEL
+
+
+Curso de Engenharia Aeroespacial
+Universidade Federal do ABC
+CEP 09.210-170, Rua Santa Adélia, 166, Santo André, SP, Brasil
+
+
+Programa de Engenharia Elétrica
+COPPEUniversidade Federal do Rio de Janeiro, C.P. 68504
+CEP 21.945-970-Rio de Janeiro, RJ, Brasil
+Emails andreluis.silva@ufabc.edu.br, battistel@ufrj.br
+Abstract In this paper, a design summary about the development of an unmanned aerial vehicle (UAV) is presented. The UAV
+is an helicopter of the quadrotor type. The discussion is focused in the kalman filter for attitude and position estimation, along
+with algorithms for camera stabilization. Flight test results show that the quadrotor is able to perform autonomous flight with the
+implemented Kalman filter, as well as to achieve a satisfying camera stabilization.
+Keywords
+
+flying robot, autonomous flight, extended Kalman filter
+
+Resumo Neste artigo, uma síntese de projeto sobre o desenvolvimento de um veículo aéreo não tripulado (VANT) é apresentado. O VANT é um helicóptero do tipo quadrirrotor. A discussão concentra-se no filtro de Kalman para estimação de posição
+e atitude, juntamente com algoritmos para a estabilização de câmara. Resultados de testes de vôo mostram a habilidade do helicóptero em realizar voo_autônomo com o filtro de Kalman em questão, juntamente com pequenos erros angulares durante a
+estabilização de câmera.
+Palavras-chave 
+
+1
+
+Introdução
+
+A utilização e o desenvolvimento de veículos aéreos
+não-tripulados (VANT) têm crescido nos últimos anos,
+bem como a quantidade de suas aplicações. Além do
+interesse militar, como por exemplo para sobrevoo de
+áreas de risco a aplicabilidade no campo civil também
+é crescente. São exemplos o sensoreamento remoto e
+supervisão para segurança, (de Fátima Bento, 2008).
+Um tipo de VANT amplamente utilizado é o quadrirrotor, bastante atraente por possibilitar decolagem
+e pouso verticais, além da característica de voo pairado (ou hover). Diversos trabalhos recentes podem
+ser encontrados envolvendo quadrirrotores com foco
+em diferentes problemas de engenharia, como mecânica de voo, navegação e guiagem, ou mesmo posicionamento por servo visão (Hoffmann et al., 2007 Huang et al., 2009 Sanchez et al., 2011).
+Embora haja atualmente uma série de quadrirrotores comercialmente disponíveis, há uma carência de
+tecnologia nacional no setor. A fim de preencher esta
+lacuna, um mini-VANT tipo quadrirrotor está sendo
+desenvolvido com apoio da FINEP pela empresa brasileira Gyrofly, situada no Parque Tecnológico de São
+José dos Campos. O modelo, chamado Gyro 200, tem
+massa de cerca de 1kg e um payload de 250g, suficiente para carregar uma câmera compacta. Uma fotografia deste equipamento é apresentada na Fig. 1.
+O desenvolvimento deste projeto passa por uma
+série de barreiras não somente tecnológicas como científicas além da mecânica de voo, o controle e a navegação de um veículo deste tipo não são triviais, uma
+vez que os sensores_inerciais necessários são muitas
+
+ISBN 978-85-8001-069-5
+
+Figura 1 Quadrirotor Gyro 200 da Gyrofly.
+vezes caros, indisponíveis ou de má qualidade. Por
+isso, a obtenção de uma medida confiável de atitude
+(orientação) por fusão_de_dados é ainda tema de pesquisa, (Wendel et al., 2006 Han et al., 2011).
+Este trabalho busca, neste contexto, obter algoritmos de controle e navegação que possibilitem a obtenção do voo_autônomo no Gyro200, isto é, sem a
+necessidade de um piloto. O quadrirrotor utiliza sensores_inerciais automotivos de baixo_custo, de tecnologia MEMS1 , dispondo de medidas de acelerômetros,
+giroscópios, magnetômetros, barômetro e GPS. A fim
+de combinar as medidas destes sensores e gerar uma
+estimativa melhorada de posição, velocidade e atitude
+(PVAT), implementam-se filtros de Kalman estendidos
+(FKE). O desenvolvimento e validação desses filtros é
+um dos focos do trabalho em questão.
+Além da questão de controle e navegação, este
+trabalho aborda o problema de estabilização inercial
+de plataformas, voltado para a estabilização de uma
+1 Microelectromechanical
+
+systems
+
+914
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+câmera a bordo do Gyro 200. O objetivo é manter invariante a linha de visada da câmera na presença de
+movimentos do VANT, possibilitando a aquisição de
+melhores imagens. Para isto, utiliza-se a informação
+de atitude obtida na navegação e um gimbal de dois eixos, sobre o qual a câmera é montada. Uma extensão
+natural da estabilização é o seguimento de um objeto
+cuja posição é conhecida, comumente referida como
+ponto de interesse (POI). Este tema também é abordado.
+Assim, o trabalho é organizado como se segue a
+seção 2 apresenta as equações gerais de mecânica de
+voo e cálculo de parâmetros. Na seção 3, discute-se
+a arquitetura de sensores e diferentes estratégias para
+a utilização do Filtro de Kalman. A seção 4 trata da
+estabilização da câmera e seguimento do ponto de interesse, mostrando resultados de simulação com dados
+extraídos de voo. As conclusões e trabalhos futuros
+são apresentados na seção 5.
+2
+
+Mecânica de voo e Controle do UAV
+
+Sob o ponto de vista de mecânica de voo, o quadrirrotor pode ser tratado como um corpo rígido. Neste
+caso, são necessárias 6 equações de cinemática 3 de
+rotação e 3 de translação bem como 6 equações de
+dinâmica 3 de rotação e 3 de translação. Os constituintes básicos da modelagem são os sistemas de coordenadas, a descrição das forças e momentos e a forma
+de parametrização de atitude.
+Os motores do quadrirrotor são numerados de 1 a
+4 no sentido horário. O par 1 e 3 gira no sentido horário enquanto o par 2 e 4 gira no sentido anti-horário.
+As quatro hélices provocam forças de tração paralelas e estas atuam sobre quatro pontos coplanares. Este
+plano é denominado plano das hélices. Considera-se
+ainda que os quatro motores são idênticos e que a força
+de arrasto é desprezível. Estas convenções são representadas na Fig. 2.
+
+Da segunda lei de Newton, a equação de dinâmica
+de translação é
+mV  mg + Cb0 Fb
+
+(1)
+
+onde m é a massa do corpo, g é a aceleração da gravidade, Fb é o somatório das forças não gravitacionais
+sobre o corpo, escrito em seu sistema, Cb0 é a matriz
+de transformação de coordenadas do sistema do corpo
+para o NED
+Cb
+0  Rz ()Ry ()Rx ()
+
+(2)
+
+onde Ri (k) é a rotação elementar de um ângulo k ao
+redor do eixo i (Sciavicco et al., 2009).
+Para a mecânica de rotação, considera-se a velocidade_angular dada por   p q rT escrita no referencial do corpo e tomada em relação ao inercial.
+Bem como levanta-se a soma de todos os momentos
+que agem sobre o corpo M  L M N T . Deste
+modo, escreve-se a equação de Euler para a dinâmica
+de rotação
+I  M    I
+(3)
+
+onde I é a matriz de inércia do corpo rígido.
+As forças e momentos são modeladas para o caso
+de voo pairado, onde o vetor velocidade com respeito
+ao solo é considerado nulo. Assume-se ainda que a
+força de arrasto é desprezível e que os motores são
+idênticos, de forma que o modelo de força devido s
+hélices é dado por, (Hoffmann et al., 2007)
+Fb 
+
+
+
+00 T
+
+T
+
+(4)
+
+onde
+T  kf 21 + 22 + 23 + 24
+
+
+
+(5)
+
+é a força de tração total atuante sobre o quadrirotor,
+sendo i a velocidade de rotação do i-ésimo motor.
+kf é um parâmetro dependente da aerodinâmica das
+hélices, denominado constante de força.
+Os momentos que atuam sobre o quadrirrotor podem ser
+(i) aqueles provocados pelo braço de alavanca das
+forças Fi de cada motor com respeito ao centro
+de massa
+(ii) momentos aerodinâmicos de reação em cada hélice, devido ao arrasto que atua nas mesmas.
+Dadas as hipóteses consideradas, os momentos do
+tipo (i) são os de roll L e pitch M, dados por
+
+Figura 2 Convenções adotadas no quadrirotor, fonte
+Hoffmann et al., 2007, p. 7.
+O vetor posição do VANT é descrito no sistema
+NED (do inglês, north-east-down) e é denotado por
+R  xn ye zd T . Analogamente, a velocidade é escrita como V  vn ve vd T .
+
+ISBN 978-85-8001-069-5
+
+L  F4 l  F2 l  kf l(24  22 )
+
+(6)
+
+M  F1 l  F3 l  kf l(21  23 )
+
+(7)
+
+onde l é a distância do centro de cada hélice até o
+centro de massa. Os momentos de reação somam-se
+para gerar o momento de yaw que atua sobre o VANT.
+O sentido de cada elemento de momento depende do
+sentido de rotação da respectiva hélice, de forma que
+o resultado é
+N  M1 M2 +M3 M4  km 21  22 + 23  24
+(8)
+
+915
+
+
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+onde km é a constante de momento, que depende principalmente da geometria da hélice.
+Suponha que, para executar uma determinada manobra, seja necessária uma demanda de tração T , e de
+momentos L, M e N . As Eq. (5), (6), (7) e (8) sugerem que esta necessidade é atendida por valores adequados das rotações 1 , 2 , 3 e 4 . De fato, resolvendo um sistema formado por estas quatro equações,
+obtém-se
+1
+2
+3
+4
+
+
+ uT
+
+ uT
+
+ uT
+
+ uT
+
++ u + u
+ u  u
+ u + u
++ u  u
+
+(9)
+
+onde
+1 L
+1M
+1N
+1T
+, u 
+, u 
+, u 
+4 kf
+2 kf l
+2 kf l
+4 km
+(10)
+Então, para realizar uma manobra que demande
+uma tração T e momentos L, M e N , é preciso obter
+rotações 1 , 2 , 3 e 4 segundo as equações (9)
+e (10). Essas rotações desejadas são obtidas por comandos enviados aos motores_elétricos, que, por sua
+vez, também são sistemas_dinâmicos. No entanto, geralmente, essa dinâmica é ignorada, considerando que
+o tempo de resposta dos motores é bem que a menor
+constante de tempo da mecânica de rotação ou translação.
+uT 
+
+3 Filtro de Kalman
+Para obtenção de uma medida de PVAT, é empregado
+um Filtro de Kalman Estendido (FKE). Como já citado, o quadrirrotor dispõe de magnetômetros, acelerômetros, giroscópios, barômetro e GPS. O FKE é
+então utilizado para a fusão dos dados dos diferentes
+sensores.
+Fisicamente, a dinâmica de translação é acoplada
+ dinâmica de rotação. Além disso, ao estabelecer as
+equações do filtro de Kalman, a dinâmica de rotação
+também torna-se acoplada  dinâmica de translação.
+No entanto, na implementação, gerou-se dois filtros
+de Kalman diferentes um para estimar o estado de rotação, outro para estimar o estado de translação. A razão da separação diz respeito  realização nos processadores embarcados separando os dois filtros, ambos
+podem funcionar a taxas de amostragem diferentes, a
+rotação operando a uma taxa mais alta. Fisicamente,
+isso é justificado pelas constantes de tempo de rotação
+serem bem menores que as da translação.
+O filtro de rotação estima os ângulos de Euler 
+e  utilizando como representação o quatérnion enquanto o filtro de translação estima as velocidades
+inerciais vn , ve , vd , as coordenadas xn , ye no sistema
+NED local, bem como a altura H. As entradas do filtro de rotação são a leitura de velocidade_angular dos
+giroscópios, a leitura dos acelerômetros e a estimativa
+de aceleração NED, vinda do filtro de translação. O
+valor de  é dado por uma unidade inercial.
+
+ISBN 978-85-8001-069-5
+
+Como se deseja operar tanto em ambiente interno
+quanto externo, o filtro de translação comuta entre dois
+modos com e sem GPS. As entradas neste caso são as
+leituras dos acelerômetros e do barômetro. Sendo assim, é esperado que somente a altura e a velocidade
+para cima permaneçam limitadas, devido ao drift dos
+acelerômetros. O filtro de translação com GPS, naturalmente, dispõe das leituras das velocidades vn , ve ,
+vd e latitude e longitude, a partir das quais xn , ye são
+facilmente determinados.
+O quadrirotor é dotado de controles de rotação e
+translação. O controle de rotação atua sobre os ângulos de Euler ,  e  existe uma malha PID modificada para cada um deles. As parcelas proporcional
+e integral recebem as estimativas de  e  advindas
+do filtro de Kalman, bem como de  proveniente da
+unidade inercial. As parcelas derivativas recebem as
+velocidades p, q e r medidas pelos giroscópios. O
+controle de translação atua sobre a altura H e as coordenadas longitudinais xn e ye . Existe uma malha
+PID modificada para cada uma dessas variáveis. As
+parcelas integral e proporcional recebem as estimativas de H, xn e ye provenientes do filtro de Kalman.
+As parcelas derivativas recebem as velocidades vd , vn
+e ve também estimadas pelo filtro de Kalman. Como o
+quadrirotor é sub-atuado (quatro variáveis de controle
+e 6 variáveis controladas), na condição de voo_autônomo, somente as variáveis , H, xn e ye são controladas independentemente. Nesta situação, o controle
+de  e  é utilizado na malha interna que governa o
+deslocamento horizontal xn -ye .
+A Fig. 3 mostra a trajetória tridimensional em voo
+autônomo, sem controle de piloto, estimada pelo filtro
+de Kalman. O ensaio foi realizado em ambiente outdoor com um helicóptero Gyro 200 ED, com os controles PID agindo sobre os ângulos de Euler, altura e
+deslocamento horizontal, conforme explicado acima.
+É possível notar a partir deste resultado que o erro máximo com respeito a referência é de cerca de 2.5m, no
+que diz respeito aos deslocamentos horizontais. Para
+a altura, o erro é de cerca de 1m. A Fig. 4 mostra os
+dados de ângulos de Euler estimados pelo filtro, obtidos neste ensaio. Os ângulos  e  são comandados
+pela malha_de_controle de xn -ye de modo a obter a trajetória horizontal desejada. O ângulo  é controlado
+de modo a permanecer constante próximo de um dado
+valor inicial.
+Os resultados mostram a capacidade do quadrirotor em realizar o voo_autônomo, de maneira razoavelmente próxima da referência, tendo em vista a qualidade dos sensores utilizados. No entanto, não é possível ter uma noção precisa dos erros de estimação,
+visto que não há acesso a uma medida mais precisa
+para comparar com as estimativas do filtro de Kalman.
+Uma forma aproximada de realizar esta avaliação é
+através de simulação, onde o valor da variável é facilmente obtido, acessando o estado da planta.
+Uma simulação representativa do caso de voo
+autônomo em questão foi realizada. Nesta simulação, foram incluídos erros de bias e ruído branco
+
+916
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+nos sensores acelerômetro, giroscópio, barômetro e
+GPS. Também foram incluídos erros de amostragem,
+de acordo com a frequência de operação dos equipamentos. Foram simulados todos os controladores, incluindo dos motores_elétricos, juntamente com erros
+de discretização e medida das rotações dos motores.
+Os erros médios e absolutos obtidos nesta simulação
+podem ser vistos na tabela 1. Os erros médios indicam a tendência de desvio da estimativa para valores
+acima ou abaixo da variável real. Os erros absolutos
+representam a amplitude média dos erros.
+
+Tabela 1 Erros médios e absolutos do FKE
+Erros Médios Erros Médios Absolutos
+ (graus)
+0.35
+0.60
+ (graus)
+0.11
+0.56
+vn (ms)
+0.0018
+0.25
+ve (ms)
+0.021
+0.25
+vu (ms)
+-0.042
+0.23
+xn (m)
+0.27
+0.64
+ye (m)
+0.19
+0.38
+H (m)
+0.013
+0.22
+
+Altura (m)
+
+20
+15
+10
+5
+0
+50
+40
+
+50
+30
+
+40
+30
+
+20
+20
+
+10
+
+Figura 5 Montagem da câmera indicando linha de visada e ângulos de compensação
+
+10
+0
+
+Deslocamento leste (m)
+
+0
+
+Deslocamento norte (m)
+
+10
+5
+0
+5
+10
+
+Ãng. de guinada 
+
+ (graus)
+
+Ãng. de arfagem 
+
+ (graus)
+
+Ãng. de rolamento 
+
+ (graus)
+
+Figura 3 Trajetória do quadrirotor estimada pelo filtro
+de Kalman em voo_autônomo.
+
+0
+
+50
+
+100
+
+150
+Tempo (s)
+
+200
+
+250
+
+300
+
+0
+
+50
+
+100
+
+150
+Tempo (s)
+
+200
+
+250
+
+300
+
+0
+
+50
+
+100
+
+150
+Tempo (s)
+
+200
+
+250
+
+300
+
+4
+2
+0
+2
+4
+
+355
+350
+345
+340
+
+dados de atitude obtidos pelo FKE. Neste caso, apenas os movimentos rotacionais são compensados.
+Para o seguimento de um ponto de interesse, porém, a distância até o ponto que se quer apontar é suposta conhecida. Desta forma, a linha de visada é recalculada com base no deslocamento do VANT e os
+movimentos translacionais são compensados. No caso
+do ponto de interesse, o yaw do quadrirrotor é utilizado como grau de liberdade, isto é, pode ser comandado automaticamente para seguir um alvo.
+A hipótese de que a distância ao alvo é conhecida
+é razoável no contexto de navegação_autônoma onde
+um usuário especifica waypoints do voo previamente,
+por coordenadas de GPS. Deseja-se observar durante
+o percurso um objeto cuja posição pode ser também
+especificada.
+4.1
+
+Figura 4 Ângulos de Euler estimados pelo filtro de
+Kalman no ensaio em voo.
+
+4 Estabilização de Câmera e Ponto de Interesse
+Como dito anteriormente, um dos objetivos deste trabalho é obter um sistema de estabilização de câmera
+para o Gyro 200. Tem-se a câmera montada sobre um
+gimbal de dois eixos ortogonais, confome a Fig. 5. A
+direção que se quer apontar é chamada linha de visada
+e o objetivo de controle é mantê-la invariante na presença de movimentos externos.
+Assim, o algoritmo deve obter os ângulos de compensação a serem efetuados pelo gimbal a partir dos
+
+ISBN 978-85-8001-069-5
+
+Algoritmo de compensação
+
+Busca-se um algoritmo capaz de manter a orientação
+da câmera em uma dada atitude de referência na presença de movimentos externos. A orientação desejada
+é denotada por Ca0 
+Ca0  Cb0 ( ,  ,   ) Rx (  )Ry (  )
+
+(11)
+
+onde  ,  ,   ,   e   são os valores de referência,
+tomados no momento em que a estabilização é ligada.
+Desta forma, a matriz Ca0 representa uma orientação
+fixa.
+Deseja-se comandar o yaw do quadrirrotor e os
+graus de liberdade do gimbal da câmera, denotados
+por  e , de forma que a orientação real CaL seja
+igual  desejada
+Cb0 (, , ) Rx ()Ry ()  Ca0
+
+(12)
+
+917
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Onde Cb0 é a orientação do VANT em relação ao
+inercial, que é função dos ângulos de roll-pitch-yaw.
+Como estes são disponíveis, é preciso calcular d ,  e
+ de forma que a Eq. (12) seja satisfeita, sendo d o
+ângulo de yaw desejado e  o real medido.
+Note que a Eq. (12) representa um sistema
+de nove equações não-lineares com cinco incógnitas, de razoável complexidade. Uma vez que o interesse é em estabilizar apenas a direção para a qual
+a câmera aponta, o problema pode ser simplificado
+considerando-se a linha-de-visada desta, dada pela
+primeira coluna da matriz de orientação (Wen and
+Kreutz-Delgado, 1991). Isto é
+UL  Ca0 ex
+
+Figura 6 Diagrama de bloco mostrando arquitetura do
+sistema
+da posição do ponto para o qual se quer apontar e é
+dada pela diferença entre os vetores posição
+UL  pP OI  pquadrirrotor
+
+(13)
+
+sendo a linha-de-visada o vetor UL  ULx ULy ULz  no
+sistema de coordenadas do quadrirrotor.
+Assim, escreve-se
+Cb0 (, , ) Rx ()Ry ()ex  Ca0 ex
+
+(14)
+
+onde ex  1 0 0T . Desta forma, o problema se reduz
+a três equações e três variáveis.
+Dada a estrutura do problema, propõe-se como
+uma possível solução
+
+Tem-se que a posição pP OI é conhecida previamente,
+enquanto a posição pquadrirrotor é obtida através do
+deslocamento NED fornecido pelo filtro de Kalman de
+translação. Uma extensão futura é a obtenção de uma
+estimativa da posição do objeto de interesse utilizando
+algoritmos de processamento_de_imagem.
+A Fig. 6 mostra a integração dos Filtros de Kalman e translação e rotação com os algoritmos de estabilização de câmera e ponto de interesse.
+4.3
+
+d
+
+
+
+
+
+d
+
+
+
+d
+
+
+
+ + atan2(ULz ,
+
+(15)
+q
+
+2
+
+ULx 2 + ULy ) (16)
+
+atan2(ULy , ULx )
+
+(17)
+
+Esta solução utiliza a idéia de cálculo de cinemática_inversa através de projeções conforme (Sciavicco
+et al., 2009). A escolha    assegura que a câmera é isolada do movimento de roll do UAV, uma
+vez que se tratam de rotações sucessivas ao redor do
+mesmo eixo.
+Decompondo-se o vetor linha-de-visada no sistema de coordenadas do quadrirrotor, pode-se observar que o ângulo de yaw é dependente apenas de x e y
+2
+, enquanto o ângulo  depende das três componentes.
+A solução proposta em (15) é obtida calculando-se as
+tangentes dois dois ângulos em relação s componentes do vetor UL . A solução foi validada tanto analiticamente quando por simulação e experimentos em
+voo.
+Note que, no entanto, a solução proposta compensa apenas os movimentos rotacionais do VANT.
+4.2
+
+Extensão para Point-of-Interest
+
+No caso de seguimento de um ponto de interesse
+(POI), deseja-se compensar também os movimentos
+translacionais do veículo a fim de manter um determinado objeto no campo de visão. O algoritmo anterior
+pode ser usado desde que se atualize a linha-de-visada
+desejada. Esta é calculada com base no conhecimento
+2 esta afirmação é possível devido ao fato de a escolha   
+manter a câmera na horizontal
+
+ISBN 978-85-8001-069-5
+
+(18)
+
+Resultados de Simulação e Experimentais
+
+Os resultados de simulação da compensação utilizando os gimbals são obtidos utilizando dados reais
+de voo do Gyro200. A dinâmica dos servomecanismos é incluída a fim de obter um resultado mais realista. Considera-se que estes são descritos por um pelo
+modelo de primeira ordem G(s)  1(s + 0.07) cuja
+constante de tempo é obtida das especificações do mecanismo. Um compensador proporcional é empregado
+e supõe-se que o controle interno é preciso o suficiente para dispensar uma malha externa, visto que os
+servomecanismos não possuem encoders.
+Na Fig. 8, observa-se o resultado para estabilização de roll e pitch quando a linha de visada é UL 
+1 0 1. Note que, por isso, a correção de elevação se
+mantém em torno de 45 . O resultado similar para o
+cenário onde o POI é ligado durante o voo é visto na
+Fig. 9, onde se pode observar que o yaw passa a ser
+atuado por volta de 250s a fim de compensar o deslocamento visto na Fig. 9.
+O algoritmo de compensação foi implementado
+no Gyro200. Através de uma filmagem da estabilização da câmera no quadrirrotor com o VANT sendo
+movimentado manualmente pode-se notar que o desempenho é satifatório. Alguns quadros desta filmagem podem ser vistos na Fig. 7, mostrando que a linha
+de visada da câmera é mantida para diferentes configurações de orientação do VANT. Este algoritmo foi
+testado em voo onde foi possível verificar uma melhoria significativa na qualidade das imagens obtidas na
+presença do algoritmo em relação ao caso onde não há
+estabilização inercial da câmera.
+Uma medida de desempenho que pode ser utilizada para este tipo de análise é o erro angular (Battistel
+
+918
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Roll medido e correção calculada
+
+
+
+Ângulo (graus)
+
+10
+5
+0
+5
+10
+0
+
+50
+
+100
+
+150
+200
+250
+tempo(s)
+Pitch medido e correção calculada
+
+300
+
+Ângulo (graus)
+
+0
+
+
+
+
+20
+40
+60
+0
+
+50
+
+100
+
+150
+200
+tempo(s)
+
+250
+
+300
+
+et al., 2012), definido por eang  acos(UL  U L),
+quantificando a diferença entre as direções desejada
+e obtida. Na Fig. 10 nota-se que os erros são bastante baixos para os dois casos, permitindo que os objetos de interesse sejam mantidos no centro do plano
+de imagem. No caso do POI, há um pico no erro angular, correspondente ao momento onde o algoritmo
+passa a seguir o ponto de interesse.
+
+Roll medido e correção calculada
+10
+
+
+
+
+0
+10
+0
+
+0
+20
+40
+60
+0
+
+Ângulo (graus)
+
+Figura 7 Sequência de quadros retirados de filmagem
+feita com o objetivo de avaliar o desempenho do algoritmo de estabilização
+
+Ângulo (graus)
+
+Ângulo (graus)
+
+Figura 8 (a) roll externo e correção de balanço  (b)
+pitch externo e correção de elevação 
+
+0
+1
+2
+3
+0
+
+50
+
+100
+
+150
+200
+250
+tempo(s)
+Pitch medido e correção calculada
+
+300
+
+
+
+50
+
+100
+
+150
+200
+tempo(s)
+yaw comandado
+
+250
+
+300
+
+50
+
+100
+
+150
+200
+tempo(s)
+
+250
+
+300
+
+Figura 9 (a) roll externo e correção de balanço  (b)
+pitch externo e correção de elevação 
+
+Erro em radianos para estabilização
+
+Conclusões
+
+Os resultados obtidos com o Filtro de Kalman Estendido mostram a possibilidade de obter um voo
+autônomo de razoável precisão utilizando sensores de
+baixo_custo. O FKE é projetado para que o quadrirrotor opere tanto em ambiente_externo quando interno,
+quando há ausência de sinal GPS. Além da navegação, o algoritmo de estabilização inercial de câmeras
+é apresentado, mostrando a possibilidade de não apenas compensar os movimentos externos do VANT na
+câmera como também de seguir um alvo cuja posição
+é conhecida. Trabalhos futuros incluem a utilização
+de servovisão para posicionamento do quadrirrotor e
+auxílio no seguimento de objetos de interesse.
+
+ISBN 978-85-8001-069-5
+
+0.8
+0.6
+0.4
+0.2
+0
+0
+
+50
+
+100
+
+150
+200
+250
+tempo(s)
+Erro em radianos para ponto de interesse
+
+300
+
+15
+Ângulo (graus)
+
+5
+
+Ângulo (graus)
+
+1
+
+10
+5
+
+0
+0
+
+50
+
+100
+
+150
+200
+tempo(s)
+
+250
+
+300
+
+Figura 10 Erro angular
+
+919
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Referências
+Battistel, A., Lizarralde, F. and Hsu, L. (2012). Inertially stabilized platforms using two gyroscopic
+measures and sensitivity analysis to unmodeled
+motion, American Control Conference .
+de Fátima Bento, M. (2008). Unmanned aerial vehicles An overview, Inside GNSS 3(1) 5461.
+Han, J., Kwon, J. H., Lee, I. and Choi, K. (2011).
+Position and attitude determination for uavbased gps, imu and at without gcps, in IEEE
+(ed.), Multi-PlatformMulti-Sensor Remote Sensing and Mapping (M2RSM), 2011 International
+Workshop on, pp. 15.
+Hoffmann, G., Huang, H., Waslander, S. and Tomlin,
+C. (2007). Quadrotor helicopter flight dynamics
+and control Theory and experiment, in AIAA
+(ed.), AIAA Guidance, Navigation and Control
+Conference and Exhibit, Hilton Head, South Carolina. AIAA-2007-6461.
+Huang, H., Hoffmann, G. M., Waslander, S. L. and
+Tomlin, C. J. (2009). Aerodynamics and control
+of autonomous quadrotor helicopters in aggressive maneuvering, in IEEE (ed.), Robotics and
+Automation, 2009. ICRA 09. IEEE International Conference on, pp. 32773282.
+Sanchez, A., Carrillo, L. R. G., Rondon, E., Lozano,
+R. and Garcia, O. (2011). Hovering flight improvement of a quad-rotor mini uav using brushless dc motors, Journal of Intelligent and Robotic
+Systems 61(1-4) 85101.
+Sciavicco, L., Siciliano, B., Villani, L. and Oriolo, G.
+(2009). Robotics modelling, planning and control, Springer Verlag.
+Wen, J. T. and Kreutz-Delgado, K. (1991). The attitude_control problem, IEEE Trans. Aut. Contr.
+36(10) 11481162.
+Wendel, J., Meister, O., Schlaile, C. and Trommer,
+G. F. (2006). An integrated gpsmems-imu navigation system for an autonomous helicopter, Aerospace Science and Technology 10(6) 527533.
+
+ISBN 978-85-8001-069-5
+
+920

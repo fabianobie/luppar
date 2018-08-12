@@ -1,0 +1,949 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+IMPLEMENTACAO PARALELA DA LOCALIZACAO DE MONTE CARLO PARA
+ROBOS MOVEIS EM GPUS COMERCIAIS
+Andre Lima Gaspar Ruas, Mario Montenegro Campos, Luiz Chaimowicz
+Emails algruas@gmail.com, mario@dcc.ufmg.br, chaimo@dcc.ufmg.br
+
+Abstract This work presents a parallel implementation of the MCL (Monte Carlo Localization) method for
+GPUs (Graphics Processing Units). The ability to localize itself with relation to the environment without external
+intervention is a fundamental capability for autonomous mobile robotic systems. However, more accurate methods
+tend to be time consuming. This is the case with particle filters, where the robots belief state is represented by
+a discrete set of weighted samples (particles). Therefore, the underlying motivation was to provide fast moving
+robots with the capability of real time and more accurate pose estimation. The technique runs entirely on the
+GPU, freeing the CPU for other robotic tasks. This work also shows that by using this approach a significant
+performance improvement is obtained, both in time and in accuracy. The technique was tested in simulation,
+for a mobile robot equipped with laser sensors in indoor environments. Experiments were run for a very large
+number of particles and results fully validate the approach. As next steps, the technique will be implemented on
+actual robots, both terrestrial and aerial, and will be extended for fast cooperative localization.
+Keywords
+
+Localization, Robotics, GPU, Monte Carlo.
+
+Resumo Este trabalho descreve a implementacao paralela do algoritmo de localizacao de Monte Carlo (MCL)
+em GPUs (Graphics Processing Units). A capacidade de se localizar em relacao ao ambiente sem a necessidade de
+intervencao externa e uma das principais competencias de sistemas roboticos autonomos. Entretanto, algoritmos
+mais precisos tendem a apresentar complexidade computacional mais elevada. Esse e o caso com os filtros de
+partculas, no qual o estado de crenca do robo e representado por um conjunto discreto de amostras ponderadas
+(partculas). Portanto, a motivacao principal foi o de prover estimativas de pose que fossem mais rapidas e
+mais precisas em tempo_real aos robos que se deslocam com maior velocidade. A tecnica desenvolvida roda
+inteiramente na GPU, liberando a CPU para outras tarefas. Este trabalho tambem mostra que a abordagem
+permitiu um aumento de desempenho significativo. A abordagem foi testada em ambiente simulacao, para
+um robo equipado com sensores laser em ambientes internos. Experimentos foram conduzidos para grandes
+quantidades de partculas e os resultados validaram corretamente a abordagem. Trabalhos futuros incluem a
+utilizacao da tecnica em robos reais terrestres e aereos, e a extensao para localizacao cooperativa.
+Palavras-chave
+
+.
+
+Introducao.
+
+pendencia das medidas dos sensores o que pode
+levar a posicao correta do robo a ser considerada
+improvavel caso os erros nas medidas estejam correlacionados (Thrun et al., 2001). Alem disso,
+mesmo executando corretamente e de maneira
+rapida, filtros de partculas demandam grande
+quantidade de processamento, reduzindo o tempo
+disponvel para outras tarefas como planejamento.
+Este trabalho tem por objetivo apresentar uma implementacao paralela do filtro de
+partculas desenvolvida para execucao em GPUs
+(Graphics Processing Units) que traz como benefcios principais (i) ganho de desempenho que
+possibilita modelos mais complexos e um numero
+maior de partculas e (ii) liberacao da carga da
+CPU para a execucao de outras tarefas.
+O filtro executa inteiramente na GPU sendo a
+CPU utilizada apenas para sincronizacao das threads e comando do robo. As chamadas as funcoes
+de predicao e atualizacao do filtro nao bloqueiam
+a CPU liberando seu uso para outras tarefas como
+planejamento e controle de atuacao.
+Para o desenvolvimento adotou-se o ambiente
+CUDA (Nvidia, 2007), um ambiente_de_desenvolvimento baseado em linguagem C, desenvolvido pela NVIDIA, e que tem sido escolhido para
+grande parte dos trabalhos desde seu lancamento.
+O filtro desenvolvido foi testado em simulacao
+utilizando a plataforma PlayerStage (Gerkey
+
+O problema de localizacao em robotica_movel
+pode ser definido como dado um robo_movel,
+equipado com um conjunto de sensores em um
+ambiente_conhecido, inferir posicao e orientacao
+desse robo em relacao ao ambiente por meio de
+observacoes obtidas dos sensores.
+A capacidade de se localizar em seu ambiente sem necessidade de intervencao e essencial
+a grande parte dos sistemas roboticos autonomos
+(Siegwart and Nourbakhsh, 2004). Como consequencia o problema de localizacao se tornou um
+dos mais investigados dessa area.
+Filtros de partculas sao um conjunto de
+metodos baseados em simulacao que realizam
+amostragens de sequencias de distribuicoes de probabilidade conhecidas a menos de uma constante
+de normalizacao. Esses metodos ja foram aplicados com sucesso na solucao de diversas instancias
+do problema de localizacao (Thrun, 2002). Entretanto Filtros de partculas possuem alto custo
+computacional, que cresce exponencialmente com
+a dimensao do estado a ser estimado. Mesmo
+em ambientes bidimensionais com mapas conhecidos, como no problema tratado neste artigo,
+muitas vezes e necessario realizar simplificacoes
+dos modelos que podem ocasionar erros em casos especficos. Um exemplo e assumir a inde-
+
+3865
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+et al., 2000). Dados experimentais de diversas
+variaveis foram coletados, em particular, dados de
+tempos de convergencias, desvio padrao (erro na
+posicao) medio, e tempos de execucao para uma
+quantidade variavel de partculas.
+O restante desse trabalho esta organizado da
+seguinte forma a Secao 2 apresenta um revisao
+dos trabalhos relacionados ao problema, a Secao
+3 descreve brevemente a arquitetura CUDA e descreve o modelo de propagacao, o de observacao e o
+metodo. Na Secao 4, sao apresentados e discutidos
+os resultados dos experimentos realizados, sendo
+o artigo finalizado com a Secao 5 que traz as conclusoes do trabalho, relata o desenvolvimento em
+curso e as direcoes futuras da pesquisa.
+2
+2.1
+
+desconhecimento da pose inicial, nao correspondendo as suposicoes do filtro de Kalman (Thrun
+et al., 2000). Diversos metodos ja foram empregados na solucao desse problema. Alguns exemplos
+sao a localizacao topologica que divide o mapa
+em regioes e estima a probabilidade de o robo
+se localizar em cada uma (Hertzberg and Kirchner, 1996), (Oore et al., 1997), (Nourbakhsh,
+1998) e Filtros de Kalman de multiplas hipoteses
+(Reuter, 2000), (Roumeliotis and Bekey, 2000) que
+representam o estado de crenca por meio de misturas_de_gaussianas (Bar-Shalom and Li., 1998).
+Porem esses metodos apresentam limitacoes o que
+tornou os filtros de partculas a solucao mais popular para o problema de localizacao global (Doucet
+et al., 2001).
+Filtros de partculas sao uma classe de
+metodos destinada a realizar inferencia sobre propriedades observaveis apenas indiretamente. Nesses filtros um numero finito de hipoteses ponderadas representam a distribuicao de probabilidades do estado t no tempo t condicionada as observacoes anteriores. Seu processamento se da em duas etapas predicao e atualizacao. A etapa de predicao tem objetivo de gerar uma distribuicao preditiva do estado atual t .
+Essa distribuicao e obtida gerando-se amostras 
+aleatorias usando a distribuicao do estado anterior p(t1 zt1 , . . . , z1 ) e o modelo de propagacao
+p(t t1 ). A etapa de atualizacao, utilizando as
+medidas dos sensores zt e o modelo de observacao
+p(zt t ), atualiza a distribuicao preditiva gerada
+com base no teorema de Bayes. Isso e realizado
+associando a um peso p(zt ) cada hipotese .
+Quando aplicados ao problema geral de localizacao tem-se a pose como estado e os modelo de
+propagacao e de observacao sao obtidos dos modelo de locomocao do robo e dos sensores dado o
+mapa disponvel respectivamente. Esses metodos,
+apesar de se comportarem bem em grande parte
+dos casos, apresentam problemas caso a distribuicao prevista difira muito da verossimilhanca
+(Liu and Chen, 1998), (Kitagawa, 1996).
+Diversas variacoes para o filtro foram propostas na literatura.Thrun et al. (2000) propos um
+metodo dual para o filtro de partculas. Filtros
+de partculas classicos geram primeiramente uma
+distribuicao preditiva para a pose utilizando o modelo de localizacao para depois atualiza-lo utilizando os dados dos sensores. O metodo dual,
+no entanto, primeiramente gera uma distribuicao
+preditiva da pose baseando-se somente nas medidas dos sensores e em seguida atualiza cada
+pose amostrada com a probabilidade de ela ter
+sido obtida da distribuicao anterior. Posteriormente, Thrun et al. (2001) utilizou uma combinacao do metodo padrao e dual solucionando
+grande parte dos problemas mencionados. Algumas simplificacoes foram feitas no modelo de observacao por motivo de desempenho.
+
+Trabalhos Relacionados
+
+Localizacao Probabilstica
+
+Smith and Cheeseman (1986) apresentaram uma
+definicao formal e um tratamento probabilstico
+para o problema de localizacao. Os autores, na
+realidade, abordaram um problema mais geral, o
+de estimar a localizacao de um robo dado um modelo de mapa associado a incertezas e reduzir a incerteza do modelo a medida que o robo navegava
+no ambiente. Esse problema e conhecido como
+SLAM (Simultaneous Localization and Mapping).
+Posteriormente, Smith et al. (1990) apresentaram um tecnica que denominaram de Stochastic
+Mapping(SM). Nela assume-se que marcos estacionarios no ambiente podem ser consistentemente
+identificados e reobservados, de forma que as incertezas na localizacao, tanto dos marcos quanto
+do robo, sao reduzidas a medida que o robo navega. Essa tecnica representa incertezas usando
+distribuicoes de probabilidade. Para cada instante
+tem-se uma distribuicao de probabilidades para a
+posicao do robo e dos marcos sobre todo o espaco
+de possibilidades. Uma das grandes contribuicoes
+desse trabalho foi mostrar que as incertezas na
+localizacao dos marcos e da pose do robo sao correlacionadas nao podendo ser assumidas com independentes.
+As dificuldades na estimacao simultanea do
+mapa e da pose levaram a uma concentracao das
+pesquisas nos problemas de localizacao com o
+mapa conhecido. Ate o final da decada passada,
+no entanto, grande parte dos trabalhos de localizacao na literatura trataram apenas do problema
+de rastreamento de posicao (Fox et al., 1999).
+Nessa instancia, assume-se que a posicao e conhecida a menos de um pequeno erro, e o objetivo e
+realizar a correcao da hodometria. A tecnica mais
+popular para rastreamento de posicao e o filtro de
+Kalman (KF) (Kalman, 1960) que assume rudo
+do processo e dos sensores normal com media 0 e
+processo de propagacao linear.
+Ja o problema de localizacao global assume
+
+3866
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+2.2
+
+Graphics Processing Unit
+
+senta uma introducao a arquitetura CUDA e as
+sub-secoes seguintes discorrem de maneira breve,
+respectivamente, sobre os modelos de observacao
+e movimentacao considerados e o algoritmo paralelo.
+
+A ultima decada observou um grande crescimento na capacidade processamento dos sistemas
+graficos. As unidades de processamento grafico
+atuais sao compostas de multiprocessadores contendo centenas de nucleos e capazes de executar
+concorrentemente milhoes de threads e cujo desempenho de pico (peak-performance) ultrapassa
+em muito o processamento das CPUs convencionais (Nvidia, 2007). Devido ao poder de processamento e custo acessvel, recentemente tem-se observado um crescimento na utilizacao dessas unidades para processamentos de proposito geral (GP
+ General Purpose) o que e conhecido, portanto,
+como GP-GPU Programming.
+A necessidade de solucoes em tempo_real para
+os problemas de visao_computacional e robotica
+associada ao grande volume de dados que necessitam ser processados, tem motivando a utilizacao de paralelismo. Varios algoritmos nessas
+areas (Sinha et al., 2006), (Fung and Mann, 2005),
+(Cornelis and Van Gool, 2008) ja foram implementados com sucesso em GPUs alcancando expressivo ganho no desempenho.
+Recentemente, Olson (2009) utilizou uma
+GPU para realizar um tratamento probabilstico
+da correlacao de escaneamentos horizontais de laser scanners. Seu trabalho assume um ambiente
+bidimensional e estima a translacao e rotacao do
+robo entre dois pontos no plano buscando o ponto
+que maximiza a probabilidade a posteriori, estimando a probabilidade em um grid de pontos em
+uma regiao do espaco. Apesar de nao apresentar
+eficiencia maior do que metodos classicos como
+Iterative Closest Points (ICP) ou Hill climbing,
+seu trabalho consegue uma estimativa mais exata
+da posicao, alem de fornecer a estimativa do erro.
+GPUs tambem foram usadas por Yguel et al.
+(2008) para preencher, de maneira eficiente, grids
+de ocupacao (modelo bastante utilizado para realizar SLAM em duas dimensoes) bem como
+para acelerar Metodos de Monte Carlo aplicados a outras areas do conhecimento (Fang and
+Boas, 2009), (Preis et al., 2009).
+O fato de os filtros de partculas tratarem
+cada hipotese de maneira independente tornaos naturalmente paralelizaveis, sendo candidatos
+ideais para execucao em GPUs. Nesse trabalho
+desenvolveu-se um filtro de partculas para solucao
+do problema de localizacao. O filtro executa inteiramente na GPU sendo a CPU utilizada somente para realizar a sincronizacao dos processos ficando substancialmente disponvel para realizacao de outras tarefas.
+3
+
+3.1
+
+Arquitetura CUDA
+
+Como o proprio nome sugere, GPUs surgiram
+como um hardware especializado para aceleracao
+de aplicacoes graficas, principalmente pelo uso das
+interfaces OpenGL e DirectX. Devido ao paralelismo inerente aos algoritmos de renderizacao, as
+GPUs vieram a se tornar unidades de processamento_paralelo. GPUs recentes chegam a uma
+taxa de pico de execucao de TeraFLOPs.
+Originalmente, seu conjunto de instrucoes era
+muito limitado, entretanto, demandas crescentes por um espectro mais amplo de processamento pelas aplicacoes de entretenimento e multimdia, impulsionaram o surgimento de processadores graficos com conjuntos de instrucoes cada
+vez mais flexveis. GPUs atuais, como a GeForce 8800 GTX da Nvidia, sao constitudas de
+um array de processadores paralelos (Fung and
+Mann, 2005) e sao completamente programaveis.
+As GPUs na arquitetura CUDA sao divididas em multiprocessadores cuja quantidade varia
+de um a sessenta nas unidades mais caras. Cada
+multiprocessador por sua vez e composto de 8 processadores. Cada um desses processadores possui
+1024 registradores de 32 bits e possuem acesso a
+uma memoria compartilhada de 16 KB de baixa
+latencia. Alem disso, todos esses multiprocessadores acessam uma mesma memoria global. Diferentemente das memorias caches das CPUs, a
+carga dos dados na memoria compartilhada deve
+ser realizada manualmente.
+As threads na GPU nao acessam diretamente
+a memoria principal da CPU. A comunicacao entre a GPU e a CPU se da por meio de copia
+de memoria. A transferencia dos dados entre a
+memoria principal e a memoria do dispositivo e
+lenta e deve ser minimizada. Por isso, muitas vezes, convem executar na GPU tarefas que seriam
+executadas mais eficientemente pela CPU.
+O conjunto de threads na GPU executa como
+um grid, que por sua vez e dividido em blocos.
+Cada bloco e alocado a um multiprocessador e
+nao migra ate o fim de sua execucao. Um bloco
+contem no maximo 512 threads, sendo que as threads de um mesmo bloco podem se sincronizar por
+meio de uma barreira. Ou seja, ao chegar a barreira, uma thread somente pode prosseguir em sua
+execucao apos todas as threads do bloco chegarem
+a barreira. E importante ressaltar que todas as threads do mesmo bloco possuem acesso aos mesmos
+elementos da memoria compartilhada.
+As threads executam em grupos de 32, chamados warps. Divergencia entre os caminhos de
+
+Metodologia
+
+Essa secao descreve a metodologia desenvolvida,
+e e divida em tres subsecoes. A primeira apre-
+
+3867
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+execucao em um mesmo warp provoca reducao de
+performance, pois as threads divergentes devem
+esperar ate que as outras terminem sua execucao
+para prosseguir. O grid de threads pode conter
+milhoes de blocos, e a criacao de threads em GPUs
+e realizada completamente em hardware e e praticamente instantanea, sendo o numero de blocos
+criados ditado pelo tamanho dos dados.
+
+servada devera ser
+
+
+
+x
+   y 
+
+
+sin( + 
+2 )
+
+2
+
+  cos( + 
+2 )
+
+2
+l1
+
+O ambiente CUDA e baseado em linguagem
+C. Em seu modelo de desenvolvimento, a aplicacao
+e divida entre um programa sequencial hospedeiro
+que tipicamente executa na CPU e procedimentos
+paralelos chamados kernels, que tipicamente executam na GPU, apesar de poderem ser compilados
+para executar de maneira eficiente em CPUs multicore. Um kernel e um procedimento SPMD
+(Single Program Multiple Data) que executa um
+programa sequencial por meio de um conjunto de
+threads paralelas. O numero de threads e de blocos deve ser especificado em tempo de invocacao.
+
+Etapa de Observacao
+
+Dada uma pose para o robo  e uma direcao m
+podemos calcular a distancia d(m ) entre o robo e
+o obstaculo mais proximo na direcao definida por
+m no mapa. Um modelo que se ajusta bem as
+medidas lm retornadas pelo sensor dado d(m ) e
+uma mistura entre uma distribuicao normal com
+moda em d(m ), uma distribuicao exponencial e
+uma distribuicao impulsiva (funcao delta de Dirac) nao nula em lmax truncadas entre 0 e lmax 
+
+Locomocao
+p(lm d(m ))  1  e
+
+Define-se a velocidade linear da roda direita e essd se
+e
+respectivamente,  como
+querda como
+t
+t
+sendo o angulo entre a direcao do robo e o eixo de
+coordenadas do mundo, l como a distancia entre
+as rodas do robo e x e y como as coordenadas do
+robo em relacao ao referencial do mundo.
+
+
+
+
+
+sd
+
+  t 
+  s  .
+e
+
+t
+
+(lm (m ))2
+2 2
+
++ 2  elm
++ 3  (lm  lmax ),
+
+(4)
+
+lm  (0, lmax ).
+Segundo Thrun et al. (2005), esse modelo costuma ajustar-se bem a varios sensores do tipo laser scanners reais.
+Para calcular a distribuicao do conjunto
+de observacoes Ot , cada medida e considerada
+condicionalmente independente das demais dado
+(d(m )) (Observe que d(m ) e funcao do mapa e
+da pose ) e identicamente distribudas em relacao
+aos outros parametros. Dessa forma tem-se que
+
+Pode-se mostrar que a velocidade instantanea
+do robo em relacao ao referencial do mundo pode
+ser obtida por (Siegwart and Nourbakhsh, 2004)
+
+
+
+(3)
+
+O modelo de predicao, dadas as estimativas de
+sd e se , e concludo assumindo que seus valores reais sao observados, que o modelo e exato
+e que as observacoes possuem rudo com distribuicao normal.
+
+O modelo de mapa utilizado foi do tipo planta
+baixa. O robo utilizado como modelo foi um Pioneer 3DX com movimentacao do tipo skid steering. Na modelagem, no entanto, por motivos
+de simplicidade e sem perda de generalidade, foi
+assumido que esse robo e do tipo diferencial.
+
+
+
+xt
+d 
+yt 
+
+dt
+t
+
+sin  sin 
+ 2
+2
+
+  cos  cos 
+
+2
+2
+l1
+l1
+
+
+
+ sd
+.
+
+ se
+
+t+1  t + 
+
+Modelos de Locomocao e Observacao
+
+3.2.1
+
+
+
+(2)
+E a pose esperada no tempo t + 1 deve ser
+
+3.2.2
+3.2
+
+sin( + 
+2 )
+2
+cos( + 
+2 )
+21
+l
+
+(1)
+
+p(Ot t ) 
+
+n
+Y
+
+p(lm d(m )).
+
+(5)
+
+m1
+
+3.3
+
+Algoritmo de Monte Carlo Paralelo
+
+Para entendimento dos algoritmos apresentados
+serao adotadas as seguintes convencoes (i) a expressao Kernel(m,n) significa um lancamento de
+um kernel com m blocos e n threads por bloco,
+(ii) Kernel(m) corresponde a um lancamento de
+
+Integrando essa medida em um intervalo de
+sd
+se
+e
+sao
+tempo t, considerando-se que
+t
+t
+constantes nesse intervalo, a variacao na pose ob-
+
+3868
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+um kernel com m threads, nesse caso nao estaremos interessados em dividir em blocos. (iii) A
+sequencia de comandos que segue a palavra Kernel entre chaves ( ) corresponde aos comandos
+executados por cada thread, (iv) idb e idt representam os identificadores do bloco e da thread dentro
+do bloco respectivamente.
+A execucao segue a sequencia mostrada no
+algoritmo 1. A cada instante de tempo sao obtidos as medidas da hodometria sd e se para
+as rodas direita e esquerda respectivamente. Esses valores sao passados para o procedimento de
+predicao (algoritmo 2) assim como o conjunto de
+partculas t1 obtido na iteracao anterior.
+
+Apos a etapa de predicao o conjunto de medidas Ot e fornecido ao procedimento de atualizacao. O procedimento de atualizacao e composto por um kernel que executa um bloco de threads por partcula. Os blocos sao compostos por
+uma thread para cada medida do sensor. Cada
+thread calcula a probabilidade da respectiva medida l para a pose  associada ao bloco de acordo
+com (4) e em seguida aguarda na barreira. Apos
+todas as threads do bloco terminarem seu calculo
+e calculado o produto das probabilidades que e
+atribudo como peso a partcula correspondente.
+Algoritmo 3 Atualizacao
+Entrada t
+Entrada Ot
+Sada t
+Kernel(t , Ot )
+l  Oidt
+t 
+  idb
+t 
+widt  p(l) equacao ((4))
+Aguarde na barreira as threads do bloco
+Calcule o produto dos widt obtidos e
+atribua como peso da partcula idb
+t  
+
+Algoritmo 1 Localizacao de Monte Carlo
+Entrada Mapa do ambiente
+Sada Distribuicao de partculas para a
+pose a cada instante de tempo.
+Distribua partculas uniformemente no
+mapa
+para cada instante de tempo t faca
+Obtenha se e sd da hodometria
+Chame o procedimento de predicao
+(algoritmo 2)
+Obtenha o conjunto Ot de medidas dos
+sensores
+Chame o procedimento de atualizacao
+(algoritmo 3)
+
+4
+
+Experimentos
+
+Os experimentos foram realizados utilizando o simulador Stage e a plataforma Player simulando
+um robo_diferencial. A plataforma computacional utilizada nos experimentos foi um Athlon 2
+5600, e uma GPU NVIDIA GeForce 9800 GT com
+14 multiprocessadores cada um contendo 8 processadores. Um algoritmo de passeio aleatorio foi
+utilizado para controlar a movimentacao do robo.
+Foram utilizados dois mapas o mapa simple, disponibilizado como exemplo na plataforma
+PlayerStage, e a planta baixa do terceiro andar do predio do Instituto de Ciencias Exatas
+da UFMG (ICEx ). Foram realizados experimentos usando 5.000, 10.000, 20.000, 30.000 e 50.000
+partculas para cada um dos mapas com 1000
+iteracoes por teste. Cada experimento foi repetido 5 vezes com o robo partindo de uma mesma
+posicao inicial escolhida de forma aleatoria para
+comparacao de desempenho e foi adotada uma
+distribuicao inicial nao informativa uniforme para
+a pose. Foram adquiridos dados de tempo de
+execucao das etapas de propagacao e atualizacao,
+desvio padrao da posicao (erro de posicao) e o
+tempo de convergencia da distribuicao. O tempo
+de convergencia foi calculado como o tempo necessario para estabilizacao do desvio abaixo de um
+limiar. O erro foi calculado como o desvio padrao
+da distancia absoluta considerando, ainda, que e
+igualmente distribudo nas direcoes x e y. Ainda
+
+O procedimento de predicao (algoritmo 2)
+na verdade e composto por 2 kernels. Eles foram agrupados para obter uma apresentacao mais
+clara do algoritmo. O primeiro kernel gera todos
+os valores aleatorios que serao usados no procedimento de predicao. O segundo kernel contem
+uma thread para cada partcula a ser gerada. A
+funcao escolhe escolhe uma das partculas geradas na iteracao anterior com probabilidade proporcional ao peso da partcula. Aos valores d
+e e(valores aleatorios gerados pelo primeiro kernel ) se soma o deslocamento medido de cada roda.
+Finalmente e estimada uma hipotese de deslocamento para a pose aplicando d e e a equacao (2)
+e o valor obtido e adicionado a pose da partcula
+escolhida.
+Algoritmo 2 Predicao
+Entrada t1 , sd e se
+Sada t
+Kernel(1 t )
+Gere e e d com distribuicao normal
+  escolhe(t1 )
+e  e + se , d  d + sd 
+Use os valores e e d para calcular 
+conforme (2)
+idt
+t   +  
+
+1 C
+
+3869
+
+corresponde ao tamanho do conjunto C
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+foram executados testes utilizando uma versao sequencial do algoritmo utilizando os mesmos modelos de locomocao e observacao. Os valores que
+constam nas tabelas 2 e 4 correspondem as medias
+e desvios padrao das estatsticas citadas em metros e milisegundos para os mapas ICEx e simple respectivamente. As tabelas 1 e 3 apresentam as medias e desvios padrao dos tempos de
+execucao em milisegundos para os mapas ICEx e
+simple respectivamente. A tabela 5 apresenta as
+medias e desvios dos tempos de execucao em milisegundos para a versao sequencial executada para
+o mapa ICEx e a tabela 6 apresenta o ganho obtido atraves da execucao em GPU.
+partculas
+5.000
+10.000
+20.000
+30.000
+50.000
+
+predicao (ms)
+0,4  0,1
+0,6  0,2
+0,8  0,2
+0,9  0,2
+1,3  0,2
+
+partculas
+5.000
+10.000
+20.000
+30.000
+50.000
+
+,
+
+riam de 27 a 33. Pode-se observar, ainda, que
+as variacoes (desvios) nos tempos sao significativamente maiores para a execucao sequencial. Isso
+se deve ao compartilhamento do tempo de CPU
+com outros processos do sistema enquanto que,
+particamente todo o tempo de GPU e dedicado a
+execucao da localizacao de Monte Carlo. A tabela
+6 apresenta os ganhos obtidos pela versao paralela
+para as etapas de predicao e atualizacao executando no mapa ICEx.
+
+atualizacao (ms)
+11,4  0,7
+21,4  1,3
+37,9  1,9
+56,3  3,1
+88,4  5,2
+
+convergencia (ms)
+3.811,4
+3.422,3
+3.440,2
+3.456,1
+3.487,2
+
+partculas
+5.000
+10.000
+20.000
+30.000
+50.000
+
+erro (m)
+0,66  0,16
+0,45  0,24
+0,34  0,23
+0,24  0,20
+0,17  0,17
+
+predicao (ms)
+0,4  0,1
+0,6  0,2
+0,7  0,2
+0,9  0,2
+1,4  0,2
+
+predicao (ms)
+1,3  0,2
+2,5  0,7
+5,2  0,6
+7,3  0,7
+12,8  0,6
+
+atualizacao (ms)
+312  51
+618  86
+1156  194
+1759  315
+2930  492
+
+Tabela 5 Tempos de execucao para CPU em milisegundos vs. numero de partculas para o mapa
+ICEx.
+
+Tabela 2 Tempos de convergencia em milisegundos e erro medio em metros vs. numero de
+partculas para o mapa ICEx.
+
+partculas
+5.000
+10.000
+20.000
+30.000
+50.000
+
+erro (m)
+0,10  0,29
+0,04  0,18
+0,03  0,17
+0,06  0,17
+0,04  0,17
+
+Tabela 4 Tempos de convergencia em milisegundos e desvio(erro) padrao medio em metros vs.
+numero de partculas para o mapa simple
+
+Tabela 1 Tempos de execucao em milisegundos
+vs. numero de partculas para o mapa ICEx.
+
+partculas
+5.000
+10.000
+20.000
+30.000
+50.000
+
+convergencia (ms)
+918,8
+238,4
+272,9
+304,8
+486,8
+
+partculas
+5.000
+10.000
+20.000
+30.000
+50.000
+
+atualizacao (ms)
+18,6  0,7
+38,1  1,5
+71,2  2,7
+101,1  4,3
+160,2  6,8
+
+predicao
+
+atualizacao
+
+3
+
+27
+
+4
+
+29
+
+7
+
+30
+
+8
+
+31
+
+9
+
+33
+
+Tabela 6 Speedups obtido pela versao paralela
+para o mapa ICEx.
+
+Tabela 3 Tempos de execucao em milisegundos
+vs. numero de partculas para o mapa simple.
+
+Observando as tabelas 2 e 4 vemos que o
+tempo de convergencia (estabilizacao) e o desvio(erro) padrao foram muito superiores no mapa
+ICEx do que no mapa simple devido a maior
+quantidade de regioes ambguas e dimensao do
+primeiro. Os desvios padrao diminuem com o
+aumento do numero de partculas, porem, para
+quantidades superiores a 30.000 partculas no
+mapa simple, o desvio padrao apresenta um ligeiro
+aumento. Isso pode ser explicado pela perda de
+dados devida ao maior tempo de execucao. Essa
+caracterstica do algoritmo tradicional de localizacao de Monte Carlo ja foi apontada por outros
+autores (Thrun et al., 2001). Observa-se, tambem,
+que para 50.000 partculas o desvio volta a cair,
+
+Pode-se notar que o tempo de execucao da
+etapa de predicao varia pouco com o aumento no
+numero de partculas. Em todos os casos podese observar que o tempo de execucao e dominado
+pela etapa de atualizacao. Um maior desempenho poderia ter sido alcancado utilizando alguma
+forma de pre-processamento dos mapas, como por
+exemplo uma decomposicao em quadtrees.
+Comparando os resultados das tabelas 1 e
+5 nota-se um ganho de desempenho (speedup)
+que varia de 3 para 5.000 partculas a 9 para
+50.000. Os resultados sao ainda mais significativos para a etapa de atualizacao. Os ganhos va-
+
+3870
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+pois a execucao com 50.000 partculas nao ocasiona perda maior do que com 30.000.
+Em todos os casos, o numero de iteracoes ate
+a convergencia (estabilizacao) manteve aproximadamente o mesmo comportamento. No caso do
+mapa simple, que possui poucas ambiguidades2 ,
+a convergencia para 5.000 partculas levou aproximadamente 9 iteracoes, mas em todos os demais casos a convergencia ocorre em cerca de 3
+iteracoes. O aumento do tempo para quantidades maiores de partculas se deve ao aumento do
+tempo de processamento de cada iteracao.
+No caso do mapa ICEx, o robo leva cerca
+de 3.300 ms para atingir um local de desambiguacao3 , o que leva um tempo de convergencia
+superior ao mapa simple. A partir desse ponto
+os tempos de convergencia seguem um comportamento semelhante aos do mapa simple. Outro
+fato interessante de se ressaltar e que o tempo de
+execucao da etapa de atualizacao foi consideravelmente menor no mapa ICEx do que mapa simple,
+apesar de o primeiro ser mais complexo. Isso se
+deve a quantidade menor de espacos vazios no primeiro mapa, o que leva a um avaliacao mais rapida
+da distancia esperada (d(m )).
+
+Figura 3 Distribuicao inicial uniforme da pose
+com 20.000 partculas.
+20.000 partculas. A figura 3 mostra uma imagem
+da distribuicao inicial uniforme das partculas, a
+figura 1 mostra a disposicao das partculas apos
+37 iteracoes, ela ainda mostra alguma ambiguidade (note a concentracao das partculas em duas
+areas distintas na figura 1). A figura 2 mostra a
+distribuicao desambiguada apos 55 iteracoes.
+5
+
+Conclusoes e Trabalhos futuros
+
+Neste trabalho foi descrita uma implementacao
+paralela do algoritmo de localizacao de Monte
+Carlo em GPUs.
+A paralelizacao do filtro de partculas trouxe
+ganhos significativos de desempenho superiores a
+30. Esse aumento poderia ser ainda maior com
+pre-processamento do mapa. O uso dos recursos de copia e processamento simultaneos da GPU
+tambem podem contribuir para um maior ganho
+de velocidade.
+A maior capacidade de processamento pode
+ser tambem aplicada a utilizacao em modelos mais
+complexos, ou de maior dimensionalidade. Algumas possibilidades de investigacao futura sao
+a utilizacao em problemas de localizacao cooperativa, otimizacao da etapa de atualizacao, realizacao de experimentos em ambientes e robos reais e a utilizacao de outros modalidade sensoriais.
+Pretende-se, ainda, aplicar a metodologia ao problema de localizacao_e_mapeamento_simultaneos
+e auto-calibracao_de_sensores pelo proprio filtro de partculas, apesar desses necessitarem de
+um numero significativamente maior de partculas
+para ser realizado.4
+
+Figura 1 Distribuicao apos 37 iteracoes com
+20.000 partculas ainda com alguma ambiguidade.
+
+Figura 2 Distribuicao apos 55 iteracoes com
+20.000 partculas desambiguada.
+
+Referencias
+
+As figuras 1, 2 e 3 mostram imagens das distribuicoes das partculas em alguns estados para
+
+Bar-Shalom, Y. and Li., X.-R. (1998). Estimation and Tracking Principles, Techniques,
+and Software, Ybs Publishing.
+
+2 nesse contexto uma regiao do mapa e considerada
+ambgua se existe uma regiao distinta onde e esperado que
+os sensores do robo retornam aproximadamente os mesmos
+valores em ambas.
+3 aqui, entende-se local de desambiguacao como a primeira posicao do mapa onde, o robo, ao atingir-la consegue
+eliminar as possibilidades de se encontrar em uma regiao
+distinta.
+
+Cornelis, N. and Van Gool, L. (2008). Fast scale
+invariant feature detection and matching on
+programmable graphics hardware, Computer
+4 Os autores gostariam de agradecer o apoio do CNPq e
+da Fapemig na realizacao desse trabalho
+
+3871
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Vision and Pattern Recognition Workshops,
+2008. CVPRW 08, pp. 18.
+
+Preis, T., Virnau, P., Paul, W. and Schneider,
+J. J. (2009). Gpu accelerated Monte Carlo
+simulation of the 2d and 3d ising model, J.
+Comput. Phys. 228(12) 44684477.
+
+Doucet, A., de Freitas, N. and Gordon, N. (2001).
+Sequential Monte Carlo Methods in Practice
+(Statistics for Engineering and Information
+Science), 1 edn, Springer.
+
+Reuter, J. (2000). Mobile robot self-localization
+using pdab, Proc. 2000 IEEE International Conference on Robotics and Automation, ICRA, IEEE Computer Society Press,
+pp. 3512  3518.
+
+Fang, Q. and Boas, D. A. (2009). Monte Carlo
+simulation of photon migration in 3d turbid media accelerated by graphics processing
+units, Opt. Express 17(22) 2017820190.
+
+Roumeliotis, S. I. and Bekey, G. A. (2000). Bayesian estimation and kalman filtering A unified frameworkvfor mobile robot localization,
+Proc. 2000 IEEE International Conference
+on Robotics and Automation, ICRA, IEEE
+Computer Society Press, San Francisco, CA,
+pp. 29852992.
+
+Fox, D., Burgard, W. and Thrun, S. (1999). Markov localization for mobile robots in dynamic environments, Journal of Artificial Intelligence Research 11 391427.
+Fung, J. and Mann, S. (2005). Openvidia parallel gpu computer_vision, Proceedings of the
+13th annual ACM international conference
+on Multimedia, ACM Press, pp. 849852.
+
+Siegwart, R. and Nourbakhsh, I. R. (2004). Introduction to Autonomous Mobile Robots, Bradford Book.
+
+Gerkey, B. P., Sty, K. and Vaughan, R. T. (2000).
+Player Robot Server, Technical Report IRIS00-392, Institute for Robotics and Intelligent
+Systems, School of Engineering, University of
+Southern California.
+
+Sinha, S. N., michael Frahm, J., Pollefeys, M. and
+Genc, Y. (2006). Gpu-based video feature
+tracking and matching, Technical report, In
+Workshop on Edge Computing Using New
+Commodity Architectures.
+
+Hertzberg, J. and Kirchner, F. (1996). Landmarkbased autonomous navigation in sewerage
+pipes, In Proc. of the First Euromicro
+Workshop on Advanced Mobile Robots. IEEE
+Computer, Society Press, pp. 6873.
+
+Smith, R. C. and Cheeseman, P. (1986). On the
+representation and estimation of spatial uncertainty, International Journal of Robotics
+Research 5(4) 5668.
+
+Kalman, R. E. (1960). A new approach to linear
+filtering and prediction problems, Transactions of the ASME  Journal of Basic Engineering 1(82) 3545.
+
+Smith, R., Self, M. and Cheeseman, P. (1990).
+Estimating uncertain spatial relationships
+in robotics, Autonomous Robot Vehicles,
+Springer-Verlag, New York, Inc., New York,
+NY, USA, pp. 167193.
+
+Kitagawa, G. (1996). Monte Carlo filter and
+smoother for non-gaussian nonlinear state
+space models, Journal of Computational and
+Graphical Statistics 5(1) 125.
+
+Thrun, S. (2002). Particle filters in robotics, Proceedings of the 17th Annual Conference on
+Uncertainty in AI (UAI).
+Thrun, S., Burgard, W. and Fox, D. (2005). Probabilistic Robotics (Intelligent Robotics and
+Autonomous Agents), The MIT Press.
+
+Liu, J. S. and Chen, R. (1998). Sequential Monte
+Carlo methods for dynamic_systems, Journal of the American Statistical Association
+93 10321044.
+
+Thrun, S., Fox, D. and Burgard, W. (2000).
+Monte Carlo localization with mixture proposal distribution, In Proceedings of the
+AAAI National Conference on Artificial Intelligence, AAAI, pp. 859865.
+
+Nourbakhsh, I. (1998).
+Dervish an officenavigating robot, Artificial intelligence and
+mobile robots case studies of successful robot systems pp. 7390.
+
+Thrun, S., Fox, D., Burgard, W. and Dellaert, F.
+(2001). Robust Monte Carlo localization for
+mobile robots, Artificial Intelligence 128(12) 99141.
+
+Nvidia (2007). Nvidia cuda compute unified device architecture - programming guide.
+Olson, E. (2009). Real-time correlative scan matching, Proceedings of the IEEE International Conference on Robotics and Automation
+(ICRA), Kobe, Japan, pp. 43874393.
+
+Yguel, M., Aycard, O. and Laugier, C. (2008). Efficient gpu-based construction of occupancy
+grids using several laser range-finders, International Journal of Vehicle Autonomous Systems 6(1-2) 48  83.
+
+Oore, S., Hinton, G. E. and Dudek, G. (1997).
+A mobile robot that learns its place, Neural
+Comput. 9(3) 683699.
+
+3872

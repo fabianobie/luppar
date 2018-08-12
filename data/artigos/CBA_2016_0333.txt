@@ -1,0 +1,519 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+DESENVOLVIMENTO E AVALIACAO DE DESEMPENHO DE UMA REDE ZIGBEE
+EM MALHA PARA TRANSPORTE DE QUADROS MODBUS
+Luan Carlos de Oliveira, Daniel Cruz Cavalieri, Rodolfo da Silva Villaca
+
+
+Instituto Federal de Educacao, Ciencia e Tecnologia do Esprito Santo
+Rodovia ES-010  Km 6,5  Manguinhos  SerraES, Brasil
+
+Email luan@zaruc.com.br, daniel.cavalieri, rodolfo.villaca@ifes.edu.br
+Abstract This paper presents the development and performance evaluation of a ZigBee mesh network to
+transport MODBUS frames. Starting from a free source code that initially only provided the peer-to-peer
+transmission between nodes, the automatic association of the nodes to the network, serial communication for
+input and output of MODBUS frames, resiliency, configuration commands and transport of MODBUS frames
+were implemented. To evaluate the implemented prototype a mesh network was used with 100 real ZigBee nodes
+with the router and the coordinator connected to a terminal for sending and receiving MODBUS frames. Five
+scenarios were created to evaluate this proposal. The first scenario demonstrates the operation of the network,
+followed by the latency evaluation, maximum transmission rate, data loss rate and the resilience of the network.
+As a result, for two hops over the network an average latency of 241 ms and a maximum transmission rate of
+2,78 framess were obtained. For three hops the average latency was 250 ms and the maximum transmission
+rate was 1,98 framess. This results permited us to conclude that the performance of the network is independent
+of the number of nodes in the network but is influenced by the number of hops that frame does.
+Keywords
+
+ZigBee, Mesh Networks, Performance Evaluation.
+
+Resumo A proposta desse estudo e o desenvolvimento e a avaliacao_de_desempenho de uma rede ZigBee em
+malha para o transporte de quadros MODBUS. Partiu-se de um codigo fonte gratuito que inicialmente fornecia
+apenas a transmissao ponto a ponto e a partir dele foram implementados a associacao automatica dos nos a rede,
+a comunicacao serial para entrada e sada de quadros, resiliencia, comandos de configuracao e o transporte dos
+quadros de dados ao longo da rede. Para avaliar o prototipo implementado utilizou-se uma malha com 100 nos
+ZigBee, dentre eles um roteador e um coordenador, ambos conectados a um terminal para o envio e recebimento
+dos quadros MODBUS. Foram criados cinco cenarios de avaliacao demonstracao do funcionamento da rede,
+verificacao da latencia na transmissao de quadros, vazao maxima, taxa da perda de quadros e resiliencia da rede.
+Como resultado, para dois saltos ao longo da rede, obteve-se uma latencia media de 241 ms e vazao media de
+2,78 quadross. Para tres saltos obteve-se a latencia media de 250 ms e vazao de 1,98 quadross. Com isso,
+observou-se que o desempenho da rede independe da quantidade de nos que compoem a rede, mas e influenciado
+pela quantidade de saltos que o quadro realiza.
+Palavras-chave
+
+.
+
+Introducao
+
+As redes_sem_fio evoluiram rapidamente nos ultimos anos (Goldsmith, 2005). Embora existam
+multiplas alternativas, algumas se sobressaem em
+aspectos como imunidade a fontes de interferencia
+eletromagnetica e flexibilidade na formacao de diferentes topologias_de_rede. Nesse contexto, o ZigBee destaca-se ao propiciar, alem essas caractersticas, a topologia de redes_em_malha (mesh) (Woo
+et al., 2007).
+Apresentando baixo consumo energetico, facilidade de instalacao, capacidade de coexistencia com outros equipamentos de Radio Frequencia (RF) e seguranca na transmissao dos dados,
+o ZigBee e uma alternativa robusta para ambientes hostis, tais como as redes_industriais (Agha
+et al., 2009). Nestas redes, o layout geralmente
+encontra-se organizado de tal forma que as paradas de producao para alteracao ou passagem de
+cabos torna-se economicamente inviavel. Diante
+disso, redes_sem_fio ZigBee garantem a flexibilidade necessaria e podem ser utilizadas em substituicao ao cabeamento convencional.
+Desta forma, o objetivo deste trabalho e incorporar a tecnologia ZigBee no desenvolvimento de
+
+ISSN 2525-8311
+
+uma rede em malha para o transporte de quadros
+MODBUS, muito utilizado no controle e automacao de dispositivos em redes_industriais (Igure
+et al., 2006). Para tanto, utilizou-se um codigo
+fonte gratuito, a Z-Stack Mesh 1 como ponto de
+partida no desenvolvimento da rede. Esse codigo
+fornecia apenas o processo basico de associacao
+entre os dispositivos e, a partir dele, foram implementados os mecanismos de associacao automatica, comunicacao serial para entrada e sada de
+quadros MODBUS, resiliencia, comandos de configuracao e transporte de quadros.
+Para avaliar a rede proposta foram utilizados
+100 dispositivos ZigBee na formacao de uma rede
+em malha e, a partir dela, foram levantadas algumas metricas de desempenho, tais como latencia
+no envio dos quadros, taxa maxima de envio de
+quadros, taxa de perda de quadros em funcao do
+tamanho da rede e capacidade de resiliencia.
+Quanto a literatura correlata, (Kohvakka
+et al., 2006) e (Anastasi et al., 2010) avaliaram o desempenho e confiabilidade do ZigBee
+para topologias em arvore. Similarmente (Chen
+et al., 2010) avaliaram a utilizacao do ZigBee para
+1 httpwww.ti.comtoolz-stack
+
+1084
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+monitoramento de aplicacoes industriais. Porem
+todos esses trabalho fizeram suas avaliacoes por
+meio de simulacoes. Experimentalmente (Lee and
+Wang, 2013) utilizou 51 radios ZigBee avaliou
+o desempenho do ZigBeeem ambientes internos.
+Desta forma, este trabalho se diferencia dos demais e contribui para o estado da arte da area ao
+fazer uma avaliacao_de_desempenho experimental,
+sem uso de simulacao e com uma grande quantidade de nos, se comparado aos estudos relacionados.
+2 Redes ZigBee em Malha
+O ZigBee e um protocolo de comunicacao sem
+fio destinado a transmissao de dados em redes de
+baixa potencia de transmissao e com poucos requisitos de largura de banda. Apesar de nao implementar todas as camadas do modelo OSI (Open
+Systems Interconnection), as tres primeiras camadas do protocolo ZigBee correspondem as tres
+primeiras camadas do modelo OSI. A subcamada
+APS (Application Support Sublayer ) e a APL (Application Layer ) equivalem a uniao das camadas
+de transporte, sessao, apresentacao e aplicacao.
+A Camada Fsica (PHY) e a camada mais inferior do protocolo e diretamente controla o hardware de transmissaorecepcao. Transforma os
+quadros de dados para o espectro de radiofrequencia e vice-versa, utilizando as tecnicas O-QPSK
+(Offset Quadrature Phase Shift Keying) e DSSS
+(Direct Sequence Spread Spectrum).
+O Controle de Acesso ao Meio (MAC) situa-se
+entre a Camada Fsica (PHY) e a Camada de Rede
+(NWK). E responsavel por controlar o acesso ao
+meio fsico de transmissao. Utiliza o mecanismo
+CSMACA (Carrier Sense Multiple Access with
+Collision Avoidance), assegurando que o dispositivo transmita algum dado somente quando o meio
+fsico estiver livre e tentando evitar a ocorrencia
+de colisoes. Tambem fornece servicos de associacao e desvinculacao dos dispositivos a rede.
+A Camada de Rede (NWK) faz a interface
+entre a camada MAC e a Camada de Aplicacao
+(APL), sendo responsavel pelo gerenciamento da
+rede e roteamento dos quadros. O roteamento e
+o processo no qual busca-se um caminho entre
+origem e destino na rede. Em uma rede ZigBee
+esse processo e realizado por meio de sucessivas
+transmissoes via broadcast para os nos vizinhos
+ate que a informacao atinja o seu destino, passando por diversos nos intermediarios. Numa rede
+em malha diferentes rotas podem existir entre dois
+pontos. Entretanto, em uma rede em malha ZigBee nao existem rotas pre-definidas e o processo
+acontece de forma independente para cada quadro sendo transmitido. Desta forma, quadros com
+uma mesma origem e um mesmo destino podem
+seguir por caminhos distintos na rede.
+A Camada de Aplicacao e formada pela subcamada de suporte a aplicacao (APS), pelo ZDO
+(ZigBee Device Object) e pelo ZigBee Aplication
+
+ISSN 2525-8311
+
+Framework. Atua como interface para utilizacao
+dos recursos das camadas inferiores e define as funcionalidades que sao comuns a todas as aplicacoes
+ZigBee, tais como o tipo do dispositivo que esta
+ligado a rede, os quais serao apresentados a seguir.
+2.1
+
+Tipos de Dispositivos
+
+Existem dois tipos de dispositivos, ou nos, em
+uma rede ZigBee dispositivos de funcao completa
+(FFD, ou Full Function Devices) e dispositivos de
+funcao reduzida (RFD, ou Reduced Function Devices).
+Dispositivos FFD podem ser subdivididos em
+coordenador e roteador. Nos processos de associacao, eles podem associar-se entre si e permitir a
+associacao de RFD. O coordenador possui a tarefa
+de controlar e gerenciar a rede, rotear quadros,
+permitir a associacao de novos dispositivos, enderecar os dispositivos na rede e, em muitas aplicacoes, e o elemento da rede para o qual se concentra
+todo o fluxo de dados. Com a excecao da formacao
+e controle da rede, o roteador possui as mesmas
+funcionalidades do coordenador.
+Os dispositivos RFD, tambem denominados
+Dispositivos Finais, possuem funcoes limitadas,
+podendo passar a maior parte do tempo em estado de economia_de_energia. Esse tipo de dispositivo pode estabelecer associacao somente com o
+FFD, nao sendo capaz de efetuar funcoes de roteamento (Farahani, 2008).
+2.2
+
+Topologias de Rede
+
+O ZigBee suporta diversas topologias_de_rede, dentre elas destacam-se estrela, arvore e malha. Em
+todas essas topologias e necessaria a presenca do
+coordenador para a formacao da rede. Ao ser inicializado ele seleciona um identificador de rede que
+nao esteja em utilizacao por nenhuma outra dentro de sua regiao de cobertura e, a partir desse
+momento, roteadores ou dispositivos finais estao
+aptos a associar-se a rede.
+Na topologia em malha, ou mesh, o coordenador e o roteador podem estabelecer multiplos
+enlaces, resultando em redundancia de caminhos.
+O dispositivo final pode estabelecer somente um
+enlace, sendo este com o roteador ou com o coordenador. Essa topologia possui as vantagens de
+multiplos caminhos para os dados, capacidade de
+reconfiguracao e resiliencia.
+3 Desenvolvimento
+Para facilitar o desenvolvimento da rede, partiu-se
+de um codigo fonte gratuito, a Z-Stack Mesh, criada pela Texas Instruments 2 . Nesta versao muitas
+funcoes encontram-se indisponveis, sobretudo as
+funcoes relacionadas as tres primeiras camadas do
+protocolo ZigBee.
+Originalmente, a Z-Stack Mesh proporciona
+os mecanismos basicos de associacao entre dispositivos para a formacao de uma rede em malha.
+2 httpwww.ti.com
+
+1085
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Contudo, como foi criada para utilizacao em kits
+de desenvolvimento, a associacao ocorre pelo acionamento manual de micro chaves. Outra caracterstica e que, mesmo obtendo uma topologia em
+malha, a troca de informacoes entre os dispositivos
+ocorre somente ponto a ponto, sem roteamento.
+Devido a essas limitacoes, foram implantados recursos no codigo para torna-lo apto a transmissao
+de quadros de quaisquer protocolos de aplicacao,
+dentre eles o MODBUS, escolhido para avaliar o
+prototipo desenvolvido. As alteracoes dividem-se
+em quatro categorias, conforme segue.
+3.1 Comunicacao Serial
+A primeira modificacao consistiu na implementacao da comunicacao serial, recurso ausente na ZStack Mesh. Essa etapa e importante pois possibilita ao dispositivo receber quadros MODBUS via
+interface serial para serem transmitidos na rede.
+Com isso, a rede ZigBee implementada pode ser
+usada em substituicao a um barramento fsico que
+interliga equipamentos industriais.
+3.2 Comandos de Configuracao
+O segundo recurso implementado foi a criacao de
+comandos de configuracao dos dispositivos que pudessem ser transmitidos pela rede, sem a necessidade de se ter acesso fsico aos mesmos. Esses
+comandos realizam alteracoes como canal e identificador de rede, taxa de transmissao da serial,
+numero maximo de saltos permitidos na rede e
+potencia do radio transmissorreceptor.
+Uma vez recebido pela serial dos dispositivos
+conectados a serial, o comando e propagado por
+broadcast para que todos os demais pontos da rede
+efetivem a acao associada ao comando implementado. Para permitir a retencao da configuracao
+dos dispositivos mesmo quando eles forem desligados foi utilizada parte da sua memoria nao-volatil.
+Para facilitar a realizacao de testes, tambem
+foi criado um comando que retorna todos os nos
+da rede ao modo padrao de funcionamento taxa
+de comunicacao de 9600 bps, numero maximo de
+10 saltos, canal de operacao 26, identificador de
+rede ABCD e maxima potencia de sada para o
+radio.
+3.3 Mecanismo de Associacao
+Por padrao a associacao dos dispositivos na ZStack Mesh ocorre tao logo eles sao ligados. Essa
+caracterstica pode se tornar um problema em redes com grande densidade de nos, pois ocorreriam
+muitas associacoes simultaneas e grande quantidade de mensagens na rede. Com o objetivo de
+evitar esse problema foi implementado um retardo
+aleatorio para que os dispositivos aguardem alguns
+instantes antes de iniciarem o procedimento de associacao a rede.
+3.4 Mecanismo de Resiliencia
+Conforme visto na Secao 2, o roteador ZigBee,
+com excecao da formacao e controle da rede, possui os mesmos recursos do coordenador. Assim,
+
+ISSN 2525-8311
+
+se o coordenador for retirado de uma rede ja formada, os roteadores sao capazes de mante-la operando. Uma vez que o coordenador armazena sua
+tabela de vizinhos na memoria nao-volatil, ao voltar a rede a comunicacao e restabelecida.
+Entretanto, eventualmente pode ocorrer um
+conflito entre os identificadores de rede, quando
+coexistiriam duas redes distintas uma composta
+somente pelo coordenador, que gerou um novo
+identificador de rede, e a outra composta pelos roteadores da rede anterior. Neste caso, nao haveria
+troca de dados entre elas e para contornar essa
+deficiencia do Z-Stack, uma mensagem periodica
+de sincronismo, partindo do coordenador para os
+roteadores, foi implementada para restabelecer a
+comunicacao.
+Coexistindo duas redes distintas, nao ha o
+transito da mensagem de sincronismo na rede
+mantida pelos roteadores. Simultaneamente, no
+coordenador nao ha a recepcao da mensagem de
+sincronismo retransmitida pelos roteadores vizinhos. Persistindo esse cenario durante um intervalo de tempo configuravel, em ambas as redes ha
+a propagacao do comando de reboot. O objetivo
+desse mecanismo e propiciar novos processos de
+associacao e o restabelecimento da comunicacao.
+4
+
+Avaliacao e Resultados
+
+Para avaliar o prototipo utilizou-se um dispositivo
+microcontrolado TTAD (Transceptor para Transmissao Automatica de Dados) desenvolvido pela
+Zaruc Tecnologia3 .
+Foram utilizados 100 dispositivos, sendo um
+roteador e um coordenador, ambos ligados a terminais seriais para envio e recebimento de quadros
+MODBUS. Os demais nos foram usados como roteadores para expansao da rede, simulando a situacao onde o controlador mestre e o dispositivo escravo estao fsicamente distantes, caracterizando
+a necessidade de uma rede_sem_fio em malha para
+transmissao dos quadros na planta industrial.
+Os dispositivos utilizados estao dispostos em
+placas de acrlico, cada uma com 10 radios, conforme Figura 1.
+
+Figura 1 Radios utilizados nos experimentos.
+As placas foram posicionadas em ambiente interno, confinadas em salas com paredes de alvenaria e distancia media de 5 m entre elas. Foram
+utilizados dois softwares analisadores de pacotes
+3 httpwww.zaruc.com.br
+
+1086
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ZigBee para monitoramento da rede e visualizacao dos dados trafegados, sendo o primeiro deles o
+Packet Sniffer 4 e o segundo o Perytons Analizer 5 .
+A seguir serao apresentados os testes realizados.
+4.1
+
+Prova de Conceito
+
+Apos a montagem de uma rede ZigBee com 100
+nos, gerou-se um quadro MODBUS de 8 Bytes
+para ser enviado pelo roteador para a rede. A
+etapa de formacao da rede, bem como o quadro
+trafegado podem ser vistos na Figura 2. Na Figura 2(a) ve-se a etapa inicial de formacao da rede,
+estando o coordenador mais a direita e o roteador ligado ao terminal no extremo oposto. Na Figura 2(b) o quadro enviado e apresentado. Notase que inicialmente o quadro realizou dois saltos
+para partir do roteador e chegar ao coordenador, o
+que pode ser visto no parametro Nwk Radius. Esse
+parametro e iniciado em 10 e decrementado a cada
+salto do quadro na rede. Ao chegar no coordenador, dispositivo de endereco 0x0000, o parametro
+Nwk Radius estava com valor 8, demonstrando os
+dois saltos realizados.
+
+4.2 Latencia na Transmissao
+Apos certificar-se de que a rede estava corretamente configurada e em funcionamento, o mesmo
+quadro passou a ser enviado periodicamente a uma
+taxa de 1 quadro por segundo (qps). O objetivo
+desse experimento foi avaliar o retardo medio entre o envio do quadro pelo roteador e o posterior
+recebimento deste quadro pelo coordenador.
+Os resultados podem ser vistos na Figura 3.
+A media da latencia foi de 241  10ms, em 25
+amostras. Cinco pontos da amostra desviaram-se
+expressivamente da media (outliers). Sua ocorrencia nao foi investigada a fundo, mas pode ser
+atribuda a picos instantaneos no processamento
+de pacotes, haja vista que a curva media de latencia no restante do intervalo mostrou-se regular.
+
+Figura 3 Medidas de latencia por quadro enviado
+
+(a) Formacao
+rede
+
+inicial
+
+da
+
+(b) Transporte do quadro
+
+Figura 2 Rede Mesh em operacao
+Outra informacao interessante e que diferentes roteadores propagaram o mesmo quadro. Por
+meio do parametro Broadcast Seq. Num nota-se
+o mesmo quadro sendo transmitido por diferentes
+caminhos.
+Por fim, o quadro nao e mais propagado na
+rede em duas situacoes ao atingir o valor 0 para
+o numero de saltos ou quando chega ao coordenador. Nesta ultima situacao, o coordenador repassa o quadro a seus vizinhos. Ao detectarem a
+presenca de um quadro com o mesmo numero de
+sequencia vindo do coordenador, os roteadores reconhecem que o quadro fora recebido com sucesso
+e encerram sua retransmissao. Esse mecanismo e
+chamado de reconhecimento passivo.
+4 httpwww.ti.comtoolpacket-sniffer
+5 httpwww.perytons.com
+
+ISSN 2525-8311
+
+4.3 Limite de Vazao
+O terceiro experimento consistiu no envio de uma
+rajada de 30 quadros. Em seguida o intervalo
+de envio entre quadros sucessivos foi reduzido e
+a taxa de transmissao foi aumentada exponencialmente, porem mantendo-se o envio de 30 quadros
+em cada rajada. Esse experimento visa encontrar
+o limite da vazao de quadros que podem ser transportados na rede.
+A curva exponencial da taxa de envio e a vazao alcancada podem ser vistas na Figura 4. O
+limite maximo de vazao da rede foi de 2,78 qps,
+valor a partir do qual comecam a acontecer perda
+de quadros. O ponto em destaque na figura evidencia esse instante. Qualitativamente, apos esse
+ponto ocorre certa estabilizacao no limite da vazao de sada. Em seguida, a medida que a vazao de entrada e incrementada, ha uma queda na
+vazao de sada devido as perdas e retransmissoes
+de quadros. Nesse momento a origem transmite
+mais quadros do que o destino e capaz de receber
+e ocorre a saturacao da rede e dos dispositivos.
+4.4 Resiliencia da Rede
+O quinto experimento foi realizado com o objetivo de verificar a capacidade da rede em voltar
+ao estado normal apos a retirada coordenador. A
+Figura 5 mostra o experimento de resiliencia e destaca os instantes da sada e volta do coordenador
+na rede. Com a rede formada e o roteador transmitindo 1 qps, o coordenador foi desligado no instante t1 da Figura 5. A partir do desligamento,
+nota-se que os quadros nao foram mais recebidos.
+
+1087
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+(a) Comando de reconfiguracao da rede.
+
+Figura 4 Vazao de entrada e sada para dois saltos
+
+No instante t2 o coordenador foi religado e dois
+quadros foram recebidos em um mesmo instante.
+O aumento da taxa de chegada no instante da
+volta do coordenador pode ser explicado pelo fato
+de que o primeiro quadro estava em transito antes do envio do quadro subsequente. Para redes
+com maior numero de saltos, menos quadros seriam perdidos por estarem sendo retidosna rede.
+
+(b) Formacao da rede
+
+Figura 6 Deteccao da falta de sincronismo com o
+coordenador
+
+Figura 5 Experimento de resiliencia da rede.
+
+Figura 7 Perda de quadros enviados
+
+Ainda avaliando a capacidade de resiliencia,
+o coordenador foi desligado permanentemente ate
+que os roteadores identificassem a falta de sincronismo. Uma vez que o conflito entre redes e eventual e de reproducao dispendiosa, o desligamento
+do coordenador emula esse fenomeno na rede mantida pelos roteadores. Desta forma, avalia-se o
+mecanismo de resiliencia implementado, conforme
+pode ser visto na Figura 6. Em (a) e evidenciado
+o comando de reboot e em (b) e observa-se a formacao inicial da rede, com o coordenador ligado.
+Nota-se que logo na etapa inicial da formacao da
+rede seu diametro foi ampliado, pois a rota mnima entre o roteador e o coordenador conectados
+aos terminais passou a ter dois nos intermediarios.
+
+4.6 Reconfiguracao da rede
+Mantendo-se o mesmo cenario e utilizando-se dos
+comandos de ajuste de potencia, a rede em malha foi reorganizada convenientemente de modo a
+ter pelo menos dois nos entre o roteador e o coordenador. Em outras palavras, o quadro passou
+a executar tres saltos para partir do roteador e
+chegar ao coordenador. Nessa disposicao novas
+avaliacoes da latencia, taxa de vazao de sada e de
+perda dos quadros foram realizadas. Os resultados sao vistos, respectivamente, nas Figuras 8, 9
+e 10.
+
+4.5
+
+Perda de Quadros
+
+A taxa perda de quadros em funcao do aumento
+da vazao de entrada tambem foi avaliada. O resultado e mostrado na Figura 7. Como foi visto em
+resultados anteriores, a medida que a vazao de entrada aumenta, esse crescimento e acompanhado
+pela vazao de sada. Em certo ponto ha uma estabilizacao da vazao de sada e, com o aumento
+contnuo da entrada de quadros, essa vazao tende
+a cair devido a perdas e retransmissoes. A partir da amostra 35, ponto em que ocorre a primeira
+perda de quadros, verifica-se a tendencia crescente
+da perda dos quadros transmitidos.
+
+ISSN 2525-8311
+
+Figura 8 Vazao de entrada e sada para tres saltos
+Com o acrescimo de um salto a latencia media
+foi de 250 ms, ou seja, um aumento de 3,3  em
+relacao ao resultado anterior. A vazao maxima de
+sada, sem ocorrencia de perda de quadros, caiu de
+
+1088
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+com maior poder de processamento. Adotando a
+mesma metodologia deste estudo para os novos radios, consegue-se validar ou refutar a hipotese do
+TTAD como limitante do desempenho.
+Referencias
+
+Figura 9 Medidas de latencia por quadro enviado
+2,78 qps para 1,98 qps. Analogamente ao primeiro
+cenario, adotou-se o nvel de confianca de 95,
+resultando em desvio padrao de 4 ms e intervalo
+de confianca de 1 ms.
+Em relacao aos quadros perdidos, a existencia
+de mais um salto na rede significou na antecipacao
+do incio da perda de quadros. Desta forma podese assegurar que a conexao serial nao e o fator
+limitante da vazao alcancada.
+
+Agha, K. A., Bertin, M.-H., Dang, T., Guitton, A., Minet, P., Val, T. and Viollet,
+J.-B. (2009). Which Wireless Technology
+for Industrial Wireless Sensor Networks?
+The Development of OCARI Technology,
+IEEE Transactions on Industrial Electronics
+56(10) 42664278.
+Anastasi, G., Conti, M., Francesco, M. and V.Neri
+(2010). Reliability and Energy Eficiency
+in Multi-Hop IEEE 802.15.4 Zigbee Wireless Sensor Networks, Proceedings of the 15th
+IEEE Symposium on Computers and Communications (ISCC10) pp. 336341.
+Chen, F., Wang, N., German, R. and Dressler, F.
+(2010). Simulation Study of IEEE 802.15.4
+LR-WPAN for Industrial Applications, Wireless Communications and Mobile Computing,
+10(5) 609621.
+Farahani, S. (2008). Zigbee Wireless Networks and
+Tranceivers, 1 edn, Newnes Newton.
+
+Figura 10 Quadros perdidos para tres saltos.
+5
+
+Discussoes Finais, Conclusao e
+Trabalhos Futuros
+
+Neste trabalho uma rede em malha ZigBee com
+100 nos foi implementada e avaliada. O coordenador e o roteador ligados aos terminais foram
+dispostos com 2 e 3 saltos entre si, variando o diametro da rede. A partir dos resultados obtidos
+concluiu-se que a latencia da transmissao dos dados independe da quantidade de dispositivos presentes na rede, mas esta associada diretamente a
+quantidade de saltos que o quadro realiza.
+Apesar da baixa vazao encontrada pode-se
+afirmar que a rede atende ao transporte de quadros MODBUS devido aos baixos requisitos de
+largura de banda desse protocolo. Para efeito de
+comparacao, (Gomes et al., 2013) tambem utilizou
+o Z-Stack Mesh em 5 equipamentos com mesmo
+microprocessador presente no TTAD e alcancou
+baixas taxas de entrega de quadros, justificadas
+pela presenca de nos ocultos na rede e retransmissoes nos roteadores.
+Por fim, a partir dos trabalhos relacionados,
+pode-se inferir que a capacidade de processamento
+de pacotes do TTAD utilizado pode ser a causa
+dessa limitacao, sobretudo por ele utilizar microprocessador de 8 bits. Deixa-se como sugestao
+para trabalho futuro a utilizacao de radios ZigBee
+
+ISSN 2525-8311
+
+Goldsmith, A. (2005). Wireless Communications,
+Cambridge University Press, New York, NY,
+USA.
+Gomes, D., Goncalves, C. and Afonso, J. A.
+(2013). Performance Evaluation of Zigbee
+Protocol for High Data Rate Body Sensor
+Networks, Proceedings of the World Congress
+on Engineering 2013 2(6810) 35.
+Igure, V. M., Laughter, S. A. and Williams, R. D.
+(2006). Security Issues in SCADA Networks,
+Computers  Security 25(7) 498506.
+Kohvakka, M., Kuorilehto, M., Hannikainen, M.
+and T.D.Hamalainen (2006). Performance
+Analysis of IEEE 802. 15. 4 and Zigbee for
+Large-Scale Wireless Sensor Network Applications, Proceedings of the 3rd ACM International Workshop on Performance Evaluation
+of Wireless Ad Hoc, Sensor and Ubiquitous
+Networks (PE-WASUN06) pp. 4857.
+Lee, J.-S. and Wang, Y.-M. (2013). Experimental Evaluation of Zigbee-Based Wireless
+Networks in Indoor Environments, Journal of
+Engineering 2013.
+Woo, L., Kinsner, W., Ferens, K. and Diamond,
+J. (2007). Performance Results and Analysis of Zigbee Networks in the Presence of
+Multifractal Noise, 2007 Canadian Conference on Electrical and Computer Engineering pp. 924927.
+
+1089

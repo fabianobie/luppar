@@ -1,0 +1,1249 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+PROGRAMACAO NEURO-DINAMICA COMO FERRAMENTA DE OTIMIZACAO
+EM SISTEMAS HIDROTERMICOS DE POTENCIA
+Lucas F. Rodrigues, Marco A. A. Castro, Ricardo O. C. Scarcelli, Rui Bertho Jr.,
+Adriano A. F. M. Carneiro
+
+
+Escola de Engenharia de Sao Carlos - EESCUSP
+Departamento de Engenharia Eletrica
+Av. Trabalhador Sao-carlense, 400
+Sao Carlos, SP, Brasil
+
+
+Universidade Federal de Juiz de Fora - UFJF
+Faculdade de Engenharia
+Campus da UFJF - 4a Plataforma do Setor de Tecnologia
+Juiz de Fora, MG, Brasil
+Emails lfrodrigues@sc.usp.br, marco.aurelio@ufjf.edu.br, scarcelli@sc.usp.br,
+rui.bertho@usp.br, adriano@sc.usp.br
+Abstract This paper presents a computer implementation proposal of neuro-dynamic programming (NDP)
+applied on a long term hydropower scheduling. The NDP is based on the use of artificial neural networks (ANN)
+to improve the approach ability of the cost-to-go function. By this way, in instead of storage a lookup table of
+the optimal values for each stage of the problem, such as a dynamic programming (DP), the NDP stores only
+the parameters vectors associated with the ANN. The NPD method have been substantially effective in problems
+where traditionally the PD would be difficultly applied. This application was performed in the deterministic
+way in two different hydrological periods. The results were compared with the DP, to verify the viability of this
+programming implementation.
+Keywords
+
+Hydropower Scheduling, Neuro-Dynamic Programming, Dynamic Programming.
+
+Resumo Este trabalho apresenta uma proposta de implementacao computacional da programacao neurodinamica (PND) aplicada ao planejamento_da_operacao energetica de sistemas_hidrotermicos de potencia (POESH). A PND tem como base a utilizacao de redes_neurais artificiais (RNAs) para melhorar a capacidade de
+aproximacao da funcao de custo futuro. Dessa maneira, ao inves de armazenar uma tabela de decisao dos valores
+otimos para cada estagio do problema, como e feito na Programacao Dinamica (PD), armazena-se somente um
+vetor de valores associados aos pesos ou parametros da rede_neural. Os metodos de PND tem sido consideravelmente eficazes em problemas onde tradicionalmente a PD dificilmente seria aplicavel. Tal aplicacao foi realizada
+de modo determinstico em dois perodos hidrologicos distintos. Os resultados obtidos sao comparados com a
+PD, a fim de verificar a viabilidade de implementacao de tal metodo de programacao.
+Palavras-chave
+
+.
+
+Introducao
+
+O objetivo do Planejamento da Operacao Eletrica
+de Sistemas Hidrotermicos (POESH) e minimizar
+o valor esperado do custo total em um determinado perodo de planejamento. A figura 1 apresenta um esquema de decisoes do POESH.
+Decisão
+
+Afluência
+
+Operação
+
+Baixa
+
+Déficit de
+energia
+
+Alta
+
+Ótima
+
+Baixa
+
+Ótima
+
+Alta
+
+Vertimento
+
+Deplecionar
+água do
+reservatório
+
+Armazenar água
+no reservatório
+
+Figura 1 Esquema de decisoes do POESH
+Na figura 1 pode-se observar que o esquema de
+
+ISBN 978-85-8001-069-5
+
+decisoes do POESH e fortemente ligado as afluencias. Se a decisao de operacao for a de deplecionar o reservatorio e a afluencia for baixa a decisao tomada nao foi otima pois ocorrera um deficit de energia e consequentemente um alto custo
+de operacao, porem se afluencia for alta a decisao
+tomada foi otima pois para deplecionar o reservatorio gera-se energia a um baixo_custo e como
+a afluencia foi alta e possvel encher o reservatorio novamente. Se a decisao de operacao for a
+de armazenar agua no reservatorio e a afluencia
+for baixa a decisao tomada foi otima pois a agua
+armazenada pode ser utilizada para gerar energia, porem se a afluencia for alta a decisao nao
+foi otima pois ocorrera um vertimento de agua,
+desperdicando uma agua que poderia ser utilizada
+para gerar energia.
+Para resolver esse problema, uma ferramenta
+matematica usualmente utilizada e a Programacao Dinamica (PD) onde tal ferramenta divide o
+problema em subproblemas e toma a decisao baseada no menor custo daquele subproblema e de
+
+3744
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+acordo com o estado que se encontra (Bertsekas,
+1987). Nos casos em que a vazao afluente futura e conhecida, pode-se utilizar a Programacao
+Dinamica Determinstica (PDD) no planejamento
+(Siqueira, 2009). Como o problema e de grande
+porte e existe a necessidade de discretizar o espaco_de_estados, a solucao via PD exige um grande
+esforco computacional, ate mesmo para o caso determinstico.
+Como alternativa a esse problema, utilizase a Programacao Dinamica Dual Determinstica
+(PDDD) em conjunto com a decomposicao de
+Benders (Siqueira, 2009 Pereira and Pinto, 1985
+Rotting and Gjelsvik, 1992 Kligerman, 1992). A
+PDDD faz uma aproximacao da funcao de custo
+futuro atraves de um processo iterativo, porem
+como o sistema brasileiro e de grande porte, fazse necessario a utilizacao da representacao por reservatorio equivalente de energia (Arvanitidis and
+Rosing, 1970a Arvanitidis and Rosing, 1970b).
+Como se trata de uma simplificacao do modelo,
+a operacao otima individual de cada reservatorio
+pode ser afetada.
+Este trabalho apresenta a proposta de aplicacao da programacao_neuro-dinamica (PND) ao
+POESH. A PND tem como base fazer uma aproximacao da funcao de custo futuro atraves de redes
+neurais artificiais (RNAs), assim nao e necessario
+armazenar uma tabela de decisoes como na PD,
+basta armazenar um vetor de valores associados
+aos pesos e parametros da RNA.
+Como a PD nao faz aproximacoes das funcoes
+de custo futuro, e sim as calcula em cada estagio do problema, o seus resultados foram tomados
+como base das analises.
+2
+
+Modelagem do problema
+
+A figura 2 apresenta o esquema de uma usina_hidreletrica.
+
+Figura 2 Esquema de uma usina_hidreletrica
+O problema do POESH e um problema de otimizacao onde o objetivo e minimizar o custo da
+geracao, o qual e uma funcao da geracao termica.
+A partir da figura 2, para o caso determinstico,
+pode-se modelar o problema da seguinte forma
+
+ISBN 978-85-8001-069-5
+
+min
+
+T
+X
+
+C(GTt ) + T (xT )
+
+(1)
+
+t1
+
+s.a.
+GTt + GHt  Dt
+
+(2)
+
+GHt  (xt )  (ut )  ph(qt )qt
+
+(3)
+
+xt  xt1 + (yt  ut ).
+
+(4)
+
+ut  qt + vt
+
+(5)
+
+xmin  xt  xmax
+
+(6)
+
+qmin  qt  qmax
+
+(7)
+
+vmin  vt  vmax
+
+(8)
+
+onde
+T  Horizonte de planejamento
+C(GTt ) funcao de custo de complementacao nao
+hidraulica
+T (xT ) funcao de custo futuro associado ao
+estado do reservatorio
+GTt  geracao media mensal de energia termica
+GHt  geracao media mensal de energia hidroeletrica
+Dt  demanda ao longo do intervalo t
+xt  volume armazenado ao final do intervalo t
+yt  vazao afluente media ao longo do intervalo t
+ut  vazao defluente media ao longo do intervalo t
+qt  turbinagem ao longo do intervalo t
+vt  vertimento ao longo do intervalo t
+ produtibilidade especfica da usina
+ conversor de unidade de m3 s para hm3 mes
+(x) polinomio da cota de montante do reservatorio
+(u) polinomio da cota de jusante do reservatorio
+ph(q) perdas hidraulicas.
+As restricoes (2) e (5) referem-se as equacoes
+de balanco de geracao e balanco hidraulico do sistema, respectivamente. As restricoes (6), (7) e (8)
+sao os limites operativos de volume, turbinagem e
+vertimento, respectivamente, do sistema. A restricao (4) representa a transicao de estado do volume
+reservado entre os meses t  1 e t.
+A restricao (3) representa a geracao hidraulica, onde esta e nao-linear pois os polinomios de
+cota de montante ((x)) e cota de jusante ((u))
+sao de 4o grau.
+As usinas termicas sao classificadas em ordem
+crescente com relacao ao custo, assim as usinas
+mais baratas entram em operacao primeiro e a
+medida em que se faz necessario as usinas mais caras entram em operacao. Quando a demanda nao
+e suprida, caracterizam-se os deficits de geracao,
+onde esses sao os ultimos a serem contabilizados
+por possuir um alto valor.
+A figura 3 apresenta o custo das usinas termicas classificadas por ordem de merito. Neste trabalho, tal caracterstica foi aproximada de uma
+
+3745
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+equacao polinomial quadratica sem prejuzo dos
+resultados finais.
+6
+
+Custo (109 R)
+
+5
+4
+3
+2
+1
+0
+0
+
+5000
+
+10000
+
+15000
+
+20000
+
+25000 30000
+
+35000
+
+Geração Térmica (MWMês)
+Custo Real
+
+Custo Aproximado
+
+Figura 3 Custo medio mensal de geracao termica
+
+3
+
+de decisoes do estagio t (ut ) e tem-se o volume ao
+final do estagio t (xt ), sempre respeitando os limites operativos do sistema. Esse processo e repetido ate que o final do horizonte de planejamento,
+ou seja, ate que t  T . Na PD, para cada estagio
+existem varios conjuntos de decisoes factveis, gerando assim a tabela de decisoes. Na PND a funcao de custo futuro e aproximada por uma RNA,
+assim tem-se um unico conjunto de decisoes para
+um dado estagio t. Dessa forma nao existe tabela
+de decisoes, reduzindo assim o esforco computacional.
+A PND se utiliza de metodos sub-otimos baseados na aproximacao do valor do estado (Damas
+et al., 2000).
+O algoritmo da PND pode ser descrito da seguinte maneira
+
+Início
+
+Programacao Neuro-Dinamica
+
+Na PD e realizado a discretizacao das variaveis de
+estado, obtendo assim os pontos factveis do problema. A partir desses pontos e montado uma tabela conhecida como tabela de decisoes. A partir
+do valor otimo do ultimo estagio faz-se o caminho
+inverso (backward ) a fim de descobrir a trajetoria otima do problema. Em problemas de gestoes
+de reservatorios, o esforco computacional do problema e aumentado exponencialmente a cada adicao de reservatorio (Rigo et al., 2008), tal problema assemelha-se muito ao problema do POESH.
+O custo total de operacao e dado pela soma
+do custo do estagio atual (custo imediato) com
+o custo dos estagios seguintes para um planejamento (custo futuro), dado que foi tomada uma
+decisao no estagio atual. A programacao neurodinamica (PND) utiliza-se de uma rede_neural artificial (RNA) do tipo perceptron_multicamadas
+(PMC) para fazer a aproximacao do custo futuro.
+Para cada estagio do problema existe uma RNA
+que faz a aproximacao do custo futuro, onde tais
+RNAs sao previamente treinadas.
+A figura 4 apresenta um esquema de decisoes
+do estagio t1 ate o estagio seguinte t no POESH.
+Estágio
+t-1
+
+ut y t
+
+xt-1
+
+Estágio
+t
+xt
+
+Figura 4 Esquema de decisoes do POESH
+Como o problema e determinstico, a vazao
+afluente (yt ) e conhecida, dessa forma dado o volume do estagio anterior (xt1 ) toma-se o conjunto
+
+ISBN 978-85-8001-069-5
+
+Dado o volume
+inicial do estágio,
+discretiza-se a
+turbinagem
+
+Para cada valor de
+turbinagem
+
+Calcule
+ O volume do próximo estágio
+ A geração hidráulica
+ A geração_térmica
+ O custo imediato (C(GTt))
+ O custo futuro através da RNA
+ O custo total (custo imediato +
+custo futuro)
+
+O volume inicial do
+próximo estágio é o
+volume da decisão ótima
+
+A decisão com o menor
+custo total será a decisão
+ótima
+
+É o último estágio?
+
+Não
+
+Sim
+
+Fim
+
+Figura 5 Fluxograma da PND
+A seguir serao apresentados os resultados obtidos com a aplicacao da PND.
+
+3746
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+4
+
+100
+
+Resultados e Discussoes
+
+90
+80
+
+Volume ()
+
+70
+60
+
+50
+40
+30
+20
+10
+
+0
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+Volume Período Seco - PD
+Volume Período Úmido - PD
+
+7
+
+8
+
+9
+
+10 11 12 13
+
+Volume Período Seco - PND
+Volume Período Úmido - PND
+
+Figura 6 Trajetoria de volume o caso da usina de
+Emborcacao
+1400
+1200
+
+Geração (MW)
+
+A PND foi aplicada em quatro usinas do sistema
+eletrico brasileiro operando isoladamente, em regioes distintas e com caracterstica operativas particulares, sendo elas Emborcacao, Sobradinho,
+Tucuru e Foz do Areia. Em cada aplicacao, a
+usina_hidreletrica foi operada em conjunto com
+um sistema termico equivalente de forma a atender a certa demanda de energia. A comparacao foi
+feita analisando o planejamento via PD e PND.
+Todas as analises tiveram como base as trajetorias de volumes armazenados, os custos marginais
+de operacao, as geracoes hidraulicas e as geracoes
+termicas, alem das funcoes de custo futuro.
+Nos estudos de casos foram utilizados dois perodos distintos de planejamento baseados no historico de vazoes afluentes um perodo seco, entre
+maio de 1952 a abril de 1953, e um perodo umido,
+entre maio de 1981 a abril de 1982. Para manter uma padronizacao dos perodos analisados, na
+usina de Foz do Areia utilizou-se da analise do
+mesmo perodo que as outras usinas, porem estes
+perodos nao sao os perodos seco e umido para
+tal usina.
+Ao final da apresentacao dos resultados obtidos e feita uma analise complementar para todas
+as usinas.
+
+1000
+800
+600
+400
+200
+
+4.1
+
+Usina Emborcacao
+
+0
+1
+
+A tabela 1 apresenta os principais dados da usina
+de Emborcacao, situada no rio Paranaba. Tal
+usina encontra-se na regiao Sudeste.
+
+A figura 6 apresenta a trajetoria dos volumes
+obtidos nas otimizacoes via PD e PND para os
+perodos seco e umido. Pode-se observar que a
+trajetoria de volume da PND segue bem proxima
+da trajetoria de volume da PD para ambos os perodos analisados.
+As figuras 7 e 8 apresentam a trajetoria das
+geracoes para o perodo seco e para o perodo
+umido, respectivamente. Pode-se observar que as
+trajetorias de geracao da PND e PD sao proximas
+para ambos os perodos. No perodo seco a media
+de geracao hidraulica da PND foi de 482,74 MW
+enquanto a da PD foi de 504,04 MW, as medias de
+geracao termica da PND e da PD foram de 709,26
+MW e 687,96 MW, respectivamente, e a diferenca
+de custo de operacao da PND foi de 5,89 maior
+
+ISBN 978-85-8001-069-5
+
+3
+
+4
+
+GH - PD
+
+5
+
+6
+
+7
+
+GT - PND
+
+8
+
+9
+
+GT - PD
+
+10
+
+11
+
+12
+
+Demanda
+
+Figura 7 Trajetoria das geracoes do perodo seco
+para o caso da usina de Emborcacao
+1400
+1200
+
+Geração (MW)
+
+Tabela 1 Dados da usina de Emborcacao
+Turbinagem maxima (m3 s)
+894
+Turbinagem mnima (m3 s)
+100
+Volume maximo (hm3 )
+17192
+Volume mnimo (hm3 )
+4669
+Potencia nominal (M W )
+1192
+Produtibilidade (M W (m3 s).m) 0,008731
+Canal de fuga medio (m)
+521,90
+
+2
+
+GH - PND
+
+1000
+800
+600
+400
+200
+0
+1
+GH - PND
+
+2
+
+3
+
+4
+
+GH - PD
+
+5
+
+6
+
+GT - PND
+
+7
+
+8
+
+9
+
+GT - PD
+
+10
+
+11
+
+12
+
+Demanda
+
+Figura 8 Trajetoria das geracoes do perodo
+umido para o caso da usina de Emborcacao
+que na PD. Ja no perodo umido a media de geracao hidraulica da PND foi 842,78 MW e a da
+PD foi 838,12 MW, as medias de geracao termica
+da PND e da PD foram de 349,22 MW e 353,88
+
+3747
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+1200
+
+MW, respectivamente, e a diferenca de custo total
+de operacao da PND foi de 0,71 maior que na
+PD.
+Usina Sobradinho
+
+A tabela 2 apresenta os principais dados da usina
+de Sobradinho, situada no rio Sao Francisco. Tal
+usina encontra-se na regiao Nordeste.
+
+Geração (MW)
+
+4.2
+
+1000
+800
+600
+400
+200
+
+Tabela 2 Dados da usina de Sobradinho
+Turbinagem maxima (m3 s)
+3833
+Turbinagem mnima (m3 s)
+1300
+Volume maximo (hm3 )
+34116
+Volume mnimo (hm3 )
+5447
+Potencia nominal (M W )
+1005,9
+Produtibilidade (M W (m3 s).m) 0,009025
+Canal de fuga medio (m)
+362,50
+A figura 9 apresenta a trajetoria dos volumes
+para os perodos seco e umido. Pode-se observar que no perodo seco a trajetoria de volume da
+PND segue proxima da trajetoria de volume da
+PD ate a metade do horizonte de planejamento,
+no restante do horizonte o volume da PND se
+mantem um pouco acima do volume da PD. No
+perodo umido a diferenca ocorre em todo o horizonte de planejamento e o volume da PND se
+mantem sempre acima do volume da PD.
+
+0
+1
+
+2
+
+GH - PND
+
+3
+
+4
+
+GH - PD
+
+5
+
+6
+
+7
+
+GT - PND
+
+8
+
+9
+
+GT - PD
+
+10
+
+11
+
+12
+
+Demanda
+
+Figura 10 Trajetoria das geracoes do perodo seco
+para o caso da usina de Sobradinho
+como no perodo seco, as trajetorias de geracao da
+PND e da PD sao proximas. A media de geracao
+hidraulica da PND foi de 811,24 MW enquanto a
+da PD foi de 811,70 MW. As medias de geracao
+termica da PND e da PD foram de 194,66 MW e
+194,20 MW, respectivamente. A diferenca entre o
+custo de operacao da PND foi de 0,34 maior que
+na PD para o perodo seco e 0,37 maior que na
+PD para o perodo umido.
+1200
+
+100
+1000
+
+90
+
+Geração (MW)
+
+80
+
+Volume ()
+
+70
+60
+
+50
+40
+
+800
+600
+400
+
+30
+20
+
+200
+
+10
+0
+
+0
+1
+
+2
+
+3
+
+4
+
+5
+
+Volume Período Seco - PD
+Volume Período Úmido - PD
+
+6
+
+7
+
+8
+
+9
+
+GH - PND
+
+Volume Período Seco - PND
+Volume Período Úmido - PND
+
+Figura 9 Trajetoria de volume para o caso da
+usina de Sobradinho
+A figura 10 apresenta a trajetoria das geracoes para o perodo seco. Pode-se observar que as
+trajetorias de geracao da PND e proxima da geracao da PD, exceto no final do horizonte de planejamento, onde a diferenca entre as trajetorias e
+maior. A media de geracao hidraulica da PND foi
+de 592,85 MW enquanto a da PD foi de 589,20
+MW. As medias de geracao termica da PND e da
+PD foram de 413,05 MW e 416,70 MW, respectivamente.
+A figura 11 apresenta a trajetoria das geracoes para o perodo umido. Observa-se que, assim
+
+ISBN 978-85-8001-069-5
+
+1
+
+10 11 12 13
+
+2
+
+3
+
+4
+
+GH - PD
+
+5
+
+6
+
+GT - PND
+
+7
+
+8
+
+9
+
+GT - PD
+
+10
+
+11
+
+12
+
+Demanda
+
+Figura 11 Trajetoria das geracoes do perodo
+umido para o caso da usina de Sobradinho
+
+4.3
+
+Usina Tucuru
+
+A tabela 3 apresenta os principais dados da usina
+de Tucuru, situada no rio Tocantins. Tal usina
+encontra-se na regiao Norte.
+A figura 12 apresenta a trajetoria dos volumes
+para os perodos seco e umido. Pode-se observar
+que a trajetoria de volume da PND, tanto no perodo seco quanto no perodo umido, se mantem
+acima da trajetoria de volume da PD. Nos tres
+primeiros meses do horizonte de planejamento as
+trajetorias sao iguais.
+
+3748
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+9000
+8000
+7000
+
+Geração (MW)
+
+Tabela 3 Dados da usina de Tucuru
+Turbinagem maxima (m3 s)
+5963
+Turbinagem mnima (m3 s)
+2000
+3
+Volume maximo (hm )
+45500
+Volume mnimo (hm3 )
+13487
+Potencia nominal (M W )
+4000
+Produtibilidade (M W (m3 s).m) 0,008382
+Canal de fuga medio (m)
+8,70
+
+5000
+4000
+3000
+2000
+
+100
+
+1000
+
+90
+
+0
+1
+
+80
+
+GH - PND
+
+70
+
+Volume ()
+
+6000
+
+2
+
+3
+
+4
+
+GH - PD
+
+5
+
+6
+
+GT - PND
+
+7
+
+8
+
+9
+
+GT - PD
+
+10
+
+11
+
+12
+
+Demanda
+
+60
+
+50
+
+Figura 14 Trajetoria das geracoes do perodo
+umido para o caso da usina de Tucurui
+
+40
+30
+20
+10
+
+0
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+Volume Período Seco - PD
+Volume Período Úmido - PD
+
+7
+
+8
+
+9
+
+10 11 12 13
+
+Volume Período Seco - PND
+Volume Período Úmido - PND
+
+Figura 12 Trajetoria de volume para o caso da
+usina de Tucurui
+As figuras 13 e 14 apresentam a trajetoria
+das geracoes para o perodo seco e para o perodo
+umido, respectivamente.
+
+4.4
+
+9000
+8000
+
+Usina Foz do Areia
+
+Para a usina de Foz do Areia, os perodos analisados nao sao perodos seco e umido, porem
+manteve-se o mesmo perodo afim de padronizar
+as analises. Os perodos serao tradados como perodo de 1952 nos anos de maio de 1952 a abril de
+1953 e perodo de 1981 nos anos de maio de 1981
+a abril de 1982.
+A tabela 4 apresenta os principais dados da
+usina de Foz do Areia, situada no rio Iguacu. Tal
+usina encontra-se na regiao Sul.
+
+7000
+
+Geração (MW)
+
+de operacao da PND foi de 0,87 maior que na
+PD.
+Na figura 14 pode-se observar que ocorre o
+mesmo do perodo seco, que apesar das diferencas
+na trajetoria de volume serem maiores as trajetorias de geracao da PND segue proxima da geracao
+da PD. A media de geracao hidraulica da PND foi
+de 5313,67 MW enquanto a da PD foi de 5254,76
+MW. As medias de geracao termica da PND e da
+PD foram de 3056,33 MW e 3115,24 MW, respectivamente. A diferenca entre o custo de operacao
+da PND foi de 3,34 maior que na PD.
+
+6000
+5000
+4000
+3000
+2000
+1000
+0
+1
+GH - PND
+
+2
+
+3
+
+4
+
+GH - PD
+
+5
+
+6
+
+GT - PND
+
+7
+
+8
+
+9
+
+GT - PD
+
+10
+
+11
+
+12
+
+Demanda
+
+Figura 13 Trajetoria das geracoes do perodo seco
+para o caso da usina de Tucurui
+Na figura 13 pode-se observar que apesar das
+diferencas na trajetoria de volume serem maiores,
+as trajetorias de geracao da PND segue proxima
+da geracao da PD. A media de geracao hidraulica
+da PND foi de 3773,83 MW enquanto a da PD foi
+de 3716,22 MW. As medias de geracao termica da
+PND e da PD foram de 4596,17 MW e 4653,78
+MW, respectivamente. Apesar das diferencas entre as medias de geracao a diferenca entre o custo
+
+ISBN 978-85-8001-069-5
+
+Tabela 4 Dados da usina de Foz do Areia
+Turbinagem maxima (m3 s)
+1173
+Turbinagem mnima (m3 s)
+79
+3
+Volume maximo (hm )
+5779
+Volume mnimo (hm3 )
+1974
+Potencia nominal (M W )
+1676
+Produtibilidade (M W (m3 s).m) 0,009025
+Canal de fuga medio (m)
+601,70
+A figura 15 apresenta a trajetoria dos volumes
+para os perodos de 1952 e 1981. Pode-se observar que a trajetoria de volume da PND se mantem
+acima da trajetoria de volume da PD em praticamente todo o horizonte de planejamento.
+
+3749
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+100
+
+1800
+
+90
+
+1600
+
+80
+
+1400
+
+Geração (MW)
+
+Volume ()
+
+70
+60
+
+50
+40
+30
+20
+
+1200
+1000
+800
+600
+400
+
+10
+
+200
+
+0
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+Volume Período Seco - PD
+Volume Período Úmido - PD
+
+7
+
+8
+
+9
+
+10 11 12 13
+
+Volume Período Seco - PND
+Volume Período Úmido - PND
+
+0
+1
+GH - PND
+
+2
+
+3
+
+4
+
+GH - PD
+
+5
+
+6
+
+GT - PND
+
+7
+
+8
+
+9
+
+GT - PD
+
+10
+
+11
+
+12
+
+Demanda
+
+Figura 15 Trajetoria de volume para o caso da
+usina de Foz do Areia
+
+Figura 17 Trajetoria das geracoes do perodo
+umido para o caso da usina de Foz do Areia
+
+As figuras 16 e 17 a trajetoria das geracoes
+para o perodo de 1952 e para o perodo de 1981,
+respectivamente. Pode-se observar que as trajetorias de geracao da PND e da PD tem uma diferenca mais acentuada que nos casos das usinas
+anteriores. No perodo de 1952 a media de geracao
+hidraulica da PND foi de 595,22 MW enquanto a
+da PD foi de 584,52 MW e as medias de geracao
+termica da PND e da PD foram de 1080,78 MW e
+1091,48 MW, respectivamente. Para o perodo de
+1981 a media de geracao hidraulica da PND foi de
+440,18 MW enquanto a da PD foi de 432,35 MW
+e as medias de geracao termica da PND e da PD
+foram de 1235,82 MW e 1243,35 MW, respectivamente. A diferenca entre o custo de operacao da
+PND foi de 0,32 maior que na PD para o perodo de 1952 e de 0,49 maior que na PD para
+o perodo de 1981.
+
+algumas trajetorias de volume, a diferenca percentual nas geracoes sao pequenas.
+Quando o espaco de estado da PD e da PND
+sao discretizados em passos de 1, o tempo computacional da PND e cerca de 60 do tempo da
+PD, porem quando discretizados em passos de
+0,5 o tempo computacional da PND se reduz
+a cerca de 30 do tempo da PD e quando a discretizacao e de 0,25 o tempo da PND se reduz a
+cerca de 18 do tempo da PD. Isso ocorre pois a
+PND carrega um unico conjunto de decisao otimo
+de um estagio para outro, enquanto na PD sao carregados os valores dos conjuntos de decisoes factveis, aumentando assim o esforco computacional.
+Dessa maneira, ha um ganho computacional com
+a aplicacao da PND no POESH.
+Ao tratar a PND deterministicamente, podese ter uma boa ferramenta para a otimizacao de
+sistemas_hidrotermicos de potencia. Mesmo a
+PND fazendo uma aproximacao do custo futuro
+os diferencas nos custos operativos foram baixos
+quando comparados a PD.
+
+1800
+1600
+
+Geração (MW)
+
+1400
+
+1200
+1000
+
+5
+
+600
+400
+200
+0
+1
+GH - PND
+
+2
+
+3
+
+4
+
+GH - PD
+
+5
+
+6
+
+GT - PND
+
+7
+
+8
+
+9
+
+GT - PD
+
+10
+
+11
+
+12
+
+Demanda
+
+Figura 16 Trajetoria das geracoes do perodo seco
+para o caso da usina de Foz do Areia
+
+4.5
+
+Conclusoes
+
+800
+
+Analise Complementar
+
+Para todas as usinas analisadas as trajetorias de
+geracao termica e hidraulica geradas pela otimizacao via PND sao condizentes com as otimizacoes
+via PD. Apesar de existir uma diferenca visvel em
+
+ISBN 978-85-8001-069-5
+
+Este trabalho apresentou uma proposta de aplicacao da PND ao POESH.
+Sabe-se que, em sistemas_hidrotermicos de potencia as funcoes de custo futuro dependem muito
+do perodo hidrologico analisado bem como do tamanho do horizonte de planejamento, isso pode
+acarretar em diferentes custos de operativos do
+sistema.
+A PND, quando tratada deterministicamente,
+apresentou ser uma boa ferramenta de otimizacao
+para sistemas_hidrotermicos de potencia e mesmo
+quando tratada em perodos distintos apresenta
+pouca diferenca nos custos em relacao a PD.
+Destaca-se ainda que ha uma diminuicao do
+esforco computacional na resolucao do problema
+do planejamento quando este e resolvido via PND.
+Essa diminuicao afeta diretamente o tempo com-
+
+3750
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+putacional. Em alguns casos houve reducao do
+tempo em cerca de 80.
+Para trabalhos futuros deve-se verificar a utilizacao da PND, tratada deterministicamente, em
+uma cascata de usinas_hidreletricas, afim de verificar que a PND nao tem o mal da dimensionalidade.
+Referencias
+Arvanitidis, N. V. and Rosing, J. (1970a). Composite representation of a multireservoir hydroelectric power system, IEEE Transactions on
+Power Apparatus and Systems 89 319326.
+Arvanitidis, N. V. and Rosing, J. (1970b). Optimal operation of multireservoir systems using
+a composite representation, IEEE Transactions on Power Apparatus and Systems
+89 327335.
+Bertsekas, D. P. (1987). Dynamic programming
+deterministic and stochastic models, Prentice
+Hall.
+Damas, M., Salmeron, M., Diaz, A., Ortega, J.,
+Prieto, A. and Olivares, G. (2000). Genetic algorithms and neuro-dynamic programming application to water supply networks,
+Proceedings of the 2000 Congress on Evolutionary Computation 1 714.
+Kligerman, A. (1992). Operacao otima de sistemas
+hirdotermicos interligados utilizando programacao_estocastica dual, Dissertacao de mestrado, Faculdade de Engenharia Eletrica e
+Computacao, Unicamp, Campinas.
+Pereira, M. V. F. and Pinto, L. M. V. G. (1985).
+Stochastic optimization of a multireservoir
+hydroelectric system A decomposition approach, Water Resources Research 21 779
+792.
+Rigo, D. d., Rizzoli, A. E., Soncini-Sessa, R., Weber, E. and Zenesi, P. (2008). Neuro-dynamic
+programming for the efficient management
+of reservoir networks, Control Engineering
+Practice 15 10311038.
+Rotting, T. A. and Gjelsvik, A. (1992). Stochastic dual programming for seasonal scheduling
+in the norwegian power systems, IEEE Transactions on Power Systems 7 273279.
+Siqueira, T. G. (2009). Comparacao entre diferentes abordagens de programacao_dinamica
+no planejamento_da_operacao energetica de
+sistemas_hidrotermicos de potencia, Tese de
+doutorado, Faculdade de engenharia Eletrica
+e Computacao, Unicamp.
+
+ISBN 978-85-8001-069-5
+
+3751

@@ -38,8 +38,8 @@
                         </span>
                         <div class="input-group form-group-lg">
                               <input type="search" id="search_query" name="q" required="true" class="form-control clearable" placeholder="{% trans "Search" %}..." value="{{ query_text }}" />
-                              <input type="hidden" id="id_query" name="qid" />
-                              <input type="hidden" id="id_page" name="page" value="{{ page }}" />
+                              <input type="hidden" id="id_query" name="qid" value="{{ qid | default_if_none:'' }}" />
+                              <input type="hidden" id="id_page" name="page" value="1" />
                               <span class="input-group-btn">
                                 <button class="btn btn-primary btn-lg" type="submit"><i class="glyphicon glyphicon-search"></i></button>
                               </span>
@@ -49,18 +49,18 @@
 
                 <div class="panel-group">
                   <div class="panel panel-default">
-                    <div class="panel-heading text-right">
-                      <h3 class="panel-title">
-                          <a data-toggle="collapse" href="#collapse1">{% trans "Options" %}</a>
-                          {% if total_docs > 1 %}
-                             | <a data-toggle="collapse" href="#collapse2">{% trans "Details" %}</a>
-                          {% endif %}
-                      </h3>
-                    </div>
-                    <div id="collapse1" class="panel-collapse collapse">
+{#                    <div class="panel-heading text-right">#}
+{#                      <h3 class="panel-title">#}
+{#                          <a data-toggle="collapse" href="#collapse1">{% trans "Options" %}</a>#}
+{#                          {% if total_docs > 1 %}#}
+{#                             | <a data-toggle="collapse" href="#collapse2">{% trans "Details" %}</a>#}
+{#                          {% endif %}#}
+{#                      </h3>#}
+{#                    </div>#}
+                    <div id="collapse1" class="panel-collapse collapse in">
                       <div class="panel-body">
                               <div class="form-group form-group">
-                                      <div class="col-sm-3 col-md-3">
+                                      <div class="col-sm-2 col-md-2">
                                           <label class="control-label">{% trans "Collection" %}</label>
                                           <select id="source_select" name="source_select" class="form-control">
                                               {% for source in source_list %}
@@ -84,23 +84,67 @@
                                               {% endfor %}
                                           </select>
                                       </div>
-                                      <div class="col-sm-3 col-md-3">
+                                      <div class="col-sm-2 col-md-2">
                                           <label class="control-label">{% trans "Free search" %}</label>
                                           <div class="text-center">
                                             <input type="checkbox" name="free_search"  >
                                           </div>
                                       </div>
-
-
+                                      <div class="col-sm-2 col-md-2">
+                                          <label class="control-label">{% trans "Metrics" %}</label>
+                                          <div class="text-center">
+                                            <input type="checkbox" name="metrics_search">
+                                          </div>
+                                      </div>
                               </div>
                       </div>
                     </div>
-                    <div id="collapse2" class="panel-collapse collapse">
+                    <div id="collapse2" class="panel-collapse collapse {% if  metrics_search == 'on' and total_docs > 1 %} in {% endif %}">
 
                       <div class="panel-body">
-                              <div class="form-group form-group text-left">
-                                    <div class="col-md-12">{{ result_config|linebreaks }} </div>
+
+                                 <div class="{% if metrics_search == 'on' and metrics %} col-md-6 {% else  %} col-md-12 {% endif %}">
+                                    <ul class="list-group text-left">
+                                        <li class="list-group-item active text-center"><b>{% trans "Search metadata" %} </b><a href="#" class="badge badge-primary badge-pill">?</a></li>
+                                        <li class="list-group-item"><b>{% trans "Collection" %}:</b> {{ source_result }}</li>
+                                        <li class="list-group-item"><b>{% trans "Search Model" %}:</b> {{ model_result }}</li>
+                                        <li class="list-group-item"><b>{% trans "Query Expansion" %}:</b> {{ expansion_result }}</li>
+                                        <li class="list-group-item"><b>{% trans "Query" %}:</b> {{ query_result }}</li>
+                                    </ul>
+                                 </div>
+
+                            {% if metrics_search == 'on' and metrics %}
+                                <div class="col-md-6">
+                                    <ul class="list-group text-left">
+                                        <li class="list-group-item active text-center"><b>{% trans "Metrics" %}</b><a href="#" class="badge badge-primary badge-pill">?</a></li>
+                                        <li class="list-group-item"><b>{% trans "Retrieved" %}:</b> {{ metrics.num_ret }}</li>
+                                        <li class="list-group-item"><b>{% trans "Relevant" %}:</b> {{ metrics.num_rel }}</li>
+                                        <li class="list-group-item"><b>{% trans "Relevant retrieved" %}:</b> {{ metrics.num_rel_ret }}</li>
+                                        <li class="list-group-item"><b>{% trans "MAP" %}:</b> {{ metrics.map }}</li>
+                                        <li class="list-group-item"><b>{% trans "Gm_MAP" %}:</b> {{ metrics.gm_map }}</li>
+                                        <li class="list-group-item"><b>{% trans "Rprec" %}:</b> {{ metrics.Rprec }}</li>
+                                        <li class="list-group-item"><b>{% trans "Bpref" %}:</b> {{ metrics.bpref }}</li>
+                                        <li class="list-group-item"><b>{% trans "Recip_rank" %}:</b> {{ metrics.recip_rank }}</li>
+                                    </ul>
+                                </div>
+
+
+                              <div class="col-md-12">
+                                        <ul class="list-group text-center">
+                                            <li class="list-group-item active text-center"><b>{% trans "Graphics" %}</b><a href="#" class="badge badge-primary badge-pill">?</a></li>
+                                            <li class="list-group-item">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <canvas id="prec_rec_chart" width="400" height="300"></canvas>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <canvas id="prec_chart" width="400" height="300"></canvas>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        </ul>
                               </div>
+                          {% endif %}
                       </div>
                     </div>
                   </div>
@@ -109,7 +153,10 @@
         </span>
         {% if total_docs > 1 %}
         <div class="panel panel-default">
-            <div class="panel-heading"> <b>{{ total_docs }}</b> {% trans "results" %} {% trans "in" %} <b>{{ total_time }}</b> {% trans "seconds" %}</div>
+            <div class="panel-heading">
+                {% if document_related %}<span class="text-right"><b>{% trans "Related documents" %}:</b> "<i>{{ document_related.name }}</i>" ,</span>{% endif %}
+                <b>{{ total_docs }}</b> {% trans "results" %} {% trans "in" %} <b>{{ total_time }}</b> {% trans "seconds" %}
+            </div>
             <div class="panel-body">
 
                      <div class="list-group {% if free_search == 'on' or not documents_relevant %} col-md-12 {% else  %} col-md-6 {% endif %}">
@@ -120,7 +167,7 @@
                                     <h4><a href="/document/{{ source_select }}/{{ doc.idd }}">DOC {{ doc.idd }}</a></h4>
 
                                     <p>{{ doc.prev_text}}...</p>
-                                    <a class="" title="{% trans "Relevance Feedback" %}"><i class="glyphicon glyphicon-star"></i> {% trans "Related documents" %}...</a>
+                                    <a href="{% relative_url doc.idd 'drid' request.GET.urlencode %}&page=1" class="" title="{% trans "Relevance Feedback" %}"><i class="glyphicon glyphicon-star"></i> {% trans "Related documents" %}...</a>
 
                              </span>
                          {% endfor %}
@@ -134,7 +181,7 @@
                                         <span class="badge">{{forloop.counter}}º</span>
                                         <h4><a href="/document/{{ source_select }}/{{ doc.idd }}">DOC {{ doc.idd }}</a></h4>
                                         <p>{{ doc.prev_text}}...</p>
-                                        <a class="" title="{% trans "Relevance Feedback" %}"><i class="glyphicon glyphicon-star"></i> {% trans "Related documents" %}...</a>
+                                        <a href="{% relative_url doc.idd 'drid' request.GET.urlencode %}&page=1" class="" title="{% trans "Relevance Feedback" %}"><i class="glyphicon glyphicon-star"></i> {% trans "Related documents" %}...</a>
                                  </span>
                              {% endfor %}
                          </div>
@@ -162,6 +209,10 @@
     </div>
 <script type="application/javascript">
 $(document).ready(function() {
+
+        $("#id_query").change(function(){
+            $( "#id_query" ).val();
+        })
 
         $( "#search_query" )
             .on( "keydown", function( event ) {
@@ -200,6 +251,8 @@ $(document).ready(function() {
                 }
             } ).focus(function(){
                 $(this).autocomplete("search");
+            }).change(function(){
+                $( "#id_query" ).val("");
             }).autocomplete( "instance" )._renderItem = function( ul, item ) {
                   var length = 100
                   var re = new RegExp("^" + this.term) ;
@@ -213,10 +266,11 @@ $(document).ready(function() {
             };
 
             var status_free =  '{{ free_search }}'=='on'? true : false;
+            var status_metrics =  '{{ metrics_search }}'=='on'? true : false;
 
 
 		    $("[name='free_search']").bootstrapSwitch({
-				 size:'medium',
+
 				 handleWidth:'50px',
 				 labelWidth:'50px',
 				 onText:'{% trans "Yes" %}',
@@ -229,9 +283,119 @@ $(document).ready(function() {
 
 		    $("[name='free_search']").bootstrapSwitch('state',status_free);
 
+		    $("[name='metrics_search']").bootstrapSwitch({
+
+				 handleWidth:'50px',
+				 labelWidth:'50px',
+				 onText:'{% trans "Yes" %}',
+				 offText:'{% trans "No" %}',
+				 inverse:false,
+				 state:false,
+				 onColor:'success',
+				 offColor:'info',
+            });
+
+		    $("[name='metrics_search']").bootstrapSwitch('state',status_metrics);
+
 
 
 
         });
 </script>
+<!-- Graficos -->
+    <script>
+        window.chartColors = {
+            red: 'rgb(255, 99, 132)',
+            orange: 'rgb(255, 159, 64)',
+            yellow: 'rgb(255, 205, 86)',
+            green: 'rgb(75, 192, 192)',
+            blue: 'rgb(54, 162, 235)',
+            purple: 'rgb(153, 102, 255)',
+            grey: 'rgb(231,233,237)'
+        };
+
+        function createConfig(details, data, label) {
+            return {
+                type: 'line',
+                data: {
+                    labels: label,
+                    datasets: [{
+                        label: details.curveLabel,
+                        steppedLine: details.steppedLine,
+                        data: data,
+                        borderColor: details.color,
+                        fill: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: details.label,
+                    },
+                    scales: {
+                        yAxes: [{
+                          scaleLabel: {
+                            display: true,
+                            labelString: details.yLabel
+                          }
+                        }],
+                        xAxes: [{
+                          scaleLabel: {
+                            display: true,
+                            labelString: details.xLabel
+                          }
+                        }],
+                      }
+                }
+            };
+        }
+
+
+        window.onload = function () {
+            var prec_rec_chart = document.getElementById("prec_rec_chart");
+            var prec_chart = document.getElementById("prec_chart");
+
+            {% autoescape off %}
+                var metrics  = {{ metrics }}
+            {% endautoescape %}
+
+            var data = [metrics['iprec_at_recall_0.00'], metrics['iprec_at_recall_0.10'], metrics['iprec_at_recall_0.20'],
+                        metrics['iprec_at_recall_0.30'], metrics['iprec_at_recall_0.40'], metrics['iprec_at_recall_0.50'],
+                        metrics['iprec_at_recall_0.60'], metrics['iprec_at_recall_0.70'], metrics['iprec_at_recall_0.80'],
+                        metrics['iprec_at_recall_0.90'], metrics['iprec_at_recall_1.00']];
+            var label = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+
+            var data2 = [metrics['P_5']*100, metrics['P_10']*100, metrics['P_15']*100,
+                        metrics['P_20']*100, metrics['P_30']*100, metrics['P_100']*100,
+                        metrics['P_200']*100, metrics['P_500']*100, metrics['P_1000']*100];
+            var label2 = [5, 10, 15, 20, 30, 100, 200, 500, 1000]
+
+            var steppedLineSettings = {
+                steppedLine: 'before',
+                label: '{{ source_result }}: {% trans "Precision x Recall" %}',
+                color: window.chartColors.red,
+                curveLabel: '{{ model_result }} {{ expansion_result }}',
+                yLabel: 'Interpolated Precision',
+                xLabel: 'Recall'
+            };
+            var steppedLineSettings2 = {
+                steppedLine: false,
+                label: '{{ source_result }}: {% trans "Mean Precision P@X" %}',
+                color: window.chartColors.green,
+                curveLabel: '{{ model_result }} {{ expansion_result }}',
+                yLabel: 'Precision (%)',
+                xLabel: 'Documents'
+            };
+
+            var ctx = prec_rec_chart.getContext('2d');
+            var ctx2 = prec_chart.getContext('2d');
+            var config = createConfig(steppedLineSettings, data, label);
+            var config2 = createConfig(steppedLineSettings2, data2, label2);
+
+            new Chart(ctx, config);
+            new Chart(ctx2, config2);
+        };
+
+    </script>
 {% endblock %}

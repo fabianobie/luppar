@@ -1,0 +1,978 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+APPLYING SVMS POST-PROCESSING STRATEGIES FOR DETECTING FAULTS
+IN CGMS
+Yenny Leal, Luis Gonzalez-Abril, Carol Lorencio, Cristiano Marcos Agulhari, Josep
+Vehi
+
+
+Av. Alberto Carazzai, 1640
+Universidade Tecnologica Federal do Parana
+86300-000 Cornelio Procopio, Parana, Brazil
+
+
+Av. Ramon y Cajal, sn
+University of Seville
+41018 Seville, Andaluca, Spain
+
+
+Av. de Franca, sn
+University Hospital of Girona Doctor Josep Trueta
+17007 Girona, Catalunya, Spain
+
+
+Av. Llus Santalo, sn
+University of Girona
+17071 Girona, Catalunya, Spain
+Emails yennymoncada@utfpr.edu.br, luisgon@us.es, clorencio.girona.ics@gencat.cat,
+agulhari@utfpr.edu.br, josep.vehi@udg.edu
+Abstract Support vector machines (SVMs) are an attractive option for detecting incorrect measurements
+in continuous glucose monitoring systems (CGMSs), because their learning mechanism usually considers a small
+subset of patterns to separate failure from fault-free situations. However, standard SVM is inherently biased
+towards the majority class when classifying imbalanced datasets. This work is aimed to introduce two SVMs
+post-processing strategies for imbalanced datasets applying them to improve the reliability of CGMSs. The first
+approach, called SVM-1, considers improving the geometric mean between specificity and sensitivity. In the
+second approach, called SVM-2, the priority is to improve sensitivity rather than improving the accuracy of the
+overall classifier. To test these approaches, a dataset of 537 samples was obtained (372 correct and 165 incorrect
+measurements classified according to International Standards Organization (ISO) criteria) from 23 critically-ill
+patients receiving insulin therapy and monitoring over 72 h using a CGMS. The results obtained have shown
+that new approaches of SVMs are a potential tool to improve the reliability of CGMSs.
+Keywords Support vector machines, Fault detection, Continuous glucose monitoring systems, Critically ill
+patients, Balanced performance.
+Resumo Maquinas de vetores de suporte (SVMs) sao uma opcao atraente para a deteccao de medicoes
+incorretas em sistemas_de_monitoramento_contnua_de_glicose (CGMSs), porque seu mecanismo de aprendizagem
+geralmente considera um pequeno subconjunto de padroes para separar fracassos de situacoes sem falha. No
+entanto, o SVM padrao e inerentemente inclinado para a classe majoritaria ao classificar conjuntos de dados
+desbalanceados. Este trabalho tem como objetivo apresentar duas estrategias de pos-processamento dos SVMs
+para conjuntos de dados desbalanceados ao aplica-las para melhorar a confiabilidade do CGMSs. A primeira
+abordagem, chamado SVM-1, considera melhorar a media geometrica entre a especificidade e sensibilidade. Na
+segunda abordagem, chamado SVM-2, a prioridade e melhorar a sensibilidade em vez de melhorar a precisao do
+classificador geral. Para testar estas abordagens, um conjunto de dados de 537 amostras foi obtido (372 corretos
+e 165 medicoes incorretas classificados de acordo com criterios do International Standards Organization (ISO)) a
+partir de 23 pacientes_criticamente_doentes que recebem a terapia de insulina e monitoramento de glicose por 72
+horas usando um CGMS. Os resultados obtidos mostraram que as novas abordagens de SVMs podem ser uma
+ferramenta potencial para melhorar a confiabilidade do CGMSs.
+Palavras-chave .
+
+1
+
+main goal of CGMS is to estimate blood glucose
+(BG) concentrations continuously over time (between one to five minutes) to provide detailed realtime information about glucose variability direction, magnitude, duration, and frequency of
+hypo- or hyper-glycemia. This information permits to identify the glucose trends throughout the
+day, and facilitate in detecting critical glycemic
+episodes (hypo- and hyper-glycemia). The main
+advantages of CGMS have been demonstrated
+
+Introduction
+
+Continuous glucose monitoring systems (CGMS)
+are devices capable of continuously estimating the
+glucose concentration in interstitial fluid. In recent years, there has been an unprecedented technological progress in the development of CGMS,
+which constitute a field of work of great importance inside of the technological research line that
+seeks to improve the quality of life in millions of
+diabetic, and reduce their financial burden. The
+
+1080
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+in multiple clinical studies a better glycemic
+control, reduction of hypo- and hyper-glycemic
+episodes and reduced HbA1c . Besides, CGMS is
+being a key element in the development of the socalled artificial pancreas (AP) (Bequette, 2012),
+a close-loop system which are integrated a CGMS
+device, an insulin pump and an algorithm for automatic control of glucose.
+In intensive care units (ICUs), BG monitoring is done intermittently using different selfmonitoring of blood glucose (SMBGs), which imposes an additional burden on the ICU staff.
+CGMSs allow for better control of glycemia by
+identifying real-time fluctuations in BG, permitting the staff to anticipate episodes of hypoand hyper-glycemia, potentially with fewer manual measurements. However, the performance of
+CGMS is still suboptimal in terms of accuracy, reliability and robustness against possible failures,
+and this can significantly limit their use as a replacement for traditional SMBGs. Thus, improvement of the accuracy, reliability and robustness of
+these devices is essential.
+The issue of reliability has not been addressed
+yet, being the current version of CGMSs still not
+able to detect and compensate for failures that can
+corrupt the local reliability of the CGMS trace.
+The glucose estimations are unreliable, particularly in the hypoglycemic range (Luijf et al., 2013),
+in comparison with SMBG measurements and laboratory systems. In order to improve reliability, self-monitoring capabilities must be embedded in the CGMS for detecting abrupt faults.
+As only a limited number of works about fault
+detection methods for CGMSs have been published to improve the reliability of these devices
+(Ward et al., 2004 Bondia et al., 2008 Facchinetti
+et al., 2011 Signal et al., 2012 Leal et al., 2013),
+significant progress needs to be made in CGMS
+fault detection (Bequette, 2010).
+Support vector machines (SVMs) are learning machines that implement the structural risk
+minimization inductive principle to obtain generalization on a limited number of learning patterns
+(Vapnik, 1998). Thus, SVMs are an attractive
+option for detecting correct and incorrect measurements made by CGMS, because their learning
+mechanism usually considers a small subset of patterns to separate failure from fault-free situations.
+Recently, standard SVMs have been used for the
+detection of therapeutically correct and incorrect
+measurements made by the CGMS Goldr , according to the clinical criteria (Bondia et al., 2008),
+to make clinical decisions. However, in CGMS
+fault detection, there are many examples of correct measurements and a few examples of incorrect measurements, i.e. the number of bad data is
+limited. Thus, in the context of this problem, it
+is very important to obtain models that exhibit
+a high prediction performance on the minority
+
+class, because it usually represents the target of
+the clinical practice, especially whenever the incorrect measurements made by the CGMS correspond to the moment when a patient showed high
+glycemic instability (hypo- and hyper-glycemia).
+However, standard SVM is inherently biased towards the majority class when classifying imbalanced datasets (Gonzalez-Abril et al., 2014), a
+premise not considered in (Bondia et al., 2008).
+This work is aimed to introduce two
+SVMs post-processing strategies for imbalanced
+datasets. The first approach, called SVM-1, considers improving the geometric mean (Gmean ) between specificity and sensitivity. In the second approach, called SVM-2, the priority is to improve
+the sensitivity rather than improving the specificity of the overall classifier. To distinguish between correct and incorrect measurements, new
+SVMs are trained using the data provided by
+a CGMS (electrical signal and glucose estimation) and insulin dose. The readings provided
+by the monitor have been previously classified according to a numerical accuracy criteria (International Standards Organization ISO criteria)
+(ISO, 2003).
+The remainder of this paper is organized as
+follows Section 2 describes the SVMs, the metrics commonly employed in the classification problems, and the methodology developed using SVMs
+post-processing strategies. Section 3 describes the
+clinical experimental setup, and the transformation of the CGMS fault detection problem into a
+bi-classification problem. Finally, Sections 4 and
+5 report the results and conclusions, respectively.
+2
+2.1
+
+Support Vector Machines
+
+The standard SVM
+
+Let Z  (x1 , y1 ), . . . , (xN , yN ) be a training set
+with xi  X as the input space, yi  +1, 1
+as the output space, and zi  (xi , yi ). Let  
+X  F, x  (x) be a feature mapping with a dot
+product denoted by h, i. A binary linear classifier
+f  X  R, defined as f (x)  hx, wi  b, is sought
+where w  F, b  R. Outputs are obtained as
+h(x)  sign(f (x)).
+The standard SVM leads to the optimization
+problem (Gonzalez-Abril et al., 2006)
+min
+
+wF ,bR
+
+subject to
+
+N
+X
+1
+2
+kwk + C
+i
+2
+i1
+
+yi (hxi , wi  b) + i  1,
+i  0, i
+
+i
+
+(1)
+where w defines the orientation of the classifier,
+bias b determines its position, and slack variables
+i measure the error on the instances. The userdefined parameter C is such that if the value of C
+is higher, then the focus of the SVM on minimizing
+
+1081
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+the errors will be greater.
+P The solution of (1) can be expressed as w0 
+i i yi xi , where i are the Lagrange multipliers
+for dual formulation. Term b is calculated a posteriori (Gonzalez-Abril et al., 2008), which is denoted as b0 (standard bias). Finally, the classifier
+PN
+can be written as f (x)  i1 i yi K(xi , x)b0 
+hx, w0 i  b0 where K  X  X  R, defined as
+K(x, y)  hx, yi  h(x), (y)i, is called the kernel function.
+This theory was developed on the basis of a
+separable binary classification problem where the
+optimization criterion is the width of the margin between the positive and negative examples
+(Gonzalez-Abril et al., 2005), which provides a
+good generalization performance (Cristianini and
+Shawe-Taylor, 2000). However, standard SVMs
+aim to minimize the error on the entire dataset,
+and hence, are inherently biased toward the majority class when classifying imbalanced datasets
+(Gonzalez-Abril et al., 2014).
+2.2
+
+i.e. Sensitivity is the proportion of positive
+cases correctly identified, while Specif icity is the
+fraction of true negatives among all negative instances. Hence, a measure that is more sensitive to the low positive values and that combines
+Sensitivity and Specif icity is Gmean , which is
+defined as their geometric mean
+s
+tpos  tneg
+(2)
+Gmean (f, D) 
+Npos  Nneg
+where both positive and negative classes have the
+same relevance for the purpose of classification.
+2.3
+
+This post-processing strategy is based on the consideration that the bias b is a parameter to be
+tuned. The function learned by a standard SVM
+will be adjusted through the bias to improve its
+performance, measured in terms of the Gmean (2).
+Hence, once the solution vector w0 of the
+problem (1) is obtained, the set of classifiers
+F (w0 ) is considered
+
+Metrics to evaluate the performance of a
+classifier
+
+F (w0 )  fb  X  R, fb ()  h(), w0 i  b, b  R
+(3)
+Starting from w0 , the SVM-1 classifier is defined
+by modifying the standard bias b. The SVM1 classifier bG (x) is defined, using the classifier
+fbG (x)  F(w0 ), such that given an input vector
+x, it assigns a label as follows
+
++1 if hx, w0 i  bG
+bG (x)  sign(fbG (x)) 
+1 if hx, w0 i < bG
+
+Let Zpos  zi  Zyi  +1 and Zneg 
+zi  Zyi  1 be the sets of training patterns
+for the positive and negative class, respectively.
+Let Npos  Zpos and Nneg  Zneg be the
+numbers of positive and negative instances, respectively hence, N  Npos + Nneg .
+Table 1 The confusion matrix for a classifier f .
+
+Positive
+Predicted
+Negative
+No. of cases
+
+Real
+Positive
+Negative
+True Positive
+False Positive
+(tpos )
+(fpos )
+False Negative
+True Negative
+(fneg )
+(tneg )
+No. Positives
+No. Negatives
+(Npos )
+(Nneg )
+
+where the bias bG  arg maxi1, ,Npos Gmean (bi ).
+According to the previous theoretical results,
+the new classifier attains a more balanced performance between the true positive rate and the true
+negative rate.
+2.4
+
+Based on the Table 1, Accuracy of the classifier f (x) on a test set D is defined as
+Accuracy(f, D) 
+
+i.e. Accuracy is a metric computing the proportion of instances that are correctly classified by the
+model. However, when probabilities for both the
+classes greatly differ, Accuracy is very sensitive to
+changes in the data and is biased toward the most
+probable class (He and Garcia, 2009). Therefore,
+other assessment measures must be considered.
+One possibility is to consider the Sensitivity and
+Specif icity metrics, which are defined as
+tpos
+Npos
+
+Specif icity(f, D) 
+
+tneg
+Nneg
+
+The SVM-2 A post-processing strategy to
+tune the bias b in function of the sensitivity
+
+Within the set of classifiers F (w0 ) (3), a trade-off
+should be found between Sensitivity (b), a decreasing function of b, and Specificity(b), an increasing
+function of b, in order to maximize generalization.
+One way to circumvent this problem given the set
+of classifiers F (w0 ), is to fix a threshold 0  r  1
+such that Sensitivity (b)  r, in order to guarantee a minimum true positive rate in the positive
+class and to maximize the Specificity(b). Hence,
+the following problem is considered
+
+tpos + tneg
+Npos + Nneg
+
+Sensitivity(f, D) 
+
+The SVM-1 A post-processing strategy to
+tune the bias b in function of the Gmean
+
+maxbR Specificity(b)
+s.t. Sensitivity (b)  r, 0  r  1, fb  F(w0 )
+Therefore, given a r value such that 0  r  1,
+then the classifier br (x) considered is as follows
+
++1 if hx, w0 i  br
+br (x)  sign(fbr (x)) 
+1 if hx, w0 i < br
+
+1082
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+where the bias br  bir ,
+max i, i  1 + Npos (1  r).
+3
+3.1
+
+where ir
+
+
+
+stabilized, the ABG measurements were recorded
+every 1, 2, 3 h, and then every 4 h. If the
+patients nutritional intake was stopped for any
+reason, then the glycemic control testing was
+performed more frequently, even during normoglycemia. Additional ABG measurements were
+used for RTCGMS calibration. From the 23 patients, 537 ABG readings were obtained, excluding those readings used for calibration.
+Under continuous glucose monitoring, the
+dose of CII (Insulin) was recorded. The ABG
+samples were used by the nurses to administer
+insulin therapy, according to the protocol established by the ICU. A CII was started once the patient exhibited ABG values >150 mgdL to maintain the ABG level between 120 and 160 mgdL.
+Short-acting insulin (Actrapidr , Novo Nordisk,
+Bagsvaerd, Denmark) diluted in 0.9 saline was
+used. CII was stopped when the ABG was <110
+mgdL. Insulin was recorded at the same time as
+ABG.
+The septic status of the patient was recorded
+every 24 h by the patients medical team, and was
+classified based on (Lorencio et al., 2012) in three
+groups patients with septic shock, patients with
+sepsis, and patients without sepsis.
+
+Database
+
+Subjects and dataset
+
+The dataset consisted of the data from 23
+critically-ill patients admitted to an ICU at the
+Doctor Josep Trueta Hospital (Girona, Spain)
+who presented with hyperglycemia and needed
+continuous infusion of intravenous insulin (CII) on
+admission to the ICU (Lorencio et al., 2012). The
+characteristics of the patients are given in Table
+2. This study followed the protocol approved by
+the ethics committee of the Hospital and all the
+patients gave informed consent.
+Table 2 Characteristics and outcomes of patients.
+Variable
+Number ()
+Type of patient
+(medicalsurgicaltrauma)
+Age (years)
+Sex (female)
+Body mass index (kgm2 )
+Previous known diabetes (yes)
+Stay in ICU (days)
+Stay in the hospital (days)
+ICU mortality (yes)
+Hospital mortality (yes)
+SOFAa
+APACHE IIa
+Sepsisa (yes)
+Mechanical ventilation (yes)
+Nutrition (enteralparenteral)
+
+Overall
+23 (100)
+7115
+(30.547.821.7)
+62.0 (54.5  74.0)
+1147.8
+29.0 (28.0  32.5)
+1356.5
+21.0 (14.5  33.0)
+34.0 (28.0  52.0)
+730.4
+939.1
+8.0 (6.0  10.0)
+20.0 (15.0  21.5)
+1878.3
+23100.0
+158
+
+3.2
+
+Data labeling and processing
+
+The ISO criteria (ISO, 2003), an analytical accuracy method currently accepted by the U.S. Food
+and Drug Administration (FDA) to assess the accuracy of CGMS devices is considered as the standard method to define the classification scheme
+associated with correct and incorrect measurements. The ISO criteria include the percentage of
+GRT CGMS readings within 15 mgdL of the ABG
+readings, when the ABG reading is 75 mgdL,
+or within 20.0 of the ABG readings, when the
+ABG reading is >75 mgdL.
+The ABG measurements were synchronized
+with Insulin measurements.
+Furthermore,
+the ABG and RTCGMS readings (Isig and
+GRT CGMS ) were obtained at different times. Subsequently, the RTCGMS readings were matched to
+the reference ABG within  2.5 min. The dataset
+of paired values (ABG  GRT CGMS ) was first classified using the ISO criteria with ABG measurements as the gold standard. Then, the data distribution was performed according to the following
+bi-classification scheme
+Class -1 (minus one) The measurements that
+fulfilled the ISO criteria were considered as correct
+measurements. Of the whole dataset, 69.3 (372
+samples) comprised correct data items.
+Class 1 (one) The measurements that did not
+fulfill the ISO criteria were considered as incorrect
+measurements. Of the whole dataset, 30.7 (165
+samples) comprised incorrect data items.
+Consequently, the dataset contained 537 sam-
+
+Data are median values. Numbers in parentheses indicate
+the interquartile range (Q1Q3, respectively).
+a These values correspond to the initial condition.
+
+Patients were monitored for 72 h using
+the Guardianr real-time CGMS (RTCGMS)
+(Medtronic, Northridge, CA). This device consists
+of a disposable subcutaneous needle-type SOFsensor and an external monitor. The sensor is an
+amperometric system that uses glucose oxidase,
+which generates an electrical signal (Isig) proportional to the glucose concentration in the interstitial fluid (GRT CGMS ). The sensor estimates
+GRT CGMS at 5-min intervals. So, data provided
+by the RTCGMS itself corresponded to (Isig)
+measured in nanoamperes and to (GRT CGMS )
+measured in mgdL. Calibrations were performed
+according to the RTCGMS manufacturers instructions (three to four per day).
+Arterial blood glucose (ABG) readings are
+used as the gold standard to define the classes
+into the bi-classification problem using ISO criteria. In the present study, ABG was measured
+using the whole BG concentration reported by the
+HemoCuer 201 DM system (HemoCue AB, Angelholm, Sweden). When a patient showed high
+glycemic instability, ABG samples were taken every 30 min. Then, once the glycemic values were
+
+1083
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+ples labeled in two imbalanced classes (372165),
+and each sample was composed of three variables
+Isig, GRT CGMS and Insulin.
+3.3
+
+0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99. Thus, for each
+r value, a total of 7500 problems were solved. Similarly, SVMs-2-RBF were tuned considering 132
+possible combinations between the value of C and
+ explored on a two-dimensional grid C  24 ,
+23 ... 26 , 27  and   23 ...26 , 27 . The threshold r was fixed considering seven possible values
+indicated previously. Thus, for each r value, a total of 16500 problems were solved. All models obtained from each combination of parameters were
+validated using their corresponding validation set.
+
+Detection of correct and incorrect measurements in CGMSs by applying post-processing
+SVMs
+
+To evaluate the performance of the postprocessing strategies SVM-1 and SVM-2, a leavethree-out cross-validation strategy was used, i.e.
+patients data were partitioned into two sets a
+training set (20 patients) and a testing set (the
+three remaining patients). First, different classifiers SVM-1 and SVM-2 were trained. The training set considered the feature vector X  (Isig,
+GRT CGMS , Insulin) as the input. The feature
+vector was autoscaled to have zero mean and unity
+variance to prevent problems with outliers. Then,
+model parameters were tuned from the training
+set previously autoscaled. Second, the classifiers
+were used to indicate the behavior of the other
+three patients not included in the training set
+(testing data). Thus, the testing data were autoscaled accordingly using the mean and standard
+deviation obtained from the training set.
+The above-mentioned methodology was repeated for different data partitions, i.e. combinations of 20-3 patients (eight partitions in total). In each partition, different classifiers SVMs1 and SVM-2s using polynomial kernel (SVM-1Poly and SVM-2-Poly) and radial basis function
+kernel (SVM-1-RBF and SVM-2-RBF) were tuned
+and validated. The criterion employed to estimate the performance generalized in the SVMs1 and SVMs-2 was the five-fold cross-validation
+on the entire training set, and this procedure was
+repeated 25 times to ensure good statistical behavior.
+In the case of SVMs-1, SVMs-1-Poly were
+tuned considering 60 possible combinations between the value of C (regularization term)
+and d (degree polynomial) explored on a twodimensional grid C  24 , 23 ... 26 , 27  and
+d polynomial  1, 2 ...5. Thus, a total of 7500
+problems were solved. Similarly, SVMs-1-RBF
+were tuned considering 132 possible combinations
+between the value of C and  (RBF width) explored on a two-dimensional grid C  24 , 23
+... 26 , 27  and   23 ...26 , 27 . Thus, a total
+of 16500 problems were solved. All models obtained from each combination of parameters were
+validated using their corresponding validation set.
+In the case of SVMs-2, SVMs-2-Poly were
+tuned considering 60 possible combinations between the value of C and d explored on a twodimensional grid C  24 , 23 ... 26 , 27  and
+d polynomial  1, 2 ...5. In order to guarantee a maxim true positive rate (Sensitivity (b))
+ r), the threshold r was fixed as follows r 
+
+4
+
+Results
+
+First, a comparative analysis between different approaches of SVMs (standard SVMs, SVMs-1 and
+SVMs-2) was carried out. The results are shown
+in Table 3.
+Standard SVM reported the best values of Accuracy and Specificity in comparison with SVM-1
+and SVM-2. However, it also reported the worst
+values of Sensitivity. Sensitivity to low values implies the presence of false negatives. False negatives lead to the ICU staff to modify the dose of
+CII, which would have a significant clinical impact
+with regard to the administration of insulin therapy to the patient, because these misclassifications
+would result in inappropriate treatment.
+Although SVM-1 presented a lower Accuracy
+than standard SVM, it was found to have a better Sensitivity, which is the priority in the CGMS
+fault detection problem. As mentioned earlier,
+this is because the SVM-1 is based on Gmean ,
+which considers both positive and negative classes
+to be equally relevant for the purpose of classification, balancing the performance between Sensitivity and Specificity.
+The SVM-2 improved significantly the Sensitivity regarding to the standard SVM. In contrast, SVM-2 presented Specificity to low values,
+which implied a significant number of false positives. The presence of false positives may not
+have clinical consequences for patients, because
+they do not lead to the ICU staff modifying the insulin therapy. However, false positives lead to the
+ICU staff taking measurements of ABG more frequently to ensure patient safety, which is contrary
+to one of the main benefits of using the CGMS in
+the ICU, to avoid the frequent and painful punctures. To maximize the Specificity and to maintain good Sensitivity, the optimal value to adjust
+r was 0.8. This value ensured a Specificity above
+50,0 and a good Sensitivity.
+The classification results of three representative patients according to the septic status of the
+patient are shown in Fig. 1. Those patients were
+chosen because they had similar metrics to the average metrics reported for each cohort of patients
+depending on the septic status.
+The main conclusion that can be drawn from
+
+1084
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Table 3 Average results of the metrics Accuracy, Specificity, Sensitivity and Gmean .
+SVM-Poly
+SVM-1-Poly
+r 
+r 
+r 
+SVM-2-Poly
+r 
+r 
+r 
+r 
+SVM-RBF
+SVM-1-RBF
+r 
+r 
+r 
+SVM-2-RBF r 
+r 
+r 
+r 
+
+0.70
+0.75
+0.80
+0.85
+0.90
+0.95
+0.99
+
+0.70
+0.75
+0.80
+0.85
+0.90
+0.95
+0.99
+
+Accuracy ()
+Specificity ()
+Sensitivity ()
+SVMs using polynomial kernel
+71.3
+89.5
+27.4
+68.9
+70.3
+66.0
+68.5
+68.3
+68.5
+43.1
+30.8
+73.5
+62.4
+56.1
+77.8
+55.3
+44.4
+82.7
+47.2
+31.5
+86.6
+39.4
+18.6
+91.7
+32.6
+06.7
+98.0
+SVMs using RBF kernel
+69.9
+76.9
+53.5
+69.7
+69.7
+69.5
+67.5
+68.2
+66.2
+64.9
+61.2
+73.9
+59.3
+51.1
+79.6
+54.7
+43.0
+83.4
+46.5
+30.2
+87.3
+40.8
+20.2
+93.1
+32.5
+06.4
+98.1
+
+the Fig. 1 is that the SVM-1 provided a balanced
+and adequate performance for patients with septic shock and with sepsis, but the performance
+was poor for the patient without sepsis. Although
+the patient without sepsis also reported balanced
+performance in its metrics with SVM-1, these values were low to be accepted from a clinical point
+of view. On the other hand, when the SVM-2
+was applied a significant improvement of the Sensitivity was reported in the three patients, and
+the values obtained in this metric were high to
+be accepted from a clinical point of view. However, although the SVM-2 guarantees a maximum
+rate in the detection of incorrect measurements,
+the Specificity values achieved were too low to be
+clinically accepted.
+
+Gmean ()
+49.5
+68.1
+68.4
+47.6
+66.1
+60.6
+52.2
+41.3
+25.6
+64.1
+69.6
+67.2
+67.3
+63.8
+59.9
+51.3
+43.4
+25.1
+
+case, GRT CGMS was 178 mgdL, while ABG was
+109 mgdL. If the physician considered the glucose
+measurement indicated by the RTCGMS as reliable, a dose of CII may be started to maintain the
+ABG between 120 and 160 mgdL. This decision
+may subsequently cause a severe hypoglycemic
+event in the patient. Additionally, two relevant hypoglycemic events (ABG below 80 mgdL)
+were correctly detected by the classifier. In these
+events, while ABG measurements indicated hypoglycemic events, the RTCGMS estimated in the
+euglycemic range (GRT CGMS between 80 and 160
+mgdL). The correct detection of the second hypoglycemic episode allowed for detecting a measurement of glucose erroneously estimated by the
+CGMS (highlighted with a blue dashed circle).
+Finally, for the same patient, using a SVM-2Poly (see Fig. 2, lower), it can be noted in the
+figure that this patient presented a high Sensitivity (87.5). However, an important number of
+false positives were reported in this case (Specificity  43.5). Although false positives do not
+have clinical consequences for patients, these misclassifications may lead to the ICU staff to taking uncomfortable and painful punctures of ABG
+more frequently to ensure patient safety, increasing the workload of nurses and the risk of accidental punctures.
+
+Let us illustrate the specific case of a patient
+with septic shock, using a standard SVM-Poly (see
+Fig. 2, upper). This figure shows that the standard SVM was highly specific (91.3). However,
+its low Sensitivity (37.5) implies a significant
+number of false negatives, which may lead to the
+ICU staff to modify the dose of CII. In this particular case, false negatives would have a significant
+clinical impact regarding to the administration of
+insulin therapy to the patient, which would cause
+an inappropriate treatment.
+Likewise, for the same patient, using a SVM1-Poly (see Fig. 2, middle), it can be observed in
+the figure that this patient presented a good Sensitivity (75.0). Similarly, this patient presented
+a slight Specificity (69.6). In this case, three
+false hyperglycemic states estimate by CGMS
+(GRT CGMS over 160 mgdL when ABG is below
+160 mgdL) were correctly detected as incorrect
+measurements by the classifier. According to the
+physicians opinion, the correct detection of the
+second false hyperglycemic episode by the proposed classifier is of great importance. For this
+
+5
+
+Conclusions
+
+CGMSs are not sufficiently accurate and reliable
+at present to be used for therapeutic decisions.
+This study has shown that new approaches of
+SVMs are a potential tool for developing a selfmonitoring fault detection system from the information provided by the monitor itself and by incorporating the dose of CII.
+SVM-1 can be a good alternative for detecting
+
+1085
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+scribed. These samples should be focused on hypoglycemias due to the importance of the correct
+and timely detection of these events. Further research will include a temporal analysis in which
+the previous diagnosis is also considered.
+
+Figure 1 Classification results of three representative patients according to the septic status.
+
+6
+
+Acknowledgements
+
+This work was supported by the Spanish Ministry
+of Science and Innovation through grant DPI2010-20764-C02, and it was partially supported by
+the Andalusian Regional Ministry of Economy, Innovation and Science through Simon (TIC-8052).
+Y. Leal is grateful for the CAPES-PNPD grant.
+
+(a) Accuracy
+
+References
+(b) Specificity
+
+Bequette, W. B. (2010). Continuous glucose monitoring real-time algorithms for calibration,
+filtering, and alarms, J Diabetes Sci Technol
+4 404418.
+Bequette, W. B. (2012). Challenges and recent progress in the development of a closedloop artificial pancreas, Annu. Rev. Control
+36 255266.
+
+(c) Sensitivity
+
+Bondia, J., Tarin, C., Garcia-Gabin, W., Esteve, E., Fernandez-Real, J. M., Ricart, W.
+and Veh, J. (2008). Using support vector
+machines to detect therapeutically incorrect
+measurements by the minimed cgms, J Diabetes Sci Technol 2 622629.
+
+(d) Gmean
+
+Cristianini, N. and Shawe-Taylor, J. (2000). An
+introduction to Support Vector Machines and
+other kernel-based learning methods, Cambridge University.
+
+correct and incorrect CGMS measurements, because a more balanced performance between Sensitivity and Specificity could be attained owing to
+the use of the Gmean metric. The obtained results
+can be considered as reliable and promising for
+patients with septic shock or sepsis, but cannot
+be considered as good for patients without sepsis. This greater reliability in patients with septic
+shock and sepsis, could be explained by the increase in capillary permeability observed in these
+two cohorts of patients. This increase in capillary
+permeability would result in an increase in the diffusion of the intravascular glucose to the interstitial space. Consequently, for these two cohorts of
+patients, the information provided by the monitor itself (Isig and GRT CGMS ), which is proportional to the glucose concentration in the interstitial space, would be more reliable. Patients with
+septic shock or sepsis are those most frequently admitted to the ICU. In this type of ICU patients,
+the glycemic control is often more difficult than in
+those without sepsis.
+
+Facchinetti, A., Del Favero, S., Sparacino, G.
+and Cobelli, C. (2011). Detecting failures of
+the glucose sensor-insulin pump system improved overnight safety monitoring for type-1
+diabetes., Proc. Engineering in Medicine and
+Biology Society, EMBC., pp. 49474950.
+Gonzalez-Abril, L., Angulo, C., Velasco, F. and
+Catala, A. (2005). Unified dual for biclass SVM approaches, Pattern Recognition
+38 17721774.
+Gonzalez-Abril, L., Angulo, C., Velasco, F. and
+Catala, A. (2006). Dual unification of biclass support_vector_machine formulations,
+Pattern Recognition 39 13251332.
+Gonzalez-Abril, L., Angulo, C., Velasco, F. and
+Ortega, J. A. (2008). A note on the bias
+in SVMs for multiclassification, IEEE Trans.
+Neural Netw. 19 723725.
+
+Further studies with a larger sample size are
+required to confirm the benefits previously de-
+
+1086
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Figure 2 Profiles of a patient with septic shock using standard SVM-Poly, SVM-1-Poly and SVM-2-Poly,
+respectively.
+SVM Patient with septic shock
+
+Glucose level mgdL
+
+250
+
+RTCGMS Valid Measurement
+
+RTCGMS Invalid Measurement
+
+ABG
+
+tneg
+
+tpos
+
+fneg
+
+200
+
+150
+
+100
+
+50
+1200 AM
+
+1200 AM
+Time Hours
+
+1200 AM
+
+SVM1 Patient with septic shock
+260
+240
+
+Glucose level mgdL
+
+220
+
+RTCGMS Valid Measurement
+
+RTCGMS Invalid Measurement
+
+ABG
+
+tneg
+
+tpos
+
+fpos
+
+fneg
+
+ABG
+ 145 mgdL
+RTCGMS  245 mgdL
+
+200
+180
+160
+140
+
+ABG
+ 131 mgdL
+RTCGMS  180 mgdL
+ABG
+ 109 mgdL
+RTCGMS  178 mgdL
+
+120
+100
+80
+60
+
+ABG
+ 74 mgdL
+RTCGMS  90 mgdL
+1200 AM
+
+ABG
+
+RTCGMS 
+
+63 mgdL
+81 mgdL
+1200 AM
+Time Hours
+
+1200 AM
+
+SVM2 Patient with septic shock
+260
+
+RTCGMS Valid Measurement
+
+RTCGMS Invalid Measurement
+
+ABG
+
+tneg
+
+tpos
+
+fpos
+
+fneg
+
+240
+
+Glucose level mgdL
+
+220
+200
+180
+160
+140
+120
+100
+80
+60
+1200 AM
+
+1200 AM
+Time Hours
+
+Gonzalez-Abril, L., Nunez, H., Angulo, C. and Velasco, F. (2014). Gsvm An svm for handling
+imbalanced accuracy between classes inbiclassification problems, Applied Soft Computing 17 2331.
+
+1200 AM
+
+accuracy in patients with septic shock, Diabetes Technol Ther 14 568575.
+Luijf, Y., Mader, J., Doll, W., Pieber, T., Farret, A., Place, J., Renard, E., Bruttomesso,
+D., Filippi, A., Avogaro, A., Arnolds, S., Benesch, C., Heinemann, L. and Devries, J.
+(2013). Accuracy and reliability of continuous glucose monitoring systems A headto-head comparison., Diabetes Technol Ther
+15 722727.
+
+He, H. and Garcia, E. A. (2009). Learning from
+imbalanced data, IEEE Trans. Know. and
+Data Eng 21 12631284.
+ISO (2003). International organization for standardization. in vitro diagnostic test systems
+requirements for blood-glucose monitoring
+systems for self-testing in managing diabetes
+mellitus. iso 15197.
+
+Signal, M., Le Compte, A., Harris, D., Weston,
+P., Harding, J. and Chase, J. (2012). Using
+stochastic modelling to identify unusual continuous glucose monitor measurements and
+behaviour, in newborn infants, BioMedical
+Engineering OnLine 11 doi10.11861475
+925X1145.
+
+Leal, Y., Ruiz, M., Lorencio, C., Bondia, J., Mujica, L. and Veh, J. (2013). Principal component analysis in combination with case-based
+reasoning for detecting therapeutically correct and incorrect measurements in continuous glucose monitoring systems., Biomedical
+Signal Processing and Control 8(6) 603614.
+
+Vapnik, V. (1998). Statistical Learning Theory,
+John Wiley  Sons, New York.
+Ward, W. K., Casey, H. M., Quinn, M. J., Federiuk, I. F. and Wood, M. D. (2004). A fully
+implantable subcutaneous glucose sensor array Enhanced accuracy from multiple sensing units and a median-based algorithm, Diabetes Technol Ther 5 943952.
+
+Lorencio, C., Leal, Y., Bonet, A., Bondia, J.,
+Palerm, C. C., Tache, A., Sirvent, J.-M. and
+Veh, J. (2012). Real-time continuous glucose
+monitoring in an intensive care unit Better
+
+1087

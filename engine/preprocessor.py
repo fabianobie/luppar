@@ -3,16 +3,18 @@
 import nltk
 import re
 import unicodedata
+import numpy as np
 
 from nltk.corpus import stopwords
 from os.path import isfile
 from engine.index import InvertedIndex
+from engine.nltk.pos_tag import PosTagger
 from engine.util import save_object, load_object
 
 
 class Preprocessor(object):
 
-    def __init__(self,source,use_stop_words=False,stemming=None,pos_tag=False,numbers=False,file_path="../data/",lang='en', save=True):
+    def __init__(self,source,use_stop_words=False,stemming=None,pos_tag=False,numbers=False,file_path="../data/",lang='en', save=True, reduce=True,expand_terms=False):
         self.source = source
         self.stemming = stemming
         self.file_path = file_path
@@ -20,6 +22,8 @@ class Preprocessor(object):
         self.__use_stop_words = use_stop_words
         self.pos_tag = pos_tag
         self.lang = lang
+        self.reduce = reduce
+        self.expand_terms = expand_terms
 
         self.representation = None
         self.querys = None
@@ -27,6 +31,7 @@ class Preprocessor(object):
         self.__querys_file = '/tmp/querys%s.idx'
         self.__stemming_list = None
         self.save = save
+        self.__pos = PosTagger()
 
         if self.__use_stop_words:
             self.stop_words = self.get_stop_words()
@@ -74,25 +79,46 @@ class Preprocessor(object):
                  for word in nltk.word_tokenize(self.clear_text(sent))
                  if not self.use_stop_words or word not in self.stop_words]
 
+        #if self.expand_terms:
+        # ts_tmp = []
+        # for t in terms:
+        #     ts_tmp.append(t)
+        #     if '_' in t:
+        #         ts_tmp.extend([w for w in t.split('_') if w])
+        # terms = ts_tmp
 
-        terms = self.reduction(terms)
-
-        if self.pos_tag:
-            terms = nltk.pos_tag(terms)
+        if self.reduce:
+            terms = self.pos_tagger(terms)
+            terms = self.reduction(terms)
 
         if self.stemming:
-            if not self.pos_tag:
-                stems = [self.stem(t) for t in terms]
+            if self.reduce and not self.pos_tag:
+                stems = [self.stem(tr) for (tr,tg) in terms]
+            elif not self.reduce and not self.pos_tag:
+                stems = [self.stem(tr) for tr in terms]
+            elif not self.reduce and self.pos_tag:
+                terms = self.pos_tagger(terms)
+                stems = [(self.stem(tr), tg) for (tr, tg) in terms]
             else:
                 stems = [(self.stem(tr),tg) for (tr,tg) in terms]
             return stems
+        else:
+            if self.pos_tag:
+                terms = self.pos_tagger(terms)
+                terms = [tr for (tr,tg) in terms]
+            elif not self.pos_tag:
+                terms = [tr for (tr, tg) in terms]
+
         return terms
 
     def stem(self, term):
 
-        if self.stemming:
+        if self.stemming and len(term)>1:
             stemmer = self.get_stemming(self.stemming)
-            term = stemmer.stem(term).lower()
+            if '_' in term:
+                term = '_'.join([stemmer.stem(p).lower() for p in term.split('_') if p])
+            else:
+                term = stemmer.stem(term).lower()
         return term
 
     def ngram_tokenize(self, text=''):
@@ -124,8 +150,10 @@ class Preprocessor(object):
         #If Numbers
         nb = '0-9' if self.numbers else ''
         #Clear text
-        text = text.replace(u'-\n', '').replace(u'-\r\n', '')
-        text = re.sub(u'[^a-zA-ZáéíóúÁÉÍÓÚâêîôÂÊÎÔãõÃÕçÇ'+nb+' ]', ' ', text).strip().lower()
+        #text = text.replace(u'-\n', '').replace(u'-\r\n', '').replace(u'- ', '')
+        text = text.replace(u'-\n', ' ').replace(u'-\r\n', ' ')
+        text = re.sub(u'[^a-zA-ZáéíóúÁÉÍÓÚâêîôÂÊÎÔãõÃÕçÇ_\-'+nb+' ]', ' ', text).strip().lower()
+
 
         return text
 
@@ -134,8 +162,16 @@ class Preprocessor(object):
             data = str(data, "utf-8")
         return ''.join((c for c in unicodedata.normalize('NFD', data) if unicodedata.category(c) != 'Mn'))
 
-    def reduction(self,terms):
-        return terms
+    def reduction(self,tokens):
+        if self.reduce:
+            tokens = [(tr, tg) for (tr, tg) in tokens if 'NN' in tg or 'JJ' in tg or 'VB' in tg or 'RB' in tg]
+        return tokens
+
+    def pos_tagger(self,terms):
+        if self.lang=='pt-br':
+            return self.__pos.pos_tagger_portuguese(terms)
+        else:
+            return self.__pos.pos_tagger_english(terms)
 
     @property
     def use_stop_words(self):
@@ -146,6 +182,14 @@ class Preprocessor(object):
         self.__use_stop_words = value
         if self.__use_stop_words:
             self.stop_words = self.get_stop_words()
+
+
+    def avg_querys(self):
+        return np.sum([len(nltk.tokenize.word_tokenize(q.text)) for q in self.get_representation_query(force=False)]) / len(self.get_representation_query(force=False))
+
+    def avg_docs(self):
+        return np.sum([len(nltk.tokenize.word_tokenize(d.text)) for d in self.source.read_docs()]) / self.source.total_docs()
+
 
 
 
@@ -169,8 +213,8 @@ class PortuguesePreprocessor(Preprocessor):
         source = source
         super(PortuguesePreprocessor,self).__init__(source=source,stemming='rslps',file_path="../data/",use_stop_words=use_stop_words,lang='pt-br')
 
-    def reduction(self,terms):
-        return [t for t in terms if len(t)>2]
+    # def reduction(self,terms):
+    #     return [t for t in terms if len(t)>2]
 
 
 

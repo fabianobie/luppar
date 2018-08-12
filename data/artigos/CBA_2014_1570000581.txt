@@ -1,0 +1,620 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+IMPLEMENTAÇÃO DE OTIMIZADOR PARA MELHORIA DO APROVEITAMENTO
+ENERGÉTICO DO SISTEMA DE CALDEIRAS DE UMA REFINARIA
+MARIO CESAR MELLO MASSA DE CAMPOS
+MARIOCAMPOS@PETROBRAS.COM.BR
+PETROBRAS
+CRISTINE KAYSER
+CRISTINE@TRISOLUTIONS.COM.BR
+TRISOLUTIONS CONTROLE E OTIMIZAÇÃO DE PROCESSOS
+RICARDO GUILHERME DURAISKI
+DURAISKI@TRISOLUTIONS.COM.BR
+TRISOLUTIONS CONTROLE E OTIMIZAÇÃO DE PROCESSOS
+CRISTHIANE JACQUES DO NASCIMENTO
+CRISTHIANE@TRISOLUTIONS.COM.BR
+TRISOLUTIONS CONTROLE E OTIMIZAÇÃO DE PROCESSOS
+FERNANDO ZANELLA
+FZANELLA@PETROBRAS.COM.BR
+PETROBRAS
+DOUGLAS FALLEIROS BARBOSA LIMA
+DFALLEIROS@PETROBRAS.COM.BR
+PETROBRAS
+WOLFGANG SCHWANER
+WOLFGANGKS@PETROBRAS.COM.BR
+PETROBRAS
+HENRIK CHAVES
+HENRIK@PETROBRAS.COM.BR
+PETROBRAS
+PATRÍCIA SAKAI
+PATRICIA.SAKAI@PETROBRAS.COM.BR
+PETROBRAS
+Abstract  This work presents the steps involved at the implementation of an optimizer, with the objective of improving the energetic use of a refinerys five boilers system, besides of the economical and environmental gains associated. The optimizer will
+be responsible for distributing, at the best manner possible, the load of the boilers that are aligned to the steams header pressure
+control. The software will be configured to minimize the costs of the fuel used to warm the water, having as restriction keeping
+constant the total steam flow generated. The models that will be used at the optimizer will be the five boilers non-linear efficiency curves.
+Keywords  On line optimization solution for utilities, boiler optimization, advanced control of boiler load, steam generating,
+boilers, and energetic efficiency of boilers.
+Resumo  Este trabalho apresentará as etapas envolvidas na implementação de um otimizador, que objetiva melhorar o aproveitamento energético do sistema de cinco caldeiras de uma refinaria, além da estimativa dos ganhos econômicos e ambientais associados. O otimizador será responsável por distribuir, da melhor forma possível, as cargas das caldeiras que estão alinhadas para o
+controle_de_pressão do header de vapor. O software está configurado de forma a minimizar o custo com os combustíveis utilizados para gerar vapor, tendo como restrição manter constante a vazão total de vapor que está sendo gerada. Os modelos utilizados
+no otimizador são as curvas de eficiência teórica das cinco caldeiras.
+Palavras-chave  . No caso de um
+sistema de caldeiras, uma operação eficiente também
+é importante para minimizar tanto o consumo de
+combustível (consequentemente minimizando o
+
+1 INTRODUÇÃO
+A operação estável e eficiente do sistema de utilidades de qualquer planta industrial é de suma im-
+
+3282
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+mentado na caldeira, bem como o controle de inventário, serão descritos a seguir.
+Para controlar a vazão de combustível em cada
+uma das caldeiras, está implementada a estratégia de
+limites cruzados entre o combustível e o ar de combustão. Esta estratégia atua mantendo sempre uma
+maior vazão de ar em detrimento da vazão de combustível, assim, quando este precisar ser alterado, há
+garantia de excesso de ar para a queima completa do
+combustível.
+Para que a estratégia de limite cruzado possa ser
+realizada, há um sistema de tiragem forçada de ar nas
+caldeiras. Isto significa que há um ventilador instalado no início da tubulação de ar, que sopra ar de combustão para dentro da câmara de combustão. Este
+sistema, além de auxiliar na estratégia de controle de
+limite cruzado, também controla o excesso de O2 nos
+gases de combustão, melhorando assim o rendimento
+das caldeiras. O ar injetado sofre um préaquecimento, recebendo calor dos gases de combustão que saem das caldeiras.
+O inventário do sistema é mantido pela injeção
+de água no tubulão superior das caldeiras. Para manter o nível deste tubulão, é utilizada uma estratégia
+com controle antecipatório (feedforward) e controle
+por realimentação (feedback). O controle antecipatório altera a vazão de entrada de água no tubulão a
+partir da vazão de vapor na saída da caldeira, e o
+controle por realimentação fica encarregado de manter o nível do tubulão em torno de um setpoint. Com
+esse controle, há uma ação rápida com a variação da
+saída de vapor aliado ao controle de setpoint do nível.
+
+custo de geração_de_vapor), quanto  emissão de
+CO2, por questões ambientais.
+Com base nisto, este trabalho apresentará as etapas envolvidas na implementação de um otimizador,
+que objetiva melhorar o aproveitamento energético
+do sistema de cinco caldeiras, que possuem diferentes capacidades, de uma refinaria, além da estimativa
+dos ganhos econômicos e ambientais associados.
+Inicialmente, as três caldeiras de maior capacidade
+estão operando com o otimizador. Após a realização
+de reformas, as outras duas caldeiras passarão a também operar com o software.
+O otimizador será responsável por distribuir, da
+melhor forma possível, as cargas das caldeiras que
+estão alinhadas para o controle_de_pressão do header
+de vapor. O software está configurado de forma a
+minimizar o custo com os combustíveis utilizados
+para gerar vapor, tendo como restrição manter constante a vazão total de vapor que está sendo gerada.
+Os modelos utilizados no otimizador são as curvas de
+eficiência teórica das cinco caldeiras.
+Os ganhos potenciais econômicos e ambientais
+com este tipo de projeto são bastante expressivos se
+a implementação do otimizador aumentar em 0,5 a
+eficiência do sistema de caldeiras, há uma redução de
+custo de US0,30 por tonelada de vapor gerado.
+Considerando a carga média das três caldeiras, a
+economia anual estimada pode ser superior a um
+milhão de dólares por ano. A seguir é apresentada,
+primeiramente, uma descrição da unidade avaliada, e
+então são detalhadas as etapas globais do projeto, que
+são
+a) a alteração da estrutura de controle
+b) implementação do otimizador e
+c) quantificação dos resultados obtidos.
+1.
+
+Descrição da unidade
+
+Nas caldeiras, o vapor é gerado a partir da energia liberada em forma de calor pela queima de combustíveis. Para gerar energia, as caldeiras da unidade
+podem utilizar gás combustível, óleo eou diesel,
+sendo que há uma preferência pela queima do gás
+combustível.
+As caldeiras são do tipo aquatubular, ou seja, o
+vapor é produzido dentro de tubos na sua fornalha,
+enquanto que os gases de combustão circulam externamente a eles. A fornalha consiste numa câmara
+com queimadores, em que o ar e o combustível são
+misturados e queimados. Ao entrar em contato com
+as paredes dos tubos do sistema de água, os gases da
+queima transferem parte do calor para a água, gerando vapor saturado. Para evitar danos aos equipamentos, o vapor que sai do tubulão é superaquecido para
+remoção de gotículas de água. Após o superaquecedor há um sistema dessuperaquecedor, que desvia
+parte da água destinada ao tubulão e a borrifa juntamente com vapor saturado seco, para controlar a
+temperatura do vapor que sai da caldeira. Para exemplificar, a Figura 1 apresenta os controladores da
+caldeira 1. O controle da vazão de combustível ali-
+
+Figura 1 Fluxograma da caldeira 1
+
+2.
+2.1
+
+Estrutura de controle
+Controle de pressão original do sistema de
+caldeiras
+
+Como comentado na seção 1, a estratégia de
+controle utilizada é a de limites cruzados. Conforme
+descrito por Campos e Teixeira (2006), a lógica de
+limite cruzado tem por objetivo garantir que sempre
+haja um excesso de ar na caldeira, garantindo a
+queima total do combustível. A Figura 2 apresenta
+uma representação simplificada desta estratégia.
+
+3283
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Figura 3 Fluxograma simplificado da estratégia de
+controle proposta
+O controlador de pressão do header possui sintonia variável, que é calculada em função das caldeiras
+que estão habilitadas para controle. O parâmetro
+externo que define qual conjunto de sintonia deve ser
+utilizado é determinado através do cálculo do somatório da capacidade das caldeiras que possuem HIC
+em modo AUTO ou AUTOHOST e que estão fora
+de saturação (limites inferior e superior). A contribuição de cada caldeira no cálculo do ganho e tempo
+integral do controlador será levada em consideração
+dependendo do valor do seu HIC. Tal valor será igual
+a 1 se seu modo de operação estiver em AUTO ou
+em AUTOHOST e se a sua saída não atingir o limite
+mínimo ou o máximo, definido no limitador. Caso
+alguma dessas condições não for satisfeita, o valor do
+HIC da caldeira será nulo e, dessa forma, sua contribuição no cálculo dos parâmetros do controlador de
+pressão não será considerada.
+Além disso, no controlador de pressão do header
+será implementado futuramente um bloco feedforward, a fim de minimizar o efeito da queda (trip) de
+um equipamento (informado através de um tag de
+identificação deste evento) no sistema de geração de
+vapor. As caldeiras que estiverem no modo AUTO
+ou AUTOHOST serão utilizadas na minimização do
+efeito do trip de um equipamento.
+
+Figura 2 Estratégia de limite cruzado, implementada
+em cada caldeira, exemplificada para o controle de
+vazão de um combustível apenas.
+Nesta estratégia, a saída do controlador de pressão (PIC-01), quando o HIC está habilitado, o sinal
+de controle segue para dois seletores, um de passamaior, que ajustará o setpoint para a vazão de ar
+(FIC-02) entre as duas recebidas. Também há um
+seletor do tipo passa-menor, que escolherá o valor
+mais baixo para definir o setpoint de vazão para o
+combustível (FIC-05, exemplificando apenas para a
+vazão de gás). A leitura da vazão de ar é feita pelo
+FIT-02 e passa por um bloco de cálculo que calcula a
+porcentagem de vazão de combustível que equivale 
+vazão de ar medida. Este valor é repassado para o
+seletor de menor e para o controlador FIC-02. Notase que dentro da malha_de_controle, todos os sinais
+estão em porcentagem de combustível.
+
+2.2
+
+Nova estratégia de controle_de_pressão
+implementada
+
+3.
+
+Otimização linear
+
+Em uma otimização busca-se minimizar ou maximizar uma função objetivo através da escolha sistemática dos valores de variáveis reais ou inteiras
+dentro de um conjunto viável. Nestes problemas a
+função objetivo está frequentemente associada a
+receitas ou despesas e a solução do problema obterá
+as condições que maximizam ou minimizam estes
+valores. A viabilidade do problema, por sua vez, é
+definida por suas restrições (em geral são variáveis
+ou funções), que delimitam uma região que será
+avaliada na solução da otimização.
+Quando a função objetivo a ser otimizada e as
+restrições que delimitam o problema são lineares,
+tem-se um problema de otimização linear. Neste
+caso, todo ótimo local pode ser considerado como
+
+A ideia principal é se ter um controle central de
+pressão envolvendo as cinco caldeiras. A estratégia
+de controle utilizada em cada caldeira continua sendo
+de limites cruzados, porém ao invés de apenas uma
+caldeira controlar a pressão da câmara de combustão,
+todas as caldeiras recebem o sinal do PIC. Um esboço da estrutura que foi implementada no SDCD é
+apresentado na Figura 3.
+Para que a ação de controle do PIC-XX1 possa
+ser distribuída de maneira flexível entre as diferentes
+caldeiras, e também a fim de habilitar ou não determinada caldeira para controlar a pressão do header,
+são inseridos blocos HIC entre a saída do PIC-XX1 e
+as entradas do sistema de combustão de cada caldeira.
+
+3284
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+ção realizada foi a criação de uma interface de modelo, capaz de interpretar um modelo não_linear de
+processo e, em tempo_real, linearizar este modelo em
+torno do ponto operacional atual. Como o otimizador
+e o modelo do processo são estacionários, também
+foi necessário modificar o otimizador para predizer
+os valores estacionários das variáveis dependentes e
+corrigi-las com dados de processo.
+Feitas as devidas adaptações do otimizador, configurou-se esta ferramenta para realizar otimizações
+limitando-se a variação máxima permitida para os
+targets calculados, a fim de que, a cada solução, os
+passos fossem pequenos e a planta evoluísse lentamente para um ponto ótimo. A cada novo ciclo de
+cálculo do otimizador, a nova linearização do modelo
+permite que a forma da função objetivo linear proposta fosse sendo modificada e, consequentemente,
+um novo redirecionamento para o ponto ótimo fosse
+gerado.
+
+um ótimo global e a solução ótima do problema pode
+ocorrer apenas em um ponto da fronteira do conjunto
+de pontos viáveis.
+Em problemas_de_otimização lineares, existem
+duas situações nas quais uma solução ótima não pode
+ser encontrada. Primeiro, se as restrições forem contraditórias (por exemplo, x  2 e x  1), a região
+factível é vazia e não pode haver solução ótima, já
+que não pode haver solução nenhuma. Neste caso, o
+problema é dito inviável. Alternativamente, a área
+pode ser ilimitada na direção da função objetivo (por
+exemplo maximizar 5x1 + 6 x2 sujeito a x1  10, x2 
+10, x1 + x2  30). Neste caso não existe solução ótima, uma vez que soluções arbitrariamente grandes da
+função objetivo podem ser construídas e o problema
+é dito ilimitado.
+Fora estas duas condições específicas, o ótimo é
+sempre alcançado em um vértice da área. Entretanto,
+o ótimo nem sempre é único e é possível se ter um
+conjunto de soluções ótimas cobrindo uma aresta da
+área delimitada, ou até mesmo na área inteira.
+A Figura 4 demonstra um exemplo clássico da
+área de busca delimitada pelas restrições em um
+problema de otimização. Neste caso, as restrições
+estão representadas pelas retas delimitando o poliedro, sendo assim, a solução da otimização estará na
+fronteira da área cinza. Dependendo da configuração
+do problema, o ponto ótimo será um dos vértices
+deste poliedro ou aresta inteira.
+
+5.
+
+O objetivo da implementação do otimizador na
+unidade em questão é distribuir de forma ótima,
+através da manipulação das vazões de combustível,
+as cargas das caldeiras que estão alinhadas para o
+controle_de_pressão do header de vapor.
+O software utilizado será configurado de forma a
+otimizar a geração_de_vapor, através da minimização
+do custo com os combustíveis utilizados para geração
+de vapor, tendo como restrição manter constante a
+vazão total de vapor que está sendo gerada. Tal software promove a otimização linear dos custos das
+variáveis manipuladas e controladas, além de trabalhar com outros termos na função objetivo tais como
+supressão de movimentos e máxima variação de
+variáveis independentes, IRVs (ideal reference values) para dependentes e independentes, faixas de restrições para dependentes e restrições rígidas para
+variáveis independentes.
+5.1
+
+Variáveis Envolvidas
+
+A Tabela 1 apresenta as variáveis de entrada e de
+saída do otimizador. As variáveis de entrada, também
+chamadas de variáveis independentes, podem ser
+classificadas como
+
+Figura 4 Exemplo de uma região possível para a
+solução de problemas lineares
+4.
+
+Implementação do otimizador
+
+- variáveis de decisão  nas quais será aplicada a
+ação calculada pelo otimizador.
+- variáveis de leitura  utilizadas apenas para leitura de PV do processo.
+
+Otimização evolutiva
+
+O conceito de otimização_evolutiva surge da incapacidade de se determinar um ótimo global em um
+processo_industrial de forma fácil e rápida. Na otimização_evolutiva não se busca necessariamente o ótimo em cada atuação do otimizador, mas sim, um
+ponto em que a condição operacional seja melhor do
+que a atual. Isto faz com que após uma sequência de
+atuações evolua-se para o ótimo operacional.
+Neste sentido, modificou-se um otimizador, originalmente linear , a fim de utilizá-lo de forma evolutiva na produção de vapor. A principal modifica-
+
+Enquanto que as variáveis de saída, isto é, as variáveis dependentes, podem ser classificadas como
+- variáveis de otimização  nesta aplicação são
+as vazões de combustível das caldeiras.
+- variáveis de restrição  nesta aplicação é a vazão total de vapor produzido pelas caldeiras que
+estão sendo otimizadas.
+
+3285
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+É importante salientar que as curvas de eficiência teórica serão corrigidas a cada atuação do otimizador.
+
+Tabela 1 Variáveis de entrada_e_saída do otimizador
+(i representa o número da caldeira, de 1 a 5)
+Descrição
+
+Tipo
+
+5.3
+
+Variáveis de Entrada
+Controle de pressão do header na
+caldeira i (distribuição de carga)
+
+Decisão
+
+Vazão de vapor gerado na caldeira i
+
+Leitura
+
+Vazão de combustível gás para
+caldeira i
+
+Leitura
+
+Eficiência real da caldeira i
+
+Leitura
+
+Vazão de combustível óleo para a
+caldeira i (válido para as caldeiras 4
+e 5)
+
+Leitura
+
+Modo de operação da malha de
+vazão de gás da caldeira i (válido
+para as caldeiras 4 e 5)
+
+Leitura
+
+Temperatura de aquecimento do
+sistema de óleo
+
+Leitura
+
+Curvas de Eficiência
+
+Nesta seção, serão apresentadas as curvas de eficiência teórica que foram implementadas no otimizador para cada caldeira, considerando os diferentes
+combustíveis gás, óleo tipo 1 e óleo tipo 2. Tais
+curvas são mostradas na Figura 5.
+
+Variáveis de saída
+Vazão de combustível gás estimada
+pelo otimizador para a caldeira i
+
+Otimização
+
+Vazão de combustível óleo estimada pelo otimizador para a caldeira i
+(válido para as caldeiras 4 e 5)
+
+Otimização
+
+Vazão total de vapor estimada pelo
+otimizador
+
+Restrição
+
+5.2
+
+Figura 5 Curvas de eficiência teórica das caldeiras
+em estudo
+5.4
+
+Comissionamento Offline do Otimizador
+
+A fim de se verificar o comportamento do otimizador e realizar um comissionamento prévio dos
+parâmetros de ajuste deste, foi montada uma simulação simplificada do processo em SimulinkMatlab.
+Nos itens 5.4.1. e 5.4.2., são descritos, respectivamente, a estrutura do teste e os resultados obtidos.
+
+Função Objetivo
+
+O objetivo do otimizador é produzir a quantidade total de vapor requisitada pelo sistema, minimizando o custo total dos combustíveis. Este cálculo é
+baseado na eficiência teórica de cada caldeira, que é
+uma função da carga e do tipo de combustível utilizado. A equação abaixo apresenta a função objetivo.
+É importante ressaltar que as caldeiras 4 e 5 irão
+utilizar gás eou óleo como combustível, enquanto
+que as caldeiras 1, 2 e 3 utilizam apenas gás.
+
+5.4.1
+
+Estrutura de testes
+
+Na simulação elaborada (Figura 6), três caldeiras
+das cinco do processo foram representadas. Estas
+caldeiras e os seus principais controladores foram
+implementados utilizando-se os blocos de função de
+transferência e de controladores do tipo PID.
+
+Sendo
+
+
+
+
+
+
+FCgi  vazão de combustível gás, estimado através da saída do HIC e da eficiência teórica da caldeira i para este
+combustível.
+FCoi  vazão de combustível óleo, estimado através da saída do HIC e da eficiência teórica da caldeira i para este
+combustível.
+gas e oleo  custo do gás e do óleo
+combustível, respectivamente.
+
+Figura 6. Estrutura de bloco utilizada para simulação.
+A simulação foi conectada a um servidor OPC
+de testes, bem como ao otimizador. Os valores gerados pela simulação eram lidos pelo otimizador, como
+se fossem do processo, e este por sua vez calculava
+ações que eram implementadas na simulação, em um
+
+3286
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Através desta tela, é possível selecionar quais
+caldeiras serão manipuladas pelo otimizador. Para
+permitir que o otimizador escreva ações na variável,
+além da chave estar na posição ligada, é necessário
+habilitar o modo HOST do bloco HC. Este modo
+permite escrita remota, neste caso oriundo do servidor onde o otimizador é executado.
+O valor do HC calculado pelo otimizador também é mostrado para cada uma das caldeiras. Quando
+uma variável está fora de um dos limites, a cor do
+texto passa para vermelho e uma seta indicando qual
+dos limites foi violado aparece do lado da variável
+seta apontando para cima indica que o limite superior
+foi violado, por exemplo. Quando uma variável fora
+dos limites está ligada e o modo HOST está habilitado, o otimizador leva a variável para dentro da faixa
+respeitando a máxima variação permitida por atuação.
+Nesta tela, também são mostrados os limites
+máximo e mínimo para operação do otimizador, que
+são definidos pelo usuário através do faceplate da
+chave ligadesliga de cada HC. Além disso, são apresentadas a última ação aplicada pelo otimizador nas
+variáveis, a condição da variável no otimizador (ou
+seja, se a otimização está sendo executada para esta
+variável).
+Além das informações citadas acima, a tela de
+operação também fornece outras que também são
+relevantes para facilitar a operação do otimizador.
+São também apresentados os valores de carga e de
+eficiência das caldeiras, além de atalhos para as telas
+gerais das caldeiras. Os campos apresentados no
+canto inferior direito da tela tem como objetivo indicar o status geral do otimizador, conforme descrito a
+seguir
+ Última Atualização indica a data e hora da última ação escrita pelo otimizador.
+ Controle Ativo verde indica que a otimização está ativa, amarelo que está inativa.
+ Estado Geral verde indica que o otimizador está conseguindo comunicar com
+SDCD, amarelo indica que não há comunicação. Quando houver um problema de comunicação automaticamente todos os HC saem do modo HOST, e
+voltam para o modo de operação anterior.
+ Validade Otimização verde indica que
+os cálculos de otimização convergiram
+para um valor, amarelo que não houve
+convergência nos cálculos do otimizador.
+
+intervalo de 200s. É válido destacar que a dinâmica
+utilizada na simulação difere da real e que o tempo
+total de cada simulação é de 4.000s.
+Para testar e comissionar o otimizador foram
+montados diferentes cenários de simulação, em todos
+os blocos HIC de todas as caldeiras estavam em
+modo AUTOHOST. Desta forma, o que foi variado
+entre os cenários foi o seguinte
+BIAS de segurança diferença entre HIC e saída
+do PIC, simula situação quando o bloco HIC foi
+passado de MAN para AUTO.
+Sinal do HIC sendo enviado para vazão de óleo
+ou para gás na caldeira 5 simula as diferenças entre a
+manipulação de óleo ou gás na caldeira 5 para controle_de_pressão, já que apenas um dos dois combustíveis pode ser selecionado para esta função.
+Correção da curva de eficiência teórica simula o
+impacto desta correção se a diferença entre a eficiência real e a teórica fosse de 5.
+MovWeigth parâmetro do otimizador pelo qual
+a função objetivo pondera os movimentos das variáveis de decisão. Este serve para garantir que todo o
+movimento_realizado nesta variável implicará em
+uma penalização da função objetivo. Quanto maior
+for este peso maior será esta penalização e menor a
+tendência de ocorrerem variações nos valores desta
+variável.
+
+5.4.2
+
+Resultados dos testes
+
+A partir dos testes realizados, foi possível levantar observações gerais que devem ser consideradas na
+implementação
+É necessário determinar de forma precisa os limites de atuação do otimizador, valor máximo e
+mínimo permitido, pois como este é linear sempre
+direciona as ações até que um dos limites tenha sido
+atingido.
+A caldeira que estiver utilizando óleo como variável manipulada sempre terá sua carga minimizada
+devido  diferença significativa entre o custo do gás e
+do óleo.
+A correção da eficiência teórica influencia de
+forma significativa a atuação do otimizador, que
+pode passar a dar preferência de manipulação para
+uma determinada caldeira, ou então, aplicar ações de
+forma mais suave.
+A alteração no parâmetro MovWeight apenas
+suaviza os passos aplicados pelo otimizador.
+5.5
+
+Comissionamento Online do Otimizador
+
+Conforme comentado anteriormente, o otimizador está atuando em três das cinco caldeiras que
+compõem o sistema em estudo. Futuramente, o software passará a atuar também sobre as outras duas
+caldeiras. Para possibilitar a operação do otimizador,
+foi implementada no SDCD uma tela específica para
+este fim.
+
+6.
+
+Ganhos decorrentes da implementação do
+otimizador
+
+A alteração na estrutura de controle_de_pressão
+do header, apresentada na seção 3.2, foi realizada
+
+3287
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+aproveitamento da energia fornecida para geração de
+vapor. Quando esse objetivo é atingido, a consequência direta é a diminuição do custo total de combustível utilizado para a geração_de_vapor. Este fato acarreta na diminuição do custo de geração_de_vapor
+(ganho financeiro) e aponta também para a redução
+da emissão de CO2 (ganho ambiental).
+Para que o otimizador pudesse cumprir seu papel
+de forma eficiente, foi necessário alterar a estratégia
+de controle_de_pressão do header, tornando-a unificada. Como mostrado na seção 6, a nova estratégia de
+controle estabilizou a pressão do header, já que a
+estratégia de controle implementada consegue lidar
+de forma mais eficiente com distúrbios que ocorrem
+no processo. Além disso, foi possível perceber, através da análise do comportamento da eficiência global
+do sistema e dos HCs, que a atuação do otimizador
+está conseguindo aumentar a eficiência do sistema de
+caldeiras.
+
+para possibilitar a implementação do otimizador. Ao
+comparar o comportamento da pressão do header em
+um período anterior e posterior  modificação na
+estratégia de controle, é possível perceber que houve
+estabilização (diminuição do desvio padrão) desta
+variável. Tal comparação é apresentada na Figura 7.
+A curva vermelha representa o modo de operação
+desta malha 0 indica que a pressão do header é controlada por apenas uma caldeira (estratégia antiga) e
+valor 1 indica que o controle da pressão do header é
+unificado (nova estratégia). É possível perceber que a
+variabilidade da pressão cai quando a nova estratégia
+é ativada.
+
+Referências Bibliográficas
+CAMPOS, M. C. M. TEIXEIRA, H. C. G. Controles típicos de equipamentos e processo industriais,
+Edgard Blcher, São Paulo, 2006
+
+Figura 7 Estabilização da pressão do header decorrente da alteração na estratégia de controle
+
+MLLER, G. H. PEREIRA, U. G.
+LARGURA, L ROSSI, C. T. Otimização Linear
+Agregando Valor na Distrubuição de Matéria Prima
+de uma Indústria Petroquímica. Petro  Química,
+Junho2012.
+
+A Figura 8 apresenta o comportamento dos HCs
+das três caldeiras atualmente manipuladas pelo otimizador. Na mesma figura, também é apresentada a
+curva de eficiência global das três caldeiras. É possível perceber que a atuação do otimizador aumenta a
+eficiência do sistema.
+Os ganhos econômicos decorrentes desta aplicação ainda estão sendo quantificados e validados.
+Porém estimativas iniciais apontam que o retorno
+anual desta aplicação é de cerca de dois milhões de
+dólares por ano. Este ganho advém da economia
+verificada no custo total do combustível utilizado
+para gerar o vapor necessário para a operação da
+refinaria.
+
+Figura 8 Comportamento dos HCs das caldeiras e da
+eficiência global
+7.
+
+Conclusões
+
+A implementação do otimizador no sistema de
+caldeiras em estudo tem o objetivo de aumentar o
+3288

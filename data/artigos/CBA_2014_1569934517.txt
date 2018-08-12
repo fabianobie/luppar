@@ -1,0 +1,722 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+A MULTI-OBJECTIVE APPROACH FOR SINGLE ROBOT ENVIRONMENT EXPLORATION
+KOSSAR JEDDISARAVI1, REZA JAVANMARD ALITAPPEH2, LUCIANO C. A. PIMENTA3, FREDERICO G. GUIMARAES4
+1,2
+
+Graduate Program in Electrical Engineering, Federal University of Minas Gerais
+Av Antônio Carlos 6627, 31270-901, Belo Horizonte, MG, Brazil
+E-mails 1Kossarjs@ufmg.br
+3,4
+
+School of Engineering, Federal University of Minas Gerais
+Av Antônio Carlos 6627, 31270-901, Belo Horizonte, MG, Brazil
+E-mails 2rezajavanmard64@gmail.com, 3lucpim@cpdee.ufmg.br, 4fredericoguimaraes@ufmg.br
+Abstract This work addresses the problem of single robot coverage and exploration of an environment with the aim of finding
+a specific previously known object. As limited time is a constraint of interest we cannot search for an infinite number of points.
+Thus, we propose to find good points to place the robot sensors in order to acquire information from the environment and find the
+desired object. Given the interesting properties of the Generalized Voronoi Diagram (GVD), we define the search points along
+this roadmap. We redefine the problem of finding these good search points as a multi-objective optimization one. NSGA-II is
+used as optimizer and ELECTRE I is applied as a decision making tool. Simulations on Stage with implementation in ROS are
+also presented.
+Keywords Robotic Exploration, Multi-Objective Planning, Generalized Voronoi Diagram, NSGA-II
+Resumo Este trabalho trata do problema_de_cobertura e exploração de um ambiente por um único robô com o objetivo de
+encontrar um objeto específico previamente conhecido. Como o limite de tempo é uma restrição de interesse, a busca ao longo de
+um número infinito de pontos é inviável. Propõe-se encontrar bons pontos para serem visitados pelos sensores do robô de forma a
+adquirir informação do ambiente e encontrar o objeto desejado. Dadas as propriedades interessantes do Diagrama de Voronoi
+Generalizado (GVD), os pontos de busca são definidos ao longo deste mapa de rotas. O problema de encontrar estes pontos de
+busca é redefinido como um problema de otimização_multi-objetivo. O NSGA-II é usado para realizar a otimização e o
+ELECTRE I é utilizado na tomada de decisão. Simulações no Stage com implementações no ROS também são apresentadas.
+Palavras-chave 
+
+1
+
+we propose a strategy to explore an environment to
+find a specific object given the constraint that it is
+not possible to wait for a full exploration of the environment.
+Typically, searching and exploring an area to
+find a specific object has been defined as an optimization problem. The main goal is to minimize or
+maximize objective functions such as time of
+search, covered area, etc.
+A common approach for this type of search
+problem is an iterative solution so that in each step
+the question where should the robot go next or
+where is the Next-Best View (NBV)? must be answered. Gonzalez and Latombe (2002) tried to find
+the next Best View by incorporating two main features safe navigation and avoidance of overlap between each new local model and the current map.
+They also proposed the concept of safe regions the
+largest region, which is free of obstacle.
+The proposed solution in (DasGupta et al., 2004)
+is based on an aggregationrenement approach in
+which the continuous search space is partitioned into
+a nite collection of regions on which they dene a
+discrete search problem. A solution to the original
+problem is obtained through a renement procedure
+that lifts the discrete path into a continuous one.
+Amigoni and Gallo (2005) proposed a multiobjective exploration strategy for mobile robots that
+
+Introduction
+
+Exploration is an important task in different applications of robotics such as surveillance, cleaning, and
+coverage. Exploring a given area with robots requires
+the specification of paths that cover the whole environment. This type of problem is well known as
+Coverage Path Planning. In Coverage Path Planning
+the robot must traverse all points of the area while
+avoiding collisions (Galceran and Carreras, 2013).
+The requirements of a coverage path planning algorithm are
+ The robot must move through the whole environment.
+ The region must be covered by the robot
+without overlapping.
+ The robot must avoid collisions with the obstacles.
+ The operation must be consecutive and sequential with no repetition of the path.
+ An optimal path is expected under the available conditions.
+However, it is not always possible to satisfy all
+these criteria in complex environments because of
+some limitations such as time, sensor range, energy
+consumption, and distance. Therefore, sometimes a
+priority should be considered. In the present paper
+
+656
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+determines the next best observation position. Their
+strategy considers three features to characterize an
+observation position the travelling cost, the information gain, and the precision of the localization of
+the robots.
+Recently Grady et al. (2012) studied the problem
+of multi-objective mission planning for car-like robots governed by differential constraints. They employed both a high-level discrete guide and low-level
+planning. The novelty of this work lies in the fact
+that the planner automatically computes deviations
+from the original path to the goal to take into account
+a secondary objective which is the exploration of a
+unexpected target.
+(Amanatiadis et al., 2013) addresses a twofold
+challenge of realistic robotic exploration operations
+that is the ability to efficiently handle multiple temporal goals while satisfying the mission constraints.
+In their approach, they model the environment constraints with cost functions and use the cognitivebased adaptive optimization algorithm to meet time
+critical objectives.
+As previously mentioned, in the present paper,
+we assume to have a robot and the robot must search
+for a specific object on the map. The main problem
+here is that we assume we cannot wait for the complete search of the given environment. Therefore, our
+solution is to compute a finite number of good view
+points in the environment and then move the robot
+through these points in order to find the desired object. We redefine the problem as a multi-objective
+with two objectives. We consider search points that
+have two special properties
+ Robot must have a maximum range of view
+in these points.
+ The distance between these points should be
+maximized.
+The first objective tries to maximize the covered
+area by the robot sensor and avoid unsafe proximity
+with the obstacles. The second objective aims to
+provide a more uniform distribution of points over
+the map which is useful to avoid sensor footprint
+overlaps. Moreover, we select Non-dominated Sorting Genetic Algorithm II (NSGA-II) as a tool for our
+multi-objective problem (Davoodi et al., 2013).
+In addition, we use Generalized Voronoi diagram (GVD), one of the most famous roadmaps, for
+navigation. One of the main advantages of this is
+safety, especially in environments that are messy and
+collision avoidance can be vital when the robot must
+move through this map to find the object.
+The remainder of the paper is organized as follows in the next section, as background, we explain
+GVD and NSGA-II. In Section 3, the problem setup
+and formulation of objective functions will be discussed. The proposed solution is introduced in Section 4. The experimental result (Section 5) includes
+the effect of parameters and ROS implementation.
+Finally, we draw a conclusion in Section 6.
+
+2
+
+Background
+
+2.1 Generalized Voronoi Diagram (GVD)
+Suppose there is a map A. The Voronoi diagram
+is a structure that induces a partition of A dividing
+this map into zones, called Voronoi regions. Each
+region has a corresponding point inside which is
+called seed or site. The set of these points will be
+given by Xx1, x2,..., xn.
+The formal definition of Voronoi region is
+
+ (
+
+
+
+)
+
+(
+
+)
+
+,
+
+(1)
+
+where d(xi,p) is the distance between p and xi which
+is the region site.
+The ordinary definition of Voronoi region can be
+extended to the case of GVD if we consider the seeds
+to be sets instead of single points. More specifically,
+we consider the sets induced by the obstacles. The
+GVD is defined as the set of points where the
+distance to two closest obstacles is the same (Choset
+et al., 2005).
+
+
+ (
+
+)
+
+(
+
+)
+
+(2)
+
+Where
+and
+are the two closest obstacles to
+p, and
+is termed two-equidistant face. Now, the
+definition of the GVD can be more accurate
+GVD 
+
+.
+
+(3)
+
+In path planning, the GVD plays the role of
+roadmap. An example of a complicated map is
+shown in Figure 1.
+
+Figure1. The green lines form the GVD. The black shapes show
+the obstacles (O) and the remaining space is free space (Qfree).
+
+Let
+be a start configuration and
+be a
+target configuration. Let also
+be the free configuration space. As any roadmap (RM), the GVD
+has three main properties as follows (Choset et al.,
+2005)
+1- Accessibility there exists a path between any
+and some
+RM.
+2- Departability there exists a path from some
+point on the RM,
+RM, to
+.
+3- Connectivity there exists a path in RM between
+and
+.
+
+657
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Therefore, the GVD can be used as a safe route
+(since it maximizes distance between obstacles) to
+connect any two configurations in the free space.
+First, the robot moves to the GVD, second it moves
+along the GVD, and finally it departs from the
+roadmap to reach the desired goal.
+
+3
+
+Problem setup
+
+Suppose we have a robot with some sensors installed
+on it and the two-dimensional map of the environment. The objective is to find a pre-specified object
+in the environment with the given sensors. We consider sensors with limited sensing range, r, and also a
+time limitation for the environment exploration.
+Given the constraints, we propose here the transformation of the original problem in the one of navigating through some stationary search points (SPs)
+located on the GVD of the given map. A limited
+number of search points is important due to the time
+limitation and the choice for points at the GVD is
+interesting to maximize the covered area by the sensors as the GVD points maximize the distance from
+obstacles and consequently minimizes occlusion.
+Furthermore, GVD provides safe routes for the robot.
+In general, the whole exploring algorithm will be
+given by the following steps
+1- Compute the set of Search points.
+2- Find the first unvisited closest Search point.
+3- Navigate the robot to the selected point.
+4- Explore the local environment on stationary
+SP by using the sensors (to find out the specific object).
+5- Continue this process until either find the
+object or no more SP exists.
+Step 2 could be improved by using a solution to
+the Traveling Salesman Problem (TSP) in order to
+obtain the optimal sequence of points to be visited.
+However, due to the exploration time limitation we
+will use a simple greedy search approach, avoiding
+the time for solving the corresponding TSP. Besides,
+this part is not the main focus of the paper, which is
+for instance the computation of the search points.
+This computation is translated to the solution of a
+multi-objective problem with two objectives
+a) First objective maximum covered area
+from SPs.
+As a first objective, we try to maximize the covered
+area on the map. In this way, the probability of finding the object will increase. The robot is equipped
+with a sensor with sensing range r, which means that
+two different situations might happen when the robot
+is at SPi. First situation corresponds to the case in
+which the obstacle is far from robots sensor range.
+The other situation will happen when the obstacle is
+within the sensing range. In this latter case the robot
+will not have the maximum covered area from a
+given point. These two cases are shown in Figure 2.
+Therefore, by defining the first objective function we want to find SPs in a place where the robot
+has a maximum range of sensor view. For computing
+the area of these SPs, it is clear that we should subtract occupied area (obstacle) from its maximum
+detectable area. The first objective is given by
+(5)
+ ( )
+
+2.2. NSGA-II
+The Pareto optimal solutions which are a set of optimal solutions are present when there are multiple
+objectives in a problem. Moreover, if there is not
+enough information, it is a challenge to say which
+Pareto optimal solutions are better than the other.
+However, in a single objective problem, there is
+always one optimal solution.
+Optimization methods have suffered several
+changes. At first, for solving a multi-objective optimization problem it was common to transform it to a
+single objective problem so that different solutions
+can be found by solving this problem multiple times
+(Deb et al., 2002).
+In recent years, the use of the multi-objective
+evolutionary algorithms (MOEAs) allows for finding
+an estimation of solutions in one single simulation
+run.
+The NSGA is one type of evolutionary algorithm. As its name is evident, this algorithm has two
+parts. The first part is related to the use of Nondomination rules and in the second part, the algorithm sorts a genetic population in different preferred
+levels.
+Domination will happen if a solution is better
+than the other one in at least one objective and equals
+in other objectives. Mathematically,
+(4)
+f( ) f( )
+Where () is a vector function
+and ,
+which is the parameter space. In this
+case ( )
+( ),
+and ( )
+( ) for at
+least one index .
+If the solutions do not dominate each other, we
+say that they are non-dominated or incomparable.
+NSGA has an important advantage which is the
+fact that they typically generate sets of solutions,
+allowing the computation of an approximation of the
+entire Pareto front. The disadvantages are the high
+computational complexity of non-dominated sorting,
+and the lack of elitism.
+NSGA-II (DSouza et al., 2010) is an improved
+version of NSGA and in this version the authors tried
+to improve those disadvantages. Therefore, we used
+NSGA-II in this paper.
+Choosing one solution over the set of solutions
+is also a challenge in MOEAs. In order to solve this
+challenge, decision making techniques are usually
+applied. ELECTRE I is the multi-criteria decision
+making method applied in our work (Shanian and
+Savadogo, 2006).
+
+658
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+where v is the number of SPs. A(SPi) is the covered
+area from SPi. This objective function must be maximized.
+
+Initialize
+population size
+Non-dominated
+sort
+
+Selection
+
+Genetic Operation
+
+O
+
+Non-dominated
+sort
+
+NO
+
+Figure 2. The robot has a maximum range of view in position SPj.
+In configuration SPi the robot does not have the maximum coverage area.
+
+Stopping
+criteria?
+YES
+End
+
+b) Second objective good distribution of
+search points
+Overlapping is also another problem to be avoided
+when defining the positions of the SPs. Thus, we
+require that the distance between SPs be maximized.
+To deal with this problem, we define the second
+objective as follows
+ 
+
+Figure 3. Flowchart of NSGA-II algorithm.
+
+b) Initialization
+In the first step, an initial population is created randomly. Indeed, the first population is a set of SPs that
+is sampled randomly over the GVD. Figure 4 presents an example of initialization.
+
+(6)
+
+
+
+In fact, F2 is the sum of distances between all
+pairs of SPs. Likewise the first objective, our second
+objective function (F2) must be maximized.
+It is necessary to mention that, in our work maximization problem is converted to minimization
+problem.
+4
+
+O
+
+Multi-objective solution
+Figure 4. Red points represent random SPs.
+
+In this section, the proposed techniques for solution
+are discussed.
+As explained before, NSGA-II applies the principles of non-dominated sorting to direct the population toward the Pareto-optimal regions. The entire
+process to achieve the Pareto-front is shown in the
+flowchart of Figure 3. In the following, we show
+some details.
+a) Representation
+Each chromosome contains a set of SPs, and each
+gene refers to a position on the GVD,
+. The
+table below illustrates the chromosome representation.
+
+c) Evaluation and non-dominated sorting
+Each chromosome is evaluated by computing its
+objective functions. Then, non-dominated sort ranks
+chromosomes based on their objectives. In addition
+the crowding distance is computed. The crowding
+distance is relative to the closeness of each individual
+to its neighbor (Seshadri, 2006).
+d) Operators
+Genetic operators are usually applied to generate
+children. Genetic algorithm includes two basic operators Crossover and Mutation.
+In this work, we used two point crossover, in order to create new children from inheriting and merging the properties of two parents. This is illustrated in
+Figure 5.
+
+Table 1. Chromosome representation
+
+p1
+
+p2
+
+
+
+pn
+
+F1
+
+F2
+
+In Table 1, F1 and F2 are the values of the objective
+functions and n is the maximum number of points in
+the chromosome.
+659
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Parent1
+
+Parent2
+
+children1
+
+children2
+Figure 6. Input map (Left).The green lines are the skeleton of the
+map (GVD).
+
+Figure 5. Two point crossover.
+
+Different versions of mutation operator have
+been proposed for different situations. Here, in order
+to have a good exploration through the map, in mutation operator, one gene is selected randomly and it is
+replaced by a new random point SP. This operator
+guarantees the variety of new generation.
+e) Selection
+Before selection, the parent population and children
+concatenate together and then they are sorted based
+on the non-dominated sort algorithm. After ranking,
+just N chromosomes are selected as elitism for the
+next generation. Then, if the output population satisfies the stopping criteria, then the final population
+can be reported, otherwise selection, genetic operation and Non-dominated sort should run again.
+5
+
+5.2.2 Implementation Results
+First we show one of the initial populations, which is
+generated randomly (Figure 7). As one can see, the
+SPs were not well distributed and there are overlaps.
+
+Results
+
+5.1 Computing GVD
+There are several techniques to compute GVD. For
+example, in discrete grid, Brushfire is a useful method (Choset et al., 2005).
+In this article, we have an image as our input map. In
+order to create the GVD, we have used a morphological approach. Morphological operators include a set
+of operators such as Dilation, Thinning, Skeletonization, Erosion and so on. In this work, we use the
+skeletonization operator to find the skeletal of the
+map which is demonstrated to be the GVD (Garrido
+et al., 2011). The results obtained by this technique
+on a given map are presented in Figure 6.
+
+Figure 7. An initial chromosome. The blue line depicts the GVD.
+The black points are SPs and red polygons around the SPs are an
+approximation of the area of the robots sensing range.
+
+After running the evolutionary algorithm, we obtained 15 solutions. As we explained in the background section, in order to select one of the solutions,
+ELECTRE I is applied as our decision making tool.
+The result obtained by using this technique is presented in Figure 8. Because of the overlaps between
+the solutions, just eight solutions (out of 15 solutions) are visible in this figure.
+To use ELECTRE I, we must assign weights to
+the objective functions. In this experiment we set w1
+and w2 equal to 0.5.
+Accordingly, Figure 9 shows SPs of the selected
+solution. The final selected SPs have minimum overlap and are well distributed as desired.
+Figure 10 presents the cost of objective functions
+F1 and F2 with respect to iteration number. At each
+iteration, the best values of objective functions are
+selected. It is shown that the values of objective
+
+5.2 Search Points computation
+5.2.1 Parameters
+In our simulation, we set the population size or
+chromosome number to 30. The dimension of each
+chromosome is 16. Its significant to mention that the
+dimension of chromosomes or the number of SPs is
+related to the sensing range. In other words, when
+sensing range is small, the number of SPs should be
+high to cover the map. In each generation, 50 of
+the population is selected as elitism. The crossover
+probability, Pc, is a noticeable parameter in this test
+and its set to 70 (mutation ratio, Pm, is 30). The
+maximum number of iterations is equal to 40.
+660
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+functions converge to a certain value after 25 iterations.
+
+5.3 Simulation on ROSStage
+The Robot Operating System (ROS) (Quigley et al.,
+2009) is a framework to help in the development of
+robotic software. Stage ROS is a useful package
+which allows for 2D robotic simulation. In order to
+verify the proposed exploration strategy, we tested it
+in Stage ROS. We defined a robot equipped with a
+laser sensor with 10 meters of range. The robot starts
+exploration from a random position on the map and
+chooses closest SP as the next goal, then it captures
+the data from laser scanner at the selected SP.
+In Figure 10, the initial configuration, an intermediate one, and final configuration are shown.
+
+Pareto-front
+0.37
+1
+0.36
+
+1
+1
+
+0.35
+
+1
+
+F2
+
+1
+1
+
+1
+
+0.34
+
+0.33
+
+0.32
+
+0.31
+0.94
+
+1
+
+0.95
+
+0.96
+
+0.97
+F1
+
+0.98
+
+0.99
+
+1
+
+Figure 8. Red point is selected as a Pareto optimal point by
+ELECTRE I.
+
+(a)
+
+(b)
+
+Initial configuration
+
+Intermediate configuration
+
+Figure 9. The best selected chromosome by ELECTRE I.
+
+0.55
+F1
+F2
+
+(c) Final configuration
+
+cost functions
+
+0.5
+
+0.45
+
+Figure 10. Snapshots of the exploration. Red points show the SPs
+on the GVD, yellow points show the points which have been
+explored so far by robot.
+
+0.4
+
+A video of this simulation is available at
+httpcoro.cpdee.ufmg.brmoviesCBA2014.
+
+0.35
+0
+
+5
+
+10
+
+15
+20
+25
+Iteration number
+
+30
+
+35
+
+6
+
+40
+
+Figure 10. The values of objective functions with respect to iteration number.
+
+Conclusion
+
+This paper has proposed a multi-objective strategy
+for robotic exploration with the aim of finding a
+specific object in the environment. We take into
+account some of the challenges such as time limitation and range of robots sensors. In order to address
+661
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+these problems, we present a technique which guides
+the robot to search just at some stationary points
+instead of searching at all possible configurations in
+the map. These points are called search points (SPs).
+SPs are placed on a safe route defined by the GVD.
+In this paper, we solve an optimization problem
+with two objective functions maximum area of coverage and distribution of SPs on the map. NSGA-II is
+used as a tool to find the Pareto-front and we use
+ELECTRE I as a decision maker to choose the best
+solution.
+This work can be suitable in different applications, especially when time limitation is one of the
+important criteria.
+
+algorithm NSGA-II. IEEE Transactions on Evolutionary Computation, Vol. 6, No. 2, pp. 182
+197.
+DSouza, R.G.L. Sekaran, K.C. Kandasamy, A
+(2010). Improved NSGA-II based on a novel
+ranking scheme. Journal of computing, Comput.
+Vol. 2, No. 2, pp. 9195.
+Shanian, A and Savadogo, O (2006). ELECTRE I
+decision support model for material selection of
+bipolar plates for Polymer Electrolyte Fuel Cells
+applications. Journal of New Materials for Electrochemical Systems, Vol. 9, pp. 191-199.
+Seshadri, A (2006). A Fast Elitist Multiobjective
+Genetic
+Algorithm
+NSGA-II.
+httpwww.mathworks.commatlabcentral.
+Garrido, S Moreno, L Abderrahim, M and Martin, F
+(2011). Path Planning for Mobile Robot Navigation using Voronoi Diagram and Fast Marching.
+International Journal of Robotics and Automation (IJRA), Vol. 2, No. 1, pp. 154176.
+Quigley, M Gerkeyy, B Conleyy, K Fausty, J
+Footey, T Leibsz, J Bergery, E Wheelery, R
+Ng, A (2009). ROS an open-source robot operating system. In. International conference on
+Robotics and Automation (ICRA) Workshop on
+Open Source Software, Vol. 3, No. 3.2.
+
+Acknowledgement
+This work has been supported by the Brazilian agencies CAPES, CNPQ and FAPEMIG.
+References
+Galceran, E. and Carreras, M. (2013). A survey on
+coverage path planning for robotics. Robotics
+and Autonomous Systems, Vol. 61, pp. 1258
+1276.
+Gonzalez-Banos, H.H. and Latombe, J.C. (2002).
+Navigation strategies for exploring indoor environments. International Journal of Robotics Research, Vol. 21, No. 10-11, pp. 829-848.
+DasGupta, B Hespanha, J and Sontag, E (2004).
+Aggregation-based Approaches to Honey-pot
+Searching with Local Sensory Information. Proceedings of the American Control Conf, pp.
+1202-1207, Boston, June 2004.
+Amigoni, F and Gallo, A. (2005). A Multi-Objective
+Exploration Strategy for Mobile Robots. International conference on Robotics and Automation
+(ICRA), IEEE, pp. 3850-3855.
+Grady, D.K Moll, M, Hegde, C Sankaranarayanan,
+A. C Baraniuk, R.G and Kavraki, L. E (2012).
+Multi-objective sensor-based replanning for a
+car-like robot. In IEEE Intl. Symp. on Safety,
+Security, and Rescue Robotics, pp. 1-6.
+Amanatiadis,
+A
+Chatzichristofis,
+S.
+A
+Charalampous, K Doitsidis, L Kosmatopoulos,
+E. B Tsalides, P Gasteratos, A and Roumeliotis
+, S. I (2013). A multi-objective exploration strategy for mobile robots under operational constraints. IEEE Access, Vol. 1, pp. 691702.
+Davoodi, M Panahi, F Mohades, A and Hashemi, S.
+N (2013). Multi-objective path planning in discrete space. Applied Soft Computing, Vol. 13,
+No. 1, pp. 709720.
+Choset, H Lynch, K Hutchinson, S Kantor, G
+Kavraki, L and Thrun, S. (2005). Principles of
+Robot Motion Theory, Algorithms, and Implementations. The MIT Press.
+Deb, K Pratap, A Agarwal, S and Meyarivan, T.
+(2002). A fast and elitist multiobjective genetic
+
+662

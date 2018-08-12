@@ -1,0 +1,1005 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+RECONHECIMENTO DE EXPRESSÕES FACIAIS BASEADO EM MODELAGEM ESTATÍSTICA
+FELIPE J. C. PEDROSO, EVANDRO O. T. SALLES
+Laboratório de Computadores e Redes Neurais, Programa de Pós-Graduação em Engenharia Elétrica,
+Universidade Federal do Espírito Santo
+Av. Fernando Ferrari, 514, 29075-910, Vitória, ES.
+felipejcpedroso@gmail.com, e.salles@ele.ufes.br
+Abstract Facial expressions have a prominent role in society and especially in man-machine interfaces. We propose a system
+able to recognize expressions of anger, happiness, sadness, surprise, fear and disgust in addition to neutral. A face detector with
+Viola-Jones framework is used. The expressions are modeled using the statistical method Active Appearance Model (AAM). A
+change in the AAM search algorithm is proposed to minimize errors in generating a synthetic image. Expressions are classified
+using support_vector_machine with RBF kernel. Finally, the system is tested on the basis of data Jaffe and the results are presented.
+Keywords Facial Expression Recognition, Active Appearance Model
+Resumo As expressões faciais apresentam papel de destaque na sociedade e, em especial, em interfaces_homem-máquina. É
+proposto um sistema capaz de reconhecer as expressões de raiva, felicidade, tristeza, surpresa, medo e nojo além da neutra. Um
+detector de faces com framework Viola-Jones é utilizado. As expressões são modeladas utilizando o método estatístico Active
+Appearance Model (AAM). Uma modificação no algoritmo de busca do AAM é proposta para minimizar erros na geração de
+uma imagem sintética. As expressões são classificadas utilizando a máquina de vetores de suporte com kernel RBF. Por fim, o
+sistema é avaliado na base de dados JAFFE e os resultados são apresentados.
+Palavras-chave .
+
+1
+
+Introdução
+
+Os seres humanos podem expressar suas idéias,
+sentimentos e reações através de diferentes formas de
+comunicação. A expressão facial é uma forma de
+comunicação não verbal resultante de determinadas
+configurações ou contrações dos músculos faciais
+que provocam modificações e deformações na face
+(Fasel, 2003). Em um processo de conversação as
+palavras contribuem com 7 da transmissão de informação entre ouvinte e interlocutor. A entonação
+de voz representa 38 da informação e a expressão
+facial corresponde a 55.
+Diferentes emoções são caracterizadas por diferentes
+expressões faciais e movimentos. Por exemplo, o
+sorriso e as sobrancelhas levantadas contêm informações sobre a emoção do indivíduo que a expressa.
+Em 1872 Darwin já realizava pesquisas sobre a universalidade das expressões faciais (Darwin, 1872) e
+estudos posteriores como de Ekman (Ekman and
+Friesen, 1971) estabeleceram que as expressões faciais são universais. Ou seja, independentemente de
+fatores como a cultura, idade e gênero, os indivíduos
+se expressam com as mesmas expressões faciais. No
+entanto, situações iguais podem gerar expressões
+faciais diferentes em função do indivíduo de teste e
+diferentes interpretações do ambiente, dependendo
+do codificador e decodificador (Matsumoto, 1993).
+Em (Ekman, 1994) foram propostas seis emoções
+básicas alegria, raiva, medo, tristeza, surpresa e
+nojoaversão além da expressão neutra que é caracterizada pela ausência de expressão. A combinação
+dessas expressões básicas é capaz de gerar emoções
+mais complexas. Estudos posteriores ainda incluem o
+desprezo com uma sétima expressão básica universal
+
+ISBN 978-85-8001-069-5
+
+(Ekman and Heider, 1988). Observe que o problema
+de reconhecer uma expressão facial é dual ao reconhecer uma face, pois se deseja reconhecer a expressão independentemente do indivíduo.
+O aumento do processamento computacional e as
+novas necessidades da sociedade impulsionam o
+desenvolvimento e aperfeiçoamento de sistemas
+inteligentes, incluindo o campo da computação pervasiva. Interfaces homem-máquina (IHM) são indispensáveis e, para um correto funcionamento, muitas
+vezes é necessário que a máquina compreenda as
+emoções de seu utilizador. Portanto, um sistema que
+realize o reconhecimento_de_expressões_faciais pode
+ser utilizado em várias áreas
+- interação com um robô Facilitar o entendimento das tarefas e humanizar a máquina
+- monitoramento de Atividades verificar desempenho do utilizador em determinadas tarefas como no
+ensino  distância (Longhi et al., 2007)
+- segurança Detectar expressões suspeitas em
+locais estratégicos como a raiva em aglomerações
+- campanhas de marketing verificar reação dos
+clientes ao utilizar um produto
+- animação Gráfica transpor as emoções corretas para uma personagem de uma animação
+- estudos em Medicina e Psicologia suporte ao acompanhamento de pacientes e em pesquisas.
+O reconhecimento de uma expressão facial pode ser
+dividido em três etapas detecção da face, extração
+das características e classificação. Assim, nesse trabalho é proposta a localização da face através do
+algoritmo Viola-Jones, a extração_de_características
+aplicando o AAM  Active Apperance Model e classificação por SVM  Suport Vetor Machine. Para
+avaliação dos resultados, foi utilizado o banco de
+
+631
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+dados JAFFE  Japonese Female Facial Expression
+Database (Lyons et al., 1998), composto por 219
+imagens (resolução 256256 pixels, 8 bits por pixel)
+de 10 indivíduos femininos em 3 ou 4 poses nas
+expressões neutra, felicidade, tristeza, surpresa, raiva, nojo e medo, conforme Figura 1. As expressões
+possuem um rótulo para posterior verificação da
+classificação.
+
+Figura 1. Indivíduos do Banco de dados JAFFE contendo expressões neutra, raiva, felicidade, tristeza, medo, nojo e surpresa.
+
+O restante deste artigo está dividido em a seção 2
+trata da localização das faces, a seção 3 trata do modelo AAM, a seção 4 apresenta os resultados e as
+conclusões são sumarizadas na seção 5.
+2 Localização da Face
+A face deve ser detectada independente de etnicidade, idade, gênero e pelos do indivíduo. Além
+disso, a posição da face, iluminação, resolução, escala, contraste, níveis de cor, complexidade de fundo
+de cena (background), oclusão do alvo e utilização
+de acessórios como óculos e bonés são desafios adicionais (Song et al, 2010).
+O framework de detecção_de_objetos Viola-Jones
+(Viola and Jones, 2001) é capaz de localizar faces em
+tempo_real. O algoritmo inicializa-se calculando a
+imagem integral e é realizada a análise de características de regiões retangulares na imagem, havendo
+similaridades com as funções base de Haar. Algumas
+características são a diferença entre a soma dos valores de pixels entre duas regiões retangulares, a diferença entre a soma de pixels de duas regiões retangulares laterais e uma região central ou a diferença
+entre a soma de pixels entre duas regiões retangulares de uma diagonal e a soma de pixels das duas
+regiões retangulares na diagonal oposta.
+O treinamento do classificador que determina quais
+regiões da imagem são potenciais alvos para faces é
+realizado através de exemplos positivos (imagens
+com faces) e exemplos negativos (imagens sem face). Uma variação do AdaBoost seleciona as características mais relevantes e o classificador final é obtido como a combinação_linear de alguns classificadores associados a diferentes características. O peso de
+cada classificador é inversamente proporcional  taxa
+de erro obtida.
+A varredura da imagem começa com sub-janelas
+de 2424, percorrendo toda a imagem. Em seguida,
+as janelas são aumentadas por um fator de 1,25 e o
+procedimento se repete até o tamanho da janela atin-
+
+ISBN 978-85-8001-069-5
+
+gir o tamanho total da imagem. Uma estrutura de
+árvore_de_decisão com vários classificadores em
+cascata é utilizada para reduzir o tempo de processamento. A saída classificada como face de um estágio
+é a entrada para um classificador mais complexo,
+diminuindo a taxa de falso positivo. Dessa forma, a
+maioria das imagens negativas é rapidamente descartada, evitando processamentos posteriores. A face só
+é detectada se todos os estágios em cascata acusarem
+positivos. O algoritmo para ao primeiro caso negativo. A implementação do algoritmo em tempo_real
+possibilita maior tempo de processamento em etapas
+futuras como, por exemplo, a extração_de_características da face e classificação das emoções associadas
+eou redução do tempo total do sistema de reconhecimento_de_expressões_faciais. Os classificadores de
+cada estágio são treinados com os exemplos negativos que passaram pelo estágio anterior (falso positivo). A taxa de falso positivo e a taxa de detecção
+final são produto das taxas individuais de cada um
+dos estágios. Portanto, os falsos positivos são reduzidos na saída do classificador em cascata. Ainda sim é
+mantida alta taxa de detecção.
+A relação entre o número de classificadoresestágios,
+número de características e o limiar de decisão de
+cada estágio é definida por valores desejados para a
+taxa de detecção e taxa de falso positivo. Uma nova
+característica é acrescentada no estágio em cada
+iteração até que sejam alcançados os valores que
+respeitem os limiares de estabelecidos. A estrutura
+final do detector em cascata utiliza 32 camadasestágios com um total de 4.297 características.
+3 Extração de Características utilizando AAM
+Uma vez detectada a face, é necessário extrair as
+características que compõem a expressão facial. O
+AAM - Active Appearance Model (Cootes et al.,
+1998) é um algoritmo capaz de modelar estatisticamente um objeto baseado na forma e textura de outros objetos similares submetidos a um treinamento.
+Além de modelar uma face e, consequentemente, sua
+expressão facial, o AAM é responsável por uma
+redução de dimensionalidade.
+3.1 Modelo Estatístico de Forma
+O conjunto de imagens do JAFFE é marcado
+manualmente com 68 pontos representativos para a
+expressão facial como os olhos, boca, nariz, sobrancelhas e queixo. A localização dos pontos segue o
+modelo estabelecido no Banco de Dados CK+ (Kanade et al., 2000), conforme Figura 2.
+A conexão entre esses n pontos define a forma da
+expressão facial em um vetor de dimensão 2n . A
+partir das marcações no treino, é possível gerar um
+modelo de forma para expressões faciais.
+Como as s imagens do banco de treino podem estar
+em escalas e orientações diferentes, é necessário um
+procedimento de alinhamento dos pontos entre cada
+632
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+
+
+Figura 2. Localização dos 68 propostos no banco_de_dados CK+
+aplicados no banco_de_dados JAFFE
+
+forma x dos s exemplos de treino para gerar o modelo para cada imagem i. Se considerarmos que o formato de um objeto é invariante a transformações
+Euclidianas, podemos alinhar cada vetor de treino
+reposicionando-os escalonando e rotacionando-o
+fazendo os passos propostos em (Cootes et al., 1998)
+
+
+translada-se cada exemplo de treino de forma a
+seu centro de massa coincidir com a origem
+
+
+
+define-se um dos exemplos de treino como sendo uma estimativa inicial da forma média e normaliza-se o vetor de forma que
+
+
+
+
+alinha-se todos os exemplos de treino de acordo
+com (inicialmente i  0)
+
+estima-se um novo vetor de forma média
+utilizando os exemplos alinhados no passo anterior.
+Normaliza-se
+e incrementa-se i
+ retorna-se ao terceiro passo até obter-se uma
+convergência.
+O objetivo é minimizar a distância D entre cada exemplo de treino do vetor de forma média .
+(1)
+
+.
+
+O procedimento fornece uma medida estatística da
+distribuição de cada ponto de entrada. O próximo
+passo é equacionar um modelo M com parâmetros b
+que representa a diferença entre os exemplos de
+treino e a forma média de treinamento na forma
+. Como é desejável utilizar no modelo
+apenas componentes significativas para o modelo é
+adequado a utilização de Análise de Componentes
+Principais  PCA para redução de dimensionalidade.
+O modelo é obtido fazendo-se
+
+
+computa-se o vetor de forma médio
+(2)
+
+calcula-se os autovetores
+e autovalores
+associados  S. Ordena-se os autovalores de
+forma decrescente, ou seja,
+.
+
+Portanto, se considerarmos os z autovetores associados aos z maiores autovalores, podemos reduzir
+a dimensionalidade e aproximar qualquer exemplo
+como
+., onde
+.
+Ou seja, uma forma qualquer pode ser escrita como
+uma forma média mais uma deformação associada
+aos parâmetros . Os parâmetros do modelo M podem ser definidos através da matriz Ps e a forma
+média, fazendo 
+.
+
+(4)
+
+Qualquer forma de entrada pode ser vista como uma
+combinação_linear do modelo de forma médio e um
+somatório dos autovetores obtidos de ponderados.
+É possível descrever uma expressão facial através da
+disposição de seus pontos segundo o modelo treinado. No entanto, mais informações podem ser obtidas
+se levarmos em consideração a textura da imagem
+que contém informações importantes como sombras
+e enrugamento nas regiões dos olhos.
+3.2 Modelo Estatístico de Textura
+A textura, maneira como os pixels estão dispostos em uma determinada região ou caminho formando um padrão de cores ou intensidades,pode auxiliar
+na construção de um modelo mais robusto de representação.
+O modelo estatístico exclusivamente de textura deve
+ser independente das formas dos protótipos de treino.
+Para tal, é realizada uma deformação em cada imagem de maneira que seus pontos referentes  forma
+coincidam com o modelo de forma média. No caso
+bidimensional podemos utilizar a triangulação de
+Delauney, onde cada pixel original dentro de um
+triângulo formado por 3 pontos que compõem a forma original será mapeado em um novo pixel na imagem deformada para a forma média de acordo com a
+posição de cada vértice do triângulo.
+Há necessidade de se alinhar fotometricamente as
+texturas de treinamento para minimizar os efeitos das
+diferentes condições de iluminação de cada imagem
+de entrada. As texturas devem ser normalizadas conforme equação 5, onde
+é a média das intensidades
+dos pixel da textura e i o desvio padrão para a imagem de entrada i.
+(5)
+
+,
+
+
+Similar ao modelo de forma, a distância Euclidiana
+Eg entre cada vetor de textura de treino e a textura
+média é minimizada
+
+calcula-se a covariância amostral
+(3)
+,
+
+ISBN 978-85-8001-069-5
+
+(6)
+
+633
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+O modelo de textura é inicializado utilizando uma
+das amostras de treino como referência. Através de
+iterações sucessivas obtemos a convergência de Eg,
+resultando em um vetor de textura médio para o
+modelo. Novamente, aplicando-se PCA, podemos
+representar uma textura em função de parâmetros de
+textura
+como
+,onde
+contém os k
+autovetores correspondentes aos maiores k autovalores . Portanto, podemos definir uma imagem de
+entrada em termos de e , uma vez que o treinamento fornece os vetores médios de forma , textura
+e as matrizes e , descrita por
+
+3.4 Algoritmo de Busca
+Dado que a partir do treinamento é possível parametrizar uma expressão facial por um vetor de
+aparência, deseja-se encontrar uma expressão facial
+em uma nova imagem de entrada. Qualquer imagem
+pode ser obtida a partir do modelo de aparência utilizando-se o c adequado.
+Portanto, o algoritmo de busca deve resolver o problema de otimização visando diminuir a diferença
+entre a imagem real e a imagem sintetizada pelo
+algoritmo AAM, segundo a equação
+(13)
+
+.
+
+(7)
+
+Qualquer textura de entrada pode ser vista como uma
+combinação_linear do modelo de textura médio e um
+somatório ponderado dos autovetores de . O modelo
+representa a forma média dos pontos com a
+textura média.
+3.3 Modelo Estatístico de Aparência
+O modelo de aparência utiliza os parâmetros de
+forma bs e textura bg, combinando as informações em
+um único parâmetro de aparência bsg. No entanto, bs
+está na forma de unidades de distância, ao passo que
+bg possui unidade de intensidade de pixel. A relação
+entre os dois parâmetros é realizada atribuindo um
+peso ao parâmetro responsável pela forma. O peso
+Ws revela o efeito que alterar bs gera nas intensidades
+de pixels relacionadas  bg, e bsg.é obtida por
+(8)
+
+O modelo final em termos do vetor de aparência c é
+obtido aplicando-se PCA em
+.
+
+onde
+é a matriz de autovetores associada aos primeiros m maiores autovalores. Dessa forma, temos
+uma redução de dimensionalidade m  z+k. Uma
+imagem pode ser modela em termos de seu formato e
+textura através das relações
+,
+
+(10)
+(11)
+
+onde
+(12)
+
+Ou, de maneira inversa, podemos sintetizar uma
+imagem através do vetor de aparência c. No caso do
+sistema de reconhecimento de expressão facial, o
+vetor de aparência será utilizado como entrada para o
+classificador.
+
+ISBN 978-85-8001-069-5
+
+.
+
+(14)
+
+Associado a essas transformações obtemos um vetor
+de pose
+. Utiliza-se o formato
+médio do modelo de treinamento
+como estimativa inicial para a nova face de entrada. A intensidade
+dos pixels da imagem de entrada é amostrada nos
+limites definidos pela forma do modelo. É realizada a
+normalização dos valores e é gerado um modelo de
+entrada . O modelo inicial diverge das reais características da imagem e a diferença
+é dada por
+
+(9)
+
+,
+
+.
+
+Observa-se que
+possui implicitamente informações sobre a mudança necessária
+no vetor de
+aparência c que minimiza o erro. Portanto, a partir do
+conhecimento da relação entre I e c é possível
+construir um algoritmo iterativo capaz de atualizar os
+valores do vetor de aparência e minimizar o erro.
+Dado uma nova imagem de entrada x é possível criar
+uma versão sintética X a partir do modelo treinado
+através das transformações de escala
+e , rotação
+e translação
+e
+que são armazenadas em uma
+matriz de transformação em coordenadas homogêneas segundo,
+
+(15)
+e
+.
+
+(16)
+
+Pode-se minimizar a diferença ajustando-se os parâmetros de aparência c e de pose t. Uma medida para a
+diferença é dada pelo somatório dos quadrados de
+cada elemento
+Um novo treinamento deve ser realizado de forma a
+determinar qual deve ser a alteração
+nos limites
+de amostragem da imagem de entrada em uma nova
+iteração em função do erro prévio. Linearizando a
+variação
+por série de Taylor, tem-se
+(17)
+
+Dessa forma, a solução que minimiza o erro quadrático do problema é dada pela matriz de regressão R.
+
+634
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+4 Resultados
+(18)
+4.1 Detecção de Faces
+onde
+(19)
+
+Seria necessário recalcular R a cada passo, mas como
+a busca se inicia com a mesma condição inicial,
+aproxima-se R por uma constante. Para os s protótipos de treinamento já conhecidos é realizada variações de 0,5 vezes o desvio padrão dos vetores de
+aparência, 10 de variação em escala, translação de
+3 pixels e 10 de variação na textura. Um filtro
+gaussiano é aplicado para suavizar a sobreposição de
+todos os elementos treinados conforme
+,
+onde w é o kernel gaussiano e
+
+(20)
+
+é o elemento na
+
+posição i,j da matriz R.
+
+
+
+projeta-se o modelo obtido no treinamento combinado de forma e textura em uma nova imagem
+de entrada e calcula-se o erro
+.
+
+
+
+computa-se
+necessário para minimizar
+.
+A estimativa do vetor de aparência+pose é dada por
+(21)
+
+
+
+Uma vez localizada as faces é possível gerar um
+modelo AAM para extração das características a
+serem classificadas. Os testes foram realizados utilizando leave-one-out. Para cada indivíduo foi gerado
+um modelo AAM de aparência e a busca foi utilizando como protótipos de treino as expressões faciais
+dos outros nove indivíduos. Os parâmetros treinados
+são testados no conjunto restante que não fez parte
+do treinamento. Além disso, diferentes modelos
+foram gerados para diferentes grupos de expressões
+faciais como, por exemplo, neutra+felicidade e neutra+tristeza+medo. Para o grupo contendo todas as
+expressões do banco é possível verificar a forma
+média e os principais autovetores de na Figura 4.
+
+. Inicialmente k  1
+
+com o novo parâmetro
+calcula-se
+um novo modelo da imagem de entrada
+e verifica-se o novo erro. A nova estimativa é dada
+por
+(22)
+,
+caso ocorra diminuição do erro mantêm-se os
+parâmetros novos. Caso contrário, volta-se ao
+passo anterior e diminui-se o valor de k
+
+
+
+Figura 3. Localização das faces do banco JAFFE através do framework de Viola-Jones.
+
+4.2 Extração das Características
+
+O processo iterativo de buscas para minimização do
+erro ao representar uma imagem por seu parâmetro
+de aparência c é realizado em quatro passos
+
+onde
+
+O algoritmo de Viola-Jones detectou 100 das faces
+para o banco JAFFE. A localização das faces é um
+ponto crítico para posterior aplicação do modelo
+gerado pelo AAM, uma vez que o mesmo é sensível
+ posição inicial estimada para a face. O ponto estimado para a face é obtido fazendo um deslocamento
+de 35 pixels no eixo vertical a partir do centro de
+massa da região detectada como face.
+
+repete-se o procedimento até que ocorra convergência ou o número máximo de iterações ocorra.
+
+O algoritmo AAM utiliza multi-resolução de quatro
+camadas. Todo o processo de treinamento de modelo
+de forma, textura, aparência e busca é realizado nas
+escalas de 0,25 , 0,5 , 0,75 e 1. Durante o processo de
+aquisição_de_dados em uma imagem de entrada é
+realizada a busca da menor para a maior escala.
+
+ISBN 978-85-8001-069-5
+
+Figura 4. (a) Forma média no canto superior esquerdo (b)-(f) 5
+autovetores associados ao 5 autovalores de Ps.
+
+Observa-se que variações nos parâmetros_são responsáveis por modificações nas feições das componentes
+que compõem o formato das expressões. Abertura da
+boca, inclinação da cabeça ou levantamento as sobrancelhas podem ser modelados.
+O modelo de textura é responsável por gerar características como dentes, língua, olho aberto ou fechado
+e rugosidades. Observa-se que a imagem sintética é
+uma versão suavizada da imagem de entrada original.
+Características como pintas ou manchas podem ser
+
+635
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+perdidas. No entanto, não é um fator que prejudica o
+reconhecimento da expressão facial. A Figura 5 ilustra a textura média obtida para o JAFFE na forma
+média e os principais autovetores de .
+
+Figura 7. Pontos candidatos  minimização do erro no algoritmo
+de busca AAM.
+
+Neste trabalho propõe-se uma solução híbrida, onde
+os pesos são alterados como uma combinação_linear
+do caso apresentado na Equação 21 com peso 0,6 e
+do segundo caso com peso 0,4. Verificou-se que a
+solução proposta minimizou o erro em 12 dos
+casos. Observa-se na Figura 8 a correta convergência
+a cada iteração do algoritmo de busca AAM entre o
+modelo estimado inicialmente e a imagem de entrada.
+
+Figura 5. (a) Textura média no canto superior esquerdo (b)-(f) 5
+autovetores associados ao 5 autovalores de Pg.
+
+O modelo combinado é capaz de representar com
+precisão a forma e a textura de uma expressão facial
+com uma grande redução de dimensionalidade, conforme Figura 6. A imagem do banco com 65.536
+pixels é mapeada pelo AAM em um vetor de aparência com 148 posições.
+Figura 8. Da esquerda para direita convergência do algoritmo de
+busca do modelo AAM treinado em uma imagem de entrada.
+
+4.3 Classificador
+
+Figura 6. (a) Imagem de entrada original. (b) Modelo Sintético
+obtido com o AAM (c) Diferença entre a imagem original e o
+modelo testado
+
+O ponto inicial para inicialização da busca AAM é
+um ponto crítico, pois possui grande sensibilidade e
+deslocamentos de três pixels são suficientes para
+influenciar na convergência do algoritmo. Foi inserido no sistema uma etapa onde o ponto localizado
+pelo detector de face é convertido em uma região
+com seis pontos mapeados como possíveis candidatos  minimização do erro (Figura 7). O algoritmo de
+busca utiliza todos os pontos e armazena o resultado
+com menor erro.
+Além disso, o algoritmo de busca da imagem sintética apresenta uma modificação no incremento dos
+parâmetros do vetor de aparência (segundo passo no
+processo de busca). A atualização de cada componente pode ser realizada uniformemente, conforme
+proposto inicialmente, ou levando em consideração
+os autovalores associados a cada posição do vetor.
+
+ISBN 978-85-8001-069-5
+
+O vetor de aparência c obtido na saída do extrator de características AAM é entrada do classificador. O primeiro teste consistiu em treinar o modelo
+AAM utilizando apenas as faces neutras e com o
+leave-one-out. É um sistema de identificação de
+indivíduos. Para cada imagem deixada de fora foi
+obtido um vetor de aparência através da busca AAM
+que foi comparado com o classificador treinado com
+os vetores de aparência das outras imagens. Utilizando-se o classificador k-nn avaliando-se os 3 vizinhos
+mais próximos, foi possível identificar cada um 10
+indivíduos obtendo-se uma taxa de acerto de 100.
+O número de vizinhos 3 que minimiza o erro foi
+estabelecido através de validação_cruzada e a medida
+analisada foi a distância_euclidiana.
+Na sequência, foi realizada uma série de treinamentos para o extrator de características para expressões
+faciais, conforme Tabela 1. Foram verificados primeiramente os resultados utilizando as faces neutras
+e uma das outras expressões faciais. As taxas de
+acerto obtidas encorajaram o acréscimo de outras
+expressões. As imagens sintéticas geradas para o
+caso com todas as expressões são apresentadas na
+Figura 9.
+
+636
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A Tabela 3 sintetiza trabalhos correlatos e suas
+respectivas taxas de acerto.
+Tabela 1. Resultados para classificação das expressões neutra (N),
+raiva (R), nojo (Nj), medo (M), felicidade (F), tristeza (T) e surpresa (S) utilizando K-NN e SVM com kernel RBF.
+SVM 
+SVM EXPRESSÕES
+K-NN
+RBF
+RBF
+FACIAIS
+3-NN
+
+Figura 9. Imagens originais do banco e modelos sintéticos gerados
+pelos vetores de aparência que representam as respectivas imagens
+e são as entradas para o módulo de classificação.
+
+O k-nn é um classificador simples e, portanto, as
+taxas de acerto podem ser melhoradas utilizando um
+classificador mais robusto. Foi empregado o SVM
+(Suport Vector Machine), (Cortes and Vapnik, 1995),
+como um classificador não-linear, pois as mesmas
+expressões faciais podem ser representadas de formas diferentes, formando diferentes agrupamentos .A
+expressão de surpresa, por exemplo, pode ser vista
+como deformação de sobrancelha arqueada para cima
+e boca aberta ou apenas o movimento da sobrancelha.
+Para o SVM, o kernel
+escolhido foi o RBF 
+Radial Basis Function já que as escolhas corretas de
+seus parâmetros podem acarretar resultados semelhantes ao obtidos com o kernel gaussiano ou polinomial (Keerthi and Lin, 2003).
+
+N+R
+N+Nj
+N+M
+N+F
+N+T
+N+S
+N+F+T
+N+F+T+S
+N + F + T+M
+N + F + T + M + Nj
+N+F+T+S+M
+N+R+F+T+S+M+Nj
+
+2-fold
+0,7333
+0,8305
+0,8548
+0,8033
+0,6066
+0,6500
+0,5217
+0,4180
+0,5323
+0,5163
+0,4156
+0,5540
+
+0,8667
+0,7996
+0,7097
+0,8033
+0,8525
+0,8000
+0,7391
+0,6557
+0,6210
+0,4118
+0,5779
+0,4742
+
+Tabela 2. Matriz de confusão para o classificador SVM-RBF com
+todas as classes.
+
+R
+Nj
+M
+F
+N
+T
+S
+
+R
+
+Nj
+
+M
+
+F
+
+N
+
+T
+
+S
+
+0,407
+
+0
+
+0
+
+0,035
+
+0
+
+0,107
+
+0
+
+0,037
+
+0,667
+
+0,148
+
+0,103
+
+0
+
+0,214
+
+0
+
+0
+
+0,222
+
+0,704
+
+0,241
+
+0
+
+0,321
+
+0,074
+
+0,259
+
+0,111
+
+0,148
+
+0,517
+
+0
+
+0,107
+
+0
+
+0,259
+
+0
+
+0
+
+0,069
+
+1
+
+0,143
+
+0,111
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0,108
+
+0
+
+0,037
+
+0
+
+0
+
+0,035
+
+0
+
+0
+
+0,815
+
+Tabela 3.Resultados para sistemas de reconhecimento_de_expressões_faciais utilizando o JAFFE com Validação Cruzada (CV) ou
+Leave-One-Out (LOO).
+
+Validação
+(23)
+O parâmetro do kernel e o parâmetro C associado 
+minimização do erro durante o treinamento do classificador foram obtidos através de uma validação_cruzada utilizando o n-fold para as entradas normalizadas. O processo de busca estima valores iniciais para
+os parâmetros e, em seguida, refina a busca em valores próximos a primeira estimativa. Conforme a
+Tabela 1, observamos que uma maior taxa de acerto
+foi alcançada em relação ao classificador inicial. A
+utilização do 2-fold na busca de otimizar os parâmetros do kernel apresentou melhores resultados do que
+o 5-fold para a totalidade de classes. Para o caso mais
+complexo envolvendo todas as expressões do banco
+foi possível obter uma taxa de acerto de 55,4 com
+sensibilidade 0,3667 e especificidade 0,9781.
+Observa-se que o indivíduo 7 do banco_de_dados
+apresentou os piores resultados, uma vez que o algoritmo de busca do AAM não consegue sintetizar
+corretamente a imagem de entrada. Excluindo-se tal
+elemento é possível aumentar a taxa de acerto para
+0,6010. A matriz de confusão apresentada na Tabela
+2 evidencia que a expressão de tristeza é a classe com
+maior taxa erro ao passo que todas as expressões
+neutras foram corretamente classificadas.
+
+ISBN 978-85-8001-069-5
+
+5-fold
+0,8167
+0,6780
+0,7419
+0,9016
+0,8852
+0,8500
+0,8804
+0,7213
+0,8226
+0,6536
+0,6104
+0,4507
+
+Zhang et al., 1998
+Lyons et al.,1999
+Dubuisson et al.2002
+Buciu et al., 2003
+Shinohara and Otsu, 2004
+Shih et al.,2008
+Martins et al., 2008
+Método proposto
+
+CV
+CV
+CV
+LOO
+CV
+CV
+LOO
+LOO
+
+Taxa de
+Acerto
+0.9010
+0.9200
+0.8760
+0.9034
+0.6940
+0.9571
+0.6120
+0.5540
+
+5 Conclusão
+A abordagem proposta se mostrou efetiva na
+classificação das expressões faciais, uma vez que foi
+possível reconhecer diferentes as expressões faciais.
+O módulo de detecção_de_face como framework
+Viola-Jones localizou a totalidade das faces. O modelo AAM foi capaz de sintetizar corretamente as
+novas imagens de entrada, excluindo-se o caso abordado com o indivíduo 7 e todas as expressões do
+banco. Esse resultado indica que o classificador é
+robusto e uma melhoria na implementação do algoritmo AAM acarretaria em maiores taxas de acerto.
+O melhor classificador testado foi o SVM com kernel
+RBF. No entanto, novos resultados podem ser alcançados utilizando classificadores alternativos como
+637
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+através de modelagem estatística GMM (Gaussiam
+Mixture Model). Para os casos com apenas duas
+classes foi possível obter taxas de acerto superiores a
+80.
+A correta identificação de indivíduos também pode
+ser explorada utilizando os resultados do presente
+trabalho, uma vez que ao reconhecer a expressão
+facial pode ser realizado um processo de treinamento
+para que uma regressão seja capaz de transformar a
+expressão encontrada em uma expressão neutra que
+será entrada para o identificador de indivíduos.
+Em trabalhos futuros será utilizado um banco de
+dados com um maior número de indivíduos e será
+incluída a expressão de desprezo (Kanade et al.,
+2000). Além disso, o sistema de reconhecimento
+multi-classe pode ser expandido adicionando-se
+novas expressões faciais, até mesmo expressões não
+universais.
+Agradecimentos
+Os autores agradecem a CAPES e ao PPGEE 
+UFES pelo incentivo, suporte e financiamento 
+pesquisa. Também agradecem aos que colaboraram
+com imagens e banco_de_dados utilizados nos testes.
+Referências Bibliográficas
+Buciu, I. Kotropoulos, C. and Pitas, I. (2003). ICA
+and Gabor representation for facial expression
+recognition, Proc. IEEE Int. Conf. Image
+Processing, pp. 855858.
+Chang, C.C. and Lin, C.J. (2011). LIBSVM  a
+library for support_vector_machines. ACM
+Transactions on Intelligent Systems and
+Technology, 2271--2727.
+Cootes T.F. Edwards, G. J. and Taylor, C.J (1998).
+Active
+appearance
+models
+A.
+In
+Proceedings of the 5th European Conference on
+Computer VisionC, Freiburg, Germany, 2
+48449.
+Cortes, C. and Vapnik, V.(1995) . Support-vector
+network. Machine Learning, 20273-297.
+Darwin, C (1872). The Expression of the Emotions
+in Man andAnimals, J.Murray, London.
+Dubuisson, S. Davoine, F. and Masson, M. (2002).
+A solution for facial expression representation
+and recognition, Sign. Process. Imag. Commun.
+17 657673,
+Ekman, P. and Friesen, W.V. (1971). Constants
+Across Cultures in the Face and Emotion, J.
+Personality Social Psychol. 17(2), 124129.
+Ekman, P and Heider, K.G. (1988).The Universality
+of Contempt Expression A Replication.
+Motivation and Emotion, 12, 303-308.
+Ekman, P. (1994). All Emotions are Basic. Oxford
+University Press, Nova York.
+Fasel, B and Luettin, J (2002). Automatic Facial
+Expression Analysis  a Survey. Elsevier. Patter
+Recognition 36, 259-275.
+
+ISBN 978-85-8001-069-5
+
+Kanade, T., Cohn, J. F.,  Tian, Y. (2000).
+Comprehensive database for facial expression
+analysis. Proceedings of the Fourth IEEE
+International Conference on Automatic Face and
+Gesture Recognition (FG00), Grenoble, France,
+46-53.
+Keerthi,S.S. and Lin, C.J. (2003). Asymptotic
+behaviors of support_vector_machines with
+Gaussian
+kernel.
+Neural
+Computation,
+15(7)1667-1689.
+Longhi, M.T. Bercht, M. and Behar, P.A. (2007).
+Reconhecimento de Estados Afetivos do Aluno
+em Ambientes Virtuais de Aprendizagem
+CINTED-UFRGS. Novas Tecnologias na
+EducaçãoV. 5 N 2.
+Lyons, M.J. Lyons Akamatsu, S. Kamachi, M. and
+Gyoba, J. (1998). "Coding Facial Expressions
+with Gabor Wavelets" Proceedings, Third IEEE
+International Conference on Automatic Face and
+Gesture Recognition, April 14-16. Nara Japan,
+IEEE Computer Society, pp. 200-205.
+Lyons, M. Budynek, J. and Akamatsu, S.(1999).
+Automatic classication of single facial images,
+IEEE Trans. Patt. Anal. Mach. Intell.21. 1357
+1362.
+Martins, P., Sampaio, J. and Batista, J (2008). Facial
+Expression
+Recognition
+Using
+Active
+Appearance Models. VISAPP 2008 Proceedings
+of the Third International Conference on
+Computer Vision Theory and Applications,
+Funchal. Volume 2, 123-129.
+Matsumoto (1993). Ethnic diferences in afect
+intensity,emotion judgments, display rules, and
+self-reported emotional expression, Motivation
+Emotion 17, 107123.
+Shih, F.Y. Chuang, C. and Wang, O.P. 2008.
+Performance Comparisons of Facial Expression
+Recognition in Jaffe Database. International
+Journal of Pattern Recognition and Articial
+IntelligenceVol. 22, No. 3 445459
+Shinohara, Y. and Otsu, N. (2004) Facial expression
+recognition using Fisher weight maps,Proc.
+IEEE Int. Conf. Automatic Face and Gesture
+Recognition, pp. 499504.
+Song, M Tao, D. Liu, Z. Li, X. and Zhou, M.
+(2010). Image Ratio Features for Facial
+Expression Recognition Application. IEEE
+Transactions on Pattern Analysis and Machine
+Intelligence, 23(2), 97-115. IEEE transactions on
+systems, man, and cybernetics  Part B
+Cybernetics, vol.40, N.3.
+Zhang, Z. Lyons, M. Schuster, M. and Akamatsu,
+S. (1998).Comparison between geometry based
+and Gabor-wavelets-based facial expression
+recognition using multi-layer perceptron, Proc.
+IEEE Int. Conf. Automatic Face and Gesture
+Recognition, 454459.
+
+638

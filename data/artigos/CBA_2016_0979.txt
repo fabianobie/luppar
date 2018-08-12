@@ -1,0 +1,823 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+UM MÉTODO PARA DETECÇÃO DE CAUSALIDADE DE GRANGER COM SELEÇÃO DE
+REGRESSORES
+RICARDO E. V. VARGAS*, CELSO J. MUNARO*, PATRICK M. CIARELLI*
+*
+
+Departamento de Engenharia Elétrica, Universidade Federal do Espírito Santo
+Av. Fernando Ferrari, 514, Goiabeiras, Vitória - ES - Brasil, CEP 29060-370, +55 27 4009-2687
+E-mails ricardovvargas@gmail.com, munaro@ele.ufes.br,
+patrick.ciarelli@ufes.br
+Abstract Causal detection methods have been applied in industrial processes data in order to diagnose disturbances that propagate plant-wide. A parametric method based on the Granger causality is proposed in this paper, adding improvements to the estimation of model residuals and procedures for the selection of regressors used to estimate these models. The method is compared
+to the classic method of Granger using data of an industrial process with known causality relationships, using nine different metrics. The results allow us to define the most appropriate causality detection methodology for the different metrics, and they indicate new perspectives for improvement of these methods.
+Keywords Granger causality, GCCA Toolbox, LASSO, regressor selection, cross-validation, Friedman test.
+Resumo Métodos de detecção de causalidade têm sido aplicados a dados de processos_industriais com objetivo de diagnosticar
+distúrbios que se propagam por eles. Um método paramétrico baseado em causalidade de Granger é proposto neste artigo, agregando melhorias no método de estimação dos resíduos dos modelos e nos procedimentos para seleção dos regressores usados para estimar esses modelos. O método proposto é comparado ao método clássico de Granger utilizando dados de um processo_industrial real com relações de causalidade conhecidas, usando para isso nove diferentes métricas. Os resultados permitem definir a
+metodologia de detecção de causalidade mais adequada para as diferentes métricas, além de indicar novas perspectivas para melhorias desses métodos.
+Palavras-chave .
+
+1 Introdução
+Muitas contribuições têm sido propostas para
+métodos baseados em dados para monitoramento de
+processos_industriais, pois há grande disponibilidade
+de dados e existe uma dificuldade em modelar processos cada vez mais complexos e interconectados
+(Aldrich e Auret, 2013).
+A detecção de relações de dependência entre variáveis de um processo contribui para diagnosticar problemas relacionados a busca da causa raiz de distúrbios que se propagam por ele, bem como o diagnóstico_de_falhas. Essas relações podem ser obtidas manualmente, a partir do conhecimento das equipes de
+operação, ou por meio dos dados. A segunda tem
+sido preferida, por ser automática, permitir a verificação periódica das relações e eliminar o esforço das
+equipes multidisciplinares que devem interagir para
+gerar essa informação. Métodos de detecção de causalidade têm sido utilizados com a finalidade de automatizar o processo e de reduzir a interferência humana (Bauer et al., 2007).
+O requisito de estacionariedade dos dados utilizados
+pode representar uma restrição na presença de distúrbios. A diferenciação dos dados permite atender esse
+requisito, porém seu efeito de um filtro passa altas
+pode dificultar a obtenção de bons modelos para os
+métodos paramétricos de detecção de causalidade.
+Esse é o caso do método de detecção de causalidade
+de Granger (Barnett e Seth, 2014), utilizado neste
+trabalho. A estacionariedade é necessária para os
+testes de significância estatística da causalidade, que
+
+ISSN 2525-8311
+
+também são afetados pelas escolhas das ordens dos
+modelos e pelos métodos para estimar os resíduos
+dos modelos.
+Apesar do método de Granger ser muito utilizado
+para detecção de causalidades, ele impõe algumas
+restrições que podem ser prejudiciais para a identificação de certas causalidades, principalmente em dados do mundo real. Um exemplo dessas restrições é
+uso desnecessário de regressores associados a tempos
+mortos.
+Este artigo tem como objetivo avaliar o impacto dessas imposições do método de Granger e, a partir das
+análises, propor um método que agrega as melhorias
+observadas e foi batizado como Granger Causality
+with Regressor Selection (GCRS) ou Causalidade de
+Granger com Seleção de Regressores.
+2 Causalidade de Granger
+O método de detecção de causalidade de Granger (Granger, 1969) se baseia fundamentalmente em
+análise de erro de modelagem linear. Originalmente
+ele foi utilizado para estimar causalidades entre pares
+de séries_temporais, sendo posteriormente adaptado
+para análises com múltiplas séries.
+A existência ou não de causalidade se baseia na análise da variância do erro do modelo completo que
+considera todas as séries comparada  variância do
+erro do modelo restrito sem a série cuja causalidade
+se deseja analisar. Uma maior variância no erro do
+modelo restrito permite concluir que a variável excluída contribui para explicar a série estimada pelo
+
+3397
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Na abordagem clássica, o erro de modelagem é
+estimado utilizando-se as mesmas observações que
+são utilizadas para a obtenção do modelo, seja ele
+completo ou restrito. Esse método, chamado de resubstituição, se destaca por ser um tipo de estimativa
+tendenciosa, otimista (menor que o erro verdadeiro) e
+que piora com o aumento da ordem (grau de liberdade) do modelo. Destaca-se também que para cada
+relação são obtidas estimativas únicas de variâncias
+de erros, tanto para o modelo completo quanto para o
+modelo restrito. Assim, os valores de causalidade
+sofrem com baixa confiabilidade estatística (James et
+al., 2013).
+Para ilustrar esse efeito, foi utilizado um modelo de
+três variáveis x, y, z da literatura (Ding et al., 2006).
+É conhecido que há apenas duas relações de causalidade nesse modelo z causa x e y causa z. Para inferir
+a causalidade entre as variáveis z e x foram obtidos
+modelos e calculadas as variâncias dos erros com
+resubstituição e com validação_cruzada (Friedman et
+al., 2009). Essa demonstração foi obtida com implementações próprias do método clássico de Granger
+(com erro de resubstituição) e do método de Granger
+ajustado para estimar erro de modelagem com validação_cruzada. Na Figura 1, os asteriscos em vermelho representam os resultados com resubstituição e as
+barras em azul são os boxplots do resultado com validação_cruzada. Na Figura 2 são mostrados valores
+da causalidade de z em x (existente) estimando o erro
+pelos dois métodos. O mesmo é feito na Figura 3
+para a causalidade de x em z (inexistente). Os limiares estatísticos apresentados nas Figuras 2 e 3 são de
+F-test com distribuição teórica assintótica e 5 de
+significância. Em relação a essas figuras é válido
+destacar
+ Para cada ordem, o erro de validação_cruzada
+foi obtido com 10-fold, sendo que a estimativa
+final (pontos destacados no boxplot) é a média
+aritmética simples entre os resultados obtidos
+nas 10 estimativas
+ O erro de resubstituição e a sua variância são
+monótonas decrescente (ver Figura 1). Por isso
+o método clássico utiliza algum critério baseado
+em informação para escolher a ordem dos modelos, por exemplo BIC (Bayesian information
+criterion) ou AIC (Akaike information criterion). Esses critérios são mais indicados quando a
+
+ISSN 2525-8311
+
+Se r ie z ( t )
+0.23
+R es u b s t i t u i ca o
+
+0.22
+
+var ( e r r o)
+
+2.1 Estimação do Erro de Modelagem com Resubstituição
+
+quantidade de observações é muito restrita a
+ponto de não ser interessante subdividi-las para
+aplicar validação_cruzada (James et al., 2013)
+ A dispersão da estimativa, tanto da variância de
+erro quanto da causalidade, é crescente com o
+aumento da ordem, como pode ser observada
+nos boxplots das Figuras 1 a 3
+ Espera-se que valores de causalidade diminuam
+com elevação da ordem do modelo, a ponto de
+se tornarem não-significativos. Isso acontece
+porque ao se elevar a ordem do modelo a série
+causa passa a contribuir relativamente cada vez
+menos no modelo completo da série efeito. Isso
+não é observado quando se utiliza erro de resubstituição
+ Uma consequência da observação anterior é que
+ao se utilizar erro de resubstituição, valores de
+causalidades inexistentes ficam mais próximos
+do limite estatístico (ver Figura 3).
+
+0.21
+
+0.20
+
+0.19
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9 10 11 12 13 14 15 16 17 18 19 20
+
+or de m
+
+Figura 1. Variância do erro do modelo completo versus ordem.
+Se r ie z ( t ) c aus a x( t )
+0.15
+
+0.10
+
+c aus al i dade
+
+modelo completo. Ou seja, nesse caso conclui-se que
+existe uma relação de causalidade.
+Uma condição para utilização desse método é a necessidade das séries serem estacionárias. É possível
+verificar significância estatística apenas quando essa
+condição é respeitada.
+No método proposto são feitas adaptações em basicamente três características do método de Granger.
+Tais características são descritas nas subseções a
+seguir.
+
+0.05
+R es u b s t i t u i ca o
+L i mi a r es t a t s t i co
+( s i g n i fi ca n ci a  5 )
+
+0.00
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10 11 12 13 14 15 16 17 18 19 20
+
+or de m
+
+Figura 2. Causalidade existente versus ordem.
+
+3398
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Se r ie x( t ) c aus a z ( t )
+0.02
+
+c aus al i dade
+
+R es u b s t i t u i ca o
+L i mi a r es t a t s t i co
+( s i g n i fi ca n ci a  5 )
+
+0.00
+
+0.02
+
+0.04
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10 11 12 13 14 15 16 17 18 19 20
+
+or de m
+
+Figura 3. Causalidade inexistente versus ordem.
+
+2.2 Utilização de Ordem Única para Todas as Séries
+No método de Granger, utiliza-se uma única ordem para todos os modelos. Assim, quando certa
+série é melhor modelada em termos de variância de
+erro com ordens menores que  escolhida, a abordagem clássica utiliza graus de liberdade desnecessários nos modelos. Em (Thornton e Batten, 1984), é
+mostrado como causalidade de Granger é sensível em
+relação a escolha da ordem dos modelos.
+2.3 Utilização de Todos os Regressores até a Ordem
+Estimada
+Quando uma ordem p é escolhida, a abordagem
+clássica inclui em cada modelo completo e restrito
+todos os regressores de todas as séries, sem considerar se eles contribuem com a redução da variância do
+erro de modelagem.
+3 Granger Causality with Regressor Selection
+(GCRS)
+O principal pilar das propostas contidas no método GCRS é o Bias-Variance Tradeoff (Friedman et
+al., 2009). O objetivo é respeitar a complexidade
+(quantidade de graus de liberdade) de cada série, mas
+utilizar no seu modelo completo apenas os regressores que minimizam a variância do erro de modelagem.
+Essas propostas foram elaboradas visualizando-se
+causalidade de Granger sob a ótica de aprendizado
+estatístico regressão_linear e seleção_de_regressores.
+O método GCRS estima as relações de causalidade
+de cada série, uma de cada vez, em até três fases. A
+3a fase é obrigatória e uma das duas primeiras fases
+pode ser suprimida a critério do usuário. Ou seja,
+pode-se utilizar as três fases, a 1a e a 3a fases ou a 2a
+e a 3a fases. Cada fase é descrita em subseção própria
+a seguir.
+
+ISSN 2525-8311
+
+3.1 Primeira Fase do GCRS
+Seu principal propósito é selecionar as quantidades iniciais de regressores de cada série causa (entradas do modelo) mais adequadas para o modelo completo inicial de cada série efeito (saída do modelo).
+São quantidades iniciais porque se a 2a fase for aplicada, elas podem ser reduzidas.
+Nesta fase as regressões lineares são feitas com Mínimos Quadrados Ordinários (MQO), por conta do
+seu baixo_custo_computacional. Para cada série efeito, são realizadas regressões lineares com todas as
+possíveis combinações de número de regressores
+associados a cada série causa, variando entre zero e
+um valor máximo escolhido pelo usuário. Nesse sentido, o caminho de busca é praticamente completo.
+Apenas o modelo com zero regressores não é considerado. Ao final desta fase, é escolhido como modelo
+completo inicial aquele composto pelo número de
+regressores de cada série causa que gera a menor
+variância do erro de modelagem. Convencionou-se
+assumir que a ordem de cada modelo completo é
+igual ao maior número selecionado de regressores.
+É importante destacar que não é utilizado um caminho de busca completo em termos dos regressores
+em si. Isso porque para qualquer número p de regressores associados a qualquer série causa, considera-se
+sempre o conjunto de regressores entre 1 e p. Outros
+possíveis conjuntos, por exemplo entre 2 e p+1, não
+são avaliados. Essa abordagem é similar  adotada no
+método clássico e diminui o tempo de processamento
+durante a busca.
+Mesmo no caso específico de séries_temporais, existem várias formas de se realizar validação_cruzada e
+ainda não há consenso sobre qual é o melhor método
+(Barrow, 2013 Arlot e Celisse, 2010). Em função da
+experiência dos autores deste artigo, adotou-se a seguinte abordagem. São formadas 10 amostras (grupos) de observações contíguas, com tamanhos iguais,
+disjuntas e em sequência. Dessa forma, as possíveis
+autocorrelações são preservadas. Durante a i-ésima
+validação, utiliza-se a i-ésima amostra no teste (avaliação) e uma única outra amostra aleatória diferente
+de i no treinamento (modelagem). Assim, cada observação é utilizada apenas uma única vez em treinamento e uma única vez em teste. Considera-se como variância do erro de modelagem a média aritmética simples entre as suas 10 estimativas.
+Portanto, logo na 1a fase do método GCRS já são
+propostas alternativas s três características descritas
+nas Subseções 2.1, 2.2 e 2.3.
+3.2 Segunda Fase do GCRS
+O propósito principal da 2a fase é reduzir o grau
+de liberdade dos modelos completos por meio de
+seleção_de_regressores.
+Nesta fase é utilizado o método LASSO (Least Absolute Shrinkage and Selection Operator), por ser um
+eficiente seletor de regressores (Friedman et al.,
+2009 Hsu et al., 2008 Chiuso e Pillonetto, 2012).
+Para cada série efeito, são selecionados os regresso3399
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+res que geram ou o menor MSE (mean squared error
+ erro quadrático médio) ou menor 1SE (mean squared error plus its standard error  erro quadrático
+médio mais seu erro padrão), a critério do usuário. A
+primeira opção tende a zerar menos coeficientes,
+gerando um maior número de regressores.
+É importante destacar que o método LASSO pode
+selecionar qualquer subconjunto de regressores, inclusive com regressores não-sequenciais eou que
+não se inicia a partir do primeiro regressor. Com essa
+característica, certos regressores não são selecionados para modelos completos associados a séries que
+apresentam certo tempo_morto.
+A mesma estratégia de validação_cruzada descrita
+anteriormente é utilizada para estimar as variâncias
+de erros_de_modelagem nesta fase.
+É importante observar que a 2a fase do método
+GCRS também modifica as três características descritas nas Subseções 2.1, 2.2 e 2.3.
+3.3 Terceira Fase GCRS
+Esta fase visa estimar os valores de causalidade,
+sendo assim a única fase obrigatória do método
+GCRS.
+Os cálculos são da mesma forma que o método de
+Granger. Portanto, qualquer teste_estatístico aplicável
+ causalidade de Granger também pode ser utilizado
+com o método GCRS.
+A principal inovação desta fase decorre da possibilidade de todos os regressores associados a uma série
+causa serem descartados do modelo completo de uma
+série efeito, o que resulta na ausência de causalidade
+dessa relação. Em outras palavras, se nenhum regressor associado a uma série causa for selecionado é
+porque a relação causa-feito não existe.
+4 Estudo de Caso
+Para estudo de caso foram utilizadas 6 variáveis
+de processo (PIC400, LIC434, FIC408, LIC400,
+LIC430 e TIC400) obtidas em um planta real de automação_industrial (Marques et al., 2015). As equipes
+de operação dessa planta comprovaram a existência
+de 7 relações de causalidade entre as variáveis.
+
+desse teste precisou ser adaptada, sem alteração na
+teoria envolvida. No GCRS os graus de liberdade do
+modelo completo e dos modelos restritos são calculados para cada par de séries. Já no GCCA tais graus
+são calculados uma única vez, pois são fixos em todos os pares de séries.
+Foram avaliados os 6 métodos descritos na Tabela 1,
+sendo que 5 são variantes do método GCRS. A proposta foi investigar a importância e as características
+das duas primeiras fases isoladas ou juntas.
+Tabela 1 Métodos avaliados.
+
+Método
+GCCA
+GCRS
+(Fase 1)
+
+Descrição
+Método clássico.
+Seleciona regressores apenas
+com a 1a fase.
+Seleciona regressores apenas
+GCRS
+com a 2a fase com o critério
+(1SE - Fase 2)
+1SE.
+Seleciona regressores tanto com
+GCRS
+a 1a quanto com a 2a fase com o
+(1SE - 2 Fases)
+critério 1SE.
+Seleciona regressores apenas
+GCRS
+com a 2a fase com o critério
+(MSE - Fase 2)
+MSE.
+Seleciona regressores tanto com
+GCRS
+a 1a quanto com a 2a fase com o
+(MSE - 2 Fases)
+critério MSE.
+Ao todo, foram realizadas 20 rodadas de estimativas
+de causalidades. Em cada rodada foram utilizadas
+400 observações distintas de cada variável de processo e foram obtidas estimativas de causalidade para
+cada método. Cada método recebeu como entrada
+rigorosamente as mesmas observações a cada rodada.
+Para garantir estacionariedade, foram utilizadas apenas observações de períodos nos quais a planta estava em regime estacionário. Além disso, as observações foram diferenciadas uma única vez.
+Para o GCCA, sempre foi utilizada a maior ordem
+entre AIC e BIC, estimadas pelo próprio GCCA Toolbox. Para o método GCRS, sempre foi utilizada
+como limite para busca de graus de liberdade a mesma ordem utilizada pelo GCCA.
+4.2 Métricas
+
+4.1 Metodologia
+O método GCRS foi implementado em
+MATLAB versão R2013a e comparado neste trabalho com o GCCA Toolbox, que implementa causalidade
+de
+Granger
+e
+é
+gratuito
+(httpwww.sussex.ac.uksacklermvgc).
+Para o teste_estatístico aplicado em valores de causalidade foi implementada e utilizada a opção padrão
+do GCCA Toolbox F-test com distribuição teórica
+assintótica, 5 de significância e correção por FDR
+(Barnett e Seth, 2014). Como no GCCA a ordem é a
+mesma para todas as séries e no GCRS isso não necessariamente acontece, a implementação original
+
+ISSN 2525-8311
+
+Em cada rodada, foram calculadas as métricas da
+Tabela 2 em relação s estimativas de cada método
+avaliado.
+Tabela 2 Métricas clássicas utilizadas.
+
+Métrica
+VP
+
+FN
+VN
+
+Descrição
+Verdadeiro-positivo percentual de
+causalidades existentes estimadas como existentes.
+Falso-negativo percentual de causalidades existentes estimadas como inexistentes.
+Verdadeiro-negativo percentual de
+
+3400
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+4.3 Teste Estatístico Aplicado nas Métricas
+
+causalidades inexistentes estimadas
+como inexistentes.
+Falso-positivo percentual de causalidades inexistentes estimadas como
+existentes.
+
+FP
+
+Para cada métrica, os valores associados a cada
+método foram avaliados com o teste_estatístico de
+comparação múltipla de Friedman (Hollander e Wolfe, 1999). Utilizou-se 5 de significância e correção
+de Tukey-Kramer (Hochberg e Tamhane. 1987).
+
+Foram calculadas também as seguintes métricas (Siyal et al., 2014)
+ Precisão (P) proporção entre causalidades existentes estimadas como existentes e todas as estimadas como existentes. Ou seja, entre todas
+que foram estimadas como existentes, percentual que realmente são existentes (Equação 1)
+ Sensibilidade (S) proporção entre causalidades
+existentes estimadas como existentes e todas as
+causalidades existentes. Ou seja, entre todas que
+realmente são existentes, percentual estimadas
+como existentes (Equação 2)
+ Acurácia (A) percentual de causalidades estimadas corretamente, sejam existentes ou inexistentes (Equação 3)
+ Medida F (F1) média harmônica entre precisão
+e sensibilidade (Equação 4).
+
+VP
+VP+FP
+VP
+S
+VP+FN
+P
+
+A
+
+4.4 Resultados
+As médias de todas as métricas e dos tempos de
+execução são apresentados na Tabela 3. Em relação a
+essa tabela, é válido destacar que
+ O símbolo  indica métricas estatisticamente
+diferentes e para melhor em relação ao obtido
+pelo GCCA. Ou seja, eles indicam por métrica
+quais variantes do método GCRS venceram o
+GCCA. Já o símbolo ! indicam por métrica
+quais variantes do método GCRS perderam para
+o GCCA. Ausência desses símbolos indica que
+houve empate com o GCCA
+ O método GCRS tende a obter melhores resultados para as métricas VN e FP, justamente por
+conta do GCCA utilizar erro de resubstituição
+conforme descrito na Subseção 2.1. Utilizandose a opção MSE do LASSO, essas métricas melhoraram em relação  variante Fase 1, mas não
+o suficiente para vencerem estatisticamente os
+respectivos resultados do GCCA
+ Uma consequência negativa da execução da 2a
+fase do método GCRS (LASSO) foi a piora nos
+resultados das métricas VP e FN. Como consequência, o GCRS não obteve bons resultados
+nas métricas S, A e F1
+ Em relação a tempo de execução, o GCCA venceu as três variantes do método GCRS que executam a sua 1a fase.
+
+(1)
+(2)
+
+VP+ VN
+VP+ VN+ FP+ FN
+2PS
+F1 
+P+S
+
+(3)
+(4)
+
+Também foram registrados os tempos de execução
+(T) em um Intel Core i5 2.7 GHz, 8 GB de RAM
+DDR3 1867 MHz e OS X 10.11.1.
+
+Tabela 3. Resultados do estudo de caso.
+MÉTODO
+
+VP 
+
+FN 
+50.0
+
+VN 
+84.8
+
+55.0
+
+Fase 1
+
+45.0
+
+Fase 2
+
+28.6
+
+!
+
+71.4
+
+!
+
+78.9
+94.1
+
+
+
+2 Fases
+
+30.0
+
+!
+
+70.0
+
+!
+
+95.0
+
+
+
+Fase 2
+
+42.9
+
+2 Fases
+
+38.6
+
+57.1
+!
+
+61.4
+
+!
+
+FP 
+21.1
+
+S 
+
+77.2
+
+50.0
+
+A 
+67.4
+
+F1 
+60.2
+
+T s
+0.2
+
+67.6
+
+45.0
+
+62.0
+
+!
+
+53.4
+
+5.9
+
+
+
+87.0
+
+28.6
+
+!
+
+61.4
+
+!
+
+41.9
+
+!
+
+5.6
+
+5.0
+
+
+
+87.0
+
+30.0
+
+!
+
+62.5
+
+!
+
+43.4
+
+!
+
+23.3
+
+62.0
+
+!
+
+51.8
+
+61.2
+
+!
+
+49.4
+
+81.1
+
+18.9
+
+69.9
+
+83.9
+
+16.1
+
+71.1
+
+5 Conclusões
+O objetivo do trabalho foi desenvolver uma alternativa ao método causalidade de Granger com
+maior confiabilidade estatística.
+Um método batizado como GCRS foi elaborado pensando-se fundamentalmente no Bias-Variance Tradeoff. Nele são adaptadas três características do método clássico estimação do erro de modelagem com
+resubstituição, utilização de ordem única para todas
+
+ISSN 2525-8311
+
+P 
+
+15.2
+
+1SE
+
+50.0
+
+MSE
+
+GCRS
+
+GCCA
+
+!
+
+42.9
+38.6
+
+!
+
+22.1
+
+!
+
+!
+
+5.6
+!
+
+23.8
+
+!
+
+as séries e utilização de todos os regressores até a
+ordem estimada.
+Um estudo de caso com 6 variáveis de processo obtidas em planta real de automação_industrial foi realizado para comparar o método GCRS com o GCCA,
+uma implementação gratuita do método clássico de
+causalidade de Granger. Mostrou-se que o GCRS
+tende a vencer o GCCA nas métricas VN e FP, justamente por conta das três adaptações realizadas. Isso
+pode significar ganhos relevantes na prática. Por
+exemplo, em análise de causa raiz de perturbações e
+de oscilações em malhas industriais de controle, VN
+
+3401
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+e FP melhores diminuem as chances de falsas causas
+raiz serem selecionadas. Ou seja, nesse tipo de aplicação, o GCRS tenderia a indicar com mais sucesso
+as causas raiz de fato, que poderiam então ser tratadas mais rapidamente e com menos custo operacional. Contudo, o GCRS tende a gerar piores resultados
+em relação ao GCCA para as outras métricas avaliadas.
+Investigações adicionais se mostram necessárias. Por
+exemplos
+ Alternativas ao caminho de busca utilizado na
+1a fase do método para torná-la menos custosa
+em termos computacionais
+ Alternativas ao MQO e ao LASSO
+ Alternativa intermediária entre MSE e 1SE, que
+tenda a obter bons resultados tanto em termos
+de VN e FP quanto em termos de VP e FN
+ Estimar causalidades com algum critério de votação dentre os valores obtidos durante validação_cruzada. Ou seja, aproveitar os múltiplos
+cálculos de variância de erro para serem obtidos
+também múltiplos valores de causalidade para
+cada par de séries.
+Agradecimentos
+Agradecemos á empresa Petróleo Brasileiro S.A.
+(Petrobras) por ter liberado parcialmente seu empregado (Ricardo E. V. Vargas) para o desenvolvimento
+deste trabalho.
+Referências Bibliográficas
+Aldrich, C. e Auret., L. (2013). Unsupervised Process Monitoring and Fault Diagnosis with Machine Learning Methods, Springer.
+Arlot, S. e Celisse, A. (2010). A survey of cross validation procedures for model selection, Statistics Surveys, 4(0), pp. 4079.
+Barnett, L. e Seth, A.K. (2014). The MVGC
+Multivariate Granger Causality Toolbox A New
+Approach to Granger-causal Inference, Journal
+of Neuroscience Methods, 223, pp. 5068.
+Barrow, D. K. (2013). Crogging (Cross-Validation
+Aggregation) for Forecasting - a novel algorithm
+of Neural Network Ensembles on Time Series
+Subsamples, The 2013 International Joint
+Conference on Neural Networks (IJCNN), pp. 1
+8.
+Bauer, M., Cox, J. W., Caveness, M. H., Downs J. J.
+e Thornill N. F. (2007). Finding the direction of
+disturbance propagation in a chemical process
+using transfer entropy, IEEE Trans. Cont. Syst.
+Tech, vol. 15, no. 1.
+Chiuso, A. e Pillonetto, G. (2012). A Bayesian
+approach
+to
+sparse
+dynamic
+network
+identification, Automatica, 48(8), pp. 1553
+1565.
+Ding, M Chen,Y e Bressler, S. L., 2006. Handbook
+of Time Series Analysis Recent Theoretical De-
+
+ISSN 2525-8311
+
+velopments and Applications. Wiley-VCH, 1, pp.
+437-460.
+Friedman, J., Hastie, T. e Tibshirani, R. (2009). The
+Elements of Statistical Learning Data Mining,
+Inference, and Prediction, 2nd edition. New
+York, NY Springer-Verlag.
+Granger, C. W. J., August 1969. Investigating Causal
+Relations by Econometric Models and CrossSpectral Methods. Econometrica, Vol. 37, No. 3,
+pp. 424-438.
+Hochberg, Y., e A. C. Tamhane. (1987). Multiple
+Comparison Procedures. Hoboken, NJ John
+Wiley  Sons, Inc.
+Hollander, M., e D. A. Wolfe. (1999).
+Nonparametric Statistical Methods. Hoboken,
+NJ John Wiley  Sons, Inc.
+Hsu, N.-J., Hung, H.-L. e Chang, Y.-M. (2008).
+Subset selection for vector autoregressive
+processes using lasso, Computational Statistics
+ Data Analysis, 52(7), pp. 36453657.
+James, G., Hastie, T. e Tibshirani, R. (2013). An
+Introduction to Statistical Learning with
+Applications in R. United States SpringerVerlag New York.
+Marques, V. M., Munaro, C. J. e Shah, S. L. (2015).
+Detection of causal relationships based on residual analysis, IEEE Transactions on Automation
+Science and Engineering, 12(4), pp. 15251534.
+Siyal, M. Y., Furqan, M. S. e Monir, S. M. G. (2014).
+Granger causality Comparative Analysis of
+Implementations for Gene Regulatory Networks, 13th International Conference on Control Automation Robotics  Vision (ICARCV),
+pp. 793798.
+Thornton, D.L. e Batten, D.S. (1984). Lag-length
+Selection and Granger Causality, Technical
+report, Federal Reserve Bank of St. Louis.
+
+3402

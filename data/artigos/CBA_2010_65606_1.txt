@@ -1,0 +1,827 @@
+DESENVOLVIMENTO DE ALGORITMO DE CONTROLE DE NÍVEL MÉDIO DE TENSÃO PARA
+INVERSORES SENOIDAIS
+RAFAEL C. ANNUNZIATO1, EDUARDO F. R. ROMANELI2, ROGER GULES2, CARLOS E. F. PIMENTEL2
+1. NHS SISTEMAS ELETRÔNICOS LTDA.
+Rua Prof. Algacyr Munhoz Mader, 2270 - Curitiba - PR
+E-mail rafael@nhs.com.br
+2. LPEE  Laboratório de Processamento Eletrônico de Energia, DAELT  Departamento Acadêmico de
+Eletrotécnica, UTFPR  Universidade Tecnológica Federal do Paraná
+Avenida Sete de Setembro, 3165  CuritibaPR, Brasil
+E-mails felix@utfpr.edu.br, rgules@utfpr.edu.br, cefpimentel@gmail.com
+
+Abstract
+ This paper shows a model of a digital controller that controls the average voltage of a PWM inverter.The control algorithm works without any specific sensor or manual adjustment. The average component of the voltage is taken off by calculating the average value per cycle, and this value is subtracted of the sinusoidal wave inserted at the processor. The resulting waveform of the inverter is sinusoidal, with low average value.
+Keywords
+ PWM Inverter, Repetitive Controller, Average Value, Flux Balance.
+Resumo  Este artigo mostra um modelo de controlador_digital que atua sobre a tensão média de um inversor PWM. O algoritmo de controle desenvolvido corrige o problema sem a necessidade de qualquer sensor específico ou ajuste manual. A componente média da tensão é minimizada através do cálculo da média de cada ciclo e o valor obtido é subtraído da onda senoidal inserida no processador. A forma de onda resultante do inversor é senoidal com um valor médio praticamente nulo.
+Palavras-chave
+ .
+
+baixo_custo segundo Rech, et al. (2001), o que justifica a grande utilização desta técnica. A forma de
+chaveamento PWM mais comum em inversores
+senoidais para UPS é o PWM em 3 níveis, pois oferece menores perdas por chaveamento e melhor qualidade na forma de onda senoidal (NABAE,
+TAKAHASHI E AKAGUI, 1981).
+
+1 Introdução
+Com a crescente demanda por fontes_ininterruptas_de_energia (UPS  Uninterruptible Power Supply), tem sido exigida uma maior confiabilidade dos
+inversores senoidais utilizados em UPS. Transformadores de baixa frequência (60 Hz) são amplamente
+conectados  saída destes inversores para fornecer
+isolação galvânica ao equipamento a ser alimentado
+pela fonte segundo Borup, Enjeti e Blaabjerg (2001).
+A preferência pelo uso desses transformadores é
+justificada pela isolação galvânica existente, inclusive quando a UPS estiver no modo bypass, onde o
+inversor não é utilizado e a tensão na saída da fonte é
+a própria tensão de entrada (BRANCO, ET.
+AL.,2008).
+Segundo Gao, et al. (2000), a utilização de equipamentos com componentes magnéticos conectados
+ao inversor, como é o caso de transformadores, justifica a preocupação em se controlar o valor médio da
+tensão. Esse controle possibilita o balanço do fluxo
+magnético no componente e seu correto dimensionamento, evitando que ele opere na região da saturação e, conseqentemente, apresente distorção na
+forma de onda da tensão na saída.
+Para obter-se a forma de onda senoidal a partir
+de um barramento CC, a topologia de inversor em
+ponte_completa é a mais indicada dentre as topologias de inversores (LINARD, ET AL., 2009).
+Fazer o controle do circuito inversor com PWM
+(Pulse Width Modulation) utilizando um DSP (Digital Signal Processor) é relativamente simples e de
+
+Figura 1 Compensação analógica
+
+Existem formas analógicas para atenuar a magnitude da componente média da tensão de saída do
+inversor, como por exemplo, inserir um compensador
+composto de amplificadores operacionais no sinal
+senoidal, como na Figura 1, o qual é provido por um
+sensor_de_corrente no primário do transformador,
+sendo que este passa por um filtro passa-baixa (Ua).
+A componente média de tensão gerada por inversores com controlador analógico ocorre devido a
+componentes médias nos dispositivos de amostragem
+ou erros inseridos na onda triangular que gera o
+PWM, enquanto que em implementações digitais,
+ocorre por componentes médios nos dispositivos de
+amostragem ou por erros de truncamento do DSP
+(GAO, ET AL., 2000).
+852
+
+Para corrigir os erros pelo desvio do nível_médio da tensão em inversores senoidais, diversas soluções têm sido propostas.
+Segundo Li e Xing (2004), uma solução, que
+pode ser observada na Figura 2, consiste em processar a tensão do controlador antes de ser carregada no
+módulo PWM do DSP, tratando o sinal com um filtro
+passa-baixa, o qual atenua a componente fundamental de 60 Hz compensando o nível_médio da saída do
+controlador. A saída desse filtro é comparada com
+zero gerando um erro, passa pelo regulador de componente CC e é adicionada na referência senoidal do
+controlador principal.
+Outra abordagem de dois níveis semelhante é
+capturar a amostra de corrente do sensor, mas a possibilidade do sensor apresentar assimetria não existe
+neste caso, porque a saída do controlador é o sinal
+que a ponte_completa irá reproduzir na saída do inversor, e qualquer acúmulo por truncamento de cálculo será compensado continuamente por esse processo (LI E XING, 2004).
+
+Na topologia proposta por Pinheiro et al. (2004),
+a amostra do sinal de saída passa por um filtro passabaixas, com o intuito de eliminar freqências a partir
+da fundamental, permitindo que o sinal inserido no
+conversor AD seja constituído de componentes de
+baixa freqência, onde, em inversores senoidais são
+as componentes CC, as quais deverão ser atenuadas
+pelo controlador de nível_médio.
+A implementação de um controlador_digital em
+inversores para aplicação como UPS exige que a
+saída do inversor tenha baixa TDH (Taxa de Distorção Harmônica) para cargas lineares e não-lineares,
+alta eficiência e alta confiabilidade segundo Pinheiro
+et al. (2004). Para atender estes requisitos, o controlador_repetitivo é bastante utilizado no controle de
+inversores para UPS, por ter baixo erro em regime
+permanente e desempenho satisfatório quando há
+distorções periódicas na forma de onda de tensão
+(RECH, 2001).
+2 Estrutura de controle do nível_médio proposta
+
+Para melhorar o funcionamento em relação 
+presença de nível_médio, está sendo proposto um
+método que utiliza um controlador_digital em que a
+inserção de TDH na saída do inversor senoidal e
+reduzida.
+Na Figura 4 pode ser visto o resultado do controlador de nível_médio adicionado a tensão senoidal de
+referência. Por ser um filtro passa-baixa comum, este
+possui componentes harmônicas de diferentes ordens
+e defasadas em relação  fundamental da senóide
+fundamental do inversor, as quais, somadas  esta,
+irão resultar em uma maior taxa de distorção_harmônica na forma de onda resultante (refseno).
+
+Figura 2 Nível médio pela saída do controlador (LI E XING,
+2004).
+
+Segundo Duarte, Botterón e Pinheiro (2005),
+para implementação digital da compensação do nível
+médio pode ser usado então, um controlador de dois
+níveis (malha CA combinada com malha CC) com
+duas amostras distintas.
+A topologia de controle proposta por Pinheiro et
+al. (2004) é mostrada na Figura 3.
+
+Figura 3 Diagrama de controle com compensação da tensão
+contínua (PINHEIRO, ET AL., 2004)
+
+Figura 4 Método clássico utilizado em Pinheiro, et al. (2004)
+
+853
+
+Pelo método proposto, visto na Figura 5, o controlador_digital calcula o nível_médio a cada ciclo da
+senóide fundamental (offsetseno), e repete esse
+mesmo valor durante toda a duração do ciclo, diferente do método proposto por (Pinheiro, et al., 2004),
+que calcula o nível_médio na mesma taxa de amostragem do controlador da senóide. A vantagem da
+metodologia proposta é que ela não insere componentes harmônicas na forma de onda de tensão de
+saída, resultando em uma tensão senoidal de melhor
+qualidade na saída do inversor.
+Figura 6 Inversor senoidal com retificador na entrada
+
+Os braços 3 e 4 são utilizados como retificadores
+para obter-se um barramento CC de aproximadamente 200 V a partir da rede CA.
+Os braços 1 e 2 são os responsáveis pelo chaveamento da senóide que está sendo filtrada pelo indutor de 1,5 mH e pelo capacitor de 5 F. O controlador é um processador_digital_de_sinais da Freescale, o
+DSP56F8013 programado em linguagem C.
+Para obter-se a amostra de tensão de saída, são
+usados divisores resistivos em cada um dos braços de
+saída, sendo que o DSP fará a subtração para obter a
+tensão diferencial, que é a tensão de saída do inversor senoidal.
+Na Figura 7 pode ser visto o controlador proposto. O bloco offset da amostra de saída é o responsável por compensar o nível_médio que pode existir
+na amostra de tensão de saída. A cada ciclo de senóide é calculado o nível_médio desta. O resultado é
+subtraído no sinal amostra de tensão de saída, para
+que este entre no controlador com um valor médio o
+mais próximo possível de zero. Isso é necessário para
+evitar que o controle_de_nível_médio principal tenha
+que compensar o desvio da tensão de saída também.
+
+Figura 5 Método proposto
+
+Na Figura 5 também pode ser vista a saída do
+controlador de nível_médio da forma de onda offsetseno que age na referência senoidal para controlar o nível_médio. Pode ser visto que o valor é alterado apenas na passagem por zero da senóide, preservando o formato senoidal desta, com a TDH mais
+próxima de zero possível.
+Para executar os testes foi utilizada uma estrutura de retificador- inversor senoidal conforme a Figura
+6.
+
+Senóide fazendo a
+função de feed-forward
+
+Erro para o controlador
+repetitivo
+
+REFERÊNCIA SENOIDAL
+
+CONTROLE DA SENÓIDE
+
+PWM E INVERSOR
++
+
+sen(t) x
+32768
+
+0,85
+
++
+
++
+
+-
+
+CONTROLADOR
+REPETITIVO
+
+FILTRO FIR
+
+2000
+32768
+
+PLANTA
+
+-
+
+FILTRO
+PASSA-BAIXA
+(CONTROLE DE
+NÍVEL MÉDIO)
+
+Controlador do offset
+atuando na referência
+senoidal
+
+Amostra de tensão de
+saída com nível_médio
+equilibrado
+
++
+
+32768
+200
+
++
+
+-
+
+CONTROLE OFFSET DE SAÍDA
+
+FILTRO
+PASSA-BAIXA
+(DESACOPLAMENTO
+CC DA SAÍDA)
+
+OFFSET DA AMOSTRA DE SAÍDA
+
+Figura 7 Controlador proposto
+
+854
+
+O bloco controle offset de saída é o que executa o controle do nível_médio da saída. Este bloco
+calcula a média durante um ciclo da freqência fundamental da senóide a partir da saída do controlador
+que vai para o módulo PWM. O resultado é aplicado
+na referência senoidal para que o sistema todo fique
+em equilíbrio no que diz respeito ao nível_médio de
+saída.
+O bloco controle da senóide é o que recebe a
+referência senoidal e a amostra de saída e efetua o
+controle conforme a equação 1.
+uRPk  c ek
+
+
+
+N
+
+n
+
+q uRP k
+
+n
+
+(1)
+
+A equação 1 é o controlador_repetitivo, onde
+uRP(k) resultado do controlador_repetitivo em
+função de k
+
+
+
+cr ganho do controlador_repetitivo
+
+
+
+e(k+N-n) erro em função de k, com defasagem de n e período antrerior (N) que está armazenado
+
+
+
+qr constante do filtro do controlador_repetitivo
+
+
+
+n defasagem de compensação do filtro LC de
+saída.
+
+
+
+N representa o período da senóide do inversor.
+
+Figura 8 Amostra desequilibrada
+
+O inversor foi montado em uma estrutura padrão
+conforme apresentado na Figura 9. As cargas que
+serão conectadas ao inversor para os testes serão um
+transformador, que pode ser visto na Figura 10, e
+uma ponte retificadora com diodos de 30 A com
+quatro capacitores de filtro de 470 F400 V e resistência de aproximadamente 500 W, compondo assim
+uma carga_não-linear.
+
+Esse controlador utiliza-se de vetores para armazenar o resultado do controle do ciclo anterior da
+senóide para servir de referência para o ciclo atual.
+Dessa maneira está sempre memorizada a ação de
+controle anterior, fazendo com que o controlador
+repetitivo tenha a capacidade de constantemente
+convergir para o erro zero.
+
+Figura 9 Inversor senoidal
+
+3 Resultados Experimentais
+
+Para executar os testes, alterou-se o divisor resistivo da amostra de tensão de saída, simulando um
+desvio no o nível_médio desta, conforme a Figura 8.
+Na Figura 8 pode ser observado os divisores resistivos usados para a amostra de tensão de saída, os
+quais tem valores de 220 k e 680 . O braço 2
+recebeu um resistor de 15 k em paralelo com 680
+para simular a anomalia que o controle_digital deve
+ser capaz de corrigir. O desvio médio simulado é de
+aproximadamente 5.
+
+Figura 10 Transformador de teste
+
+Para confirmar o efeito do desequilíbrio_de_tensão, o controle_de_nível_médio será totalmente desati-
+
+855
+
+vado, conforme a Figura 11, para a execução do teste
+e análise do problema.
+
+200
+150
+
+Amplitude
+
+100
+50
+0
+-50
+-100
+-150
+-200
+-0,025 -0,02 -0,015 -0,01 -0,005 5E-17 0,005 0,01
+
+0,015 0,02 0,025
+
+Tempo (s)
+Tensão (V)
+
+Corrente (A)
+
+Figura 13 Corrente desequilibrada com carga_não-linear
+Figura 11 Controle de nível_médio desativado
+
+Na Figura 13 pode ser visto que a corrente na
+ponte retificadora também não está equilibrada, fazendo com que apenas metade do inversor trabalhe
+para alimentar a carga, além de um par de diodos da
+carga sofrer maior dissipação do que o outro par.
+Agora será ativada a parte do controlador que
+controla o offset de saída, mas com a parte que retira
+o offset da amostra ainda desativada, conforme a
+Figura 14.
+
+O resultado obtido pode ser visto na Figura 12 e
+na Figura 13.
+200
+
+150
+
+Amplitude
+
+100
+
+50
+
+0
+
+-50
+
+-100
+
+-150
+
+-200
+-0,025 -0,02 -0,015 -0,01 -0,005 2E-17 0,005 0,01 0,015 0,02 0,025
+
+Tempo (s)
+Tensão (V)
+
+Corrente (A)
+
+Figura 12 Corrente assimétrica no primário do transformador
+
+Figura 14 Controle parcialmente ativado
+
+Na Figura 12 pode ser observado que a corrente
+no primário do transformador de teste não está equilibrada e tem a tendência de crescimento constante
+provocando dano aos componentes ou atuação de
+proteção do inversor.
+
+O resultado do controle parcial pode ser visto na
+Figura 15 e na Figura 16.
+
+856
+
+200
+
+150
+
+100
+
+Amplitude
+
+50
+
+0
+
+-50
+
+-100
+
+-150
+
+-200
+
+Figura 17 Controle completamente ativado
+-0,025 -0,02 -0,015 -0,01 -0,005 5E-17 0,005 0,01 0,015 0,02 0,025
+
+Os resultados podem ser vistos nas Figuras 18,
+19, 20, 21, 22 e 23.
+
+Tempos (s)
+Tensão (V)
+
+Corrente (A)
+200
+
+Figura 15 Corrente assimétrica no primário do transformador
+150
+100
+
+Amplitude
+
+Na Figura 15 pode ser observado que a corrente
+no primário do transformador de teste permaneceu
+estável, mas ainda tem um valor de 30 A de pico em
+um dos semi-ciclos.
+
+50
+0
+-50
+-100
+-150
+
+200
+
+-200
+150
+
+-0,025 -0,02
+
+-0,015 -0,01
+
+0,005
+
+0,01
+
+0,015
+
+0,02
+
+0,025
+
+Tempo (s)
+
+100
+
+Amplitude
+
+-0,005 5E-17
+
+50
+
+Figura 18 Saída do inversor com controlador ativado
+
+0
+
+Na Figura 18, pode ser visto que a corrente ficou
+equilibrada e estável na saída do inversor com o
+transformador de teste como carga.
+
+-50
+
+-100
+
+-150
+
+6
+
+-200
+4
+-0,025 -0,02 -0,015 -0,01 -0,005 5E-17 0,005 0,01 0,015 0,02 0,025
+
+Corrente (A)
+
+Tempo (s)
+Figura 16 Corrente desequilibrada
+
+Na Figura 16 pode ser percebido que a corrente
+de pico do retificador no semi-ciclo negativo reduziu
+pouco, mas já começa a circular corrente no semiciclo positivo, indicando que o nível_médio está mais
+equilibrado.
+Mantendo o sensor_de_tensão de saída com a simulação de defeito de 5, foi testado o controlador
+completo, como na Figura 17.
+
+2
+
+0
+
+-2
+
+-4
+
+-6
+-0,025
+
+-0,02
+
+-0,015
+
+-0,01
+
+-0,005 5E-17
+
+0,005
+
+0,01
+
+0,015
+
+0,02
+
+0,025
+
+Tempo (s)
+Figura 19 Corrente equilibrada
+
+Na Figura 19, pode ser observado que os picos
+das correntes no transformador de teste chegaram a
+valores bem próximos (+4,4 A e -4,8 A), indicando
+que o controle_de_nível_médio está atuando satisfatoriamente.
+857
+
+17,078
+
+18,000
+16,000
+
+200
+
+14,000
+150
+12,000
+9,673
+
+100
+
+10,000
+
+Amplitude
+
+7,786
+8,000
+
+50
+
+4,871
+
+6,000
+0
+
+4,000
+
+2,324
+
+2,000
+
+-50
+
+0,05528
+0,000
+
+-100
+SEM CONTROLE DE NÍVEL COM CONTROLE DE NÍVEL COM CONTROLE DE NÍVEL
+MÉDIO
+MÉDIO PARCIAL
+MÉDIO
+-150
+
+EFICAZ
+
+-200
+-0,025 -0,02 -0,015 -0,01 -0,005 5E-17 0,005
+
+0,01 0,015
+
+0,02 0,025
+
+MÉDIA
+
+Figura 22 Comparação com transformador
+
+Tempo (s)
+Tensão (V)
+
+Na Figura 23 pode ser vista a progressão da variação entre a corrente eficaz e a corrente média com
+o retificador de 500 W como carga. Pode ser observado que mesmo em um retificador que não tem
+nenhum elemento magnético, o consumo é alterado
+em função do nível_médio, sendo que sem controle
+de nível_médio a corrente eficaz é de 6,477 A e com
+o controle_de_nível_médio completo é de 5,337 A. O
+principal problema aqui é a corrente excessiva que
+irá passar por apenas um par de transistores da etapa
+de potência e por um par de diodos do retificador da
+carga_não-linear.
+
+Corrente (A)
+
+Figura 20 Saída com controlador ativado
+
+Na Figura 20, pode ser visto o resultado com
+carga_não-linear, sendo que a corrente ficou praticamente equilibrada e estável.
+20
+
+15
+
+10
+
+Corrente (A)
+
+7,000
+
+6,477
+
+5
+
+5,798
+
+6,000
+0
+
+5,000
+
+-5
+
+4,000
+
+5,337
+
+3,000
+-10
+
+2,066
+2,000
+
+1,382
+
+-15
+1,000
+0,13584
+-20
+
+0,000
+-0,025 -0,02 -0,015 -0,01 -0,005 5E-17 0,005
+
+0,01 0,015
+
+0,02
+
+0,025
+
+SEM CONTROLE DE NÍVEL
+MÉDIO
+
+COM CONTROLE DE NÍVEL
+MÉDIO PARCIAL
+
+COM CONTROLE DE NÍVEL
+MÉDIO
+
+Tempo (s)
+EFICAZ
+
+Figura 21 Corrente no retificador com controlador ativado
+
+MÉDIA
+
+Figura 23 Comparação com carga_não-linear
+
+Na Figura 21, pode ser observado que os picos
+da corrente alimentando a carga_não-linear ficaram
+próximos (+18 A e -16,5 A) indicando que o controle
+é eficiente inclusive para cargas não-lineares.
+A progressão da corrente eficaz e corrente média
+com o transformador como carga pode ser vista na
+Figura 22. Pode ser percebido que  medida que a
+corrente média se aproxima de zero, a corrente eficaz
+cai drasticamente indicando que o transformador está
+em uma condição de saturação sem o controle de
+nível_médio e está em condição de funcionamento
+normal com o controle_de_nível_médio implementado
+completamente respectivamente.
+
+Uma característica importante deste controle é o
+fato de não inserir TDH na senóide de saída devido a
+característica de repetir o valor calculado do offset
+durante o ciclo completo da senóide, mantendo esta
+senoidal, conforme o controlador_repetitivo impõe.
+Os valores de TDH estão representados na Tabela 1.
+
+Tabela 1 TDH da tensão de saída.
+
+858
+
+Condição
+
+Com controle
+de nível_médio
+
+Em vazio
+Com 500W de
+carga_não-linear
+Com transformador
+
+0,99
+1,6
+
+Sem controle
+de
+nível
+médio
+1,07
+1,55
+
+1,3
+
+1,15
+
+IEEE
+Transaction
+on
+Industry
+Applications, v. 37. p. 1864-1870, 2001.
+Branco, C. G. C., Cruz, C. M. T. , Torrico-Bascope,
+R. P., et al. A Non-isolated Single-Phase UPS
+Topology With 110 V220 V Input-Output
+Voltage Ratings. IEEE - Transactions on
+Industry Electronics, v. 55. p. 2979-2983,
+2008.
+Duarte, Marcelo Hey, Botterón, Fernando e Pinheiro,
+Humberto. Three-Phase to Single-Phase UPS
+Topologies. In Congresso Brasileiro de
+Eletrônica de Potência, 2005.
+Jun Gao, Xianghua Zhao, Xu Yang, et al. The
+Research on Avoiding Flux Imbalance in
+Sinusoidal Inverter. In Power Electronics and
+Motion Control Conference, 2000. Proceedings IPEMEC 2000. 2000, v. 3. p. 1122-1126.
+Li, Mingzhu e Xing, Yan. Digital Voltage Regulation
+with Flux Balance Control for Sine Wave
+Inverters. In Applied Power Electronics
+Conference and Exposition, 2004. v. 3.
+p.1709-1713.
+F. M. A. Linard, G. A. L. Henn, C. M. T. Cruz, et al.
+Double Conversion Uninterrupted Power System With Integration Of The Rectifier And The
+Inverter, In 10o Congresso Brasileiro de
+Eletrônica de Potência, Bonito, 2009
+Nabae, Akira, Takahashi, Isao e Akagui, Hirofumi. A
+New Neutral Point Clamped PWM Inverter.
+IEEE - Transaction Industry Applications. v.
+IA-17 p. 518-523, 1981.
+Humberto Pinheiro, Fernando Botterón, José R.
+Pinheiro, et al. A Digital Controller for SinglePhase UPS Inverters to Reduce the Output DC
+Component. In IEEE - Power Electronics
+Specialists Conference. v. 2. p. 1311-1314,
+2004.
+Rech, Cassiano. Análise e Implementação de
+Técnicas de Controle Digital Aplicadas a
+Fontes Ininterruptas. Dissertação (Mestrado
+em Engenharia Elétrica) - Universidade Federal
+de Santa Maria. 2001.
+Rech, Cassiano e Pinheiro, José R. New Repetitive
+Control System of PWM Inverters with
+Improved Dynamic Performance under NonPeriodic Disturbances. In IEEE - Power
+Electronics Specialists Conference. v. 1. p.
+54-60, 2004.
+
+4 Conclusões
+A malha_de_controle_de_nível_médio reduz significativamente a assimetria na saída do controlador
+repetitivo, utilizando a realimentação da soma dos
+valores da saída do controlador aplicada ao PWM do
+DSP, trabalhando juntamente com a malha que retira
+o nível_médio da amostra de tensão de saída, para
+que esta não entre contaminada no controlador_repetitivo.
+Quando inserido algum desequilíbrio na amostra de tensão de saída, a carga composta pelo transformador tende a saturar podendo provocar danos na
+etapa de potência do inversor, levando a conclusão
+que o controle_de_nível_médio torna-se indispensável.
+Quando inserido de maneira plena, a corrente
+no primário do transformador ficou praticamente
+simétrica e estável levando ao funcionamento correto
+mesmo com a amostra de tensão de saída tendo uma
+assimetria de 5 , atestando a eficácia do controle.
+No caso da ponte retificadora o resultado foi igualmente satisfatório eliminando a corrente de aproximadamente 30 A em um dos semi-ciclos.
+As vantagens do algoritmo implementado nesse
+projeto são
+ não é necessário medir diretamente a corrente
+no primário do transformador conectado 
+carga, pois apenas com o controle no nível
+médio na tensão foi possível garantir o controle no nível_médio da corrente
+ não necessita executar nenhum ajuste manual,
+porque mesmo com assimetria na leitura de
+tensão de saída o controle_de_nível_médio faz
+a saída do controlador_repetitivo ser simétrica
+e garante o nível_médio próximo de zero
+ não necessita medir a tensão no primário do
+transformador, porque o fato de garantir a saída do controlador_repetitivo simétrica resulta
+na tensão no primário do transformador simétrica também
+ permite desvios na alimentação e no sensor de
+amostra durante o funcionamento, resultantes
+de variações de temperatura, com o controle
+mantendo a tensão de saída simétrica, como
+comprovado com o desvio de 5 inserido na
+amostra.
+Agradecimentos
+Os autores agradecem  Fundação Araucária, 
+Secretaria de Estado da Ciência, Tecnologia e Ensino Superior (SETI-PR) e ao Governo do Estado do
+Paraná pelo apoio concedido.
+Referências Bibliográficas
+Borup, U., Enjeti, P.N., Blaabjerg, F. A New Space
+Vector Based Control Method for UPS Systems
+Powering Non-linear and Unbalanced Loads.
+
+859

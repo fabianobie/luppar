@@ -1,0 +1,1010 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+DETERMINAÇÃO DA VERTICAL LOCAL COM GIRÔMETROS E ACELERÔMETROS SOLIDÁRIOS E FILTRO DE KALMAN ESTENDIDO HÍBRIDO
+RENAN DE F. E. CAMPOS, JACQUES WALDMANN
+Divisão de Engenharia Eletrônica, Depto. de Sistemas e Controle, Instituto Tecnológico de Aeronáutica
+12.228-900 São José dos Campos, SP, Brasil
+E-mail renanpos@yahoo.com.br, jacques@ita.br
+Abstract
+ A quaternion-based, hybrid extended Kalman filter is implemented for the fusion of low cost rate-gyro and accelerometer triads and estimate the local vertical at an aerial vehicle. Accelerometer measurements are assumed corrupted by zero
+mean Gaussian noise, bias, scale factor, CG misalignment, and vehicle motion. Rate-gyro measurements are assumed corrupted
+by zero mean Gaussian noise, drift, scale factor, Earth angular rate, and vehicle motion. The filter detects significant lateral accelerations, and switches accordingly between incorporating and discarding accelerometers measurements. Alternating episodes
+of static attitude and rotating motion are simulated to gauge the accuracy of the estimated local vertical. Statistical consistency
+tests (NEES and NIS) are also performed to validate filter estimation consistency.
+Keywords
+ Extended Kalman filter, quaternions, sensors fusion, accelerometers, rate-gyros, statistical consistency.
+Resumo
+ Implementa-se um filtro de Kalman estendido híbrido baseado em quatérnion para a fusão de tríades de girômetros e
+acelerômetros de baixo_custo para estimação da vertical local em um veículo aéreo. As medidas dos acelerômetros são corrompidas por ruídos gaussianos de média nula, erro de zero, fator de escala, desalinhamento da montagem com o CG do corpo e o
+próprio movimento do veículo. As medidas dos girômetros são corrompidas por ruídos gaussianos de média nula, erro de zero,
+fator de escala, velocidade_angular da Terra e movimento do veículo. O filtro detecta acelerações laterais significativas e chaveia
+entre incorporar ou descartar as medidas dos acelerômetros. Movimento alternado entre atitude estática e movimento rotacional
+é simulado para verificar a exatidão na estimativa da vertical local. Testes de consistência_estatística (NEES e NIS) validam a
+consistência no processo de estimação pelo filtro.
+Palavras-chave
+ .
+
+1
+
+rente. Assim, modificou-se o filtro de Kalman estendido e obteve-se um filtro_híbrido (chaveado), o qual
+detecta a presença ou ausência de acelerações laterais
+e se torna possível decidir quando incorporar as medidas dos acelerômetros e quando descartá-las, apenas propagando o modelo de predição do filtro com
+as medidas dos girômetros. O filtro implementado é
+ainda testado para validar a consistência_estatística de
+sua estimação da vertical local.
+
+Introdução
+
+Um veículo aéreo voa com velocidade constante
+e possui rigidamente instalados em seu corpo três
+girômetros e três acelerômetros (strapdown) cuja
+acurácia é típica de sensores disponíveis comercialmente para aplicações aeroespaciais, os quais encontram-se alinhados com o sistema de coordenadas fixo
+ao corpo (B). Deseja-se estimar a vertical local (ângulos de rolamento  e arfagem ) do veículo através
+das medidas destes sensores.
+Os erros nos sensores são modelados por imperfeições aditivas (ruídos gaussianos e erros de zero) e
+fator de escala, que fazem com que os erros na determinação da vertical local tendam a crescer indefinidamente com o tempo. Para solucionar este problema, implementa-se um filtro de Kalman estendido
+baseado em quatérnions, de modo a fundir-se as medidas dos girômetros e acelerômetros para uma boa
+estimativa dos ângulos de arfagem e guinada.
+Em Vaganay et al. (1993) foi proposta uma solução
+similar com aplicação para um robô_móvel, porém
+utilizando um filtro de Kalman não estendido. Setoodh et al. (2004) apresenta uma segunda proposta com
+utilização de filtro de Kalman estendido, porém com
+estimação da covariância dos ruídos dos sensores
+baseada em wavelets. Kim et al. (2004) propôs também uma solução com filtro de Kalman estendido e
+baseado em quatérnions, porém com uma formulação
+diferente daquela aqui proposta.
+Ocorrendo acelerações laterais, as medidas dos acelerômetros deixam de ser confiáveis para a estimação
+da vertical local, pois passam a medir a vertical apa-
+
+2 Medidas dos girômetros
+A formulação segue Gandelman et al. (1988). Os
+girômetros são alinhados de modo a medir as velocidades angulares em torno das direções XB, YB e ZB,
+respectivamente dadas por x, y e z, em relação ao
+sistema de coordenadas da vertical local NED  Norte, Leste e Vertical para baixo. A velocidade_angular
+verdadeira vx y zT do veículo relaciona-se
+com os ângulos de Euler, na sequência usual, através
+da equação (1)
+
+
+
+
+(1a)
+
+
+
+(1b)
+
+ x     . sen( )
+
+
+ y   . cos( ) +  . cos( ). sen( )
+
+
+
+
+ z    . sen( ) +  . cos( ). cos( )
+
+(1c)
+
+A medida m dos girômetros inclui erros de zero
+(deriva), ruído gaussiano de média nula e fator de
+escala. Com isto, estas medidas podem ser modeladas, conforme equação (2), de maneira similar  modelagem determinística em Gandelman et al. (1988).
+Nota-se aqui, no entanto, o ruído gaussiano aditivo
+
+199
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+de média nula sobre as medidas. O sub-índice m
+indica valor medido.
+
+ m  S fg  v + ( + ) + k
+
+x aug
+
+(2)
+
+onde v é o vetor de velocidades angulares verdadeiras em relação ao sistema NED  é o vetor de
+velocidade_angular do sistema NED em relação ao
+sistema de coordenadas fixo a Terra  é o vetor
+velocidade_angular da Terra em relação ao sistema
+inercial fixo, com magnitude 7,292115 x 10-5 rads k
+é o vetor composto por erro de zero e ruído aditivo
+gaussiano de média nula e Sfg é a matriz que inclui o
+erro no fator de escala, sendo dada por
+
+
+
+VE
+
+. tg( )  .sen( )
+R
+
+
+
+
+
+
+VN
+
+VE
+
+VD   D
+
+B
+NED
+
+
+
+. Vx
+
+Vy
+
+Vz
+
+
+
+D
+
+q02 + q12  q22  q32
+
+  2(q1.q2  q0 .q3 )
+ 2(q1.q3 + q0 .q2 )
+
+
+2(q1.q2 + q0 .q3 )
+q02  q12 + q22  q32
+2(q2 .q3  q0 .q1 )
+
+(
+
+2
+1
+
+2
+2
+
+(7b)
+2
+3
+
+)
+
+Os acelerômetros disponíveis no veículo são dispostos de modo a alinharem-se s direções XB, YB e
+ZB. No caso ideal, os acelerômetros seriam posicionados no centro de gravidade (CG) do veículo. Porém, na prática, isto dificilmente ocorre, sendo que o
+desvio desta posição resulta em um braço de alavanca
+que corrompe ainda mais as medidas, as quais já incluem erros de zero (bias), ruído gaussiano de média
+zero e fator de escala. Assim, conforme Gandelman
+et al. (1988), quando em movimento não acelerado,
+as medidas dos acelerômetros podem ser dadas por
+
+(3)
+
+a m  S fa .( D BNED g + desCG) + r
+
+(5)
+
+(8)
+
+onde g é o vetor reação  gravidade descrito no sistema NED, dado por 0 0 -9,780327T ms Sfa é a
+matriz que inclui o efeito do fator de escala s medidas dos acelerômetros
+0
+0 
+1 + k ax
+S fa   0
+1 + k ay
+0 
+ 0
+0
+1 + k az 
+
+2(q1.q3  q0 .q2 ) 
+
+2(q2 .q3 + q0 .q1 ) 
+2
+2
+2
+2
+q0  q1  q2 + q3 
+
+sendo kax, kay e kaz os fatores de escala dos acelerômetros r é o vetor composto por bias e ruído gaussiano de média nula desCG é o vetor que inclui o efeito do desalinhamento da posição dos acelerômetros
+com relação ao CG do corpo, sendo dado por
+
+onde q BNED  q0 q1 q 2 q3 T é o quatérnion que rotaciona do sistema NED para o B, sendo q0 real e q1, q2
+e q3 imaginários. Dada a velocidade_angular de um
+corpo, o quatérnion de rotação que determina sua
+atitude é a solução da equação diferencial
+d dt (qBNED )  0.5.x aug .qBNED
+
+
+
+2
+0
+
+3 Medidas dos acelerômetros
+
+sendo Vx10ms, VyVz0 ms e D BNED  (D NED
+)T ,
+B
+com D BNED a matriz de cossenos diretores (DCM) que
+leva do sistema NED para o B e, parametrizada por
+quatérnion de rotação, tem a seguinte forma
+NED
+B
+
+(7a)
+
+  tg 2(q 2 .q3 + q0 .q1 )  q  q  q + q
+(7c)
+Uma vez que as medidas dos girômetros são corrompidas por erros, o modelo em (6) determina uma atitude incorreta quando parametrizada por elementos
+de m,ao invés de v. Entretanto, esta atitude incorreta servirá de base para o modelo do filtro de Kalman estendido a ser empregado mais adiante.
+
+(4)
+
+T
+
+)
+
+  sen (2(q1.q 3  q 0 .q 2 ))
+1
+
+A velocidade linear do veículo VBVx Vy VzT é
+representada no sistema NED através de
+T
+
+(
+
+1
+
+em que R é o raio médio terrestre, dado por 6,378138
+x 106 m  é a latitude em que se encontra o veículo,
+e cuja taxa temporal é
+  VN R
+
+ z 
+  y  .
+x 
+
+0 
+
+ y
+z
+0
+ x
+
+  tg1 2(q1.q 2 + q0 .q3 )  q02 + q12  q22  q32
+
+sendo kgx, kgy e kgz os fatores de escala relativos aos
+eixos XB, YB e ZB, respectivamente. O vetor (+ ) é
+representado no sistema do corpo por
+V
+V
+( + ) B  DBNED  E + .cos( )  N
+R
+R
+
+ x
+0
+ z
+y
+
+Os ângulos de Euler são extraídos do quatérnion por
+meio da equação (7)
+
+1 + k gx
+0
+0 
+
+
+S fg   0
+1 + k gy
+0 
+ 0
+0
+1 + k gz 
+
+
+T
+
+0
+
+x
+
+ y
+
+ z
+
+desCG
+
+
+
+  v  + 
+
+v
+
+ (
+
+v
+
+  )+ 
+
+v
+
+ VB
+
+com  sendo o vetor de desalinhamento da posição
+dos acelerômetros com relação ao CG do veículo e é
+dado na simulação por 2x10-31 1 1T m. Conforme
+Gandelman et al. (1988), o efeito desse desalinhamento pode ser compensado, subtraindo-se das medidas o seguinte vetor
+
+(6)
+
+com matriz xaug composta com componentes de v
+para o quatérnion de atitude verdadeiro.
+
+200
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+
+
+(9)
+
+COMPm m  m + m  (m  m )
+
+sendo D BNED parametrizada pelo quatérnion de atitude verdadeira qv. Nota-se ainda que quando da ausência de acelerações laterais, ANEDg.
+
+O termo m x VB não entra na compensação, pois
+assume-se que não há medidas disponíveis da velocidade VB do veículo. E, para tornar as simulações
+ainda mais realísticas, será considerado que na medição do desalinhamento m, obtém-se um erro de 5
+do valor verdadeiro do desalinhamento.
+Quando o veículo apresenta movimento não acelerado, as medidas dos acelerômetros rastreiam a vertical
+local verdadeira, dada pela reação  gravidade. Porém, sob aceleração, essas medidas rastreiam a vertical aparente resultante das forças específicas atuantes. Neste segundo caso, as medidas dos acelerômetros deixam de ser úteis e devem ser descartadas,
+como será visto adiante com o filtro de Kalman estendido híbrido (chaveado).
+
+4.2 Estimação em baixas acelerações
+Quando os acelerômetros medem baixas acelerações (magnitude próxima a g0), a fusão pode ser realizada eficazmente entre as medidas dos girômetros e
+dos acelerômetros. Neste caso, o vetor de medidas yk
+deve ser incorporado ao filtro. Isto é feito mediante o
+seguinte algoritmo
+Predição 
+z k- +1  A k .z k+ ,
+T
+
+Pk- +1  A k .P k+ .A k + Q1
+Ganho Ótimo 
+
+4 Filtro de Kalman estendido híbrido
+
+K k  Pk- +1 .H T .(H.Pk- +1 .H T + R) -1
+Predição atualizada pelas medidas 
+
+A estimação da vertical local com o uso apenas
+de girômetros incorre em erros que se acumulam e
+crescem indefinidamente devido  deriva, erro de
+baixa frequência. O uso tão-somente de acelerômetros para o mesmo fim tende a incorrer em erros relevantes porque as medidas apresentam ruído significativo, além de serem inviáveis em cenários que envolvam significativa aceleração lateral. No entanto, em
+longo prazo e na ausência de acelerações laterais, os
+acelerômetros podem fornecer uma estimativa aceitável da vertical local. Gandelman et al. (1988) propuseram uma fusão ad-hoc de um girômetro mais grosseiro alinhado com ZB, um girômetro 2-D sintonizado
+a seco e 2 acelerômetros, com XB e YB, para estimar
+a vertical local. Este artigo propõe o uso do filtro de
+Kalman estendido híbrido (chaveado) baseado em
+quatérnions para essa fusão, incluindo-se ainda ao
+sistema mais um acelerômetro alinhado com ZB.
+
+z k+ +1  z k- +1 + K k .y k - (H.z k- +1 - COMPm)
+Pk++1  (I (4x4) - K k .H).P k- +1
+
+sendo H a matriz_jacobiana, dada por
+ 2q2
+H   2q1
+ 2q0
+
+sendo
+
+
+
+x +k  q 0 
+
+q1 
+
+q2 
+
+q3 
+
+
+
+T
+
+(12)
+
+. A extração dos
+
+4.3 Estimação sob elevadas acelerações
+Quando elevadas acelerações atuam sobre o veículo, as medidas dos acelerômetros deixam de ser
+úteis, pois passam a rastrear a vertical aparente. Estas
+acelerações podem aparecer devido ao desalinhamento dos acelerômetros com relação ao CG do corpo ou
+devido a acelerações oriundas do movimento do veículo. Em qualquer destes casos, o vetor de medidas
+yk não pode ser incorporado ao filtro, sob pena de
+piorar a estimativa da vertical local. Nessa situação, o
+filtro conta apenas com as medidas dos girômetros
+para propagação do estado estimado. Isto se dá pelo
+algoritmo abaixo
+
+(10)
+
+) 
+
+2q3
+
+ângulos de arfagem e rolamento - que descrevem
+mais intuitivamente a vertical local do que quatérnions - se dá por (7).
+
+A solução de Ak, para um período Ts  0,001s, pode
+ser aproximada por série de Taylor, seguindo o algoritmo descrito em The MathWorks, Inc. (2003) e
+também incluso no software MatLab 7. No filtro utilizam-se as medidas dos acelerômetros normalizadas
+por g0g
+
+ (
+
+2q0
+
+ 2q1  2q2
+
+q0 
+2q1 
+q  
+2q2 , z k+   1 
+q2 
+2q3 
+ 
+ q3 
+
+ x k ,estim se z k+ +1  0
+x +k +1   +
++
++
+z k +1  z k +1 se z k +1  0
+
+Para o modelo_dinâmico do filtro, utilizam-se as
+medidas corrompidas dos girômetros para obtenção
+da matriz xaug. A solução da equação (6) é empregada na propagação do quatérnion estimado que descreve a atitude incorreta. É possível que este quatérnion não se mantenha unitário por questões numéricas, sendo necessário, posteriormente, sua normalização. Como o filtro de Kalman opera em tempo_discreto, a solução de (6) fica conforme (10)
+
+y k  a m  g 0  S fa D BNED A NED + desCG + r g 0
+
+ 2q0
+
+e o vetor COMPm é obtido através da equação (9).
+As matrizes Q14x4, R3x3 e P0+4x4 são parâmetros de
+sintonia do filtro, podendo ser dadas por matrizes
+diagonais. A normalização da estimativa atualizada
+do quatérnion zk+1+  cujo efeito é desconsiderado na
+covariância do erro de estimação  é dada por
+
+4.1 Modelo para o filtro
+
+zk+1  Ak .zk
+
+2q3
+
+(11)
+
+201
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+porar as medidas dos acelerômetros (T1), apenas o
+teste NEES será analisado. No período em que o filtro incorpora as medidas (T0), ambos os testes
+NEES e NIS serão empregados.
+Testes estatísticos, no entanto, por serem normalizados não evidenciam o desempenho absoluto do filtro.
+Tal desempenho é possível de se obter pelo desalinhamento médio entre a vertical local verdadeira e a
+estimada e o desvio padrão deste desalinhamento,
+obtidos por meio de várias simulações.
+
+Predição 
+z k- +1  A k .z k+ ,
+T
+
+Pk- +1  A k .Pk .A k + Q2
+Atualização (na ausência de medidas) 
+z k+ +1  z k- +1
++
+ Pk- +1
+Pk.1
+
+sendo Q24x4 parâmetro de sintonia para o caso acelerado. As etapas de normalização e extração dos ângulos de Euler (arfagem e rolamento) se dão por meio
+das equações (7) e (12). Para fins de análise dos resultados das estimações, extraem-se ainda por meio
+da equação (7) os ângulos verdadeiros de arfagem e
+rolamento, através do quatérnion de atitude verdadeira.
+
+5.1 Erro Quadrático de Estimação Normalizado
+(NEES)
+Para N simulações de Monte Carlo, este teste de
+consistência - que requer conhecimento do estado
+verdadeiro do sistema - baseia-se na seguinte hipótese nula, utilizando distribuição chi-quadrado
+H 0  N . ( k )   nx2 . N
+
+4.4 Detecção de acelerações elevadas
+
+onde k é o índice da amostra temporal, nx é a dimensão do estado xk e  sendo estimado por
+
+Para detectar ocorrência de elevadas acelerações,
+procede-se conforme Rehbinder et al (2004)
+1,
+T
+0,
+
+yk 1  
+y j  1 < , j  k, k  m
+
+ (k ) 
+
+(13)
+
+1
+N
+
+N
+
+ x
+
+iT
+k
+
+.(Pki ) 1 .
+x ki
+
+(14)
+
+i 1
+
+sendo 
+x ki  x iverdadeiro  x ik ,estim o erro de estimação no
+
+ou seja, T1 quando há acelerações elevadas, o que
+leva o filtro a fazer tão-somente propagação segundo
+o algoritmo na seção 4.3 para estimar a vertical local.
+Acelerações baixas durante uma sequência de medidas consecutivas produzem T0. Segundo Rehbinder
+et al. (2004), os valores adequados para  e m devem
+ser escolhidos por meio de análise de vários testes e
+simulações. Para as simulações realizadas neste caso,
+os valores adequados para estes parâmetros foram
+mTs   0,08s e   0,01, sendo Ts0,001s o intervalo de amostragem.
+Se T1 por um longo período, sem incorporar as
+medidas dos acelerômetros, é de se esperar que os
+erros de estimação aumentem ao longo do tempo
+devido  deriva dos girômetros. Logo, a incerteza do
+filtro aumentaria devido  propagação da covariância
+sem atualização com informação externa. Para que
+isso não ocorra além do admissível, Rehbinder et al.
+(2004) afirma que o veículo deve mover-se de maneira alternada entre um movimento acelerado e um
+movimento não acelerado para garantia de que o filtro seja assintoticamente estável.
+
+instante k da i-ésima realização de Monte Carlo e
+Pki a respectiva matriz de covariância computada
+pelo filtro. A hipótese H0 é satisfeita com probabilidade de falso alarme  se  (k )  l1 , l 2  , com
+(15a)
+
+l1   nx2 . N (1    2)  N
+l2  
+
+2
+nx . N
+
+(15b)
+
+(  2)  N
+
+Para o caso de nx.N>100, os valores da distribuição
+chi-quadrado podem ser aproximados em função da
+distribuição gaussiana, conforme equação (16).
+
+
+
+
+
+2
+
+ nx2 .N ( )  G( ) + nx.N 1  2
+
+(16)
+
+onde  é a probabilidade do evento. A tabela com os
+valores das distribuições chi-quadrado () e gaussiana (G) é dada em Bar-Shalom et al. (2001).
+5.2 Inovação Normalizada Quadrática (NIS)
+Para K simulações de Monte Carlo, este teste de
+consistência parte da seguinte hipótese nula
+
+5 Consistência estatística e desempenho do filtro
+
+H 0  K . r ( k )   ny2 . N
+
+Para que o filtro seja sintonizado de modo a nem
+subestimar, nem superestimar suas incertezas, testes
+de consistência_estatística são recomendados. Estes
+testes se dão por meio de simulações de Monte Carlo,
+como no caso dos testes de Erro Quadrático de Estimação Normalizado (NEES) e de Inovação Normalizada Quadrática (NIS) conforme em Bar-Shalom et
+al (2001). Estes testes serão empregados aqui, sendo
+que para os períodos em que o filtro deixa de incor-
+
+onde ny é a dimensão do vetor de medidas yk e a média amostral  r (k ) é dada por
+
+ r (k ) 
+
+202
+
+1
+K
+
+K
+
+r
+k 1
+
+iT
+k
+
+.(S ik ) 1 .rki
+
+(17)
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+i
+sendo rki  y ik  Hik .zkpredito
+ COMPmi o resíduo do filtro
+no instante k da i-ésima realização de Monte Carlo e
+T
+i
+S ik  H ik .Pkpredito
+H ik + R ik a respectiva matriz de co-
+
+variância. Assim, a hipótese H0 é verdadeira com
+probabilidade de falso alarme  se  r (k )   r1 , r2  ,
+sendo que o intervalo r1, r2 é obtidos através de
+(15), porém substituindo-se nx por ny e N por K.
+
+M
+
+ cos
+
+1
+
+d i (k )
+
+0,0001 rads
+90hora
+
+Fator de Escala
+
+0,02
+
+Variância do ruído
+Deriva (Bias)
+
+0,0001 rads
+0,5mg
+
+Fator de Escala
+
+0,001
+
+Variância do ruído
+
+0,0001 ms4
+
+
+
+
+
+
+
+(20)
+
+e outro é rotatório, com duração de 3 segundos, descrito pela equação (21).
+
+(18)
+
+i 1
+
+
+
+(t )  0,15.sen(2. .t  3,5) + 0,25.sen(2. .t  0,75)
+
+
+ (t )  0, 25 . sen( 2 . .t  1,5) + 0,1 . sen( 2 . .t .)
+
+
+
+
+
+
+ ( t )  sen(  .t ) + 0 , 2 .  + 0 ,1 . 
+
+
+
+(21a)
+(21b)
+(21c)
+
+Estes movimentos alternam-se entre si ao longo da
+simulação. A condição inicial é o vetor nulo. A velocidade linear do veículo VB mantém-se constante. As
+velocidades angulares verdadeira e medida são obtidas por meio das equações (1) e (2), respectivamente.
+A partir destas, obtêm-se os quatérnions de atitude
+verdadeiro e estimado através de (6).
+
+(19)
+
+ED
+q NNED
+ q BNED  q BNED
+
+onde q BNED  (q NED
+) é o conjugado do quatérnion que
+B
+leva do sistema NED ao sistema do corpo B verda
+deiro q BNED é o quatérnion estimado pelo filtro e 
+é o operador de multiplicação de quatérnions.
+O desalinhamento da vertical local estimada não pode ser computado como a magnitude da rotação em
+torno do vetor de Euler, que leva do quatérnion de
+atitude estimado ao verdadeiro, pois essa rotação
+inclui o erro de azimute na estimação de atitude. A
+estimação de azimute se dá com as medidas corrompidas dos girômetros apenas (pois as medidas dos
+acelerômetros não agregam informação sobre azimute) e, assim, o erro de estimação de azimute cresce
+indefinidamente com o tempo. Portanto, é utilizada a
+equação (18) para avaliar o desempenho da estimação da vertical, considerando tão somente o desalinhamento angular com relação ao eixo vertical verdadeiro, sem embutir na avaliação o erro na estimação de azimute.
+
+
+6.2 Implementação do filtro
+O modelo_dinâmico do filtro é dado por (6) com
+medidas corrompidas dos girômetros e discretizado
+conforme (10). As matrizes P0+, Q1, Q2 e R foram
+sintonizadas por meio de várias simulações, sendo
+que empregou-se um estado inicial estimado z0+ aleatório e consistente com P0+. A sintonia deu-se de maneira heurística, sendo que os ajustes visavam tornar
+os testes estatísticos consistentes e ainda manter os
+erros de estimação reduzidos. Assim, quando os testes NIS e NEES ficavam acima do intervalo de confiança estabelecido, aumentavam-se os valores nas
+diagonais de Q1, Q2 e R de modo a aumentar os
+valores de Sk e Pk. Quando os testes NIS e NEES
+ficavam abaixo do intervalo de confiança, procediase de maneira inversa, buscando-se reduzir os valores
+de Sk e Pk.
+Para as medidas do filtro, aplicou-se a equação (11),
+sendo utilizada a condição descrita por (13) para determinar se estas medidas deveriam ser incorporadas
+ estimativa ou não.
+
+6 Simulação
+Os girômetros e acelerômetros foram simulados
+com as características descritas na tabela 1. A simulação utilizou-se a ferramenta Simulink em um processador Intel Pentium Quad-Core. Em cada realização foram empregadas sementes aleatórias nos geradores de números aleatórios que simulam ruído nos
+sensores.
+
+6.3 Teste de consistência e desalinhamento da vertical local estimada
+Para a verificação da consistência_estatística do
+filtro, utilizaram-se os métodos NEES durante toda a
+simulação e NIS somente para os instantes em que as
+
+Tabela 1. Características dos erros dos sensores.
+Fonte de Erro
+
+Girômetros para o
+eixo vertical
+
+ ( t )  0, ( t )  0, ( t )  0
+
+desalinhamento dado pela equação (19)
+
+Sensor
+
+0,0015
+
+Variância do ruído
+Deriva (Drift)
+
+Na simulação, o veículo executa dois tipos de
+movimento. Um é estático e dura 2 segundos, conforme descrito pela equação (20)
+
+onde na i-ésima simulação, di(k) é o terceiro elemento da terceira coluna da DCM de desalinhamento
+ ED
+D NNED
+(k ) , a qual é parametrizada pelo quatérnion de
+
+
+3hora
+
+6.1 Movimentos do veículo
+
+A avaliação_do_desempenho absoluto do filtro
+pode ser obtida calculando-se o desalinhamento entre
+a vertical local verdadeira e a estimada. Assim, para
+M simulações, o desalinhamento médio é obtido por
+meio da equação (18).
+1
+M
+
+Deriva (Drift)
+Fator de Escala
+
+Acelerômetros
+
+5.3 Desalinhamento da vertical estimada
+
+d (k ) 
+
+Girômetros para
+os eixos horizontais
+
+Valor
+
+203
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+de aceitável e o desempenho absoluto do filtro implementado é superior ao método ad-hoc.
+
+medidas eram incorporadas. Estes testes se deram por
+meio de 50 simulações de Monte Carlo, considerando
+a probabilidade de falso alarme 5. Portanto, é de
+95 a probabilidade dos testes NEES e NIS nas equações (14) e (17), respectivamente, se encontrarem
+nos correspondentes intervalos de confiança bilaterais computados segundo (15).
+Avaliou-se ainda o desalinhamento entre as verticais
+locais verdadeira e estimada - tanto para o método
+aqui proposto quanto para o método ad-hoc descrito
+em Gandelman et al (1988) - para fins de comparação e análise do desempenho. Assim, por meio de 50
+simulações, extraiu-se o valor médio e o desviopadrão do desalinhamento para cada instante.
+7 Resultados
+Os resultados a seguir ilustram o desempenho
+obtido na estimação da vertical local pelo filtro de
+Kalman estendido híbrido, comparando-o com o método proposto por Gandelman et al (1988). Para ambos os casos, foram simulados o mesmo movimento,
+com a mesma qualidade de sensores (incluindo ruídos
+gaussianos) e sob as mesmas condições.
+
+Figura 1. Erros de estimação da vertical local obtidos por método
+ad-hoc e pelo filtro de Kalman estendido híbrido.
+
+7.1 Estimação da vertical local
+A Figura 1 ilustra os erros de estimação de arfagem e rolamento obtidos tanto pelo filtro aqui proposto quanto pelo método ad-hoc. Verifica-se por
+meio desta que os erros obtidos pelo filtro, nos instantes em que as medidas dos acelerômetros são incorporadas, são mais ruidosos do que os obtidos pelo
+segundo método, porém mantém-se com ordem de
+grandeza igual ou inferior. O método ad-hoc inclui
+pré-filtragem passa-baixas dos sinais dos acelerômetros. Já nos períodos de movimento acelerado, quando o filtro não incorpora medidas dos acelerômetros,
+a dinâmica do erro do filtro apresenta variação bastante suave, similar  do método ad-hoc. Nota-se,
+entretanto, que o erro na determinação do rolamento
+com o filtro é consideravelmente reduzido.
+A Figura 2 ilustra as acelerações normalizadas verdadeira e medida, bem como o sinal de chaveamento.
+A partir desta figura, observa-se como o chaveamento garante o bom uso das medidas dos acelerômetros
+pelo filtro. Nota-se como a incerteza de 5 na medição do desalinhamento com relação ao CG influi na
+diferença entre as medidas dos acelerômetros e a
+gravidade no movimento rotatório.
+A figura 3 ilustra o valor angular médio e este somado a três desvios-padrão para o desalinhamento entre
+a vertical local verdadeira e a estimada para 50 simulações com duração de 12s. Nota-se que os resultados
+médios obtidos pelo filtro mostram-se mais estáveis
+ao longo do tempo, ao passo que o método ad-hoc
+oscila muito, chegando a apresentar desalinhamento
+médio de deciradianos em alguns instantes. Levandose em conta a qualidade dos sensores disponíveis,
+pode-se afirmar que os erros obtidos são de magnitu-
+
+Figura 2. Análise dos sinais de chaveamento.
+
+Figura 3. Desalinhamento angular obtido para 50 simulações.
+
+7.2 Consistência estatística e desalinhamento
+A figura 4 ilustra o resultado obtido para o teste
+NEES realizado. Verifica-se que a curva obtida fica
+dentro do intervalo de confiança 3,24 4,81 nos
+momentos de movimento não acelerado e, durante os
+movimentos acelerados, a curva decai até sair do
+intervalo de confiança, havendo apenas 9,45 dos
+pontos dentro. Tal resultado indica que, nos instantes
+em que filtro não incorpora as medidas dos acelerô204
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+vimento não acelerado  em que o filtro incorpora
+medidas dos acelerômetros  o filtro mostrou indícios
+de estar devidamente sintonizado. Já para os instantes
+de movimento acelerado  quando não há incorporação das medidas dos acelerômetros  verificou-se
+pelo testes NEES que a estimação é enviesada e divergente. A matriz de covariância do erro de estimação cresce com o tempo nos intervalos em que o filtro conta apenas com as medidas ruidosas dos girômetros. Isto confirma ainda a necessidade do movimento alternado entre acelerado e não acelerado para
+que o desempenho estatístico do filtro seja consistente com as hipóteses estatísticas para otimalidade do
+filtro de Kalman. Incorporação durante período prolongado das medidas dos acelerômetros durante o
+movimento acelerado viola o modelo de medidas
+visto em (8) e causa a divergência do filtro. O filtro
+chaveado aqui investigado lida muito bem com essa
+situação.
+Apesar das condições bastante realísticas e adversas
+simuladas para a obtenção das medidas disponíveis,
+os erros de desalinhamento entre a vertical local verdadeira e a estimada aqui obtidos não ultrapassaram a
+ordem de milésimos de radianos com o uso do filtro,
+sendo comparáveis e até melhores do que os obtidos
+em Gandelman et al (1988). A desvantagem com
+relação ao método ad-hoc proposto em Gandelman
+consiste na necessidade de um acelerômetro adicional
+para a detecção de acelerações  inclusive, e especialmente, a ocorrência das laterais, que afetam a medida da vertical local  significativas atuando sobre o
+veículo, além da maior carga_computacional demandada pelo filtro.
+
+metros (T1), a estimação é enviesada e a matriz de
+covariância do erro de estimação aumenta rapidamente, tendendo a divergir. Isto era de se esperar,
+pois nesses períodos de aceleração significativa a
+estimação só conta com as medidas dos girômetros
+corrompidas pela deriva constante, as quais induzem
+erros que crescem indefinidamente com o tempo. Já
+para os instantes em que há incorporação das medidas (T0), o filtro apresenta indícios de consistência,
+pois 99,41 dos pontos caem dentro do intervalo de
+confiança estabelecido.
+Isto mostra que o movimento acelerado do veículo
+precisa, de fato, alternar-se, ao longo do tempo, com
+um período no modo não acelerado. Caso contrário, o
+erro de estimação e sua covariância computada durante o movimento acelerado aumentam a ponto de o
+desempenho estatístico do estimador se mostrar inconsistente com as condições para otimalidade do
+filtro de Kalman, cuja equação de medidas (8) presume movimento sem aceleração, e a incerteza na
+vertical estimada a torna inviável.
+A figura 5 ilustra os resultados para o teste NIS para
+simulações de 12s. Durante esta, há três períodos em
+que as medidas dos acelerômetros são incorporadas,
+sendo que o teste NIS é computado apenas estes instantes. O intervalo de confiança para este teste foi
+2,35, 3,70. Embora o resultado tenha se mostrado
+ruidoso, nota-se que a maior parte dos resultados
+(99,28) caiu dentro do intervalo de confiança estipulado. Portanto, pode-se afirmar que o filtro apresenta desempenho estatisticamente consistente durante os movimentos não acelerados. Tal fato está de
+acordo ainda com o resultado obtido para o teste
+NEES nestes instantes.
+8 Conclusão
+Com este trabalho, implementou-se um filtro de
+Kalman estendido híbrido baseado em quatérnion
+para a determinação da vertical local de um veículo
+hipotético equipado com três girômetros e três acelerômetros, cuja acurácia é típica de sensores disponíveis comercialmente para aplicações aeroespaciais.
+Para o modelo embarcado no filtro, utilizou-se as
+medidas dos girômetros corrompidas por ruído gaussiano de media nula, deriva, erro de fator de escala,
+velocidade_angular da Terra e movimento do veículo.
+Para as medidas do filtro utilizou-se acelerômetros,
+cujas medidas são corrompidas por ruído, bias, erro
+de fator de escala, incerteza no posicionamento do
+CG do corpo e movimento do veículo. Na presença
+de significativas acelerações laterais, o filtro rejeita
+as medidas dos acelerômetros para evitar rastreio da
+vertical aparente. A fusão dos girômetros e acelerômetros pelo filtro, nos instantes de movimento não
+acelerado, evitou que erros de estimação da vertical
+crescessem ao longo do tempo devido s imperfeições dos girômetros.
+Por meio dos testes de consistência_estatística NEES
+e NIS, verificou-se que durante os instantes de mo-
+
+Figura 4. Teste NEES para 50 simulações de Monte Carlo.
+
+205
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Figura 5. Teste NIS para 50 simulações de Monte Carlo.
+
+Agradecimentos
+Os resultados deste trabalho valem-se do apoio
+logístico e financeiro proporcionados pelo projeto
+DCTAINPEFINEP Sistemas Inerciais com Aplicação Aeroespacial (SIA).
+Referências Bibliográficas
+Bar-Shalom, Y., Li, X. R. e Kirubarajan, T. (2001).
+Estimation with applications to tracking and
+navigation. John Wiley  Sons, Inc. New York  NY,
+pp. 84, e pp. 236-238
+Gandelman, G. e Bar-Itzhack, I. Y. (1988). Simulação para
+Verificação da Viabilidade da Determinação da
+Vertical, Através de Giros e Acelerômetros
+Strapdown. 7CBA, pp 1027-1031, ITA, São José
+dos Campos - SP
+Kim, A., Golnaraghi, M. F. (2004). A Quaterion-Based
+Orientation Estimation algorithm Using an Inertial
+Measurement Unit. IEEE Press 0-7803-8416-404, pp
+268272
+Setoodh, P., Khayatian, A., Farjah, E. (2004). Attitude
+Estimation by Separate-Bias Kalman Filter-Based
+Data Fusion. The Journal of Navigation, Vol. 57, pp
+261-273
+Rehbinder, H. and Hu, X. (2004). Drift-free attitude
+estimation for accelerated rigid bodies. Automatica,
+Vol.40, pp. 653-659
+The MathWorks, Inc. (2003). Matrix Exponentials Demo
+online. Disponível em
+httpwww.mathworks.comproductsmatlabdemos.ht
+ml?fileproductsdemosshippingmatlabexpmdemo.
+html acessado em 10 de fevereiro de 2010
+Vaganay, J., Aldon, M.J., and Fournier, A. (1993). Mobile
+Robot Attitude Estimation by Fusion of Inertial Data.
+Proceedings of the 1993 IEEE International
+Conference on Robotics and AutomationAutomatica,
+pp. 277-282.
+
+206

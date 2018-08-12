@@ -1,0 +1,661 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+IMPLEMENTAÇÃO DIDÁTICA DO FILTRO DE KALMAN DISCRETO EM UM
+CIRCUITO RC
+PABLO F. SALAROLLI, VINÍCIUS DA R. MOTTA, MARCO A. DE S. L. CUADROS
+Grupo da Automação Industrial  GAIn, Coordenadoria de Engenharia de Controle e Automação, Instituto
+Federal de Educação, Ciência e Tecnologia do Espírito Santo  Campus Serra
+Rodovia ES-010, km 6,5, 29173-087, Manguinhos, Serra, ES, Brasil
+E-mails pablosalarolli@hotmail.com, vinicius.motta@ifes.edu.br,
+marcoantonio@ifes.edu.br
+Abstract Noise is an inherent part of all analog variables measurement and, generally, digital or analog filters are used to mitigate them.
+The Kalman filter is a mathematical method to estimate the value of a variable, weighting between the measured value and a value predicted
+by the filter itself using the process model. The filter output is a optimal estimate of the actual value and less noisy than the measured value.
+In order to facilitate the implementation of this tool, it is necessary to have practical applications available that reinforce the concepts and the
+theory of the Kalman filter. This article aims to show the operation of the Kalman filter to estimate the voltage over the capacitor in an RC
+circuit in a simple way, serving as an application for undergraduate laboratory classes.
+Keywords Kalman filter, Signal processing, Noise, RC circuit.
+Resumo Ruídos são parte inerente de toda medição de variáveis analógicas e geralmente são utilizados filtros_digitais ou analógicos para
+atenuá-los. O filtro de Kalman é um método matemático para estimar o valor de uma variável, ponderando entre o valor medido e um valor
+predito pelo próprio filtro utilizando o modelo do processo. A saída do filtro é uma estimativa muito próxima do valor real e com menos ruído
+que o valor medido. Para facilitar a implementação desta ferramenta, é necessário que haja a disponibilidade de aplicações práticas que
+reforcem os conceitos e a teoria do filtro de Kalman. O presente artigo visa mostrar o funcionamento do filtro de Kalman para estimar a tensão
+sobre o capacitor em um circuito RC de forma simples, servindo como uma aplicação para aulas de laboratório de graduação.
+Palavras-chave 
+
+1 Introdução
+Durante a Guerra Fria, no fim da década de 1950,
+os Estados Unidos da América estavam perdendo a
+corrida espacial para a União Soviética e o governo
+americano aumentou o financiamento e incentivo 
+pesquisa para impulsionar o desenvolvimento
+aeroespacial, o que estimulou os trabalhos de Rudolf
+Emil Kalman no Research Institute for Advanced
+Studies, em Baltimore (Grewal and Andrews, 2010),
+culminando na publicação de Kalman em 1960,
+trazendo uma nova proposta de filtragem linear e
+solução para problemas de predição, chamada de filtro
+de Kalman (Kalman, 1960).
+A primeira aplicação publicamente conhecida, e
+também uma das mais importantes, foi no sistema de
+navegação do projeto Apollo da Agência Espacial
+Americana (NASA), que realizou as únicas missões
+na história que levaram o homem  Lua (Schmidt,
+1981). Neste projeto, o filtro de Kalman resolveu os
+problemas de fusão_de_dados e de rejeição de erros da
+medição. Desde então, tem sido parte integrante de
+quase todos sistema de estimativa de trajetória
+embarcada e sistemas_de_controle (Grewal and
+Andrews, 2008).
+Muitas tecnologias se tornaram possíveis devido as
+aplicações do filtro de Kalman em controle, rastreio,
+localização, robótica_móvel, etc. o que o torna um
+tópico importante no ensino da engenharia. Porém, o
+filtro de Kalman é normalmente estudado nos
+laboratórios de ensino de graduação no Brasil de
+forma teórica, acompanhado de simulações, não sendo
+muito comuns os exemplos práticos, aplicados 
+
+ISSN 2525-8311
+
+sistemas físicos, sejam eles elétricos, mecânicos,
+eletro hidráulicos, etc., deixando uma lacuna entre a
+compreensão da teoria e a verificação da sua
+funcionalidade na prática.
+Tendo em vista ajudar a diminuir esta lacuna, o
+presente trabalho apresenta a implementação do filtro
+de Kalman para estimar a tensão sobre o capacitor em
+um circuito RC (resistor-capacitor). Apesar de os
+níveis de ruído na medição da tensão de saída do
+circuito RC serem baixos, este é um ótimo meio para
+implementação do filtro de Kalman, pois ele é
+simples, compacto e barato, possibilitando alunos e
+professores utilizarem em casa ou em salas de aula nas
+áreas de medição de variáveis analógicas, tratamento
+de sinais e controle.
+2 Conceitos
+2.1 Probabilidade e estatística
+Para auxiliar o entendimento da teoria do filtro de
+Kalman e também a interpretação dos resultados deste
+trabalho, alguns conceitos sobre probabilidade e
+estatística são aqui apresentados.
+A variância é uma medida de dispersão dos valores
+da variável aleatória ao redor da média. Se os valores
+tendem a concentrar-se próximos da média, a
+variância é pequena mas se os valores tendem a
+afastar-se da média, a variância é grande (Spiegel,
+1978). O desvio padrão é a raiz quadrada positiva da
+variância. Essas medidas podem ser utilizadas para
+representar numericamente a intensidade do ruído de
+
+3715
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+uma medição, tornando-se parâmetros para avaliação
+da qualidade de um sinal.
+A covariância é uma medida de relação linear
+(Montgomery and Runger, 2009), que mede o grau de
+dependência entre duas variáveis aleatórias X e Y
+(Morettin, 1999).
+A distribuição de probabilidades de uma variável
+aleatória X é uma descrição das probabilidades
+associadas com os valores possíveis de X
+(Montgomery and Runger, 2009). Uma variável
+aleatória distribuída normalmente apresenta uma das
+curvas de distribuição mostradas na Figura 1. Esta
+curva é centrada na média da variável em questão e
+quanto maior a largura da base da curva, maior é a
+variância. Para variáveis no tempo_discreto, a soma
+das probabilidades dos pontos que formam a curva é
+igual a 1. Sua notação é N(, ), onde  e  são a
+média e a variância da variável aleatória,
+respectivamente. A distribuição pode ser utilizada
+para representar visualmente a intensidade do ruído de
+um sinal.
+
+onde Kp é o ganho do processo e  é a constante de
+tempo do processo.
+Na Figura 2, pode ser vista a resposta característica de
+um sistema de primeira ordem, onde a saída y varia de
+forma exponencial em função de uma variação na
+forma de um degrau na entrada u. Kp é a razão entre
+y e u.  é o tempo para que a saída alcance 63,2
+de y.
+
+Figura 2. Resposta de um sistema de primeira ordem ao degrau.
+
+Neste trabalho, inicialmente foi encontrada a função
+de transferência do processo que, em seguida, foi
+convertida para o espaço_de_estados discreto. Isto
+porque o filtro de Kalman discreto requer uma
+representação no espaço_de_estados discreto.
+3 O filtro de Kalman
+
+Figura 1. Exemplos de distribuições normais (Shimakura, 2005).
+
+2.2 Sistemas de primeira ordem
+O circuito RC é um sistema de primeira ordem e,
+objetivando a compreensão de sua dinâmica, bem
+como a realização de sua modelagem de forma
+experimental, alguns conceitos sobre este sistema
+serão aqui apresentados. Vale considerar que a
+utilização do filtro de Kalman não está restrita 
+apenas sistemas de primeira ordem, podendo ser
+utilizado em sistemas_lineares muito gerais.
+Um sistema é uma entidade que manipula um ou
+mais sinais para realizar uma função, produzindo,
+assim, novos sinais (Haykin and Van Veen, 2001).
+Um sistema de primeira ordem é aquele cujo modelo
+é representado por uma equação diferencial sendo a
+maior ordem da derivada igual a um, e pode ser escrito
+como uma função_de_transferência de primeira ordem
+no domínio da frequência (Hsu, 2012) (Haykin and
+Van Veen, 2001), como a descrita na Equação (1)
+() 
+
+ISSN 2525-8311
+
+
+ + 1
+
+(1)
+
+O filtro de Kalman é na verdade um estimador para o
+chamado problema linear quadrático, que é o
+problema de estimar o estado instantâneo de um
+sistema dinâmico linear utilizando medições
+linearmente relacionadas com este estado, i.e.,
+medições de algum sensor, porém corrompidas por
+ruído branco (Grewal and Andrews, 2008).
+O filtro de Kalman discreto (FKD) se baseia no
+modelo mostrado nas Equações (2) e (3)
+  1 +  + 
+
+(2)
+
+   + 
+
+(3)
+
+onde x é o vetor_de_estados (n x 1) u é o vetor das
+entradas de controle (q x 1) z é o vetor de medições
+(m x 1) A é a matriz de transição de estados (n x n) B
+é a matriz de controle (n x q) C é a matriz de
+observação (m x n) w é o vetor de ruídos do processo
+(n x 1) e v é o vetor de ruídos da medição (m x 1). Os
+índices k e k-1 representam os instantes de tempo atual
+e anterior, respectivamente (Santana and Medeiros,
+2007). Vale notar que a dinâmica do processo é
+representada pela Equação (2), ou seja, a relação entre
+os estados e a entrada do processo definem como o
+sistema se comporta. A saída z do sistema é apenas
+uma relação linear do vetor_de_estados x, como é visto
+na Equação (3).
+
+3716
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Com instrumentos_de_medição, é possível obter os
+valores de z. O grande problema é remover de z o ruído
+da medição v, obtendo assim, o valor real da saída do
+sistema. Realizar esta operação é difícil, pois v é
+composto por valores aleatórios. Porém, se v possuir
+valores aleatórios distribuídos normalmente, é
+possível inferir sobre suas medidas de dispersão.
+Além disso, utilizando o modelo do processo, pode-se
+estimar os estados do sistema, relacionando-os com a
+saída pela matriz C.
+O filtro de Kalman faz a fusão entre a estimativa do
+modelo e a medição real para minimizar o erro na
+estimativa dos estados. Para isso, é utilizado um fator
+que mescla essas duas variáveis, que é o chamado
+ganho de Kalman (K). O critério de desempenho para
+se chegar na fórmula do ganho de Kalman é o método
+de estimação do mínimo erro quadrático médio
+(minimum mean-square error, MMSE) (Brown and
+Hwang, 2012).
+O algoritmo do FKD é recursivo e pode ser
+implementado basicamente com cinco equações
+divididas em duas fases a predição e a atualização.
+Em termos gerais, a fase de predição leva em conta
+apenas o modelo do processo enquanto a fase de
+atualização considera a medição. Vale salientar que
+não cabe a este trabalho as demonstrações
+matemáticas das equações do FKD.
+3.1 Fase de predição
+Esta fase é composta pelas Equações (4) e (5),
+também chamada de atualização do tempo. Nas
+equações, o sobrescrito - sinaliza um valor a priori,
+já o sobrescrito  indica que aquela variável é
+estimada. Nesta fase é feita a estimativa a priori dos
+estados do sistema (Equação (4)). A Equação (5)
+calcula o valor a priori de P (matriz de covariância
+dos erros da estimativa), baseado em Q (matriz de
+covariância dos ruídos do processo w).
+
+Figura 3. Diagrama de blocos do processo de estimativa dos
+estados de um processo aleatório no filtro de Kalman.
+
+4 Plataforma de testes
+A simulação e o teste prático foram baseados em
+um circuito RC, como pode ser visto na Figura 4. Ao
+aplicar uma tensão de entrada (Vf), obtém-se uma
+resposta característica de um sistema de primeira
+ordem na tensão de saída (Vc).
+Para realizar os testes práticos, o circuito RC foi
+ligado  uma placa de aquisição NI USB 6009, como
+é visto na Figura 4.
+
+  1 + 
+
+(4)
+
+Figura 4. Esquema de ligação da planta.
+
+  1  + 
+
+(5)
+
+A NI USB 6009 é uma placa da National
+Instruments, que pode medir tensões entre -10 V e
++10 V, com resolução de 14 bits e impedância de
+entrada de 144 k. As saídas analógicas possuem
+resolução de 12 bits em uma faixa de 0 V a +5 V.
+Um circuito RC, como o da Figura 4, tem a
+característica de apresentar um ganho Kp unitário e
+uma constante de tempo  com valor igual ao produto
+da resistência R pela capacitância C. Os valores de R
+e C foram escolhidos de forma que o processo seja
+lento suficiente para que o sinal Vf possa ser observado
+com facilidade no regime transitório. Também foi
+levado em consideração que a impedância da entrada
+analógica da placa de aquisição é relativamente baixa
+(144 k), o que leva a adotar um valor de resistor R
+muito menor que 144 k, para inibir o aparecimento
+de um divisor de tensão entre o resistor R e a entrada
+analógica da placa, que diminuiria o valor do ganho
+Kp. Assim, os valores adotados para R e C foram 1 k
+e 3200 F, respectivamente. A montagem pode ser
+
+3.2 Fase de atualização
+Esta fase é composta pelas equações (6), (7) e (8),
+também é conhecida como atualização da medição. O
+ganho de Kalman é calculado na Equação (6),
+utilizando R (matriz de covariância dos ruídos da
+medição v), além de P  e C. Na Equação (7), a
+estimativa dos estados é atualizada e na Equação (8),
+a matriz P é atualizada, sendo I a matriz identidade de
+ordem n.
+     (   + )1
+
+(6)
+
+   +  (   )
+
+(7)
+
+  (   )
+
+(8)
+
+ISSN 2525-8311
+
+A Figura 3 representa o diagrama_de_blocos do
+funcionamento do filtro de Kalman discreto,
+envolvendo as Equações (2), (3), (4) e (7).
+
+3717
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+vista na Figura 5. Há dois capacitores (1000 F e 2200
+F) ligados em paralelo para resultar em 3200 F,
+devido  ausência de um capacitor com tal valor.
+
+Figura 7. Fluxograma do programa.
+Figura 5. A plataforma_de_testes.
+
+4.1 A modelagem
+A modelagem visa encontrar o ganho do processo
+Kp e a constante de tempo  do sistema. Embora em
+um circuito RC esses parâmetros possam ser
+levantados facilmente, como já citado na Seção 4, é
+importante destacar que a resistência interna da placa
+de aquisição_de_dados influenciará na dinâmica do
+processo assim neste artigo o modelo é estimado de
+forma experimental.
+Para isso, aplicou-se um degrau de 1 volt na
+alimentação Vf do circuito, obtendo a curva de tensão
+do capacitor Vc, como pode ser visto na Figura 6.
+
+A inicialização é composta pelo trecho de código que
+é executado apenas na primeira iteração do programa.
+Nela, são declaradas e inicializadas as variáveis, sendo
+algumas do tipo persistent, para que se mantenham na
+memória enquanto o programa é executado. Aqui
+também é gerado o espaço_de_estados discreto, com
+um período de amostragem T, definido em 0,05 s.
+Como o sistema é de primeira ordem, há apenas uma
+variável de estado, que é a tensão sobre o capacitor.
+Utilizando o modelo encontrado na seção anterior, foi
+obtido o seguinte modelo no espaço_de_estados A 
+0,9846, B  0,0496 e C  0,0351.
+A segunda e terceira etapas são executadas em loop.
+O objetivo da segunda etapa é calcular o estado do
+sistema, utilizando a Equação (4) do espaço de
+estados. A terceira etapa é o próprio filtro de Kalman,
+explicado na Seção 3. Os desvios padrão da medição
+e do processo são z e p, respectivamente, que são
+utilizados para simular os ruídos brancos.
+O algoritmo do programa está representado na Figura
+8.
+Algoritmo Filtro de Kalman
+Inicio
+leia(Kp, , T, u, z, p)
+Espaçodeestados(A, B, C) <- Funcaodetransferencia(Kp, )
+Inicializa variáveis persistent  x, x, Pk, A, B, C
+Enquanto Parar  falso
+leia(u)
+
+Figura 6. Resposta do circuito RC ao degrau.
+
+Foram realizados os cálculos das Equações (9) e (10)
+para se obter Kp e , baseados na teoria apresentada na
+Subseção 2.2.
+ 
+
+0,9983  0,01411
+ 0,984
+10
+
+  6,925  3,7  3,225 
+
+(9)
+(10)
+
+5 Implementação do algoritmo
+Como pode ser observado na Figura 7, o
+programa foi subdividido em três etapas
+inicialização, cálculos do modelo e medição e o filtro
+de Kalman.
+ISSN 2525-8311
+
+Q <- p*p
+R <- z*z
+w <- p*valorAleatorio  valorAleatorio  N(0,1)
+v <- z*valorAleatorio  valorAleatorio  N(0,1)
+x <- A*x + B*u + w
+y <- C*x
+z <- y + v
+x <- (A*x + B*u)
+Pk <- A*Pk*A + Q
+Kk <- Pk*C*inversa(C*Pk*C + R)
+x <- x + Kk*(z - C*x)
+Pk <- (I - Kk*C)*Pk
+y <- C*x
+plotar(z, y, y)
+Fim-Enquanto
+Fim
+
+Figura 8. Algoritmo do programa.
+
+3718
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Para os testes simulados e práticos, o algoritmo da
+Figura 8 foi implementado no módulo MathScript RT,
+do software LabVIEW, como pode ser visto na
+Figura 9. Este módulo, é compatível com a linguagem
+de programação do MATLAB.
+
+Tau
+
+tau
+
+Kp
+
+kp
+
+T
+u
+
+ Declaração de variáveis persistentes
+persistent x xChapeu Pk A B C
+ Inicialização das variáveis persistentes
+if isempty(x)
+ Cria espaço_de_estados discreto
+sysc2d(ss(tf(kp,tau 1)),T)
+ Extrai as matrizes do espaço_de_estados
+A,B,Cssdata(sys)
+Pk  0
+x  0
+xChapeu  0
+end
+
+T
+u
+
+sigmaZ
+
+sigmaZ
+
+sigmaP
+
+sigmaP
+
+Q
+R
+w
+v
+
+x
+y
+
+z
+
+ sigmaP2  Variância
+ sigmaZ2  Variância
+ sigmaP*randn  Ruído
+ sigmaZ*randn  Ruído
+Modelo do processo
+ A*x+B*u+w
+ C*x
+Simulação da medição
+ y+v
+
+do
+da
+do
+da
+
+Figura 11. Resposta da simulação aos degraus de subida e descida.
+
+processo
+z
+medição
+processo
+y
+medição yChapeu
+
+ Filtro de Kalman
+ Predição
+xChapeu  (A*xChapeu+B*u)
+yChapeu  C*xChapeu
+Pk  A*Pk*A+Q
+ Correção
+Kk  Pk*C*inv(C*Pk*C+R)
+xChapeu  xChapeu+Kk*(z-C*xChapeu)
+yChapeu  C*xChapeu
+Pk  (eye(1)-Kk*C)*Pk
+
+Figura 9. Código no MathScript RT.
+
+No código da Figura 9, as linhas de 1 a 12 são a etapa
+da inicialização. O modelo e a medição estão entre as
+linhas 14 e 22. O filtro de Kalman pode ser visto a
+partir da linha 24.
+6 Resultados de simulação e prática
+Devido ao circuito RC possuir por natureza pouco
+ruído, foi aplicado um degrau de 0,1 V. Assim, é
+possível observar a resposta ao degrau com mais
+detalhes.
+6.1 Simulação
+Na simulação, foram adotados p  0,001 e z 
+0,005, sendo o modelo utilizado o mesmo obtido nas
+Equações (9) e (10).
+
+Figura 12. Funções distribuição de probabilidade  simulação.
+Tabela 1. Medidas de dispersão  simulação.
+
+Dado
+Modelo
+Medição
+Filtro de Kalman
+
+Média (V)
+-0,00017
+-0,00013
+-0,00010
+
+Desvio padrão (V)
+0,00184
+0,00542
+0,00152
+
+6.2 Prática
+A parte inicial da Figura 13 mostra o sinal da
+medição obtido com a placa de aquisição. Como pode
+ser observado, os valores são distribuídos em poucos
+pontos, originando um sinal digital de baixa resolução.
+Isso ocorre devido  amplitude do ruído da medição
+ser pequena em relação  resolução do conversor
+analógico-digital da placa de aquisição. Como esse
+sinal é composto por poucos e repetidos pontos, a
+distribuição dos dados fica concentrada em alguns
+valores, o que não permite exibir resultados na forma
+de uma curva de distribuição de probabilidades. Para
+melhor distribuir os pontos do sinal e interferir pouco
+em seu ruído, foi aplicado um filtro do tipo média
+móvel de 2 períodos no sinal da medição. O efeito
+desse filtro pode ser visto na parte final da Figura 13.
+
+Figura 10. Resultado da simulação no regime_permanente.
+Figura 13. Efeito da média móvel no sinal da medição.
+
+ISSN 2525-8311
+
+3719
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Agradecimentos
+Agradecemos ao CNPq,  SETECMEC e ao
+IFES pelo apoio concedido s pesquisas que deram
+origem a este trabalho.
+Referências Bibliográficas
+
+Figura 14. Resposta do teste prático no regime_permanente.
+
+Figura 15. Resposta do teste prático aos degraus de subida e
+descida.
+
+Figura 16. Funções distribuição de probabilidade  teste prático.
+
+Tabela 2. Medidas de dispersão  teste prático.
+
+Dado
+Modelo
+Medição
+Filtro de Kalman
+
+Média (V)
+-0,00008
+0,01307
+0,01171
+
+Desvio padrão (V)
+0,00189
+0,00266
+0,00135
+
+7 Conclusão
+Como pôde ser observado nos gráficos das
+distribuições normais das Figuras 12 e 16 e nas
+Tabelas 1 e 2, a estimativa do filtro de Kalman ficou
+com uma média entre a medição e o modelo e com
+uma variância menor, ou seja, com um grau de ruído
+mais baixo, o que mostra que este trabalho trouxe uma
+implementação correta do filtro de Kalman discreto.
+A simplicidade e o custo do circuito RC junto a forma
+de implementação simplificada aqui apresentada,
+incluindo uma breve base teórica, proporciona ao
+leitor as ferramentas suficientes para realizar uma
+simulação e um teste prático com certa facilidade.
+
+ISSN 2525-8311
+
+Brown, R. and Hwang, P. (2012). Introduction to
+random
+signals
+and
+applied
+Kalman
+filtering with MATLAB exercises. 4th ed.
+Hoboken, N. J. Wiley.
+Grewal, M. and Andrews, A. (2008). Kalman
+filtering Theory and Practice Using MATLAB.
+3rd ed. Hoboken, N. J. Wiley.
+Grewal, M. and Andrews, A. (2010). Applications of
+Kalman filtering in aerospace 1960 to the present
+historical perspectives. Control Systems, IEEE,
+Vol. 30, No. 3, pp. 69-78.
+Haykin, S. and Van Veen, B. (2001) Sinais e
+sistemas. Porto Alegre Bookman, 668 p.
+Hsu, H. (2001). Sinais e sistemas. 2nd ed. Porto
+Alegre Bookman, 496 p.
+Kalman, R. (1960). A new approach to linear filtering
+and prediction problems. Journal of basic
+Engineering, Vol. 82, No. 1, pp. 35-45.
+Montgomery, D. and Runger, G. (2009). Estatística
+aplicada e probabilidade para engenheiros. 4th
+ed. Rio de Janeiro LTC.
+Morettin,
+L.
+(1999). Probabilidade
+e
+estatística Volume 1 - Probabilidade. 7th ed. São
+Paulo Pearson Makron Books.
+Santana, A. and Medeiros, A. (2007). Localização de
+um Robô Móvel Baseada em Odometria e Marcos
+Naturais Utilizando Filtro de Kalman Extendido.
+In Simpósio Brasileiro de Automação
+Inteligente, online Florianópolis SBAI.
+Available
+at
+httpwww.sba.org.brrsvSBAISBAI2007docs
+301241.pdf Accessed 11 Apr. 2016.
+Schmidt, S. (1981). The Kalman filter-Its recognition
+and
+development
+for
+aerospace
+applications. Journal of Guidance, Control, and
+Dynamics, Vol. 4, No. 1, pp. 4-7.
+Shimakura, S. (2005). A distribuição Normal.
+Available
+at
+httpleg.ufpr.brsilviaCE701node36.html
+Accessed 30 May 2016.
+Spiegel, M. (1978). Probabilidade e estatística. São
+Paulo Pearson Education do Brasil.
+
+3720

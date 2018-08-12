@@ -1,0 +1,1182 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+MÉTODO DE CONTROLE E DETECÇÃO DE OBSTÁCULOS PARA ROBÔS MANIPULADORES
+APLICADO  INTERAÇÃO HUMANO-ROBÔ
+T HIAGO B. DE A LMEIDA -A NTONIO , F ERNANDO L IZARRALDE , L IU H SU , A NTONIO C. L EITE
+ Departamento
+
+de Engenharia Elétrica  COPPE
+Universidade Federal do Rio de Janeiro
+C.P. 68504, CEP 21941-972, Rio de Janeiro, RJ, Brasil
+Email braga.thiago@poli.ufrj.br, fernando, liu, toni@coep.ufrj.br
+Abstract This work presents a kinematic control and collision detection method for redundant robot manipulators operating in
+human environments. The control algorithm is based on the concept of artificial potential fields and uses the pseudo-inverse of the
+Jacobian matrix with a weighting factor for the joint mechanical limits, taking advantage of the robot redundancy for the purpose
+of obstacle avoidance and control goal achievement. The detection algorithm uses a depth sensor based on the structured light
+to obtain a 2D 12 description of the surroundings from a point cloud. Repulsive fields are created around the detected obstacles,
+allowing for the robot to perform the task of interest without collisions. Experimental results obtained from a Motoman DIA10
+robot and a natural user interface Microsoft KinectTM illustrate the feasibility of the proposed scheme.
+Keywords
+
+Robot Control, Obstacle Avoidance, Artificial Potential Fields, Human-Robot Interaction
+
+Resumo Este trabalho apresenta um método de controle_cinemático e detecção de obstáculos para robôs manipuladores_redundantes operando em ambientes humanos. O algoritmo de controle baseia-se no conceito de campos_potenciais artificiais e utiliza a
+pseudo-inversa da matriz Jacobiana com um fator de ponderação para os limites mecânicos das juntas, aproveitando a característica de redundância do robô para desviar de obstáculos e atingir o objetivo de controle simultaneamente. O algoritmo de detecção
+utiliza um sensor de profundidade baseado na tecnologia de luz estruturada para obter uma descrição 2D 12 do ambiente a partir
+de uma nuvem de pontos. Campos repulsivos são gerados em torno dos obstáculos detectados permitindo que o robô realize a
+tarefa de interesse sem colisões. Resultados experimentais obtidos com um robô Motoman DIA10 e um dispositivo de interface
+natural Microsoft KinectTM são apresentados para ilustrar a viabilidade do método proposto.
+Palavras-chave .
+
+1
+
+Introdução
+
+do ambiente (Khatib, 1986 Chung et al., 1997). Outra
+abordagem consiste em utilizar campos artificiais circulares, que rotacionam a trajetória do robô ao redor
+dos obstáculos ao invés de apenas repelir o robô como
+faz o campo potencial repulsivo (Singh et al., 1996).
+Campos virtuais circulares e potenciais também podem ser combinados a fim de aproveitar as vantagens
+de ambas as abordagens (Haddadin et al., 2011). Nesses trabalhos, os autores assumem que o movimento
+dos obstáculos é conhecido a priori ignorando a necessidade de sensoreamento externo. Em Flacco et al.
+(2012) um método de detecção de obstáculos baseado
+em dados obtidos a partir de um dispositivo Microsoft KinectTM é proposto para evitar colisões em tarefas de interação entre humanos e robôs. Em Rakprayoon et al. (2011) é apresentado um método de calibração para o Kinect bem como um método para distinguir entre o manipulador e os obstáculos, quando
+eles compartilham o mesmo espaço de trabalho.
+No presente trabalho, apresenta-se um método de
+controle_cinemático e detecção de obstáculos para manipuladores_redundantes operando em ambientes humanos. O algoritmo de controle baseia-se no conceito
+de campos_potenciais artificiais e utiliza a pseudo inversa da matriz Jacobiana com um fator de ponderação para os limites mecânicos das juntas, aproveitando
+a característica de redundância do robô para desviar
+de obstáculos. Um sensor de profundidade baseado
+na tecnologia de luz estruturada é utilizado para obter
+uma descrição 2D 12 do ambiente a partir de uma nuvem de pontos. Campos repulsivos são gerados ao redor dos obstáculos detectados, permitindo que o robô
+
+Atualmente, um dos principais desafios da robótica é lidar com a interação entre humanos e robôs,
+possibilitando que eles trabalhem juntos de forma natural, efetiva e segura (Santis et al., 2008 Haddadin
+et al., 2008). Para permitir essa interação é preciso conhecer o ambiente ao redor do robô garantindo que o
+mesmo se movimente sem causar danos aos operadores próximos a ele. Portanto, o robô deve ser capaz
+de evitar colisões com obstáculos localizados no seu
+espaço de trabalho e alcançar os objetivos de controle
+simultaneamente.
+Na área de robótica diversos métodos de planejamento_de_movimento e desvio_de_obstáculos foram
+propostos ao longo dos anos com o intuito de gerar um
+caminho ou trajetória livre de colisões entre dois pontos de interesse (LaValle, 2011). Entretanto, como a
+proposta do presente trabalho é promover a interação
+entre robôs e seres humanos em um ambiente dinâmico e imprevisível, o uso de técnicas off-line não é recomendado, uma vez que elas consideram os modelos
+do robô e do cenário perfeitamente conhecidos. Uma
+alternativa é utilizar técnicas on-line ou reativas capazes de lidar com a presença de objetos desconhecidos e
+móveis em ambientes incertos (Minguez et al., 2008).
+Uma abordagem de desvio_de_obstáculos bem conhecida é baseada no conceito de campos_potenciais
+artificiais, onde campos virtuais atrativos e repulsivos
+são criados no espaço de trabalho do robô, e dessa
+forma o efetuador pode mover-se na direção de um
+ponto desejado, enquanto evita colidir com obstáculos
+
+4036
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+realize a tarefa de interesse sem colisões e garantindo
+a segurança dos operadores. Resultados experimentais
+obtidos a partir de um robô Motoman DIA10 e um dispositivo de interface natural Microsoft KinectTM ilustram a viabilidade do método proposto.
+2
+
+do manipulador pode ser descrito por
+
+i  ui ,
+
+Neste trabalho, considera-se que um robô manipulador redundante deve executar uma determinada
+tarefa em um ambiente humano, na presença de pessoas trabalhando e movendo-se livremente dentro do
+espaço de trabalho do robô. A tarefa de interesse consiste em mover o efetuador de um ponto inicial P0 até
+o ponto final Pf , seguindo uma trajetória de referência
+r(t), enquanto mantém uma orientação desejada variante no tempo (vide Figura 1). Assume-se aqui que
+a tarefa é previamente planejada e que a descrição do
+ambiente de trabalho é parcialmente conhecida.
+Para adquirir uma representação geométrica 2D
+12 do ambiente, um dispositivo de interface natural
+(DIN), equipado com um sensor de profundidade, é
+montado em frente ao robô. Dessa forma, objetos fixos e móveis (incluindo pessoas) podem ser identificados na forma de uma nuvem de pontos e o robô pode
+realizar a tarefa de maneira segura sem colidir com esses obstáculos.
+
+onde p  R3 é a posição do efetuador com respeito a
+
+
+base do robô e q  qs q
+ R4 é o quaternion univ
+tário correspondente a matriz de rotação R  SO(3)
+(Wen and Kreutz-Delgado, 1991), que representa a
+orientação do sistema de coordenadas do efetuador
+com respeito ao sistema de coordenadas da base. Note
+que, qs R e qv R3 são as partes escalar e vetorial do
+quaternion, sujeitas a restrição q q  1.
+A derivada temporal de (2) resulta na seguinte
+equação de cinemática diferencial
+
+
+p
+x 
+ Ja ( ) ,
+(3)
+q
+)
+mn é o Jacobiano analítico. A
+onde Ja ( )   k(
+  R
+velocidade_angular do efetuador  é relacionada  derivada temporal do quaternion unitário por (Wen and
+Kreutz-Delgado, 1991)
+
+Robô Redundante
+
+P0
+
+ze
+
+  2 Jr (q) q ,
+
+ye
+
+Operador
+
+xe
+
+zb
+xs
+
+zs
+ys
+
+J( )
+
+yb
+
+onde J( )  R6n é o Jacobiano geométrico do manipulador. A partir da abordagem de controle_cinemático
+(1), o seguinte sistema_de_controle é obtido vJ( ) u.
+Uma lei de controle cartesiana vc é transformada em
+um sinal de controle das juntas usando
+
+
+vp
+,
+(6)
+u  J 1 ( )vc  J 1 ( )
+vo
+
+xb
+
+Figura 1 Robô evitando colisões com um operador,
+um DIN e os sistemas de coordenadas de interesse.
+Como a maioria dos robôs_industriais possui uma
+malha interna de controle_de_velocidade para acionamento direto das juntas, uma lei de controle puramente
+cinemática baseada em comandos de velocidade pode
+ser implementada para garantir o desempenho satisfatório do manipulador durante a execução da tarefa.
+3
+
+(4)
+
+onde Jr (q)  qv qs I  Q(qv )  R34 é o Jacobiano
+da representação e Q() é o operador produto vetorial.
+A relação entre as velocidades das juntas  e as velocidades linear p e angular  do efetuador é dada por
+
+ 
+
+I33
+034
+p
+
+Ja ( )  , (5)
+v
+033 2 Jr (q)
+
+
+z
+
+
+Pf
+
+DIN
+
+(1)
+
+onde i é a velocidade_angular da i-ésima junta e ui é
+o sinal de controle_de_velocidade aplicado ao drive do
+motor da i-ésima junta. A partir do vetor de ângulo
+das juntas   Rn pode-se obter a pose do efetuador
+x  Rm através do mapeamento da cinemática direta
+k() como
+
+
+p
+x
+ k( ) ,
+(2)
+q
+
+Formulação do Problema
+
+Trajetória
+r(t)
+
+i  1,    , n ,
+
+onde v p e vo são leis de controle projetadas para controlar a posição e a orientação do efetuador respectivamente. Para robôs_redundantes, a seguinte relação
+baseada na pseudo-inversa ponderada da matriz Jacobiana pode ser utilizada
+
+Controle Cinemático
+
+u  W 1 J  (J W 1 J  )1 vc  Jw vc ,
+
+(7)
+
+onde W Rnn é uma matriz de ponderação, simétrica
+positiva definida, e J Jw  I. Note que, as relações (6)
+e (7) são válidas desde que vc não conduza o robô para
+configurações singulares, onde a matriz Jacobiana é
+singular.
+
+Considere o problema de controle_cinemático de
+um manipulador com n graus de mobilidade. Neste
+contexto, quando o robô possui altas taxas de redução nas engrenagens ou quando baixas velocidades
+são empregadas para realizar uma tarefa, o movimento
+
+4037
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+3.1
+
+Restrições das Juntas
+
+de controle baseada em uma ação proporcional e um
+termo feedforward dada por
+
+Neste trabalho, o sinal de controle (7) pode ser
+utilizado para evitar que os movimentos do robô alcancem os limites mecânicos das juntas. A matriz de
+ponderação W é construída de forma que quando uma
+junta do robô aproxima-se do seu limite, os elementos
+da diagonal tendem a infinito. Isso garante que as velocidades das juntas tendam a zero na vizinhança de
+um limite mecânico (Bjerkeng et al., 2011). Então, os
+elementos diagonais de W 1 tendem a zero conforme
+a junta aproxima-se do seu limite, e são iguais a 1 se a
+junta está no meio da sua faixa, isto é
+
+vo  d + Ko eqv ,
+
+onde Ko  Ko > 0 é a matriz de ganho de orientação
+e d  R3 é a velocidade_angular desejada, os pontos
+de equilíbrio eq  1 0  são ditos ser quase globalmente assintoticamente estáveis (Wen and KreutzDelgado, 1991). Uma análise de convergência e estabilidade para o sistema_de_controle de orientação proposto baseada na Teoria de Estabilidade de Lyapunov
+é apresentada em Leite et al. (2009).
+
+1
+,
+1 + Hi (i )2
+
+(8)
+
+3.4
+
+(imax  imin )2 (2i  imax  imin )
+,
+(i  imax )2 (i  imin )2
+
+(9)
+
+A caractérística de redundância do robô permite
+gerar movimentos internos nas juntas que reconfiguram a estrutura do manipulador sem modificar a posição e orientação do efetuador. Isso pode ser alcançado adicionando-se um termo, denominado solução homogênea,  lei de controle (7) como (Bjerkeng
+et al., 2011)
+
+Wi,i1 
+com
+Hi (i ) 
+
+onde imax e imin são os limites superior e inferior da
+i-ésima junta respectivamente.
+
+Controle de Tarefa Secundária
+
+u  Jw ( ) vc +  (I  Jw J) W 1 0 ,
+3.2
+
+Controle de Posição
+
+p  pd (t),
+
+e p  pd (t)  p  0 ,
+
+(10)
+
+onde e p  R3 é o erro de posição. A partir de (5) e
+(6) chega-se a pv p obtendo-se a seguinte equação de
+erro e p  pd v p . Usando uma lei de controle baseada
+em uma ação proporcional e um termo feedforward
+dada por
+v p  Kp e p + pd ,
+(11)
+
+onde g( ) é a função objetivo secundária (e.g., distância para um obstáculo). A solução de (15) move-se ao
+longo da direção do gradiente da função objetivo secundária para maximizá-la localmente, satisfazendo o
+objetivo primário.
+
+onde Kp  k p I é a matriz de ganho de posição, a dinâmica do erro de posição é governada por e p +Kp e p 0.
+Então, escolhendo-se k p como uma constante positiva,
+tem-se que limt e p (t)  0.
+
+4
+
+Considere que o objetivo de controle para uma determinada tarefa é alcançar uma orientação desejada
+variante no tempo Rd (t) a partir de uma orientação inicial R, isto é
+Rq  R Rd  I ,
+
+Desvio de Obstáculos
+
+Uma abordagem eficiente para planejamento de
+movimento online baseia-se no conceito de que um
+determinado ponto do robô pode mover-se no espaço
+cartesiano sob a influência de campos_potenciais artificiais. Neste contexto, campos atrativos conduzem o
+robô na direção de um ponto desejado, enquanto que
+campos repulsivos são criados ao redor de obstáculos
+para evitar colisões (Khatib, 1986). Neste trabalho,
+dois tipos de campos_potenciais repulsivos são utilizados um é definido em termos de uma restrição adicional onde as juntas são consideradas como os pontos de interesse para o cálculo da distância (Chung
+et al., 1997) o outro atua sobre o efetuador e modifica a lei de controle_de_posição, garantindo que o
+mesmo siga uma trajetória de referência livre de colisões (Flacco et al., 2012).
+
+Controle de Orientação
+
+R  Rd (t),
+
+(14)
+
+onde  é um escalar negativo e 0  Rn1 é um vetor
+de velocidade das juntas arbitrária. A matriz (I  Jw J)
+projeta o vetor W 1 0 no espaço nulo do Jacobiano
+sem violar a restrição (5). Note que, o primeiro termo
+de (14) corresponde a norma mínima das velocidades
+das juntas e o segundo termo satisfaz a restrição adicional de prioridade secundária especificada via 0 .
+Uma escolha típica para a restrição adicional é
+
+
+ g( ) 
+,
+(15)
+0 
+
+
+Considere que o objetivo do controle para uma
+determinada tarefa é seguir uma posição desejada variante no tempo pd (t) a partir de uma posição inicial
+p, isto é
+
+3.3
+
+(13)
+
+(12)
+
+onde Rq  SO(3) é a matriz de erro de orientação. A
+representação em quaternion unitário de Rq é dada por
+
+1  q (t), onde q e q são
+eq  eqs e
+d
+d
+qv  , com eq  q
+as representações em quaternion unitário de R e Rd
+respectivamente e  é o operador produto de quaternion. Note que, eq 1 0  se R e Rd estão alinhados.
+A partir de (5) e (6) chega-se a  vo . Usando uma lei
+
+4038
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+4.1
+
+  0, pL  p1 , se   1, pL  p2 , e nos demais casos,
+pL é obtido de (17). Então, a distância resultante L,O
+é calculada como (Khatib, 1986)
+ (po p )(po p )
+1
+2
+, 0< <1
+
+p2 p1 
+(19)
+L,O 
+(p
+
+p
+)
+,  0
+o
+1
+
+(po  p2 )
+,  1.
+
+Desvio de Obstáculos para as Juntas
+
+Para uma junta Ji e um obstáculo Ok arbitrários,
+o campo potencial repulsivo UJ,O ( ) é definido por
+(Khatib, 1986)
+
+
+2
+ kJ,O
+1
+1
+, J,O ( )  lim
+
+2
+lim
+J,O ( )
+UJ,O ( ) 
+
+0
+,
+J,O ( ) > lim
+
+4.3
+
+onde kJ,O > 0, J,O ( ) é a distância entre a junta e
+o obstáculo e lim é o raio de influência do obstáculo ou a distância limite de detecção do obstáculo.
+Note que, quanto menor é J,O ( ), maior é a intensidade do campo potencial repulsivo. Dessa forma, se
+J,O ( )  0, implica que UJ,O ( )  . Então, a restrição adicional resultante é
+
+O campo potencial repulsivo associado ao efetuador E e a um obstáculo Ok arbitrário é definido
+por (Flacco et al., 2012)
+
+E,O ( )
+
+UE,O  vmag (E,O )
+
+E,O ( )
+
+(20)
+
+,
+
+em termos da direção de um vetor unitário E,O ( ) e
+da magnitude
+vmax
+vmag (E,O ) 
+,
+(21)
+(E,O ( )(2 )1)b
+1+e
+
+no
+
+0   UJ,O ( ) ,
+
+Desvio de Obstáculos para o Efetuador
+
+(16)
+
+J,O
+
+onde no é o número de obstáculos e UJ,O ( ) é o gradiente do potencial repulsivo definido por
+!
+kJ,O
+1
+1
+J,O ( ) ,
+UJ,O ( )   2
+
+J,O ( ) J,O ( ) lim
+
+onde E,O ( ) é a distância entre o efetuador e o obstáculo, vmax é a magnitude máxima,  é o raio de influência e b > 0 é uma constante que define a inclinação da curva (vide Figura 2). Note que, quando
+E,O ( )  0, vmag (E,O )  vmax (1 + eb ), e quando
+E,O ( )   , vmag (E,O )  0.
+
+onde J,O ( ) é o gradiente da distância.
+
+Função Repulsiva v
+
+mag
+
+2
+
+4.2
+
+b1
+b2
+b3
+b4
+b5
+b6
+b7
+b8
+b9
+b  10
+
+Cálculo da Distância entre Elos e Obstáculos
+Magnitude, vmag
+
+1.5
+
+O uso da distância entre uma junta e um obstáculo J,O no algoritmo de detecção pode gerar conflitos de movimentos entre duas ou mais juntas. De fato,
+um conflito ocorre quando o campo repulsivo afasta
+um junta de um obstáculo, mas aproxima outra junta
+de um ou mais obstáculos, criando um ciclo de movimentos oscilatórios. Uma solução alternativa, que
+resulta em movimentos mais suaves, consiste em usar
+a distância entre o elo e o obstáculo L,O , ao invés da
+distância entre a junta e o obstáculo J,O na expressão
+de UJ,O . Considere PL um ponto arbitrário localizado
+em um elo L j do robô, conectando dois pontos P1 e
+P2 localizados em duas juntas consecutivas J1 e J2 respectivamente. A posição do ponto PL expressa em um
+sistema de coordenadas inercial é dada por
+pL  p1 +  (p2  p1 ) ,
+
+0.5
+
+0
+0
+
+(p1  po )  (p2  p1 )
+p2  p1 2
+
+0.1
+
+0.15
+Distância, 
+
+0.2
+
+0.25
+
+0.3
+
+(m)
+
+Figura 2 Magnitude da função repulsiva para b variando de 1 a 10, com vmax  2 ms1 e   0,3 m.
+Então, considerando a contribuição de todos os
+obstáculos o campo repulsivo resultante é dado por
+no
+
+Ut   UE,O .
+
+(22)
+
+i
+
+Na presença de múltiplos obstáculos (20) pode ser reescrita em termos da magnitude do campo devido ao
+obstáculo mais próximo do efetuador vmag (E,Omin ),
+gerando um campo repulsivo resultante com variações
+mais suaves (Flacco et al., 2012) descrito por
+
+(17)
+
+,
+
+0.05
+
+E,O
+
+onde p1 e p2 são as posições dos pontos P1 e P2 respectivamente, e  > 0 é uma constante paramétrica a ser
+definida. A distância entre um obstáculo pontual Ok e
+um elo L j pode ser obtida pelo cálculo da distância entre esse obstáculo e o ponto mais próximo localizado
+no elo. A partir de (17), o valor de  que corresponde
+ao ponto mais próximo do elo L j é obtido por
+
+ 
+
+1
+
+Ur (E,Omin )  vmag (E,Omin )
+
+Ut
+.
+Ut 
+
+(23)
+
+Então, considerando-se o vetor repulsivo Ur como
+uma velocidade repulsiva pode-se adicionar (23) na lei
+de controle_de_posição (11) como
+v p  Kp e p + pd +Ur (E,Omin ) ,
+
+(18)
+
+(24)
+
+garantindo que o efetuador realize a tarefa de interesse
+enquanto desvia de obstáculos presentes no seu espaço
+de trabalho.
+
+onde po é a posição do obstáculo. A expressão para
+o valor de pL varia de acordo com o valor de  . Se
+
+4039
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+4.4
+
+Mudança da Direção do Vetor Repulsivo
+
+O sensor de profundidade pode ser modelado
+como uma câmera pin-hole, em termos de parâmetros
+intrínsecos de uma matriz Kim que modela a projeção
+de um ponto cartesiano no plano da imagem, e em termos de parâmetros extrínsecos de uma matriz Trs que
+representa a transformação homogênea entre o sistema
+de coordenadas de referência (e.g., base do robô) e o
+sistema de coordenadas do sensor
+
+
+
+
+f sx 0 cx
+Rrs prs
+f sy cy  , Trs 
+Kim   0
+,
+0 1
+0
+0
+1
+
+De acordo com (23), o campo repulsivo é baseado apenas na direção da distância entre o efetuador e
+o obstáculo. Então, quando o obstáculo aproxima-se
+do efetuador com uma velocidade maior do que a capacidade de movimento do robô, pode ser difícil evitar colisões retraindo o efetuador na mesma direção da
+velocidade do obstáculo.
+Uma estratégia de reação mais efetiva, similar a
+reação humana, consiste em escapar da colisão movendo o efetuador em uma direção aproximadamente
+normal a velocidade do obstáculo. Esse efeito pode ser
+obtido utilizando-se a variação temporal do campo repulsivo Ur para modificar a direção do vetor repulsivo
+na vizinhança de um ponto de interesse localizado no
+efetuador. O seguinte algoritmo proposto em Flacco
+et al. (2012) modifica a direção do vetor repulsivo de
+acordo com a sua variação
+
+onde f é a distância focal da câmera, (sx , sy ) são fatores de escalamento em pixels por milímetros, (cx , cy )
+são as coordenadas do centro do plano da imagem,
+(Rrs , prs ) são a matriz de rotação e o vetor de translação relativos entre os sistemas de coordenadas do
+sensor e de referência (vide Figura 1).
+As coordenadas em pixel no plano da imagem e a
+profundidade de um ponto cartesiano genérico Pd são
+expressas no sistema de coordenadas do sensor como
+
+Algoritmo I - Mudança da Direção do Vetor Repulsivo
+Ur (
+
+Ur (
+
+)
+
+s  U (E,O ) 
+r
+
+if  <  2
+n sr
+
+  +
+
+)
+
+r  U (E,O ) 
+r
+
+E,O
+
+  arccos(sT r)
+
+xs  ((xd  cx )zd ) f sx ,
+ys  ((yd  cy )zd ) f sy ,
+
+E,O
+
+t ns  ns
+  2
+
+( Ur (E,O ) (2Ur,max )1 ) c
+
+1+e
+
+zs  zd .
+
+
+
+Ur,mod (E,O )  Ur (E,O ) (cos( )s + sin( )t)
+
+As coordenadas (xs , ys , zs ) podem ser expressas no
+sistema de coordenadas de referência por
+
+
+
+
+xr
+xs
+ yr   Rrs  ys  + prs .
+(25)
+zr
+zs
+
+else
+Ur,mod (E,O ) Ur (E,O )
+end
+
+onde  é o ângulo entre o vetor repulsivo e sua variação. Note que, apenas quando o obstáculo está se
+aproximando do efetuador ( <  2), o campo repulsivo é modificado. Quando Ur e Ur estão alinhados
+(  0), o vetor n é nulo e o vetor t não é definido.
+Nesse caso, t é obtido ao rotacionar Ur de  2 radianos e a ortogonalidade é mantida.
+A direção de Ur,mod é uma combinação da direção
+de Ur e da direção do vetort, que está no mesmo plano
+que Ur e Ur .O ângulo  , que define essa nova direção,
+é igual a  se Ur  0, e tende a  2 se Ur  Ur,max ,
+que é a máxima variação permitida para o campo repulsivo. O escalar positivo c funciona como o escalar
+b em (21), e modifica a inclinação da função Ur .
+
+Note que, uma nuvem de pontos cartesianos genéricos
+pode ser composta por objetos próximos ou distantes
+do robô, bem como por elos e juntas. Então, quando
+o sensor de profundidade é inserido no ambiente de
+operação, o algoritmo de detecção pode considerar os
+elementos do robô como obstáculos. Neste contexto,
+um método é proposto para eliminar o robô do cenário
+obtido pelo sensor delimitando os elos e as juntas por
+uma sequência de esferas (vide Figura 4) de acordo
+com os seguintes passos
+Passo 1 Considere duas juntas consecutivas Ji e Ji+1
+conectadas por um elo L j de comprimento  e raio r
+Passo 2 Calcule a posição das juntas dos robôs por
+meio da equação de cinemática direta pJi  k(i ) para
+i  1,    n
+
+5 Detecção de Obstáculos
+
+Passo 3 Defina pontos equidistantes dentro do elo L j
+ao longo do menor segmento de reta interligando as
+juntas Ji e Ji+1 . O número
+ de pontos é definido por
+n p  d +1, onde d   e   N 
+
+Neste trabalho, utiliza-se um sensor de profundidade de um dispositivo de interface natural Microsoft
+KinectTM para detectar os obstáculos presentes no espaço de trabalho do robô, a partir de uma nuvem de
+pontos (vide Figura 3). Os dados obtidos pelo sensor fornecem uma representação geométrica 2D 12 do
+ambiente, que consiste de uma tripla (xd , yd , zd ) onde
+o par (xd , yd ) representa as coordenadas da projeção
+de um ponto cartesiano no plano e o elemento zd representa a distância entre o ponto e o plano.
+
+Passo 4 Use as juntas e os pontos intermediários
+como centros de esferas (vide Figura 4) e crie esferas
+em todos os elos do robô
+Passo 5 A partir do raio do elo r e da distância entre os pontos d, obtenha os raios das esferas rs pelo
+2
+Teorema de Pitágoras rs2  d2 + r2 
+
+4040
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Figura 3 (a) Dados obtidos pelo Kinect, (b) nuvem de pontos inicial e (c) nuvem de pontos sem o robô.
+Passo 6 Remova todos os pontos da nuvem localizados dentro das esferas e subtraia os seus raios do
+   r .
+cálculo da distância, tal que L,O
+s
+L,O
+
+de oclusão é aumentar a densidade de sensores, utilizando mais de um sensor de profundidade com suas
+linhas de visão perpendiculares umas a outras, ou realizar uma fusão sensorial entre o Kinect e um sensor
+externo que forneça uma representação geométrica do
+ambiente na forma de uma nuvem de pontos.
+
+
+Ji+1
+
+Ji
+
+rs
+
+
+rs
+
+r
+
+6 Resultados Experimentais
+
+d
+
+Lj
+
+Ji
+
+Lj
+
+Nesta seção, resultados experimentais são apresentados para ilustrar a viabilidade do método proposto. O sistema robótico consiste de um robô Motoman DIA10 (Motoman Inc.) de dois braços com
+15 graus de mobilidade (DoF, degrees of freedom),
+com 7-DoF por braço mais 1-DoF na base, um controlador industrial de baixo nível NX100 e um sistema
+HSC (High-speed Synchronous Controller). Nos experimentos apenas um braço será utilizado (n  8) e a
+tarefa de interesse consiste em alcançar uma posição
+e orientação desejadas no espaço Cartesiano (m  6),
+com apenas 2 graus de redundância (n  m  2).
+As referências são geradas por um computador
+externo, rodando Windows OS, que é conectado ao
+controlador NX100 pelo sistema HSC. Então, as referências são enviadas para uma malha_de_controle de
+posição das juntas, que é implementada em Simulink
+e executada a uma frequência de 500 Hz. O acesso
+ao sistema HSC é realizado através do Matlab usando
+um protocolo de comunicação fornecido pela Robot
+Raconteur, uma arquitetura e biblioteca desenvolvida
+para aplicações de robótica e automação, distribuída
+pelas redes do CATSRPI1 .
+Um dispositivo de interface natural Microsoft
+KinectTM é posicionado de frente para o robô a uma
+distância de 2,25 m e a uma altura de 0,96 m. Esses
+valores são medidos com respeito ao sistema de coordenadas de referência fixado na base do robô. O sensor de profundidade do Kinect captura imagens com
+uma resolução de 320  240 pixels a uma frequência de 30 Hz e os parâmetros intrínsecos do sensor
+são obtidos a partir de um método de calibração proposto em (Herrera C. et al., 2012). Os parâmetros de
+controle ajustados empiricamente são Kp  70I s1 ,
+Ko  70I rad s1 ,   102 , kJ,O  5, lim  0,6 m.
+
+Ji+1
+
+Figura 4 Método para remoção do robô da detecção
+de obstáculos baseado no uso de esferas.
+Note que, como o sensor de profundidade do
+Kinect tem um alcance mínimo (0,4 m) e máximo
+(4,0 m), caso um objeto esteja localizado fora da faixa
+de detecção o valor da profundidade medida será zero,
+e por isso esse objeto não deve ser considerado como
+obstáculo. Além disso, pode-se descartar os objetos
+que estão fora do alcance do robô em um determinado
+instante de tempo. Primeiramente, os pontos localizados fora do espaço de trabalho do robô são removidos da nuvem. Em seguida, as esferas criadas para
+remover o robô da nuvem de pontos são reutilizadas,
+aumentando-se os seus raios. Finalmente, remove-se
+os pontos da nuvem localizados fora das esferas.
+É válido ressaltar que para delimitar completamente os elos e as juntas do robô a partir do método de remoção baseado em esferas deve-se usar um
+grande número de pontos, implicando no aumento do
+custo_computacional e na redução do espaço de trabalho livre de colisões. Além disso, os objetos localizados muito próximos do robô podem ser considerados como parte dele. Uma alternativa para evitar essas limitações é substituir as esferas por cilindros ou
+elipses, possibilitando a delimitação dos elos com um
+número menor de elementos geométricos e evitando
+sobreposições.
+Observação 1 Uma desvantagem do método de detecção baseado em um único sensor de profundidade
+é a possibilidade de existência de zonas de oclusão ou
+de objetos oclusos, aumentando o risco de colisões.
+Uma solução alternativa para minimizar a ocorrência
+
+1 Center for Automation Technologies and Systems  Rensselaer
+Polytechnic Institute, Troy, NY, USA - httpwww.cats.rpi.edu
+
+4041
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Outros parâmetros_são vmax  0,35 m s1 ,   0,6 m,
+b  9, Vrmax  1 m s1 , c  9.
+Dois experimentos foram realizados para avaliar o
+comportamento do robô em tarefas de regulação e rastreamento, considerando a presença de seres humanos
+no seu espaço de trabalho2 . No Experimento 1, o efetuador do robô deve manter a sua posição e orientação
+originais, enquanto um operador aproxima-se do robô,
+fazendo-o reagir (vide Figura 5). A pose inicial do efetuador x0  0,816 0,656 1,337 m e os movimentos realizados pelo efetuador para evitar a colisão com
+o operador são apresentados na Figura 6. A Figura 7
+apresenta a evolução no tempo do erro de posição e
+da norma do erro de orientação respectivamente, onde
+pode-se observar a variação do erro de posição devido
+ao comportamento_reativo do robô.
+
+3
+
+ep (m)
+
+2
+
+x 10
+
+(a)
+
+(b)
+0.2
+
+0
+
+0
+
+2
+0
+
+5
+
+10
+
+0.2
+0
+
+4
+
+eqv
+
+7.5
+
+5
+
+10
+
+5
+
+10
+
+3
+
+x 10
+
+6
+
+x 10
+
+4
+7
+2
+
+6.5
+0
+
+5
+
+Tempo (s)
+
+10
+
+0
+0
+
+Tempo (s)
+
+Figura 7 Erro de posição e norma do erro de orientação para uma tarefa de regulação (a) sem desvio de
+obstáculos e (b) com desvio_de_obstáculos. Legenda
+  ), e pz (
+  ).
+e px (  ), e py (
+robô (vide Figura 8). A evolução no tempo da posição
+do efetuador durante a execução da tarefa de rastreamento com desvio_de_obstáculos é apresentada na Figura 9. Na Figura 10 observa-se o comportamento do
+erro de posição e da norma do erro de orientação respectivamente, devido  ação reativa do robô para evitar
+colisões e alcançar os waypoints simultaneamente.
+
+Figura 5 Sequência de imagens do robô para uma tarefa de regulação (a) sem desvio_de_obstáculos e (b)
+com desvio_de_obstáculos.
+
+1.4
+
+z (m)
+
+1.35
+
+x
+
+0
+
+1.3
+
+1.25
+1.2
+0.7
+0.6
+y (m)
+
+0.5
+
+0.82
+
+0.84
+
+0.86
+
+0.88
+
+0.9
+
+0.92
+
+x (m)
+
+Figura 8 Sequência de imagens do robô para uma tarefa de rastreamento (a) sem desvio_de_obstáculos (b)
+e com desvio_de_obstáculos.
+
+Figura 6 Posição inicial do efetuador x0 e movimentos do efetuador durante uma tarefa de regulação com
+desvio_de_obstáculos.
+
+7 Considerações Finais
+
+No Experimento 2, o efetuador movimenta-se
+através de quatro pontos de passagem (waypoints) formando uma trajetória retangular em um um plano,
+enquanto o operador aproxima-se constantemente do
+
+Neste trabalho é apresentado um método de controle_cinemático e detecção de obstáculos para permitir uma interação natural, efetiva e segura entre seres
+humanos e robôs. O algoritmo de controle baseia-se
+na abordagem de campos_potenciais artificiais, utilizando a pseudo-inversa ponderada da matriz Jacobi-
+
+2 Um vídeo apresentando os dois experimentos pode ser encontrado em httpwww.youtube.comwatch?vyYi0jCC2i2M
+
+4042
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+(b)
+
+(a)
+px
+
+1.5
+
+IEEERSJ International Conference on Intelligent Robots and Systems, Vol. 3, pp. 17871793.
+
+1.5
+
+Posição (m)
+
+py
+pz
+
+1
+
+0.5
+
+1
+
+Flacco, F., Kroger, T., De Luca, A. and Khatib, O.
+(2012). A depth space approach to human-robot
+collision avoidance, IEEE International Conference on Robotics and Automation, pp. 338345.
+
+0.5
+
+0
+0
+
+20
+40
+Tempo (s)
+
+0
+0
+
+60
+
+20
+40
+Tempo (s)
+
+60
+
+Haddadin, S., Albu-Schffer, A., De Luca, A.
+and Hirzinger, G. (2008). Collision detection
+and reaction A contribution to safe physical
+human-robot interaction, IEEERSJ International Conference on Intelligent Robots and Systems, pp. 33563363.
+
+Figura 9 Evolução no tempo da posição do efetuador para uma tarefa de rastreamento (a) sem desvio de
+obstáculos e (b) com desvio_de_obstáculos.
+
+ep (m)
+
+(a)
+0.5
+
+0.5
+
+0
+
+0
+
+eqv
+
+0.5
+0
+
+20
+
+40
+
+60
+
+0.5
+0
+
+0.01
+
+0.04
+
+0.005
+
+0.02
+
+0
+0
+
+20
+40
+Tempo (s)
+
+60
+
+0
+0
+
+(b)
+
+20
+
+40
+
+20
+40
+Tempo (s)
+
+Haddadin, S., Belder, R. and Albu-Schffer, A.
+(2011). Dynamic motion planning for robots in
+partially unknown environments, Proceedings of
+the 18th IFAC World Congress, Vol. 18, Milan,
+Italy, pp. 68426850.
+
+60
+
+Herrera C., D., Kannala, J. and Heikkil, J.
+(2012). Joint depth and color camera calibration with distortion correction, IEEE Transactions on Pattern Analysis and Machine Intelligence 34(10) 20582064.
+
+60
+
+Figura 10 Erro de posição e norma do error de orientação para uma tarefa de rastreamento (a) sem desvio_de_obstáculos e (b) com desvio_de_obstáculos. Le  ), e pz (
+  ).
+genda e px (  ), e py (
+
+Khatib, O. (1986). Real-time obstacle avoidance for
+manipulators and mobile robots, The International Journal of Robotics Research 5(1) 9098.
+LaValle, S. (2011). Motion planning, IEEE Robotics
+Automation Magazine 18(1) 7989.
+
+ana e a característica de redundância do robô para desviar de obstáculos e alcançar o objetivo de controle simultaneamente. O algoritmo de detecção utiliza um
+sensor de profundidade baseado na tecnologia de luz
+estruturada para obter uma descrição geométrica 2D
+12 do ambiente a partir de uma nuvem de pontos.
+Campos repulsivos são criados em torno dos obstáculos identificados permitindo a execução bem sucedida
+da tarefa de interesse sem colisões. Experimentos realizados com um robô Motoman DIA10 e um dispositivo de interface natural Microsoft KinectTM demonstram a viabilidade do método proposto.
+
+Leite, A. C., Lizarralde, F. and Hsu, L. (2009). Hybrid adaptive vision-force control for robot manipulators interacting with unknown surfaces,
+The International Journal of Robotics Research
+28(7) 911926.
+Minguez, J., Lamiraux, F. and Laumond, J.-P. (2008).
+Motion planning and obstacle avoidance, in
+B. Siciliano and O. Khatib (eds), Springer Handbook of Robotics, Springer Berlin-Heidelberg,
+pp. 827852.
+Rakprayoon, P., Ruchanurucks, M. and Coundoul, A.
+(2011). Kinect-based obstacle detection for manipulator, IEEESICE International Symposium
+on System Integration, pp. 6873.
+
+Agradecimentos
+Este trabalho foi parcialmente financiado pelo CNPq,
+CAPES e FAPERJ.
+
+Santis, A. D., Siciliano, B., Luca, A. D. and Bicchi, A. (2008). An atlas of physical humanrobot interaction, Mechanism and Machine Theory 43(3) 253270.
+
+Referências
+Bjerkeng, M., Transeth, A., Pettersen, K., Kyrkjebo,
+E. and Fjerdingen, S. (2011). Active camera control with obstacle avoidance for remote operations with industrial manipulators Implementation and experimental results, IEEERSJ International Conference on Intelligent Robots and Systems, pp. 247254.
+
+Singh, L., Stephanou, H. and Wen, J. (1996). Realtime robot motion control with circulatory fields,
+Proceedings of IEEE International Conference
+on Robotics and Automation, Vol. 3, Minneapolis, MN, pp. 27372742.
+Wen, J.-Y. and Kreutz-Delgado, K. (1991). The attitude_control problem, IEEE Transactions on Automatic Control 36(10) 11481162.
+
+Chung, C. Y., Lee, B.-H. and Lee, J.-H. (1997). Obstacle avoidance for kinematically redundant robots using distance algorithm, Proceedings of the
+
+4043

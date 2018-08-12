@@ -1,0 +1,1385 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+UMA PLATAFORMA COMPUTACIONAL PARA SISTEMAS DE CONTROLE
+AVANCADO UM ESTUDO DE CASO APLICADO A DESTILARIA DO ETANOL
+Marcus V. Americano da Costa Fo, Julio E. Normey-Rico, Ebrahim Samer Elyoussef
+
+
+
+
+
+Departamento de Engenharia Qumica
+Universidade Federal da Bahia - 40210910
+Salvador, BA, Brasil
+
+Departamento de Automacao e Sistemas
+Universidade Federal de Santa Catarina - 88040-900
+Florianopolis, SC, Brasil
+
+Emails marcus.americano@ufba.br, julio.normey@ufsc.br, ebrahim.el.youssef@ufsc.br
+Abstract In this paper, it is presented a computational platform which allows the simulations of advanced
+control systems, considering the complexity of the real processes represented in the Aspen Hysys. The environment is composed by a MPC controller (Model Predictive Control) and a supervisory system, implemented
+in Matlab and a distillation unit of the industry which produces 2nd and hydrated ethanols modeled in the
+Aspen Hysys. A case study with three scenarios is realized in order to illustrate the use of the platform, and to
+demonstrate the viability of the proposed control structure.
+Advanced control, simulator, distillery, ethanol, Aspen Hysys
+
+Keywords
+
+Resumo Neste artigo esta apresentado uma plataforma computacional que permite a simulacao_de_sistemas
+de controle_avancado, considerando as complexidades dos processos reais representados no Aspen Hysys. O
+ambiente e composto por um MPC (Model Predictive Control ) e um sistema supervisorio, implementados em
+Matlab e uma unidade de destilacao da industria do etanol que produz os alcoois de 2a e hidratado, desenvolvida
+no Aspen Hysys. Um estudo de caso contendo tres cenarios e realizado a fim de ilustrar o uso da plataforma e
+demonstrar a viabilidade da estrutura de controle proposta.
+Palavras-chave
+
+.
+
+rante tomadas de decisoes corretas que visam ao
+lucro na producao. Ou seja, com esse tipo de auxlio, o usuario (operador ou engenheiro) pode comparar alternativas com diferentes graus de complexidade e fazer a escolha mais adequada para operacao de um processo. Para a industria, isso significa o melhor balanceamento possvel do custo
+X benefcio.
+Dentro do contexto dos processos_industriais, os algoritmos dedicados aos sistemas_de_controle_avancado sao bastante importantes devido a
+sua capacidade de lidar com os diversos problemas conhecidos pela comunidade cientfica, tais
+como longos atrasos de transporte e constantes de
+tempo, multiplas entradas e sadas, nao linearidades e restricoes que podem ser consideradas no
+projeto de otimizacao em tempo_real. E possvel encontrar diversos trabalhos que demonstram
+a importancia academica do assunto (Karacan,
+2003 Camacho e Bordons, 2004 Normey-Rico e
+Camacho, 2007).
+Por esse prisma, foi criada uma biblioteca
+que permite a comunicacao de um modelo desenvolvido no software Aspen Hysys (AmericanodaCosta et al., 2012) com outras plataformas
+como Matlab e Python, por exemplo, para simulacao do tipo Software in The Loop ou, ainda, Hardware in the Loop, quando se tem algum sistema
+embarcado. Vale salientar que o Aspen Hysys
+e um programa bastante utilizado nas industrias
+pela sua alta representatividade dos processos re-
+
+Introducao
+
+A simulacao e uma tecnica amplamente utilizada
+para avaliar o desempenho de sistemas, aumentando a produtividade do engenheiro bem como
+incentivando o estudo e a aplicacao de novas configuracoes nos processos_industriais. Um simulador dinamico que ilustra corretamente o comportamento do processo a ser analisado traz grandes vantagens tanto para o ensino academico
+(Johansson et al., 1998) quanto para a industria
+(Acebes et al., 2003), pois permite testes de modelagem, de monitoramento, de diagnostico e de
+sistemas_de_controle a um custo de implementacao
+e tempos de espera bem menores em relacao aos
+de uma planta piloto ou real. Ademais, os simuladores podem ser utilizados para treinamento e
+capacitacao de operadores (Santos, 2005).
+No ambito mundial, o desenvolvimento dessas ferramentas computacionais vem experimentando, nessas ultimas decadas, uma evolucao admiravel (Fontanini et al., 1990 Guzman et al.,
+2005 Americano-daCosta e Normey-Rico, 2009).
+A medida que novas teorias e metodologias da engenharia moderna sao desenvolvidas, cresce a demanda por simuladores de processos dinamicos,
+tornando a CACE (Computer Aided Control Engineering) uma das principais areas de pesquisa
+em controle_automatico.
+Experiencias em outras plantas mostram que
+o investimento na utilizacao dos simuladores ga-
+
+4068
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+ais. Porem, e necessario realizar uma comunicacao
+entre seus pacotes de controle e outros ambientes
+no sentido de obter maior flexibilidade quanto aos
+testes de novos algoritmos, sobretudo os avancados, o que viabiliza a pesquisa por novas tecnicas
+que podem ser desenvolvidas. Dessa forma, este
+artigo apresenta uma plataforma computacional
+que permite simular sistemas_de_controle_avancado aplicados ao Aspen Hysys. Em particular,
+sera proposta uma nova configuracao da unidade
+de destilacao alcoolica na qual se aplicam um controlador MPC (Model Predictive Control ) e uma
+camada supervisoria a fim de demonstrar os ganhos em termos de produtividade e consumo de
+energia. Finalmente, alguns cenarios que possibilitam incrementos economicos na industria do
+etanol serao ilustrados por meio das simulacoes.
+O artigo esta organizado como segue na Secao 2, o ambiente de simulacao e descrito incluindo
+suas caractersticas computacionais e implementacao. Na Secao 3, a estrutura de controle proposta
+e apresentada juntamente com o detalhamento dos
+modelos da unidade de destilacao. Na Secao 4, os
+parametros de sintonia da camada do MPC sao
+definidos. Na Secao 5, sao realizados experimentos em diversos cenarios para ilustrar o funcionamento da plataforma e se analisam os resultados
+obtidos. Finalmente, as conclusoes sao discutidas
+na Secao 6 do artigo.
+
+onamento correto do programa. Algumas vezes, a
+instabilidade do modelo se deve ao passo de integracao (iteracao numerica) computacional. Nesse
+caso, ao diminuir o passo, a instabilidade e eliminada. Porem, em outras situacoes, a instabilidade
+pode ser causada pelas proprias operacoes do modelo, sobretudo pelos controladores mal projetados.
+Todos os controladores PID do modelo foram
+sintonizados para o algoritmo padrao (PID Velocity Form) dado pela seguinte equacao
+h
+u(k)  u(k  1) + Kc e(k)  e(k  1) + TTsi e(k)
+i
+ TTds (P V (k)  2P V (k  1) + P V (k  2)) ,
+(1)
+em que u(k) e a sada de controle e k e o instante
+de amostragem, Kc , Ti e Td sao os parametros de
+ajuste do controlador (ganho proporcional, tempo
+integrativo e tempo derivativo), e e o erro entre
+o setpoint e a variavel do processo P V  e Ts e o
+perodo de amostragem.
+O recurso autotuner foi utilizado para ajustar
+os controladores escravos ao passo que a estrutura Internal Model Control (IMC) foi aplicada
+nos controladores mestres (para as malhas em cascata). O projeto por IMC do Aspen Hysys e feito
+de acordo com a regra de sintonia para modelos
+de 1a ordem proposta por Rivera et al. (1986)
+Kc 
+
+2
+
+Aspectos computacionais da
+plataforma e implementacao
+
+Ti   +L2,
+
+Td 
+
+L
+,
+2 + L
+
+nas quais  , K e L sao a constante de tempo, o
+ganho e atraso do modelo do processo, respectivamente. O tempo de resposta Tc > 0, 2 e definido
+pelo usuario. Em algumas ocasoes, apos utlizar
+esses recursos, um ajuste fino foi procedido para
+se obter respostas mais rapidas dos sistemas.
+Alem dos recursos de sintonia, o pacote do
+PID permite adicionar a estrategia feedfoward
+para diminuir o efeito das perturbacoes, cuja lei
+de controle e dada pela seguinte funcao de transferencia
+Tp s + 1 Lp s
+Kp 1
+e
+,
+(2)
+T p2 s + 1
+
+Os controladores da camada local do modelo
+da destilaria desenvolvido por Americano-daCosta
+et al. (2012) sao do tipo PID do proprio pacote do
+Aspen Hysys que dispoe de alguns algoritmos comerciais implementados na industria (Honeywell,
+Foxboro e Yokogawa), alem da funcao padrao do
+programa. Esse pacote possui diversas derivacoes
+e recursos que permitem melhorar o desempenho
+do sistema.
+O MPC Toolbox do Matlab foi utilizado para
+calcular a lei de controle otimizada na camada superior. Desse modo, para atingir o escopo desta
+proposta de estudo, deve-se realizar a comunicacao entre a unidade de destilacao e as camadas de
+controle_avancado e supervisorio. Sera implementado o mecanismo denominado OLE Automation
+que possibilita a troca de informacoes entre os sistemas.
+Na continuacao, serao explanados os algoritmos e metodos de ajuste dos controladores, assim
+como a programacao do sistema.
+
+em que Kp , Lp , Tp1 e Tp2 sao os parametros de
+ajuste com base nos modelos do processo e perturbacao. Essa estrategia foi implementada nos
+controladores mestres com a finalidade de obter
+o melhor desempenho possvel e uma comparacao mais criteriosa com o controlador MPC. O
+algoritmo possui a estrutura anti-windup e, finalmente, os limites de operacao devem ser definidos
+pelo usuario.
+2.2
+
+2.1
+
+2 + L
+,
+K(2Tc + L)
+
+Controlador PID
+
+Controlador MPC
+
+Para avaliar os ganhos que podem ser obtidos a
+partir da implementacao de um sistema_de_controle_avancado na destilaria de etanol, foi utilizado o MPC na camada superior. O MPC e uma
+
+Certamente, quando se tem um modelo complexo
+no Aspen Hysys, e importante um determinado
+conhecimento em teoria_de_controle para o funci-
+
+4069
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+das tecnicas de controle moderno mais potentes e,
+provavelmente, a que teve maior exito em aplicacoes industriais (Takatsu et al., 1998), principalmente, porque pode ser utilizada tanto em sistemas monovariaveis quanto multivariaveis, lineares
+ou nao lineares e porque as restricoes nas sadas
+e nas entradas dos processos podem ser consideradas no projeto da lei de controle que minimiza
+uma funcao custo em tempo_real (Camacho e Bordons, 2004).
+O MPC se tornou rapidamente bastante popular, sobretudo em processos qumicos industriais, devido a simplicidade de seu algoritmo que
+utiliza modelos baseados a resposta ao impulso
+ou ao degrau. Essa tecnica vem se desenvolvendo
+consideravelmente nos ultimos anos, tanto na area
+de pesquisa quanto na industria e seu sucesso
+pode ser atribudo ao tratamento mais geral dos
+problemas em controle_de_processos no domnio
+do tempo. Por outro lado, o MPC ainda nao atingiu um numero de aplicacoes sugerido pelo seu
+potencial. A complexidade matematica existente
+na sua implementacao pratica, muitas vezes representa uma desvantagem para engenheiros de controle, mas que nao significa um empecilho para a
+comunidade cientfica, haja vista diversos pacotes
+matematicos encontram-se completamente disponveis.
+As principais diferencas entre os algoritmos
+MPC estao nos tipos dos modelos do processo e
+da perturbacao utilizados para calcular as predicoes e minimizar a funcao custo. No entanto, as
+seguintes ideias aparecem em maior ou menor evidencia em todo o conjunto de controle_preditivo
+
+na qual W e o vetor de referencias futuras, Qy ,
+Qu sao as ponderacoes do erro e esforco_de_controle, respectivamente e Y e o vetor predicao de
+sada do processo que pode ser representado como
+Y  GU + F ,
+
+em que F e o vetor resposta livre, U e o vetor que
+possui os incrementos de controle (u) calculados
+para se aplicar nas entrada e G e a matriz obtida
+por meio das equacoes do modelo. Nessa equacao,
+Y e F tem dimensao ny 1, U tem dimensao
+Pm nu 
+1eGP
+e da ordem ny  nu , sendo ny  i1 Nyi ,
+n
+nu  i1 Nui , nas quais Nyi e o horizonte de
+predicao da sada yi e Nui e o horizonte de controle
+da entrada ui .
+Substituindo a Eq. 4 na Eq. 3, e possvel
+obter a seguinte equacao
+J(U ) 
+
+1 T
+U HU + bT U + f 0 ,
+2
+
+(5)
+
+na qual o vetor U contem os incrementos das acoes
+de controle que minimizam a funcao custo, H 
+2(GT Qy G + Qu ), bT  2(F  W )T Qy G e f 0 
+(F  W )T Qy (F  W ).
+Dessa maneira, a acao de controle pode ser
+computada sujeita a restricoes nas variaveis manipuladas e de sada tornando um problema de
+minimizacao quadratica do tipo
+Min
+Sujeito a
+
+J(U )
+(6)
+AU
+
+
+
+B
+
+na qual A e B sao matrizes utilizadas para representar em funcao de U as restricoes impostas nas
+variaveis manipuladas e controladas do processo
+(Camacho e Bordons, 2004).
+A seguir, uma breve descricao de como foi realizada a implementacao dos dois sistemas o modelo da destilaria e o controlador MPC.
+
+ Predicao baseado em modelos da planta e
+perturbacao, as predicoes do comportamento
+futuro do processo sao obtidas considerando
+seu estado atual
+ Calculo do controle a acao atual de controle
+e calculada minimizando uma funcao custo
+sujeita ou nao a restricoes
+
+2.3
+
+ Horizonte deslizante em cada perodo de
+amostragem, o horizonte e deslocado um
+passo a frente e aplica-se somente o primeiro
+sinal da sequencia calculada naquele instante.
+
+Protocolo de comunicacao
+
+Mais moderno do que o DDE, OLE Automation e
+um metodo que permite um programa cliente controlar um servidor do tipo OLE. Com esse recurso,
+e possvel um programa manipular objetos implementados em outro aplicativo ou expor objetos
+que possam ser manipulados. Renomeado apenas
+por Automation, embora o termo antigo seja bastante usado, a Microsoft introduziu a plataforma
+Component Object Model (COM) para a comunicacao entre os processos e criacao de objetos nas
+linguagens de programacao que suportarem a tecnologia.
+O Automation funciona na estrutura clienteservidor. Um servidor disponibiliza um servico
+para os clientes mediante o protocolo de acesso.
+Dessa maneira, o Aspen Hysys e sempre um servidor que expoes seus objetos de tal forma que seja
+
+As diversas formulacoes do MPC propoem diferentes funcoes custos para calcular a lei de controle. Contudo, o objetivo geral e que a sada
+futura do processo (Y ) no horizonte considerado
+siga uma determinada referencia (W ) e, ao mesmo
+tempo, de que forma a funcao custo seria penalizada ao aplicar a acao de controle (U ) necessaria.
+Portanto, o algoritmo implementado nesse trabalho parte do mesmo princpio usando o conceito
+de respostas livres e forcada. Neste caso, para
+uma planta multivariavel (m  n), a funcao custo
+quadratica e
+J  W  Y T Qy W  Y  + U T Qu U ,
+
+(4)
+
+(3)
+
+4070
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+possvel executar quase todas as acoes que poderiam ser realizadas pela interface grafica do programa. Partindo dessa propriedade, entre as comunicacoes do cliente e do servidor, implementase alguma regra de atuacao, bem como a lei de
+controle.
+Entretanto, para que haja comunicacao com
+o Matlab, um objeto servidor deve ser criado no
+seu workspace. Objetos sao a chave para entender a comunicacao pelo Automation. Um objeto
+contem uma quantidade de variaveis e funcoes relacionadas, cuja estrutura e estabelecida por uma
+hierarquia. O caminho percorrido pelo cliente ate
+chegar ao ponto desejado sempre parte do Hysys
+Application ou do Hysys SimulationCase. Uma
+descricao mais detalhada sobre objetos e comunicacao no Hysys encontra-se disponvel na literatura (Aspentech, 2005).
+
+ocorre nos reatores em batelada gerando um comportamento dinamico bastante oscilatorio na sua
+producao, sera considerada uma onda do tipo quadrada para a vazao de alimentacao nos experimentos a seguir. Por sua vez, os sistemas_de_controle
+devem rejeitar as perturbacoes causadas por essas
+oscilacoes e manter o processo estabilizado. Notase que o MPC (ou PIDs para o cenario C2) esta
+em cascata com o sistema_de_controle regulatorio
+local (PIDs). Como sera explanado, essa camada
+superior (PIDs para C2 ou MPC para C3) atua
+sobre tres variaveis alcool de 2a , vinhaca e alcool
+hidratado.
+Supervisório
+PIDs ( C2) 
+
+PID ( C2) 
+MPC B (C3)
+
+MPC A (C3)
+
+PIDs
+
+3
+
+FC
+
+PIDs
+
+Estrutura proposta e modelos do
+processo
+
+Hidratado
+
+D
+
+Vf
+Flegma
+
+FC
+
+Nesta secao, serao apresentadas as simulacoes com
+tres diferentes cenarios para a destilaria (C1) com
+a configuracao nominal, apenas com os controladores regulatorios (C2) com a camada do supervisorio sobre os PIDs e (C3) com supervisorio sobre
+a camada do MPC em cacasta com os PIDs regulatorios. A ideia do supervisorio e possibilitar
+uma maior e melhor producao em funcao da carga
+massica de entrada que e estabelecida pela quantidade de vinho obtido na unidade precedente (fermentacao). Frisa-se que o consumo energetico e a
+qualidade do produto tambem serao considerados
+nas analises.
+O objetivo dessas simulacoes e demonstrar
+mediante o modelo completo de uma destilaria de
+etanol o incremento que se pode obter nas suas
+produtividade e eficiencia ao se utilizar um sistema_de_controle_avancado. O controle_supervisorio acionara as valvulas de vazao da flegma e do
+hidratado a fim de aumentar ou diminuir a quantidade de etanol a produzir. Contudo, as camadas
+de controle inferiores devem manter a destilaria estabilizada nos pontos de operacao desejados, uma
+vez que essas atuacoes perturbarao o sistema.
+A configuracao geral da estrategia implementada de controle_avancado na unidade de destilacao para os cenarios C2 e C3 encontra-se na
+Fig. 1, em que algumas das principais variaveis
+sao ilustradas. O sistema supervisorio atua sobre
+as vazoes da flegma e hidratado de acordo com
+a entrada de vinho na unidade que depende da
+producao obtida nas etapas anteriores. Em particular, na unidade antecedente, onde ocorre a fermentacao, administra-se a quantidade de vinho a
+ser enviada. Em geral, a malha_de_controle de
+nvel do tanque pulmao que armazena o vinho define a sua carga massica de sada, que e a entrada
+da unidade de destilacao. Como a fermentacao
+
+Vinho
+
+B
+
+A
+
+Figura 1 estrategia geral da unidade de destilacao
+Embora as colunas apresentem um comportamento fortemente nao linear, tanto o PID quanto
+o MPC utilizam equacoes lineares para calcular
+os sinais de controle. Dessa maneira, primeiramente, e necessario identificar modelos lineares
+do processo no ponto de operacao estabilizado
+anteriormente para poder ajustar os sistemas de
+controle. Os pontos de operacao das sadas sao
+y1  0, 92 o GL para o alcool de 2a , y2  0, 03 o GL
+para a vinhaca e y3  96 o GL para o alcool hidratado. Nas entradas, tem-se u1  119, 17 kP a e
+u2  72, 38 o C para a pressao de fundo e temperatura de topo da coluna A, respectivamente e u3 
+50 do nvel maximo do condensado da coluna B.
+Para as perturbacoes, tem-se d1  293, 22 m3 h
+de entrada de vinho na coluna A, d2  41, 41 m3 h
+de sada da flegma e d3  22, 23 m3 h de sada
+de hidratado na coluna B. Ao utilizar o Toolbox
+de identificacao do Matlab, obtem-se os seguintes
+modelos para a unidade de tempo em segundos
+"
+2 
+2
+PuA 
+
+Pd A 
+
+"
+
+6,982910
+1706,3s+1
+1,6649103
+2392,8s+1
+
+2,644310
+1971,2s+1
+5,4526104
+1610,8s+1
+
+3,3547107
+1445,7s+1
+2,0232108
+815s+1
+
+5,59107
+1880,9s+1
+7,3887108
+204,26s+1
+
+(7a)
+
+
+
+(7b)
+
+para o MPC A, cuja estrutura e YA (s) 
+PuA UA (s) + PdA DA (s), na qual YA 
+
+4071
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+y1 , y2 T , UA  u1 , u2 T e DA 
+d1 , d2 T .
+Para o MPC B, tem-se
+PuB 
+
+9, 674  105 (508, 86s + 1) 4,67s
+e
+(222, 35s + 1)(15, 074s + 1)
+
+A  12 0, 02 para os erros e esforcos de controle, respectivamente. As restricoes consideradas sao UAmin  117 kP a, 71 o C e UAmax 
+119, 25 kP a, 72, 55 o C para as variaveis manipuladas e para as variacoes maximas de controle, tem-se u1m  0, 5 kP amin e u2m 
+0, 5 o Cmin.
+De forma sintetizada, o ajuste do MPC B segue abaixo
+
+(8)
+
+cuja estrutura e YB (s)  PuB UB (s), na qual
+YB  y3 e UB  u3 .
+Por fim, a operacao do supervisorio obedece
+as seguintes equacoes
+Se d1 (t)  d1
+
+Se d1 (t) < d1
+
+
+ Vf (t + 180)
+
+
+
+0,604
+d1 (t)
+600s+1
+
+NuB  15
+B  0, 05
+U3min  20
+u3m  0, 5
+
++ 50,
+
+
+
+d3 (t + 780)
+
+
+
+
+ Vf (t + 180)
+
+
+
+0, 338d1 (t) + d3 .
+(9a)
+0,503
+d1 (t) + 50,
+600s+1
+
+
+
+d3 (t + 780)
+
+
+
+d3 ,
+
+5
+
+Ensaios e analises
+
+Alguns criterios sao necessarios para a montagem
+das simulacoes e comparacoes. No que segue, serao explanados os criterios e metodos de avaliacao.
+A variacao massica do vinho ficara em torno
+de 1, 69 com intervalos iguais de 2 h (120 min),
+dentro do tempo total da simulacao de 8 h. No que
+se refere ao controle, o desempenho dos sistemas
+sera analisado conforme dois ndices o somatorio dos erros absolutos - Sum of Absolute Errors
+(SAE) - dado pela equacao
+
+(9b)
+
+nas quais Vf () e a abertura da valvula da flegma
+e d1 e a variacao de vazao volumetrica de entrada do vinho.
+4
+
+NyB  60
+B  250
+U3max  80
+TsB  60 s
+
+Caracterizacao parametrica e sintonia
+dos controladores
+
+Primeiramente, e importante frisar que a unica
+malha local diferente nos modelos dos cenarios C2
+e C3 em relacao ao modelo nominal (cenario C1)
+corresponde ao controle do hidratado. No cenario
+C1, o controle da concentracao do hidratado e realizado manipulando-se sua vazao, ao passo que,
+nos cenarios C2 e C3 essa malha foi retirada para
+que o supervisorio pudesse atuar diretamente sobre a vazao do hidratado. Portanto, os ajustes
+dos controladores foram definidos na tentativa de
+se obter comparacoes mais justas possveis.
+Os mesmos modelos foram utilizados para os
+PIDs (sintonia por IMC) e MPCs, assim como
+para as estrategias do tipo feedfoward. Porem,
+no cenario C1, o controlador do hidratado foi sintonizado pelo autotuner do Aspen Hysys. A saturacao nos PIDs (cenarios C1 e C2) foi considerada na mesma faixa de restricao dos MPCs.
+Para o controle da vinhaca, a situacao e peculiar,
+pois trata-se de um subproduto cuja concentracao
+nao deve ultrapassar um determinado valor. Embora muitas usinas consigam aproveita-la cada vez
+mais, o ideal e produz-la na menor quantidade
+possvel. Nesse caso, o controle de qualidade consiste em deixar seu nvel de toxidade relativamente
+baixo, nao prejudicando o meio_ambiente. Portanto, foi implementado um controle por banda,
+em que o PID funcionava no modo automatico
+apenas quando a leitura na vinhaca atingia valores acima de 0, 04 o GL.
+No caso do MPC A, especificamente, temse os seguintes parametros o tempo de amostragem e TsA  60 s, o horizonte de controle e
+NuA  20 e o horizonte de predicao e NyA  70.
+As ponderacoes sao dadas por A  75 150 e
+
+SAE 
+
+N
+1 X
+SP (k)  ym (k),
+N
+
+(10)
+
+k1
+
+em que N e o numero de amostras SP e o setpoint do controlador e ym e a sada medida e o somatorio dos esforcos quadraticos incrementais de
+controle - Sum of Squared Control efforts (SSC) relativos
+N
+
+SSC 
+
+X
+1
+(N  1)
+
+
+
+u(k + 1)  u(k)
+u(k)
+
+2
+
+. (11)
+
+k1
+
+Para o desempenho dos sistemas do ponto de
+vista economico, serao analisadas a produtividade
+e a eficiencia de acordo com a agua consumida,
+dada a uma temperatura de 15, 56 o C na pressao
+atmosferica, da qual sera calculado o fator de eficiencia
+P roduto
+Fe (m3 m3 ) 
+.
+(12)
+
+Agua
+Ainda, sera considerado um controle de qualidade fictcio na destilaria. Na producao dos alcoois havera um nvel de tolerancia, bem como para
+a vinhaca. Certamente, por se tratar de um simulador computacional no qual as variacoes sao pequenas, em virtude da instabilidade iterativa apresentada nas variacoes elevadas, sao limites fora da
+realidade industrial. Sem embargo, a metodologia adotada para ilustrar o impacto do sistema
+proposto na destilaria de etanol nao sera comprometida. Desse modo, definem-se as seguintes tolerancias
+
+4072
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+96.02
+
+Hidratado oGL
+
+Álcool de 2 oGL
+
+92.05
+
+92
+
+96
+95.99
+
+Cenário C1
+91.95
+
+0
+
+1
+
+2
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+7
+
+95.98
+
+8
+
+Hidratado m3h
+
+Temperatura oC
+
+72.4
+
+72.35
+
+1
+
+2
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+7
+
+8
+
+Cenário C1
+22.6
+22.4
+22.2
+22
+
+Cenário C1
+72.3
+
+0
+
+1
+
+2
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+7
+
+21.8
+
+8
+
+1
+
+2
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+Vinho m3h
+
+0.03
+0.025
+0
+
+1
+
+2
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+7
+
+8
+
+295
+
+290
+
+285
+
+8
+
+119.15
+
+0
+
+1
+
+2
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+0
+
+1
+
+2
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+7
+
+8
+
+Flegma m3h
+
+41.6
+
+119.1
+
+119.05
+
+41.5
+41.4
+41.3
+41.2
+
+Cenário C1
+119
+
+7
+
+Cenário C1
+
+Cenário C1
+
+0.035
+
+0.02
+
+0
+
+300
+
+0.04
+
+Vinhaça oGL
+
+0
+
+22.8
+
+72.45
+
+Pressão kPa
+
+Cenário C1
+
+96.01
+
+0
+
+1
+
+2
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+7
+
+Cenário C1
+41.1
+
+8
+
+Figura 2 desempenho do sistema nominal. Coluna A
+
+7
+
+8
+
+Figura 3 desempenho do sistema nominal. Coluna B e perturbacoes
+
+SAE
+SSC
+
+Alcool de 2a  1, 5  102 o GL,
+Hidratado 0, 5  102 o GL,
+Vinhaca +0, 5  102 o GL.
+
+P ID1
+2, 10  104
+1, 01  1010
+
+P ID2
+0
+7, 35  1014
+
+P ID3
+1, 14  104
+1, 36  109
+
+Tabela 1 ndices de desempenho de C1
+Finalmente, aplicando a energia total consumida (6, 681  109 kJ) em equivalente de agua e
+os produtos na Eq. 12, obtem-se o seguinte fator
+eficiencia
+
+O desempenho do sistema nominal no cenario
+C1 esta representado nas Figs. 2 e 3. As perturbacoes afetam mais a vinhaca, mas sua concentracao em etanol permanece sempre abaixo do
+limite tolerado, o que nao compromete o meio_ambiente, mesmo que se tenha um custo para transportar a grande quantidade produzida (volume de
+2365 m3 ). Por outro lado, as oscilacoes do alcool de 2a reduzem um pouco a sua produtividade,
+proporcionando um volume de 29, 78 m3 considerando o criterio de qualidade.
+
+FeC1 
+
+207, 98
+ 0, 4181
+497, 3
+
+Na Fig. 4, os desempenhos dos sistemas com
+o controle_supervisorio sao mostrados. E possvel
+constatar que a diferenca no comportamento da
+vinhaca entre os cenarios e desprezvel. Apesar de
+haver pequenos erros em relacao a banda superior
+nos cenarios C2 e C3, o resultado final esta dentro do limite preestabelecido. No entanto, para os
+produtos, o desempenho do sistema no cenario C3
+apresenta erros de referencia menores se comparados com os do C2. Observa-se que, por se tratar
+de um sistema MIMO, o MPC atua mais sobre a
+pressao a fim de manter o sistema no ponto desejado. De forma geral, os resultados ficam mais
+bem explicados visualizando os dados nas tabelas
+
+No caso do hidratado, o efeito das perturbacoes e mnimo, obtendo-se um volume de
+178, 2 m3 . E importante lembrar que nesse cenario a variacao da flegma nao e manipulada,
+embora seja considerada uma perturbacao juntamente com a variacao do vinho. Os ndices de
+desempenho do sistema_de_controle encontram-se
+na Tabela 1.
+
+4073
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Hidratado oGL
+
+C2
+C3
+
+SSC3
+1, 76  108
+2, 91  108
+
+92
+Cenário C2
+Cenário C3
+
+91.98
+91.96
+0
+
+0.04
+
+1
+
+2
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+7
+
+8
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+7
+
+8
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+7
+
+8
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+7
+
+8
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+7
+
+8
+
+os cenarios.
+Entretanto, os ganhos obtidos sao bem diferentes quando se consideram a producao do alcool
+de 2a e do hidratado e o consumo de agua nos condensadores e refervedores. Com base nos dados,
+tem-se uma situacao bastante interessante. Notase que a configuracao proposta para a destilaria e
+vantajosa somente com o uso de um sistema avancado de controle, visto que as perturbacoes causadas pelo supervisorio nao sao suficientemente amenizadas no cenario C2, afetando significativamente
+o rendimento do processo. Como consequencia,
+obtem-se um fator de eficiencia menor que o do cenario C1, neste que tambem sao utilizados PIDs.
+Em contrapartida, em C3, os MPCs promovem
+um aumento importante na eficiencia do processo.
+Observa-se que, com uma quantidade de agua menor que a utilizada em C2, tem-se uma producao
+maior que a do cenario C1. Dessa forma, do ponto
+de vista economico, e possvel estimar quantitativamente o ganho obtido em relacao ao cenario C1,
+se forem atribudos valores aos precos dos produtos, da agua e o perodo de safra nas usinas de
+etanol.
+
+Cenário C2
+Cenário C3
+
+0.03
+0.02
+
+0
+
+1
+
+2
+
+96.01
+Cenário C2
+Cenário C3
+
+96
+95.995
+95.99
+
+Temperatura oC
+
+SSC2
+6, 50  1011
+7, 19  1010
+
+Tabela 3 ndices de controle
+
+92.02
+
+96.005
+
+Pressão kPa
+
+SSC1
+5, 59  1011
+2, 25  1011
+
+92.04
+
+Vinhaça oGL
+
+Álcool de 2 oGL
+
+2 e 3, cujas diferencas representam um balanco
+energetico que deve ser analisado.
+
+0
+
+72.45
+
+1
+
+2
+
+Cenário C2
+Cenário C3
+
+72.4
+72.35
+72.3
+0
+
+1
+
+0
+
+1
+
+2
+
+119.2
+119
+118.8
+
+Cenário C2
+Cenário C3
+2
+
+Cenário C2
+Cenário C3
+
+Nível 
+
+50
+40
+30
+
+Vinho m3h
+
+0
+
+2
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+7
+
+8
+
+300
+
+6
+
+295
+290
+
+Flegma m3h
+
+285
+
+Cenário C2
+Cenário C3
+0
+
+1
+
+2
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+7
+
+42
+40
+1
+
+2
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+24
+
+7
+
+8
+
+Cenário C2
+Cenário C3
+
+23.5
+23
+22.5
+22
+
+0
+
+1
+
+2
+
+3
+
+4
+Tempo h
+
+5
+
+6
+
+7
+
+8
+
+Figura 4 desempenho dos sistemas. Cenarios C2
+e C3
+
+C2
+C3
+
+SAE1
+2, 60  104
+1, 26  104
+
+SAE2
+2, 1  107
+3, 87  107
+
+Conclusoes e consideracoes finais
+
+O objetivo principal deste trabalho foi o desenvolvimento de uma plataforma que permitisse analises e testes mais realsticos dos algoritmos de
+controle_avancado. Dessa maneira, foi desenvolvimento um ambiente computacional que possibilitasse a comunicacao do modelo de uma destilaria
+no Aspen Hysys com outras ferramentas de software como o Matlab.
+No que tange a destilaria, uma estrategia de
+controle com tres camadas foi proposta para aumentar o rendimento da sua producao. Diferente dos trabalhos que focalizam no desempenho
+de cada coluna isoladamente, a pesquisa inicial
+abrangeu o comportamento global da unidade com
+base na fabricacao dos alcoois, na formacao da vinhaca e nas variacoes do vinho e da flegma. A
+partir dos cenarios estudados, incluindo o modelo
+nominal que corresponde a configuracao padrao
+das usinas brasileiras, constatou-se uma situacao
+interessante um sistema supervisorio que visa a
+otimizacao_da_producao causa perturbacoes que
+pioram o desempenho do sistema de tal forma que
+sua implementacao nao vale a pena, caso as colunas sejam operadas apenas por controladores PID.
+Em particular, um dos escopos deste trabalho e buscar um embasamento de cunho teorico
+com aplicacoes praticas, propiciando uma aproxi-
+
+8
+
+Cenário C2
+Cenário C3
+
+44
+
+0
+
+Hidratado m3h
+
+1
+
+SAE3
+1, 81  104
+2, 84  105
+
+Tabela 2 ndices de erros
+Resumidamente, em termos de produtividade
+e consumo energetico, os dados dos tres cenarios
+estao expostos na Tabela 4. Como comentado, em
+relacao a vinhaca, o custo economico para seu reaproveitamento e transporte e o mesmo em todos
+
+4074
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+C1
+C2
+C3
+
+Alcool de 2a
+29, 78 m3
+29, 16 m3
+34, 32 m3
+
+Hidratado
+178, 2 m3
+139, 5 m3
+181, 2 m3
+
+Vinhaca
+2365 m3
+2365 m3
+2365 m3
+
+Agua
+497, 3 m3
+487, 5 m3
+487, 1 m3
+
+Fe
+0, 4181
+0, 3460
+0, 4425
+
+Tabela 4 parametros de producao
+macao com a industria. Nesse caso, o ambiente
+foi utilizado para testar um MPC embarcado em
+hardware, desenvolvido por um mestrando no Departamento de Automacao e Sistemas (DAS) da
+Universidade Federal de Santa Catarina (UFSC)
+(Lima et al., 2013). Como, em geral, as plataformas comerciais de controle_preditivo sao orientadas para plantas de larga escala, o foco do projeto
+foi analisar um prototipo de baixo_custo que fornecesse as mesmas vantagens para processos com
+dimensoes menores.
+Finalmente, dando continuidade as pesquisas
+de perodos anteriores, novos trabalhos poderao
+ser direcionados a dar sustentacao teorica e pratica as solucoes ja apresentadas, a desenvolver novos controladores e estender os resultados teoricos
+para casos de aplicacao em processos_industriais,
+tais como as operacoes das colunas de destilacao
+alcoolica.
+
+Guzman, J. L., Berenguel, M. e Dormido, S.
+(2005). Interactive teaching of constrained
+generalized predictive control, IEEE Control
+Systems Magazine 25(2) 5266.
+Johansson, M., Gafvert, M. e Astrom, K. J.
+(1998). Interactive tools for education in automatic control, Control Systems Magazine
+18(3) 3340.
+Karacan, S. (2003). Application of a non-linear
+long range predictive control to a packed distillation column, Chemical Engineering and
+Processing 42(12) 943953.
+Lima, D. M., Americano-daCosta, M. V. e
+Normey-Rico, J. E. (2013). A flexible low cost
+embedded system for model predictive control of industrial processes, European Control
+Conference, Zurich, pp. 1571  1576.
+Normey-Rico, J. E. e Camacho, E. F. (2007). Control of Dead-time Processes, Springer, London, England.
+
+Referencias
+Acebes, L. F., de Prada, C., Alves, R., Merino, A.,
+Pelayo, S., Garcia, A., Rueda, A. e Gutierrez,
+G. (2003). Development tools for full-scale
+simulators of sugar factories, Proceedings of
+the 22nd general assembly of the International Commission for Sugar Technology, Madrid, Spain, pp. 131138.
+
+Rivera, D. E., Morari, M. e Skogestad, S. (1986).
+Internal model control PID controller design, Industrial  Engineering Chemistry
+Process Design and Development 25(1) 252
+ 265.
+Santos, R. A. (2005). Meios distribudos para simuladores de processo, PhD thesis, Universidade Federal de Santa Catarina, Brasil.
+
+Americano-daCosta, M. V., Cruz, D. M. e
+Normey-Rico, J. E. (2012). Modelagem, simulacao e controle de uma unidade de destilacao em uma usina produtora de etanol,
+Congresso Brasileiro de Automatica, Campina Grande, Paraba, pp. 437442.
+
+Takatsu, H., Itoh, T. e Araki, M. (1998). Future
+needs for control theory in industries-report
+and topics of the control technology survey
+in the japanese industry, Journal of Process
+Control 8(5-6) 369374.
+
+Americano-daCosta, M. V. e Normey-Rico, J. E.
+(2009). An interactive tool to design controllers for processes with dead time time delay systems, Vol. 8, 8th IFAC Workshop on
+Time-Delay Systems, pp. 189194.
+Aspentech (2005).
+Customization
+www.aspentech.com.
+
+guide.
+
+Camacho, E. F. e Bordons, C. (2004). Model Predictive Control, Springer-Verdag, London, England.
+Fontanini, W., Filho, O. S. S. e Ferreira, P. A. V.
+(1990). Um ambiente integrado para analise e projeto no espaco_de_estados, Vol. 1,
+Congresso Brasileiro de Automatica, Belem,
+Para, pp. 189194.
+
+4075

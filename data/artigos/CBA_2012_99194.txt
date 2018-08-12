@@ -1,0 +1,723 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+IMPLEMENTAÇÃO E CONTROLE DE UM QUADRIRROTOR
+FABIAN B. DE REZENDE, ELDER M. HEMERLY, IGOR DRAGO
+Divisão de Engenharia Eletrônica, Depto. de Sistemas e Controle
+Instituto Tecnológico de Aeronáutica, ITA-IEE-IEES
+Pça. Mal. Eduardo Gomes, 50  Vila das Acácias 12228-900 São José dos Campos  SP
+E-mails fabianbrezende@yahoo.com.br, hemerly@ita.br, igordrago@gmail.com
+Abstract
+ This paper presents a hardware implementation of a small unmanned aerial quadrirotor vehicle, as well as the design
+and experimental evaluation of a control system that takes into account its nonlinear dynamics. The control technique employs
+the quadrirotor 6 degrees of freedom model, and is based on trajectory linearization and inverse dynamic control. For preliminary
+assessment of performance, a simulation environment was developed in MATLAB. For experimental evaluation, it was implemented a specific hardware based on a 32-bit microcontroller, with floating point. The control system also incorporates an
+AHRS (Attitude and Heading Reference System), barometric sensor for altitude, GPS (Global Positioning System), ultrasonic
+sensor to measure distance (height) for landing and a high resolution laser sensor for calibration of the filters that estimate altitude and vertical speed. With this system, it is possible to control the UAV in position and attitude, thereby enabling the automatic guidance with GPS waypoints. Simulations and experimental results are presented and discussed.
+Keywords
+ Control system, nonlinear dynamics, inverse dynamics, trajectory linearization control, UAV (unmanned aerial vehicle), quadrirotor.
+Resumo
+ Este artigo apresenta uma implementação em hardware de um pequeno veículo aéreo não tripulado, do tipo quadrirrotor, bem como o projeto e avaliação experimental de um sistema_de_controle que considera sua dinâmica_não-linear. A técnica de
+controle, que utiliza o modelo do quadrirrotor com 6 graus de liberdade, é baseada na linearização de trajetória e a estratégia de
+dinâmica_inversa. Para avaliação preliminar de desempenho, foi desenvolvido um ambiente de simulação no MATLAB. Para
+avaliação experimental, foi implementado um hardware específico, com um micro controlador de 32 bits, ponto_flutuante, para
+embarcar o algoritmo, que incorpora sensor AHRS (Attitude and Heading Reference System), sensor barométrico para altitude,
+GPS (Global Positioning System), sensor ultrassônico para medir distância (altura) para pouso e um sensor_laser de alta resolução, para calibração dos filtros que estimam altitude e velocidade vertical. Com esse sistema é possível controlar o VANT em
+posição e atitude, viabilizando o guiamento automático com waypoints GPS. Resultados de simulações e experimentais são
+apresentados e discutidos.
+Palavras-chave
+ .
+
+1
+
+Introdução
+
+Os problemas de modelagem_e_controle_de_quadrirrotores vêm sendo amplamente investigados na
+literatura, havendo extensa lista de publicações. Trabalhos como (Ritz, R., 2011), que apresenta um método numérico para cálculo de manobras de alto
+desempenho para quadrirrotores, satisfazendo otimalidade de tempo. Em (Schoellig, A., 2010) são mostrados múltiplos quadrirrotores, sendo guiados por
+música e em (Hehn, M. 2011) um controle de pêndulo_invertido montado no quadrirrotor.
+Apesar de já existir essa extensa literatura avançada sobre quadrirrotores, estudos de estabilização e
+rastreamento de posição de quadrirrotores ainda vêm
+sendo realizados. Um dos primeiros trabalhos foi
+apresentado por (Mistler, 2001), que usa um método
+de linearização da realimentação para rastrear posição e atitude. Uma comparação entre controladores
+PID e LQR é mostrada em (Bouabdallah, 2004),
+através da simulação do controle_de_atitude e altura.
+Em (Xu, 2006) é utilizado Sliding Mode Control
+para rastreamento de posição e estabilização, e em
+(Madane, 2006) um método bastante comum e bem
+sucedido para rastreamento de posição e atitude, o
+Backstepping Control, foi apresentado. Os méto-
+
+ISBN 978-85-8001-069-5
+
+dos PID, linearização do modelo e Backstepping
+Control foram comparados através de simulações
+do controlador de atitude e altura em (Henrique, P. e
+Santana, 2009) e em (Lopes, 2011) foi apresentado o
+método Model Predictive Control para rastreamento e estabilização de quadrirrotor, com comparação de desempenho entre controlador PID e Backstepping Control, via simulações.
+Uma técnica recente, o Controle por Linearização da Trajetória, TLC (Trajectory Linearization
+Control), apresentada primeiramente em (Huang,
+2009), foi aplicada a um trirrotor e em seguida ao
+quadrirrotor (Bing Zhu, 2010). Essa técnica combina
+a inversão da dinâmica_não-linear e a estabilização da
+realimentação linearizada variante no tempo. O controle pela linearização da trajetória pode ser visto
+como um controlador gain-scheduling ideal projetado em cada ponto da trajetória (Huang, 2009).
+Este trabalho apresenta a implementação em
+hardware e firmware de um quadrirrotor, empregando a estratégia TLC de controle. São apresentados
+resultados simulados e experimentais. As principais
+contribuições desse artigo são
+ Projeto de hardware do VANT, incluindo
+sensores e atuadores
+ Implementação de uma estratégia de contro-
+
+877
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+
+
+
+
+le para tratar a dinâmica_não-linear do quadrirrotor
+Modelagem realista de um sistema de navegação, usando sensores discretizados (16
+bits), incorporando ruído e atraso nos atuadores
+Realização de trabalhos experimentais para
+avaliação_de_desempenho em situações de
+interesse.
+
+a segunda lei de movimento de Newton, envolvendo
+forças, momentos e efeito Coriolis. Esse modelo,
+para efeito de simplificação, não considera o efeito
+giroscópio, devido  simetria do quadrirrotor (Bing
+Zhu, 2010), como também os complexos efeitos
+aerodinâmicos.
+A notação utilizada na modelagem é mostrada na
+Tabela 1.
+Tabela 1. Notação utilizada na modelagem.
+
+Convém ressaltar que a estrutura mecânica do
+quadrirrotor, o hardware de atuação e o controlador
+utilizado no presente trabalho foram desenvolvidos
+na totalidade, de modo a gerar um protótipo. Para os
+testes experimentais de controle_de_atitude e altura, o
+peso total do quadrirrotor ficou em 1.09 kg com uma
+bateria de LiPo 4S e capacidade de 2200 mAh. Nessa configuração e em voo pairado  uma altura máxima de 30 m, esse VANT tem autonomia de 20
+minutos, aproximadamente. O peso máximo de decolagem MTOW (Maximum Take-Off Weight) está
+estimado em 1.8 kg aproximadamente, para manter a
+autonomia de 20 min. O quadrirrotor implementado
+é mostrado na Figura 1.
+
+Notações
+
+Posição nos eixos x, y, z do referencial
+fixo na terra
+Ângulos de atitude do quadrirrotor
+Componentes das forças no referencial
+do quadrirrotor
+Velocidades angular no referencial do
+quadrirrotor
+Velocidades no referencial do quadrirrotor
+Momentos de inércia do quadrirrotor
+Massa total do quadrirrotor
+Distância entre o centro e um motor do
+quadrirrotor.
+Empuxo gerado por cada um dos motores
+Empuxo total gerado pelos motores
+Constante do torque em torno do eixo Z
+no referencial do quadrirrotor
+Constante de arrasto
+
+x, y, z
+, , 
+Fx, Fy, Fz
+p, q, r
+u,v, w
+Ixx, Iyy, Izz
+M
+D
+f1, f2, f3, f4
+fz
+Ktm
+Cdv
+
+Figura 1. Quadrirrotor implementado nesse trabalho
+
+Esse artigo está organizado da seguinte maneira
+a seção 2 apresenta a modelagem_matemática do
+quadrirrotor. Na seção 3 é efetuado o projeto do
+controlador TLC. A seção 4 mostra o detalhamento
+do hardware utilizado. Na seção 5 são apresentados
+os resultados de simulação e experimentais. A seção
+6 consiste nas conclusões e trabalhos futuros.
+
+2 Modelo Matemático do Quadrirrotor
+O veículo aéreo quadrirrotor é um helicóptero
+dotado de quatro sistemas propulsores dispostos de
+forma simétrica, conforme ilustrado nas Figura 2 e
+Figura 3. A modelagem se inicia com a definição dos
+sistemas de coordenadas. Desta forma, com o objetivo de controlar o VANT nos 6 graus de liberdade (x,
+y, z, , , ), são necessários dois referenciais o
+referencial da terra NED (North-East-Down) que é
+fixo, e o referencial do quadrirrotor, que está ilustrado na Figura 2.
+O modelo do quadrirrotor é obtido utilizando-se
+
+ISBN 978-85-8001-069-5
+
+Descrição
+
+Como já mencionado em (Bing Zhu, 2010), o
+modelo do quadrirrotor possui quatro subsistemas
+cinemática de posição, dinâmica de posição, cinemática de atitude e dinâmica de atitude. De acordo com
+a teoria mecânica do corpo rígido, como mostrado
+por (Bing Zhu, 2010), esses quatro subsistemas podem ser modelados conforme as equações de (1) a
+(5).
+O modelo de cinemática de posição é descrito
+por
+
+   
+
+
+ 
+  
+  
+      
+
+
+
+  cs
+    
+
+
+(1)
+onde P  x y zT e     T.
+O modelo da dinâmica de posição é descrito por
+ 
+
+x 
+
+
+
+
+
+!   "
+
+(2)
+
+onde   p q rT, F  Fx Fy FzT e S(.) denota o
+produto vetorial matricial. As entradas F da equação
+(2) podem ser obtidas diretamente de
+Fx  - mgs - Cdvu2 - (qw - rv)
+Fy  mgcs - Cdvv2  (ru - pw)
+Fz  fz + mgcc - Cdvw2  (pv - qu)
+
+(3)
+(4)
+(5)
+
+878
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A cinemática da atitude é descrita por
+1
+  0
+0
+
+0
+
+
+
+ ( )
+  *   ,- 
++
+
+
+3 Projeto do Controlador
+(6)
+
+e finalmente a dinâmica da atitude é dada por
+0 0
+
+ 1
+  
+2
+ 44
+ 56
+. 277
+
+1
+233
+0
+
+56
+277
+
+0
+
+1
+244
+56
+277
+
+1
+
+233 9 <(
+9 <
+0 9  @
+<>
+9
+56 9 <?
+277 8
+
+*+A277 244 B
+0
+
+233
+
+9
+ )+ 233 277  9
+
+9
+244
+
+9
+)*A244 CCB9
+.
+8
+277
+
+3.1 Controle por Linearização da Trajetória (TLC)
+Existem na literatura diversos métodos para tratar o problema de controle de plantas com dinâmica
+não-linear, como já citado no segundo parágrafo da
+seção 1. Um método de grande significância para
+tratar esse tipo de sistema é o TLC (Devasia, 1996).
+Resumidamente, esse método usa uma pseudoinversão da dinâmica (Mickle, 2004) para gerar o
+controle da planta e em conjunto com um regulador
+PI para tratar os erros_de_modelagem. A Figura 4
+mostra o esquema básico do TLC.
+
+(7)
+
+Na equação (7), o cálculo da aceleração angular
+associada a  é efetuado com base na diferença de
+torques gerados pelas rotações dos pares de motores
+(1,3) e (2,4). A Figura 3 mostra os sentidos de rotação de capa par de motores.
+
+Figura 4. Estrutura básica do Controle por Linearização da Trajetória
+
+Figura 2. Referencial do Quadrirrotor, onde  (Fi),  (Theta) e 
+(Psi) equivalem a Roll, Pitch e Yaw, respectivamente
+
+As equações de (8)  (13) se referem ao algoritmo de controle, como já descrito em (Bing Zhu,
+2010).
+Na Figura 4, supõe-se a forma geral não-linear
+em variáveis de estado,
+D E  <A E, H E,  EB
+ E  JA E, H E,  EB
+
+(8)
+
+onde (t)  n, (t)  l, (t)  m (t)  r e são
+estados, entradas, saídas e vetores (parâmetros) variantes no tempo respectivamente.
+A trajetória a ser rastreada possui dinâmica
+DK E  <ADK E, HK E,  EB
+
+L E  J MD E, H E,  EN
+
+Figura 3. Sentido de rotação dos motores
+
+Na Figura 3 pode-se ver que o par (1,3) gira no
+sentido anti-horário, fazendo com que o quadirrotor
+tenha a tendência de girar no sentido horário, e o par
+(2,4) gira no sentido horário, fazendo com que o
+quadrirrotor tenha a tendência de girar no sentido
+anti-horário, onde o motor 1 está na parte positiva do
+eixo X, o motor 2 está na parte positiva do eixo Y e
+assim sucessivamente, até o motor 4 que está na
+parte negativa do eixo Y. Além disso, essa diferença
+de torques é proporcional aos empuxos gerados pelos
+motores e  constante Ktm.
+
+onde c(t), c(t), c(t) são estados, entradas e saídas,
+respectivamente.
+Definindo-se os erros de estados, entradas e saídas como
+e(t) (t) - c(t)
+e(t)(t) - c(t)
+e(t)(t)- c(t)
+
+(10)
+(11)
+(12)
+
+e considerando que os mesmos são relativamente
+pequenos, devido  pseudo-inversão, a linearização
+de (8)  (12) resulta
+
+onde
+
+ISBN 978-85-8001-069-5
+
+(9)
+
+D O  P EDO  Q EHE+R
+LO   EDO  S EHE+R
+
+(13)
+
+879
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+T< D, H
+TD  VWVX ,
+T< D, H
+Q E 
+TH  VWVX ,
+TJ D, H
+ E 
+TD  VWV ,
+X
+T D, H
+S E 
+TH  VWVX ,
+P E 
+
+YWYX
+
+YWYX
+
+YWYX
+
+Figura 6. Diagrama da Malha de Atitude
+YWYX
+
+Assim como mostrado em (Bing Zhu, 2010), para se resolver o problema de projeto_de_controle de
+um sistema não-linear da forma (8), é suficiente se
+estabilizar o sistema linear variante no tempo descrito por (13).
+3.2 Estrutura e Estratégia de Controle
+O objetivo principal deste artigo é navegação por
+GPS, possibilitando ao quadrirrotor seguir
+waypoints desejados, o que requer controle de
+posição. Para se controlar x e y nessa estrutura particular de aeronave, o controlador deve ajustar os ângulos de atitude  e  que leve o VANT de uma
+posição inicial conhecida a uma posição de referência desejada x e y. Assim, apesar do modelo_dinâmico não-linear do quadrirrotor descrito na seção anterior possuir quatro entradas - que são os quatro empuxos gerados pelos motores (f1, f2, f3 e f4) e seis
+saídas (x, y, z, , , ) - é impossível controlar todas
+as saídas independentemente, pois temos um sistema
+de controle subatuado. Desta forma o controlador
+será projetado para que o quadrirrotor rastreie quatro
+saídas x, y, z e .
+A estrutura do controlador também é subdividida
+em quatro subgrupos, que estão ilustrados nas Figura
+5 e Figura 6.
+A Figura 7 mostra o sistema propulsivo, que é
+basicamente um sistema de segunda ordem com nm
+e m extraídos experimentalmente, a planta descrita
+na seção 2 e o sistema de navegação. Para efeito de
+simulação, esse sistema de navegação equivale simplismente  discretização dos 12 estados somados a
+ruídos realistas. No caso experimental, utiliza-se uma
+combinação dos sistemas AHRS e GPS.
+
+Figura 7. Dinâmica da Planta e Sistema de Navegação
+
+Em um nível superior, o controlador é dividido
+em dois subgrupos, a malha de guiamento e a malha
+de atitude.
+A malha de guiamento tem como entrada a posição desejada no referencial fixo da terra, e os sinais
+dos sensores, de posição NED e de velocidade no
+referencial do quadrirrotor. Como saídas, esse subbloco gera os sinais de atitude nominal nom, atitude
+de controle ctrl e a força fzcom necessária para estabilização do veículo no eixo z do referencial NED.
+A malha de atitude recebe do sub-bloco anterior
+a referência de atitude e o comando fzcom, gerando
+como saída quatro sinais de empuxo para os quatro
+motores do quadrirrotor. Além disso, convém notar
+que os sub-blocos mostrados nas Figura 5 e Figura 6,
+com denominação PD, calculam a pseudo-diferencial
+do sinal de entrada. Esse pseudo diferenciador é um
+sistema de segunda ordem como mostrado em (Bing
+Zhu, 2010),
+Z1<<  
+
+1<< 2
+
+2 2D
+
+2
+1<< 1<<
+
+(14)
+
+Em (14) utiliza-se um sistema de segunda ordem, pois, na saída desse sistema, além da diferencial, tem-se o valor da entrada filtrado.
+Os passos para se implementar a estratégia de
+controle podem ser encontrados em (Bing Zhu,
+2010).
+4 Projeto do Hardware de Controle
+
+Figura 5. Diagrama da Malha de Guiamento
+
+ISBN 978-85-8001-069-5
+
+Para integrar os sensores, atuadores e módulos
+de suporte externos do sistema eletroeletrônico do
+quadrirrotor, foi desenvolvido um hardware de controle onde o diagrama geral está ilustrado na Figura
+8.
+
+880
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 9. Parte elétrica do sistema propulsivo
+
+5 Resultados de Simulações e Experimentais
+Figura 8. Diagrama geral do hardware de controle
+
+No centro desse hardware está o micro controlador de 32 bits da Texas Instruments TMS320F28335,
+que conta com uma unidade de ponto_flutuante e
+trabalha com uma frequência de clock de 150
+MHz. Esse dispositivo realiza a leitura dos sensores
+externos, calcula e aplica o controle nos atuadores.
+Além disso, recebe telecomandos e envia telemetria
+para estação de solo.
+Um dos módulos externos desse sistema é o receptor digital R617FS. Esse módulo faz parte de um
+subsistema de rádio controle que originalmente é
+usado em aeromodelismo para pilotagem remota. Ele
+é usado na fase inicial de depuração do sistema, para
+pilotagem assistida. Os sinais de saída desse módulo
+são PWMs, que são decodificados pelo microcontrolador do hardware de controle.
+O módulo externo Wi-Fi é usado para realizar as
+operações de telemetria e telecomando do sistema.
+Para facilitar o desenvolvimento, foi implementado
+um protocolo de comunicação entre o quadrirrotor e
+uma estação de solo, que pode ser um desktop, notebook, e futuramente poderá ser um tablet ou celular com sistema operacional android. Por exemplo, os
+ajustes dos ganhos do controlador podem ser feitos
+através desse protocolo. O protocolo de mais alto
+nível utilizado nesse sistema Wi-Fi é o UDP.
+Para controle_de_atitude, como já dito anteriormente, o sistema conta com um sensor AHRS, que
+transmite dados a uma taxa de 250Hz.
+Para controle em x, y e z, em modo de guiamento, o sistema conta com um sensor GPS, com uma
+taxa de atualização de 10Hz. Para pouso, decolagem
+e ajuste dos filtros internos, os sensores laser e ultrassônico são usados.
+O sistema de atuadores conta com ESCs (Electronic Speed Controlers) e motores BLDC (Brushless DC), pois podem ser encontrados em grande
+variedade no mercado e são relativamente baratos. A
+Figura 9 ilustra o diagrama elétrico básico do sistema
+propulsivo. O motor utilizado foi o NTM-2830A, que
+possui um empuxo máximo de aproximadamente
+2Kg, e sua tabela de torque x velocidade pode ser
+obtida através da home page do fabricante.
+
+ISBN 978-85-8001-069-5
+
+5.1 Resultados de Simulação
+Para avaliar o modelo_dinâmico do quadrirrotor,
+foi desenvolvido um ambiente de simulação no
+SIMULINK. A Tabela 2 contém os valores dos parâmetros usados nessa simulação. Esses valores foram obtidos experimentalmente, com base no quadrirrotor implementado.
+Os parâmetros de controlador de todos os reguladores PI descritos na seção 3 estão listados na Tabela 3.
+Diversas outras simulações foram realizadas, variando-se os parâmetros de projeto, intensidade do
+ruído dos sensores, etc, de modo a avaliar a robustez
+do sistema_de_controle. Esses resultados serão omitidos, por questões de espaço.
+Tabela 2. Parâmetros do quadrirrotor.
+Parâmetro
+
+Valor
+0.0371 kg.m
+0.0371 kg.m2
+0.0186 kg.m2
+1.09 kg
+0.25 m
+0.1
+0.1 N.s2m2
+2
+
+Ixx
+Iyy
+Izz
+M
+D
+Ktm
+Cdv
+
+Tabela 3. Parâmetros dos controladores PI.
+Parâmetro
+ n11
+ n21
+ n31
+ n41
+i,j
+nm
+m
+
+n12
+n22
+n32
+n42
+
+n13 
+n23 
+n33 
+n43 
+
+Valor
+0.094
+0.375
+1.5
+6
+1.4142
+35
+1.4142
+
+0.07
+0.281
+1.125
+4.5
+
+0.88
+0.85 
+1.4
+5.6
+
+Foi aplicado um comandado de posição para que
+o quadrirrotor se deslocasse no eixo z de 10 m, para
+cima, e em seguida realizada uma trajetória senoidal
+com amplitude de 50 m em x e y. O resultado é mostrado na Figura 10. O comando do angulo Psi é gerado automaticamente, de modo que o eixo x do quadrirrotor sempre tangencie a trajetória x e y no referencial da terra. Na Figura 11 são mostrados os ângulos de atitude comandados para que o VANT siga a
+trajetória desejada.
+
+881
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 10. Posição do quadrirrotor em x,y e z
+Figura 13. Ângulo de arfagem theta
+
+Figura 11. Atitude do quadrirrotor
+
+Diversas outras simulações foram realizadas, variando-se os parâmetros de projeto, intensidade do
+ruído dos sensores, etc. Conclui-se, como desejado,
+que o desempenho não depende criticamente desses
+parâmetros.
+
+Figura 14. Ângulo de guinada psi
+
+5.2 Resultados Experimentais
+Os dados experimentais apresentados se referem
+aos controles de atitude - Fi, Theta e Psi - e de altura
+z.
+Os dados experimentais foram obtidos em 2 cenários diferentes, em laboratório e em ambiente aberto, de modo a se verificar o efeito de perturbações
+causadas pelo vento. A Figura 1, da seção 1, mostra
+imagem obtida durante a realização dos ensaios em
+ambiente aberto.
+As Figura 12-14 mostram os ângulos comandados e os ângulos reais de atitude do quadrirrotor.
+
+A Figura 16 mostra um resultado de rastreamento de altura em ambiente_externo, com vento.
+
+Figura 12. Ângulo de rolamento fi
+
+Figura 16 - Altura z - ensaio em ambiente aberto
+
+ISBN 978-85-8001-069-5
+
+Figura 15. Altura z  ensaio em laboratório
+
+882
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Na Figura 16 percebe-se maior variação na altura, quando comparada com a Fig. 15. Isto era esperado, pois a manutenção da altura de referência demanda esforço contínuo dos motores, em ambiente
+com perturbação de vento variável.
+Nos experimentos realizados até o momento, o
+rastreamento de atitude foi avaliado de modo completo, como mostrados nas Figura 12 e Figura 13. No
+que se refere  posição, foi efetuado teste preliminar
+de regulação em torno de uma posição desejada,
+como mostrado nas Figuras 15 e 16.
+6 Conclusão
+Esse artigo descreve a implementação de um
+protótipo de quadrirrotor, considerando todos os
+subsistemas envolvidos hardware, sensores e sistemas_de_controle. Resultados de simulação usando o
+modelo_não-linear do quadrirrotor juntamente como
+sistema_de_controle foram apresentados na seção 5.
+Resultados experimentais preliminares foram mostrados na mesma seção. Como desenvolvimento
+futuro, considera-se análise de desempenho em situações de interesse, utilizando ground truth, para
+análise de erros transitórios e em regime.
+Agradecimentos
+O primeiro autor agradece Ciro Vasconcelos, piloto profissional de VANT, que teve participação
+fundamental nos testes experimentais. Os autores
+agradecem a empresa Flight Technologies LTDA,
+que cedeu espaço em seus laboratórios para a realização dos ensaios iniciais.
+Referências Bibliográficas
+Hoffmann, G. M., Huang, H., Waslander, S. L. and
+Tomlin, C. J., Aug 2007. Quadrotor Helicopter
+Flight Dynamics and Control Theory and
+Experiment. AIAA Guidance, Navigation and
+Control Conference and Exhibit, Hilton Head,
+South Carolina.
+Bouabdallah, S., Noth, A. and Siegwart, R., Sep 28 
+Oct 2, 2004. PID vs LQ Control Techniques
+Applied to an Indoor Micro Quadrotor.
+Proceedings of 2004 IEEERSJ International
+Conference on Intelligent Robots and Systems,
+pp. 2451-2456, Sendal, Japan.
+Xu, R. and Umit Ozguner, Dec 13-15, 2006. Sliding
+Mode Control of a Quadrotor Helicopter.
+Proceedings of the 45th IEEE Conference on
+Decision and Control, pp. 4957-4962, San
+Diego, CA, USA.
+Madani, T. and Benallegue, A., Oct 9-15, 2006.
+Backstepping Control for a Quadrotor
+Helicopter. Proceedings of the IEEERSJ Int.
+Conference on Intelligent Robots and Systems,
+pp. 3255-3260, Beijing, China.
+ISBN 978-85-8001-069-5
+
+Mistler, V., Benallegue, A. and MSirdi, N. K., Sep
+18-21, 2001. Exact Linearization and
+Noninteracting Control of a 4 Rotors Helicopter
+via Dynamic Feedback. The 10th IEEE
+International Workshop on Robot-Human
+Interactive Communication, pp. 586-593,
+Bordeaux and Paris.
+Mickle, M. C., Huang, R. and Zhu, J. J., 2004.
+Unstable, Nonminimum Phase, Nonlinear
+Tracking by Trajectory Linearization Control.
+Proceedings of the 2004 IEEE International
+Conference on Control Applications, pp. 812818, Taipei, Taiwan, Sep. 2-4.
+Devasia, S. D., Chen, D. and Paden, B., 1996.
+Nonlinear inversion based output tracking. IEEE
+Trans. on Auto. Ctrl, Vol 41, pp. 930-941.
+Hunt, L. R. and Meyer, G., 1997. Stable inverse for
+nonlinear_systems. Automatica, V. 33, No. 8.
+Aug., pp. 1549-1554.
+Bing Zhu and Wei Huo, June 2010. Trajectory
+Linearization Control for a Quadrotor
+Helicopter. IEEE International Conference on
+Control and Automation, pp. 34 - 39, Xiamen,
+China.
+Huang, R., Liu, Y. and Zhu, J. J., November
+December 2009. Guidance, Navigation, and
+Control System Design for Tripropeller VerticalTakeoff-and-Landing Unmanned Air Vehicle.
+Journal of Aircraft, Vol. 46, No. 6. pp.18371856.
+Leishman, J. G., 2000. Principles of Helicopter
+Aerodynamics, Cambridge University Press,
+New York, NY.
+Ritz, R., Hehn, M., Lupashin, S. and DAndrea, R.,
+2011. Quadrocopter Performance Benchmarking
+Using Optimal Control. IEEERSJ International
+Conference on Intelligent Robots and Systems.
+Schoellig, A., Augugliaro, F. and DAndrea, R.,
+2010. A Platform for Dance Performances with
+Multiple Quadrocopters. IEEERSJ International
+Conference on Intelligent Robots and Systems Workshop on Robots and Musical Expressions.
+Hehn, M. and DAndrea, R, 2011. A Flying Inverted
+Pendulum. IEEE International Conference on
+Robotics and Automation.
+Lopes, R.V., Santana, P.H.R.Q.A. , Borges, G.A. and
+Ishihara J.Y., 2011. Model Predictive Control
+applied to tracking and attitude stabilization of a
+VTOL quadrotor aircraft. 21st International
+Congress
+of
+Mechanical
+Engineering.
+(Submitted).
+Santana, P.H.R.Q.A. e Borges, G.A., 2009.
+Modelagem e Controle de Quadrirrotores. IX
+Simpósio Brasileiro de Automação Inteligente,
+SBAI.
+
+883

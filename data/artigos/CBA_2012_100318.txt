@@ -1,0 +1,982 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ESTRATÉGIAS DE RIT APLICADAS A REDES DE SENSORES SEM FIO URBANAS
+RODRIGO P.PANTONI
+Instituto Federal de São Paulo, campus São João da Boa Vista. Acesso Dr. João Batista Merlin, sn - Jardim
+Itália - 13872-551 - São João da Boa Vista - SP
+E-mails rpantoni@ifsp.edu.br
+DENNIS BRANDÃO
+Laboratório de Automação Industrial, Departamento de Engenharia Elétrica, Universidade de São Paulo
+Avenida Trabalhador São-carlense, 400, 13566-590 - São Carlos - SP
+E-mails dennis@sc.usp.br
+
+Abstract
+ The IEEE 802.15.4e draft document provides two ways to reduce energy consumption by turning off the radio periodically, even if they operate in mesh topology. One is named Receiver Initiated Transmission, which does not require an entity
+nor a centralized scheduling messages synchronized between devices. This paper presents a Receiver Initiated Transmission configuration strategy based on gradient weights, which allows better performance of consumption, average end to end delay and
+end to end delivery rate. The experiments were performed using the simulation tool ns-2 and its results enable the application of
+RIT in urban networks according RFC 5548.
+Keywords
+ Receiver initiated transmission, IEEE 802.15.4e, wireless sensor networks.
+Resumo
+ O documento draft da nova especificação IEEE 802.15.4e prevê duas maneiras dos sensores sem fio reduzir o consumo_de_energia através do desligamento periódico do rádio, mesmo que operem na topologia em malha. Uma delas é chamada
+de Receiver Initiated Transmission, a qual não necessita de uma entidade centralizadora nem tampouco um escalonamento de
+mensagens sincronizado entre os dispositivos. Este trabalho apresenta uma estratégia de configuração do mecanismo de RIT baseada no mapeamento dos pesos atribuídos aos dispositivos no roteamento do gradiente, o que permite melhor desempenho em
+relação  energia consumida pela rede, média de atraso fim a fim e taxa de entrega fim a fim. Os experimentos foram realizados
+em simulação utilizando a ferramenta ns-2. Os resultados mostram que a estratégia desenvolvida viabiliza a aplicação do RIT em
+redes urbanas, segundos os requisitos especificados na RFC 5548.
+Palavras-chave
+ .15.4e, redes_de_sensors_sem_fio.
+
+1
+
+Introdução
+
+Este trabalho é parte de um projeto formado por
+tecnologias para um sistema_de_iluminação_pública,
+no qual sensores interligados numa rede de sensor
+sem fio são utilziados para monitorar e controlar
+variáveis elétricas. O sistema consiste em sensores
+contectados aos pontos de luz e aplicações de
+software que são utilizadas para monitorar e controlar
+as variáveis relacionadas. O padrão de camadas
+inferiores utilizado refere-se ao IEEE 802.15.4, na
+topologia do tipo malha, na qual os dispositivos
+realizam comunicação de múltiplos saltos para
+alcançar o destino final.
+A principal contribuição deste trabalho é o
+desenvolvimento e avaliação do mecanismo de
+estratégias de RIT (Receiver Initiated Transmission),
+aplicadas em redes urbanas RFC 5548 (2009),
+especificamente para um sistema_de_iluminação
+pública. A motivação deste trabalho é a busca de uma
+forma de redução do consumo dos dispositivos da
+rede com o mínimo impacto nos quesitos atraso fim a
+fim e taxa de entrega fim a fim, de forma que ainda
+sejam adequados para redes urbanas.
+ISBN 978-85-8001-069-5
+
+Na próxima seção é descrito o sistema de
+iluminação_pública proposto, assim como os
+requisitos especificados. A seção 3 aborda uma
+introdução sobre o mecanismo de RIT e os trabalhos
+relacionados. Na seção 4 são apresentadas as
+estratégias de RIT propostas. Na seção 5 são
+mostrados os resultados assim como as estratégias de
+avaliação propostas e, por fim, na última seção são
+tecidas as conclusões.
+2 Sistema de iluminação_pública proposto
+O sistema_de_iluminação_pública proposto consiste numa rede urbana, na qual, de acordo com o
+documento RFC 5548 (2009) é definida por nós
+sensores e atuadores posicionados em ambientes
+urbanos externos com o objetivo de melhorar a
+condição de vida da população assim como para
+fiscalizar o cumprimento de leis ambientais. A
+operação esperada dos nós é a medição e o relatório
+de uma ampla gama de dados (por exemplo, dados
+extraídos de aplicações que executam smart
+metering, que monitoram condições meteorológicas,
+poluição, entre outros). A maioria dos nós se
+comunica através de tecnologias de rede_sem_fio, tais
+4011
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+como IEEE 802.15.4, IEEE 802.11 ou IEEE
+802.15.1 (Bluetooth), as quais fornecem um alcance
+de rádio limitado, porém são capazes de formar redes
+em larga escala com a utilização de protocolos de
+roteamento adequados.
+Portanto, para o concebimento de protocolos de
+rede, é fundamental desenvolver uma especificação
+das necessidades, que são traduzidos como
+requisitos, divididos em funcionais e não funcionais.
+Os requisitos funcionais são
+ Supervisão de pontos Telas de mapas que
+indicam os estados dos pontos de iluminação
+ Controle Acionar ou desacionar lâmpada,
+regular nível de luminosidade do trecho
+selecionado como rua, bairro, cidade, entre
+outros
+ Diagnóstico Possibilidade de requisitar telas que
+indicam parâmetros de diagnóstico, tais como,
+estimativa de tempo_de_vida de bateria,
+estimativa de vida de lâmpada, dispositivos fora
+de alcance da rede, entre outros
+ Alarme Disparar evento quando houver alguma
+falha de rede, de hardware ou lâmpada
+ Ações programadas automáticas O sistema deve
+permitir a programação de ações como acionar
+iluminação s 19 horas e 02 minutos no bairro
+centro na cidade de São Carlos-SP.
+Para entendimento dos requisitos não funcionais,
+segue uma breve definição sobre os parâmetros
+relevantes para a aplicação em questão em ordem de
+importância
+ Escalabilidade Quando se considera uma
+solução para RSSF é importante levar em conta
+que o modelo produzido poderá ser aplicado a
+pequenas (até 25 dispositivos), médias (de 25 até
+103 dispositivos) ou mesmo grandes redes (mais
+de 103 dispositivos)
+ Tolerância a falhas Em relação s falhas ou
+danos permanentes de dispositivos, a rede deve
+ser tolerante, de forma que o protocolo de
+roteamento consiga encontrar um caminho até o
+destino mesmo que dispositivos estejam com
+falha no decorrer do trajeto
+ Garantia de entrega É fundamental que os
+protocolos desenvolvidos para a aplicação
+resultem numa alta taxa de entrega de pacotes
+fim a fim, o que garante o transporte de
+informações
+ Tempo de vida Dispositivos sensores são
+dependentes de uma bateria, o que obriga ao uso
+de protocolos eficientes em termos energéticos
+de forma a prolongar tanto quanto possível o
+tempo_de_vida da bateria. Contudo, no caso deste
+projeto, a maior parte dos dispositivos será
+alimentada através da estrutura elétrica
+atualmente existente na iluminação_pública.
+Assim, o consumo_energético deve ser avaliado
+em termos da rede como um todo, de todos os
+
+ISBN 978-85-8001-069-5
+
+
+
+dispositivos somados. Entretanto, pensa-se na
+possibilidade da instalação de baterias no caso
+de pontos que não possuem a estrutura legada de
+iluminação, como por exemplo, em áreas rurais
+Latência Em relação  iluminação_pública, o
+tempo de atraso fim a fim deve ser em torno de
+dezenas de segundos (RFC 5548, 2009) (tempo
+de ação esperada para atuar sobre certa região de
+destino, como por exemplo, acionar lâmpadas de
+uma região).
+3 RIT e trabalhos relacionados
+
+O mecanismo de RIT está sendo incluído no documento draft da nova especificação complementar
+do protocolo IEEE 802.15.4, chamado de IEEE
+802.15.4e Draft Rev 05 (2010), que prevê a adição
+de melhorias no MAC para aplicações industriais e
+outras inclusões extraídas do CWPAN. Tal especificação está sendo elaborada pela força de trabalho
+IEEE 802.15 WPAN Task Group 4E (2012).
+O mecanismo de RIT programa nos nós receptores a transmissão periódica de mensagens para sinalizar quando os dispositivos transmissores podem enviar dados a eles, permitindo assim que tais nós receptores possam desligar seus rádios durante uma
+parte do ciclo de comunicação. Segundo IEEE
+802.15.4e Draft Rev 05 (2010), RIT é adequado para
+as seguintes aplicações
+ Baixo tráfego de mensagens e requisito de latência mais relaxado (dezenas de segundos por
+transmissão)
+ Onde regulações locais restringem a duração de
+transmissões de rádio contínua, como por exemplo,
+950MHZ no Japão.
+RIT é uma alternativa para economia_de_energia
+para redes que não trabalham com beacons habilitados em topologia em malha. O modo RIT é ligado
+quando o atributo do PIB chamado macRitPeriod é
+configurado para um valor diferente de zero e desligado quando macRitPeriod é configurado para zero.
+Na figura 1 é representado o mecanismo de RIT
+incluindo apenas suas operações básicas. Um nó
+transmite comandos a cada macRitPeriod usando
+unslotted CSMACA. O destino do comando de pedido (RITDataReq) pode ser broadcast ou o endereço específico do dispositivo. Quando o comando não
+carrega nenhuma carga, depois da transmissão do
+comando de pedido RIT (RITDataReq), o nó ouve no
+período macRitDataWaitPeriod para recepcionar
+pacotes (exceto o pacote RITDataReq, que é descartado) e retorna para o estado ocioso até a próxima
+transmissão do comando RITDataReq.
+O nó pode desligar seu rádio numa parte de seu
+ciclo de comunicação e, só acorda, assim que tiver
+que enviar um comando RITDataReq. Por outro lado,
+se o nó transmissor tiver pacote a ser enviado, a partir
+do enfileiramento do pacote (envio do pacote da ca-
+
+4012
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+mada de rede), o nó liga seu rádio e espera indefinidamente a recepção do comando RITDataReq. Caso
+contrário, o nó transmissor mantém seu rádio desligado.
+
+comunicação de cada nó da rede, a fim de se
+aproximar da realidade, foi configurado um tempo
+aleatório, entre 0 e 1 segundos, com o objetivo de
+simular tempos totalmente dessincronizados para os
+nós. Além disso, também foi colocada uma margem
+de tempo aleatória para disparo do comando
+periódico de RITDataReq e para o disparo de
+mensagens pendentes (provindas da camada de rede).
+Em razão desses tempos aleatórios disparados,
+verifica-se que existe uma oscilação no valor, que
+não representa um comportamento linear. Foram
+simulados 5 vezes para cada diferente tipo de fluxo
+para cada período de ciclo, o que evita concluir que o
+comportamento oscilatório foi gerado por erros de
+captura. O resultado dessas simulações é mostrado na
+figura 2.
+
+Figura 1. Operações básicas de RIT
+
+Monowar et al. (2010) sofisticaram o protocolo
+desenvolvido por Sun et al. (2008) de forma que seja
+adaptativo em relação  carga de pacotes da rede.
+Comparado ao RI-MAC, esse trabalho difere em termos de recepção de pacotes, determinação do tempo
+de dormência e estratégia de back-off.
+O protocolo A-MAC, proposto por Dutta et
+al.(2010), utilizou o protocolo IEEE 802.15.4 como
+base. A ideia básica do A-MAC é a requisição do
+receptor através de um pacote, então esse pacote é
+confirmado utilizando o padrão IEEE 802.15.4 para
+confirmações automáticas, então pausa para um curto
+e aleatório atraso e finalmente transmite o pacote de
+dados se o canal está livre (CCA do IEEE 802.15.4).
+4 Estratégias de RIT
+Diferentemente dos trabalhos anteriormente
+citados, dos quais propõem novos mecanismos ou
+alterações no nível de MAC, tais como baseadas em
+adaptação em relação  carga de mensagens da rede,
+autoconfiguração do período de desligamento do
+rádio, entre outros, este trabalho destina-se a
+descrever uma estratégia de RIT aplicável aos
+protocolos de roteamento desenvolvidos de forma
+que seja apropriado para a aplicação de redes
+urbanas.
+Um dos problemas encontrados para configuração
+da simulação foi escolher um valor adequado para o
+ciclo de RIT (macRITPeriod), que compreende o
+envio da mensagem de RITDataReq, espera para
+recebimento de mensagens (macRITDataWaitperiod)
+e o período destinado para operação do rádio (duty
+cycle). O valor a ser escolhido deve ter uma boa
+relação entre consumo_energético e latência. Então,
+anteriormente  tomada de decisão, foi feita uma
+avaliação para analisar a relação da frequência do
+ciclo de comunicação (macRITPeriod no gráfico da
+figura 2) com o tempo de recebimento da mensagem
+no destino. Foram escolhidos nós com 4, 7, 11 e 19
+saltos em relação ao sink. Para início do ciclo de
+ISBN 978-85-8001-069-5
+
+Figura 2. Atraso fim a fim versus macRITPeriod
+
+Segundo Yang (2006), o valor de duty cycle operável pode ser mínimo, chegando até 1 de um pequeno ciclo total (em torno de 1 segundo). Foi adotado nas simulações o valor de 2 segundos de ciclo,
+sendo que 5 do ciclo como período de duty cycle,
+que é destinado para os dispositivos manterem seus
+rádios ligados. Valores mais altos de ciclo podem ser
+atribuídos, entretanto, resultam em tempo maior de
+atraso fim a fim, assim como um maior tempo de
+operação do rádio também pode ser atribuído, portanto, aumenta o consumo_de_energia do dispositivo.
+A figura 3 (a) apresenta um mapa digital com
+coordenadas geodésicas reais no ambiente do NS-2,
+fornecido pela concessionária de iluminação_pública
+Elektro. Essa figura mostra que independentemente
+da posição do sink, na parte superior (sink 1) ou central do mapa (sink 2), é gerado um único padrão de
+quantidade de nós por gradiente. No início existe
+uma região de afunilamento, que tende a aumentar o
+número de nós por gradiente. Após um pico de quantidade, que indica o fim da região de afunilamento, o
+número de nós por gradiente tende a diminuir gradualmente. Isso ocorre em razão da diminuição de vizinhos nas regiões de fronteira com as regiões sem nós.
+Então, com base nesse padrão, outra estratégia
+foi desenvolvida para que pudesse dar maior vazão
+para o tráfego convergente, no caso do afunilamento
+de mensagens. Além disso, essa estratégia traz menor
+consumo_energético a alguns nós da rede.
+Com base na figura 3 (b) e (c), verifica-se que
+poucos nós têm alto número de gradiente, o que via4013
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+biliza um valor alto em segundos de macRITPeriod.
+Essa medida resulta em economia_de_energia, uma
+vez que esses nós com alto grau de gradiente realizariam requisições (RITDataReq) com menor peridiocidade. Complementarmente, quanto mais próximo
+do sink, é interessante que os nós tenham menor tempo de ciclo (macRITPeriod) e maior tempo de duty
+cycle. As equações para cálculo dos parâmetros de
+RIT em função do gradiente são apresentadas nas
+equações (1), (2) e (3).
+fator  1(gradiente x 5)
+(1)
+macRITPeriod  gradiente 2,5
+(2)
+macRITDataWaitperiod  (fator macRITPeriod x 0.5) + 0,15 (3)
+
+A tabela I apresenta os valores de gradiente, fator,
+macRITPeriod, macRITDataWaitPeriod e percentagem de duty cycle resultantes do cálculo das equações
+(1), (2) e (3) e informações retiradas de um mapa
+digital que possui as coordenadas dos pontos de iluminação. É importante enfatizar que tal cálculo foi
+feito para demonstrar que é possível melhorar o desempenho da rede com mudanças nos valores de macRITPeriod, macRITDataWaitPeriod e percentagem
+de duty cycle dependente do valor de gradiente. Portanto, outras equações podem ser experimentadas
+para obter melhor desempenho dependendo de aplicações específicas.
+
+Existe um problema relacionado  transmissão
+com endereço broadcast com a aplicação de RIT,
+pois com cada dispositivo que opera num ciclo de
+comunicação diferente, de forma dessincronizada, os
+dispositivos deveriam para cada transmissão enviar 
+cada vizinho em seu alcance uma mensagem unicast,
+o que aumenta o consumo significamente. É por essa
+razão que a aplicação de RIT em protocolos baseados
+em inundação, tais como LBM, é inviável.
+Tabela 1. Configuração da estratégia de RIT.
+Gradiente
+
+Fator
+
+MacRIT
+Period (s)
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+
+0.20
+0.10
+0.07
+0.05
+0.04
+0.03
+0.03
+0.03
+0.02
+0.02
+0.02
+0.02
+0.02
+0.01
+0.01
+0.01
+
+0.40
+1.00
+1.50
+2.00
+2.50
+3.00
+3.50
+4.00
+4.50
+5.00
+5.50
+6.00
+6.50
+7.00
+7.50
+8.00
+
+MacRIT
+DataWait
+Period (s)
+0.40
+0.20
+0.17
+0.16
+0.16
+0.16
+0.15
+0.15
+0.15
+0.15
+0.15
+0.15
+0.15
+0.15
+0.15
+0.15
+
+Duty cycle
+()
+100.00
+20.00
+11.48
+8.13
+6.32
+5.19
+4.40
+3.83
+3.39
+3.04
+2.76
+2.52
+2.33
+2.16
+2.01
+1.88
+
+Li et al. (2010) propuseram para esse problema
+uma solução simples que inclusive reduz atrasos a
+transmissão contínua da mensagem pelo tempo de
+ciclo somado a um tempo mínimo. Isso garante que a
+mensagem chegue a todos os vizinhos, pois
+certamente ligarão seus rádios nesse período.
+Contudo, baseado nos requisitos de redes urbanas,
+como não existe a necessidade de atrasos mínimos,
+essa solução é ineficiente uma vez que existem ciclos
+mais longos, em geral na região de destino em
+relação ao tráfego divergente, pois se localizam
+distantes dos sinks, o que pode acarretar na
+acentuação de consumo.
+Portanto, para mensagens de endereço broadcast,
+este trabalho considerou a transmissão isolada para
+todos os vizinhos.
+5 Simulação e resultados
+
+Figura 3. Mapa digital de 1020 nós e quantidade de nós por peso
+de gradiente
+
+No caso do RIT com macRITPeriod de 2
+segundos, o tempo de espera para reconhecimento
+(acktimeout) é de 5 segundos. Contudo, no caso do
+RIT em função do gradiente, o tempo de espera para
+reconhecimento deve ser calculado, tendo como base
+o tempo de ciclo fixo (2 segundos de macRITPeriod
+exige 5 segundos de espera). Portanto, o tempo de
+espera é calculado multiplicando-se o tempo de
+macRITPeriod por 2,5 , conforme mostra a equação
+(4).
+acktimeout  macRITPeriod x 2,5
+
+ISBN 978-85-8001-069-5
+
+Esta seção é dividida em dois experimentos. O
+primeiro experimento, descrito na subseção 4.1, é
+destinada para avaliação do comsumo gerado pela
+aplicação de RIT independente do tráfego de
+mensagens, isto é, somente com o consumo do
+microprocessador e rádio.
+A subseção restante (4.2) é destinada a avaliar as
+diferentes configurações de RIT aplicadas ao tráfego
+convergente com tráfego não simultâneo. Este
+experimento permite a avaliação principalmente do
+requisito não funcional de escalabilidade. Entretanto,
+também permite a avaliação de outros requisitos, tais
+como de tolerância a falhas, garantia de entrega,
+consumo_energético e latência.
+
+(4)
+
+4014
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A. Comparação de consumo sem enviar
+mensagens de dados
+Estima-se que na maior parte do tempo os
+sensores não transmitem pacotes de dados, o que
+também motiva a aplicação do mecanismo de RIT
+mesmo que os nós não sejam alimentados por bateria.
+A tabela II apresenta os tempos de vida aproximados
+de bateria para um nó, que foram calculado com base
+nas informações da tabela III, referente ao consumo
+do microprocessador e rádio do fabricante FreeScale
+da linha MC1321x (2008) e duas pilhas duracell.
+Além disso, foi utilizado o valor de 7,168 ms para o
+tempo de transmissão de um pacote, informação que
+foi extraída do documento Jennic (2006) Os cálculos
+foram realizados de acordo com o modelo de energia
+do ns-2, mostrado anteriormente na equação (5).
+Embora existam ainda outros fatores de consumo, tais
+cálculos foram realizados utilizando as variáveis mais
+relevantes, fornecendo uma relação de consumo
+próxima dos valores reais.
+Energiasubtraída  Pr.Tr
+
+(5)
+
+Verifica-se que sem a aplicação de RIT (primeira
+linha da tabela II), a bateria do dispositivo teria 5
+meses e 10 dias de tempo_de_vida. Com a aplicação
+de RIT com um valor de duty cycle de 100 para um
+ciclo pequeno (mostrado na terceira linha da tabela
+II), que corresponde aos valores de RIT atribuídos ao
+sink em função do gradiente, verifica-se que o tempo
+de vida diminuiu. Portanto, recomenda-se a
+alimentação cabeada do sink. Por outro lado, para
+ciclos maiores e duty cycle maiores, nota-se um
+aumento do tempo_de_vida significativo a segunda
+linha, que se refere  estratégia de RIT com 2
+segundos de macRITPeriod e 5 de duty cycle,
+apresenta o valor de 21 meses e 15 dias. As linhas
+restantes apresentam o tempo_de_vida de acordo com
+valor de gradiente, que varia entre 9 meses e 5 dias a
+6 anos.
+
+aos pedidos periódicos de RITDataReq e o tempo de
+MacRITDataWaitPeriod, que tende a ser minimizado
+na estratégia de RIT em função do gradiente. A
+economia se deve ao tempo que o dispositivo destina
+para que o rádio permaneça desligado.
+No caso da não utilização do RIT, o consumo
+energético deve-se ao estado oscioso constante, o que
+resulta num maior consumo_energético se comparado
+s duas estratégias de RIT.
+Complementarmente, a figura 4 apresenta um
+gráfico a partir de informações de consumo da rede
+com os dispositivos utilizando RIT com 2 segundos
+de macRITPeriod e 5 de duty cycle, com
+parâmetros de RIT em função do gradiente e sem
+RIT.
+Portanto, é altamente recomendada a aplicação de
+RIT para protocolos de redes urbanas, alimentados ou
+não por baterias, uma vez que o tempo_de_vida dos
+nós é significamente prolongado.
+As simulações com RIT experimentadas e avaliadas
+nesta seção incluem as duas estratégias de RIT
+abordadas até então. Além disso, os resultados
+obtidos para o protocolo de maior distância sem a
+utilização do RIT, obtidos nos experimentos
+anteriores, foram incluídos (copiados) aos gráficos
+apresentados nesta seção, para fins de melhor
+visualização para comparação.
+
+Figura 4. Energia remanescente da rede sem transmissões
+
+Tabela 2. Tempo de vida sem enviar mensagens de dados
+Gradiente
+
+MacRIT
+Period
+(s)
+
+Independente
+Independente
+1
+2
+7
+16
+
+Sem RIT
+2
+0.40
+1.00
+3.50
+8.00
+
+MacRIT
+DatataWait
+Period (s)
+Sem
+RIT
+0.1
+0.40
+0.20
+0.15
+0.15
+
+Duty
+cycle
+()
+
+Tempo de vida
+aproximado
+
+Sem
+RIT
+5
+100.00
+20.00
+4.40
+1.88
+
+5 meses e 10 dias
+21 meses e 15 dias
+2 meses e 5 dias
+9 meses e 5 dias
+2 anos e 9 meses
+6 anos
+
+Tabela 3. Configuração de consumo da simulação
+Potência de Transmissão (Pt)
+Potência de recepção(Pr)
+Energia inicial
+Potência modo oscioso
+Potência modo dormência
+
+0,1134 W
+0,0945 W
+29160 J
+0,00216 W
+0,0000162 W
+
+No caso do RIT, o consumo_energético deve-se
+
+ISBN 978-85-8001-069-5
+
+B. Comparação com transmissões não-simultâneas
+O segundo experimento foi realizado no
+simulador ns-2 (NS2, 2012), vastamente utilizado no
+meio acadêmico. As configurações de simulação são
+descritas na tabela 4.
+O problema de perda de bits (taxas de erro por bit
+- BER) em comunicação_sem_fio IEEE 802.15.4 é
+constituído pelos seguintes fenômenos
+ Path loss A relação entre a distância e a
+BER
+é
+tipicamente
+não
+linear
+frequentemente, a BER é quase constante
+para certa distância e degrada rapidamente
+(BLACKARD et al., 1993)
+ Slow fading ocorre em razão do movimento
+de obstáculos, tais como veículos grandes e
+objetos fixos, tais como prédios, outdoors e
+árvores
+ Ruído e interferência de outras redes ou
+dispositivos tais como motores.
+
+4015
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Tabela 4. Configuração da simulação
+Interface de rede
+MAC
+IFQ
+Camada de enlace
+Antena
+Dimensão X
+Dimensão Y
+IFQLEN
+Tamanho do pacote
+Tráfico
+Número de nós
+
+PhyWirelessPhy802154
+Mac802154
+QueueDropTailPriQueue
+LL
+AntennaOmniAntenna
+700m
+270m
+50
+60 bytes
+CBR
+1000
+
+O fator de path loss é simulado no NS-2 através
+do modelo de propagação shadowing. Para simulação
+do componente slow fading, existem modelos muito
+detalhistas (SRIDHAR e BOHACEK, 2007
+GIORDANO et al., 2011), os quais são configurados
+em função de cada objeto do cenário, considerando os
+prédios e suas dimensões, veículos e suas dimensões
+e movimentos, entre outros, incluindo os fenômenos
+de difração e de reflexão.
+Entretanto, para simulações em grande escala, o
+mapeamento dos objetos é inviável. Todavia, uma
+maneira de generalizar a caracterização das
+condições de propagação nas redes urbanas é através
+da utilização do modelo de propagação shadowing
+unido ao modelo de
+erro Gilbert-Elliot
+(ANDREADIS e GIAMBENE, 2002 FENG et al.,
+2006). Em razão disso, neste trabalho optou-se por
+utilizar a junção dos modelos de propagação e de
+erro, para que desempenhem o comportamento
+similar na prática de perdas de bits em redes urbanas.
+A figura 5 mostra a taxa de entrega fim a fim de
+transmissão entre dois nós (um transmissor e outro
+receptor)  medida que a distância é aumentada em
+relação aos modelos de propagação. Tentou-se
+utilizar os valores iguais para os modelos. Foram
+transmitidos 1000 pacotes num intervalo de 100 ms
+entre cada transmissão, a fim de evitar problemas de
+colisão. O modelo freespace possui um
+comportamento de receber os pacotes numa
+probabilidade de 100 até certa distância
+configurada (120 metros) e, após essa distância, todos
+os pacotes são descartados. O modelo tworayground
+apresenta o mesmo comportamento, entretanto, a
+distância de recepção de pacotes com probabilidade
+de 100 é menor que comparado ao freespace (100
+metros). Por fim, o modelo shadowing, gera uma
+função log-normal em relação  entrega de pacotes.
+Alguns trabalhos na literatura exploraram o
+indicador RSSI a fim de calcular a distância do nó
+transmissor do pacote recebido. Segundo Srinivasan e
+Levis (2006) e Faheem et al. (2010), em razão dos
+recentes avanços no rádio, é possível alcançar uma
+intensidade de sinal que indique a distância do nó
+cada vez mais precisa.
+Além de estabelecer um critério para descarte de
+pacotes com baixa qualidade do sinal, o RSSI pode
+ser utilizado para tentar "idealizar" o modelo de
+propagação. Assim, acima de determinado valor (essa
+estratégia proposta adotou o que represente 100
+metros), pacotes podem ser descartados como se o
+próprio modelo de propagação não os tivesse ao
+alcance. A estratégia adotada é de não receber
+ISBN 978-85-8001-069-5
+
+pacotes que populem as tabelas de vizinhos e que
+mapeiam os números de gradientes dos nós se os
+pacotes recebidos forem equivalentes a um valor de
+RSSI que ultrapasse determinada distância. Portanto,
+quando um pacote está sendo encaminhado de acordo
+com o protocolo de roteamento aplicado, a chance de
+fluxos interrompidos é minimizada, mesmo
+utilizando-se
+um
+modelo
+de
+propagação
+realista.
+
+Figura 5. Modelo de propagação e estratégia de descarte
+baseada em RSSI
+
+Os parâmetros utilizados para configuração do
+modelo de erro são baseados nos encontrados em
+Bhagwat et al. (1997) (Pg  0,9999 e Pb  0,998), os
+quais para todos os fins, considera-se erro a falha na
+recepção de pelo menos um bit. Para se ter uma
+noção da perda em relação a taxa de entrega de
+pacotes, a uma distância utilizando-se o modelo de
+propagação shadowing que obtém 100 de sucesso,
+aplicando-se o modelo Gilbert-Elliot, a taxa
+modifica-se para 99,8.
+Neste experimento, foi aplicado o protocolo de
+roteamento do gradiente (nodes em direção ao sink)
+baseado na maior distância, previamente publicado
+em Pantoni e Brandão (2012). O protocolo é baseado
+numa lógica que escolhe os vizinhos para
+retransmissão de acordo com o número de tentativas
+ocorridasem função da maior distância. O próximo
+salto é selecionado de acordo com uma lista que é
+ordenada de forma decrescente (pela maior distância)
+e populada com todos vizinhos com exceção do
+último salto. Se for uma transmissão, será escolhido o
+nó mais distante do nó corrente do grupo de vizinhos
+de menor peso, isto é, o primeiro elemento da lista.
+Caso seja a primeira retransmissão, o segundo
+elemento mais distante será escolhido e assim por
+diante. Se não houver nós com menor peso em
+alguma seleção, o próximo grupo a ser ordenado em
+função da distância será escolhido de acordo com o
+próximo menor peso existente entre os vizinhos.
+A figura 6 apresenta o cenário aplicado no
+segundo experimento, gerado através do Google
+Maps API Family (2012).
+
+4016
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+segundos, pois existe um pequeno afunilamento
+mesmo com o tempo de 5 segundos de intervalo de
+transmissões, como mencionado anteriormente.
+
+Figura 6. Cenário do segundo experimento
+Figura 8. Média de atraso fim a fim
+
+Verifica-se que a energia remanescente da rede,
+mostrada no gráfico da figura 7, é maior para a
+estratégia de RIT em função do gradiente. Isso se
+deve a maior peridiocidade de envio de mensagens de
+RITDataReq para nós que possuem valores de
+gradiente mais altos. Como esperado, a energia da
+rede é degradada mais rapidamente no caso de não
+utilizar o mecanismo de RIT.
+
+Outra desvantagem do mecanismo de RIT,
+independente da estratégia aplicada, é a redução da
+taxa de entrega de pacotes fim a fim. Isso se deve a
+aplicação do modelo de propagação realista, uma vez
+que existe a possibilidade das mensagens periódicas
+de RITDataReq alcançarem uma distância de até 270
+metros, como mostrado na figura 5, a qual se refere
+ao modelo de propagação shadowing. Essas
+mensagens periódicas colidem com as mensagens de
+dados, degradando o desempenho do sistema.
+
+Figura 7. Energia remanescente dos sensores da rede somada
+
+Observa-se na figura 8 que o resultado referente 
+média de atraso também é superior quando é utilizado
+o RIT em função do gradiente comparado a outra
+estratégia de RIT, pois nós que se localizam
+próximos ao sink possuem ciclos mais curtos e
+percentagens maiores de duty cycle, o que permitem
+maior vazão dos pacotes na região de afunilamento.
+Mesmo com a simulação de transmissões não
+simultâneas, existe um pequeno afunilamento que
+ocorre em razão das retransmissões, que reflete
+também na taxa de garantia de entrega fim a fim
+(figura 9).
+Uma desvantagem evidenciada na figura 8 do
+mecanismo de RIT, independente da estratégia
+adotada, é o aumento do atraso fim a fim, devido s
+transmissões de dados que devem respeitar o período
+de ciclo macRITPeriod de cada dispositivo.
+A percentagem de pacotes entregues fim a fim é
+superior para a estratégia do RIT em função do
+gradiente, como mostrado na figura 9. Isso também
+pode ser explicado pelos ciclos mais curtos e
+percentagens maiores de duty cycle nos nós próximos
+ao sink se comparado ao RIT com ciclo fixo de 2
+
+ISBN 978-85-8001-069-5
+
+Figura 9. Taxa de entrega fim a fim
+
+6 Conclusão
+Resultados mostrados nesta seção em relação ao
+RIT, principalmente em relação ao prolongamento do
+tempo_de_vida, apresentados na tabela 2, levam a
+concluir que o mecanismo de RIT deve ser utilizado
+para redes urbanas.
+Em relação  latência, o protocolo gradiente
+baseado na maior distância aplicado ao RIT em
+função do gradiente é adequados, pois atendem aos
+requisitos especificados na RFC 5548 de dezenas de
+segundos, visto que a média de atraso apresentada no
+pior caso, isto é, de 70 segundos no caso de
+transmissões não simultâneas. Em relação ao tráfego
+convergente, referente ao protocolo baseado na maior
+distância, foi possível minimizar o consumo,
+entretanto, houve uma queda em relação  taxa de
+entrega.
+Nota-se também a viabilidade da aplicação de RIT
+em relação  taxa de entrega desde que aos
+
+4017
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+protocolos sejam aplicados a estratégia de RIT
+proposta, cuja denominação atribuída foi de RIT em
+função do gradiente. A taxas de entrega fim a fim
+relativa ao tráfego não simultâneo, de 80
+aproximadamente (figura 9), são satisfatórias pois
+acredita-se que um maior número de transmissões
+simultâneas só ocorreria na prática se houvesse uma
+pane geral nos nós).
+A conclusão de que tais taxas de entrega são
+satisfatórias devem-se ao fato que alguns trabalhos na
+literatura (FARUQUE et al., 2005 SUN et al., 2008
+LIN et al., 2010) apresentarem taxas de entrega em
+torno de 90 a 100 utilizando modelos de
+propagação ideais, tais como tworaygroud. Portanto,
+a estratégia de descarte baseada no valor de RSSI
+viabiliza a utilização do mecanismo de RIT para
+redes urbanas.
+Agradecimentos
+Os autores gostariam de agradecer ao IFSP e a
+EESCUSP pelas adequadas estruturas oferecidas 
+pesquisa e a FAPESP pelo financiamento.
+Referências Bibliográficas
+Andreadis, A. Giambene, G. (2002). Protocols for highefficiency wireless networks, Springer, 2002, 284 p.
+Blackard, K.L. Rappaport, T.S. Bostian, C.W. (1993)
+Measurements and models of radio frequency
+impulsive noise for indoor wireless communications.
+IEEE Journal on Selected Areas in Communications,
+v. 11, p. 991-1001, 1993.
+Bhagwat, P. Bhattacharya, P. Krishna, A. Tripathi, S.K.
+(1997). Using channel state dependent packet
+scheduling to improve tcp throughput over wireless
+LANs, Wireless Networks, v. 3, n. 1, p. 91102,
+1997.
+Dutta, P Dawson-Haggerty, S Chen, Y. Liang, C-J. M.
+Terzis, A. (2010). Design and Evaluation of a
+Versatile and Efficient Receiver-Initiated Link Layer
+for Low-Power Wireless. Proceedings of Conference
+On Embedded Networked Sensor Systems - SENSYS,
+Zurich, Switzerland.
+Faheem, A. Virrankoski, R. Elmusrati, M. (2010).
+Improving RSSI based distance estimation for
+802.15.4 wireless sensor networks. Proceedings of
+IEEE International Conference On Wireless
+Information Technology, Honolulu, HI, 2010.
+Faruque, J. Psounis, K. Helmy, A. (2005) Analysis of
+Gradient-based Routing Protocols in Sensor
+Networks. Proceedings of IEEE International
+Conference
+Distributed Computing In Sensor
+Systems. Marina del Rey, CA, USA.
+Feng, Q. Mcgeehan, J. Tameh,E.K. Nix, A.R. (2006).
+Path Loss Models for Air-to-Ground Radio Channels
+in Urban Environments. Proceedings of IEEE
+Vehicular Technology Conference, Melbourne, USA,
+2006.
+Giordano, E Frank, R. Pau, Giovanni Gerla, M.(2011).
+CORNER A Radio Propagation Model for VANETs
+in Urban Scenarios. Proceedings of the IEEE, v. 99, n.
+7.
+
+ISBN 978-85-8001-069-5
+
+Google Maps API Family (2012). Available at
+<httpcode.google.comintlenapismaps>. Access
+on March 2012.
+IEEE 802.15.4 Draft Rev 05 (2010). IEEE Std 802.15.4eD0.01r5 IEEE Draft Standard for Information
+Technology - Telecommunications and Information
+Exchange Between Systems - Local and Metropolitan
+Area Networks - Specific Requirements - Part 15.4
+Wireless Medium Access Control (MAC) and
+Physical Layer (PHY) Specifications for Low Rate
+Wireless Personal Area Networks (WPANs), IEEE
+Computer Society, IEEE Unapproved Draft Std
+802.15.4e-D0.01, 2010.
+IEEE 802.15 WPAN TASK GROUP 4E (2012). Available
+at <httpwww.ieee802.org15
+pubTG4e.html>. Access on 02 april. 2012.
+Jennic (2011). Calculating data rates in an IEEE 802.15.4based network. Application Note, 2006. Available at
+<httpwww.jennic.comsupportapplicationnotesjnan-1035calculating dataratesinanieee802154basednetwork>. Access on April 2011.
+Li, J Zhang, D. Guo, L Ji, S. Li, Y. (2010). ARM an
+Asynchronous Receiver-initiated Multichannel MAC
+Protocol with Duty Cycling for WSNs. Proceedings of
+The 29th Ieee International Performance Computing
+And Communications Conference, 2010.
+Lin,C.-H. Yuan,S.-A. Chiu,S.W. Tsai, M.J. (2010).
+ProgressFace An Algorithm to Improve Routing
+Efficiency of GPSR-Like Routing Protocols in
+Wireless Ad Hoc Networks. IEEE Transactions on
+Computers, v. 59, n. 6, Jun. 2010.
+MC1321X (2009). Freescale Semiconductor Technical
+Data for MC1321x Rev. 1.8 082009. Technical
+specification for device. 2008. 70 p.
+Monowar, M. M. Alam, M.M. Rahman, O. Hong C.S.
+Lee, S. (2010). A load-aware energy-efficient and
+throughput-maximized asynchronous duty cycle MAC
+for wireless sensor networks. Annals of
+Telecommunications, v.65, n. 11-12, p. 777-794,
+2010.
+NS2 (2012). Available <httpwww.isi.edunsnamns>.
+March, 2012.
+Pantoni, R.P. Brandao, D. (2012). Confirmation-Based
+Routing For Convergent Traffic Intended for Urban
+Networks. Proceedings of IEEE International
+Conference on Industrial Technology, Athens, Greece,
+2012.
+RFC 5548 (2009). Routing Requirements for Urban LowPower
+and
+Lossy
+Networks.
+Avalible
+<httpdatatracker.ietf.orgdocrfc5548.txt>. Access
+em 30 jul. 2010.
+Sridhar, V. Bohacek, S. (2007). Realistic propagation
+simulation of urban mesh networks. Computer
+Networks, v. 51, n. 12, pp. 33923412, 2007.
+Srinivasan, K. Levis, P. (2006). RSSI is under appreciated.
+Proceedings of Workshop On Embedded Networked
+Sensors, Cambridge, MA, 2006.
+Sun, Y. Gurewitz, O. Johnson, D. B. (2008). RI-MAC A
+Receiver-Initiated Asynchronous Duty Cycle MAC
+Protocol for Dynamic Traffic Loads in Wireless
+Sensor Networks. Proceedings of Conference On
+Embedded Networked Sensor Systems.
+Yang, G.Z. (2006). Body sensor networks. Springer. 528 p.
+
+4018

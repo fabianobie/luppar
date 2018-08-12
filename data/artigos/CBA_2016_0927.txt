@@ -1,0 +1,587 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+CLASSIFICAÇÃO DE SONS PULMONARES BASEADA EM MÁQUINAS DE VETORES SUPORTE E
+ANÁLISE NO DOMÍNIO DA FREQUÊNCIA
+FLÁVIO P. GOMES, BRUNO H. G. BARBOSA
+Departamento de Engenharia, Universidade Federal de Lavras
+Câmpus Universitário, Caixa Postal 3037, 37200-000, Lavras, MG, Brasil
+E-mails fpingas@engautomacao.ufla.br, brunohb@deg.ufla.br
+Abstract The analysis of lung sounds during medical diagnosis is a well-established practice in Medicine, that still barely
+makes use of available technology that could assist in this process. Motivated by this deficiency, researchers develop new systems and solutions aiming to improve this analysis. This paper presents the creation of a model to perform classification of lung
+sounds into 5 different classes, normal lung sounds, course crackles, fine crackles, monophonic wheezes and polyphonic wheezes. The model is based upon the use of support_vector_machines for classification and frequency components as features. Genetic
+algorithms are used for feature selection, choosing for most relevant frequency components. Results show that the method proposed achieves high accuracy when classifying lung sounds.
+Keywords Support Vector Machine, Lung Sounds, Pattern Recognition, Genetic Algorithm, Feature Extraction.
+Resumo A análise de sons_pulmonares no diagnóstico médico é uma prática bem estabelecida, mas ainda pouco adaptada ao
+uso de sistemas_inteligentes que auxiliem neste processo. Motivados por tal deficiência, pesquisadores desenvolvem novos sistemas e soluções visando aperfeiçoar esta análise. Este trabalho desenvolve a criação de um modelo para classificação de eventos em sons_pulmonares em 5 classes, som normal de respiração, estertor grosso, estertor fino, sibilo monofônico e sibilo polifônico. O modelo se baseia no uso de máquinas de vetores suporte para classificação e de componentes de frequência como características. Algoritmos genéticos são utilizados para redução de dimensionalidade, selecionando as componentes de frequência
+que melhor descrevem os sinais. Resultados obtidos demonstram que a abordagem utilizada atinge alta acurácia na classificação
+de sons_pulmonares.
+Palavras-chave .
+
+1
+
+Introdução
+
+Sons pulmonares, definidos como todos os sons
+relacionados a respiração ouvidos ou detectados sobre a parede torácica, são valiosos indicadores de
+anomalias no sistema respiratório. Estes sons_pulmonares podem ser divididos em sons normais de respiração ou sons adventícios (anormais), cuja presença
+usualmente indica desordem pulmonar (Sovijarvi et
+al. 2000).
+A análise de sons respiratórios no processo de
+diagnóstico médico é uma prática comum e a detecção e distinção adequada de sons adventícios se torna
+necessária para o diagnóstico correto (Reichert et al.
+2008). A análise feita durante a ausculta convencional é altamente dependente da habilidade e experiência do examinador com o processo. Kiyokawa et al.
+(2001) discutem como a detecção de sons respiratórios anormais se torna difícil em condições não ideais, ao ponto que a superposição de sons torna os
+sinais de interesse inaudíveis.
+Com o avanço tecnológico e desenvolvimento de
+métodos capazes de captar sons respiratórios com
+qualidade representativa, a análise desses sinais acústicos ganha espaço para desenvolvimento (Pasterkamp et al. 1997 Reichert et al. 2008), seja na busca
+por tornar sons_pulmonares sinais suficientes para
+diagnostico confiável ou no estudo da acústica do
+sistema respiratório.
+
+ISSN 2525-8311
+
+Vários pesquisadores têm aplicado técnicas de
+reconhecimento_de_padrões visando detecção ou classificação objetiva de anomalias em sons respiratórios.
+Gurung et al. (2011) realizam uma pesquisa sobre
+estudos relevantes que implementam a classificação
+automática de sons respiratórios adventícios para
+auxílio em diagnóstico, detalhando a qualidade da
+metodologia aplicada e os resultados obtidos. Conforme discutido por Reichert et al. (2008), este campo de pesquisa sofre com a falta de um nível de padrão. Esforços coletivos são feitos para padronizar a
+qualidade de gravação de sons respiratórios ou para
+normalizar a nomenclatura de termos relevantes na
+área.
+Neste trabalho será apresentado uma metodologia para criação de um modelo para classificação
+automática de eventos em sons_pulmonares, e discutido a qualidade deste modelo. É utilizado maquinas
+de vetores suporte (Support Vector Machine - SVM)
+(Boser et al. 1992 Cortes et al. 1995) como classificador, coeficientes da Transformada Rápida de Fourier (Fast Fourier Transform - FFT) como características extraídas do sinal e Algoritmos Genéticos (Holland, 1975) para seleção_de_características visando
+redução de dimensionalidade.
+Na próxima seção é realizada a contextualização
+do problema. A seção 3 descreve a implementação do
+método proposto. A seção 4 apresenta os resultados
+obtidos na implementação. A seção 5 apresenta as
+conclusões.
+
+3236
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+2
+
+Descrição do Problema
+
+A classificação realizada neste trabalho visa a
+identificação de 5 classes de sons definidos pela literatura som normal de respiração, estertor grosso,
+estertor fino, sibilo monofônico e sibilo polifônico.
+A Figura 1 ilustra eventos das classes de sons citadas, retirados do banco_de_dados que foi utilizado
+no trabalho.
+
+O estertor é um som curto e explosivo, geralmente gerado pela abertura de vias aéreas respiratórias que se encontravam fechadas (por motivo anormal) durante a inspiração. Baseado em sua duração, o
+estertor pode ainda ser definido como estertor fino
+(menor duração) ou estertor grosso (maior duração)
+(Reichert et al. 2008). O sinal estertor é caracterizado
+em vários níveis de frequência e duração (Mori et al.
+1980 Munakata et al. 1991 Piirila et al. 1995), o que
+torna difícil estabelecer um conceito definitivo.
+O sibilo é caracterizado por forma de onda periódica, com frequência fundamental acima de 100
+Hz. Se um sibilo é definido por basicamente uma
+frequência, este é classificado como sibilo monofônico caso o sibilo possua múltiplas frequências relevantes, este é classificado como sibilo polifônico
+(Sovijarvi et al. 2000).
+3
+
+Método Proposto
+
+A metodologia para criação do modelo de classificação é dividida nas seguintes etapas A criação de
+amostras a partir do banco_de_dados, a extração de
+características que serão entrada para o modelo, a
+separação de dados para treinamento e validação,
+criação do modelo com seleção de hiperparâmetros e
+seleção_de_características, treinamento e validação do
+modelo proposto.
+Como o banco_de_dados utilizado é relativamente pequeno, a metodologia é desenvolvida com foco
+em assegurar que o modelo construído é capaz de
+generalizar, evitando sobre-ajuste (Overfit), que pode
+ocorrer quando dados de teste são utilizados em processos anteriores a validação do modelo final
+(Cawley et al. 2010 Rao et al. 2008 Varma et al.
+2006).
+3.1 Criação de Amostras
+
+Figura 1. Eventos de sons_pulmonares (a) Normal, (b) Estertor
+Grosso, (c) Estertor Fino, (d) Sibilo Monofônico e (e) Sibilo Polifônico.
+
+Um som normal de respiração, medido pela parede torácica, é caracterizado por um leve som ruidoso de baixa frequência durante a inspiração e é quase
+inaudível durante a expiração (Sovijarvi et al. 2000).
+O som normal de respiração tem frequência dominante abaixo dos 100 Hz (Gavriely et al. 1981), mas pode ser detectado até acima de 1000 Hz (Pasterkamp
+et al. 1996).
+Entre diferentes tipos de sons adventícios estão
+os estertores e o sibilos.
+ISSN 2525-8311
+
+O banco_de_dados utilizado foi obtido de
+(Lehrer, 2004), onde sons respiratórios normais, estertores e sibilos estão disponíveis. Todas as faixas
+estão amostradas em 8000 Hz.
+Amostras de 512 pontos, representando 64 ms,
+foram retiradas de faixas originais e manualmente
+classificadas de acordo com a presença, ou não, de
+um som adventício. Todos os sinais foram individualmente normalizados com média nula e variância
+unitária.
+Foram obtidas 450 amostras de som normal de
+respiração, 148 amostras de estertor grosso, 71 amostras de estertor fino, 71 amostras de sibilo monofônico e 100 amostras de sibilo polifônico, totalizando
+840 amostras.
+Considerando o uso planejado da Transformada
+Rápida de Fourier (Fast Fourier Transform - FFT),
+foi aplicado uma função janela sobre amostras coletadas. O efeito de fuga espectral na FFT, a criação de
+componentes de frequência não presentes no sinal
+
+3237
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+original, pode ocorrer devido a existência de componentes de frequência que não encaixam corretamente
+na faixa de precisão da FFT aplicada, ou com a descontinuidade do ponto inicial com o ponto final do
+sinal após o janelamento. O uso de uma função janela
+adequada tende a atenuar o efeito da fuga espectral
+(Harris, 1978). Neste trabalho foi utilizado a janela
+Tukey, que apresenta um compromisso adequado
+entre resolução e resposta_dinâmica para a aplicação.
+A Figura 2 exemplifica a aplicação de uma janela Tukey sobre um sinal sibilo monofônico em comparação ao sinal original sob uma janela retangular.
+Nota-se como a atenuação do sinal no domínio do
+tempo resulta em um espectro de amplitude suavizado. A redução da fuga espectral facilita a classificação, removendo parte dos ruídos que afetam os dados
+de interesse.
+
+amostra é obtido então um vetor com 512 características, reduzido a 256 após remover a simetria conjugada.
+Sobre as características extraídas, a única manipulação realizada foi o escalonamento linear para a
+faixa -1,1, com o objetivo de facilitar manipulações
+matemáticas e evitar que valores de diferentes escalas
+perdessem representação (Hsu et al. 2003).
+3.3 Separação do Banco de Dados
+Neste ponto os dados para treinamento e validação estão disponíveis. Para diminuir possibilidades
+de overfit, o banco_de_dados é separado em dados que
+serão utilizados na criação do modelo (dados de treinamento), e em dados que serão utilizados na validação (dados de teste).
+É utilizado um método de validação_cruzada aninhada (Nested Cross Validation) para lidar adequadamente com o banco_de_dados.
+Uma validação_cruzada k-fold externa aplicada
+sobre toda a extensão do banco_de_dados separa dados de treinamento de dados de teste. Nota-se que
+esta validação_cruzada implica que k diferentes modelos finais serão treinados. A análise da performance de múltiplos modelos finais criados pelo mesmo
+método auxilia na avaliação da eficácia do método
+proposto.
+A validação_cruzada k-fold interna, aplicada sobre os dados de treinamento, auxilia na seleção de
+hiperparâmetros e subsequente criação do modelo
+final.
+3.4 Seleção do Classificador
+
+Figura 2. Aplicação de duas janelas em uma amostra de sibilo
+monofônico e sua representação no domínio da frequência.
+
+3.2 Extração de Características
+Baseado no trabalho de Biau et al. (2005), que
+demonstra a validade de utilizar coeficientes da série
+de Fourier de um sinal para sua classificação, foi
+utilizado os módulos da FFT do som respiratório
+como características para classificação. Para cada
+
+ISSN 2525-8311
+
+Nesta etapa o banco_de_dados foi dividido com
+uma validação_cruzada externa. Apenas dados classificados como para treinamento são utilizados. É realizada a seleção de hiperparâmetros do classificador
+selecionado.
+No processo de seleção de modelo tratamos da
+otimização de hiperparâmetros em dois modos, a
+seleção_de_características relevantes e a seleção de
+hiperparâmetros do classificador selecionado.
+O classificador utilizado, a máquina de vetores
+suporte (SVM), busca construir um conjunto de hiperplanos em um espaço dimensional superior que
+delimita com máxima margem os dados de entrada de
+treinamento de acordo com suas classes. Este conjunto de hiperplanos se torna a referência para a classificação de novos dados. Os hiperplanos são marcados
+por dados de treinamento que formam suas margens,
+chamados vetores suporte (Cortes et al. 1995).
+Para a implementação do classificador, foi utilizado a biblioteca LIBSVM (Chang et al. 2011).
+A função de kernel utilizada na SVM foi a função_de_base_radial (Radial Basis Function  RBF),
+baseado nos trabalhos de Keerthi et al. (2003) e Lin
+et al. (2003).
+
+3238
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+O classificador estabelecido possui dois hiperparâmetros para otimização, C, um parâmetro de penalização, e , a largura do kernel. Esta otimização é
+realizada conforme indicado pela documentação do
+LIBSVM, com validação_cruzada sobre os dados de
+treinamento, dando prioridade a maior taxa de acertos e menor número total de vetores suporte. O par
+Cf, f selecionado é utilizado como parâmetro para o
+modelo final.
+3.5 Seleção de Características
+Consideramos agora a redução de dimensionalidade do vetor de características. Originalmente este
+possui 256 pontos, descrevendo 256 componentes de
+frequência. A seleção_de_características tem como
+objetivo diminuir o custo_computacional da classificação sem comprometer a qualidade desta, idealmente atingindo até melhores níveis de precisão na classificação caso alguma característica frequentemente
+carregue algum tipo de informação problemática
+(Guyon et al. 2003 Saeys et al. 2007).
+A seleção foi realizada com Algoritmo Genético
+(AG), um algoritmo de otimização que busca minimizar uma função manipulando uma população de
+soluções candidatas (Holland, 1975). Para esta finalidade, os indivíduos do AG são vetores binários que
+indicam se a característica é utilizada ou não.
+A avaliação de cada indivíduo é dada por
+
+Avaliação  MCll  0.0004 * RgPar
+
+(1)
+
+Onde MCll é a média do Multi-Class Logarithmic Loss mais seu desvio padrão, calculado sobre a
+performance do indivíduo em uma validação_cruzada
+com um SVM com parâmetros Cf, f como classificador. RgPar é o número de características utilizadas. Deste modo, a função de avaliação (1) é a função a ser minimizada pelo AG, e contêm um termo
+para minimizar o erro de classificação e um termo
+pesado para favorecer indivíduos que utilizam menos
+características.
+
+4
+
+Os procedimentos descritos anteriormente são
+aplicados e seus resultados apresentados.
+A validação_cruzada externa foi aplicada com 5
+folds. A divisão foi refeita 2 vezes, totalizando 15
+modelos validados. A criação de múltiplos modelos é
+feita com o intuito de demonstrar que os resultados
+obtidos não representam overfit do modelo, já que
+cada um é criado e validado com conjuntos de dados
+distintos.
+Na validação observamos a eficácia do classificador sobre dados de teste e do algoritmo_genético
+como método para seleção_de_características. É comparado então a complexidade e a qualidade dos modelos encontrados e posto em perspectiva o efeito da
+seleção_de_características.
+Como medida de acurácia será utilizada a média
+harmônica entre precisão e sensibilidade de cada
+classe, ou F1 Score. Nota-se que no banco_de_dados
+utilizado as classes não estão igualmente distribuídas.
+Para diminuir o efeito desta distribuição na medida
+de performance, a medida geral é tomada pela média
+das medidas individuais sem ponderação.
+A Tabela 1 mostra a matriz de confusão resultante da validação dos 15 modelos treinados, e a sensibilidade da classificação de cada tipo de som pulmonar.
+Tabela 1. Matriz de confusão para os 15 modelos obtidos SRN
+Som respiratório normal EG Estertor Grosso EF Estertor Fino
+SM Sibilo Monofônico SP Sibilo Polifônico.
+
+SRN
+
+EG
+
+EF
+
+SM
+
+3.6 Treinamento e Validação do Modelo
+Um modelo com os parâmetros Cf, f é treinado
+com as características indicadas pelo melhor individuo encontrado pelo algoritmo_genético, com todos
+os dados para treinamento. Finalmente, este modelo
+final é testado com os dados separados para teste na
+etapa inicial da validação_cruzada.
+Todo o processo de seleção de modelo e esta
+etapa final de treinamento e validação é repetida conforme o número de vezes configurada na validação
+cruzada externa.
+
+ISSN 2525-8311
+
+Resultados
+
+SP
+
+Sensibilidade
+
+SRN
+89.73
+
+0.59
+0.00
+
+0.00
+0.40
+
+0.63
+0.00
+
+0.00
+0.00
+
+0.00
+0.997
+
+0.007
+
+EG
+0.00
+
+0.00
+29.27
+
+0.70
+0.00
+
+0.00
+0.00
+
+0.00
+0.27
+
+0.46
+0.989
+
+0.016
+
+EF
+0.27
+
+0.59
+0.00
+
+0.00
+13.67
+
+0.82
+0.07
+
+0.26
+0.00
+
+0.00
+0.962
+
+0.046
+
+SM
+0.00
+
+0.00
+0.00
+
+0.00
+0.13
+
+0.35
+13.93
+
+0.88
+0.00
+
+0.00
+0.981
+
+0.057
+
+SP
+0.00
+
+0.00
+0.33
+
+0.49
+0.00
+
+0.00
+0.20
+
+0.56
+19.73
+
+0.46
+0.987
+
+0.023
+
+O F1 Score para estes dados é de 0.9841 
+0.0134. O número médio de características utilizadas
+foi de 94.33  6.48. O número médio de vetores suporte utilizado pelos modelos foi de 133.87  10.54.
+Para comparação, são treinados outros 15 modelos em mesmas condições, exceto que estes não passam pela etapa de seleção_de_características. O F1
+
+3239
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Score obtido foi de 0.9896  0.0147. O número médio de vetores suporte utilizado foi de 181.80 
+18.56.
+Observa-se que os modelos escolhidos obtiveram
+resultados estáveis mesmo durante um processo de
+validação cruzado, um indicador de boa capacidade
+de generalização. Os modelos que utilizam de características selecionadas são consideravelmente mais
+simples com nenhuma deficiência em performance,
+validando o uso do algoritmo_genético.
+Os resultados encontrados são satisfatórios e em
+linha com outros da literatura, como discutidos por
+Gurung et al. (2011), Serbes et al. (2013) e Naves
+(2015). A classificação de pequenas janelas de som
+com base em componentes de frequência tem como
+vantagem a simplicidade do método de extração de
+características como também discutido por Oweis et
+al. (2015).
+5
+
+Conclusão
+
+Neste trabalho foi apresentado uma metodologia
+para criação de um modelo para classificação de sons
+pulmonares em 5 classes distintas, baseado em componentes de frequência e máquinas de vetores suporte. A metodologia inclui a utilização de um algoritmo
+genético para selecionar características pertinentes.
+O trabalho propõe diferencialmente a combinação particular dos métodos descritos como uma solução altamente eficiente e simples para o problema
+descrito.
+O uso de coeficientes resultantes da FFT como
+características tem a vantagem de utilizar de um algoritmo computacionalmente eficiente.
+A máquina_de_vetores_suporte como classificador
+não é afetada pela dificuldade de treinamento com
+bancos de dados pequenos, como é o caso com redes
+neurais artificiais.
+Para futuro desenvolvimento é notável a possibilidade de utilizar diferentes classificadores e diferentes métodos para seleção_de_características, seja em
+busca de melhor performance ou menor custo_computacional para a implementação do software em um
+sistema_embarcado.
+A utilização da mesma metodologia para criar
+um modelo a partir de um banco_de_dados mais extenso é um ponto tentativo. O escopo do modelo proposto é servir como solução adequada para uma situação de uso real, sendo necessário então um banco de
+dados representativo.
+Agradecimentos
+Agradecimento  FAPEMIG (Fundação de Amparo  Pesquisa do Estado de Minas Gerais) pela
+bolsa de pesquisa e auxílio concedido.
+
+ISSN 2525-8311
+
+Referências Bibliográficas
+Biau, G., Bunea, F. and Wegkamp, M.H., 2005.
+Functional classification in Hilbert spaces.
+Information Theory, IEEE Transactions on,
+51(6), pp.2163-2172.
+Boser, B.E., Guyon, I.M. and Vapnik, V.N., 1992,
+July. A training algorithm for optimal margin
+classifiers. In Proceedings of the fifth annual
+workshop on Computational learning theory
+(pp. 144-152). ACM.
+Cawley, G.C. and Talbot, N.L., 2010. On over-fitting
+in model selection and subsequent selection bias
+in performance evaluation. The Journal of
+Machine Learning Research, 11, pp.2079-2107.
+Chang, C.C. and Lin, C.J., 2011. LIBSVM a library
+for support_vector_machines. ACM Transactions
+on Intelligent Systems and Technology (TIST),
+2(3), p.27.
+Cortes, C. and Vapnik, V., 1995. Support-vector
+networks. Machine learning, 20(3), pp.273-297.
+Gavriely, N., Palti, Y. and Alroy, G., 1981. Spectral
+characteristics of normal breath sounds. Journal
+of Applied Physiology, 50(2), pp.307-314.
+Gurung, A., Scrafford, C.G., Tielsch, J.M., Levine,
+O.S. and Checkley, W., 2011. Computerized
+lung sound analysis as diagnostic aid for the
+detection of abnormal lung sounds a systematic
+review and meta-analysis. Respiratory medicine,
+105(9), pp.1396-1403.
+Guyon, I. and Elisseeff, A., 2003. An introduction to
+variable and feature selection. The Journal of
+Machine Learning Research, 3, pp.1157-1182.
+Harris, F.J., 1978. On the use of windows for
+harmonic analysis with the discrete Fourier
+transform. Proceedings of the IEEE, 66(1),
+pp.51-83.
+Holland, J.H., 1975. Adaptation in natural and
+artificial systems an introductory analysis with
+applications to biology, control, and artificial
+intelligence. U Michigan Press.
+Hsu, C.W., Chang, C.C. and Lin, C.J., 2003. A
+practical guide to support vector classification.
+Technical Report, Department of Computer
+Science and Information Engineering, National
+Taiwan
+University.
+Available
+at
+httpwww.csie.ntu.edu.twcjlinpapersguideg
+uide.pdf Accessed Sept. 3, 2016.
+
+3240
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Keerthi, S.S. and Lin, C.J., 2003. Asymptotic
+behaviors of support_vector_machines with
+Gaussian kernel. Neural computation, 15(7),
+pp.1667-1689.
+
+Reichert, S., Gass, R., Brandt, C. and Andrs, E.,
+2008. Analysis of respiratory sounds state of the
+art. Clinical Medicine Insights. Circulatory,
+Respiratory and Pulmonary Medicine, 2, p.45.
+
+Kiyokawa, H., Greenberg, M., Shirota, K. and
+Pasterkamp, H., 2001. Auditory detection of
+simulated crackles in breath sounds. CHEST
+Journal, 119(6), pp.1886-1892.
+
+Saeys, Y., Inza, I. and Larraaga, P., 2007. A review
+of feature selection techniques in bioinformatics.
+bioinformatics, 23(19), pp.2507-2517.
+
+Lehrer, S., 2004. Entendendo os sons_pulmonares. 3
+edição. São Paulo Editora Roca Ltda.
+Lin, H.T. and Lin, C.J., 2003. A study on sigmoid
+kernels for SVM and the training of non-PSD
+kernels by SMO-type methods. submitted to
+Neural Computation, pp.1-32.
+Mori, M., Kinoshita, K., Morinari, H., Shiraishi, T.,
+Koike, S. and Murao, S., 1980. Waveform and
+spectral analysis of crackles. Thorax, 35(11),
+pp.843-850.
+
+Serbes, G., Sakar, C.O., Kahya, Y.P. and Aydin, N.,
+2013. Pulmonary crackle detection using time
+frequency and timescale analysis. Digital
+Signal Processing, 23(3), pp.1012-1021.
+Sovijarvi, A.R.A., Dalmasso, F., Vanderschoot, J.,
+Malmberg, L.P., Righini, G. and Stoneman,
+S.A.T., 2000. Definition of terms for
+applications of respiratory sounds. European
+Respiratory Review, 10(77), pp.597-610.
+Varma, S. and Simon, R., 2006. Bias in error
+estimation when using cross-validation for model
+selection. BMC bioinformatics, 7(1), p.91.
+
+Munakata, M., Ukita, H., Doi, I., Ohtsuka, Y.,
+Masaki, Y., Homma, Y. and Kawakami, Y.,
+1991. Spectral and waveform characteristics of
+fine and coarse crackles. Thorax, 46(9), pp.651657.
+Naves, R., 2015. Um estudo de reconhecimento de
+sons_pulmonares baseado em técnicas de
+inteligência
+computacional.
+Universidade
+Federal
+de
+Lavras.
+Available
+at
+httprepositorio.ufla.brjspuihandle110496
+Accessed Sept. 3, 2016
+Oweis, R.J., Abdulhay, E.W., Khayal, A. and Awad,
+A., 2015. An alternative respiratory sounds
+classification system utilizing artificial neural
+networks. Biomedical journal, 38(2), p.153.
+Pasterkamp, H., Powell, R.E. and Sanchez, I., 1996.
+Lung sound spectra at standardized air flow in
+normal infants, children, and adults. American
+journal of respiratory and critical care
+medicine, 154(2), pp.424-430.
+Pasterkamp, H., Kraman, S.S. and Wodicka, G.R.,
+1997. Respiratory sounds advances beyond the
+stethoscope. American journal of respiratory
+and critical care medicine, 156(3), pp.974-987.
+Piirila, P. and Sovijarvi, A.R., 1995. Crackles
+recording, analysis and clinical significance.
+European Respiratory Journal, 8(12), pp.21392148.
+Rao, R.B., Fung, G. and Rosales, R., 2008, April. On
+the
+Dangers
+of
+Cross-Validation.
+An
+Experimental Evaluation. In SDM (pp. 588-596).
+
+ISSN 2525-8311
+
+3241

@@ -1,0 +1,971 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+IMPLEMENTAÇÃO DE UM ALGORITMO DE DIVISÃO SILÁBICA AUTOMÁTICA PARA
+ARQUIVOS DE FALA NA LÍNGUA PORTUGUESA
+E.L.F. DA SILVA E H.M. DE OLIVEIRA
+Departamento de Engenharia Eletrônica e Sistemas, UFPE
+lizandrafernandes@hotmail.com,hmo@ufpe.br
+Abstract
+ A new algorithm for automatic syllabic splitting in the Portuguese language is proposed, which is based on the
+envelope of the speech signal of an audio file. A computational implementation in MatlabTM is presented and made available at
+the URL httpwww2.ee. ufpe.brcodecdivisaosilabica.html. Due to its straightforwardness, the proposed method is very attractive for embedded_systems (e.g. i-phones). It can also be used as a screen to assist more sophisticated methods. Voice excerpts
+containing more than one syllable and identified by the same envelope are named as super-syllables and they are separated subsequently. The results indicate which samples corresponds to the beginning and end of each detected syllable. Preliminary tests
+were performed to fifty words at an identification rate circa 70 (further improvements may be incorporated to treat particular
+phonemes). This algorithm is also particularly useful in voice command systems, as a tool in the teaching of Portuguese language
+or even for patients with speech pathology.
+Keywords
+ syllabic division, Portuguese language, speech processing, voice-to-text.
+Resumo
+ Um novo algoritmo para divisão_silábica automática a partir de arquivos de fala em língua_portuguesa é proposto,
+com base na envoltória do sinal de fala. Uma implementação computacional em Matlab é apresentada e disponibilizada na URL
+httpwww2.ee.ufpe.brcodecdivisaosilabica.html. Pela sua simplicidade, o método proposto é atrativo para implementações
+em sistemas_embarcados (e.g. i-phones). Pode também ser usado como triagem, para auxiliar métodos mais sofisticados. Trechos
+longos contendo mais de uma sílaba e identificados com uma mesma envoltória são chamados de supersilabas e são separados
+posteriormente. Os resultados identificam as amostras correspondentes ao inicio e o fim de cada silaba detectada. Foram realizados testes preliminares com meia centena de palavras, com uma taxa de identificação cerca de 70 porém melhorias podem ser
+incorporadas para tratar fonemas nos quais o envelope não é o principal parâmetro na identificação. Este algoritmo é particularmente útil em sistemas com comandos de voz, ou como ferramenta de apoio no ensino da língua_portuguesa, ou ainda para auxiliar pacientes em tratamento fonoaudiológico.
+Palavras-chave
+ .
+
+1
+
+Introdução
+
+Com o advento de circuitos mais eficiente e com
+a crescente disponibilização de novas técnicas de
+processamento_de_sinais (Vasegnhi, 2007, HolmesHolmes, 2001, OppenheimSchafer, 2010), o
+desenvolvimento de novos aplicativos envolvendo a
+síntese de fala, o reconhecimento de locutor, tradutores automáticos, a conversão de fala (texto-fala eou
+fala-texto), vêm se proliferando (Taylor, 2003, dos
+Santos, 1997, Soterode Oliveira, 2009). As aplicações de sistemas envolvendo conversão de fala em
+texto de língua_portuguesa já são promissoras (Fraga,
+2001, Silva et al., 2008, Silva et al., 2009), mas os
+atuais sistemas ainda carecem de melhorias (Neto,
+2005). Alguns sistemas de conversão fala-texto para
+a língua Portuguesa já foram sugeridos (e.g. (Fraga,
+2001)) e eles tradicionalmente envolvem três etapas
+i) segmentação (sub)silábica ii) conversão dos fonemas segmentados em texto e iii) verificação ortográfica e gramatical das palavras e sentenças identificadas (Huang et al., 2001). A ênfase e foco deste
+trabalho se concentram na etapa de segmentação dos
+sinais de fala com vocabulário ilimitado para uma
+divisão_silábica automática (Gouveia et al., 2000).
+Rosenberg e colaboradores (Rosenberg et al., 1983)
+propuseram um sistema de reconhecimento de palavras através da concatenação de meias-sílabas definidas previamente, usando modelos de referência (templates), com taxas de erro no reconhecimento de subsílabas na faixa 18-33. Outros sistemas para reco-
+
+ISBN 978-85-8001-069-5
+
+nhecimento de palavras isoladas foram propostos
+com base no empenamento temporal dinâmico
+(Lipeika et al., 2002). Frequentemente, a segmentação automática de fala emprega modelos nos quais as
+subunidades fonéticas (dependentes de contexto) são
+representadas empregando Modelos Ocultos de Markov - HMM (Selmini, 2008, dos SantosAlcaim,
+2001). Embora as taxas de acerto destes sistemas
+sejam aceitáveis, os algoritmos empregados são
+computacionalmente intensivos, especialmente para
+aplicações em tempo_real ou no desenvolvimento em
+sistemas_embarcados (iPods, iPhones, etc.). A proposta é introduzir uma técnica alternativa bastante
+simples (quando comparada  HMM ou técnicas
+envolvendo análise Cepstral), a qual pode funcionar
+como um passo preliminar a ser incorporado nos
+algoritmos existentes. Não se trata de uma concorrência ou alternativa direta para os sistemas existentes (nem as taxas de acerto nem as complexidades
+estão no mesmo patamar), mas sim de uma maneira
+de concretizar um pré-processamento. Então, após a
+aplicação desta técnica inicial, outras estratégias
+poderão ser incorporadas. Apesar do objetivo modesto, este método pode aumentar a velocidade dos
+sistemas fala-texto (para a língua_portuguesa) já
+propostos. Após esta breve introdução que situa o
+problema, a Seção 2 descreve a aquisição e o préprocessamento_de_fala. Em particular, é descrita a
+implementação de um procedimento para a identificação da envoltória do sinal de voz, com base em
+uma descarga linear do detector de envoltória. A
+
+4161
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Seção 3 apresenta uma proposta para a localização
+das sílabas no sinal de áudio. A identificação de
+supersílabas e a sua quebra em sílabas menores são
+descritas na Seção 4. Finalmente, alguns testes de
+validação do sistema proposto são apresentados juntamente com uma análise preliminar do desempenho
+do divisor silábico, além das conclusões.
+2 Aquisição e pré-processamento dos sinais
+2.1 Aquisições e Pré-processamento de Fala
+Os dados foram coletados em uma sala isolada com nível de ruído controlado. A coleta foi
+realizada com o auxílio de um computador HP Intel
+Atom, sem uso de fone de ouvido. Foram realizadas
+49 coletas distintas por indivíduos do sexo masculino
+e feminino. O aplicativo utilizado para a captura da
+fala do colaborador foi o Audacity 1.3. As gravações geraram arquivos em extensão .wav. A Figura 1
+ilustra a interface do programa Matlab para o arquivo de áudio contendo a palavra departamento. O
+pré-processamento_de_fala também foi realizado com
+o auxílio do mesmo aplicativo, consistindo em eliminar os trechos de silêncio no início e no final de cada
+arquivo gravado.
+
+ 1 se x < 0
+
+sign( x )   0 se x  0
+ 1 se x > 0
+
+
+(1)
+
+em que, cada valor de amostra xn  é convertido
+para xn   (1 + sign ( xn ))  2 . A Figura 2 ilustra a
+interface_gráfica do programa Matlab do sinal de
+onda retificado para a palavra batata (adotada na
+ilustração ao invés da palavra departamento, devido a sua simplicidade).
+Após o cálculo da retificação de meia onda, foi
+efetuado o cálculo do valor_rms (root mean square)
+ou valor médio quadrático.
+
+Figura 2 Ilustração da Interface gráfica do Matlab para o sinal de
+áudio da palavra batata após retificação de meia-onda.
+
+Figura 1. Ilustração da interface do programa Matlab para a
+palavra departamento após o pré-processamento.
+
+Como os arquivos adquiridos podiam estar em
+formato estéreo, foi necessária uma conversão para
+que estes ficassem em formato mono. A leitura do
+separador silábico é realizada em seguida, a uma taxa
+de amostragem de 44,1 kHz, com uma quantização
+em 16 bits. O comprimento da janela utilizada no
+algoritmo foi de 2048 amostras. Este valor foi selecionado através do exame do comportamento vocálico de locutores de língua_portuguesa (Fernandes da
+Silvade Oliveira, 2012).
+2.2 Retificação da Onda, Valor RMS e Descarga
+Linear
+Nesta etapa, primeiramente, ocorre uma retificação
+de meia-onda do sinal de entrada. A retificação do
+sinal de fala é realizada com o auxilio da função
+signal, definida por
+
+ISBN 978-85-8001-069-5
+
+O valor_rms é utilizado posteriormente no processo de localização silábica. Juntamente com um percentual estatístico, ambos servem como critério de
+avaliação na localização das sílabas.
+Em seguida, realiza-se a detecção da envoltória
+através de uma descarga linear do sinal. Para isso,
+utilizam-se os valores de amostras obtidos no processo de retificação da onda. Este processo consiste em
+descrever o envelope da onda retificada através de
+um método preditivo linear (Rabiner  Juang, 1993).
+As amostras são analisadas dentro de uma subjanela
+de descarga linear (chamada de delta) dentro da
+janela maior a qual possuiu 2.048 amostras. Esse
+delta é um valor obtido pelo produto da taxa de amostragem (44,1 kHz) pelo valor da janela de tempo
+utilizada em codificadores de voz que é, tipicamente,
+22 ms (Rabiner  Schafer, 2007). O resultado deste
+produto fornece uma pequena janela com 970 amostras, a qual descreve a trajetória da descarga (aproximada linearmente) do pico, visando a acompanhar
+a envoltória do sinal. O valor do delta corresponde ao
+ajuste da constante de tempo do detector AM (de
+Oliveira, 2012) A ilustração do sinal de onda retificado pode ser vista na Figura 3.
+
+4162
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 3 Ilustração da Interface gráfica do Matlab para a envoltória do sinal de áudio da palavra batata.
+
+3 O localizador silábico
+A localização das sílabas no sinal de áudio é realizada pela comparação do valor de cada amostra
+(obtida na etapa de detecção da envoltória) com
+um valor limite. Este limiar foi ajustado após diversos testes empíricos realizados através de sucessivas análises. O limiar foi expresso percentualmente (valor ajustado, Perc  1,2) em termos do
+valor_rms obtido na etapa de retificação de meia
+onda. O algoritmo consiste em atribuir o valor 1,
+em um novo vetor (denominado de sílaba), na
+respectiva posição do valor da amostra. Esta atribuição se dá quando o valor da amostra da envoltória for maior do que o valor limite. Caso contrário, atribuí-se o valor 0. Em seguida, realiza-se a
+contagem dos números de zeros e uns na sequência do vetor-sílaba.
+Tabela I Matriz de Contagem Obtida Via Matlab para o Arquivo
+de Trecho de Áudio Pré-Processado Referente  Palavra batata.
+Valor na
+Sequência
+
+Quantidade
+de elementos
+
+0
+
+10702
+
+1
+
+9472
+
+0
+
+204
+
+1
+
+788
+
+0
+
+185
+
+1
+
+40
+
+0
+
+55
+
+1
+
+92
+
+0
+
+8238
+
+1
+
+29
+
+0
+
+192
+
+1
+
+9432
+
+0
+
+523
+
+1
+
+484
+
+0
+
+128
+
+ISBN 978-85-8001-069-5
+
+1
+
+10
+
+0
+
+423
+
+1
+
+46
+
+0
+
+512
+
+1
+
+156
+
+0
+
+4633
+
+1
+
+8631
+
+0
+
+189
+
+1
+
+611
+
+0
+
+1137
+
+1
+
+79
+
+0
+
+68
+
+1
+
+24
+
+0
+
+19717
+
+A contagem das sequências consecutivas
+de amostras é realizada e, em seguida, os valores
+obtidos são armazenados na matriz denominada de
+matriz de contagem. Essa matriz armazena a quantidade de elementos encontrados na sequência (segunda coluna) e o respectivo valor associado (primeira coluna). A matriz de contagem pode ser vista na
+Tabela I para a separação da palavra batata como
+ilustração (N.B. isso é meramente explicativo, uma
+vez que uma melhor notação pode ser adotada, como
+será visto).
+A etapa seguinte consiste em eliminar as sequências muito curtas de amostras mapeadas com o
+valor 1, no intuito de que estas pequenas sequências
+não interfiram na localização das sílabas dentro de
+cada palavra. As amostras das sequências curtas são
+eliminadas por comparação com um percentual. Esse
+percentual também foi obtido por ajustes ad hoc e
+corresponde a 1,8 vezes o comprimento da janela
+utilizada para descrever a trajetória da envoltória
+(970 amostras). Uma representação mais compacta
+pode ser utilizada, simplificando os dados para uma
+notação 0n1m, em que os índices n e m denotam os
+comprimentos das sequencias de zeros e uns,
+respectivamente. A matriz de contagem exibida da
+Tabela I pode ser representada pela sequencia (run
+length) alternada de 0s e 1s
+0107021947202041788018514005519208238129019219432052314840128
+11004231460512115604633186310189161101137179068124019717
+
+Depois da eliminação das sequências curtas de elementos 1 (falsa localização de sílaba), ela é transformada em
+0107021947202040788018504005509208238029019219432052304840128
+01004230460512015604633186310189061101137079068024019717
+
+ou seja, 0107021947209823194320691518631021825.
+Ao final dessa etapa, realiza-se o somatório
+da quantidade de posições que possuem apenas valores unitários, a fim de se obter o número total de
+sílabas. No presente exemplo, três sílabas foram
+identificadas com início-fim bem delineados.
+4163
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Como visto, os elementos da sequência de contagem
+determinam quais as amostras contém as sílabas da
+palavra analisada. Estes mesmos valores unitários
+também são responsáveis por determinar o início de
+cada sílaba. Para determinar a localização de cada
+uma delas, realizou-se uma rotina em que, primeiramente, calcula-se a soma acumulativa dos elementos
+da sequência de contagem e se armazena o resultado
+em um novo vetor  vetor de posições. Em seguida, verifica-se a posição que ocorre a mudança deste
+valor. A divisão_silábica é obtida para o trecho de
+áudio da palavra analisada (batata) depois do seu
+isolamento, o que correspondeu, no áudio gravado, a
+76.800 amostras (i.e., duração 1,75 s).
+
+Figura 4 Formas de onda envolvidas a) em cor verde, sinal de
+áudio referente  palavra departamento b) em cor vermelha, a
+onda retificada em meia-onda c) em cor azul, o envelope o sinal
+obtido com envoltória de descarga linear.
+
+01070219472129997239429246344354975376800.
+4 Identificação de supersílabas e quebra
+Em geral, a média de amostras contidas em uma
+sílaba é de 6.543 amostras, com um desvio padrão de
+5.467 amostras (valores obtidos restritos  análise
+estatística das palavras investigadas, porém representativo para uma linha geral de análise na língua_portuguesa  ao menos para os propósitos deste algoritmo). Portanto, sílabas longas cujos comprimentos
+excedem a média em um desvio padrão (ou seja,
+12.010 amostras) são consideradas como sendo supersílabas. Com base empírica, observou-se que as
+sequências com um número de amostras igual ou
+superior a este valor possuíam de facto mais do que
+uma sílaba em sua composição. Além disso, tornouse necessária a utilização de outro critério para a
+localização do início e término de cada sílaba dentro
+de uma supersílaba.
+O critério utilizado para separar sílabas que contenham número igual ou superior a 12.010 amostras
+consiste em comparar os valores de amostras desta
+supersílaba com um valor pré-estabelecido. Este
+valor é o resultado do produto do limiar utilizado na
+localização da sílaba por um fator de ajuste épsilon. O processo é similar quele usado para a detecção de sílabas por limiar, agora em outro nível (inspirado no padrão do tipo Matrioshka  bonecas russas).
+
+Figura 5 Forma de onda com a respectiva separação silábica
+obtida por limiar aplicado ao envelope do sinal de fala (palavra
+pronunciada Departamento).
+
+Figura 6 Separação silábica no sinal original note a separação
+clara dos fonemas DE-PAR-TAMEN-TO. A supersílaba TAMEN
+foi corretamente dividida.
+
+5 Desempenho do divisor silábico
+O algoritmo proposto conseguiu realizar adequadamente a separação silábica automática de 43 das 49
+palavras gravadas. Destas 43 palavras, 20 delas foram separadas por completo (Tabela III) e 23 obtiveram uma separação parcial (Tabela IV). Mostra-se a
+seguir, ilustrações do processo para a separação da
+palavra DEPARTAMENTO, incluindo detalhes da interface_gráfica. Estes gráficos (Figuras 5 a 7), sons e
+arquivos correspondentes podem ser encontrados na
+URL citada no resumo.
+
+Figura 7 Divisão silábica completada. Trechos são indicados há
+acesso ao comprimento em amostras e duração das sílabas e ao
+trecho de áudio isolado de cada silaba.
+
+A palavra analisada, departamento, correspondeu a
+um total de 76.800 amostras na gravação, com duração total de 1,74 segundos. A Tabela II identifica a
+
+ISBN 978-85-8001-069-5
+
+4164
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+saída do divisor silábico, com os respectivos delineamentos das sílabas (amostras inicial e final) e a
+duração estimada.
+Tabela II Sílabas separadas no arquivo de voz contendo a palavra
+departamento. Índice da amostra inicial, da amostra final e
+duração estimada da silaba (exemplo de saída de dados).
+Silaba
+De
+Par
+Ta
+Men
+To
+
+inicio
+7371
+25364
+42188
+47975
+70141
+
+fim
+17913
+33320
+47975
+64029
+76111
+
+Duração (ms)
+239
+180
+131
+364
+135
+
+Tabela III Lista de Palavras com as Respectivas Sílabas Separadas
+Corretamente pelo Algoritmo de Divisão Silábica de Arquivo de
+Áudio (23 palavras).
+
+Tabela IV Lista de Palavras Separação Silábica Parcial
+(total de 20 palavras analisadas)
+
+Palavras
+
+Sílabas
+
+abacate
+
+a
+
+ba
+
+ca
+
+batata
+
+ba
+
+ta
+
+ta
+
+berimboca
+
+be
+
+rim bo
+
+bonita
+
+bo
+
+ni
+
+ta
+
+Butantã
+
+bu
+
+tan
+
+tã
+
+Café
+
+ca
+
+fé
+
+campus
+
+cam
+
+pus
+
+complexo
+
+com
+
+ple
+
+xo
+
+computador
+
+com
+
+pu
+
+ta
+
+corpo
+
+cor
+
+po
+
+departamento
+
+de
+
+par ta
+
+história
+
+his
+
+to
+
+hoje
+
+ho
+
+je
+
+música
+
+mus
+
+si
+
+ca
+
+pitoco
+
+pi
+
+to
+
+co
+
+Recife
+
+rec
+
+ci
+
+fe
+
+roupa
+
+rou
+
+pa
+
+semicondutor
+
+sem
+
+mi
+
+Siri
+
+si
+
+ri
+
+solteiro
+
+sol
+
+tei
+
+Uva
+
+u
+
+va
+
+Vale
+
+va
+
+le
+
+zebra
+
+ze
+
+bra
+
+te
+
+ca
+
+dor
+
+men
+
+to
+
+ria
+
+com du
+
+tor
+
+ro
+
+Pode ser constatado que as palavras listadas na Tabela IV não foram inteiramente separadas (e.g. vião,
+silei), Embora alguns trechos de voz possuíssem
+mais do que uma sílaba, as quais não atenderam ao
+critério usado para definir as supersílabas e, portanto,
+ainda necessitariam sofrer uma nova quebra. Em
+outros casos, letras isoladas com duração maior que o
+usual (e.g. b, m, s) foram indicadas como pseudossílabas (isto não pode ser eliminado alterando o limiar,
+sob pena de perder algumas sílabas curtas). Em
+algumas palavras não foi possível realizar a separa-
+
+ISBN 978-85-8001-069-5
+
+ção das sílabas, como por exemplo, oito, roxo e banana.
+Testes preliminares com diferentes locutores e diversas palavras também indicaram que um aumento na
+velocidade com que o locutor pronuncia a(s) palavra(s) (ou fala) praticamente não degrada o desempenho do sistema de reconhecimento de sílabas.
+Outro teste adicional (assaz conveniente) consistiu na
+execução do algoritmo para um arquivo de áudio
+obtido pela leitura fluente, em voz contínua, de um
+texto escrito. O texto selecionado foi a poesia inteira
+Vou-me embora para Pasárgada, do poeta Manuel
+Bandeira, gravado em .wav 16bits mono, com duração total de 1 minuto e meio, o qual contém um total
+de 316 sílabas.
+
+Palavras
+
+Sílabas
+
+abacaxi
+
+A
+
+ba
+
+cax
+
+i
+
+assado
+
+As
+
+sa
+
+d
+
+do
+
+avião
+
+Av
+
+vião
+
+o
+
+brasileiro
+
+Bra
+
+silei
+
+ro
+
+cabelo
+
+Ca
+
+belo
+
+cabeça
+
+Ca
+
+be
+
+ç
+
+ça
+
+circunferência
+
+Cir
+
+cun
+
+fe
+
+rên
+
+duzentos
+
+Duz
+
+zen
+
+economia
+
+E
+
+cono
+
+mia
+
+eletrônica
+
+Ele
+
+tro
+
+ni
+
+engenharia
+
+Em
+
+g
+
+genhar ria
+
+farmácia
+
+Far
+
+r
+
+ma
+
+matemática
+
+Ma
+
+tema
+
+a
+
+ti
+
+minuto
+
+M
+
+m
+
+inu
+
+to
+
+mistério
+
+Mi
+
+s
+
+te
+
+rio
+
+oficina
+
+O
+
+fic
+
+c
+
+ina
+
+Pernambuco
+
+Per
+
+nam
+
+b
+
+bu
+
+televisão
+
+telev
+
+v
+
+visão
+
+universidade
+
+Uni
+
+ver
+
+si
+
+dade
+
+vestibular
+
+Vês
+
+ti
+
+bula
+
+ar
+
+c
+
+Ia
+
+ca
+
+cia
+ca
+
+co
+
+O identificadorseparador silábico proposto encontrou um total de 360 sílabas (já incluindo, entre elas,
+a detecção de 62 superssílabas). Há ainda cerca de
+5 de trechos identificados como sílabas, mas que se
+constituem de meras letras isoladas. A inclusão de
+critérios adicionais para reduzir estas ocorrências
+pode melhorar o desempenho do separador.
+6 Conclusões
+Um dos grandes desafios em processamento_de_fala é
+a concepção de sistemas para a conversão automática
+fala-para-texto (STT), com funcionamento em tempo
+
+4165
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+real e com qualidade aceitável (Huang et al., 2001).
+Sistemas de conversão texto-para-fala (TTS) estão
+mais bem desenvolvidos. Este algoritmo pode ser útil
+em uma etapa inicial de um sistema STT adaptado 
+língua_portuguesa. A técnica introduzida é bem mais
+simples quando comparada  HMM ou técnicas de
+análise Cepstral. No caso de uso em sistemas_embarcados, a despeito da taxa de identificação de sílabas
+ainda não ser conveniente para aplicações comerciais, melhorias simples podem ser incorporadas para
+tratar fonemas em que o envelope não é o parâmetrochave de identificação. A proposta (com código
+aberto) funciona como um primeiro sistema de base
+e, assim, melhores taxa de acertos podem ser obtidas.
+Um dos casos particulares de interesse e aplicação
+envolve o uso em sistemas_automáticos com comandos de voz específicos (previamente catalogados).
+Neste caso, as taxas de acerto podem ser bem melhores. Outra aplicação potencial do aplicativo é no
+auxílio na educação infantil ou como ferramenta de
+apoio ao ensino de língua_portuguesa para estrangeiros. Outro cenário particularmente atrativo é o uso
+como apoio para pacientes em tratamento fonoaudiólogo ou para diagnóstico médico (Fagundes et al.,
+2008).
+Agradecimentos
+E.L.F. SILVA agradece ao CNPq pelo apoio financeiro, e ao apoio do PPGEE-UFPE. Os autores agradecem a Paulo Hugo Espírito Santo, Paulo Roberto
+Martins e Raimundo C. de Oliveira pelo auxilio e
+sugestões na implementação do código Matlab.
+Referências Bibliográficas
+H. M. de Oliveira, 2012, Fundamentos de Engenharia
+de Telecomunicações, free download em
+httpwww2.ee.ufpe.brcodecengenhariateleco
+municacoes.pdf
+S. C. B. dos Santos (1997). Reconhecimento de Voz
+Contínua Para o Português Utilizando Modelos
+de Markov Escondidos. Rio de Janeiro. Tese
+Engenharia Elétrica  Engenharia Elétrica. PUC.
+S. C. B. dos Santos e A. Alcaim (2001). Sílabas
+Como
+Unidades
+Fonéticas
+para
+o
+Reconhecimento Automático de Voz Contínua
+em Português. In SBA Controle  Automação.
+Brasil. pp. 64-70.
+R. D. R Fagundes e I. C. Zwetsch e D. Scolari
+(2008). Técnicas de processamento de áudio em
+sinais de voz, para auxílio diagnóstico de
+doenças laríngeas. In Congresso AES Brasil (60
+2008 São Paulo). Anais. Brasil. pp. 24-28.
+E. L. Fernandes da Silva e H. M. de Oliveira (2012),
+Estimativa do comportamento vocálico de
+locutores, comunicação privada.
+F. J. Fraga (2001). Conversão Fala-texto para o
+Português com Segmentação Sub-silábica e
+Vocabulário
+Ilimitado.
+Revista
+de
+
+ISBN 978-85-8001-069-5
+
+Telecomunicações, INATEL, Vol. 4, No 2, pp.
+44-50.
+P. D. F. Gouveia, J. P. R. Teixeira e D. Freitas
+(2000). Divisão Silábica Automática do Texto
+Escrito e Falado. In Encontro para o
+Processamento Computacional da Língua
+Portuguesa Escrita e Falada. Proceedings, pp.6574.
+J. Holmes and W. Holmes, 2001, Speech Synthesis
+and Recognition, Second Edition, Taylor 
+Francis.
+X. Huang, A. Acero e H. W. Hon, 2001, Spoken
+Language Processing, New Jersey, PrenticeHall.
+A. Lipeika, J. Lipeikiené e L. Telksnys (2002).
+Development of Isolated Word Speech
+Recognition. Informatica, Vol. 13, No. 1, pp. 3746.
+N. Neto, E. Silva e E. Sousa. Software Usando
+Reconhecimento e Síntese de Voz (2005) O
+Estado da Arte para o Português Brasileiro.
+Latin American conference on Human-computer
+interaction. Proceedings, pp. 326-331.
+A. V. Oppenheim R. W. Schafer. Discrete-Time
+Signal Processing. Pearson, 2010.
+L. Rabiner and B. H. Juang, 1993, Fundamentals of
+Speech Recognition, Prentice-Hall.
+L. R. Rabiner and R. W. Schafer, 2007, Introduction
+to Digital Speech Processing. Now Publishers.
+A. E. Rosenberg, L.R. Rabiner, J.G. Wilpon e D.
+Kahn (1983). Demisyllable-Based Isolated Word
+Recognition System. IEEE Transactions on
+acoustics, speech and Signal Processing, pp.
+713-726.
+A. M. Selmini (2008). Sistema Baseado em Regras
+para o Refinamento da Segmentação Autómatica
+de Fala. Campinas. Tese Engenharia de
+Telecomunicações  Engenharia Elétrica e da
+Computação,UNICAMP.
+P. Silva, N. Neto e A. Klautau (2009). Novos
+Recursos de Utilização de Adaptação de Locutor
+no Desenvolvimento de um Sistema de
+Reconhecimento de Voz para o Português. In
+SBrT Simpósio Brasileiro de Telecomunicações
+(XXVII 2009 Blumenau). Anais. Brasil.
+P. Silva, N. Neto, A. Klautau, A. Adami e I.
+Trancoso (2008). Speech Recognition for
+Brazilian Portuguese using the Spoltech and
+OGI-22 Corpora. In SBrT Simpósio Brasileiro
+de Telecomunicações (XXVI 2008 Rio de
+Janeiro). Anais. Brasil.
+R. F. B. Sotero Filho e H. M. de Oliveira (2009).
+Reconhecimento de Locutor baseado em
+Mascaramento Pleno em Frequência por
+Oitavas. In Congresso AES Brasil, 26 a 28
+Maio, (70 2009 São Paulo). Anais. Brasil.
+pp.61-66.
+P. Taylor, 2009, Text-to-Speech Synthesis,
+Cambridge.
+S. V. Vaseghi, 2007, Multimedia Signal Processing Theory and Applications in Speech, Music and
+Communications, John Wiley, 2007.
+
+4166

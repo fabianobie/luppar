@@ -1,0 +1,1281 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+PROCESSAMENTO PARALELO E ALGORITMO DE FECHOS CONVEXOS NA PROGRAMAÇÃO
+DINÂMICA ESTOCÁSTICA APLICADA AO PLANEJAMENTO DA OPERAÇÃO DE SISTEMAS
+HIDROTÉRMICOS
+BRUNO H. DIAS1,2, ANDRÉ L. M. MARCATO2, REINALDO C. SOUZA1, MURILO P. SOARES3, IVO C. SILVA JUNIOR2,
+RAFAEL B. S. BRANDI2, TALES P. RAMOS2, MARCELO A. TOMIM2, EDIMAR J. DE OLIVEIRA2.
+
+1
+
+Departamento de Engenharia Elétrica, Pontifícia Universidade Católica do Rio de Janeiro- PUC-Rio
+Rua Marquês de São Vicente, 225  Gávea,22451-900, Rio de Janeiro RJ
+
+2
+
+Departamento de Energia Elétrica, Universidade Federal de Juiz de Fora- UFJF
+Campus da UFJF, Plataforma do Setor de Tecnologia, 36036-330, Juiz de Fora - MG
+
+3
+
+Operador Nacional do Sistema Elétrico- ONS
+Rua da Quitanda, 196  Centro, 20091-005  Rio de Janeiro, RJ
+E-mails bdias@ieee.org, andre.marcato@ufjf.edu.br, reinaldo@ele.puc-rio.br,
+murilopsoares@yahoo.com.br, ivo.junior@ufjf.edu.br,
+rafael.brandi@engenharia.ufjf.br, tales.pulinho@engenharia.ufjf.br,
+matomim@gmail.com, edimar.oliveira@ufjf.edu.br
+Abstract
+ This paper uses the convex hull algorithm to model the expected future cost functions in the stochastic dynamic
+programming to solve hydrothermal operation planning problem. A Case study using two reservoirs in series is presented.
+Additionally, a parallel processing algorithm is proposed in order to overcome the high computational burden. The results
+achieved support the importance of coding parallelization in the solution of the long-term operation planning problem. With
+proper adaptations this can be applied to energy equivalent reservoirs, which is used as the representation of the whole
+hydrothermal system adopted currently by the Brazilian Electrical Sector for mediumlong term studies.
+Keywords
+ Operation Planning, Stochastic Dynamic Programming, Convex Hull, Parallel Processing, Hydrothermal Dispatch.
+Resumo
+ Este artigo utiliza o algoritmo de fechos_convexos para modelar as funções de custo futuro da programação_dinâmica
+estocástica no problema do planejamento_da_operação hidrotérmica. Um estudo de caso contendo dois reservatórios em cascata é
+apresentado. Adicionalmente, um algoritmo de processamento_paralelo é proposto para contornar o alto esforço computacional
+do problema. Os resultados obtidos ressaltam a importância da paralelização de código para a solução do problema de
+planejamento_da_operação de longo prazo. Este método pode ser aplicado a reservatórios equivalentes de energia, que é a
+representação utilizada oficialmente no Setor Elétrico Brasileiro para estudos de médio e longo prazo.
+Palavras-chave
+ .
+
+1
+
+produção de energia_elétrica. Entretanto, não se pode
+precisar o volume de afluências futuras, o que faz
+com que o sistema hidrotérmico apresente
+interdependência temporal, ou seja, a decisão
+operativa em um estágio impacta nos custos
+operativos do estágio futuro (Silva, 2001). Desta
+forma, torna-se necessário avaliar o impacto da
+decisão de utilização (ou da estocagem) da água no
+instante atual sobre um estágio futuro, sendo este
+custo esperado modelado através da Função de Custo
+Futuro.
+Adicionalmente,
+obtêm-se
+um
+melhor
+aproveitamento do potencial hídrico das bacias
+através da construção de diversas usinas ao longo do
+curso dos rios (Grygier, 1985). Esta configuração
+representa uma interdependência espacial entre as
+
+Introdução
+
+O planejamento_da_operação de sistemas
+hidrotérmicos consiste na alocação_ótima das
+parcelas de geração hídricas e térmicas, considerando
+alguma incerteza relacionada  disponibilidade de
+recursos. Tem por objetivo minimizar o valor
+esperado do custo de operação no período de
+planejamento, atendendo a demanda dentro de um
+limite estabelecido de confiabilidade (Fortunato,
+1990).
+Os reservatórios para estocagem da água são
+abastecidos no período úmido e deplecionados em
+períodos secos, promovendo a regularização da
+
+3931
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+médio_prazo utilizando aproximação linear por
+partes. Neste caso propõe-se a utilização do
+algoritmo de fechos_convexos e programação
+dinâmica estocástica.
+Para reduzir o esforço computacional devido ao
+elevado número de combinações do espaço de
+estados, o presente trabalho analisa a utilização de
+múltiplos processadores na solução deste problema.
+
+usinas tendo em vista que a decisão de operação de
+uma usina hidrelétrica impacta diretamente nas usinas
+a jusante (Ni, 1999 Terry, 1986).
+Este planejamento era realizado, na década de
+oitenta, utilizando a Programação Dinâmica
+Estocástica  PDE (Terry, 1986). Porém a ampliação
+do sistema de transmissão e conseqente
+consideração do intercâmbio entre os subsistemas
+energéticos resultaram em um aumento no número de
+combinações de estados operativos, tornando a
+metodologia
+inviável
+computacionalmente
+(Kligerman, 1992).
+Para contornar o problema, foi então proposta a
+metodologia da Programação Dinâmica Dual
+Estocástica  PDDE (Pereira, 1989 Pereira, 1985).
+Esta metodologia utiliza a técnica de Decomposição
+de Benders (Benders, 1962) e as afluências são
+tratadas a partir de um modelo auto-regressivo
+periódico (Maceira, 2004 Hipel, 1994 Mondal,
+2006). Adicionalmente, os reservatórios do Sistema
+Interligado Nacional (SIN) são agregados em quatro
+reservatórios equivalentes de energia a fim de evitar
+o mal da dimensionalidade (Arvanitidis, 1970
+Zambelli, 2006).
+Esta modelagem é utilizada até hoje, e está
+implementada nos modelos DECOMP e NEWAVE
+(Maceira, 2002), desenvolvidos pelo CEPEL, os
+quais são os modelos oficiais do setor_elétrico
+brasileiro para o planejamento_da_operação de curto e
+médio_prazo respectivamente.
+Com a evolução tecnológica dos hardwares e
+softwares dos sistemas_computacionais, observada ao
+longo dos últimos anos, propostas de voltar-se a
+utilizar a técnica de Programação Dinâmica
+Estocástica (PDE) têm sido consideradas, a exemplo
+de Cervellera (2006), que apresenta um modelo de
+discretização eficiente, bem como a utilização de
+Redes Neurais Artificiais na resolução do problema.
+Adicionalmente, Silva e Finardi (2003) utilizam
+técnicas de processamento_paralelo para a solução do
+problema de planejamento hidrotérmico porém
+através de Programação Dinâmica Dual Estocástica
+(PDDE).
+Seguindo esta linha de pesquisa, este trabalho
+investiga os benefícios da utilização de
+processamento_paralelo no problema de planejamento
+hidrotérmico
+resolvido
+através
+da
+PDE.
+Adicionalmente, a metodologia proposta está baseada
+na utilização do algoritmo de fechos_convexos, ou
+Convex Hull (CH), para a modelagem das funções
+de custo futuro (Dias et al, 2010).
+
+2.1 Programação Dinâmica Estocástica
+A Programação Dinâmica (PD) consiste em um
+processo seqencial de tomada de decisões, onde
+uma decisão ótima global pode ser obtida através da
+otimização de subproblemas (ou ótimos locais)
+individuais (Bellman, 1957). No problema do
+planejamento_energético tem-se a subdivisão do
+problema em estágios, sendo que a decisão ótima
+atual está ligada a um conjunto de acontecimentos
+futuros. O problema é resolvido em sentido contrário,
+ou seja, tomando como início o último estágio de
+decisão e realizando a recursão no tempo, onde em
+cada estágio são consideradas as decisões do estágio
+em análise e as conseqências futuras (Silva, 2001).
+O planejamento_da_operação de sistemas
+hidrotérmicos é, por natureza, um problema
+estocástico, uma vez que as afluências futuras são
+incertas. Considerando o vetor_de_estados Xt,
+contendo os dados de volume inicial e as afluências
+incrementais referentes a cada usina hidrelétrica no
+estágio em t estudo, a Programação Dinâmica
+Estocástica (PDE) pode ser descrita tendo como base
+a seguinte equação recursiva (Silva, 2001)
+
+
+X 
+t( t)
+
+
+ Min C U + 1 
+E
+X
+
+t t
+ t +1 t +1
+AFL X  U t
+t t
+
+( )
+
+(
+
+
+
+) 
+
+(1)
+
+
+
+Sujeito a
+
+Onde
+T
+t(Xt)
+
+2 Metodologia
+
+AFLt
+
+t+1
+EAFLtXt
+
+O método proposto consiste inicialmente em
+modelar as Funções de Custo Futuro (FCFs) dos
+estágios do problema de planejamento_energético de
+
+3932
+
+gtt + ght + deft  Dt
+
+(2)
+
+xt +1  xt + yt  ut  st
+
+(3)
+
+xt +1  xt +1  xt +1
+
+(4)
+
+ut  ut
+
+(5)
+
+índice do estágio em análise
+valor do custo total esperado de operação do
+estágio t até o final do horizonte de
+planejamento
+vazão incremental afluente no estágio t
+(hm3mês)
+custo futuro ()
+valor esperado do custo total de operação
+considerando as possíveis afluências no estágio
+t, e condicionadas ao estado Xt
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Xt
+Ut
+Ct(Ut)
+
+gtt
+ght
+Deft
+Dt
+xt
+
+geração_térmica ( MW )
+geração hídrica ( MW )
+déficit ( MW )
+
+ut
+
+demanda total ( MW )
+volume inicial do reservatório no estágio t
+(hm3)
+volume no final do estágio t (hm3)
+afluência ao reservatório durante o estágio t
+(hm3mês)
+vazão turbinada no estágio t (hm3mês)
+
+ut
+
+vazão turbinada máxima (hm3mês)
+
+st
+
+vazão vertida no estágio t (hm3mês)
+
+xt +1
+
+volume máximo do reservatório (hm3)
+
+xt +1
+
+volume mínimo do reservatório (hm3).
+
+xt+1
+yt
+
+pontos dados (Cormen, 2001), conhecido como fecho
+convexo. Um exemplo de utilização deste algoritmo
+é apresentado por Diniz e Maceira (2008), para a
+modelagem da função de produção de geradores
+hídricos em quatro dimensões.
+Um conjunto C é considerado convexo se para
+quaisquer pontos x, y  C , qualquer combinação
+
+vetor_de_estados no estágio t
+vetor de decisões no estágio t
+custo operativo associado a decisão Ut
+taxa de desconto
+
+convexa de x e y também pertença a C, ou seja,
+(1   ) x +  y C  x, y C e  0,1
+
+(6)
+
+Existem diversos algoritmos para a obtenção dos
+CHs, dentre eles, o algoritmo de Graham, o
+algoritmo de Jarvis e o algoritmo QuickHull, sendo
+este último utilizado no desenvolvimento do presente
+trabalho (Qhull, 2009),(Barber, 1996).
+No presente trabalho, dados os pontos
+correspondentes  solução ótima de cada um dos
+estados dos problemas de coordenação_hidrotérmica,
+o algoritmo indica o conjunto de hiperplanos que
+correspondem a um fecho convexo, que são
+utilizados como uma aproximação linear das funções
+de custo futuro para cada estágio do problema. Um
+exemplo para o caso de uma única usina hidrelétrica
+é mostrado na Figura 1. Os pontos em azul
+representam os custos obtidos em cada nível de
+discretização do reservatório.
+
+Na equação (1), Ct(Ut) representa o custo imediato
+vinculado a decisão Ut, uma vez que o estado Xt+1 é a
+conseqência da decisão operativa Ut. Considera-se
+que Ut é dado pelos vetores correspondentes aos
+volumes armazenados no final do estágio, volumes
+turbinados e vertidos das usinas hidrelétricas,
+montante gerado nas usinas térmicas e déficit de
+energia. A função de custo de operação pode ser
+definida como a associação do custo em um
+determinado estado Xt ao custo futuro associado ao
+estado Xt+1.
+As equações (2) a (5) representam as
+restrições do problema, sendo a equação (2)
+representa a restrição de atendimento  demanda,
+onde o montante de geração hídrica e térmica deve
+suprir a demanda solicitada pelo sistema.
+Na equação (3) tem-se a restrição de balanço
+hídrico, onde o volume armazenado no final de um
+estágio, xt+1, é igual ao volume armazenado no início
+deste estágio, xt, somado  afluência ao sistema
+durante o estágio, yt, subtraído do montante de água
+utilizado na geração ut, e do total vertido st.
+As
+equações
+(4)
+e
+(5)
+representam,
+respectivamente, os limites máximos e mínimos dos
+reservatórios e os volumes máximos turbináveis.
+Esse problema pode ser resolvido naturalmente por
+PD discretizando as variáveis de estado e
+enumerando todas as combinações destas variáveis.
+A desvantagem consiste no elevado número de
+combinações reforçando a necessidade de novos
+procedimentos.
+
+12000
+
+10000
+
+Custo ()
+
+8000
+
+6000
+
+4000
+
+2000
+
+0
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+90
+
+100
+
+Volume do Reservatório (hm3)
+
+Figura 1 Conjunto convexo obtido a partir dos custos
+
+Após a eliminação da reta superior, que fecha o
+conjunto convexo, obtêm-se as restrições do
+problema, conforme mostrado na Figura 2. Estas
+restrições formam as FCFs aproximadas.
+
+2.2 Fechos Convexos
+Os algoritmos da classe Convex Hull (CH)
+apresentam, a partir de um conjunto de pontos
+fornecidos, o menor polígono convexo que contém os
+
+3933
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+2.3 Processamento Paralelo
+
+12000
+
+A crescente demanda de aplicações que necessitam
+um elevado esforço computacional, que leva a um
+tempo de execução que torna inviável a sua execução
+incentivou o desenvolvimento de técnicas que
+permitem a distribuição de processos ou computação
+paralela.
+Uma característica importante da Programação
+Dinâmica Estocástica está no fato do cálculo do custo
+ótimo de cada estado operativo poder ser calculado
+de forma independente dos outros estados, o que leva
+ possibilidade de paralelização dos processos.
+Desta forma, o algoritmo apresentado na Figura 3
+pode ser reformulado utilizando processamento
+paralelo. Esta abordagem é mostrada na Figura 4,
+onde se observa que o Bloco 1 passa a utilizar
+múltiplos processadores. Foi utilizada a estrutura
+SPMD (do inglês Single Program Muliple Data),
+onde os processadores executam o mesmo código,
+variando apenas os dados de entrada.
+
+10000
+
+Custo ()
+
+8000
+
+6000
+
+4000
+
+2000
+
+0
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+90
+
+100
+
+Volume do Reservatório (hm3)
+
+Figura 2 Função de Custo Futuro aproximada por retas
+
+Os passos do algoritmo de solução do problema
+utilizando o algoritmo de fechos_convexos na PDE
+são mostrados na Figura 3.
+
+Figura 3 Algoritmo da obtenção das funções de custo futuro
+utilizando fechos_convexos
+
+Observa-se que, seguindo a técnica de
+programação_dinâmica, inicia-se pelo último estágio
+(t  T). No Bloco 1 são obtidos os custos
+operacionais médios para cada estado operativo,
+através de programação_linear (PL). O conjunto de
+pontos que relacionam armazenamento do
+reservatório e custo ótimo obtido anteriormente é
+fornecido ao algoritmo QuickHull, obtendo o
+conjunto reduzido de planos que compõem o fecho
+convexo. Estes planos são utilizados para a
+modelagem da Função de Custo Futuro (FCF). Este
+procedimento é mostrado no Bloco 2. No Bloco 3 há
+um decremento no número do estágio. As FCFs
+obtidas entram como restrição na análise do próximo
+estágio, sendo este procedimento repetido até que se
+atinja o primeiro estágio. O critério de parada está
+representado através do Bloco 4.
+
+Figura 4 Algoritmo da obtenção das funções de custo futuro
+utilizando fechos_convexos e processamento_paralelo
+
+Na avaliação_do_desempenho de códigos
+paralelizados, algumas métricas de desempenho
+podem ser utilizadas, tais como o fator_de_aceleração
+e eficiência.
+O Fator de Aceleração (ou speedup, do inglês),
+representa a razão entre o tempo gasto na solução de
+um problema utilizando um único processador, Ts, e
+o tempo gasto por um programa que utiliza p
+processadores, de forma paralela, Tp.
+S
+
+Ts
+Tp
+
+(7)
+
+Eficiência, por sua vez, mede a fração de tempo no
+
+3934
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+qual cada unidade de processamento é efetivamente
+utilizada (Grama et al, 2003). A sua representação
+matemática é dada pela razão entre o fator de
+aceleração e o número de processadores utilizados,
+conforme equação abaixo
+E
+
+(9)
+
+T
+S
+ s
+p p  Tp
+
+3 Estudo de Casos
+Figura 5 Modelo de usinas com reservatórios em cascata
+
+Inicialmente utilizou um estudo de caso
+comparando a PDE convencional com a metodologia
+proposta. O sistema apresenta uma única usina
+hidrelétrica e duas termelétricas, cujos dados
+operativos são mostrados na Tabela 1 e Tabela 2
+(Silva, 2001).
+
+Tabela 4 Parâmetros das usinas hidrelétricas.
+
+Tabela 1 Parâmetros da usina hidrelétrica.
+Volume
+Máximo
+(hm3)
+100
+
+Volume
+Mínimo
+(hm3)
+20
+
+Turbinamento
+Máximo (hm3)
+
+Produtibilidade
+(MW-médiohm3)
+
+60
+
+0.95
+
+UTE1
+UTE2
+
+Geração
+Máxima
+(MW)
+15
+10
+
+Custo de
+Operação
+(RMW-médio)
+10
+25
+
+11
+101
+
+Produtibilidade
+(MW-médiohm3)
+
+11068,2
+
+0,0849822
+
+Usina 2
+Volume
+Máximo
+(hm3)
+10782
+
+Volume
+Mínimo
+(hm3)
+7234
+
+Turbinamento
+Máximo (hm3)
+
+Produtibilidade
+(MW-médiohm3)
+
+7639,54
+
+0,167513
+
+Termelétrica
+
+Geração Máxima
+(MW)
+
+UTE1
+UTE2
+UTE3
+
+242
+138
+102
+
+Custo de
+Operação
+(RMW-médio)
+177,45
+105,78
+493,17
+
+Adicionalmente, o custo de não suprimento da
+carga foi adotado como 1000 MW-médio, sendo o
+mercado considerado fixo no valor de 2000 MWmédio para todos os estágios do horizonte de estudo.
+Simulou-se o problema com 11 discretizações para
+os reservatórios das usinas hidrelétricas e 71 cenários
+de afluência incremental s usinas, com 60 estágios
+(5 anos) de estudo para a análise. Não foi
+considerado período de pós-estudo nesta análise. A
+escolha dos parâmetros foi feita com base em estudos
+prévios, conforme mostrado em Dias (2010).
+Na Figura 6 pode-se observar o conjunto de planos
+que modelam a função de custo futuro, obtidos na
+PDE, através do último estágio do problema (estágio
+60). Já na Figura 7 e na Figura 8 são mostrados os
+planos obtidos dos estágios 59 e 2 respectivamente.
+Através destas figuras pode-se observar a mudança
+da morfologia das curvas em relação ao estágio em
+análise.
+
+Tabela 3 Número de restrições obtidas em cada metodologia.
+PDE
+Convenciona
+l
+10
+100
+
+Turbinamento
+Máximo (hm3)
+
+Tabela 5 Parâmetros das usinas térmicas.
+
+Os custos obtidos foram os mesmos, para os dois
+modelos, porém, observa-se na Tabela 3 que a
+metodologia proposta apresenta um menor número de
+restrições para as mesmas discretizações utilizadas,
+representando ganho de tempo na solução dos PLs.
+
+Discretizações
+
+Volume
+Mínimo
+(hm3)
+5447
+
+Neste sistema foram consideradas três usinas
+térmicas, cujos parâmetros_são mostrados na Tabela
+5. Para este estudo foi considerada somente a
+restrição de geração_térmica máxima em cada usina,
+sendo a restrição mínima considerada como valor
+zero.
+
+Tabela 2 Parâmetros das usinas térmicas.
+Termelétrica
+
+Usina 1
+Volume
+Máximo
+(hm3)
+34116
+
+Metodologia
+Proposta
+7
+27
+
+Para análise e avaliação do modelo proposto,
+utilizou-se um sistema fictício com duas usinas
+hidrelétricas em cascata, conforme Figura 5.
+a) Sistema Tutorial
+Os dados das usinas hidrelétricas consideradas no
+sistema proposto são mostrados na Tabela 4.
+
+3935
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Onde
+D
+N
+E
+C
+
+Função de Custo Futuro
+
+4
+
+x 10
+10
+
+Custo (R)
+
+8
+
+número de discretizações
+número de reservatórios
+número de estágios
+número de cenários
+
+6
+
+Desta forma, o número total de PLs é de
+71  60  (112 )  515.460
+
+4
+2
+0
+0
+
+11000
+10000
+
+1
+
+Na Figura 9 observa-se o montante de geração
+hídrica e térmica em relação ao mercado total de
+energia para os 5 anos de estudo (2008 a 2012), cujo
+custo total de operação foi de R 2.484.239,00.
+
+9000
+
+2
+8000
+
+3
+
+4
+
+x 10
+
+4
+
+7000
+
+Volume da Usina 2 (hm3)
+
+Volume da Usina 1 (hm3)
+
+Figura 6 Função de custo futuro obtida no último estágio
+
+Geração Hidrotérmica
+
+Função de Custo Futuro
+
+2500
+5
+
+x 10
+6
+
+2000
+
+Geração (MW-médio)
+
+Custo (R)
+
+5
+4
+3
+2
+1
+0
+0
+
+1500
+
+1000
+
+11000
+
+Geração Hídrica
+Geração Térmica
+Déficit
+Demanda
+
+500
+
+10000
+
+1
+9000
+
+2
+8000
+
+3
+
+4
+
+x 10
+
+4
+
+7000
+
+Volume da Usina 2 (hm3)
+
+Volume da Usina 1 (hm 3)
+
+0
+
+10
+
+20
+
+30
+Mês
+
+Figura 7 Função de custo futuro obtida no estágio 59
+
+40
+
+50
+
+60
+
+Figura 9 Geração hidráulica e térmica do caso em estudo
+
+Observa-se ainda, nas Figuras 10 e 11, o
+armazenamento dos reservatórios em estudo. No caso
+da Usina 2, observa-se um comportamento de rápido
+enchimento e esvaziamento do reservatório. Isto se
+deve ao fato de ser o seu reservatório
+significativamente menor que o da Usina 1, além do
+fato de estar localizada a jusante desta mesma usina.
+
+Função de Custo Futuro
+6
+
+x 10
+3.5
+
+Custo (R)
+
+3
+
+2.5
+
+2
+4
+
+3.5
+
+1
+
+2
+
+3
+
+4
+
+x 10
+
+8000
+4
+
+Volume da Usina 1 (hm3)
+
+9000
+
+10000
+
+11000
+
+3
+Energia Armazenada (MW-médio)
+
+1.5
+0
+7000
+
+Volume da Usina 2 (hm3)
+
+Figura 8 Função de custo futuro obtida no estágio 2
+
+Para o cálculo do custo operativo total, na fase
+forward, considerou-se um cenário mediano de
+afluências.
+Inicialmente a simulação foi realizada em um
+único processador. O tempo computacional foi de
+aproximadamente 134 segundos, utilizando um
+computador Intel Core 2 Quad de 2.5 GHz, com 4 Gb
+de memória RAM. Observa-se o número total de
+Problemas Lineares (PLs) a ser resolvido para esta
+modelagem, equivale a
+C  E ( DN )
+
+Usina 1
+
+x 10
+
+2.5
+
+2
+
+1.5
+
+1
+
+0.5
+
+0
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+Mês
+
+35
+
+40
+
+45
+
+50
+
+Figura 10 Gráfico de armazenamento da usina 1.
+
+(10)
+
+3936
+
+55
+
+60
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Gráfico de Eficiência
+100
+
+10000
+
+80
+
+8000
+
+Eficiência ()
+
+Energia Armazenada (MW-médio)
+
+Usina 2
+12000
+
+6000
+
+60
+
+40
+
+4000
+20
+
+2000
+0
+
+0
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+Mês
+
+35
+
+40
+
+45
+
+50
+
+55
+
+2
+
+3
+Processadores
+
+4
+
+60
+
+Figura 13 Eficiência do algoritmo paralelo.
+
+Figura 11 Gráfico de armazenamento da Usina 2.
+
+4 Conclusão
+
+b) Simulação utilizando processamento_paralelo
+
+Este artigo apresentou uma proposta de
+paralelização do código do modelo de planejamento
+hidrotérmico baseado em PDE, utilizando o
+algortimo de fechos_convexos para a modelagem
+linear por partes das FCFs. No estudo de caso
+utilizou-se um sistema tutorial com duas usinas com
+reservatórios em cascata. Foram mostrados os planos
+de corte obtidos para o problema, bem como os
+resultados obtidos para 2, 3 e 4 processadores na
+resolução dos PLs do problema.
+Observou-se que a paralelização de um trecho do
+código levou a uma significativa melhora no tempo
+computacional do problema, sendo o processamento
+paralelo de extrema importância para se resolver
+sistemas de maior porte, considerando um maior
+número de reservatórios. Os resultados se mostram
+promissores, devendo ser expandidos para um maior
+número processadores, através da utilização de
+cluster ou mesmo de arquitetura do tipo Beowulf.
+
+Simulou-se ainda o mesmo sistema, utilizando
+porém diferente número de processadores a cada
+simulação. Tendo em vista a disponibilidade de um
+micro Quad Core, contabilizou-se, além do tempo
+seqencial, o tempo gasto com 2, 3 e 4
+processadores. O tempo computacional total do
+programa em função do número de processadores
+utilizados é mostrado na Tabela 6.
+Observa-se que o algoritmo paralelo apresenta uma
+alta eficiência, além de um fator_de_aceleração
+extremamente significativo, sendo o código em
+estudo altamente paralelizável.
+Tabela 6 Parâmetros das usinas térmicas.
+Número de
+processadores
+1
+2
+3
+4
+
+Tempo total (s)
+134,6
+73,9
+51,9
+41,5
+
+A partir dos tempos totais obtidos e dos tempos
+das partes paralelizada e seqencial do código em
+análise, pode-se calcular o fator_de_aceleração e
+eficiência, mostrados nas Figuras 12 e 13.
+
+5 Trabalhos Futuros
+Diante dos resultados obtidos e considerando as
+propriedades da metodologia utilizada, o presente
+trabalho deve ser estendido para um número maior de
+processadores, diminuindo assim o tempo de
+simulação, além de se considerar a possibilidade de
+paralelização de outras partes do código, tal como o
+algoritmo de fechos_convexos.
+Adicionalmente, pode-se ampliar o número de
+reservatórios em estudo e assim incorporar ao
+ambiente computacional desenvolvido os quatro
+reservatórios equivalentes de energia do Sistema
+Elétrico Brasileiro (SEB), que representam os
+subsistemas Sul, SudesteCentro-Oeste, Norte e
+Nordeste, para estudos de planejamento_energético.
+Por fim, propõe-se o estudo de técnicas de
+amostragem do espaço_de_estados para a redução do
+esforço computacional, excluindo estados operativos
+
+Gráfico de Speedup
+4
+3.5
+3
+
+Speedup
+
+2.5
+2
+1.5
+1
+0.5
+0
+
+1
+
+2
+
+3
+
+4
+
+Número de Processadores
+
+Figura 12 fator_de_aceleração do algoritmo paralelo.
+
+3937
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Maceira, M., Terry, L., Costa, F., Damázio, J., Melo,
+A., (2002) Chain of optimization models for
+setting the energy dispatch and spot price in the
+brazilian system. XIV Power Systems
+Computation Conference, June, Spain.
+Maceira, M. E. P., Damázio, J. M., (2004) The use
+of PAR(p) model in the stochastic dual dynamic
+programming optimization scheme used in the
+operation planning of the Brazilian hydropower
+system.
+International
+Conference
+os
+Probabilistic Methods Applied to Power
+Systems, September, Iowa.
+Kligerman, A. S., (1992) Operação Ótima de
+Subsistemas
+Hidrotérmicos
+Interligados
+Utilizando Programação Dinâmica Estocástica
+Dual. Dissertação de Mestrado, Unicamp.
+Mondal, M. S., Wasimi, S. A., (2006) Generating
+and forecasting monthly flows of the ganges
+river with par model. Journal of Hydrology.
+Ni, E. Guan, X. Li, R., (1999). Scheduling
+Hydrothermal Power System with Cascaded
+and Head-Dependent Reservoir. IEEE Trans.
+Power Systems. Vol 14, No. 3, pages 1127 1132.
+Pereira, M. V. F., (1989) Optimal stochastic
+operation of large hidro-electric systems.
+Electrical Power and Energy Systems, vol.11.
+Pereira, M. V. F., Pinto, L. M. V. G. (1985)
+Stochastic Optimization of a multireservoir
+hydroelectric. Electrical Power and Energy
+Systems, vol. 11.
+Qhull, biblioteca em C++, disponível em
+httpwww.qhull.com. Acesso em 10 de jan.
+2009.
+Silva, E. L., (2001). Formação de Preço em
+Mercados de Energia Elétrica, Editora Sagra
+Luzzatto.
+Silva, E. L. e Finardi, E. C., (2003) Parallel
+Processing Applied to the Planning of
+Hydrothermal Systems. IEEE Transactions on
+Parallel and Distributed Systems, vol. 14, no. 8.
+Terry, L. A., Pereira, M. V. F., Neto, T. A. A., Silva,
+L. F.C. A., and Sales, P. R. H., (1986)
+Brazilian national hydrothermal electrical
+generating system. Interfaces.
+Zambelli, M., Siqueira, T. G., Cicogna, M., Soares,
+S., (2006) Deterministic versus stochastic
+models
+for
+long
+term
+hydrothermal
+scheduling. IEEE Power Engineering Society
+General Meeting.
+
+que não são atingidos em determinados estágios.
+Agradecimentos
+O presente trabalho foi realizado com o apoio do
+Conselho Nacional de Desenvolvimento Científico e
+Tecnológico  CNPq - Brasil.
+Referências Bibliográficas
+Arvanitidis, N. V  Rosing, J., (1970), Composite
+representation of a multireservoir hydroelectric
+power system, IEEE Transactions on Power
+Apparatus and Systems PAS-89, pages 319-326.
+Barber, C. B. Dobkin, D. P. Huhdanpaa, H., (1996)
+The Quickhull Algorithm for Convex Hulls.
+ACM Trans. Math. Software, 22, 4.
+Bellman, R., (1957). Dynamic Programming,
+Princeton  Princeton University Press.
+Benders, J. F., (1962) Partitioning procedures for
+solving
+mixed-variables
+programming
+problems. Numerisch Mathematik, 4.
+Cervellera, C. Chen, V. C. P.  Wen, A., (2006).
+Optimization of a large-scale water reservoir
+network by stochastic dynamic programming
+with efficient state space discretization.
+European Journal of Operational Research. Vol.
+171, pages 1139-1151.
+Cormen, T. H., (2001). Introduction to Algorithms.
+2nd Edition, Cambridge, The MIT Press.
+Dias, B. H. Marcato, A. L. M. Souza, R. C., Soares,
+M. P. Silva Jr, I. C. Oliveira, E. J. Brandi, R.
+B. S. and Ramos, T. P. (2010), Stochastic
+Dynamic
+Programming
+Applied
+to
+Hydrothermal Power Systems Operation
+Planning Based on the Convex Hull
+Algorithm,
+Mathematical
+Problems
+in
+Engineering (Aceito para publicação).
+Diniz, A. L. Maceira, M. E. P., (2008). A FourDimensional Model of Hydro Generation for
+the Short-Term Hydrothermal Dispatch
+Problem Considering Head and Spillage
+Effects. IEEE Trans. Power Systems. Vol
+XXIII, No. 3, pages 1298-1308.
+Fortunato, L. A. M., Neto, A. and Alencar, T.
+(1990). Introdução ao Planejamento da
+Expansão e Operação de Sistemas de Produção
+de Energia Elétrica, Niterói  EDUFF.
+Grama, A., Gupta, A., Kumar, V. e Karypis, G.
+(2003). Introductio to Parallel Computing.
+Addisson Wesley, 2 edition.
+Grygier, J. C., Stendinger, J. R. (1985) Algorithms
+for Optimizing Hydropower System Operation
+. Water Resource Research, Vol 21, No. 1,
+pages 1-10.
+Hipel, K. W., McLeod, A. I., (1994) Time Series
+Modeling
+of
+Water
+Resources
+and
+Environmental Systems. Amsterdan, The
+Netherlands Elsevier.
+
+3938

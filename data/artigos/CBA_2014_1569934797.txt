@@ -1,0 +1,936 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+RECONSTRUCAO ONLINE PARA CALORIMETROS OPERANDO EM CONDICOES
+DE ALTAS LUMINOSIDADES
+Marcos Vincius Teixeira, Luciano M. de A. Filho, Bernardo S. Peralva
+
+
+UFJF  Universidade Federal de Juiz de Fora
+Faculdade de Engenharia  Programa de PosGraduacao em Engenharia Eletrica
+Campus Universitario, Plataforma 5  Martelos  Juiz de ForaMG  CEP36036-030
+Emails teixeira.marcosv@gmail.com, luciano.ma.filho@gmail.com,
+bernardo.peralva@gmail.br
+Abstract This paper presents an online energy reconstruction algorithm for calorimeters operating in
+high-luminosity environments and its FPGA implementation. Based on the Gradient Descent algorithm, the
+implemented method has its properties defined through the COF (Constrained Optmal Filter) method. The
+COF aims at designing a luminosity independent signal amplitude estimator. Furthermore, COF recovers the
+amplitude of the central signal and the amplitude of each superposed component. However, the method results
+in a matrix inversion in the work proposed here. In order to avoid such computation, the Gradient Descent
+algorithm is applied on the COF method, resulting in sum and product operations, which are suitable in FPGA
+for online applications. For this end, it was developed a dedicated RISC (Reduced Instruction Set Computer)
+processor with pipelined architecture, in order to optimize the FPGA resources. It was also developed a C
+compiler to facilitate the development of the Gradient Descent algorithm subroutines.
+Keywords
+
+Amplitude Estimation, Best Linear Unbiased Estimator, Optimal Filter, Gradient Descent
+
+Resumo Este trabalho apresenta um algoritmo para reconstrucao online de energia em calormertros
+operando em ambiente de alta luminosidade e sua respectiva implementacao em FPGA. Baseado no algoritmo
+Gradiente , o metodo implementado tem suas propriedades definidas atraves do metodo COF (do
+ingles, Constrained Optmal Filter ). O COF visa estimar a amplitude de sinais empilhados independentemente
+das informacoes de luminosidade, recuperando, alem do sinal de interesse, os sinais sobrepostos. Porem o metodo
+resulta em inversao de matrizes para a estimativa da amplitude dos sinais. Para evitar a inversao de matrizes,
+o algoritmo Gradiente  e aplicado no metodo COF resultando em operacoes de soma e produto,
+facilitando sua implementacao em FPGA para reconstrucao online. Para este fim, foi desenvolvido um processador
+RISC (do ingles, Reduced Instruction Set Computer ) dedicado com arquitetura pipeline, permitindo a otimizacao
+de recursos da FPGA. Tambem foi desenvolvido um compilador C para facilitar o desenvolvimento das subrotinas
+do algoritmo Gradiente .
+Palavras-chave
+.
+
+1
+
+Estimacao de Amplitude, Melhor Estimador Linear Imparcial, Filtro Otimo, Gradiente
+
+Introducao
+
+O LHC (do ingles, Large Hadron Collider ) (Evans,
+2008), e o maior acelerador de partculas do
+mundo. O experimento opera acelerando feixes
+de protons em sentidos opostos, onde cada feixe
+e formado por milhares de pacotes de protons.
+Os pacotes, entao, colidem a uma taxa constante
+de 40 MHz no ponto de interesse dos detectores
+posicionados ao longo do acelerador.
+O ATLAS (do ingles, A Toroidal LHC
+ApparatuS ), apresentado na Figura 1, e o maior
+detector do LHC. Seus sub-detectores construdos
+em forma cilndrica, envolvem o feixe de partculas
+em um ponto de colisao (Collaboration, 2008). O
+detector de trajetorias (Ros, 2003), que esta na
+camada mais interna, envolvendo a linha de feixe
+de partculas, e responsavel por medir o momento
+e a posicao do vertice das partculas incidentes. O
+sistema de deteccao de muons (Palestini, 2003)
+forma a camada mais externa do ATLAS e
+e responsavel pela identificacao de muons nao
+absorvidos pelos calormetros.
+Os calormetros, localizados entre os
+detectores de trajetorias e muons,
+sao
+
+Figura 1 Detector ATLAS.
+
+responsaveis
+por
+absorver
+e
+amostrar,
+com precisao,
+a energia das partculas
+incidentes (Wigmans, 2000).
+Eles se
+dividem em duas partes, o calormetro
+eletromagnetico (LAr) (ATLAS Group, 1996a)
+e calormetro hadronico (TileCal) (ATLAS
+Group, 1996b Adragna, June 2006), sendo o
+ultimo, o ambiente de pesquisa deste trabalho.
+O TileCal utiliza o aco como material
+absorvedor
+passivo
+e
+telhas
+cintilantes
+como amostradores de energia.
+Com a
+passagem das partculas, as telhas se excitam,
+
+141
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+produzindo fotons, que sao coletados por
+celulas fotomultiplicadoras (PMT, do ingles
+PhotoMultiplier Tube), cuja funcao e converter
+a luz em um sinal eletrico. O sinal gerado na
+PMT passa por um circuito conformador de
+pulsos, visando tornar o sinal um pulso padrao
+(pulso de referencia do TileCal), cuja amplitude
+e diretamente proporcional a energia depositada
+pela partcula. Cada PMT recebe sinais luminosos
+de certo numero de telhas cintilantes formando
+as celulas do calormetro. Cada celula e formada
+por duas PMTs, resultando em duas leituras
+independentes. O TileCal e segmentado ao longo
+da profundidade do detector em camadas e cada
+camada apresenta um certo numero de canais de
+leituras (PMTs). No total, o TileCal apresenta,
+aproximadamente, 10.000 canais de leitura a
+serem lidos pelo sistema de aquisicao. Cada canal
+de leitura amostra um pulso de referencia na taxa
+de 40 MHz resultando em 7 amostras discretas
+separadas de 25 ns umas das outras, compondo
+uma janela de leitura de 150 ns.
+Atualmente, o metodo de reconstrucao online
+de energia para o TileCal tem sua formulacao
+matematica baseada na estimativa da amplitude
+de apenas um pulso de referencia. Na cadeia
+eletronica do TileCal, o tempo de processamento
+para o segundo nvel de filtragem (Conde et al.,
+2008), correspondente a reconstrucao_de_energia,
+nao pode exceder 10 us. O mesmo e implementado
+basicamente por uma estrutura de filtro FIR (do
+ingles, Finite Impulse Response). A Figura 2
+ilustra o pulso caracterstico de um canal do
+TileCal com seus parametros de amplitude,
+largura, pedestal (linha de base) e fase.
+
+como rudo e a estatstica de segunda ordem do
+mesmo e usada no projeto do filtro de forma a
+minimizar o efeito do pileup. Porem, o rudo deixa
+de ser Gaussiano nestas condicoes, o que torna o
+filtro sub-otimo. Alem disso, o projeto do filtro
+torna-se dependente da luminosidade, que varia
+durante uma tomada de dados.
+Tendo em vista os inconvenientes e no intuito
+de soluciona-los, a colaboracao brasileira propos o
+metodo OF com restricoes adicionais, chamado
+de COF (L. Filho, 2012). A proposta visa
+estimar, alem da amplitude do pulso de interesse,
+a amplitude de cada componente sobreposta o que
+caracteriza as restricoes adicionais se comparado
+ao metodo OF. Nestas condicoes o rudo e
+caracterizado somente pelo rudo eletronico que
+e Gaussiano, mantendo a caracterstica otima do
+estimador. Entretanto, o metodo COF resulta
+em uma inversao de matrizes, dificultando a
+implementacao em hardware para a estimacao
+online. Atualmente o COF esta sendo utilizado
+para estimacao offline e vem obtendo excelentes
+resultados.
+Porem, sua implementacao para
+processamento_online nao e otimizada pois se faz
+necessario a utilizacao de bancos de filtros para
+cada combinacao de pileup.
+Sendo assim, o presente trabalho propoem a
+implementacao do processo de minimizacao do
+COF, atraves de um processo iterativo, baseado
+em Gradiente  (GD) (Haykin, 1996)
+para a estimacao online. O metodo resulta em
+operacoes de soma e produto, possibilitando sua
+implementacao em dispositivos FPGA. Para a
+execucao destas operacoes, foi desenvolvido um
+processador dedicado, baseado em arquitetura
+RISC para otmizacao de recursos em FPGA. O
+processador tem como nucleo de execucao uma
+ALU (do ingles, Arithmetic Logic Unit), capaz
+de efetuar as operacoes de soma e multiplicacao
+em ponto_flutuante. O processador apresenta,
+como tecnica de implementacao, uma arquitetura
+em pipeline, capaz de executar uma instrucao
+por ciclo de clock. O conjunto de instrucoes
+assembly, armazenado na memoria principal do
+processador, sao geradas por subrotinas em
+linguagem C, atraves de um compilador, tambem
+desenvolvido na presente proposta.
+Apesar
+de o GD ser uma tecnica bem difundida
+em processos de minimizacao, sua utilizacao
+na medida de multiplas amplitudes, em um
+processador dedicado, visando a reconstrucao de
+energia em calormetros e algo novo.
+Este trabalho esta organizado da seguinte
+forma.
+Na proxima secao sao apresentados
+os metodos de reconstrucao_de_energia visando
+descrever a coerencia para o metodo proposto.
+Na Secao III apresenta-se o metodo proposto.
+A Secao IV descreve a implementacao do
+algoritmo do Gradiente  e o nucleo
+do processador para execucao do algoritmo
+
+Figura 2 Pulso caracterstico do TileCal.
+Este metodo, chamado de OF (Fullana,
+2006)(do ingles, Optmal Filter ), e otimizado para
+estimar a amplitude de um sinal determinstico
+em rudo gaussiano.
+Entretanto, devido ao
+aumento do numero de colisoes protons-protons,
+ocorre o fenomeno de pileup (Cleland and Stern,
+1994), onde os sinais sao acumulados em uma
+mesma janela de 150 ns. Consequentemente,
+a sobreposicao de sinais em condicao de
+alta luminosidade degrada o pulso original
+comprometendo a estimativa da energia atual. No
+metodo OF, os sinais acumulados sao tratados
+
+142
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+em FPGA. Na Secao V sao apresentadas as
+conclusoes.
+2
+
+Ea  HT EGa + w  a
+
+Metodos de Reconstrucao de Energia
+
+Seja o vetor w um rudo aditivo com media
+zero, entao a Equacao (4) para o valor esperado da
+estimativa resultante do vetor de amplitudes Ea
+pode ser reescrita, como mostra a Equacao (5)
+
+A seguir sao apresentadas as formulacoes para os
+metodos de reconstrucao_de_energia. A descricao
+dos mesmos visa o embasamento teorico para
+o metodo proposto. Inicialmente descreve-se,
+atraves do metodo BLUE (do ingles, Best Linear
+Unbiased Estimator ) (Kay, 1993) para um vetor
+de parametros, a estimativa da amplitude de
+um modelo generico. Posteriormente, o metodo
+COF para reconstrucao de sinais no ambiente do
+TileCal e apresentado.
+2.1
+
+Ea  HT Ga  a
+
+O metodo BLUE tem como objetivo restringir-se
+a um estimador linear, de modo a determinar
+os pesos otimos de um filtro que minimiza
+a variancia da estimativa. Para compreensao
+da equacao geral do metodo BLUE, um
+modelo, para estimacao das amplitudes de
+sinais determinsticos sobrepostos (Kay, 1993), e
+apresentado. Neste, as amostras do sinal de
+entrada digitalizado sao dadas pela Equacao (1)
+
+HT G  I
+
+(1)
+
+n
+o
+2
+vara  E (a  Ea)
+
+(7)
+
+Resolvendo a Equacao (7) encontramos a
+Equacao (8).
+vara  HT C H
+
+(2)
+
+(8)
+
+onde C e a matriz de covariancia do rudo.
+A etapa seguinte consiste em aplicar o metodo
+dos multiplicadores de Lagrange (Bertsekas,
+1996), de forma a minimizar a Equacao (8)
+dado as restricoes (6).
+Como N restricoes
+sao inseridas no processo de minimizacao de
+cada componente, entao N 2 multiplicadores sao
+utilizados no metodo. O metodo de Lagrange,
+formado por uma combinacao linear, determina
+o ponto mnimo da variancia da estimativa
+da amplitude condicionada a restricao imposta
+pela Equacao (6).
+Isto e feito derivando a
+funcao de Lagrange e igualando-a a zero. Em
+seguida, as etapas da formulacao matematica
+consistem em isolar variaveis e substitu-las
+para se determinar os pesos do BLUE e,
+consequentemente, a estimativa resultante otima
+do vetor de amplitudes. Este procedimento e
+
+onde a e a estimativa resultante do vetor de
+amplitudes e H representa a matriz de coeficientes
+do banco de filtros lineares a ser determinado.
+Para que os pesos do BLUE sejam encontrados, e
+imposta a imparcialidade na estimativa de a. Um
+estimador e dito imparcial, ou nao-tendencioso
+(do ingles, unbiased ), se o valor esperado da
+estimativa for igual ao valor real. Portanto, para
+um estimador linear nao-tendencioso, temos que
+Ea  HT E(r)  a
+
+(6)
+
+Desta forma, o valor esperado da estimativa
+resultante do vetor de amplitudes Ea sera
+igual ao proprio vetor de constantes a e, dado
+que o vetor a representa a amplitude real das
+amostras do sinal de entrada r, a propriedade
+de imparcialidade apresentada pela Equacao (6)
+e atendida. Uma vez determinada a restricao
+para pesos do BLUE, o objetivo passa a ser
+encontrar a variancia dos estimadores, a partir da
+Equacao (7)
+
+onde a e o vetor coluna que contem as amplitudes
+dos sinais sobrepostos. Cada coluna da matriz
+G representa as amostras dos sinais de referencia,
+cujas amplitudes estao contidas no vetor a. A
+componente w trata-se do rudo aditivo WG (do
+ingles, White-Gaussian) com media zero. Sendo
+assim, a equacao geral do metodo BLUE pode ser
+definida como o produto interno entre os pesos do
+filtro e as amostras do sinal de entrada, conforme
+a Equacao (2)
+a  HT r
+
+(5)
+
+No metodo BLUE, seja N o numero de sinais
+sobrepostos, entao N restricoes sao inseridas no
+processo de minimizacao de cada componente.
+Logo, para que Ea seja igual a a, o produto
+entre a matriz dos pesos do BLUE H e a
+matriz do pulso de referencia G deve ser igual a
+matriz identidade I, conforme e apresentado pela
+Equacao (6).
+
+BLUE para um vetor de parametros
+
+r  Ga + w
+
+(4)
+
+(3)
+
+Substituindo a Equacao (1) na Equacao (3),
+o valor esperado da estimativa resultante do vetor
+de amplitudes Ea podera ser reescrita conforme
+a Equacao (4)
+
+143
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+descrito em (Kay, 1993). Logo, os pesos otimos
+do BLUE para um vetor de parametros sao
+encontrados atraves da Equacao (9)
+1 1
+C G
+Hotimo  GT C1 G
+
+(9)
+
+Substituindo a Equacao (9) na Equacao (2),
+a estimativa otima da amplitude do sinal e
+determinada por meio da Equacao (10)
+1 T 1
+a  GT C1 G
+G C r
+2.2
+
+Figura 3 Diagrama Geral do metodo COF.
+
+(10)
+
+OF com restricoes adicionais - COF
+
+Para o caso em que se deseja estimar apenas a
+informacao relevante para o sistema de trigger
+do TileCal, ou seja, apenas o pulso central da
+janela, os pesos de um filtro linear seriam dados
+pela Equacao (9), substituindo a matriz G pelo
+vetor g com as amostras do sinal de referencia
+do TileCal. Portanto, na ausencia de pileup,
+e assumindo que o rudo eletronico e gaussiano
+branco (WG), a Equacao (9) pode ser reescrita
+conforme a Equacao (11)
+hotimo 
+
+g
+kgk
+
+2
+
+Figura 4 Identificacao de PileUp e Reconstrucao
+da Energia.
+3
+
+De forma a implementar o COF iterativamente,
+utilizando somente operacoes de soma e produto,
+partimos da funcao custo para a minimizacao do
+erro medio quadratico entre o sinal recebido r e
+a projecao das amplitudes estimadas a na matriz
+dada pelos sinais de referencia G, como mostra a
+Equacao (14)
+
+(11)
+
+Para o caso particular em que se observa
+pileup em algum BC (do ingles, Bunch-Crossings)
+e assumindo que o rudo eletronico e WG, a
+Equacao (9) pode ser simplificada, conforme e
+apresentado pela Equacao (12)
+1
+Hotimo  GT G
+G
+
+J (a)
+
+1
+
+2
+
+ kGa  rk
+
+(14)
+
+Atualizando-se os valores em a na direcao
+contraria ao gradiente de J, em pequenos
+passos, obtem-se os estimadores de amplitude
+a que miniminizam o erro medio quadratico.
+Este algoritmo e conhecido como Gradiente
+. Assim, derivando J em relacao a
+a, temos
+
+(12)
+
+onde G contem os sinais de referencia relacionados
+aos BC onde o pile-up foi observado. O processo
+de deteccao de pileup, para os 7 BC centrais,
+tambem pode ser executado com a ajuda da
+Equacao (10). No caso especial em que se deseja
+estimar todas as sete componentes sobrepostas,
+por ser uma matriz quadrada, podemos reescrever
+a Equacao (12) reduzindo-a, como mostra a
+Equacao (13).
+Desta forma, a inversa da
+matriz GT e, portanto, chamada de matriz de
+deconvolucao (DM).
+Hotimo  GT
+
+Metodo Proposto
+
+J  2G (Ga  r)
+
+(15)
+
+O processo iterativo na determinacao de a e
+implementado da seguinte forma,
+an + 1  an  G (Gan  r)
+
+(16)
+
+.
+onde  e a taxa de evolucao do processo iterativo.
+O valor inicial de a0 e obtido com o processo de
+deconvolucao dado pela Equacao (13).
+Determinada a formulacao matematica do
+metodo proposto, os passos seguintes consistem
+em determinar a faixa de valores de  que
+permitem a convergencia do algoritmo para a
+estimativa da amplitude de sinais sobrepostos ou
+mesmo sem a existencia do fenomeno de pile-up.
+Da mesma forma busca-se determinar o numero
+
+(13)
+
+O processo de deconvolucao indica a
+existencia de informacoes de pile-up.
+Estas
+informacoes sao entao comparadas com um
+limiar.
+Se as informacoes de pile-up forem
+maiores do que este limiar, entao o COF sera
+capaz de reconstruir a energia de cada componente
+detectada com o mnimo de restricoes. As figuras
+a seguir ilustram o diagrama o metodo COF.
+
+144
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+mnimo de iteracoes em que o desvio entre o COF
+e o GD seja inferior a 1.
+Para tal, inicialmente gera-se um vetor linha
+com 98000 amostras sendo que 10 destas
+amostras apresentam dados validos. Ou seja,
+a ocupancia de 10 caracteriza os valores de
+simulacao para as amostras de entrada r (sem
+rudo aditivo) quando o vetor linha com 98000
+amostras e dividido 7. Neste caso, cada linha da
+matriz 14000 x 7 contem um vetor de entrada r.
+Uma vez que trata-se de um processo aleatorio,
+em algumas situacoes o vetor de entrada r nao
+ira conter sinal ou mesmo pile-up. Em outros
+casos, ha existencia de pile-up no BC central
+com influencia de seus BCs adjacentes imediatos o
+que caracteriza uma situacao real no calormetro.
+Apos determinado os vetores de entrada r e
+adicionado rudo WG.
+Em seguida, no processo de identificacao,
+o DM e calculado.
+Para um limiar de 5
+ADC counts, o DM identifica pile-up no BC
+central e em seus adjacentes imediatos, quando
+ha ocorrencia. Apos obter as informacoes do DM
+o algoritmo COF e executado. De posse dos
+resultados do DM e do COF o MSE (do ingles,
+Mean Squared Error ) e calculado.
+O algoritmo GD e entao executado tendo
+como valores iniciais de convergencia os dados
+calculados pelo DM. Os valores acima do limiar
+aplicados como valores iniciais para o algoritmo
+GD permitem a convergencia de forma eficiente.
+Alem disso, a identificacao de pile-up antes da
+execucao do algoritmo possibilita a reconstrucao
+do sinal com o mnimo de restricoes. Finalmente,
+de posse dos resultados, o MSE entre o GD e
+COF e calculado.
+Nesta simulacao o GD foi executado
+considerando 20 valores para  dentro faixa
+0.01 <  < 0.6. Para o numero de interacoes
+tambem foi considerado 20 valores dentro da faixa
+de 0 < iteracoes < 2000. A Figura (5) mostra
+a simulacao para identificacao de valores  que
+divergem.
+
+Atraves da Figura (5) percebe-se que o
+algoritmo GD diverge para valores de  acima
+de 0.5. Entao, a partir desta analise define-se
+que o algoritmo sera executado para  dentro
+faixa 0.01 <  < 0.5. Logo, obtem-se o grafico
+de convergencia do algoritmo como mostra a
+Figura (6).
+
+Figura 6 Convergencia do algoritmo GD.
+Note que quando o valor do numero de
+interacoes e igual a zero os valores sao constantes
+independentemente da variacao de . Uma vez
+que o GD nao executa nenhuma interacao e
+tendo em vista que o mesmo inicializa com valores
+calculados pelo DM, entao seu MSE sera identico
+ao MSE calculado entre o DM e o COF.
+Percebe-se que a medida em que o numero de
+iteracoes aumenta com o aumento da taxa de
+evolucao o MSE entre o GD e o COF diminui.
+Determinado a faixa de valores para  o passo
+seguinte consiste em encontrar o numero mnimo
+de interacoes em que o desvio entre o COF e o
+GD seja inferior 1. Diversas simulacoes foram
+realizadas para encontrar o mnimo de interacoes
+considerando a condicao estabelecida. O resultado
+e apresentado na Figura (7), onde e possvel
+concluir que 20 iteracoes e o suficiente para se
+obter desvio inferior a 1.
+
+Figura 5 Identificacao dos valores de  em que
+ha divergencia.
+
+Figura 7 Identificacao do valor mnimo de
+iteracoes para desvio de 1
+
+145
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Definido os valores da taxa de convergencia
+e numero de interacoes, a seguir e apresentado o
+algoritmo proposto.
+
+REAL
+COF
+GD
+
+a 2
+22.00
+25.25
+25.00
+
+a0
+25.00
+29.09
+29.01
+
+a+ 3
+27.00
+26.32
+26.00
+
+Data
+Tabela 1 Comparativo entre COF e GD para os
+sinais observados.
+
+ r  Sinal de entrada digitalizado
+ G  Sinais de referencia
+ a0  G1 r  Amp. Estimada DM
+
+4
+
+Result
+
+Implementacao
+
+Diante das caractersticas da arquitetura de um
+dispositivo FPGA (Meyer-Baese, 2007), a seguir
+descreve-se o Top level do nucleo do processador
+para execucao sequencial do algoritmo GD.
+Posteriormente sao apresentados os detalhes da
+simulacao do processador em FPGA
+
+ a(n + 1)  Vetor de Amp. Estimadas
+  0.49, taxa de evolucao
+it  20, maxima iteracao
+n  0, valor inicial para convergencia
+for n  1 to it do
+an + 1  an  G(Gan  r)
+end
+
+4.1
+
+Arquitetura do Processador em FPGA
+
+A Figura (9) mostra o Top level e suas
+caractersticas. O bloco PC consiste basicamente
+de um contador que incrementa a cada instrucao
+realizada, indicando a posicao do programa ou
+aplicacao que o hardware esta executando no
+momento. O mesmo possui tambem sinais de
+controle para carregamento externo, no caso de
+uma instrucao de mudanca de controle_de_fluxo
+ou subrotina.
+Na arquitetura pipeline
+desenvolvida,
+enquanto a instrucao atual e executada pela
+ULA, o bloco Prefetch faz a busca da proxima
+instrucao na memoria de programa, separando
+suas informacoes de opcode e operando e
+gerando os sinais de controle para mudanca de
+fluxo de programa, caso a proxima instrucao a ser
+executada seja uma instrucao de salto ou chamada
+para subrotinas. Ja o Instrdecoder recebe os
+campos separados pelo Prefetch e decodifica o
+que a instrucao determina, comandando os blocos
+para realizar a operacao desejada.
+O Stack Pointer tem a funcao de colocar e
+retirar os dados do topo da memoria, simulando
+uma pilha. Este recurso e essencial para o
+desenvolvimento do compilador C. Para suportar
+sub-rotinas no hardware, o bloco Stack armazena
+em qual posicao de memoria o programa estava
+anteriormente, para quando esta rotina terminar,
+voltar ao local correto onde a aplicacao estava.
+O bloco Int2float converte para tipo float os
+dados recebidos do tipo inteiro para se adequar
+ao dado guardado na memoria e realizar as contas
+corretamente e com precisao.
+Finalmente o bloco RegFile implementa um
+ponteiro relativo para enderecamento da memoria
+de dados. Este recurso permite a implementacao,
+em software, de ponteiros e vetores.
+A Figura (10) mostra o nucleo do processador,
+chamado de ULA (Unidade Logica Aritmetica),
+que realiza as operacoes de soma, multiplicacao e
+divisao de numeros em ponto_flutuante.
+
+Na simulacao foi considerado a existencia de
+pile-up no BC central com influencia dos BCs
+a2 e a+3 . Desta forma, para um vetor de
+amplitudes a  a3 a2 a1 a0 a+1 a+2 a+3 
+foram atribudos os valores 0 29 0 25 0 0 27.
+Apos a adicao de rudo, os valores de simulacao
+para as amostras de entrada r sao obtidos,
+14.23 29 28.69 30.02 17.37 16.89 25.38.
+No processo de identificacao do pile-up o DM
+e calculado, resultando em um vetor com valores
+0 23.78 0 29.18 0 0 22.75. Para um limiar de
+5 ADC counts, o DM identifica pile-up no BC
+central e nos BCs a2 e a+3 , como era esperado.
+A Figura (5) apresenta a curva de
+convergencia do presente metodo, para este
+exemplo.
+
+Figura 8 Curva de convergencia para estimacao
+da amplitude utilizando algoritmo GD
+Para a comparacao do algoritmo proposto
+com o metodo COF, a seguir apresenta-se uma
+tabela comparativa com os resultados.
+
+146
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Figura 9 Diagrama de blocos da Unidade Logica Aritmetica.
+
+Figura 10 Diagrama de blocos da Unidade Logica Aritmetica.
+numero formado pelo empacotamento e normaliza
+o mesmo para deixa-lo no padrao de ponto
+flutuante adotado para o processador.
+A utilizacao da ULA como nucleo do
+processador otimiza os recursos em FPGA
+para a reconstrucao de multiplos sinais
+quando comparado aos recursos utilizados
+pela implementacao do COF por meio de
+bancos de filtros. A saber, se considerarmos a
+implementacao do COF por meio de filtros FIR
+para a estimacao do pulso central apenas, seriam
+necessarios sete multiplicadores e seis somas.
+Ja com a utilizacao da ULA para execucao
+do algoritmo GD, apenas um multiplicador e
+uma soma sao utilizados para todas as possveis
+combinacoes de pile-up.
+
+A ULA constitui-se dos blocos Unpack,
+Mymult, Mydiv, Denorm, Mysoma, Outmux, F2i,
+Pack e Norm. O bloco Unpack e responsavel por
+separar o numero recebido em expoente e mantissa
+do ponto_flutuante, verificando se o mesmo e
+negativo. Em caso afirmativo, o mesmo ja realiza
+o complemento de 2. Ja o bloco Mymult realiza
+a multiplicacao dos numeros da entrada da ULA,
+multiplicando os valores das mantissas e somando
+os expoentes. O bloco exporta o resultado dessas
+duas operacoes em sadas distintas.
+O Mydiv tem como funcao realizar a divisao
+dos numeros da entrada da ULA, dividindo os
+valores das mantissas e subtraindo os expoentes.
+Ele exporta o resultado dessas duas operacoes
+em sadas distintas porem, este bloco nao e
+utilizado no algoritmo Gradiente 
+implementado. O Denorm iguala os expoentes,
+realizando o deslocamento de bits da mantissa,
+preparando os numeros para serem subtrados ou
+adicionados.
+O bloco Mysoma, apos preparar as mantissas,
+realiza a soma das mesmas e ajusta o expoente.
+O bloco outmux verifica qual foi a operacao
+indicada pela instrucao e seleciona o resultado
+do expoente e a mantissa deste. O bloco F2i
+recebe o resultado no formato de ponto_flutuante
+e transforma em inteiro atraves do deslocamento
+adequado de bits. Ja o bloco Pack tem como
+funcao realizar o empacotamento do expoente
+e mantissa informando se o numero e positivo
+ou negativo. Por fim, o bloco Norm verifica o
+
+4.2
+
+Resultados do Processador em FPGA
+
+Atraves do compilador projetado, desenvolveu-se
+as subrotinas em linguagem C para o algoritmo
+GD. O compilador foi desenvolvido com o
+parse generator GNU bison e um gerador de
+analise lexical (FLEX) (Donnelly and Stallman,
+2008 Paxson, 1995) capaz de reconhecer padroes
+de texto e codificar no formato da instrucao
+do processador.
+O compilador gera as
+intrucoes em assembler para o processador atraves
+das subrotinas em C. Estas instrucoes sao
+entao executadas pelo hardware digital para o
+co-processamento do algoritmo. O Hardware
+digital foi desenvolvido em linguagem descritiva
+
+147
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+HDL, utilizando o sintetizador da Altera Quartus
+II.
+Sabendo que o segundo nvel de filtragem
+possui tempo de processamento maximo de 10 us
+e visto que 20 iteracoes sao suficientes para um
+desvio inferior a 1, entao cada loop do algoritmo
+pode ser repetido a uma taxa de 2 MHz. Porem,
+para o tempo de processamento de 10 us, 7.5 us
+sao utilizados para outras aplicacoes. Sendo
+assim, os algoritmos DM e GD precisam ser
+executados em um tempo total de 2.5 us. Se o
+resultado do DM e obtido com 7 ciclos de clock e
+o GD com 20 ciclos, entao a taxa a ser utilizada
+no metodo proposto e de 10.8 MHz.
+A tabela a seguir mostra a comparacao entre
+os resultados obtidos em ambiente de simulacao
+Matlab e os resultados obtidos apos simulacao em
+FPGA.
+
+GD MATLAB
+GD FPGA
+
+a 2
+25.00
+25.00
+
+a0
+29.01
+29.01
+
+ATLAS Group (1996b). Atlas tile calorimeter
+technical design report, Technical report,
+CERNLHCC9642.
+Bertsekas, D. P. (1996). Constrained Optimization
+and Lagrange Multiplier Methods, 1st edn,
+Athena Scientific.
+Cleland, W. and Stern, E. (1994).
+Signal
+processing
+considerations
+for
+liquid
+ionization calorimeters in a high rate
+environment, Nuclear Instruments and
+Methods in Physics Research A338 467497.
+Collaboration, T. A. (2008). The atlas experiment
+at the cern large hadron collider, Journal of
+Instrumentation 3(08003).
+Conde, M. P., Aracena, I., Brelier, B. and
+Cranmer, K. (2008). Implementation and
+performance of the atlas second level jet
+trigger, Journal of Physics Conference
+Series 119(2) 022029.
+
+a+ 3
+26.00
+26.00
+
+Donnelly, C. and Stallman, R. (2008). Bison, Free
+Software Foundation, Inc.
+
+Tabela 2 Comparativo entre GD Matlab e GD
+FPGA.
+
+Evans, L., B. P. (2008). Lhc machine, Journal of
+Instrumentation JINST 3(S08001).
+5
+
+Conclusoes e Trabalhos Futuros
+
+Fullana, E. (2006). Optimal filtering in the atlas
+hadronic tile calorimeter, IEEE Transactions
+On Nuclear Science 53(4).
+
+Atraves
+das
+formulacoes
+apresentadas,
+comprova-se que o metodo proposto, baseado no
+algoritmo do Gradiente , e capaz de
+estimar as amplitudes de sinais sobrepostos com
+eficiencia similar a formulacao atual do COF com
+inversao de matrizes. O metodo apresentado evita
+esta inversao possibilitando sua implementacao
+em FPGA para o processamento_online. Atraves
+da simulacao do processador comprovou-se a
+viabilidade do algoritmo para reconstrucao online
+de sinais em condicoes de alta luminosidade, uma
+vez que sua formulacao resulta em operacoes
+simples de produto e soma e hardware otimizado.
+Para trabalhos futuros pretende-se implementar
+em FPGA os algoritmos Gradiente 
+Adaptativo e Conjugado, o que viabiliza a
+utilizacao de ponto fluntuante. Estes algoritmos
+ja foram simulados em ambiente Matlab obtendo
+excelentes resultados.
+Para o caso do GD
+Conjugado, os resultados mostram que o numero
+de interacoes e identico a quantidade de pile-up
+observados.
+
+Haykin, S. (1996). Adaptative Filter Theory, 3rd
+edn, Prentice Hall.
+Kay, S. M. (1993). Fundamentals of Statistical
+Signal Processing  Estimation Theory, 1st
+edn, Prentice Hall.
+L. Filho, A. Cerqueira, D. D. J. S. (2012).
+Calorimeter signal response deconvolution
+for online energy estimation in presence
+of pile-up, Atl-tilecal-int-2012-008, CERN
+Document Serve.
+Meyer-Baese, U. (2007). Digital Signal Processing
+with Field Programmable Gate Arrays, 3rd
+edn, Springer.
+Palestini, S. (2003). The muon spectrometer
+of the atlas experiment, Nuclear Physics B
+125 337345.
+Paxson, V. (1995).
+California.
+
+Referencias
+
+FLEX, University of
+
+Ros, E. (2003). Atlas inner detector, Nuclear
+Physics B - Proceedings Supplements
+120 235238.
+
+Adragna, P. e. a. (June 2006). The atlas hadronic
+tile calorimeter from construction toward
+physics, Nuclear Science 53 1275  1281.
+
+Wigmans, R. (2000).
+Calorimetry Energy
+Measurement in Particle Physics, Oxford
+University Press.
+
+ATLAS Group (1996a).
+Atlas liquid argon
+calorimeter technical design report, Technical
+report, CERN.
+
+148

@@ -1,0 +1,708 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+RECONSTRUCAO BAYESIANA DE IMAGEM DE TOMOGRAFIA DE RAIOS-X
+USANDO SOFT-THRESHOLD NONLINEAR FILTRATION COM AJUSTE DO
+PARAMETRO DE THRESHOLD
+Tiago T. Wirtti, Evandro O. T. Salles
+
+
+Universidade Federal do Esprito Santo
+Av. Fernando Ferrari, 514 - Goiabeiras
+Vitoria, ES -Brasil, CEP 29075-910
+
+Emails tiago.wirtti@aluno.ufes.br, evandro@ele.ufes.br
+Abstract A widespread technique for X-ray tomography reconstruction is the statistical approach making
+use of maximum a posteriori (MAP) and total variation (TV) regularization. The main concern is the tradeoff between performance and noise reduction. The objective function is stated with discrepancy modeled by the
+projection data (sinogram) as a Poisson distribution, and the fidelity with a discrete gradient transform (DGT) as
+TV regularization term. A two steps alternating minimization method is used to optimize the objective function.
+The first one solves discrepancy using simultaneous algebraic reconstruction technique (SART). The other solves
+DGT pseudo-inverse through soft-thresholding nonlinear filtration which depends on a well stabilished threshold
+parameter. The main contribuition on this work is exploring DGT sparsity feature to design consistent solutions
+for threshold setup. Structural similarity (SSIM) was used to compare the reconstructed image with the original
+one. Results about SSIM  96 was achieved using noiseless projection data, SSIM  91 with a noise of 5.
+Although it is not achievable in practice by the high computational cost, an approach with a result of SSIM
+ 98 has also been proposed.
+Keywords
+
+X-ray Tomography, Image Reconstruction, Baeysian Inference.
+
+Resumo Na reconstrucao_de_imagem de tomografia de raios-X, uma tecnica bem difundida e a abordagem
+estatstica de maximizacao a posteriori (MAP) com regularizacao por variacao total (TV). Mais detalhadamente,
+trata-se de um problema de otimizacao em que a funcao objetivo e representada pela soma de dois termos, a
+saber a discrepancia (ou fidelidade), com norma l2 , e a restricao (ou priori, ou termo regularizador), com norma
+lp , 1 < p < 2. A modelagem do termo regularizador utiliza a DGT (discrete gradient transform), por ser uma
+transformacao esparsa. A solucao de reconstrucao consiste em realizar a minimizacao alternada dos termos da
+funcao objetivo. O termo regularizador e resolvido por STNF (soft-thresholding nonlinear filtration) sobre a
+pseudo-inversa da DGT, que depende do paramentro de threshold, , cuja definicao e, frequentemente, realizada
+de forma emprica. Este trabalho explora a esparsidade da DGT para definir o threshold, demonstrando que a
+melhor escolha e o valor esperado da DGT, obtido dinamicamente a cada iteracao do algoritmo de reconstrucao. Os resultados com diferentes definicoes do parametro  sao comparados com a solucao proposta usando
+o indicador SSIM (structural similarity), sendo que a ultima obteve resultado (SSIM  96 para reconstrucao
+sem rudo e SSIM  91 com rudo gaussiano a 5) na reconstrucao do phantom de Shepp-Logan. Foi sugerida
+tambem uma abordagem de computacao intensiva em que varios valores de threshold dentro da faixa possvel sao
+testados. Neste caso, obteve-se o resultado SSIM  98, mas este e dependente do sinal de entrada, ao contrario
+do metodo proposto, que funciona de forma independente.
+Palavras-chave
+
+.
+
+Introducao
+
+Em princpio, o tomografo mede a atenuacao dos
+feixes de fotons de raios-X que atravessam um objeto. Atraves de tais medicoes (projecoes), aplicando tecnicas de reconstrucao, as imagens sao
+obtidas. Nos paragrafos seguintes serao apresentadas brevemente as principais tecnicas de reconstrucao de imagens de tomografia de raios-X.
+O primeiro metodo amplamente utilizado
+para a reconstrucao_de_imagem a partir de projecoes, tanto em CT de raios-X como PET (positron emission tomagraphy) e SPECT (singlephoton emission computed tomography), foi o FBP
+(filtered backprojection). FBP se baseia no teorema da fatia central de Fourier, sendo implementado com transformada rapida de Fourier. Portanto, FBP e uma solucao de bom desempenho e
+confiavel. Entretanto, FBP requer dosagem elevada de radiacao, alem de nao incorporar bem co-
+
+ISSN 2525-8311
+
+nhecimento previo sobre o sistema, tornando sua
+utilizacao em novas geometrias(cone-beam e multislice, por exemplo), bastante desafiantes.
+O metodo ART (algebraic reconstruction technique) (Gordon et al., 1970) foi apresentado como
+alternativa ao FBP. ART e uma adaptacao do metodo Kaczmarz (1937) de algebra linear numerica.
+ART consiste em resolver iterativamente o sistema
+linear y  Ax, onde A descreve o processo de obtencao da imagem, y representa as projecoes e x
+a imagem que se pretende reconstruir. Dentre as
+principais vantagens apresentadas pelo ART estao
+(1) facilidade de introduzir conhecimento previo
+sobre a geometria do tomografo, (2) capacidade de
+suprimir artefatos metalicos e (3) melhor desempenho em tomografias de angulo limitado. Entretanto, conforme aumenta o numero de projecoes,
+maior e o seu custo_computacional.
+Em resposta a limitacao de desempenho do
+ART, foi proposto o metodo SART (simultaneous
+
+930
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+algebraic reconstruction technique) (Andersen and
+Kak, 1984). SART gera uma reconstrucao completa da imagem a cada iteracao, pois realiza aplicacao simultanea dos termos de correcao de erros
+de todas as projecoes em cada ciclo. Este metodo
+se tornou bastante popular, tendo sua convergencia comprovada por Jiang and Wang (2003). Variacoes do SART foram propostas em combinacao
+com outros metodos. Ge and Ming (2004) implementaram SART com ordered-subset (OS-SART)
+com ganho sobre o metodo original. Pan et al.
+(2006) propuseram o metodo VW-OS-SART (variable weighted OS-SART), que mostrou melhor
+potencial em comparacao com OS-SART e SART.
+Yu and Wang (2010a) utilizaram SART e propriedades de esparsidade para reconstruir imagens
+com numero limitado de projecoes. Hengyong
+et al. (2010) propuseram a reconstrucao de imagens de tomografia com SART usando projecoes
+sobrepostas que, em teoria, melhoram o desempenho global do processo de reconstrucao. Yu
+and Wang (2014) propuseram um metodo SART
+adaptado para o algoritmo half-threshold filtering
+com grande potencial para melhorar a qualidade
+da imagem reconstruda a partir de pequena quantidade de projecoes em presenca de rudo. A abordagem SART, embora bem sucedida, nao favorece
+a incorporacao de fenomenos fsicos a modelagem
+para reconstrucao da CT. Em contrapartida, os
+metodos estatsticos, mais notadamente os Bayesianos, permitem a insercao de conhecimento previo sobre o sistema, restringindo (melhorando) a
+busca por solucoes de reconstrucao mais satisfatorias.
+Desta forma, os metodos estatsticos, as vezes denominada SIR (statistical iterative reconstruction), tem sido extensamente aplicados em reconstrucao de CT. Carson and Lange (1984) propuseram o metodo ML-EM (maximum likelihoodexpectation maximization) no qual se procura maximizar a resposta mais provavel usando como fator de correcao o valor esperado maximo de cada
+iteracao. Lange et al. (1987) incluram no modelo
+EM (expectation maximization) uma prior Bayesiana e mostraram que esta versao converge mais rapidamente que a nao Bayesiana. Man et al. (2001)
+e Elbakri and Fessler (2002) propuseram, de forma
+independente, modelos estatsticos ML (maximum
+likelihood ) e MAP, respectivamente, para tomografias reconstrucao de CT com feixes polienergeticos. Xu et al. (2011) apresentaram uma abordagem denominada SIT (statistical interior tomography) que usa metodos estatsticos combinados
+com SART para reconstruir imagens de tomografias de areas limitadas (tomografia interior).
+O estado da arte (Yu and Wang (2010b), Xu
+et al. (2011), Daubechies et al. (2004), entre outros) sugerem uma estrategia para reconstrucao de
+CT usando MAP com funcao de regularizacao TV
+obtida por pseudo-inversa da DGT (discrete gradi-
+
+ISSN 2525-8311
+
+ent transform). A funcao objetivo e otimizada por
+minimizacao alternada utilizando SART para o
+termo de fidelidade (discrepancia) e soft-threshold
+filtration para resolver a pseudo-inversa da DGT.
+O metodo de filtragem utilizado e bastante sensvel ao threshold. Portanto, a contribuicao deste
+trabalho consiste em avaliar e sugerir diferentes
+possibilidades de estimacao do parametro de threshold para a inversao da DGT  desde constantes ate os dinamicos  comparando-os e mostrando vantagens e desvantagens de cada abordagem. Os resultados de reconstrucao sao comparados com a imagem de referencia por SSIM. O restante deste artigo e organizado como segue. Na
+secao II o metodo proposto e desenvolvido. Na
+secao III varios experimentos sao realizados, os
+resultados sao apresentados e analisados. Finalmente, na secao IV tem-se as conclusoes e consideracoes finais.
+2
+
+Metodologia
+
+Nesta secao e obtida a funcao objetivo para reconstrucao de CT com base no modelo Bayesiano
+MAP. Em seguida, um algoritmo_de_otimizacao
+por minimizacao alternada e apresentado. O algoritmo obtem a solucao (imagem reconstruda)
+em duas etapas. Na primeira, e aplicado o metodo SART para otimizar o termo de fidelidade
+(discrepancia). Na segunda etapa, o resultado anterior e suavizado (filtrado) pela aplicacao do metodo soft-threshold filtration. Enfim, a segunda
+etapa realimenta a primeira e o processo se repete
+sucessivas vezes, ate que um criterio_de_parada
+seja satisfeito. A convergencia e comprovada por
+Daubechies et al. (2004). O metodo de filtragem
+adotado e relativamente sensvel ao threshold escolhido. Por isso, ao final desta secao, sao discutidas
+algumas tecnicas de definicao de threshold, tanto
+estaticos como dinamicos.
+2.1
+
+Modelo Estatstico e Funcao Objetivo
+
+O tomografo registra o numero de fotons de raiosX (projecao) que atravessam um objeto a diferentes angulos usando geometria paralela ou divergente. Quanto mais densa a regiao atravessada pelo feixe de fotons, menor e a intensidade
+Ii , i  1, ..., NI , da projecao medida pelo sensor
+do tomografo, onde NI e o numero maximo de
+projecoes obtidas. Consequentemente, maior e a
+atenuacao sofrida pelo feixe. Esta relacao, conhecida como lei de Beer-Lambert, e definida por
+
+
+Z
+Ii  I0 exp  (x, y)dL , i  1, ..., NI , (1)
+Li
+
+onde I0 representa a intensidade da projecao
+quando o feixe atravessa o ar (sem obstaculo) e
+
+931
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+o termo exponencial e a integral de todos os coeficientes de atenuacao linear, (x, y), sobre a linha
+Li (trajetoria do feixe).
+O objetivo da reconstrucao e estimar a atenuacao discreta, (x, y), para cada um dos NJ pixels
+retangulares daR imagem. Assim, a integral sobre
+a linha, pi  (x, y)dL, pode ser discretizada
+Li
+
+como
+pi 
+
+NJ
+X
+
+aij j  Ai , i  1, ..., NI ,
+
+definicao, TV e a soma da DGT para todos os
+pixels da imagem. Assim, se a TV, definida por
+T V ()  kDk1 ,
+T
+
+com D  (D1 , ..., DN J ) , e o termo regularizador de (5), entao, introduzindo a variavel auxiliar   D, o problema de reconstrucao se resume em minimizar a funcao objetivo a seguir
+
+(2)
+
+ () 
+
+j1
+
+onde yi e a projecao ao longo do i-esimo feixe de
+raios-X e yi e o seu valor esperado. Uma vez que
+os feixes de raios-X sao independentes entre si, levando em consideracao (3), a probabilidade conjunta de y  y1 , y2 , ..., yNI  dado  pode ser expressa por
+P (y) 
+
+NI
+Y
+
+P (yi ) 
+
+i1
+
+NI 
+y
+Y
+(yi ) i
+
+yi !
+
+i1
+
+e
+
+yi
+
+
+. (4)
+
+Aplicando o desenvolvimento proposto por Yu
+and Wang (2009), utilizando a abordagem MAP,
+tem-se a funcao objetivo
+ () 
+
+NI
+X
+yi
+i1
+
+2
+
+2
+
+(Ai  pi ) + R () ,
+
+(5)
+
+onde R () e o termo de regularizacao. Esse problema se enquadra na categoria daqueles cuja solucao e assumida ter uma expansao esparsa em
+uma base ortogonal arbitraria, conforme descrito
+por Daubechies et al. (2004). Assim, usando o
+termo regularizador esparso apropriado de norma
+lp , 1 < p < 2, tem-se uma solucao convergente.
+Dentre as transformacoes esparsas, a mais utilizada e a DGT (discrete gradient transform), definida por
+
+
+
+2
+
+2.2
+
+ISSN 2525-8311
+
+2
+
+(Ai  pi ) + kk1 ,
+
+(8)
+
+Otimizacao por Minimizacao Alternada
+
+A minimizacao alternada consiste em otimizar
+simultaneamente, de forma alternada, dois ou
+mais termos da uma funcao objetivo. Desta
+forma, a abordagem proposta por Yu and Wang
+(2010b), adotada neste trabalho, consiste em otimizar o termo de fidelidade (ou discrepancia)
+PNI yi
+2
+i1 2 (Ai  pi ) por SART e, em seguida,
+otimizar o termo T V () por soft-threshold filtering. O resultado obtido na segunda etapa realimenta o algoritmo SART ate que um criterio
+de parada seja atingido, eou o resultado da reconstrucao seja satisfatorio. A primeira etapa
+(SART) consiste em resolver, conforme Ge and
+Ming (2004), a equacao iterativa
+1
+kj  k1
++ k a+j
+j
+
+NI
+P
+i1
+
+ai,j
+ai+
+
+
+pi  Ai k1 (9)
+
+PNI
+
+PNJ
+onde a+j 
+i1 > 0, ai+ 
+j1 > 0, Ai e
+a i-esima linha de A, k e o ndice de iteracao e
+0 < k < 2 e um parametro de relaxacao arbitrario. Para simplificar a notacao, pode-se estabelecer que +NJ  RN  RN seja uma matriz
+1
+J
+e +NI  RN  RN
+diagonal com +N
+ a+j
+jj
+I
+seja uma matriz diagonal com +N
+
+ii
+tao (9) pode ser reescrita como
+
+1
+ai+ .
+
+En-
+
+
+k  k1 ++NJ AT NI + p  Ak1 , (10)
+onde o termo k foi omitido, pois sera considerado
+constante e igual a 1.
+A segunda etapa (otimizacao da priori) consiste em resolver o problema   D, apresentado
+em (7), sendo que D nao e inversvel. Yu and
+Wang (2010b) propuseram a solucao apresentada
+a seguir
+km,n 
+
+2
+
+(m,n  m+1,n ) + (m,n  m,n+1 ) ,(6)
+
+onde j  (m  1)  W + n, com m  1, 2, ..., H
+e n  1, 2, ..., W , e com W e H sendo, respectivamente, a largura e a altura da matriz que representa a imagem com NJ  W  H pixels. Por
+
+2
+
+onde  e um parametro de ajuste positivo para
+balancear os termos de fidelidade e TV.
+
+Dj   Dm,n  
+q
+
+NI
+X
+yi
+i1
+
+onde A  aij  e a matriz que representa a geoT
+metria do sistema,   (1 , ..., NJ ) e o vetor de
+coeficientes de atenuacao linear com j representando o j-esimo pixel e, finalmente, o smbolo T
+representa a transposta da matriz. Para efeito de
+simplificacao do modelo, cada posicao aij e definida como o comprimento normalizado da intersecao entre o i-esimo raio de projecao e o j-esimo
+pixel retangular centrado em (x, y). Devido a natureza da emissao de raios-X (evento raro), utilizase o modelo probabilstico de Poisson
+
+yi  P oisson yi  I0 epi , i  1, ..., NI (3)
+
+(7)
+
+
+1
+k,b
+k,c
+2k,a
+m,n + m,n + m,n ,
+4
+
+(11)
+
+onde
+k,a
+m,n 
+
+
+
+
+
+
+
+
+
+k
+k
+2k
+m,n +m+1,n +m,n+1
+ 4
+
+k
+k
+ 2k
+m,n m+1,n m,n+1
+k
+
+m,n
+4Dm,n k
+
+se Dm,n k < 
+se Dm,n k  .
+
+932
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+k,b
+m,n 
+
+
+
+
+
+
+
+
+
+k,c
+m,n 
+
+
+
+
+
+
+
+
+
+k
+k
+m,n +m1,n
+2 
+
+k
+ k
+m,n m1,n
+k
+m,n 
+2Dm1,n k
+
+k
+k
+m,n +m,n1
+2 
+
+k
+ k
+m,n m,n1
+k
+m,n 
+2Dm,n1 k
+
+se Dm1,n k < 
+se Dm1,n k  
+
+se Dm,n1 k < 
+se Dm,n1 k  
+
+e  e um threshold preestabelecido. A contribuicao deste trabalho e discutir alternativas e propor
+uma solucao com bom compromisso entre desempenho computacional e qualidade da reconstrucao
+para o ajuste do parametro .
+2.3
+
+Parametro de Threshold 
+
+Intuitivamente, o valor do threshold  deve ser tal
+que
+Dmn min < w < Dmn max ,
+(12)
+onde Dmn min e Dmn max sao, respectivamente,
+os valores mnimo e maximo de cada versao de
+Dmn . A DGT, em (6), expressa o quanto cada
+pixel da imagem em construcao varia em relacao
+aos seus vizinhos, ou seja,
+
+q
+
+dkm,n 
+2
+2
+km,n  km+1,n + km,n  km,n+1 .(13)
+
+Conforme observando em (11), quando
+dkm,n < , deve-se ajustar os valores de km,n ,
+km+1,n e km,n+1 de forma que dkm,n  0. Assim, temos um filtro que ajusta as frequencias mais baixas da DGT para zero. Quando
+dkm,n  , o objetivo e diminuir as diferencas
+2
+2
+km,n  km+1,n e km,n  km,n+1 . O resultado dessa operacao pode ser interpretado como
+um filtro que preserva as frequencias mais altas
+da DGT. Assim, pode-se afirmar que o metodo
+de soft-threshold filtering funciona como um filtro
+passa-altas com frequencia de corte em . Alem
+disso, as altas frequencias sao suavizadas.
+Considerando o exposto ate o momento, o parametro de threshold  desempenha um papel importante na qualidade da reconstrucao da imagem, pois, se ajustado adequadamente, estabelece
+uma relacao ideal entre sinal e rudo. Entao, surgem algumas questoes importantes (1) qual e a
+melhor maneira de se ajustar o parametro ? (2)
+e melhor um  fixo, ou um  dinamico? (3) o metodo soft-threshold filtering converge para qualquer ? A primeira questao e o objetivo desta
+subsecao e sera tratada em breve. Com relacao ao
+tipo de threshold (fixo ou dinamico), a utilizacao
+de um threshold dinamico pode acelerar a convergencia, pois aumenta o tamanho dos passos do
+algoritmo. Entretanto, a complexidade computacional aumenta consideravelmente. Segundo Daubechies et al. (2004), o algoritmo tem convergencia
+garantida, desde que a norma lp da restricao seja
+
+ISSN 2525-8311
+
+tal que 1 < p < 2 e que seja satisfeita a condicao
+em (12).
+Voltando a questao (1), uma boa inspiracao
+seria pensar na esparsidade da DGT. Sua pdf possui caracterstica laplaciana, apresentando valor
+alto em zero (indicador de esparsidade) e uma
+calda longa. Os componentes de baixa frequencia da DGT (proximos de zero) representam o
+rudo que se pretende eliminar, enquanto os componentes de alta frequencia representam as transicoes (bordas) que devem ser preservadas. Pela
+sua natureza esparsa, tanto a media como a mediana da DGT sao relativamente proximas de zero.
+Por essa razao, intuitivamente, a media pode funcionar como frequencia de corte deste filtro.
+Assim, e razoavel pensar que os valores da DGT
+que estao abaixo do valor esperado () devam ser
+suprimidos e os valores acima preservados (e
+suavizados). Em (6) temos Dmn  reescrito lexicograficamente como Dj  que, por conveniencia,
+sera expresso aqui como Dj (). Entao, o valor
+esperado e dado por
+E Dj () 
+
+NJ
+X
+
+Dj () fM ()
+
+(14)
+
+j1
+
+onde E . e a funcao valor esperado, fM () e a
+pdf da DGT e  e uma variavel aleatoria. Sabe-se
+que, conforme (11), se dkm,n < , entao os valores
+de km,n , km+1,n e km,n+1 devem ser ajustados
+para que dkm,n  0. Desta forma,
+h
+i
+2
+V AR Dj ()  E (Dj ()  )  0, (15)
+pois, se dkm,n  0, entao V AR Dj ()  0. Consequentemente, tem-se
+E Dj ()  .
+
+(16)
+
+Como sera mostrado na proxima secao, o valor
+de threshold definido em (16) apresenta resultados
+muito interessantes, tanto na presenca quanto na
+ausencia de rudo (situacao ideal).
+3
+
+Experimentos e Resultados
+
+Os testes realizados neste trabalho utilizam uma
+imagem phantom Shepp-Logan. O sinal (projecao) e obtido por y  Ax + e, onde A (NI  NJ )
+e a matriz que descreve o sistema de captura, x
+(NJ 1) e o (phantom) representado lexicograficamente e e (NJ  1) e rudo gaussiano branco com
+media 0 e variancia unitaria. NI  nl n e o numero de projecoes, onde nl e o numero de linhas
+de projecao para cada angulo de varredura e n e
+o numero total de angulos de varredura.
+ A imagem tem dimensoes d  d, onde d  NJ  2R ,
+R  N+ (naturais positivos). Detalhando os testes, utilizou-se nl  300, n  0, ..., 179o , d 
+512(R  9) desvio padrao e  0 ou e  0, 05.
+
+933
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Desta forma, A tem dimensoes 54000  262144,
+que e compatvel com as dimensoes de y e x. A
+foi obtido para arquitetura de tomografo paralela.
+O experimento consiste em realizar os procedimentos descritos na secao 2, obtendo assim uma
+imagem reconstruda, , o mais proxima possvel da imagem original, , de acordo com o criterio SSIM. Em todos os testes foram realizadas
+K  350 iteracoes. A Figura 1 ilustra os testes
+de reconstrucao do phantom a partir do sinal sem
+rudo. Foram testadas cinco estrategias para a
+definicao do threshold . O melhor resultado foi
+obtido quando  foi estimado a cada passo k, conforme (16), obtendo SSIM  96. A solucao pelo
+melhor  (ultimo  obtido pela estimativa (16))
+se equiparou a primeira, mas para saber o melhor  foi necessario recalcular a media a cada
+passo (utilizando a primeira solucao). Portanto,
+embora a utilizacao do melhor  resulte em um
+desempenho superior (pois nao e necessario recalcular a media a cada iteracao), esta nao e viavel
+na pratica, pois o melhor  depende da imagem, alem de variar de acordo com as condicoes
+de rudo (para a mesma imagem). As estrategias
+de calculo de  pela mediana e pela media mais
+desvio padrao se mostraram inferiores a primeira
+abordagem. Foi realizada a reconstrucao apenas
+com SART , sem levar em conta a priori (modelada na secao 2). Neste caso, como se pode observar na Figura 1 (sem ), o resultado e muito
+inferior ao obtido pelas outras abordagens.
+Figura 1 SSIM sem rudo
+
+Figura 2 SSIM com rudo branco gaussiano com
+desvio e  5
+
+tro de threshold  e o indicador SSIM para valores
+de  iniciais da faixa definida por (12). Optou-se
+por exibir apenas os valores de  proximos da origem, pois, acima de um certo , o valor do SSIM
+se estabiliza. Esse fenomeno de saturacao ocorre
+devido a natureza esparsa da DGT, que concentra muitos valores proximos de zero e poucos mais
+distantes (pdf com cauda longa). Observa-se que
+o valor SSIM resultante da reconstrucao realizada
+aplicando-se (16) (estimativa pela media) e SSIM
+ 0.9686 com   0.0130 (quadrado na Figura
+3). Entretanto, o valor obtido tetando-se varios
+thresholds e de SSIM  0.9885 com   0.0030
+(losango na Figura 3). Embora este ultimo resultado seja superior a estimativa pela media, o
+mesmo apresenta a desvantagem de so obter o resultado prometido apos varias tentativas de reconstrucao, enquanto a estimativa pela media requer apenas uma. Isso implica que o custo_computacional desta tecnica de forca bruta (inumeras
+tentativas para obter exito) e elevado em relacao a
+estimativa pela media. Embora o custo_computacional desta solucao seja proibitivo, este pode ser
+bastante atenuado atraves da escolha de um intervalo bem proximo da origem, que provavelmente
+contera o maior SSIM, conforme sugere a Figura
+3 (regiao R).
+Figura 3 SSIM por parametro 
+
+O segundo teste (Figura 2) foi realizado
+adicionando-se rudo gaussiano com desvio padrao
+de 5. O calculo do threshold  pela media (16)
+e melhor  continuam apresentando os melhores
+resultados, com SSIM  91. A solucao pela
+mediana perde para a solucao pela media mais
+desvio padrao. A deterioracao da solucao pela
+mediana ocorre porque a mediana se desvia da
+media da DGT na presenca de rudo, ou seja, a
+pdf da DGT passa a ser assimetrica. A solucao
+sem  (SART puro) continua tendo o pior resultado.
+A Figura 3 mostra a relacao entre o parame-
+
+ISSN 2525-8311
+
+934
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+4
+
+Conclusoes
+
+A metodologia proposta na secao 2 e robusta e
+tem sua convergencia garantida. Entretanto, uma
+escolha inadequada do parametro de threshold 
+pode inviabilizar o potencial da solucao. A escolha do parametro  pode ser realizada por forca
+bruta, com excelente resultado, conforme exposto
+na secao 3, Figura 3. Entretanto, seu custo_computacional e proibitivo e, via de regra, a busca da
+melhor solucao e inviavel no que se refere as necessidades de desempenho de uma tomografia. Por
+isso, o presente trabalho apresentou uma solucao
+para a escolha do parametro  que com base no
+valor esperado da DGT, obtendo resultado proximo do ideal. A solucao apresentada e robusta
+na presenca de rudo, enquanto os outros criterios utilizados para o calculo do  nao o foram.
+Esta se baseia na ideia de que a DGT contem os
+componentes de alta frequencia da imagem em reconstrucao, que podem ser rudo ou borda. Como
+o rudo se apresenta na banda inferior da DGT
+(em frequencias mais baixas), a aplicacao do filtro
+passa altas suavizado por soft-threshold filtration
+preserva as bordas e, simultaneamente, elimina as
+componentes de rudo, igualando os pixels vizinhos.
+Como perspectiva para novos trabalhos, podese explorar outros tipos de funcao de penalizacao
+e outros tipos de funcao esparsa, inclusive funcoes
+de penalizacao adaptativas.
+Referencias
+Andersen, A. and Kak, A. (1984). Simultaneous
+algebraic reconstruction technique (sart) A
+superior implementation of the art algorithm,
+Ultrasonic Imaging 6(1) 81  94.
+Carson, R. E. and Lange, K. (1984). E-m reconstruction algorithms for emission and transmission tomography, Journal of Computer
+Assisted Tomography .
+Daubechies, I., Defrise, M. and Mol, C. D. (2004).
+An iterative thresholding algorithm for linear inverse problems with a sparsity constraint, Communications on Pure and Applied
+Mathematics 57(11) 14131457.
+Elbakri, I. A. and Fessler, J. A. (2002). Statistical image reconstruction for polyenergetic
+x-ray computed tomography, IEEE Transactions on Medical Imaging 21, 2.
+Ge, W. and Ming, J. (2004). Ordered-subset simultaneous algebraic reconstruction techniques (os-sart), Journal of X-Ray Science and
+Technology 12(3) 169  177.
+
+(art) for three-dimensional electron microscopy and x-ray photography, Journal of Theoretical Biology 29(3) 471  481.
+Hengyong, Y., Ji, C. and Wang, G. (2010). Sarttype image reconstruction from overlapped
+projections, International Journal of Biomedical Imaging Annual 2011.
+Jiang, M. and Wang, G. (2003). Convergence
+of the simultaneous algebraic reconstruction
+technique (sart), Image Processing, IEEE
+Transactions on 12(8) 957961.
+Kaczmarz, S. (1937). Angenaherte auflosung von
+systemen linearer gleichungen, Bulletin International de lAcademie Polonaise des Sciences et des Lettres. Classe des Sciences
+Mathematiques et Naturelles. Serie A, Sciences Mathematiques 35 355357.
+Lange, K., Bahn, M. and Little, R. (1987). A theoretical study of some maximum likelihood algorithms for emission and transmission tomography, IEEE Transactions on Medical Imaging .
+Man, B. D., Nuyts, J., Dupont, P., Marchal,
+G. and Suetens, P. (2001).
+An iterative maximum-likelihood polychromatic algorithm for ct, IEEE Transactions on Medical
+Imaging 20(10) 9991008.
+Pan, J., Zhou, T., Han, Y. and Jiang, M. (2006).
+Variable weighted ordered subset image reconstruction algorithm, International Journal of Biomedical Imaging 2006 7 pages.
+Xu, Q., Mou, X., Wang, G., Sieren, J., Hoffman,
+E. A. and Yu, H. (2011). Statistical interior
+tomography, IEEE Transactions on Medical
+Imaging 30, 5.
+Yu, H. and Wang, G. (2009). Compressed sensing
+based interior tomography, Physics in Medicine and Biology .
+Yu, H. and Wang, G. (2010a). Sart-type image
+reconstruction from a limited number of projections with the sparsity constraint, International Journal of Biomedical Imaging 2010 9
+pages.
+Yu, H. and Wang, G. (2010b). A soft-threshold
+filtering approach for reconstruction from
+a limited number of projections, PHYSICS
+IN MEDICINE AND BIOLOGY (55) 3905
+3916.
+Yu, H. and Wang, G. (2014). Sart-type halfthreshold filtering approach for ct reconstruction, Access, IEEE 2 602613.
+
+Gordon, R., Bender, R. and Herman, G. T.
+(1970). Algebraic reconstruction techniques
+
+ISSN 2525-8311
+
+935

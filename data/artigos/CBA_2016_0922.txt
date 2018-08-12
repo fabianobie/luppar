@@ -1,0 +1,523 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ESTRATÉGIAS DE CONTROLE DE COBERTURA DESCENTRALIZADAS ABORDAGEM VIA
+CÉLULAS DE VORONOI
+MATEUS S. MOURA, BERNARDO ORDONEZ
+Laboratório de Controle e Automação, Departamento de Engenharia Elétrica
+Escola Politécnca - UFBA
+E-mails mateus.sm@ieee.org bordonez@ufba.br
+Abstract The control of a land vehicles network aiming to solve the coverage problem is evaluated, under the decentralized
+approach, through an established strategy that relies on the division of an environment of interest into Voronoi cells. Each cell is
+computed locally, considering the vehicles range limit to the network, its field of view, the work area and the presence of obstacles, and after processing of the cell region, its centroid becomes the vehicle trajectory reference. Iteratively, this procedure is
+carried out until an equilibrium setting is achieved, seeking to maximize coverage. The simulations performed indicate an efficient and well distributed setup for convex and obstacle-free regions, and some questions arise for more complex regions, as the
+need of evaluation criteria for distribution and computational efficiency. However, the expansion of this strategy proved to be
+opportune and promising, in particular for a future application in aerial vehicles.
+Keywords Vehicle networks, Coverage problem, Voronoi, Delaunay, Range limit.
+Resumo O controle de uma rede de veículos terrestres almejando solucionar o problema_de_cobertura é avaliado, sob a abordagem descentralizada, por meio de uma estratégia consolidada pela literatura que se baseia na divisão de uma área de interesse
+em células de Voronoi. Cada célula é computada de forma local, levando em consideração o limite_de_alcance do veículo com a
+rede, o seu campo de visão, a área de trabalho e a presença de obstáculos, e após o processamento da região da célula, o seu centroide se torna a referência de trajetória do veículo. Iterativamente, este procedimento é realizado até que se obtenha uma situação de equilíbrio, buscando a maximização da cobertura. As simulações realizadas indicam uma configuração eficiente e bem
+distribuída para regiões convexas e desobstruídas, e algumas questões como critérios de avaliação da distribuição e eficiência
+computacional necessitam ser endereçados para regiões mais complexas. Contudo, a expansão dessa estratégia mostra-se oportuna e promissora, em particular para uma futura aplicação em veículos aéreos.
+Palavras-chave .
+
+1
+
+Introdução
+
+O controle_coordenado de múltiplos veículos_autônomos, em particular os drones ou VANTs (veículos_aéreos_não_tripulados), tem se tornado cada vez
+mais viável e vantajoso, do ponto de vista operacional, econômico e de segurança (Kumar e Michael,
+2012). As diversas aplicações das redes_de_veículos,
+a exemplo de combate  incêndios (Khoon, Sebastian
+e Saman, 2012), cobertura de desastres naturais
+(Chen et al, 2013), vigilância (Stump e Michael,
+2011) e logística (Kato et al, 2015), dentre outras,
+justificam a continuidade do desenvolvimento de
+estratégias efetivas de controle e comunicação.
+O controle de uma rede de veículos pode ser
+centralizado, partindo do pressuposto de que o sistema central será sempre capaz de operar um conjunto
+de veículos, o que pode se tornar inviável ou descentralizado, tornando o sistema mais robusto, flexível e
+operacional e, assim, sendo utilizado com maior frequência (Cao et al, 2013). Uma das limitações do
+controle descentralizado é o conjunto de restrições
+impostos pelo sistema de sensoriamento dos veículos,
+que possuem um alcance máximo de detecção determinado pela tecnologia utilizada, limitando a comunicação com outros veículos em certos casos e demandando novas abordagens para contornar o problema. A interação, portanto, passa a ser local, logo,
+limitada (Zavlanos, Ribeiro e Pappas, 2013).
+ISSN 2525-8311
+
+Parte das aplicações das redes_de_veículos incorpora o requisito de cobrir, sem a orientação direta de
+uma entidade central, um determinado espaço, seja
+aéreo ou terrestre, caracterizando assim um problema
+de cobertura (coverage), que consiste em distribuir
+um grupo de veículos buscando ocupar um determinado ambiente de interesse. Para atingir tal objetivo,
+faz-se necessária a aplicação de estratégias de controle, levando em consideração as limitações de comunicação entre os veículos  o que leva  consequente
+limitação de informações sobre a vizinhança, além de
+critérios para medir a eficácia da cobertura de uma
+determinada distribuição (Bullo, Cortés e Martínez,
+2009).
+Na literatura, encontram-se diversos algoritmos
+para a solução do problema_de_cobertura em uma
+rede distribuída. Cortés et al (2004) introduziram o
+conceito de cobertura para redes_de_veículos e desenvolveram um procedimento baseado nos centroides
+de uma partição de Voronoi aplicada  área de trabalho. Cortés, Martinez e Bullo (2005) ampliaram essa
+percepção, ao considerarem as implicações dos limites de comunicação entre os veículos no algoritmo.
+Trabalhos mais recentes nesse sentido foram desenvolvidos por Schwager, Rus e Slotine (2009), Pavone
+et al (2011), Aragues, Sagues e Mezouar (2014) e
+Jiang, Sun e Anderson (2015).
+Este trabalho se baseia nos conceitos e estratégias de controle explicitados por Bullo, Cortés e
+Martínez (2009), visando implementar uma estratégia
+descentralizada pela aplicação das partições de Vo3216
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ronoi para uma rede de veículos terrestres, utilizando
+como referência para cada veículo o respectivo centroide de sua célula de Voronoi e considerando os
+efeitos decorrentes dos limites de alcance da comunicação e da obstrução dos campos visuais para cada
+veículo por obstáculos e pela própria área de trabalho. Considera-se como ponto de partida a definição
+abrangente de Cortés et al (2004) do problema de
+cobertura para uma área A e um número de veículos
+n, elaborar uma lei de controle descentralizada, de
+modo a tornar uniforme a distribuição dos veículos
+sobre A, e de modo que para cada veículo i  1, ...,
+n com posição pi(t)  , exista um sinal de controle ui, que dependa apenas de informação local, tal
+que i(t)  ui.
+O artigo está dividido em cinco seções. A primeira seção consiste na introdução ao trabalho. A
+segunda seção consiste na definição e explanação
+acerca da partição de Voronoi, assim como conceitos
+complementares, como campo visual e conectividade
+de veículos. A terceira seção descreve a estratégia
+utilizada a fim de se cumprir o objetivo proposto a
+partir do problema_de_cobertura. A quarta seção mostra os resultados da estratégia de cobertura para diferentes casos, sem e com limitações de conectividade
+e para áreas convexas e não convexas, incluindo no
+último caso obstáculos, realizando-se uma análise da
+efetividade da metodologia. Por fim, a quinta seção
+consolida as conclusões obtidas a partir da análise e
+destaca possibilidades de evolução do trabalho.
+
+zado em aplicações matemáticas e em geometria
+computacional (Sung et al, 2015 Dai e Wang, 2015).
+Os circuncentros dos triângulos obtidos a partir de
+uma triangulação de Delaunay, para um determinado
+conjunto de pontos, correspondem aos vértices do
+diagrama de Voronoi para o mesmo conjunto.
+2.2 Limitação de alcance e observabilidade
+As definições na seção 2.1 não levam em consideração as restrições de alcance da comunicação nas
+redes_de_veículos, derivadas de limitações técnicas
+nos sensores e transmissores dos veículos. Para um
+determinado veículo com um raio de comunicação
+finito, sua respectiva célula de Voronoi pode em algum momento exceder a circunferência (ou esfera, no
+caso tridimensional) referente ao limite de comunicação do veículo com a rede.
+Além do exposto acima, é preciso pontuar que,
+devido ao caráter descentralizado da estratégia, um
+veículo nem sempre será capaz de detectar todos os
+seus semelhantes  sua volta devido s limitações
+expostas, e tal fato afeta a construção da célula de
+Voronoi, pois somente a sua vizinhança observável
+comporá a rede de veículos  qual o mesmo está conectado em determinado momento.
+Incluindo as restrições acima, para um raio de
+comunicação r, define-se a célula de Voronoi limitada em r
+Vi,r(v,i)  Vi(v,i)(pi,r), i  1, ..., n,
+
+2
+
+Células de Voronoi
+
+Nesta seção são conceituadas matematicamente a
+partição e as células de Voronoi, sendo posteriormente consideradas questões de limite_de_alcance, em
+conformidade com o objetivo do trabalho de desenvolver estratégias de cobertura descentralizadas.
+2.1 Definição
+Seja X um espaço, d  X  X  0 uma função
+distância, S um conjunto tal que S  X e n pontos
+distintos   p1, ..., pn em S. Define-se a partição
+ou diagrama de Voronoi de S gerada por  como a
+coleção de conjuntos ()  V1(), ..., Vn() 
+(S) definidos, para i  1, ..., n, como
+Vi()  q  S  d(q,pi)  d(q,pj),  pj    pi. (1)
+Vi() é definida como uma célula de Voronoi
+do ponto pi e corresponde ao conjunto de pontos de S
+que está mais próximo de pi do que de quaisquer outros pontos de . O diagrama de Voronoi, em suma,
+pode ser descrito como uma coleção de células de
+Voronoi para todos os pontos em  em S. Considerase a distância_euclidiana entre pontos para a função d.
+O diagrama de Voronoi é considerado o dual da
+triangulação de Delaunay, método comumente utili-
+
+ISSN 2525-8311
+
+(2)
+
+em que (pi,r) corresponde  região circular ou esférica fechada de centro pi  S e raio r  0, e v,i ao
+conjunto de pontos vizinhos a pi, sendo o subconjunto
+de  cujos pontos pj  S satisfazem as seguintes expressões
+d(pi,pj)  r pk  S,  pk  pipj,
+
+(3)
+
+pipj se referindo ao segmento de reta entre pi e pj. Em
+outras palavras, o veículo i deve ser capaz de observar livremente o veículo j, sem que exista obstrução
+na sua visão por obstáculos ou pelos limites da área
+de trabalho.
+As células de Voronoi da partição assim se limitam s regiões observáveis pelos veículos.
+Assume-se que o intercâmbio de informações na
+rede de veículos é sincronizado e que não há erros de
+comunicação.
+2.3 Área de trabalho, obstáculos e campo visual
+Além das limitações impostas pela conectividade
+da rede, o próprio ambiente delimita a expansão da
+célula, ao se sondar possíveis obstáculos na área de
+trabalho.
+A área de trabalho Q é definida, considerando o
+conjunto de m obstáculos   O1, ..., Om, Oi  S
+para i  1, ..., m, como
+
+3217
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Q  S  (Oi), para i  1, ..., m.
+
+(4)
+
+A definição do diagrama de Voronoi é, então,
+atualizada
+Vi()  q  Q  d(q,pi)  d(q,pj),  pj    pi (5)
+Finalmente, com as definições aplicadas acima,
+necessita-se levantar o impacto dos obstáculos e de
+áreas de trabalho côncavas no campo visual do veículo, para que o mesmo não calcule sua trajetória se
+baseando em áreas obstruídas visualmente. Desta
+forma, aplica-se a última modificação  célula de
+Voronoi para determinado veículo.
+Define-se o campo visual  de pi com respeito 
+Q da seguinte forma
+ (pi,Q)  c  Q  pj  Q,  pj  pic,
+
+(6)
+
+em suma,  é o conjunto de todos os pontos c observáveis a partir de pj na área de trabalho Q.
+Aplicando a definição anterior na célula de Voronoi
+limitada em r, tem-se
+Vi,r(v,i)  Vi(v,i)(pi,r)(pi,Q).
+3
+
+(7)
+
+Estratégia de Cobertura
+
+Esta seção define uma metodologia para o cumprimento do objetivo de cobertura da área de interesse a ser programada nos veículos, utilizando os conceitos discutidos na seção 2, e faz considerações sobre o comportamento esperado da rede de veículos.
+3.1 Estratégia de Cobertura Descentralizada
+Para fins deste trabalho, a seguinte definição da
+tarefa de cobertura é aplicada
+()  verdadeiro,
+se pi  CM(Vi,r(v,i))2  , i  1, ..., n,
+falso, caso contrário,
+
+(8)
+
+sendo Vi,r(v,i) a célula de Voronoi limitada em r do
+veículo i e redefinida na seção 2.3, CM(Vi,r(v,i)) o
+centroide da referida célula, e  um critério de tolerância predeterminado. Desta forma, para o cumprimento do objetivo da tarefa que corresponde ao valor
+verdadeiro de (), a estratégia de controle deve
+buscar a aproximação dos veículos a suas respectivas
+referências até que as normas euclidianas dos erros
+de posição sejam menores do que .
+O cumprimento da tarefa direciona os veículos
+para uma configuração mais equilibrada dentro da
+área de trabalho em comparação  uma formação
+concentrada. Contudo, executá-la uma vez não é sufi-
+
+ISSN 2525-8311
+
+ciente para obtenção da configuração desejada, e as
+posições de referência devem ser atualizadas a cada
+processamento. Consequentemente, um procedimento
+iterativo é elaborado para que os veículos atualizem
+suas posições sucessivamente até que uma situação
+de equilíbrio seja alcançada.
+O equilíbrio se caracteriza quando a tarefa ()
+eventualmente é cumprida. É possível haver configurações em que o equilíbrio não é alcançável ou pode
+levar muito tempo, neste caso, estabelece-se um limite de iterações nlim que interrompa o algoritmo quando ultrapassado.
+O seguinte algoritmo, com base no proposto por
+Cortés et al. (2005) e adaptado pelos autores, é implementado para aplicação da estratégia de cobertura
+mencionada
+1 Inicializar k  0
+2 Realizar loop enquanto k < nlim ou ()
+3
+Obter   p1, ..., pn
+4
+Para i  1, ..., n
+5
+Determinar v,i
+6
+Determinar Vi,r(v,i)
+7
+Calcular CM(Vi,r(v,i))
+8
+Fazer pi  CM(Vi,r(v,i))
+9
+Verificar o estado de ()
+10
+Fazer k  k+1
+A estratégia descrita acima é descentralizada, ou
+seja, os veículos são autônomos de forma a determinar suas referências com base no espaço observado
+pelos mesmos e pelas interações com sua vizinhança,
+restritas pelas condições de conectividade existentes
+e pelos obstáculos da área de trabalho. Se um veículo
+não detecta nenhum semelhante ou obstáculo no seu
+espaço visível em um determinado momento, a sua
+célula de Voronoi se torna o lugar geométrico gerado
+pelo alcance de comunicação, cujo centro é a própria
+posição do veículo, permanecendo então no seu lugar
+até que alguma modificação ocorra.
+Vale ressaltar, contudo, que o algoritmo em si
+não trata do controle_de_posição dos veículos, apenas
+estabelece a referência de posição, admitindo-se que
+a dinâmica dos veículos é significativamente mais
+rápida, e que os mesmos possuem uma estratégia de
+controle local para seguimento da trajetória.
+4
+
+Apresentação e análise dos resultados
+
+Para simular a dinâmica e a eficácia da estratégia
+utilizada neste trabalho, além de visualizar o movimento dos veículos em uma área de trabalho para
+determinadas condições iniciais, o pseudocódigo
+descrito na seção 3 foi adaptado ao software numérico MATLAB. As simulações foram realizadas em
+duas dimensões, para posterior teste em veículos terrestres, e podendo ser estendida para uma análise
+tridimensional futuramente.
+
+3218
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Para avaliar a eficiência da estratégia para cada
+caso, o tempo decorrido (T) e o número de iterações requeridas para se alcançar o equilíbrio foram
+levantados. Além disso, critérios estatísticos como a
+média e o desvio padrão das áreas das células de Voronoi foram analisados, a fim de se estabelecer uma
+métrica da uniformidade da distribuição final.
+Almejando simular um comportamento parecido
+com o futuro ambiente de testes, a área-limite, dentro
+da qual a área de trabalho deve obrigatoriamente ser
+inserida, foi definida como um quadrado de lado 10
+m. O número limite de iterações definido foi de 1000
+e a tolerância foi definida em 1 (10 cm). De acordo
+com o código, a cada nova iteração as posições dos
+veículos foram atualizadas conforme o tempo decorrido, permitindo uma simulação mais realista. Adicionalmente, a distância média percorrida (em metros)
+pelos veículos foi registrada, como uma métrica
+complementar da performance.
+Foram testadas diversas configurações, sem e
+com restrições de alcance, para áreas de trabalho
+côncavas e convexas, com e sem obstáculos, variando
+a quantidade de veículos e o raio de comunicação,
+conforme apresentado e discutido a seguir.
+4.1 Problema com área convexa sem limitação de
+conectividade
+A estratégia de controle estudada neste trabalho
+foi aplicada inicialmente para cinco veículos_autônomos (representados como asteriscos pretos nas
+figuras), distribuídos aleatoriamente numa área de
+trabalho (região branca nas figuras) correspondente 
+um quadrilátero irregular conforme a Figura 1(a). Na
+mesma forma, pode-se verificar o caminho percorrido
+por cada um dos veículos até as suas posições de
+equilíbrio.
+A Figura 1(b) mostra o resultado final da aplicação, com todos os veículos na configuração de equilíbrio. As linhas pontilhadas no gráfico representam
+as fronteiras entre as células de Voronoi, e as cruzes
+vermelhas representam os centroides de cada célula,
+referências de posição para cada veículo. Em 21 segundos (57 iterações), e percorrendo em média 6,06
+m, foi possível obter tal estado, gerando uma distribuição de áreas com média 7,5 m e desvio 0,86 m,
+resultando assim num coeficiente de variação (CV)
+igual  12. Por não haver limite_de_alcance, a cobertura da área de trabalho foi de 100.
+A mesma simulação foi realizada conforme visto
+nas Figuras 2(a) e 2(b), variando-se o formato da área
+e aumentando expressivamente o número de veículos.
+Os indicadores obtidos também se mostraram satisfatórios considerando a quantidade maior de veículos.
+4.2 Problema com área convexa com limitação de
+conectividade
+O problema 4.1 considera um alcance de comunicação infinito, o que pode ser estendido para raios
+de alcance grandes o suficiente para que a cobertura
+
+ISSN 2525-8311
+
+da área pelos veículos seja total. Contudo, para áreas
+grandes ou para comunicações bastante limitadas,
+faz-se necessário incluir a restrição na geração dos
+diagramas, e tal inclusão aumenta a complexidade do
+problema.
+
+Figura 1  Posições iniciais dos veículos e respectivos caminhos
+percorridos (a) e diagrama de Voronoi com as posições finais dos
+veículos, no estado de equilíbrio (b), sem limite_de_alcance.
+
+Figura 2  Posições iniciais dos veículos e respectivos caminhos
+percorridos (a) e diagrama de Voronoi com as posições finais dos
+veículos, no estado de equilíbrio (b), sem limite_de_alcance.
+
+As Figuras 3(a) e 3(b) evidenciam o caso em que
+o raio de comunicação dos 6 veículos inseridos aleatoriamente numa área é razoável (1,5 m) para manter
+a rede conectada, porém insuficiente para obter uma
+total cobertura.
+É possível notar que não houve muita movimentação, os veículos meramente se afastassem das bor-
+
+3219
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+das e de uns aos outros, e as áreas cobertas pelos
+veículos são bastante similares s áreas dos círculos
+(7,07 m) que correspondem s suas respectivas regiões observáveis. Assim, a distribuição obtida é bastante uniforme, todavia, a cobertura total não alcançou 70.
+Para os fins do problema proposto, as condições
+foram satisfeitas eficientemente (11 iterações), porém
+se há a necessidade de percorrer ou sobrevoar toda a
+região, estratégias de coordenação adicionais devem
+ser tomadas em conjunto com a ação de cobertura, ou
+veículos adicionais devem ser incorporados  rede.
+
+A diminuição do raio de alcance, conforme esperado e visto nas Figuras 4(a) e 4(b), leva a uma diminuição da cobertura, uma uniformidade da distribuição e a uma menor distância percorrida, pois os veículos não possuem uma orientação definida quando
+não são capazes de identificar o ambiente e estão
+desconectados da rede. Para esse conjunto de situações, é importante que se estude uma estratégia complementar de formação e controle, para varredura da
+área total de cobertura.
+
+4.3 Problema com área não convexa e presença de
+obstáculos
+Situações mais complexas e próximas de ambientes reais também foram simuladas, como nas Figuras 5(a) e 5(b).
+
+Figura 3  Posições iniciais e caminho percorrido (a), posições
+finais e diagrama de Voronoi no estado de equilíbrio (b) dos veículos, para médio alcance.
+
+Figura 5  Posições iniciais e caminho percorrido (a), posições
+finais e diagrama de Voronoi no estado de equilíbrio (b) dos veículos, para uma região côncava com um obstáculo.
+
+Figura 4  Posições iniciais e caminho percorrido (a), posições
+finais e diagrama de Voronoi no estado de equilíbrio (b) dos veículos, para uma região convexa e baixo alcance.
+
+ISSN 2525-8311
+
+Pode-se observar o comportamento de oito veículos buscando ocupar uma área convexa, com a presença de um obstáculo, porém sem a limitação por
+campo visual. Nota-se que há uma dificuldade por
+parte de alguns veículos de se desviar do obstáculo,
+apesar do objetivo de cobertura ser efetivado, resultando numa distribuição irregular.
+Por sua vez, as Figuras 6(a) e 6(b) mostram o
+teste realizado com quatro veículos, inicialmente
+concentrados numa área irregular, não-convexa e
+com a presença de três obstáculos, já com o campo
+visual implementado.
+Como é possível observar, o objetivo de cobertura foi almejado em um tempo razoável, quase toda a
+área foi explorada, e é possível notar que o veículo
+posicionado inicialmente mais próximo  grande área
+foi o primeiro a explorar o ambiente, seguido dos
+outros. Todavia, a uniformidade da configuração foi
+
+3220
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+pior do que nas outras simulações, o que se justifica,
+novamente, pela ausência de uma função de otimização que induzisse os veículos enclausurados a expandirem suas regiões de cobertura.
+
+Figura 6  Posições iniciais e caminho percorrido (a), posições
+finais e diagrama de Voronoi no estado de equilíbrio (b) dos veículos, para uma região convexa com obstáculos.
+
+5
+
+Conclusão e Trabalhos Futuros
+
+A implementação da estratégia de cobertura por
+diagramas de Voronoi resultou em uma orientação
+rápida e efetiva dos veículos em configurações mais
+simples, e ao considerar a presença de obstáculos,
+áreas de trabalho com mais detalhes e limitações de
+alcance, certas configurações não puderam garantir o
+estado de equilíbrio almejado ou uma distribuição
+uniforme. Isso se deve pelo fato de não se utilizar um
+critério de otimização para a cobertura da área, buscando no equilíbrio dinâmico dos veículos a distribuição mais uniforme possível em consonância com a
+maximização da cobertura, conforme objetivo de
+cobertura estabelecido.
+A inclusão do campo visual no cálculo das células de Voronoi permitiu uma abordagem realista do
+problema na presença de obstáculos e áreas não convexas. Contudo, o peso computacional do novo algoritmo faz com que as iterações levem mais tempo
+para serem concluídas, o que constitui um desafio
+para sua implementação em tempo_real.
+Para trabalhos futuros, estuda-se a implementação e avaliação da estratégia em redes_de_veículos
+reais, a inclusão de critérios de otimização que levem
+em consideração a área ocupada e a uniformidade da
+distribuição, dentre outras variáveis, e a extensão do
+algoritmo para veículos aéreos.
+Referências Bibliográficas
+
+ISSN 2525-8311
+
+Aragues, R., Sagues, C. e Mezouar, Y., 2014.
+Triggered Minimum Spanning Tree for
+distributed
+coverage
+with
+connectivity
+maintenance,
+2014
+European
+Control
+Conference (ECC), 18811887.
+Bullo, F., Cortés, J. and Martínez, S., 2009.
+Distributed Control of Robotic Networks, by
+Applied
+Mathematics
+Series.
+Princeton
+Princeton University Press.
+Chen, D. et al, 2013. Natural Disaster Monitoring
+with Wireless Sensor Networks A Case Study of
+Data-intensive Applications upon Low-Cost
+Scalable Systems, Mobile Network Applications,
+18(5), 651663.
+Cortés, J., Martínez, S., Karatas, T.,  Bullo, F.,
+2004. Coverage control for mobile sensing
+networks, IEEE Transactions on Robotics and
+Automation, 20(2), 243255.
+Cortés, J., Martínez, S., and Bullo, F., 2005.
+Spatially-distributed coverage optimization and
+control with limited-range interactions, ESAIM
+Control, Optimisation  Calculus of Variations,
+11, 691719.
+Dai, L., Wang, B., 2015. Sensor Placement based on
+Delaunay Triangulation for Complete Confident
+Information Coverage in An Area with
+Obstacles, 2015 IEEE 34th International
+Performance Computing and Communications
+Conference (IPCCC), 18.
+Jiang, B., Sun, Z., Anderson, B. D. O., 2015. Higher
+order Voronoi based mobile coverage control,
+2015 American Control Conference, 14571462
+Kato, T., Chiba, R., Takahashi, H., Kinoshita, T.,
+2015. Agent-Oriented Cooperation of IoT
+Devices towards Advanced Logistics, 2015
+IEEE 39th Annual International Computers,
+Software  Applications Conference, 223227.
+Khoon, T. N., Sebastian, P., Saman, A. B. S., 2012.
+Autonomous Fire Fighting Mobile Platform,
+International Symposium on Robotics and
+Intelligent Sensors 2012 (IRIS 2012), 41, 1145
+1153.
+Kumar, V., Michael, N., 2012. Opportunities and
+challenges with autonomous micro aerial
+vehicles, The International Journal of Robotics
+Research, 31(11), 12791291.
+Stump, E. e Michael, N., 2011. Multi-robot persistent
+surveillance planning as a vehicle routing
+problem, In Proceedings of the IEEE
+Conference on Automation Science and
+Engineering, Trieste, Italy, 569575.
+Sung, T. et al, 2015. Direction Control Using
+Delaunay
+Triangulation
+for
+Coverage
+Improvement in Directional Sensor Networks,
+2015 Third International Conference on Robot,
+Vision and Signal Processing, 290293.
+Zavlanos, M. M., Ribeiro, A. and Pappas, G. J.,
+2013. Network Integrity in Mobile Robotic
+Networks, IEEE Transactions on Automatic
+Control, 58(1), 318.
+
+3221

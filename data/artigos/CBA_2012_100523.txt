@@ -1,0 +1,906 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+UM CONTROLADOR PARA ROBOS MOVEIS BASEADO EM NUVEM DE
+PARTICULAS
+Jorge Augusto Vasconcelos Alves, Walter Fetter Lages
+
+
+Universidade Federal do Rio Grande do Sul
+Departamento de Engenharia Eletrica
+Av. Osvaldo Aranha, 103
+90035-190 Porto Alegre, RS, Brasil
+
+Emails jorge@ece.ufrgs.br, fetter@ece.ufrgs.br
+Abstract Common control systems for mobile robots include the use of deterministic control laws together
+with state estimation approaches and the consideration of the certainty equivalence principle. Recent approaches
+consider the use of partially observable Markov decision process strategies together with Bayesian estimators. In
+order to reduce processing power and yet allow for multimodal or non-Gaussian distributions, a scheme based on
+a particle filter and a corresponding cloud of input signals is proposed in this paper. Results are presented and
+compared to a scheme with extended Kalman filter and the assumption that the certainty equivalence holds.
+Mobile robotics, Particle filter, Nonlinear control, Stochastic control, Stochastic estimation.
+
+Keywords
+
+Resumo O controle usual de robos_moveis inclui o uso de leis de controle determinsticas juntamente com
+estimadores_de_estados e a consideracao do princpio da equivalencia a certeza. Resultados recentes consideram
+o uso de processo de decisao de Markov parcialmente observaveis juntamente com o uso de estimadores bayesianos. De forma a reduzir o esforco computacional e mesmo assim considerar distribuicoes multimodais ou nao
+gaussianas, este artigo propoe um esquema baseado em um filtro de partculas para estimacao do estado e uma
+nuvem de partculas para os sinais de controle. Os resultados sao comparados com um esquema utilizando o
+filtro de Kalman estendido e o princpio da equivalencia a certeza.
+Palavras-chave
+.
+
+1
+
+Robos moveis, Filtro de partculas, Controle nao linear, Controle estocastico, Estimacao
+
+Introducao
+
+E sabido que robos_moveis estao sujeitos a incerteza tanto no seu comportamento quanto no ambiente no qual o robo navega (Thrun et al., 2005).
+O enfoque classico para estimacao_de_estados e
+controle_de_sistemas_estocasticos e considerar o
+valor esperado das variaveis de estado e o princpio da equivalencia a certeza (Anderson e Moore, 1989). No entanto, enfoques baseados no valor esperado nao podem ser utilizados quando distribuicoes multimodais, ou mesmo assimetricas,
+estao presentes. Por outro lado, distribuicoes assimetricas ou multimodais podem surgir devido
+a fusao_de_sensores e problemas tpicos de robotica (Kaelbling et al., 1998). Adicionalmente, a
+dinamica_nao_linear frequentemente gera distribuicoes multimodais ou assimetricas a partir de distribuicoes normais ou simetricas. O estado da arte
+atual para tratar incertezas, especialmente as com
+distribuicoes de probabilidade nao gaussianas, e
+utilizar ltros bayesianos para estimar o estado
+do sistema e entao obter um sinal de controle baseado no resultados da estimacao. Tipicamente, o
+resultado da estimacao e uma densidade de probabilidade ou um histograma ou um conjunto de partculas ou probabilidades sobre um mapa topologico. Este sinal pode ser obtido a partir de um dos
+modos da distribuicao ou atraves de otimizacao,
+como nos enfoques de processo de decisao de Markov parcialmente observaveis (POMDP) (Blanco
+et al., 2010 Thrun et al., 2005). O uso de POMDP
+
+ISBN 978-85-8001-069-5
+
+para sistemas com estados contnuos requer aproximacoes, pois caso contrario, o problema torna-se
+intratavel (Baral et al., 2000 Littman et al., 1995).
+Este artigo propoe um esquema de controle
+para um robo_movel com acionamento diferencial
+que mapeia um conjunto de possveis estados em
+um espaco de sinais de controle. Tanto as transicoes de estado quanto as observacoes sao sujeitas a
+incerteza. Portanto, um ltro de partculas e proposto para estimacao_de_estados. No entanto, a estimativa do estado nao e considerada como sendo
+apenas um vetor, mas toda a nuvem de partculas que representa a probabilidade de cada vetor
+de estado. A seguir, uma lei de controle_globalmente estavel e considerada para o mapeamento
+da nuvem de partculas no espaco_de_estados em
+um nuvem de partculas no espaco de entradas
+da planta. O sinal de entrada a ser efetivamente
+aplicado no robo e, entao, escolhido entre os pertencentes as regioes mais populadas do espaco de
+entradas.
+2
+
+Descricao do Sistema
+
+A cinematica de um robo_movel com acionamento
+diferencial movendo-se em um plano horizontal
+pode ser descrita, em tempo contnuo por
+
+
+cos x3
+x  f (x, u)  sen x3
+0
+
+
+0
+0 u
+1
+
+(1)
+
+4867
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+
+T
+e o vetor_de_estados e
+onde x  x1 x2 x3
+
+T
+u  u1 u2 e o vetor de entradas. As variaveis de estado x1 e x2 sao as coordenadas no plano,
+x3 e o angulo de orientacao, e as variaveis de entrada u1 e u2 sao as velocidades linear e angular,
+respectivamente.
+Uma realizacao em tempo_discreto (Lages,
+1998) e dada por
+x(k + 1)  fd (x(k), u(k))
+
+
+
+h
+
+T u2 (k)
+cos x3 (k) +
+T u1 (k) sinc
+2
+
+
+
+h
+
+T u2 (k)
+ x(k) + 
+sen x3 (k) +
+T u1 (k) sinc
+2
+T u2 (k)
+
+(2)
+i 
+
+T u2 (k)
+2
+i
+
+T u2 (k)
+
+2
+
+onde sinc x , senx x e T e o perodo de amostragem.
+O comportamento do robo pode ser melhor
+descrito por modelos_estocasticos, como descrito
+por Thrun et al. (2005) e Rekleitis (2004).
+Os efeitos estocasticos podem ser observados
+no movimento do robo como uma deriva com relacao a trajetoria nominal, tanto na distancia trafegada quanto na orientacao. Estes erros crescem com o tempo, e portanto, serao modelados
+aqui como velocidades lineares e angulares incertas. Adicionalmente, os efeitos estocasticos estao
+fortemente relacionados com a velocidade linear
+do robo (Rekleitis, 2004). Assim, a versao  de (1) e
+
+
+
+
+0
+w2 (k) , T u1 (k)  0 
+wd2 (k)
+
+Como assume-se que wd1 (k) e wd2 (k) representam metade dos efeitos de wD (t), sua variancia
+2
+deve ser a metade de D
+, ou
+D
+d   .
+2
+E importante notar que embora w1 (k), w1 (k)
+e w2 (k) aparecam como termos aditivos em (3) e
+(4), eles nao sao, na realidade, incerteza aditiva,
+pois dependem da velocidade linear u1 (k) e tanto
+f (  ,  ) quanto fd (  ,  ) sao nao lineares.
+O modelo (4) sera utilizado para estimar as
+transicoes de estado para um conjunto de possveis
+valores do vetor de estado, como sera explicado
+em detalhes na secao 3.1. E importante notar que
+mesmo que wt (k), wd1 (k) e wd2 (k) sejam assumidos gaussianos, o estado resultante x(k + 1) nao e
+gaussiano, devido as nao-linearidades. O modelo
+(3) sera usado para simular o robo na secao 4, enquanto o modelo (4) sera utilizado para estimacao
+de estado.
+3
+3.1
+
+x(t)  f (x(t), u(t) + w(t)) ,
+
+
+(3)
+
+T
+
+com w(t)
+  u1 (t) wt (t) w2D(t) , onde wt (t) 
+sao processos gausN 0, t2 e wD (t)  N 0, D
+sianos representando as incertezas nas velocidades
+linear e angular, respectivamente.
+Para obter um modelo discreto que pode representar adequadamente a incerteza de orientacao em k + 1, sera assumido aqui, com base em
+Rekleitis (2004), que metade dos efeitos da incerteza na velocidade_angular atua atraves da transicao de estado, portanto afetando tanto a posicao
+quanto a orientacao em k + 1, e a outra metade
+atua diretamente na orientacao em k + 1. Consequentemente, a incerteza wD (t) no modelo contnuo sera representada por duas incertezas
+no mo
+delo discreto wd1 (k)  N 0, d2 , que atua atra
+ves da transicao de estado e wd2 (k)  N 0, d2 ,
+que atua diretamente no estado em k + 1. Os efeitos de wt (t) podem
+ ser mapeados diretamente em
+wt (k)  N 0, t2 . Logo, o modelo discreto pode
+ser escrito como
+x(k + 1)  fd (x(k), u(k) + w1 (k)) + w2 (k), (4)
+onde a transicao de estados fd (  ,  ) e dada por
+(2) e
+
+
+wt (k)
+w1 (k) , u1 (k)
+,
+wd1 k)
+
+ISBN 978-85-8001-069-5
+
+Sistema de Controle
+
+Estimacao de Estado
+
+Robos moveis nao podem, em geral, determinar
+sua pose (i.e., posicao e orientacao) atraves de
+sensores internos. A sua pose deve ser estimada.
+Aqui assume-se que o robo esta equipado com encoders incrementais nas rodas e um GPS. As leituras dos encoders sao consideradas como medidas
+das entradas de velocidade do robo, enquanto o
+GPS fornece uma medida da pose. Tanto as leituras dos encoders quando as leituras do GPS sao
+corrompidas por incertezas, de forma que nao e
+possvel saber-se a pose real do robo. Alem disso,
+as medidas dos encoders estao disponveis a cada
+instante de amostragem, enquanto as observacoes
+do GPS sao disponveis a uma taxa menor do que
+a taxa de amostragem do sistema.
+Como as leituras dos encoders sao mapeadas
+como medidas das entradas do sistema, u(k), o vetor de observacao y(k), corrompido pela incerteza
+v(k), e restrito a observacao do GPS
+y(k)  h (x(k), v(k))  x(k) + v(k).
+
+(5)
+
+O ltro de partculas, no entanto, poderia ser
+estendido para considerar outros sensores, incluindo sensores de outros tipos, simplesmente
+considerando-os na denicao de h (x(k), v(k)).
+Note que para outros tipos de sensores, o mapeamento de x(k) e v(k) em y(k) pode ser nao
+linear e que quando sensores redundantes forem
+usados, a dimensao de y(k) pode ser maior do
+que a de x(k).
+
+4868
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Como e o caso para muitas tecnicas de ltragem bayesiana, os algoritmos de ltro de partculas podem ser divididos em dois estagios, denominados predicao e atualizacao. O funcionamento do
+ltro de partculas e resumido a seguir. Uma descricao mais detalhada esta disponvel em Thrun
+et al. (2005).
+A cada instante de amostragem, os possveis
+valores do vetor de estado xi (k), i  1, M , sao
+considerados, com base nas observacoes anteriores
+do sistema. Cada vetor xi (k) e denominado uma
+partcula e M e o numero total de partculas. A
+crenca do estado belp (x(k)) e dada pelo conjunto
+de todas as partculas, ou seja
+belp (x(k))  x1 (k), x2 (k), . . . , xM (k).
+
+(6)
+
+A crenca do estado e uma aproximacao de uma
+funcao de densidade de probabilidade no seguinte
+sentido regioes do espaco_de_estados com um numero relativamente grande de partculas tem altos
+valores de densidade de probabilidade, enquanto
+regioes com relativamente poucas partculas representam baixos valores de densidade de probabilidade.
+A etapa de predicao do algoritmo calcula a
+crenca a priori do estado no instante k + 1,
+belp (x(k + 1)), a partir da crenca do estado no
+instante k e do vetor de entradas do sistema. Para
+cada partcula da crenca do estado, uma nova partcula e gerada conforme a funcao de transicao de
+estado do sistema (4), com os termos de incerteza
+obtidos de um gerador de numeros aleatorios com
+distribuicao apropriada, o que pode ser feito para
+qualquer distribuicao. A crenca a priori do estado
+e denotada por
+belp (x(k + 1))  x1 (k+1), x2 (k+1), . . . , xM (k+1),
+(7)
+
+onde cada partcula xi (k + 1), i  1, M , e obtida
+de
+xi (k + 1)  fd (xi (k), u(k) + w1i (k)) + w2i (k).
+(8)
+O conjunto de partculas belp (x(k + 1)) e obtido sem informacao da observacao do sistema
+em k + 1 e calculado apenas a partir da conjunto de partculas belp (x(k)) e as entradas da
+planta. Este conjunto de partculas e, entao,
+atualizado com a informacao das observacoes,
+obtendo-se a nova crenca do estado no instante
+k + 1, belp (x(k + 1)). Isto e feito a partir do
+chamado fator de importancia i (k + 1) de cada
+partcula xi (k + 1), dado por
+i (k)  fy (y(k)xi (k)) ,
+com
+e( 2 y(k)Cx(k) Py(k)Cx(k))
+p
+,
+fy (y(k)x(k)) 
+(2)n P
+1
+
+T
+
+onde P e a matriz de covariancia da incerteza e n
+e o numero de linhas de y(k).
+
+ISBN 978-85-8001-069-5
+
+A crenca do estado belp (x(k + 1)) e obtida
+atraves da selecao das partculas, entre aquelas
+em belp (x(k + 1)), com uma probabilidade proporcional ao seu fator de importancia (Thrun
+et al., 2005).
+A atualizacao da crenca requer que seja feita
+uma observacao. Neste artigo, o GPS e considerado ter um perodo de amostragem maior do que
+o dos encoders incrementais. Como resultado, a
+etapa de atualizacao nao ocorre a cada instante
+de amostragem, mas apenas quando as observacoes do GPS sao obtidas.
+3.2
+
+Controle
+
+Um resultado importante sobre o controle_de_robos
+moveis e que nao e possvel estabilizar assintoticamente o sistema em um ponto arbitrario atraves
+de uma lei de controle suave e invariante no tempo
+(Brockett, 1982). No entanto, apesar disto, o sistema e controlavel (Astol, 1994).
+Considera-se, aqui, um mapeamento do espaco_de_estados para o espaco de entradas proposto por Lages e Hemerly (1998), que permite a
+obtencao de uma lei de controle assintoticamente
+estavel. Se o mapeamento for representado por
+g  X  U, x  X e u  U, entao o sistema
+autonomo
+x  f (x, g(x))
+onde f (  ,  ) e descrito por (1), e assintoticamente estavel na origem. No entanto, desejase estabilizar o robo em qualquer ponto xr , ou
+seja, qualquer posicao e orientacao (xr1 , xr2 , xr3 ).
+Isso pode ser feito pela mudanca de coordenadas
+x(x, xr ),obtida pela transformacao
+
+
+R(xr3 ) 0
+x 
+(x  xr )
+(9)
+0
+1
+onde R(xr3 ) e uma matriz de rotacao 2-D , ou
+seja,
+
+
+sen xr3
+cos xr3
+R(xr3 ) 
+.
+ sen xr3 cos xr3
+Logo, se o sistema x  f (x, g(x)) e estavel em
+x  0, entao x  f (x, g(x)) e estavel em x  xr .
+Portanto, para estabilizar o sistema em qualquer
+ponto arbitrario xr , com base na lei de controle
+g que leva o estado para a origem, e suciente
+utilizar g(x) (Srdalen, 1993).
+Aqui, o resultado da estimacao_de_estados e
+um conjunto de partculas. Esta estimativa pode
+ter pontos agrupados em torno de regioes distintas do espaco_de_estados, devido a crencas multimodais. Como consequencia, nem estimadores
+baseados em media quadratica, nem estimadores
+baseados em valor esperado produzem resultados
+apropriados e o princpio da equivalencia a certeza
+nao pode ser aplicado. Propoe-se, neste caso, gerar o sinal de controle a partir da crenca atual do
+estado considerando o sinal de controle que seria
+
+4869
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+gerado para cada partcula pertencente a crenca
+do estado, mapeando-se com isto a crenca do estado para o espaco de entradas do sistema, cuja
+distribuicao reetira os valores adequados para a
+entrada do sistema.
+A cada instante de amostragem k, a crenca
+belp (x(k)) representa os possveis valores para o
+vetor de estado. Para cada partcula xi (k), desta
+crenca, uma partcula de controle ui (k) e obtida
+por
+ui (k)  g (xi (k)) ,
+com xi (k) computada por (9), resultando
+belp (u(k))  u1 (k), u2 (k), . . . , uM (k)
+
+(10)
+
+onde g (xi (k)) e um mapeamento apropriado do
+espaco_de_estados para o espaco de entradas.
+Para cada partcula da crenca do estado, e
+utilizada a seguinte transformacao de coordenadas (Lages e Hemerly, 1998)
+q
+e  x21 + x22
+(11)
+  atan2(x2 , x1 )
+
+(12)
+
+  x3  ,
+
+(13)
+
+que, com o sinal
+T
+ui1 (k) ui2 (k)
+
+de
+
+ui1  1 e cos 
+ui2  2   1 cos 
+
+controle
+
+ui (k)
+
+
+(14)
+
+sen 
+(  h),
+
+
+(15)
+
+com h, 1 , 2 > 0, faz (1) ser assintoticamente
+estavel (Lages e Hemerly, 1998). Consequentemente, a crenca de controle contem os sinais de
+controle que estabilizam em um ponto as partculas da crenca do estado.
+O criterio para escolher um vetor de controle
+dentre as partculas pertencentes a belp (u(k)) e
+selecionar a partcula com o maior suporte local,
+ou seja, escolher a partcula cujas vizinhas tambem estao contidas em belp (u(k)). A vizinhanca
+de cada partcula ui (k) foi escolhida com uma regiao elipsoidal Si , centrada em ui (k), dada por
+
+
+(u2  ui2 )2
+(u1  ui1 )2
++
+<
+1
+,
+Si  u(k) 
+a21
+a22
+onde a1 e a2 sao os raios da elipse.
+3.3
+
+Filtro de Kalman Estendido
+
+Para avaliar o desempenho da estrategia_de_controle proposta, que usa um ltro de partculas e
+uma nuvem de sinais de controle, sera feita uma
+comparacao com a estrategia classica de utilizar
+um ltro de Kalman estendido e calcular-se o controle utilizando-se o princpio da equivalencia a
+certeza. Ressalte-se que em ambos os casos sera
+utilizado o mesmo mapeamento de estados para
+entradas apresentado na secao 3.2.
+
+ISBN 978-85-8001-069-5
+
+Os dois casos consideram aproximacoes para
+gerar uma estimativa para o estado. O ltro de
+partcula produz uma estimativa representada por
+um conjunto de valores possveis, as partculas,
+que sao uma aproximacao da distribuicao de probabilidade conjunta dos estados. O ltro de Kalman estendido produz uma aproximacao da distribuicao de probabilidade conjunta dos estados
+dada por uma gaussiana multivariavel e considera
+uma aproximacao das funcoes de transicao de estados e de observacao dadas pelo primeiro termo
+da expansao em serie de Taylor das respectivas
+funcoes.
+A atualizacao da estimativa do estado feita
+pelo ltro de Kalman estendido e baseada no ganho de Kalman e na observacao. Como a crenca
+e resumida por uma media (x(k)) e uma matriz
+de covariancia Q(k), as equacoes de atualizacao
+podem ser escritas em funcao destas variaveis. As
+equacoes do ltro tambem dependem do Jacobiano F(k) de fd (  )
+fd (x(k), u(k))
+
+x(k)
+x(k)x(k)
+
+
+
+
+T u2 (k)
+T u2 (k)
+0 T u1 (k) sinc
+sen x3 (k) +
+2
+2
+
+
+ 
+
+
+T u2 (k)
+T u2 (k)
+cos x3 (k) +
+1
+T u1 (k) sinc
+
+2
+2
+0
+1
+
+F(k) 
+
+
+1
+
+
+0
+0
+
+do jacobiano H(k) de h(  ),
+H(k) 
+
+h(x(k), u(k))
+x(k)
+
+ I
+x(k)x(k)
+
+e das matrizes de covariancia Q(k) e R(k), relativas as incertezas de fd (  ) e h(  ), respectivamente.
+As etapas de atualizacao da estimativa do estado e predicao sao computadas conforme as equacoes usuais do ltro de Kalman estendido.
+4
+
+Resultados de Simulacao
+
+O robo foi simulado atraves do modelo estocastico em tempo contnuo dado por (3), integrado
+utilizando-se um algoritmo de Runge-Kutta de
+4a ordem. O ltro de partculas utilizou na sua
+etapa de predicao o modelo estocastico do robo em
+tempo_discreto, dado por (4). Os parametros das
+incertezas foram t  0, 005 e D  0, 1745radm.
+A matriz de covariancia da observacao foi P 
+diag(y1 , y2 , y2 ), com y1  y2  0.1 m e y3 
+1 . A velocidade maxima das rodas e 0.471 ms.
+O perodo de amostragem do controle e T  50ms
+e o GPS fornece medidas (com incertezas) a cada
+200 ms. Um total de 900 partculas foram usadas
+para estimacao_de_estados, sendo que na crenca
+inicial todas foram espacadas igualmente em uma
+area de 1m2 centrada em x(0). Os parametros do
+controlador foram 1  0, 5, 2  0, 5 rh  1, 0.
+Os raios do elipsoide utilizado para determinar a
+vizinhanca do sinal de controle foram 0, 05 e 0, 2.
+
+T
+A pose inicial foi x(0)  4 0  e a referencia
+
+T
+foi ajustada em xr  1.0 3.0 2 .
+4870
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A crenca do controle em k  0 e mostrada na
+gura 1. Como as partculas da crenca inicial do
+estado estao estruturadas em uma grade, a crenca
+do controle resultante mantem parte daquela estrutura.
+
+0.56
+0.57
+0.58
+
+u2 (rads)
+
+0.59
+0.6
+0.61
+0.62
+
+2.05
+
+0.63
+2.1
+
+0.64
+0.65
+0.64
+
+0.62
+
+0.6
+
+u2 (rads)
+
+2.15
+
+2.2
+
+0.58
+0.56
+u1 (ms)
+
+0.54
+
+0.52
+
+0.5
+
+Figura 4 Crenca do controle em k  50.
+
+2.25
+
+2
+
+2.3
+1.25
+
+1.3
+
+1.35
+
+1.4
+
+1.45
+
+1.5
+1.55
+u1 (ms)
+
+1.6
+
+1.65
+
+1.7
+
+1.75
+
+1.5
+
+Figura 1 Crenca do controle em k  0.
+
+u1 (ms)
+
+1
+0.5
+0
+0.5
+1
+
+0
+
+200
+
+400
+
+600
+
+800
+
+1000
+
+1200
+
+1400
+
+800
+
+1000
+
+1200
+
+1400
+
+k
+
+2
+1
+u2 (rads)
+
+A crenca do estado em k  50 e mostrada na
+gura 2. A gura 3 mostra a sua projecao no plano
+X1  X2 com a orientacao omitida. A crenca do
+controle correspondente e mostrada na gura 4.
+
+0
+1
+2
+3
+
+0
+
+200
+
+400
+
+600
+k
+
+0.46
+0.44
+
+x3
+
+0.42
+0.4
+
+Figura 5 Sinais de controle em funcao do tempo.
+Linha solida metodo proposto. Linha pontilhada
+EKF e equivalencia a certeza.
+
+0.38
+0.36
+0.34
+1.4
+1.35
+1.3
+1.25
+3.05
+
+1.2
+
+3
+
+x2
+
+2.95
+1.15
+
+2.9
+2.85
+
+x1
+
+Figura 2 Crenca do estado em k  50.
+
+1.35
+
+x2 (m)
+
+1.3
+
+1.25
+
+1.2
+
+1.15
+2.85
+
+2.9
+
+2.95
+x1 (m)
+
+3
+
+3.05
+
+Figura 3 Projecao da crenca do estado em k  50
+no plano X1  X2 .
+A gura 5 mostra os sinais de controle em
+funcao do tempo. A trajetoria do robo no plano
+e mostrada na gura 6, juntamente com a trajetoria gerada pelo metodo utilizando ltro de
+
+ISBN 978-85-8001-069-5
+
+Kalman estendido. A posicao nal do robo e
+
+T
+x(k)  1, 044 3, 090 1, 571 .
+O experimento foi repetido 50 vezes, como
+forma de vericar os efeitos estocasticos em regime. A media e o desvio padrao do estado no
+ultimo instante de amostragem sao mostrados na
+tabela 1. A tabela 2 mostra os resultados equivalentes utilizando o ltro de Kalman estendido e o
+princpio da equivalencia a certeza. Nota-se que,
+embora os valores das medias sejam semelhantes
+para ambos os controladores, utilizando-se a estrategia proposta neste artigo tem-se desvios padrao
+bem menores, o que signica que o desempenho
+do controlador e bem mais consistente e robusto
+as incertezas presentes no sistema do que a estrategia de utilizar EKF com um controlador baseado
+na equivalencia a certeza.
+Tabela 1 Pose nal media e desvio padrao com o
+metodo proposto.
+x1 (m)
+x2 (m)
+x3 (rad)
+
+Media
+0, 9973
+3, 0027
+1, 5708
+
+Desvio padrao
+0, 0203
+0, 0139
+0, 0014
+
+4871
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Referencias
+
+3.5
+
+3
+
+Anderson, B. D. O. e Moore, J. B. (1989). Optimal Control Linear Quadratic Methods,
+Prentice-Hall Information and System Sciences Series, Prentice-Hall, Englewood Clis,
+NJ, USA.
+
+x2 (m)
+
+2.5
+
+2
+
+1.5
+
+1
+
+0.5
+
+0
+0.5
+
+1
+
+1.5
+
+2
+
+2.5
+
+3
+
+3.5
+
+4
+
+x1 (m)
+
+Figura 6 Trajetoria do robo. Linha solida metodo proposto. Linha pontilhada EKF e equivalencia a certeza.
+Tabela 2 Pose nal media e desvio padrao com
+EKF e equivalencia a certeza.
+x1 (m)
+x2 (m)
+x3 (rad)
+
+Media
+1, 0538
+2, 9276
+1, 4310
+5
+
+Desvio padrao
+0, 2750
+0, 2127
+0, 4977
+
+Conclusoes
+
+Um metodo para controlar um robo_movel com
+acionamento diferencial que pode acomodar incertezas nao gaussianas na transicao de estados
+e nos sensores foi proposto neste artigo e teve seu
+desempenho comparado com o enfoque classico de
+utilizar um ltro de Kalman estendido e o princpio da equivalencia a certeza.
+Foi utilizada uma estrategia e estimacao de
+estados baseada em ltro de partculas e a nuvem de partculas representando a crenca do estado foi mapeada para o espaco de entradas atraves da utilizacao de uma lei de controle nao suave, resultando em uma distribuicao de partculas no espaco de entradas, representando a crenca
+do controle. O sinal de controle foi entao obtido
+desta crenca atraves de um metodo que considera o suporte local para o sinal de controle com
+maior probabilidade. Embora os valores das medias dos erros sejam semelhantes para ambos os
+controladores, utilizando-se a estrategia proposta
+neste artigo tem-se desvios padrao bem menores,
+o que signica que o desempenho do controlador e
+bem mais consistente e robusto as incertezas presentes no sistema do que a estrategia de utilizar
+EKF com um controlador baseado na equivalencia
+a certeza.
+
+Agradecimentos
+Os autores agradecem a CAPES e a FAPERGS
+pelo apoio nanceiro.
+
+ISBN 978-85-8001-069-5
+
+Astol, A. (1994). On the stabilization of nonholonomic systems, Proceedings of the 33rd IEEE
+American Conference on Decision and Control, Piscataway, NJ, IEEE Press, Lake Buena Vista, FL, pp. 34813486.
+Baral, C., Kreinovich, V. e Trejo, R. (2000). Computational complexity of planning and approximate planning in the presence of incompleteness, Artificial Intelligence 122(1) 241
+267.
+Blanco, J.-L., Gonzalez, J. e Fernandez-Madrigal,
+J.-A. (2010). Optimal ltering for nonparametric observation models Applications
+to localization and slam, International Journal of Robotics Research 29(14) 17261742.
+Brockett, R. W. (1982). New Directions in Applied
+Mathematics, Springer-Verlag, New York.
+Kaelbling, L. P., Cassandra, A. R. e Littman,
+M. L. (1998). Planning and acting in partially observable stochastic domains, Artificial
+Intelligence 101(1) 99134.
+Lages, W. F. (1998). Controle e Estimacao de
+Posicao e Orientacao de Robos Moveis, Tese
+de doutorado, Instituto Tecnologico de Aeronautica, Sao Jose dos Campos, SP. Orientador Elder M. Hemerly.
+Lages, W. F. e Hemerly, E. M. (1998). Smooth time-invariant control of wheeled mobile
+robots, Proceedings of The XIII International Conference on Systems Science, Technical University of Wroclaw, Wroclaw, Poland.
+Littman, M. L., Cassandra, A. R. e Kaelbling,
+L. P. (1995). Ecient dynamic-programming
+updates in partially observable markov decision processes, Technical Report CS-95-19,
+Brown University, Providence, RI, USA.
+Rekleitis, I. M. (2004). A particle lter tutorial for mobile robot localization, Technical
+Report TR-CIM-04-02, Centre for Intelligent
+Machines, McGill University, Montreal, Quebec, Canada.
+Srdalen, O. J. (1993). Feedback Control of
+Nonholonomic Mobile Robots, Thesis (dr.
+ing.), The Norwegian Institute of Technology,
+Trondheim, Norway.
+Thrun, S., Burgard, W. e Fox, D. (2005). Probabilistic Robotics, MIT Press, Cambridge, MA.
+
+4872

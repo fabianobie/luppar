@@ -1,0 +1,746 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+IMPLEMENTAÇÃO DE UM SISTEMA DE CONTROLE PARA SEGUIMENTO DE LINHAS DE
+TRANSMISSÃO UTILIZANDO UM VANT
+V ITOR A BREU M ARTINS, E LIETE M ARIA
+
+DE
+
+O LIVEIRA C ALDEIRA, M ÁRIO S ARCINELLI -F ILHO
+
+ Instituto
+
+Federal do Espírito Santo
+Guarapari, Espírito Santo, Brasil
+
+ Universidade
+
+Federal do Espírito Santo
+Vitória, Espírito Santo, Brasil
+
+Emails vitoram1234@gmail.com, eliete@ele.ufes.br, mario.sarcinelli@ufes.br
+Abstract This article presents a supervisory system based on vision developed to a miniaturized unmanned aerial vehicle
+(UAV), which sends parameters to the dynamic controller of the UAV, in order to allow it to follow transmission lines. The
+transmission lines are identified by a camera on board pointed downwards. A nonlinear_controller based on inverse dynamics is
+used, using linearization technique of partial feedback states to control the UAV dynamics. Experiments results are shown, which
+validate the proposed structure.
+Keywords
+
+arial robotics, computer_vision.
+
+Resumo Este artigo apresenta um sistema_supervisório baseado em visão desenvolvido para um veículo aéreo não tripulado
+(VANT) miniatura, que envia parâmetros para o controlador dinâmico do VANT permitindo que o mesmo consiga acompanhar
+linhas_de_transmissão. As linhas_de_transmissão são identificadas por uma câmera a bordo apontada para baixo. É utilizado um
+controlador não_linear baseado em dinâmica_inversa, utilizando a técnica de linearização por retroalimentação parcial de estados
+para controlar a dinâmica do VANT. Resultados de experimentos são apresentados, os quais validam a estrutura proposta.
+Palavras-chave
+
+
+
+1 Introdução
+Nas últimas décadas veículos_aéreos_não_tripulados
+(VANTs) têm sido amplamente utilizados em diversas
+aplicações, tanto militares quanto civis. Os VANTs
+se destacam em tarefas de inspeção de grandes áreas
+ou regiões hostis, tais como em agricultura_de_precisão, em gerenciamento de riscos naturais e missões
+táticas em campos de combate, por exemplo (Kendoul
+et al., 2010 Duan and Liu, 2010).
+Outra possível aplicação dos VANTs é utilizá-los
+na inspeção de linhas_de_transmissão. Atualmente,
+essa inspeção é realizada utilizando helicópteros tripulados voando próximos s linhas, e com um eletricista
+que literalmente caminha sobre a linha_de_transmissão
+realizando inspeção_visual e térmica, como pode ser
+visto na Figura 1. Portanto, esta é uma tarefa de alta
+periculosidade e bastante custosa (Lima II et al., n.d.).
+Para realizar a inspeção o VANT tem que ser capaz de identificar a linha_de_transmissão e segui-la.
+Em (Rangel et al., 2009) a inspeção da linha é reali-
+
+Figura 1 Inspeção de linha_de_transmissão_de_energia
+elétrica usando um helicóptero tripulado.
+
+ISSN 2525-8311
+
+zada através de um avião miniatura não tripulado. O
+controle do VANT é realizado por um piloto embarcado que contém as rotas previamente estabelecidas
+por um sensor GPS. Porém, nem sempre a localização dos postes do sistema de transmissão_de_energia
+é conhecida, tornando a utilização de GPS uma solução restrita. Já em (Berger et al., 2012) essa tarefa é
+realizada através de uma estrutura de controle em cascata, utilizando sensores convencionais e informação
+visual. Porém, as linhas_de_transmissão não são formadas por apenas um segmento de linha, uma vez que
+elas podem ter o ângulo de direção alterado nos postes
+ou torres de sustentação. De fato, do ponto de vista da
+imagem capturada pelo VANT, a linha_de_transmissão
+é constituída de vários conjuntos de segmentos de linhas, em que as linhas se aproximam ou se afastam,
+dependendo da diferença de altitude, segmentos de linha esses conectados em pontos específicos. Em outras palavras, vista de cima, uma linha_de_transmissão_de_energia_elétrica pode ser entendida como um
+conjunto de caminhos retos, constituindo um caminho
+linear por partes, onde cada linha do conjunto pode
+aparecer mais próxima ou mais distante das outras, dependendo da altitude relativa.
+Este projeto propõe solucionar o problema de seguir uma linha_de_transmissão com a utilização de um
+VANT dotado de uma câmera a bordo apontada para
+baixo, para realizar a localização em relação  linha
+de transmissão, e de um supervisório que divide a tarefa em três etapas, a saber, seguir cada trecho da linha
+com velocidade e altitude constante, se posicionar no
+encontro de dois trechos sucessivos da linha que tenham inclinações diferentes na imagem, e corrigir seu
+ângulo de guinada para seguir o próximo segmento.
+
+3561
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+O supervisório, então, dependendo do estado que se
+encontra e da localização do VANT envia parâmetros
+para um controlador não_linear de dinâmica_inversa. O
+VANT escolhido para esse projeto é um quadrimotor
+do modelo AR.drone 2.0.
+Para tratar desses tópicos, o artigo foi estruturado,
+a partir deste ponto, da seguinte forma a Seção 2 descreve o controlador dinâmico utilizado pelo supervisório, enquanto a Seção 3 apresenta como foi implementado o sistema de visão para a detecção das linhas e
+a localização do VANT em relação s linhas_de_transmissão. Nessa seção também são apresentados alguns
+resultados de experimentos. Já a Seção 4 descreve o
+sistema_de_controle desenvolvido nesse projeto, enquanto a Seção 5 apresenta resultados de experimentos, para validar o sistema_de_controle, e comentários
+sobre os resultados. Finalmente, na Seção 6 são feitas as considerações finais do trabalho, e apresentadas
+ideias para dar continuidade ao mesmo.
+2
+
+O Controlador Dinâmico Utilizado
+
+Para a realização de um voo_autônomo, é necessário juntar-se a modelagem do veículo e um controlador. Para o entendimento do funcionamento do sistema como um todo, esta sessão apresenta o modelo e o controlador utilizados para o quadrimotor
+do modelo AR.drone 2.0, descritos em (Vago Santana
+et al., 2014). A modelagem utilizada considerou os
+controladores internos de tal modelo, já presente em
+seu firmware. Já o controlador utilizado é um controlador não-linear de dinâmica_inversa para seguimento
+de trajetória ou posicionamento para o AR.drone 2.0.
+Em (Vago Santana et al., 2014) foi desenvolvido
+um modelo para representar a dinâmica do AR.drone
+2.0 em seu próprio eixo de coordenadas, com o centro de massa como ponto de interesse para o controle,
+através da análise da resposta do mesmo com base nos
+controladores internos já presentes. O modelo é descrito pelas equações
+
+vx  K1 uvx  K2 vx
+
+
+
+
+vy  K3 uvy  K4vy
+
+z  K5 uz  K6 z
+
+
+
+  K7 u  K8 ,
+
+X  f1  U  f2X,
+
+(2)
+
+ 
+ 
+ 
+uvx
+x
+vx
+ y 
+uvy 
+ vy 
+
+ 
+ 
+X  
+ z  , U   uz  , X   z  ,
+
+
+u
+
+(3)
+
+onde
+
+Partindo da Equação 2 a lei de controle adotada é
+
+onde
+
+U  f1 1  ( + f2  X),
+
+(4)
+
+
+  Xd +  p  X + d  X,
+
+(5)
+
+sendo
+T
+yd  y zd  z d  
+(6)
+o erro de seguimento, e sendo  p e d as matrizes diagonais de ganho com valores sempre positivos e não
+nulos. Em (Vago Santana et al., 2014) também é provada a estabilidade do controlador utilizando a teoria
+de Lyapunov.
+
+X  Xd  X  xd  x
+
+(1)
+
+onde vx e vy representam acelerações lineares em relação aos eixos x e y no referencial do quadrimotor,
+enquanto z representa a aceleração linear com respeito ao eixo z e  representa a aceleração angular
+com respeito ao eixo z no referencial inercial, devido
+ao firmware já compensar a influência dos ângulos
+ e . Os parâmetros K1 , . . . , K8 são constantes de
+proporcionalidade a serem identificadas experimentalmente. Os comandos de movimento do AR.drone 2.0
+são uvx , uvy , uz e u . Tais comandos são normalizados, assim cada elemento do vetor de sinais de controle u  uz u uvx uvy   1, +1, sendo que uz representa um comando de velocidade de deslocamento
+
+ISSN 2525-8311
+
+linear sobre o eixo z u representa um comando de velocidade_angular em torno do eixo z uvy representa um
+comando de inclinação em relação a x, o que indiretamente representa um comando de velocidade linear
+relacionado ao eixo y , e por isso que é chamado de
+uvy  uvx representa um comando de inclinação em relação a y, o que indiretamente representa um comando
+de velocidade linear relacionado ao eixo x, e por isso
+que é chamado de uvx .
+O modelo utilizado não é uma representação
+completa da dinâmica do quadrimotor, porém é uma
+aproximação suficiente, o que é comprovado em
+(Vago Santana et al., 2014), onde se compara dados
+experimentais coletados em voo com dados simulados
+com o modelo.
+O controlador proposto é capaz de realizar posicionamento e seguimento de trajetória de um AR.drone
+2.0. Ou seja, um controlador capaz de levar o quadrimotor da posição e orientação X  x, y, z,  para os
+valores desejados Xd  xd , yd , zd , d , onde Xd pode
+ser uma função no tempo, caracterizando um seguimento de trajetória, ou uma constante, caracterizando
+posicionamento. O modelo do quadrimotor, Equação 1, agora no referencial global, torna-se
+
+3
+
+Sistema de Visão
+
+O AR.drone 2.0 já vem com uma câmera a bordo
+apontada para baixo e as imagens adquiridas são de
+fácil acesso. Simplificando, para o caso em que a câmara está no centro de massa do veículo, os seus eixos
+se tornam os mesmos que os do quadrimotor, assim
+como as matrizes de rotação e translação para o sistema inercial.
+Para detectar as linhas nas imagens capturadas
+pela câmara a bordo do quadrimotor, foi utilizada a
+
+3562
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+transformada de Hough, por ser um método amplamente utilizado e muito efetivo para a detecção de linhas retas em imagens. Foram realizados experimentos utilizando a transformada de Hough, para validar
+o método na detecção da linha a ser seguida. Nesses
+experimentos o AR.drone 2.0 foi colocado para sobrevoar um caminho feito com tiras de papel no chão,
+sendo a largura do caminho variável para representar
+um possível aclive e declive das linhas_de_transmissão.
+As bordas do papel com o chão representam as linhas
+de transmissão e devem ser identificadas nas imagens.
+Durante os experimentos as bordas do papel foram detectadas, porém foram detectados segmentos de retas
+a mais, que são divididos em dois padrões, segmentos
+que não pertencem s linhas foram detectados, e mais
+de um segmento sendo detectado para a mesma linha.
+Sendo o padrão das linhas_de_transmissão conhecido, é possível criar um classificador que analise os
+segmentos de reta encontrados pela transformada de
+Hough e que retorne apenas um segmento de reta para
+cada linha_de_transmissão da imagem, semelhante ao
+trabalho apresentado em (Li et al., 2010). O padrão
+das linhas_de_transmissão é que elas aparecem nas imagens como um número fixo de segmentos de reta, e
+cada segmento de reta possui inclinação próxima dos
+outros segmentos de reta, e deve estar a uma certa distância dos outros. Essa distância, em pixels, depende
+da altura relativa da câmera em relação s linhas. Um
+filtro foi desenvolvido para eliminar os segmentos extras da seguinte forma, juntar os vários segmentos de
+reta que representam a mesma linha_de_transmissão
+e eliminar as linhas avulsas que não pertencem a nenhuma linha_de_transmissão. O filtro foi aplicado nas
+imagens dos experimentos anteriores e o resultados
+podem ser vistos na Figura 2. Como resultado final
+todas as linhas no chão foram representadas por apenas um segmento de reta, e todas os segmentos de reta
+representam uma e apenas uma linha.
+Com as linhas_de_transmissão sendo detectadas
+na imagem, o posicionamento e a orientação relativos
+do VANT em relação s linhas foi encontrado. Para
+isso foi utilizando o modelo de câmera Pinhole com os
+parâmetros intrínsecos da câmera encontrados de maneira empírica, a distância em metros entre as linhas,
+um valor fixo e também conhecido, e as matrizes de
+rotação entre os eixos da câmera e da linha.
+4
+
+Adaptação do Controlador para Seguir Linha
+
+O controlador dinâmico desenvolvido em (Vago Santana et al., 2014) pode ser utilizado para cumprir as
+
+Figura 2 Aplicação do filtro sobre os segmentos de
+reta detectados.
+
+ISSN 2525-8311
+
+Figura 3 Diagrama de blocos do VANT com o sistema
+supervisório desenvolvido.
+
+tarefas de posicionamento do robô e seguimento de linhas. Esse projeto propôs desenvolver uma estratégia
+de controle que, utilizando a informação do processamento das imagens da câmera, o posicionamento e a
+orientação do VANT em relação s linhas_de_transmissão e a quantidade de linhas_de_transmissão presentes
+nas imagens, envie os parâmetros de entrada para o
+controlador dinâmico, e tal controlador dinâmico leva
+o VANT para os valores desejados. O diagrama de
+blocos da Figura 3 mostra o sistema proposto completo, sendo que Xl representa a posição e a orientação
+do VANT em relação s linhas, Xd representa sua posição tridimensional, sua orientação e sua velocidade
+frontal desejados, U contém os sinais de controle enviados pelo controlador ao VANT, e Xe representa a
+posição e a orientação do VANT no referencial global.
+O sistema_supervisório sempre tenta manter a velocidade lateral do VANT em zero, enquanto os ângulos
+de arfagem e guinada desejados vão ser definidos pelo
+controlador dinâmico utilizado.
+Sabendo que as linhas_de_transmissão seguem o
+padrão de segmentos de linhas retas conectados em
+pontos específicos, o sistema proposto tem a estrutura
+representada na Figura 4.
+Após ter os parâmetros inicializados, o supervisório segue para a parte "Seguimento de linha" onde
+o robô tem que seguir o segmento de linha detectado
+com uma velocidade constante e com ângulo de guinada igual  inclinação da linha. Ou seja, sua orientação deve coincidir com a direção da linha. Nessa etapa
+a velocidade frontal deve ser constante e a velocidade
+lateral deve ser nula. No caso do quadrimotor estar
+deslocado em relação  linha, ele deverá se aproximar
+da linha variando o seu ângulo de guinada. O ângulo
+de guinada a ser estabelecido como referência é obtido
+partindo-se do ponto da linha mais próximo do quadrimotor (P1 ), conforme ilustra a Figura 5. Em seguida
+é encontrado um ponto P2 a certa distância de P1 (no
+caso 50 cm) que também pertence  linha (tomando
+cuidado para que P2 esteja  frente de P1 ). O ângulo
+que o quadrimotor deve seguir é o ângulo entre sua
+posição atual e P2 , ou seja, o ângulo d mostrado na
+
+Figura 4 Fluxograma adotado para o cumprimento da
+tarefa de seguimento de linha.
+
+3563
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Figura 5. Este procedimento é repetido a cada ciclo de
+amostragem, de forma que a distância em relação  linha tende a 0, levando tan(d ) a 0, resultando no robô
+seguindo a linha com o mesmo ângulo. Outra possibilidade seria o quadrimotor seguir a linha no sentido
+contrário. Note-se que o sentido de seguimento da linha depende apenas de onde está o ponto P2 ,  frente
+ou atrás de P1 .
+Na imagem aparecerão duas linhas com inclinações diferentes, quando o quadrimotor se aproximar
+de uma torre de suporte de linha_de_transmissão, caso
+a direção do novo segmento seja diferente daquela da
+atual. Ao encontrar a outra linha o sistema_de_controle muda para a tarefa "Posicionamento", e o robô
+passa a ser comandado para parar sobre o ponto de
+encontro das duas linhas detectadas. Nessa parte, as
+coordenadas do ponto comum s linhas são encontradas e enviadas como referência para o controlador da
+dinâmica do quadrimotor, que o leva para o ponto desejado. Nesse caso, o ângulo de guinada é calculado
+da mesma forma que durante a etapa Seguimento de
+Linha", não levando em consideração o ponto de encontro. Isto é feito desta forma porque como o ponto
+vai estar muito próximo do VANT qualquer erro ao
+calcular a posição do ponto de encontro ou de posicionamento do VANT resultaria numa grande variação
+do ângulo desejado. Mais ainda, como o ponto de encontro se localiza sobre a linha, seguindo a linha não
+resultará num grande erro de posicionamento. Caso algum dos dois segmentos não seja detectado enquanto
+o quadrimotor não alcançar o ponto de destino, o sistema considera o ponto anteriormente calculado como
+ponto destino.
+Quando o quadrimotor se posiciona no ponto de
+encontro das linhas, o sistema muda a tarefa para
+"Ajuste de Guinada". Nessa etapa o robô tem que girar em torno do próprio eixo Z, e ajustar seu ângulo de
+guinada para se igualar  orientação da nova linha a ser
+seguida. Ao passar da segunda etapa para a terceira o
+ângulo do próximo segmento é salvo, passando a ser
+a nova referência para o ângulo de guinada do quadrimotor. A terceira etapa é finalizada quando o quadrimotor tem seu ângulo de guinada igual  orientação
+do próximo segmento de linha, e então o sistema volta
+para a primeira etapa, seguindo o novo segmento. Foram tomadas as devidas precauções para evitar que o
+segmento antigo, ainda presente na imagem, seja confundido com um novo segmento e que o quadrimotor
+faça o caminho contrário, e assim fique preso em um
+
+Figura 5 Aproximação do quadrimotor  linha a ser
+seguida.
+
+ISSN 2525-8311
+
+só segmento de linha, sem passar para os seguintes.
+5 Resultados
+Para validar o sistema desenvolvido foram realizados
+experimentos com o AR.drone 2.0. Foi utilizado um
+software_livre em openCV, no qual foi adicionado o
+sistema de visão e o supervisório desenvolvidos. Nos
+experimentos o quadrimotor tinha que completar um
+caminho desenhado no chão, utilizando fitas de papel,
+sendo que as bordas do papel representam as linhas a
+serem seguidas. O caminho a ser seguido pelo quadrimotor durante o experimento é mostrado na Figura 6.
+O caminho é definido por duas linhas, e se inicia com
+as linhas paralelas ao eixo y. Após 4, 9 m a linha tem
+sua inclinação alterada em 90 para a direita, seguindo
+paralela ao eixo x por mais 6, 1 m. Um aclive e um
+declive da linha foram representados no experimento
+por uma variação na largura do caminho, sendo que na
+troca de inclinação a linha tem a sua largura dobrada,
+e no final do caminho a sua largura original. Essa variação de largura é interpretada pelo quadrimotor como
+uma variação de 1, 5 m de altura. Esse caminho foi
+escolhido por apresentar os dois movimentos verticais
+requeridos pelo quadrimotor, subir e descer, e poder
+verificar se o quadrimotor para sobre o ponto de encontro e consegue ajustar a sua orientação para seguir
+a nova linha.
+A tarefa é seguir a linha do meio, tendo a orientação semelhante  direção da linha, permanecendo a
+1, 5 m acima dela. Durante a etapa Seguimento de Linha" a velocidade de avanço do quadrimotor deve ser
+de 20 cms. O quadrimotor iniciou o experimento no
+chão, sobre o início do caminho, foi colocado em voo
+manualmente, e após se estabilizar foi iniciado o programa que realiza o controle do quadrimotor para realizar o seguimento de linha. O ângulo de guinada do
+quadrimotor coincide com a direção da linha a ser seguida, paralela ao eixo y, e a altura é metade da altura
+desejada, 0, 75 cm do chão, condições iniciais essas
+que foram escolhidas para verificar se o quadrimotor
+iria completar o caminho com o mínimo de controle
+humano (apenas decolar e pousar).
+O AR.drone 2.0 possui uma característica que não
+foi incorporada no modelo, o fato do controlador interno conseguir forçar a parada e manter o quadrimotor parado quando os sinais de controle_de_velocidade
+tridimensional são nulos. Tal característica será utilizada na etapa Ajuste de Guinada" para evitar que
+
+Figura 6 Caminho a ser percorrido pelo quadrimotor
+no experimento.
+
+3564
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ele saia do ponto de encontro. Com isso, durante essa
+etapa o controle_de_altitude também não será realizado
+e o quadrimotor ficará parado sobre o mesmo ponto.
+Ou seja, durante a etapa Ajuste de Guinada" apenas
+será controlado o ângulo guinada. Além disso, como
+no sistema_de_controle proposto para o quadrimotor
+este não deve realizar movimentos laterais, durante
+todo o experimento o sinal de controle_de_movimento
+lateral do quadrimotor será nulo.
+Os gráficos da Figura 7 mostram com detalhes os
+dados de voo do quadrimotor durante o experimento.
+Nesses gráficos as linhas contínuas representam os valores medidos, as linhas tracejadas em vermelho correspondem aos valores desejados, e as linhas pontilhadas verticais representam as trocas de etapas do
+controlador. Os valores de velocidade foram medidos
+pelos sensores internos do próprio AR.drone 2.0, enquanto o ângulo e a altura foram medidos através do
+processamento das imagens da câmera.
+A Figura 7a mostra o ângulo de guinada do quadrimotor em relação  linha a ser seguida. No início tal
+ângulo é calculado em relação  primeira parte do caminho, paralela ao eixo y, e a partir da etapa Ajuste de
+Guinada" passa a ser calculado em relação  segunda
+parte do caminho, paralela ao eixo x. Essa variação
+de referencial é representada no gráfico pela variação
+brusca de 0 para 90 quando a etapa Ajuste de Guinada" se inicia. Analisando esse gráfico, pode-se perceber que durante a primeira parte do percurso o ângulo foi próximo de zero e quase não sofreu variações.
+Isso se deve ao fato que durante o experimento o quadrimotor iniciou seu voo próximo da linha, e portanto
+não teve que realizar uma grande variação de ângulo
+para corrigir o seu posicionamento em relação  linha
+a ser seguida. Na etapa Ajuste de Guinada" o ângulo
+é ajustado para seguir a nova linha, e tem seu valor re3
+
+120
+Ângulo em relação  linha
+Ângulo em desejado
+
+100
+
+2.5
+80
+
+2
+Altura (m)
+
+Ângulo em graus
+
+60
+40
+20
+0
+
+1.5
+
+1
+
+20
+
+0.5
+Altura pela visão
+Altura pelo ultrassom
+Altura desejada
+
+40
+60
+
+0
+
+50
+
+100
+
+150
+
+200
+
+250
+
+300
+
+350
+
+0
+
+400
+
+0
+
+50
+
+(a) Ângulo de guinada.
+
+100
+
+150
+
+200
+
+250
+
+300
+
+350
+
+duzido de 90 a 0 . Após o ajustar o ângulo, devido
+a estar mais afastado da linha que no início da simulação, por causa de variações indesejadas das velocidades, o ângulo de guinada teve que sofrer alterações
+maiores.
+A Figura 7b mostra a altitude em relação  linha
+a ser seguida, medida pela visão, traçada em azul, em
+comparação com a altura desejada (1, 5 m), correspondente  linha preta, e com a altura medida pelo ultrassom, representada pela linha verde. Pode-se perceber
+que no início o quadrimotor alcançou a altura desejada e se manteve próximo a ela durante todo o percurso. Durante a etapa Ajuste de Guinada" a altura
+não foi medida pelas imagens, mas o sensor  base
+de ultrassom a bordo do quadrimotor confirma que ela
+permaneceu praticamente constante nessa etapa. Ao
+voltar a seguir a linha, a altura apresenta uma variação
+positiva, o que se deve ao fato do quadrimotor estar
+adiantado no percurso, e como nessa etapa a largura
+da linha está se reduzindo, a altura do quadrimotor em
+relação  linha aumenta. Mas ao analisar pela altura
+medida pelo sensor ultrassônico se percebe que a variação de altura não foi tão expressiva. Pela curva da
+altura medida pelo sensor ultrassônico se nota que o
+quadrimotor se elevou a até quase 3 m e depois retornou para 1, 5 m, como era desejado.
+A Figura 7c permite a análise da velocidade de
+avanço, e nela se percebe que o controlador conseguiu levar a velocidade de avanço para o valor desejado (20 cms) durante a etapa Seguimento de Linha". Nessa etapa aconteceram algumas sobrelevações da velocidade, mas sempre voltando para valor
+desejado. Ao trocar de etapa, quando da detecção da
+segunda linha na imagem, a velocidade de avanço cai
+para próximo de zero, e então o veículo altera a sua
+orientação para coincidir com a da próxima linha. No
+início da etapa Ajuste de Guinada", a velocidade cai
+até 0 cms, porém na metade da etapa a velocidade
+cresce. Esse comportamento não é esperado e acaba
+retirando o quadrimotor do ponto de encontro das linhas. Porém, mesmo com esse evento o quadrimotor
+consegue completar o percurso. Já a Figura 7d mostra
+a velocidade lateral do quadrimotor. Nela é fácil perceber que aconteceram uma série de variações de velocidade indesejadas. Tais variações são devidas aos
+
+400
+
+(b) Altitude.
+1
+
+0.6
+
+0.4
+Velocidade medida
+Velocidade Desejada
+
+Distância em relação  linha
+
+Velocidade medida
+Velocidade Desejada
+
+0.9
+
+0.3
+
+0.5
+
+0.8
+
+0.2
+0.4
+
+0.2
+
+Distancia Em Metros (m)
+
+0.3
+
+Vy (ms)
+
+Vx (ms)
+
+0.1
+
+0
+
+0.1
+0.1
+0.2
+0
+
+0.1
+
+0.3
+
+0
+
+50
+
+100
+
+150
+
+200
+
+250
+
+300
+
+350
+
+(c) Velocidade frontal
+no referencial do robô.
+
+400
+
+0.4
+
+0.6
+0.5
+0.4
+0.3
+
+0
+
+50
+
+100
+
+150
+
+200
+
+250
+
+300
+
+350
+
+400
+
+(d) Velocidade lateral
+no referencial do robô.
+
+Figura 7 Gráficos correspondentes ao experimento
+com o quadrimotor.
+
+ISSN 2525-8311
+
+0.7
+
+0.2
+0.1
+0
+
+0
+
+50
+
+100
+
+150
+
+200
+
+250
+
+300
+
+350
+
+400
+
+Figura 8 Distância horizontal entre o quadrimotor e a
+linha sendo seguida no experimento.
+
+3565
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+erros de drift que ocorrem na IMU disponível a bordo
+do veículo, causando seu deslocamento nas direções x
+e y, principalmente. Esse fato acaba afastando o quadrimotor da linha a ser seguida, mas mesmo com essas
+variações o sistema consegue completar o percurso.
+Por fim, a Figura 8 mostra a distância horizontal
+entre o quadrimotor e a linha média sendo seguida. O
+quadrimotor inicia seu voo aproximando-se da linha,
+porém devido s variações indesejadas na velocidade
+lateral (ver Figura 7d), o quadrimotor acaba se afastando da linha. Mas o sistema_de_controle faz com que
+quadrimotor se aproxime da linha novamente, corrigindo esses deslocamentos, e com isso o quadrimotor
+consegue completar o percurso com sucesso.
+
+de etapas do sistema_supervisório.
+Agradecimentos
+Os autores agradecem ao CNPq  Conselho Nacional
+de Desenvolvimento Científico e Tecnológico - e  FAPES - Fundação de Amparo  Pesquisa e Inovação do
+Espírito Santo  pelo apoio financeiro ao projeto. Eles
+também agradecem  CAPES  Coordenação de Aperfeiçoamento de Pessoal de Nível Superior, do Ministério da Educação, pelo apoio financeiro adicional concedido, na forma da bolsa de Mestrado de Vitor Abreu
+Martins.
+Referências
+
+6
+
+Observações Finais e Trabalhos Futuros
+
+Este trabalho propôs um sistema_de_controle para um
+quadrimotor miniatura, com o objetivo de seguir segmentos de linha com direções diferentes conectados
+um ao outro, formando um caminho contínuo por partes, utilizando visão para encontrar a posição e a orientação do robô em relação  linha pelas imagens de
+uma câmera disponível a bordo veículo, voltada para
+baixo. Os segmentos têm suas larguras variadas durante o percurso, e o quadrimotor deve ajustar a altitude para que a largura na imagem permanecesse constante. Para realizar a tarefa foi utilizado o controlador
+não_linear baseado em dinâmica_inversa desenvolvido
+em (Vago Santana et al., 2014), para controlar a dinâmica do quadrimotor, e um sistema supervisor para
+definir os parâmetros de entrada do controlador, que
+dependem da etapa da tarefa que o quadrimotor estiver
+executando. No caso, a tarefa foi dividida em três subtarefas, a saber, seguimento de linha, que corresponde
+ao seguimento efetivo de um trecho linear do caminho
+sendo percorrido, posicionamento, que corresponde 
+tarefa de posicionar-se no ponto de junção de dois segmentos de linha sucessivos, e ajuste de guinada, que
+corresponde a orientar-se adequadamente para seguir
+o próximo segmento de linha. O desempenho do sistema desenvolvido foi comprovado através de experimentos, onde se observaram bons resultados.
+Como trabalhos futuros, propõe-se implementar
+uma fusão sensorial utilizando as imagens da câmera
+embarcada, as medidas fornecidas pelos sensores_inerciais a bordo do veículo e dados fornecidos por um receptor de GPS. Além de fornecer informações de posicionamento e orientação mais precisas, este sistema
+baseado na fusão_de_dados também será útil nas situações em que o VANT eventualmente perder a imagem
+da linha_de_transmissão. Bastaria, por exemplo, que
+a linha fosse caracterizada por suas coordenadas GPS.
+Ele poderia usar informações do módulo de GPS apenas, podendo reposicionar-se para readquirir a visão
+da linha. Outra sugestão é utilizar cabos e postes ao invés de fitas de papel, para representar a linha_de_transmissão. Essa mudança permitiria ajustar o sistema de
+visão para uma situação mais próxima da realidade, e
+utilizar a detecção do poste para auxiliar na mudança
+
+ISSN 2525-8311
+
+Berger, C., Sarapura, J., Jordán, M. and Carelli, R.
+(2012). Control servovisual de un cuadrirotor en
+seguimiento de líneas, Anales de las VII Jornadas Argentinas de Robótica (JAR 2012), Vol. 1,
+Olavarria, Buenos Aires, Argentina.
+Duan, H. and Liu, S. (2010). Unmanned airground
+vehicles heterogeneous cooperative techiniques
+Current status and prospects, Science China, Technological Sciences 53(5) 13491355.
+Kendoul, F., Yu, Z. and Nonami, K. (2010). Guidance and nonlinear control system for autonomous flight of minirotorcraft unmanned aerial
+vehicles, Journal of Field Robotics 27(3) 311
+334.
+Li, Z., Liu, Y., Walker, R., Hayward, R. and Zhang, J.
+(2010). Towards automatic power line detection
+for a uav surveillance system using pulse coupled
+neural filter and an improved hough transform,
+Machine Vision and Applications 21(5) 677
+686.
+Lima II, E. J., Bomfim, M. H., Bracarense, A. Q., Gontijo, R. A., Mourão, M., Almeida, C. V., Barreto,
+A. and Reis, M. A. (n.d.). Robô autonômo para
+inspeção de linhas de alta tensão.
+Rangel, R. K., Kienitz, K. H. and Brandão, M. P.
+(2009). Sistema de inspeção de linhas_de_transmissão deenergia_elétrica utilizando veículos aéreos não-tripulados, 3rd CTA-DLR Workshop on
+Data Analysis  Flight Control ocorrido entre,
+pp. 1416.
+Vago Santana, L., Brandao, A. S., Sarcinelli-Filho,
+M. and Carelli, R. (2014). A trajectory tracking and 3d positioning controller for the ar.
+drone quadrotor, Unmanned Aircraft Systems
+(ICUAS), 2014 International Conference on,
+IEEE, pp. 756767.
+
+3566

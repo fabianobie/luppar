@@ -1,0 +1,565 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+RECONSTRUCAO A PARTIR DE MULTIPLOS REGISTROS DE NUVEM DE
+PONTOS RGB-D
+Edson K. Ueda Rogerio Y. Takimoto Marco S. G. Tsuzuki Renato Vogelaar
+Thiago C. Martins Toshiyuki Gotoh Seiichiro Kagei Giulliano B. Gallo
+Marco A. A. Garcia Hamilton Tiba
+
+
+Laboratorio de Geometria Computacional
+Escola Poliecnica da Universidade de Sao Paulo
+Sao Paulo, SP, Brasil
+
+
+
+
+Yokohama National University
+79-1 Tokiwadai, Hodogaya-ku
+Yokohama-shi, Kanagawa,
+240-8501
+Japan
+
+Companhia Energetica do Estado de Sao Paulo
+Sao Paulo, SP, Brasil
+
+Email edson.ueda@usp.br, takimotoyugo@gmail.com, mtsuzuki@usp.br, thiago@usp.br.
+Abstract The objective of this work is to present a 3D reconstruction method using the color information.
+The 3D reconstruction is performed by combining point clouds obtained from different viewpoints. The main
+task is the point cloud registration algorithm that matches two point clouds. A well known algorithm for point
+cloud registration is the ICP (Iterative Closest Point) that determines the rotation and translation that when
+applied to one of the point clouds, place both point clouds in accordance. The ICP executes iteratively two
+main steps point correspondence determination and registration. The point correspondence determination is a
+module that if not properly executed the ICP converges to a local minimum. To overcome such drawback an ICP
+that uses statistics to generate a dynamic distance and color threshold on the distance allowed between closest
+points was implemented. This approach allows subset matches, instead of matching all points from the point
+clouds. The surface reconstruction is performed using the marching cubes and a consensus surface algorithm
+with signed distance to compensate point cloud errors. In this paper the performance of the proposed method is
+analyzed and compared with the conventional ICP.
+Keywords
+
+ICP Algorithm, Registration, 3D Reconstruction, Marching Cubes.
+
+Resumo O objetivo deste trabalho e apresentar um metodo de reconstrucao 3D de um objeto utilizando
+informacoes de cor. A reconstrucao 3D de um objeto e feita ao combinar multiplas nuvens de pontos de diferentes
+pontos de vista. A principal tarefa e o algoritmo de registro de nuvens de pontos que determina a correspondencia
+entre duas nuvens de pontos. Um dos algoritmos utilizados para registrar nuvens de pontos e o ICP (Iterative
+Closest Point) que determina a rotacao e a translacao que ao ser aplicada a uma nuvem de pontos, coloca ambas
+as nuvens de pontos em concordancia. O ICP executa iterativamente dois principais passos determinacao da
+correspondencia entre pontos e o registro. A determinacao da correspondencia entre pontos e o modulo que caso
+nao seja executado corretamente pode fazer com que o ICP caminhe para um mnimo local. Para superar essa
+desvantagem, um ICP que utiliza a cor e um limiar de distancia, definido dinamicamente por meio de estatsticas,
+para definir a correspondencia entre pontos foi implementado. Essa abordagem possibilita a correspondencia de
+subconjuntos, ao inves da correspondencia de todos os pontos das nuvens de pontos. A reconstrucao da superfcie
+e realizada ao utilizar a isosuperfcie determinada pela distancia com sinal para compensar erros e, posteriormente,
+a partir da isosuperfcie, os algoritmos dos cubos_marchantes e utilizado para criar a superfcie. Neste artigo o
+desempenho do metodo proposto e analisado e comparado com o ICP convencional.
+Palavras-chave
+
+.
+
+Introducao
+
+tras areas (Benavidez and Jamshidi, 2011). Este
+tipo de sensor permite a integracao de informacoes como imagem e profundidade em uma nuvem
+de pontos colorida que contem aproximadamente
+300.000 pontos em cada quadro. E conhecido que
+dados obtidos por escaners de baixo_custo sao contaminados com erros sistematicos, erros aleatorios
+e rudo. Deste modo, a distancia e a cor da imagem podem ser mapeados de forma imprecisa e os
+pontos mais proximos do sensor possuem maior
+precisao.
+
+Existem varias aplicacoes em diferentes areas que
+utilizam sensores RGB-D. Por serem confiaveis e
+acessveis, eles se tornaram uma alternativa atrativa em relacao aos caros escaners de laser. Estes
+sensores combinam informacoes de cameras e sensores de distancia, tambem conhecidos como cameras RGB-D (como o Kinect (Microsoft, 2012)).
+O Kinect foi desenvolvido inicialmente para interacao natural em ambientes de jogos. Porem, devido as caractersticas dos dados de captura, ele
+vem atraindo a atencao de pesquisadores de ou-
+
+Lemuz-Lopez and Arias-Estrada (2006) propuseram o uso do metodo SIFT (Scale Invariant
+
+128
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Feature Transform) para definir pontos caractersticos da imagem RGB. Os pontos correspondentes
+foram determinados a partir dos pontos SIFT 3D,
+e o ICP (Iterative Closest Point) e utilizado para
+determinar o registro entre as nuvens de pontos.
+Druon et al. (2006) propuseram um ICP que utiliza a informacao da cor para aprimorar a correspondencia entre pontos e o registro das nuvens de
+pontos. Xie et al. (2013) propos uma nova funcao objetivo para o ICP que combina os pontos
+caractersticos do SIFT com pontos 3D convencionais. Os metodos propostos por Lemuz-Lopez and
+Arias-Estrada (2006), Druon et al. (2006) e Xie
+et al. (2013) apresentaram resultados com apenas
+duas nuvens de pontos. Takimoto et al. (2013)
+propuseram um ICP que utiliza a informacao da
+cor para aprimorar a correspondencia entre pontos e o registro entre multiplas nuvens de pontos. A informacao da cor e utilizada no calculo
+do erro. Eles tambem reconstruram a superfcie
+utilizando a distancia com sinal e o algoritmo dos
+cubos_marchantes (Masuda, 2002). Foi mostrado
+que informacoes redundantes podem melhorar a
+reconstrucao da forma 3D.
+Este trabalho e um aprimoramento da pesquisa de Takimoto et al. (2013) ao modificar a
+utilizacao da informacao de cor. Eles utilizaram a
+cor para o calculo do erro na correspondencia entre
+pontos (informacao geometrica e de cor). Neste
+trabalho, a informacao de cor sera utilizada para
+definir a correspondencia entre pontos. O metodo
+proposto sera comparado com o ICP convencional.
+Esse artigo esta estruturado da seguinte
+forma. O metodo proposto envolvendo multiplas
+nuvens de pontos esta na Secao 2. A Secao 3 explica o processo de correspondencia entre pontos
+e o registro entre duas nuvens de pontos. A Secao 4 apresenta o algoritmo proposto. A Secao
+5 explica a compensacao de erro e o processo de
+reconstrucao do modelo. A Secao 6 apresenta alguns resultados com analise de erros e na Secao 7
+a conclusao e trabalhos futuros.
+2
+
+P C1
+
+P C2
+
+T1
+
+P C3
+
+T2
+
+
+
+P C4
+
+T3
+
+T4
+
+P Cn
+
+Tn1
+
+FPC
+Figura 1 Registro de multiplas nuvens de pontos
+(P C1 , P C2 ,    , P Cn ). A transformacao Ti que
+registra P Ci com P Ci+1 e determinada. A nuvem
+de pontos final (FPC) e determinada apos realizar
+todo os registros.
+Imagem A
+
+Imagem B
+
+Correspondencia Inicial de Pontos
+
+Registro com o ICP modificado
+
+Mais Nuvens de Pontos?
+
+Imagem C
+
+Compensacao de Erros
+
+Reconstrucao da Superfcie
+
+Figura 2 O algoritmo de reconstrucao proposto.
+suficiente para que o registro seja realizado com
+sucesso.
+O processamento de duas nuvens de pontos e
+feito segundo o algoritmo exibido na Fig. 2. Inicialmente, duas nuvens de pontos RGB-D A e B
+sao adquiridas e registradas. Caso uma nuvem de
+pontos RGB-D adicional C seja adquirida, entao
+ela e registrada junto a segunda nuvem de pontos
+B. Desta forma, apenas as nuvens de pontos adquiridas sucessivamente sao registradas. A compensacao de erro e a reconstrucao da superfcie sao
+executadas apos o registro de todas as nuvens de
+pontos adquiridas.
+
+Breve Explicacao do Metodo Proposto
+
+Considere que multiplas nuvens de pontos sao adquiridas. A Fig. 1 mostra que duas nuvem de
+pontos sequencialmente adquiridas P Ci e P Ci+1
+sao registradas pela determinacao da matriz de
+transformacao Ti . Este metodo e diferente em
+relacao ao proposto por Takimoto et al. (2013)
+no qual apos o registro, ambas as nuvens de pontos sao fundidas e entao e realizado o registro entre a nuvem fundida e uma nova nuvem de pontos. A abordagem apresentada na Fig. 1 possui
+nuvem de pontos com menor numero de pontos
+para definir a correspondencia entre pontos e por
+consequencia possui um menor tempo de processamento. Assume-se que duas nuvens de pontos
+adquiridas em sequencia possuem sobreposicoes o
+
+3
+
+Registro de Nuvem de Pontos
+
+O ICP (Besl and McKay, 1992) e uma proposta
+generalizada que suporta o registro 3D entre pares de nuvens de pontos. De forma intuitiva, o
+registro de uma superfcie ocorre se existe uma
+correspondencia entre as duas nuvens de pontos
+obtidas a partir de vistas diversas. Entao, dizse que duas nuvens de pontos 3D Q e P estao
+
+129
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+registradas quando qualquer par de pontos correspondentes (pi , qj ), com pi  P e qj  Q, representam o mesmo ponto na superfcie segundo
+uma transformacao rgida simples (Chen and Medioni, 1991). Existe uma transformacao rgida T
+expressa por
+ pi  P,  qj  Q  kT  pi  qj k  0
+
+(x,y,z), e cada ponto na nuvem 3D e representado
+por quatro coordenadas (x,y,z,h). A arvore 3-d foi
+modificada para tornar-se uma arvore 4-d.
+4.2
+
+Mesmo que o ICP seja muito utilizado para o registro de pares de nuvens de pontos 3D, algumas
+limitacoes devem ser mencionadas. O ICP possui
+um mnimo local muito proximo ao mnimo global e ao ficar preso a esse mnimo local pode levar
+a um sub-otimo durante o processo de registro.
+O ICP convencional (Besl and McKay, 1992) e o
+processo de determinar a correspondencia entre
+pontos sao executados de forma iterativa. A correspondencia entre pontos nao pode ser um-a-um
+(todos os pontos de um conjunto possuem correspondentes no outro conjunto), pois falsos positivos
+podem existir devido a obstrucoes, aparecimentos e desaparecimentos. Na realidade, e necessario executar a correspondencia entre pontos entre
+subconjuntos.
+Pontos correspondentes com distancia maior
+que um limiar dinamicamente adaptado Dmax sao
+removidos. A distancia entre dois pontos correspondentes (pi , ci ) e dada por di  pi ci . O limiar
+Dmax e adaptado de acordo com as seguintes regras (Zhang, 1994)
+
+(1)
+
+onde T  pi e o resultado de T em pi .
+P e Q sao dois conjuntos contendo respectivamente Np e Nq pontos. Considerando pontos
+de ambos os conjuntos, P  pi , i  1,    , Np
+e Q  qj , j  1,    , Nq , o objetivo e avaliar a
+matriz de rotacao R e o vetor de translacao t, de
+modo que P 0  R  P + t, e que P 0 fique alinhado
+com Q. Duas nuvens de pontos estao alinhadas
+quando a media da distancia entre os pontos correspondentes e menor que uma tolerancia  .
+4
+
+ICP proposto
+
+Nesta secao, sera apresentado o ICP proposto. A
+informacao da cor e utilizada para aumentar o numero de pontos correspondentes mapeados corretamente. Adicionalmente, pontos correspondentes
+mapeados incorretamente sao removidos. Sera explicado como o ICP proposto resolve as limitacoes
+presentes em uma nuvem de pontos 3D adquiridos
+com um sensor RGB-D de baixo_custo, que neste
+caso e o Kinect (Microsoft, 2012).
+4.1
+
+Remocao de Falsos Positivos
+
+ quando  < D o registro e muito bom e Dmax
+e atualizado para  + 3.
+ quando  < 3D o registro ainda e bom e
+Dmax e atualizado para  + 2.
+
+Utilizacao da Cor e a Correspondencia entre
+Pontos
+
+ quando  < 6D o registro nao e ruim e Dmax
+e atualizado para  + .
+
+A informacao de cor e utilizada para aumentar
+a robustez do algoritmo ICP. Para utilizar a cor
+em aplicacoes de sistemas de visao_computacional, e necessario um modelo robusto e eficiente
+representando a cor. Como a aquisicao de diferentes vistas com iluminacao_natural causa variacoes
+de cor devido ao sombreamento, e necessaria uma
+representacao perceptual da cor. A variacao de
+sombreamento afeta a intensidade da cor sobre o
+ponto, mas nao a sua cor intrnseca. Um dos modelos de cor mais populares e o trio RGB, que e
+a combinacao das tres cores basicas. Este modelo
+nao representa a cor intrnseca, pois propriedades
+cromaticas e nao cromaticas (brilho) estao juntas
+nesse modelo. O modelo de cor utilizado neste trabalho e o HSV, que e um modelo formado por tres
+parametros, o primeiro e a tonalidade (Hue, H) representando o tipo de cor, o segundo e a saturacao
+(Saturation, S), e o terceiro o brilho (Value, V).
+A correspondencia entre pontos e determinada utilizando o metodo do vizinho mais proximo. Para agilizar o processo, uma arvore k-d e
+utilizada. Ela e uma generalizacao do algoritmo
+de bisseccao em uma dimensao para k dimensoes.
+Neste trabalho, a componente de tonalidade H do
+modelo HSV e utilizada com as coordenadas 3D
+
+ quando nenhuma das situacoes for satisfeita
+o registro e ruim e Dmax e atualizado para ,
+a mediana de todas as distancias.
+Onde  e  sao respectivamente a media e o desvio
+padrao da distribuicao das distancias. D e o limiar
+da distancia que define um bom registro.
+O ICP proposto tambem adiciona um peso
+para os pontos que se encontram mais proximo ao
+sensor. Como o peso e utilizado na precisao do registro, o ICP forcara um registro aprimorado para
+os pontos que se encontram proximos ao sensor.
+5
+
+Reconstrucao da Superfcie
+
+Na reconstrucao, e possvel utilizar algumas tecnicas para eliminar erros gerados pelo ICP, rudo
+do sensor e erros de calibracao. Uma destas tecnicas e o uso da funcao distancia com sinal explicada
+por Curless and Levoy (1996). A distancia com sinal e calculada ao realizar o lancamento de raios a
+partir do sensor passando por cada voxel proximo
+a superfcie. Assim, um limiar max , denominado
+de distancia maxima, e definido para determinar
+
+130
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Figura 3 Caixa utilizada nos testes.
+a distancia com sinal para os voxels dentro desse
+intervalo, considerando o ponto sobre a superfcie
+como centro do intervalo. A funcao cumulativa da
+distancia com sinal D(x) e avaliada para cada voxel e uma isosuperfcie correspondente a D(x)  0
+e extrada. Caso o voxel esteja entre a fonte e a
+superfcie, a distancia e positiva, caso contrario,
+ela e negativa. Para cada voxel, a distancia media
+e determinada e de acordo com o seu valor absoluto e sinal, o voxel e considerado estar dentro,
+fora ou sobre a fronteira.
+Utilizando somente os voxels marcados como
+sobre a fronteira, uma representacao poligonal do
+objeto pode ser determinada com o auxlio dos cubos_marchantes (Lorensen and Cline, 1987). Porem, neste trabalho, e utilizada uma adaptacao
+dos cubos_marchantes (Shu et al., 1995). Este
+algoritmo reduz o numero de triangulos que representa a superfcie ao adaptar o tamanho dos
+triangulos de acordo com o formato da superfcie. Ao utilizar este algoritmo para uma nuvem de
+pontos com muitos pontos, a media do tempo de
+execucao e o numero de triangulos sao reduzidos
+consideravelmente, e a qualidade final do objeto
+reconstrudo e similar ao utilizar os cubos_marchantes com alta resolucao.
+
+(b)
+
+Figura 4 (a) Nuvem de pontos final gerada utilizando o ICP proposto. (b) Nuvem de pontos final
+gerada utilizando o ICP convencional.
+
+103
+Distancia Media (mm)
+
+6
+
+(a)
+
+Resultados
+
+O conjunto de dados utilizado para analisar o ICP
+proposto foi gerado ao capturar varias vistas de
+uma caixa ao rotacionar o sensor segundo o eixo z.
+A caixa utilizada na captura possui dimensoes 49
+cm  33 cm  51 cm (ver Fig. 3). Os resultados
+obtidos com o ICP proposto foram comparados
+com os do ICP convencional.
+6.1
+
+6
+
+4
+
+2
+
+0
+
+Analise Comparativa
+
+10
+
+20
+
+30
+
+40
+
+50
+
+Numero da Aquisicao
+ICP Proposto
+ICP Convencional
+
+A caixa foi rotacionada em 360o e desta rotacao
+foram feitas 48 aquisicoes de imagens RGB-D. Foi
+obtida uma nuvem de pontos com o algoritmo ICP
+proposto e o convencional. A Fig. 4 mostra uma
+nuvem de pontos obtida com ambos os algoritmos.
+O ICP proposto obteve um melhor registro da reconstrucao da caixa. A Fig. 5 mostra a distancia
+
+Figura 5 Distancia media entre pontos correspondentes para 47 registros (48 aquisicoes).
+
+131
+
+103
+2.5
+
+6,800
+
+2
+
+6,600
+
+1.5
+
+6,400
+
+1
+
+6,200
+0
+
+20
+
+reconstrucao ao remover buracos.
+Na analise de reconstrucao 3D de objetos e
+possvel verificar que existe uma diferenca de aproximadamente 5 mm entre o objeto real e o reconstrudo. Como essa analise foi feita utilizando
+somente dimensoes vetorizadas, consideracoes futuras sao necessarias para desenvolver um metodo
+de avaliacao mais aprimorado considerando a geometria da superfcie.
+
+Numero de Pares
+
+Disntancia Media (mm)
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+40
+
+Numero de Nuvens
+
+7
+
+Figura 6 Distancia media entre pontos correspondentes e numero de pontos correspondentes no
+ICP proposto (48 aquisicoes).
+
+Os resultados apresentados pelo ICP proposto
+mostram um metodo de registro com maior robustez comparado ao ICP convencional. O uso da
+informacao de cor no processo de correspondencia
+entre pontos previne a ocorrencia de falsos positivos levando a um processo de registro mais confiavel. O uso de um numero maior de nuvens de
+pontos aprimora a reconstrucao da superfcie ao
+fornecer a visao completa do objeto. Apesar da
+distancia media entre os pontos correspondentes
+e o numero de pontos correspondentes fornecerem
+uma ideia da qualidade do alinhamento, uma inspecao visual e necessaria para determinar o melhor
+resultado. Desta forma, investigacoes futuras sao
+necessarias para determinar uma melhor avaliacao
+numerica.
+
+media entre pontos correspondentes. E possvel
+notar que o ICP convencional sempre mostra uma
+distancia media entre pontos correspondes maior
+em relacao ao ICP proposto. A Fig. 6 mostra o numero de pontos correspondentes e a distancia media final apos a convergencia do registro de cada
+par de nuvens de pontos. Uma analise detalhada
+do comportamento dos graficos mostra alguns registros onde ocorrem diminuicoes do numero de
+pontos correspondentes utilizados no registro. Devido ao menor numero de pontos correspondentes
+utilizados no registro, existe um grande numero
+de pontos sem correspondencia e a distancia media aumenta devido a baixa taxa de alinhamento.
+Assume-se que o numero de falsos positivos
+e relativamente baixo, entretanto uma verificacao
+visual e necessaria para confirmar se o registro foi
+corretamente executado. Quando comparados os
+dois metodos, o ICP proposto e o ICP convencional, alguns registros terminaram com a distancia
+media final entre pontos correspondentes aproximadamente de mesmo valor para os dois metodos.
+Por exemplo, entre as aquisicoes 0 e 10, este fato
+ocorreu duas vezes (os graficos azul e vermelho se
+tocam em duas posicoes). Entretanto, e necessario tambem avaliar o numero de falsos positivos
+(pontos correspondentes que foram estabelecidos
+incorretamente). Mas, a avaliacao de falsos positivos e praticamente impossvel, mesmo quando
+efetuada visualmente. Takimoto et al. (2011) ja
+comentava que apenas a distancia media em pontos correspondentes e o numero de pontos correspondentes nao podem ser utilizados para avaliar
+a qualidade do registro.
+6.2
+
+Conclusoes
+
+Agradecimentos
+Esta pesquisa e suportada pelo projeto ANEEL
+PD-0061-00332011, e foi parcialmente suportada
+pelo projeto JSPSCAPES cooperativo entre Brasil e Japao. RY Takimoto e suportado pela FAPESP segundo o processo 201122402-8. MSG
+Tsuzuki e parcialmente suportado pelo segundo
+os processos 309.5702010-7 e 310.6632013-0, e
+TC Martins e parcialmente suportado pelo CNPq
+segundo o processo 306.4152012-7. EK Ueda e
+suportado pela CAPES.
+Referencias
+Benavidez, P. and Jamshidi (2011). Mobile robot
+navigation and target tracking system, Proc
+6th Int Conf System of Systems Engineering
+SoSE in Cloud Computing, Smart Grid, and
+Cyber Security, Albuquerque, USA, pp. 299
+304.
+
+Reconstrucao da Superfcie
+Besl, P. and McKay, N. (1992). A method for
+registration of 3D shapes, IEEE T Pattern
+Anal 14 239256.
+
+As informacoes adicionais inerentes fornecidas por
+imagens de varias vistas podem ser utilizadas na
+reconstrucao da superfcie. A Fig. 7 compara as
+reconstrucoes da superfcie utilizando dados de
+apenas uma aquisicao e utilizando dados de varias aquisicoes. E possvel notar que um aumento
+no numero de aquisicoes aprimora a qualidade da
+
+Chen, Y. and Medioni, G. (1991). Object modeling by registration of multiple range images,
+Proc IEEE Int Conf Robotics and Automation, Sacramento, USA, pp. 27242729.
+
+132
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Curless, B. and Levoy, M. (1996). A volumetric
+method for building complex models from
+range images, Proc 23rd Annual Conf Computer Graphics and Interactive Techniques,
+SIGGRAPH 96, ACM, New York, NY, USA,
+pp. 303312.
+Druon, S., Aldon, M.-J. and Crosnier, A. (2006).
+Color constrained ICP for registration of
+large unstructured 3D color data sets, Proc
+2006 IEEE Int Conf on Information Acquisition, Shandong, China, pp. 249255.
+(a)
+
+Lemuz-Lopez, R. and Arias-Estrada, M. (2006).
+Iterative closest SIFT formulation for robust
+feature matching, in G. Bebis, R. Boyle,
+B. Parvin, D. Koracin, P. Remagnino, A. Nefian, G. Meenakshisundaram, V. Pascucci,
+J. Zara, J. Molineros, H. Theisel and T. Malzbender (eds), Advances in Visual Computing,
+Vol. 4292 of Lecture Notes in Computer Science, Springer Berlin Heidelberg, pp. 502
+513.
+Lorensen, W. E. and Cline, H. E. (1987). Marching cubes A high resolution 3d surface
+construction algorithm, Computer Graphics
+21(4) 163169.
+
+(b)
+
+Masuda, T. (2002). Registration and integration
+of multiple range images by matching signed distance fields for object shape modeling,
+Comput Vis Image Und 87(1-3) 51  65.
+Microsoft (2012). Xbox 360 kinect, httpwww.
+xbox.comen-USkinect.
+Shu, R., Zhou, C. and Kankanhalli, M. S. (1995).
+Adaptive marching cubes, The Visual Computer 11 202217.
+(c)
+
+Takimoto, R. Y., Neves, A. C., Martins, T. C., Takase, F. K. and Tsuzuki, M. S. G. (2011). Automatic epipolar geometry recovery using two
+images, Proceedings of the 18th IFAC Wold
+Congress, Milan, Italy, pp. 39803985.
+Takimoto, R. Y., Vogelaar, R., Ueda, E. K., Sato,
+A. K., Martins, T. C., Gotoh, T., Kagei, S.
+and Tsuzuki, M. S. G. (2013). 3D reconstruction using low precision scanner, Proc 11th
+IFAC Workshop on Intelligent Manufacturing Systems, Sao Paulo, Brazil, pp. 239244.
+Xie, J., Hsu, Y.-F., Feris, R. and Sun, M.T. (2013). Fine registration of 3D point
+clouds with iterative closest point using an
+RGB-D camera, Proc 2013 IEEE Int Symp
+Circuits and Systems, Melbourne, Australia,
+pp. 29042907.
+
+(d)
+
+Figura 7 (a) Reconstrucao da superfcie utilizando dados de 1 aquisicao. (b) Reconstrucao da
+superfcie utilizando dados de 48 aquisicoes. (c)
+Reconstrucao da textura colorida utilizando dados de 1 aquisicao. (d) Reconstrucao da textura
+colorida utilizando dados de 48 aquisicoes.
+
+Zhang, Z. (1994). Iterative point matching for
+registration of free-form curves and surfaces,
+Int J Comp Vision 13(2) 119152.
+
+133

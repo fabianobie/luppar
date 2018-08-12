@@ -1,0 +1,1099 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+IMPROVING ROBUSTNESS AND DISTURBANCE REJECTION PERFORMANCE
+WITH INDUSTRIAL MPC
+Daniel Martins Lima, Julio Elias Normey-Rico, Agustinho Plucenio, Tito Lus Maia
+Santos, Marcos V.C. Gomes
+
+
+Departamento de Automacao e Sistemas
+Universidade Federal de Santa Catarina (UFSC)
+Florianopolis, Santa Catarina, Brasil
+
+
+Departamento de Engenharia Eletrica
+Universidade Federal da Bahia (UFBA)
+Salvador, Bahia, Brasil
+
+
+Centro de Pesquisa PETROBRAS (CENPES)
+Rio de Janeiro, Rio de Janeiro, Brasil
+
+Emails daniel.lima@posgrad.ufsc.br, julio.normey@ufsc.br,
+plucenio@firenzeconsult.com, tlsantos@ufba.br, mvcg@petrobras.com.br
+Abstract This paper presents an improved industrial MPC controller based on the widely used Dynamic
+Matrix Control (DMC) approach. The proposed controller is specially oriented to control MIMO plants with
+multiple delays that are the most common case in process industry. A MIMO filter is included in the prediction
+model of the controller in order to achieve two important advantages when compared to traditional industrial
+DMCs (i) disturbance rejection response can be speeded up and (ii) robustness can be improved, mainly when
+errors in the estimation of the delays are considered. The filter properties are demonstrated by means of an
+equivalent analysis of the unconstrained DMC using a dead-time compensation (DTC) approach. Moreover
+implementation and tuning of the filter is simple and intuitive. Simulation results using a water-methanol
+distillation column are presented to illustrate the advantages of the proposed approach.
+Keywords Model Predictive Control, Process Control
+Resumo Este trabalho apresenta uma versao melhorada de um controlador_preditivo industrial baseado
+no amplamente utilizado algoritmo Dynamic Matrix Control (DMC). A proposta e orientada ao controle de
+plantas multivariaveis com multiplos atrasos de transporte, que representam os casos mais comuns na industria
+de processos. Um filtro multivariavel e includo no modelo de predicao do controlador para conseguir duas
+vantagens se comparadas ao algoritmo DMC tradicional (i) aceleracao da rejeicao de perturbacoes e (ii) melhoria
+da robustez, especialmente quando sao considerados erros de estimacao nos atrasos. As propriedades do filtro sao
+demonstradas atraves da analise do algoritmo DMC sem restricoes atraves de uma estrutura de compensacao de
+atraso_de_transporte (DTC). Alem disso, a implementacao e o ajuste do filtro e simples e intuitivo. Resultados
+de simulacoes utilizando uma coluna de destilacao agua-metanol sao apresentados para ilustrar as vantagens do
+algoritmo proposto.
+Palavras-chave 
+
+1
+
+Introduction
+
+on the use of linear models. Simple MPCs based
+on step or impulse response models without stability guarantee are the most common in industry, mainly in refineries and petrochemical plants,
+where MPC is widely used. The main reasons for
+this are that (i) processes have a stable behavior
+in open loop and using long horizons and adequate
+weighting factors allows for stable closed-loop systems (Rossiter, 2003), and (ii) linear models provide good results when the plant is operating in
+the neighborhood of the operating point. In the
+process industry, the objective is to keep the process around the stationary state rather than perform frequent changes from one operation point to
+another and, therefore, a suitable linear model is
+sufficient (Camacho and Bordons, 1999). Hence,
+the analysis of some closed-loop properties of these
+controllers, like disturbance rejection and robustness, is very important for the process industry as
+they can be transformed in simple and useful modifications of the control algorithms to achieve bet-
+
+MPC has emerged as a powerful practical control
+technique during the last two decades (Camacho
+and Bordons, 1999). It is one of the few advanced
+control techniques that have had a significant impact on industrial process control and many works
+have reported the advantages of its use in different
+plants (Qin and Badgwell, 2003).
+Also, the MPC academic community has been
+very active in the last years, approaching different aspects of MPC algorithms. Efforts have been
+done to obtain conditions for stability guarantee
+in linear MPC (Mayne et al., 2000 Evans et al.,
+2012) or to extend the qualities of linear algorithms to nonlinear MPC (Marruedo et al., 2002)
+or hybrid MPC.
+However, in spite of these new theoretical developments in MPC and that industrial processes
+are, in general, nonlinear, most control design
+techniques in industrial applications, are based
+
+3229
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+ter performance in real applications (Normey-Rico
+and Camacho, 2007). Particularly, in multivariable industrial processes, dead-times are always
+used to model the plant behavior. In such models, each signal path between the inputs and outputs may show a different delay. Although these
+MPC formulations can include multiple delays in
+a straightforward manner, robustness andor disturbance rejection can be poor because the controller does not have enough degrees of freedom
+to achieve a satisfactory trade-off between these
+two important specifications (Normey-Rico and
+Camacho, 2007).
+Thus, in this paper, a particular MPC strategy, Dynamic Matrix Control (DMC), is interpreted through a Dead-Time Compensator (DTC)
+structure to understand the effects of dead-time
+on the closed-loop system. This approach uses a
+transfer function representation instead of statespace, as was presented in numerous papers, e.g.,
+(Lundstrom et al., 1995 Jrgensen et al., 2011
+Lee and Yu, 1994). This approach was chosen
+in order to use some specific DTC robust tuning methodologies already developed for MIMO
+dead-time compensators (MIMO-DTC) (Flesch
+et al., 2011) for improving the robustness and disturbance rejection performance of DMC. Moreover, it is shown that the original algorithm only
+needs some minor modifications and that the implementation and tuning of this strategy is simple and straightforward, contrary to the solutions
+based on state-space approach, that require a
+completely re-programming of the controller code.
+In the next section the basic DMC algorithm
+is reviewed along with the DTC interpretation of
+the algorithm and its properties. In section 3 a
+modification to the original algorithm, called Filtered DMC (FDMC), that allows an improved robustness and disturbance rejection is proposed. In
+section 4 the implementation of the new algorithm
+is discussed. Finally, in section 5 simulation results are presented to illustrate the advantages of
+the FDMC over the traditional DMC. The paper
+ends with a conclusion.
+
+Figure 1 Structure of the FSP
+fast model Gn (z) (the full nominal system model
+is given by Pn  Ln Gn , in which Ln is related to
+the time delay). Pp (z) represents how n(t) affects
+y(t) and the plant is defined as
+
+
+
+P(z)  
+
+
+G11 (z)z d11
+G21 (z)z d21
+..
+.
+Gn1 (z)z dn1
+
+G1m (z)z d1m
+G2m (z)z d2m
+..
+.
+Gnm (z)z dnm
+
+
+
+
+.
+
+
+In this model, Gij (z)z dij is the transfer function relating the j th input with the i th output
+where Gij (z) is a delay-free transfer function and
+dij is the discrete dead-time. The effective deadtime of each output i is di , computed as the minimal delay of the i th row, i.e., di  minj1...n (dij ).
+Thus, defining L(z)  diagz d1 , . . . , z dn  as
+the MIMO delay of the plant P(z) and G(z)
+as the model without the common dead-times
+(also called fast model), it follows that P(z) 
+L(z)G(z). It is worth noting that G(z) may still
+contain multiple delays (Flesch et al., 2011).
+Now it will be shown that the unconstrained
+DMC algorithm can be interpreted as a DTC controller. DMC uses the step response of the system
+to compute the predictions of the outputs. For a
+MIMO system with m inputs and n outputs, the
+prediction of the i th output at the future instant
+t + k, given the information at time t, is
+yi (t + kt)
+
+2
+
+
+
+..
+.
+...
+
+DTC Interpretation of DMC
+
+ yoi (t + kt) + i (t + kt) (1)
+
+where yoi is the open-loop prediction of the i th
+output of the system, which is given in (2), and
+i (t + kt) is a disturbance that represents the
+prediction error, or the difference between the
+measured output yi (t) and the one calculated
+by the step-response model (Camacho and Bordons, 1999). Since the future prediction error is
+usually not known, DMC considers all future errors equal to the current one, i.e., i (t + kt) 
+i (tt)  yi (t)  yoi (tt). The open-loop prediction
+is given by
+
+The DTC structure used to analyze the DMC
+is the Filtered Smith Predictor (FSP) (NormeyRico and Camacho, 2007) which is comprised of
+a primary controller C(z) and a predictor structure, which are presented in Fig. 1. Considering
+a MIMO system with m inputs, n outputs and
+p output disturbances, n(t) and q(t) are vectors
+that represent, respectively, output and input disturbances, Fr (z) is a n  n matrix transfer function which will be tuned to modify the robustness
+and disturbance rejection properties of the system, r(t) represent the set-points, C(z) is a m  n
+controller tuned to stabilize the systems nominal
+
+yoi (t + kt) 
+
+m
+
+X
+X
+j1
+
+3230
+
+l1
+
+!
+gij,l uj (t + k  l) , (2)
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+where gij,l is the l th step response coefficient of
+the i th output in relation to the j th input.
+2.1
+
+Obtaining the Primary Controller
+
+To obtain the primary controller, the first step
+is to write the predictions of the outputs after the
+minimum dead-time di (yi (t+di +kt) with k > 0),
+as a function of the prediction at instant t + di , or
+yi (t + di t). Rewriting (1), the following equations
+are obtained
+
+yi (t + di + kt)
+
+
+
+m
+
+X
+X
+j1
+
+!
+gij,di +l uj (t + k  l)
+
+l1
+
++yi (t)  yoi (tt)
+
+(3)
+
+and
+
+yi (t + di t)
+
+
+
+m
+
+X
+X
+j1
+
+!
+gij,di +l uj (t  l)
+J  (Y  W)T Qy (Y  W) + UT Qu U,
+
+l1
+
++yi (t)  yoi (tt).
+
+(4)
+
+where Qy and Qu are matrices that represent
+the weights of the future errors and the control
+increments, respectively. W is the vector of future set-points and, considering the case where all
+future references are constant, it can be defined
+as W  1yr , where yr  yr1 (t), . . . , yrn (t)T .
+Without constraints1 , an algebraic solution can
+be found, which is given by
+
+Isolating yi (t) in (4) and substituting in (3), it
+is possible to obtain, after some rearrangements,
+
+yi (t + di + kt)
+
+
+
+m
+k
+X
+X
+j1
+
++
+
+gij,di +l uj (t + k  l)
+
+l1
+
+
+X
+
+di + 1k), . . . , yi (t + di + Nyi k)T , the future control increments vector is U  u1 , . . . , um T ,
+where ui  ui (t), . . . , ui (t + Nui  1)T , and
+the past control increments vector u(t  1) 
+u1 (t1), . . . , um (t1)T , where ui (t1) 
+ui (t1), . . . , ui (tM )T . Finally, y(t+dt) 
+y1 (t + d1 t), . . . , yn (t + dn t)T .
+Equation (6) can also be written as Y 
+GU + f , where f represents the free response
+of the systems after the future instant t + d, i.e.,
+the response of the systems if no changes in the
+control actions were made, and the term GU is
+the forced response, which shows how the system
+would react due to the future control increments.
+Note that the output of the predictor y(t + dt) is
+the free response at instant t + d.
+The future control action increments vector
+U is obtained by minimizing the following cost
+function
+
+!
+aij,l uj (t  l)
+
+l1
+
++yi (t + di t),
+
+U
+
+(5)
+
+(7)
+
+where K  (GT Qy G + Qu )1 GT Qy is the control gain and f  Hu(t  1) + 1y(t + dt)). Since
+only the control increments of the current time instant (t) of U will be used, (7) is simplified to
+
+where aij,l  gij,di +k+l  gij,di +l .
+In (5), the future control increments and past
+ones were separated in different summations, notice, however, that the summation of the past increments have infinite terms. Nevertheless, for
+stable systems, those summations can be truncated, because gij,di +k+l  gij,di +l 
+ 0 after M
+terms, where M is a sufficiently large number
+(Camacho and Bordons, 1999).
+With this last equation, the primary controller of the FSP structure can be obtained.
+Rewriting (5) in matrix form, it follows that
+Y  GU + Hu(t  1) + 1y(t + dt)
+
+ K(W  f )
+
+u(t)  K1 (W  f ),
+(8)
+Pn
+where K1 is a m  i1 Nyi matrix and u(t) 
+u1 (t), . . . , um (t)T . Hence, considering (7),
+(8) can be rewritten as
+u(t) + K1 Iu(t  1)  K1 1(yr  y(t + dt)). (9)
+
+In the frequency domain, the control actions
+are computed using U(z)  C(z)(R(z)  Yd (z)),
+which is obtained after applying the Z-transform
+to (9), Yd (z) is the transfer function representation of the output of the predictor structure and
+C(z) is the primary controller, which is given by
+
+(6)
+
+where G and
+H are matrices
+Pm
+Pn with dimensions
+P
+n
+N
+and
+N
+
+ui
+yi
+i1
+i1
+i1 Nyi  mM , respectively. Nyi and Nui are the prediction and
+control horizons of the i th output and i th input respectively. M is the number of step coefficients obtained with the step response of the
+system for each inputoutput pair. 1 is a block
+diagonal matrix composed of n column vectors
+with dimension Nyi  1, with all entries equal
+to one. The future predictions are given by the
+vector Y  y1 , . . . , yn T where yi  yi (t +
+
+
+
+
+C(z)  
+
+
+C11 (z)
+C12 (z)
+..
+.
+C1m (z)
+
+C21 (z)
+C22 (z)
+..
+.
+C2m (z)
+
+
+
+..
+.
+...
+
+Cn1 (z)
+Cn2 (z)
+..
+.
+Cnm (z)
+
+
+
+
+,
+
+
+1 This solution also holds for constrained problems if the
+constraints are not active
+
+3231
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+where Cij (z) is a transfer function representing
+the controller from the j th input to the i th output.
+2.2
+
+(i) since Pn (z) and Pp (z) are factors in equations
+(15) and (14), respectively, the disturbance rejection will always be, at least, as slow as the openloop response, and (ii) if the controller is tuned to
+improve the set-point tracking response, the robustness of the system will be compromised.
+In (Normey-Rico and Camacho, 2007), it was
+suggested the inclusion of the filter Fr (z) in the
+MIMO-SP structure, hence the name Filtered
+Smith Predictor (FSP), which can be tuned to increase the disturbance rejection performance and
+to increase the robustness of the closed-loop system by means of a filter that does not change
+the nominal reference-tracking response (Flesch
+et al., 2011). Using the same idea, in this paper
+we propose a modification in the standard DMC
+to make its prediction structure equivalent to a
+FSP but maintaining the advantages of a MPC
+strategy.
+
+Obtaining the Predictor Structure
+
+The role of the predictor structure is to obtain
+the expected value of the outputs after the deadtime, which is given by (4). By inspection, it is
+easy to see that this equation is already in the
+format required by the predictor structure of the
+FSP. The first term of (4) is yoi (t + di t), i.e., the
+open-loop prediction based on the step response of
+the system, which is delayed by di and appears in
+the second term of (4) as yoi (tt), which is used
+to compute the prediction error. However, (4)
+can not be used directly due to the presence of
+the summations with infinite terms. To overcome
+this problem, consider the relation between the
+impulse response of a system and its step response
+
+y(t) 
+
+
+X
+
+hi u(t  i) 
+
+i1
+
+
+X
+
+gi u(t  i),
+
+3
+
+(10)
+
+Filtered DMC
+
+In the proposed Filtered DMC, the disturbance
+i (tt) is now computed by the sum of the n filtered prediction errors, i.e.,
+
+i1
+
+where hi  gi  gi1 . As shown before, the difference gi  gi1 
+ 0 for a sufficiently large i. Thus,
+the summation in (4) can be truncated after M
+terms. Applying this equivalency to (4), it follows
+that
+
+i (tt) 
+
+n
+X
+
+Fr,ij (q 1 )(yj (t)  yoj (tt))
+
+(16)
+
+j1
+
+yi (t + di t)
+
+
+
+m
+M
+X
+X
+j1
+
+where q 1 is the back-shift operator, e.g.,
+q 1 y(t)  y(t  1), and Fr,ij (q 1 ) is a polynomial that represents the filter of the j th output
+prediction error considering the i th output.
+For the time domain analysis, the filters Fr,ij
+are represented by their impulse response, i.e.,
+
+!
+hij,di +l uj (t  l)
+
+l1
+
++yi (t)  yoi (tt).
+
+(11)
+
+Applying the Z-transform on (11) gives
+Yd (z)  (I  Ln (z))GDMC (z)U(z) + y(z)
+
+(12)
+
+Fr,ij (q 1 ) 
+
+where GDMC (z) is a nominal fast model based on
+the step-response of the system used internally by
+the DMC algorithm and, if the number of coefficients is large enough GDMC (z) 
+ Gn (z). By
+inspection, it is easy to see that (12) corresponds
+to the MIMO predictor structure of Fig. 1 with
+Fr (z)  I, where I is n dimension identity matrix.
+The transfer function matrices that describe
+the behaviour of the closed-loop system for
+changes in the set-point R(z), and disturbances
+Q(z) and N(z) are2
+HR (z)
+
+
+
+Pn C(I + Gn C)1
+
+HN (z)
+
+
+
+I  Pn C(I + Gn C)
+
+HQ (z)
+
+
+
+I  Pn C(I + Gn C)1 Fr Pn (15)
+
+hij,l q l 
+
+
+l0
+
+Mf
+X
+
+hij,l q l
+
+l0
+
+where hij,l is the l th impulse response coefficient
+of the respective filter. Since the filters are stable,
+the infinite summation can be truncated after Mf
+terms. For implementation and design, the filters
+are represented by transfer functions, which are
+easier to work with.
+Using (16) in (1), the new predictions after the
+minimum dead-time yi (t + di + kt), k > 0, and
+the predictions at instant t + di can be obtained.
+Repeating the steps shown in the last section, it
+is possible to prove that the inclusion of the filters
+does not affect the primary controller and that the
+predictor structure is given by
+
+(13)
+1
+
+
+X
+
+Fr Pp (14)
+
+yi (t + di t)
+
+Since Fr (z)  I, the original DMC algorithm
+is equivalent to a MIMO Smith Predictor (MIMOSP), and as such, suffers from the same problems
+
+
+
+M
+m
+X
+X
+j1
+
++
+
+n
+X
+
+!
+hij,di +l uj (t  l)
+
+l1
+
+
+Fr,ij (q 1 )(yj (t)  yoj (tt)) .
+
+j1
+
+2 The
+
+dependency on the complex variable z was omitted
+for the sake of visualization
+
+(17)
+
+3232
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+with appropriate dimensions whose elements are
+0, and
+
+M(z)  W1 (z)M0 (z)Fr (z)W2 (z),
+where M0 (z)  C(z)I + Gn (z)C(z)1 is stable
+because C(z) stabilizes Gn (z), the robust stability condition under block diagonal disturbances is
+given by (Skogestad and Postlethwaite, 2005)
+
+Figure 2 M   structure
+By inspection, it is easy to see that, again,
+this equation is already in the format required by
+the predictor structure of the FSP. The first term
+of (17) is yoi (t+di t), i.e., the open-loop prediction
+based on the step response of the system, which
+is delayed by di and appears in the second term
+of (17) as yoi (tt), which is used to compute the
+prediction error. The error is then filtered and
+added to yoi (t + di t) to obtain the the corrected
+prediction yi (t + di t). Applying the Z-transform
+to (17) results, again, in (12), with the exception
+that the filter is now given by
+
+
+Fr,11 (z)
+
+..
+Fr (z)  
+.
+Fr,n1 (z)
+
+
+..
+.
+...
+
+1
+,   0, Ts ).
+(M(ejTs ))
+(19)
+Now, using (X  Y)  (X)(Y), (19) is
+rewritten as (M)  (M0 )(Fr )(W1)(W2).
+It should be noted that the use of this inequality
+results in a more conservative filter design but, as
+stability is primordial, this should not be a problem.
+So, for given uncertainty matrices W1 (z),
+W2 (z) and a defined primary controller C(z), the
+robustness of the proposed controller is defined by
+(Fr (z)).
+((ejTs )) <
+
+
+Fr,1n (z)
+
+..
+.
+.
+Fr,nn (z)
+
+3.2
+
+The predictor filter Fr (z) plays two important roles (i) adjust the disturbance rejection response and noise attenuation, and (ii) increase the
+robustness (Flesch et al., 2011). It is worth noting
+that, although Fr (z) can be a full matrix transfer
+function, in practice a diagonal Fr (z) is normally
+enough to achieve a good compromise between
+performance and robustness. Also, the condition
+Fr (1)  I must be true, otherwise the referencetracking properties of the closed-loop system will
+be compromised.
+3.1
+
+From input-output relationships (13)-(15), it can
+be seen that the filter only affects the noise and
+disturbance rejection responses. Thus, it can be
+designed to obtain a desired disturbance rejection without affecting the set-point tracking performance. In the case that Fr (z) is not properly
+designed (for example Fr (z)  I), the disturbance
+rejection response is governed by the open-loop
+dynamics of the plant Pn (z) and Pp (z) (Flesch
+et al., 2011). In the case of input disturbances
+Q(z), it was shown in (Flesch et al., 2011) that
+the filter Fr (z) can be tuned to cancel the undesired poles of the nominal fast model Gn (z) inside the predictor. By doing this, these undesired
+poles do not affect the input disturbance rejection
+of the system. Unfortunately, this procedure can
+not be used directly with the DMC because, as
+was shown, the nominal fast model used by DMC
+is a Finite Impulse Response (FIR) model with no
+poles that represents the dynamics of the system,
+rendering the above procedure not applicable in
+this case.
+Thus, to improve the disturbance rejection
+another procedure is required. From equations
+(13)-(15), it is possible to see that the closedloop reference to output response appears inside
+the other equations multiplied by the filter Fr (z).
+Hence, two tuning guidelines can be derived, one
+more practical and an analytical one.
+For the practical one, consider the fact that,
+ideally, the controller completely decouples the
+dynamics of the system, i.e., the reference to output closed-loop response of the system (Pn C(I +
+
+Robustness Analysis
+
+For the robustness analysis, additive uncertainties
+are considered, i.e.,
+P(z)  Pn (z) + P(z)
+
+Improving Disturbance Rejection
+
+(18)
+
+where P(z) are the uncertainties which, in general, can be written as
+P(z)  W2 (z)(z)W1 (z),
+with ((z))  1   0, Ts ), or equivalently
+(z) < 1, where, for this case, (z) is a
+full matrix, (X) denotes the maximum singular
+values of X, and W1 (z) and W2 (z) are two stable matrices in the Z-domain that characterize the
+spatial and frequency structure of the uncertainty
+(Skogestad and Postlethwaite, 2005).
+Considering the M   structure shown in
+Fig. 2, obtained from the original system making
+R(z), Q(z) and N(z) equal to 0, which is a vector
+
+3233
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Gn C)1 ) is a diagonal matrix transfer function.
+Simulating the nominal closed-loop system, the
+dominant dynamics of each element can be estimated, e.g., a first order transfer function. With
+this simplified model, tune Fr (z) in a way that the
+factor I  Pn C(I + Gn C)1 Fr will have a zero in
+the same place as the undesired pole of Pp (z) or
+Pq (z), thus canceling the unwanted open-loop dynamic.
+The analytical method consists of the same
+procedure as the practical one, but without the
+approximation, i.e., the nominal closed-loop transfer matrix is obtained, and then the same procedure described above is used. This method is
+harder to do when the number of variables increases but, done correctly, can lead to better results considering disturbance rejection.
+4
+
+
+
+
+Yo  Yo + 
+
+
+yo (t + kt  1)
+
+
+
+
+
+ik+1
+
+X
+
+
+
+ u(t  1)
+
+
+(23)
+
+Hence, the vector Yo is updated. After the
+update, it is necessary to move the values inside
+the vector Yo . This is important because at the
+next instant, t + 1, it will be required the future
+predictions from instant t + 1 to t + M based
+in the control moves up to instant t. Thus, the
+first element, yo (tt), is removed from the vector
+and used to calculate the current prediction error,
+(tt)  y(t)  yo (tt). Because of the dislocation, the last value of the vector, which should be
+yo (t + M t), is not known. However, in the stable
+case, yo (t + M t) 
+ yo (t + M  1t), thus, the new
+vector Yo will be given by
+
+
+yo (t + 1t)
+
+
+yo (t + 2t)
+
+
+
+
+.
+..
+(24)
+Yo  
+
+
+
+ yo (t + M  1t) 
+yo (t + M  1t)
+
+In (Morari et al., 2002), it was shown the recursive properties of DMC, which will be presented
+briefly. This recursiveness does not affect the resulting controller, it only changes the software implementation of the DMC in such a way that it
+is faster and more efficient. The recursive form
+also facilitates the inclusion of the prediction filter. The filter can be include in the original implementation but it is much more cumbersome.
+For simplicity, the SISO case will be used
+to describe the recursiveness of DMC. The SISO
+open-loop predictions at instant t + k, given the
+information at t and t  1, are
+
+yo (t + kt)
+
+
+
+gM
+
+Implementation
+
+
+X
+
+g1
+g2
+..
+.
+
+Therefore, the free response calculation is
+computed as follows in the recursive DMC
+
+yo (t + 1t)
+
+
+..
+f 
+ + 1N (y(t)  yo (tt)) (25)
+.
+yo (t + N t)
+
+
+Since the difference between the FDMC and
+the DMC is how the prediction error (tt) is
+computed, it is very straightforward how to implement the FDMC in the recursive form. It
+is simply a matter of adding the filtered prediction error instead of the standard error, i.e., to
+substitute the term 1N (y(t)  yo (tt)) in (25) by
+Fr (q 1 )(y(t)  yo (tt)).
+
+gi u(t + k  i)(20)
+gi u(t + k  i)(21)
+
+ik+2
+
+The difference of the predictions at t + k at
+instants t and t  1 is only the new control increment u(t  1), which was not known in t  1.
+Subtracting (21) from (20), the predictions can be
+rewritten recursively
+
+5
+
+Results
+
+The case to be considered will be the watermethanol distillation column which had its model
+derived in (Wood and Berry, 1973). This is a typical MIMO plant with strong interaction and deadtimes. A simplified schematic representation of
+the process showing just the variables of interest is
+presented in Fig. 3 and its transfer function matrices are given by Y(z)  Pn (z)U(z) + Pp (z)N(z),
+where
+
+yo (t + kt)  gk+1 u(t  1) + yo (t + kt  1). (22)
+The recursive DMC operates as follows. A
+vector with M elements is stored in memory, Yo 
+yo (tt  1), . . . , yo (t + M  1t  1)T , whose elements are the future predictions given the known
+past control moves up to instant t  1. During initialization at instant t0 , it can be considered that
+the system is at steady state and that all future
+predictions are equal to the current output of the
+system y(t0 ).
+After the initialization, at instant t, it is necessary to update the vector since the past control
+move u(t  1) is now known
+
+
+Pn (z)  
+
+0.744
+z 1
+z0.9419
+
+0.8789 3
+z
+z0.9535
+
+0.5786
+z 7
+z0.9123
+
+1.3015 3
+z
+z0.9329
+
+
+Pp (z)  
+
+3234
+
+0.2467
+z 8
+z0.9351
+0.3575 3
+z
+z0.927
+
+
+,
+
+
+
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Figure 5 Simulation results for disturbance rejection with the nominal model
+
+Figure 3 Schematic representation of a watermethanol distillation column
+
+Figure 6 Robustness condition evaluation
+ever, that the disturbance rejection shown in Fig.
+5 is considerably slow, as was expected, since the
+open-loop dynamics are present in the response.
+To demonstrate the capabilities of the proposed FDMC, a filter were designed to improve the disturbance rejection of the system
+using the practical methodology explained earlier. From the nominal output to set-point response, a diagonal first order matrix transfer
+function was obtained to represent the closedloop dynamics, then the filter was tuned to
+cancel the undesired closed-loop poles, which
+resulted
+in the following filter Fr1
+
+ (z) 
+1.5786(10.8440z 1 ) 1.89(10.8697z 1 )
+diag
+, (10.5037z1 )2 . The
+(10.5037z 1 )2
+
+Figure 4 Simulation results for set-point tracking
+with the nominal model
+Y  y1 (z), y2 (z)T , U  u1 (z), u2 (z)T , y1 is the
+overhead product mole fraction of methanol, y2
+is the bottom product mole fraction of methanol,
+u1 is the reflux flow rate, u2 is the reboiler steam
+flow rate, and q is the feed flow rate. The mole
+fractions are given in percent, and the flow rates
+have units of pounds per minute (1 lbmin 
+
+7.56  103 kgs). The considered operating point
+is given by y1  96.25 mol, y2  0.50 mol,
+u1  1.95 lbmin, u2  1.71 lbmin, and q 
+2.45 lbmin. The sampling time is Ts  1 min.
+A disturbance feed-forward is not considered in
+this case. However, it is possible to add the feedforward action to the control structure.
+The controller is configured as follows prediction horizons and control horizons are set to 40
+and 10 time samples for outputs and inputs, respectively. The weights are 1 for the outputs and
+25 for the inputs. This configuration will result in
+a settling time of approximately, without taking
+into account the dead-times, 7 minutes for both
+outputs, as can be seen in Fig. 4. Notice, how-
+
+simulations results can be seen in Fig. 4 and 53 ,
+where the improvement in disturbance rejection
+time and the fact that set-point response does not
+change are clear. In this particular case, the disturbance rejection time was reduced from 45 to
+approximately 12 minutes, for both outputs.
+Now, to exemplify the importance of taking
+into account the trade-off between the desired disturbance rejection dynamics and the robustness
+to modeling errors, consider that the dead-times
+of the nominal model were incorrectly estimated,
+3 A white noise with zero mean and 0.005 standard deviation where added to all simulations
+
+3235
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+bounded multiplicative uncertainty, 2012
+IEEE 51st Annual Conference on Decision
+and Control(CDC), pp. 248253.
+Flesch, R. C., Torrico, B. C., Normey-Rico, J. E.
+and Cavalcante, M. U. (2011). Unified approach for minimal output dead time compensation in MIMO processes, Journal of
+Process Control 21(7) 1080  1091.
+Jrgensen, J., Huusom, J. and Rawlings, J.
+(2011). Finite horizon MPC for systems in
+innovation form, Decision and Control and
+European Control Conference (CDC-ECC),
+2011 50th IEEE Conference on, pp. 1896
+1903.
+
+Figure 7 Simulation results with the system considering uncertainties
+
+Lee, J. and Yu, Z. (1994). Tuning of model predictive controllers for robust performance, Computers  Chemical Engineering 18(1) 15 
+37. An International Journal of Computer
+Applications in Chemical Engineering.
+
+and that the real dead-times are d11  3, d12  1,
+d21  5 and d22  5. The uncertainty can be described by the matrices W1 (z)  I and
+"
+W2 (z) 
+
+0.7440(z1)(z+1)
+z 3 (z0.9419)
+0.5786(z1)(z+1)
+z 7 (z0.9123)
+
+0.8789(z1)(z+1)
+z 3 (z0.9535)
+1.3015(z1)(z+1)
+z 5 (z0.9329)
+
+
+.
+
+(26)
+In Fig. 6, it can be seen that the robustness condition is not satisfied by the filter Fr1 (z)
+and, even if no filter is used (Fr (z)  I), the
+closed-loop system is not guaranteed. Thus, for
+these set of uncertainties, to guarantee stability, the following filter was designed (Fig. 6)
+Fr2 (z)  0.2419(z0.6065)
+I. The response of the
+z0.9048
+system considering uncertainties with and without the filter Fr2 (z) can be seen in Fig. 7, where
+it is clear that the filter attenuates the effects of
+the system uncertainties.
+6
+
+Lundstrom, P., Lee, J., Morari, M. and Skogestad, S. (1995). Limitations of dynamic matrix
+control, Computers  Chemical Engineering
+19(4) 409421.
+Marruedo, D., Alamo, T. and Camacho, E.
+(2002). Input-to-state stable mpc for constrained discrete-time nonlinear_systems with
+bounded additive uncertainties, Decision and
+Control, 2002, Proceedings of the 41st IEEE
+Conference on, Vol. 4, pp. 46194624 vol.4.
+Mayne, D., De Dona, J. and Goodwin, G.
+(2000). Improved stabilising conditions for
+model predictive control, Decision and Control, 2000. Proceedings of the 39th IEEE Conference on, Vol. 1, pp. 172177 vol.1.
+Morari, M., Lee, J. and Garcia, C. (2002). Model
+Predictive Control, Prentice Hall PTR.
+
+Conclusions
+
+This paper presented a improved industrial MPC
+controller based on the ideas of DMC and FSP
+which can be easily implemented in DMC based
+control loops in order to improve closed loop
+behavior of MIMO process with multiple timedelays. The proposed controller modifies DMC
+prediction scheme by filtering the prediction errors, which modifies the robustness and disturbance rejection properties of the controller without changing the reference tracking response. It
+is also noteworthy that the tuning methodologies
+of the filter are relatively simple.
+
+Normey-Rico, J. and Camacho, E. (2007). Control of Dead-Time Processes, Advanced Textbooks in Control and Signal Processing,
+Springer.
+Qin, S. and Badgwell, T. A. (2003). A survey of
+industrial model predictive control technology, Control Engineering Practice 11(7) 733
+ 764.
+Rossiter, J. (2003). Model-Based Predictive Control A Practical Approach, CRC Press Control Series, CRC Press.
+Skogestad, S. and Postlethwaite, I. (2005). Multivariable feedback control analysis and design, John Wiley.
+
+References
+Camacho, E. and Bordons, C. (1999). Model Predictive Control, Advanced Textbooks in Control and Signal Processing, Springer.
+
+Wood, R. and Berry, M. (1973). Terminal composition control of a binary distillation column,
+Chemical Engineering Science 28(9) 1707 
+1717.
+
+Evans, M., Cannon, M. and Kouvaritakis, B.
+(2012). Robust MPC for linear systems with
+
+3236

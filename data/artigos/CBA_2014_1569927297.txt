@@ -1,0 +1,1357 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+PROJETO DE UM CONTROLADOR ADAPTATIVO APLICADO  ESTAÇÃO
+MPSPA DA FESTO NO SISTEMA DE PRESSÃO
+
+PAULO C. SILVA, DANIEL S. MATOS, MARIANA S. M. CAVALCA, ADEMIR NIED
+Laboratório de Controle de Processos, Departamento de Engenharia Elétrica  DEE
+Universidade do Estado de Santa Catarina - UDESC
+CEP 89.219-710, Joinville, SC, Brasil
+E-mails paullocs@hotmail.com, matos.s.daniell@gmail.com, mariana.cavalca@udesc.br,
+ademir.nied@udesc.br
+Abstract This work focuses on the study of the pressure of the bench-PA Festo MPS process. The objective is to implement a
+strategy of adaptive_control, in order to linearize a wider range of pressure excursion process, and this self-adjusting method is
+compared with a non-adaptive_controller. To perform the identification of the online system and make the design of an adaptive
+controller possible, the strategy known as Recursive Least Squares (RLS) is implemented. The self-tuning control has been designed based on the method proposed by Lim and compared with non-adaptive strategy control that used the cancellation of the
+pole to meet the design specifications. The software used to drive and read the data from the pressure of the countertop process
+was MatlabSimulink.
+Keywords Adaptive Control, Pressure Control, MatlabSimulink, Recursive Least Squares (RLS).
+Resumo Este trabalho tem como foco o estudo do processo de pressão da bancada MPSPA da Festo. O objetivo do trabalho é
+implementar uma estratégia de controle_adaptativo, de modo a linearizar uma maior faixa de excursão do processo de pressão,
+sendo que este método auto-ajustável é comparado com um controlador não adaptativo. Para realizar a identificação do sistema
+online e tornar possível o projeto de um controlador_adaptativo, a estratégia conhecida como Mínimos Quadrados Recursivos
+(MQR) é implementada. O controle auto-ajustável projetado foi baseado no método proposto por Lim e comparado com a estratégia de controle não adaptativa que utilizou o cancelamento do polo da planta para atender as especificações do projeto. O software usado para o acionamento e leitura dos dados do processo de pressão da bancada foi o MatlabSimulink.
+Palavras-chave .
+
+1
+
+Introdução
+
+Este trabalho tem como foco o controle do sistema de pressão oferecido pela estação, o qual será
+controlado através do ambiente SimulinkMatlab.
+Para isto é necessário utilizar a OPC (Object linking
+and embedding for Process Control) Toolbox do
+Matlab, que viabiliza acionar as saídas e fazer aquisição_de_dados do processo. Esta ferramenta fornece
+conexão com os servidores OPCDA (Data Access)
+e OPCHDA (Historical Data Access) através de
+comunicação serial permitindo acesso ao histórico
+dos dados via Simulink. Através do OPCDA é possível fazer a leitura dos sensores e aquisição_de_dados
+dos atuadores. Já o OPCHDA permite o acesso do
+histórico dos dados.
+A maioria das técnicas clássicas de controle de
+processos pressupõe o conhecimento prévio do processo a ser controlado. Contudo, em muitos casos
+práticos, a modelagem_matemática do sistema é muito complexa, ou os parâmetros internos do processo
+são variantes com o tempo (Serralheiro, 2013). Além
+disto, tipicamente os processos físicos são de natureza não_linear, de forma que as considerações utilizadas nos projetos em termos de desempenho e estabilidade são válidas apenas em torno do ponto de operação no qual o modelo do processo foi obtido. Conforme as variáveis do processo se afastam desta região de operação linear, há perda de desempenho da
+malha controlada e em alguns casos, pode-se levar o
+sistema de malha_fechada a uma condição de instabilidade.
+
+A bancada MPSPA da Festo oferece a possibilidade de trabalho com quatro sistemas muito
+comuns nos processos_industriais como o controle
+de nível de um reservatório, o controle_de_temperatura de um ambiente, a vazão de uma tubulação e a
+pressão exercida por um líquido. Esses sistemas
+podem ser manipulados individualmente ou serem
+trabalhados de uma forma conjunta, formando uma
+planta industrial complexa. A Figura 1 apresenta o
+objeto de estudo.
+
+Figura 1. Estação Compacta MPSPA (Helmich, 2008)
+
+1164
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Devido ao processo de pressão da bancada Festo não ser linear, neste trabalho é proposto uma forma de controle, na qual os parâmetros do modelo de
+projeto são atualizados a cada período de amostragem, refletindo mais adequadamente a condição atual
+do sistema, sendo assim possível manter o desempenho nominal do projeto dentro de uma maior faixa de
+excursão do sinal de entrada. Este cenário é a base do
+controle_adaptativo, que utiliza métodos de identificação online de sistemas para promover a sintonia de
+controladores. No presente trabalho o método utilizado para identificação do sistema é o de Mínimos
+Quadrados Recursivos (MQR) de forma indireta,
+onde é realizada a estimativa dos parâmetros do
+modelo e os mesmos são utilizados para o cálculo da
+lei de controle. A técnica de controle utilizada será
+baseada em um controlador proporcional e integral
+(PI) com o método de projeto proposto por Lim
+(Lim, 1990). Com o objetivo de realizar uma comparação com este projeto adaptativo, foi implementado
+também um controlador com ganhos fixos e com as
+mesmas especificações da estrutura adaptativa.
+2
+
+reservatório B102. Para não haver fluxo de água no
+reservatório B101, a válvula V109 foi totalmente
+fechada.
+Com o objetivo de analisar o sistema em malha
+aberta foram aplicados vários degraus, com amplitudes unitárias de tensão na bomba centrífuga e a cada
+degrau foram coletados os dados da pressão correspondentes.
+Testes realizados mostraram que tal bomba possui uma faixa de tensão (0  3V) que a mesma não
+responde a variações em sua entrada e além disto,
+tensões entre 3 e 6V resultam em pressões muito
+baixas, quase não havendo circulação de fluido no
+sistema.
+
+Modelo do Sistema
+
+Na Figura 2 é apresentada os principais componentes do processo de pressão da bancada da Festo
+onde foi realizado o estudo. Para tal processo foram
+utilizados os seguintes componentes uma bomba
+centrífuga que tem controle_digital ou analógico (0 
+10V), um sensor de pressão com célula cerâmica
+com saída analógica (0  10V), uma placa de aquisição_de_dados (easyport), além de válvulas manuais
+que controlam o fluxo do fluido.
+
+Figura 3. Processo de Pressão (Helmich, 2008)
+
+Desta forma, avaliou-se o processo entre 6 e 9
+V, excluindo assim, a região inativa do atuador do
+processo. A Figura 4 apresenta o comportamento do
+sistema para tensões entre 6  9V, sendo que cada
+degrau foi de 1 V.
+0.24
+0.22
+
+Pressão bar
+
+0.2
+0.18
+0.16
+0.14
+0.12
+0.1
+0.08
+
+0
+
+5
+
+10
+
+15
+20
+Tempo s
+
+25
+
+30
+
+35
+
+Figura 4. Pressão do Sistema para tensões entre 69V
+Figura 2. Estação Compacta MPSPA- (1) Tanque de pressão- (2)
+Sensor de pressão (Helmich, 2008)
+
+Na Tabela 1 são apresentados os valores aproximados da pressão correspondentes  tensão na
+bomba, onde é possível observar o comportamento
+não_linear do sistema, pois o mesmo não varia de
+maneira uniforme para cada degrau aplicado.
+
+O diagrama do processo de pressão está representado na Figura 3. A bomba P101 foi configurada
+para atuar em modo analógico. O fluxo de água seguirá da bomba e passará pelas válvulas V103 e
+V108 que estão totalmente abertas e também pela
+válvula V107 que está 50 aberta, chegando ao
+
+1165
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Tabela 1. Características do Sistema em Malha Aberta
+
+i
+1
+2
+3
+4
+
+Tensão
+V
+6.0
+7.0
+8.0
+9.0
+
+Pressão (Pi)
+bar
+0.096448
+0.133948
+0.178186
+0.229944
+
+Analisando-se a Figura 4, nota-se que o comportamento da pressão pode ser aproximado por um
+sistema de primeira ordem e, portanto, o método de
+controle proposto por Lim pode ser utilizado neste
+caso. Na Figura 5 está representado o esquema de
+malha_fechada adotado no sistema. A partir de um
+estimador de parâmetros, que no presente caso é o
+MQR, os parâmetros  e  serão estimados e os
+ganhos ( e ) do controlador PI são atualizados
+online e de forma recursiva, ou seja, a cada período
+de amostragem. Com base no modelo_matemático de
+(2), pode-se obter um controlador PI com alocação
+de polos, ou seja, o zero do controlador é alocado
+para cancelar o polo da planta.
+
+Pi
+Pi - Pi-1
+
+
+
+0.037500
+0.044238
+0.051758
+
+A resposta do processo para degraus de tensão
+na bomba deve ser identificada previamente de maneira que, como será mostrado posteriormente, o
+vetor de parâmetros estimados do MQR possa ser
+inicializado de maneira mais eficiente. Utilizando o
+System Identification Tool do Matlab e um período
+de amostragem de 50 milissegundos obteve-se o
+seguinte modelo para um degrau de tensão entre 6 e
+7V
+(
+
+(
+(
+
+)
+
+)
+)
+
+ +
+
+
+
+(1)
+
+onde ( ) representa a saída medida (pressão
+dada em bar) e ( ) representa a ação de controle
+(dada em Volts).
+Observa-se que o modelo acima encontrado é
+válido apenas para uma faixa de tensão entre 6 e 7V,
+pois o processo não é linear. O modelo encontrado
+mostra que a resposta do processo é extremamente
+rápida, o que também pode ser verificado na Figura
+4, pois a duração do transiente para cada degrau de
+tensão é de aproximadamente 400 milissegundos.
+Observa-se que o modelo dado por (1), não
+apresenta polo em
+. Isto corresponde a um
+sistema que não possui um integrador, ou seja este
+sistema apresenta um erro estacionário, ou erro residual, na resposta a uma entrada degrau (Ogata,
+1995). Devido a isto, os controladores implementados neste estudo têm uma ação integrativa além da
+proporcional, pois assim é possível anular o erro em
+regime_permanente para as entradas do tipo degrau
+de tensão na bomba centrífuga.
+3
+
+De acordo com a Figura 5, para haver o cancelamento de polo da planta, sintoniza-se
+
+
+
+
+
+(3)
+
+Desta forma, aplicando a condição apresentada
+em (3), a função_de_transferência em malha_fechada é
+dada por
+(
+(
+
+
+
+)
+)
+
+
+
+(
+
+)
+
+(4)
+
+O parâmetro
+do controlador PI pode ser escrito em função do parâmetro  e de uma constante
+que determina a posição do polo desejado no
+processo de malha_fechada
+(
+
+)
+
+
+(5)
+
+As Equações (3), (4) e (5) compõem o método
+de sintonia proposto por Lim e garantem um comportamento de primeira ordem imposto pelo valor de ,
+sem erro de regime_permanente. Tal comportamento
+apenas é válido se os parâmetros de (2) forem estimados corretamente.
+O controlador PI com ganhos fixos segue a
+mesma metodologia descrita por (3), (4) e (5), porém
+os parâmetros  e  são fixos com base no modelo
+representado por (1). O valor de
+é o mesmo para
+ambos os projetos, assim como a faixa de excursão e
+o tempo de assentamento. Ressalta-se que, como o
+processo em estudo não é linear, o modelo descrito
+anteriormente apenas é válido na faixa de excursão
+na qual foi obtido. Portanto o desempenho do controlador diminui a medida que se afasta deste ponto,
+
+Conforme observado anteriormente, o processo
+de pressão responde de forma não_linear a uma variação linear de tensão na bomba. Desta forma, com o
+objetivo de se trabalhar com uma variação de tensão
+entre 6  9V de forma linear, a utilização de um
+controle_adaptativo é justificada. O controlador utilizado é um PI e será baseado no método proposto por
+Lim (Lim, 1990). Tal método possui uma representação matemática que é obtida a partir de observações
+da resposta ao degrau. Desta forma o comportamento
+da mesma pode ser aproximado por uma função de
+transferência estimada de primeira ordem, que na
+forma discreta é representada por
+)
+
+
+ 
+(
+  )
+
+ )
+ )
+
+Figura 5. Malha Fechada
+
+Estratégias de Controle
+
+(
+
+(
+(
+
+(2)
+
+1166
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+pois aumenta o descasamento entre o controlador e a
+planta.
+4
+
+Pode-se então reescrever a Equação (12), para
+possibilitar a determinação dos parâmetros
+
+
+Mínimos quadrados recursivos (MQR)
+
+
+Os parâmetros do controlador, conforme comentado anteriormente, foram estimados pela técnica
+dos Mínimos Quadrados Recursivos (MQR). O conceito principal do MQR foi desenvolvido por Karl
+Friedrich Gauss no século XVIII cujo intuito inicial
+era de estudar as órbitas de alguns objetos celestes.
+Gauss definiu o conceito dos mínimos_quadrados
+afirmando que a soma dos quadrados das diferenças entre o valor observado e o calculado multiplicado por constantes que medem o grau de precisão é
+um mínimo (strm, 1995).
+Considerando-se um modelo_matemático descrito por
+( )
+
+( )
+
+( )
+( )
+
+( )
+
+
+
+( )
+
+( )
+
+( )
+
+
+
+( )
+
+(6)
+
+(7)
+
+( )
+
+(8)
+
+)
+
+( ( )
+
+() )
+
+)
+
+
+
+(9)
+
+( )
+
+(15)
+
+(
+) ( )
+( ) (
+) ( )
+
+(16)
+
+(
+
+( )
+
+( )) (
+
+)
+
+(17)
+
+A Figura 6 mostra em blocos o sistema em malha_fechada. Conforme citado anteriormente o controlador_adaptativo foi feito de forma indireta. Nesta
+forma de controle o processo de realimentação pode
+ser dividido por duas malhas. Conforme pode ser
+visto na Figura 6, uma das malhas consiste em uma
+realimentação da saída do processo através do sensoriamento. O que diferencia dos controladores estáticos é o acréscimo de uma malha externa formada
+pelo MQR que estima os parâmetros da planta e, a
+partir de tal estimação, ajusta o controlador de forma
+recursiva.
+
+
+
+( )
+
+(11)
+
+Note que na Equação (11), quando a função
+custo for minimizada, o erro de estimação tenderá a
+zero e neste caso existirá um conjunto de parâmetros
+estimados  que garante
+
+
+( ) ( )
+
+(10)
+
+()
+
+( )
+
+
+)
+
+A matriz de covariância ( ) é atualizada após
+o cálculo do ganho de Kalman e com o uso do vetor
+( )
+
+( ) ( ) é a saída estimada e ( ) é o erro
+onde
+de estimação que compõe o vetor dos erros de estimação dado por
+ ( )
+
+(
+
+( )
+
+( )
+(
+
+(14)
+
+onde ( ) é conhecido como vetor de ganho de
+Kalman e é dado por
+
+O problema dos Mínimos Quadrados pode então ser entendido como o problema em determinar
+( ) ( ) seja equivalente a
+( ) tal que o produto
+saída observada ( ). Portanto, ( ) deve ser determinado tal que a função custo dos Mínimos Quadrados seja minimizada, sendo esta função dada por
+(
+
+)
+
+onde é uma matriz não-singular e que relaciona a
+variância entre os parâmetros estimados, sendo denominada de Matriz de Covariância.
+No resultado, mostrado na Equação (14), é necessário a utilização de um vetor
+com todos os
+elementos observados, o que inviabilizaria a sua
+utilização a cada período de amostragem, já que seria
+necessário um certo número de observações de ( )
+e ( ) para a determinação de . Além disso, seria
+preciso realizar a inversão matricial em tempo de
+execução, o que nem sempre é possível, pois em
+sistemas_embarcados isto acarretaria em um alto
+custo_computacional. Devido a tais inconvenientes, é
+necessário que se tenha um estimador que determine
+ sequencialmente em tempo_real. Para isto é desejável que o algoritmo dos Mínimos Quadrados opere
+recursivamente.
+Segundo strm (strm, 1995) o vetor de parâmetros estimados do processo pode ser escrito de
+forma recursiva utilizando algumas manipulações
+matemáticas e algumas propriedades de inversão de
+matrizes. Desta forma (14) pode ser reescrita como
+
+onde ( ) é a variável observada, , , ... ,
+são os parâmetros do modelo a serem determinados e
+, ,... ,
+são dados por funções conhecidas. Os
+resultados podem ser apresentados na forma vetorial
+( )
+
+(
+
+(13)
+
+(12)
+
+1167
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+(
+(
+
+Parâmetros do Processo
+
+Especificação
+
+Estimação dos
+parâmetros do
+processo
+
+Ajuste do
+controlador
+
+A Figura 7 mostra graficamente os resultados
+obtidos no processo de pressão com a inclusão do
+controlador_adaptativo projetado. Os resultados mostram um erro nulo em regime_permanente para as
+especificações dadas anteriormente, o que era previamente esperado, pois o controlador é um PI. Inicialmente a pressão é de 0.090 bar, e após o primeiro
+degrau de tensão, a mesma estabiliza em 0.13 bar.
+Após isto foram aplicados mais dois degraus de tensão, sendo os valores de 0.17 e 0.21 bar alcançados
+pela saída, observando-se a linearização do processo,
+pois a cada degrau de 1V na bomba, obteve-se o
+acréscimo de 0.040 bar na saída. O tempo de estabilização também ficou de acordo com o especificado,
+convergindo para o valor em regime em torno de 2.3
+segundos.
+
+Referência
+Processo
+
+saída
+
+Ação de
+controle
+
+Figura 6. Método de controle indireto (strm, 1995)
+
+5
+
+(19)
+
+6 Resultados
+
+Parâmetros
+de controle
+
+Controlador
+
+)
+)
+
+Projeto e implementação dos controladores
+
+O projeto implementado consiste de um controlador PI adaptativo, onde os parâmetros do mesmo
+são estimados online com a utilização da técnica de
+Mínimos Quadrados Recursivos (MQR). A tensão na
+bomba centrífuga varia entre 6  9V, sendo que a
+pressão varia entre 0.090  0.21 bar. Cada degrau de
+tensão de 1V, corresponde portanto, a um incremento
+de 0.040 bar o qual será tomado como referência.
+O tempo de estabilização, definido como o
+tempo que o sistema leva para entrar e permanecer na
+faixa de 2 (Coelho e Coelho, 2004) do valor de
+referência, em malha_aberta é algo em torno de 400
+ms, conforme pode ser visualizado na Figura 1. Deste modo, foi definido como requisito de projeto um
+tempo de assentamento de 2.3 segundos para que a
+variação da pressão fique dentro de um valor tomado
+como tolerável. Esta especificação torna o sistema
+mais lento, pois é de interesse no projeto suavizar a
+elevação da pressão na tubulação do sistema, de
+modo a prevenir possíveis incidentes com a variação
+brusca da pressão na bancada ou no meio industrial
+onde a ideia deste projeto pode ser implementada.
+Devido ao fato do controlador utilizado ser um
+PI adaptativo, espera-se de antemão que a saída do
+processo seguirá a referência imposta respeitando o
+tempo de assentamento estabelecido, linearizando
+assim a faixa de variação de tensão trabalhada.
+Pode-se observar que os atuadores, estão abaixo
+dos valores limites de operação, pois a bomba pode
+trabalhar até 10V e a pressão pode atingir um valor
+de aproximadamente 0.25 bar.
+O projeto do controlador é bastante simples,
+visto que o modelo do processo é de primeira ordem.
+De acordo com os requisitos de projeto a localização
+do polo do controlador que irá impor um tempo de
+assentamento de 2.3 segundos é dado por
+
+0.22
+
+Pressão bar
+
+0.2
+0.18
+0.16
+0.14
+0.12
+0.1
+0.08
+
+0
+
+5
+
+10
+
+15
+20
+Tempo s
+
+25
+
+30
+
+35
+
+Figura 7. Saída do processo com o controlador_adaptativo
+
+A Figura 8 mostra a dinâmica dos parâmetros
+ e  estimados, adaptando-se a cada degrau aplicado na entrada do processo.
+
+a1(t)
+
+-0.505
+
+-0.51
+
+-0.515
+
+0
+
+5
+
+10
+
+15
+20
+Tempo s
+
+25
+
+30
+
+35
+
+0
+
+5
+
+10
+
+15
+20
+Tempo s
+
+25
+
+30
+
+35
+
+b0(t)
+
+0.04
+
+0.03
+
+(18)
+0.02
+
+O valor de
+encontrado garante que os requisitos de projeto serão atendidos seguindo o princípio
+da equivalência a certeza apresentado por Aguirre
+(Aguirre, 2000) e Hemerly (Hemerly, 2000). Desta
+forma a função_de_transferência de malha_fechada
+será dada por
+
+Figura 8. Parâmetros estimados pelo MQR sem perturbação
+
+Pode-se observar na Figura 8 que os parâmetros
+estimados entre 5 e 15 segundos coincidem com os
+valores encontrados pelo System Identification Tool
+do Matlab, conforme o modelo apresentado em (1).
+Isto se deve ao fato de a bomba estar trabalhando na
+
+1168
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+( )
+
+mesma faixa de tensão na qual o modelo foi encontrado, mostrando assim a correta estimação online
+dos parâmetros pelo MQR. Na Figura 9 está representada a ação de controle dada em Volts.
+
+(
+
+))
+
+(20)
+
+Pressão bar
+
+0.18
+
+8
+7.5
+
+0.16
+0.14
+
+Saída estimada
+Sinal real
+
+0.12
+
+7
+
+0.1
+
+6.5
+
+0.08
+
+0
+
+5
+
+10
+
+6
+
+15
+20
+Tempo s
+
+25
+
+30
+
+35
+
+Figura 12. Sinais reais vs Estimado
+0
+
+5
+
+10
+
+15
+20
+Tempo s
+
+25
+
+30
+
+35
+
+Observa-se um pequeno erro residual entre os
+sinais. Na Figura 13 pode ser visto tal erro, dado em
+bar, ao longo do tempo.
+
+.
+
+Figura 9. Ação de controle sem perturbação
+
+Na Figura 10 é mostrada a variação da pressão
+do processo com o degrau de tensão na bomba. Fica
+evidente que o sistema rastreia a referência, que neste
+caso é dada por uma função de 1 ordem com tempo
+de acomodação de 2.3 s.
+
+-3
+
+4
+
+Pressão bar
+
+0.04
+0.03
+Variação da Saída
+Referência
+
+0.02
+
+x 10
+
+3
+
+0.05
+
+Variação de Pressão bar
+
+
+
+0.2
+
+8.5
+
+5.5
+
+)
+
+0.22
+
+9
+
+Tensão V
+
+ (
+
+2
+1
+0
+-1
+
+0.01
+-2
+
+0
+-0.01
+0
+
+0.5
+
+1
+
+1.5
+Tempo s
+
+2
+
+2.5
+
+-3
+
+x 10
+
+Erro bar
+
+0
+-2
+-4
+-6
+0.5
+
+1
+
+1.5
+Tempo s
+
+2
+
+2.5
+
+10
+
+15
+20
+Tempo s
+
+25
+
+30
+
+35
+
+A resposta do PI não adaptativo pode ser visualizada na Figura 14 e a sua respectiva ação de controle na Figura 15. O valor da pressão convergiu para a
+referência imposta em toda a faixa de variação de
+tensão. Porém o tempo de assentamento, apenas está
+de acordo no primeiro degrau de tensão, convergindo
+para 0.13 bar em torno de 2.3 segundos. Isto se deve
+ao fato de o modelo dado por (1), ser referente a este
+ponto do sistema. No degrau de 7 para 8V, é possível
+observar um overshoot em relação ao valor de referência, e o valor de pressão em regime foi atingido
+em aproximadamente 1.8 s. Já no último degrau o
+valor final da pressão foi alcançado em 1.3 s, não
+respeitando desta forma a especificação do tempo de
+assentamento. Com o aumento do descasamento
+entre o modelo da planta e o controlador, observa-se
+um comportamento da bancada similar ao de malha
+aberta, pois a planta apresenta uma resposta mais
+rápida para uma mesma variação de tensão na entrada. Na Figura 15, percebe-se que o sinal enviado pelo
+controlador  bomba é mais brusco a cada degrau
+aplicado, acarretando um menor tempo para a convergência da saída.
+
+Na Figura 11, é apresentado o erro entre a referência e a variação de saída do sistema com controle
+adaptativo, o qual apresenta valores bem reduzido.
+
+-8
+0
+
+5
+
+Figura 13. Erro de estimação
+
+3
+
+Figura 10. Referência e variação da pressão
+
+2
+
+0
+
+3
+
+Figura 11. Erro entre a referência e a variação de pressão
+
+A Figura 12 mostra a comparação entre o sinal
+medido e o sinal de saída estimado. Para realizar a
+estimação da saída foram utilizados os parâmetros
+)) e
+fornecidos pelo MQR (  e  ), a saída ( (
+o sinal do controlador ( (
+)). A Equação (20),
+descreve a relação utilizada
+
+1169
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+de uma perturbação no sistema, foi realizado um
+teste com o total fechamento da válvula V107. Após
+o fechamento da válvula, a mesma permaneceu neste
+estado até o fim da simulação.
+O resultado para o controlador_adaptativo é
+mostrado na Figura 18.
+
+0.22
+0.2
+
+Pressão bar
+
+0.18
+0.16
+0.14
+0.12
+
+0.22
+0.1
+
+0.2
+Perturbação
+0
+
+5
+
+10
+
+15
+20
+Tempo s
+
+25
+
+30
+
+35
+
+0.18
+
+Pressão bar
+
+0.08
+
+Figura 14. Saída do processo com o controlador não adaptativo
+9
+
+0.16
+0.14
+0.12
+
+8.5
+0.1
+
+Tensão V
+
+8
+
+0.08
+
+7.5
+7
+
+0
+
+5
+
+10
+
+15
+20
+Tempo s
+
+25
+
+30
+
+35
+
+Figura 18. Saída do processo com perturbação
+
+6.5
+
+Observa-se que quando o fechamento da válvula é efetuado, há um aumento de pressão no sistema,
+pois não há fluxo de fluido no mesmo. Desta forma o
+controlador, conforme observado na Figura 19, identifica e faz a acomodação deste distúrbio, diminuindo
+a tensão enviada  bomba, fazendo assim a pressão
+atingir o valor de referência novamente. Não há mudança alguma (com relação ao resultado apresentado
+anteriormente) após a acomodação do distúrbio na
+resposta da planta, mesmo com a válvula mantida
+fechada.
+
+6
+5.5
+
+0
+
+5
+
+10
+
+15
+20
+Tempo s
+
+25
+
+30
+
+35
+
+Figura 15. Ação de controle não adaptativo
+
+Na Figura 16 é mostrada a variação da pressão
+do processo com o PI não adaptativo, após um degrau de tensão na bomba. É possível observar que o
+sistema não rastreia a referência. Na Figura 17, está o
+respectivo erro entre a referência e a variação de
+saída do sistema para o caso não adaptativo, que
+apresenta um valor bem acentuado em relação ao
+caso adaptativo apresentado anteriormente.
+
+8.5
+8
+7.5
+
+Tensão V
+
+Variação de Pressão bar
+
+0.05
+0.04
+0.03
+
+6.5
+
+Variação de Saída
+Referência
+
+0.02
+0.01
+
+6
+
+0
+
+5.5
+
+-0.01
+0
+
+0.5
+
+1
+
+1.5
+Tempo s
+
+2
+
+2.5
+
+3
+
+0
+
+5
+
+10
+
+15
+20
+Tempo s
+
+25
+
+30
+
+35
+
+Figura 19. Ação de controle adaptativa com a perturbação
+
+Figura 16. Referência e variação da pressão (PI fixo)
+
+A Figura 20 ilustra uma pequena variação dos
+parâmetros estimados pelo MQR no momento da
+perturbação, de modo a se adaptar ao então novo
+modelo do sistema.
+
+0.005
+0
+-0.005
+
+-0.505
+
+-0.01
+
+a1(t)
+
+Erro bar
+
+7
+
+-0.015
+
+-0.51
+
+-0.02
+-0.025
+0
+
+-0.515
+
+0.5
+
+1
+
+1.5
+Tempo s
+
+2
+
+2.5
+
+3
+
+0
+
+5
+
+10
+
+15
+20
+Tempo s
+
+25
+
+30
+
+35
+
+0
+
+5
+
+10
+
+15
+20
+Tempo s
+
+25
+
+30
+
+35
+
+0.04
+
+b0(t)
+
+Figura 17. Erro entre a referência e a variação de pressão (PI fixo)
+
+6.1 Resultados com Perturbação
+
+0.03
+
+0.02
+
+Com o objetivo de avaliar a capacidade de
+adaptação dos controladores implementados diante
+
+Figura 20. Parâmetros estimados pelo MQR com perturbação
+
+1170
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Para o controlador não adaptativo o mesmo
+procedimento foi realizado e o resultado pode ser
+visto na Figura 21.
+De maneira semelhante ao caso anterior, o controlador não adaptativo também conseguiu acomodar
+a perturbação realizada na válvula, diminuindo a
+tensão enviada  bomba centrífuga, conforme mostra
+a Figura 22. Porém os transientes nos degraus posteriores mudaram em relação ao caso em que não houve perturbação. Para o degrau dado de 7 para 8V, não
+houve overshoot e o valor de referência foi atingido
+em apenas 1s. Já para o último degrau, ocorreu um
+overshoot na saída e o valor final foi atingido de
+forma mais rápida, em 800 ms.
+
+excursão avaliada, pois o processo em estudo é não
+linear, de modo que um modelo fixo, não descreve
+corretamente o comportamento do sistema para toda
+a faixa de tensão trabalhada. Várias são as possibilidades de técnicas adaptativas que podem ser implantadas, porém como a planta da bancada se comporta
+aproximadamente como um sistema de primeira
+ordem, o método de controle de Lim atendeu de
+forma satisfatória s especificações de controle.
+Para trabalhos futuros, é possível fazer o controle simultâneo de mais de um processo disponibilizado pela bancada didática, como um conjunto de
+pressão e vazão. Neste caso, espera-se uma maior
+evidência da robustez e eficácia do controle_adaptativo, pois tratará de um sistema de maior complexidade.
+
+0.22
+
+Pressão bar
+
+0.2
+
+Agradecimentos
+
+0.18
+0.16
+
+Agradecemos a todos que colaboraram para a
+realização deste trabalho, ao Centro de Ciências
+TecnológicasCCT por disponibilizar o Laboratório
+de Controle de Processos, no qual foi realizado este
+estudo e a Universidade do Estado de Santa CatarinaUDESC, pelo apoio financeiro por meio da bolsa
+de estudos do programa PROMOP.
+
+0.14
+0.12
+0.1
+0.08
+
+0
+
+5
+
+10
+
+15
+20
+Tempo s
+
+25
+
+30
+
+35
+
+Figura 21. Saída do processo com o controlador não adaptativocom perturbação
+
+Referências Bibliográficas
+9
+8.5
+
+Aguirre, L. A., (2000), Introdução  identificação de
+sistemas técnicas lineares e não_lineares
+aplicadas a sistemas reais. Belo Horizonte, Ed.
+da UFMG.
+
+Tensão V
+
+8
+7.5
+7
+
+strm, K. J. Wittenmark, B., (1995), Adaptive
+control. 2 ed. New York Addison-Wesley Publishing Company, 574 p.
+
+6.5
+6
+5.5
+
+0
+
+5
+
+10
+
+15
+20
+Tempo s
+
+25
+
+30
+
+35
+
+Coelho, A. R. Coelho, L. S., (2004), Identificação de
+Sistemas Dinâmicos Lineares. Florianópolis,
+Ed. UFSC.
+
+Figura 22. Ação de controle não adaptativa com perturbação
+
+Fica evidente por meio deste teste realizado, a
+imprevisibilidade por parte do controlador não adaptativo e a sua inadequação para uso na faixa de trabalho considerada. Em contrapartida, o controlador
+com parâmetros estimados, mostrou-se capaz de
+acomodar uma perturbação no sistema e manter as
+características especificadas para o mesmo, mostrando-se desta forma eficaz e robusto para o projeto
+implementado.
+
+Helmich, J., (2008), Manual da Festo.
+Hemerly, E. M., (2000), Controle por Computador de
+Sistemas Dinâmicos. São Paulo, Editora Blcher.
+Lim, C.M., June 1990, Experimental Evaluation of
+a Self-Tuning Controller, IEEE Trans. on Industrial Electronics, vol. 37, no. 3.
+
+7 Conclusão
+
+Ogata, K., (1995), Discrete-Time Control Systems.
+Upper Saddle River, Prentice-Hall.
+
+Este trabalho apresentou um método de implementação de controle_adaptativo com a estratégia PI
+sintonizada pela estratégia de Lim em conjunto com
+uma técnica de estimação_de_parâmetros. Foi realizada uma comparação entre a estrutura de Lim e um PI
+não adaptativo, a partir de um modelo encontrado
+para um ponto específico da planta. Conclui-se que o
+controlador_adaptativo respondeu melhor a faixa de
+
+Serralheiro, W. A. O., 2013, Um Controlador RST
+Adaptativo Digital com Identificação por Mínimos Quadrados Recursivo e Sintonia por
+Alocação de Polos, 1 SEPEI.
+
+1171

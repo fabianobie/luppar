@@ -1,0 +1,855 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ESTIMACAO ROBUSTA DE ESTADOS EM SISTEMAS DE POTENCIA BASEADA
+EM ALGORITMO ORTOGONAL E CRITERIO DE MAXIMA CORRENTROPIA
+Victor Freitas, Antonio Simoes Costa, Vladimiro Miranda
+
+
+Grupo de Sistemas de Potencia
+Universidade Federal de Santa Catarina
+Florianopolis, SC, Brasil
+
+
+INESC TEC e Faculdade de Engenharia da Universidade do Porto
+Universidade do Porto
+Porto, Portugal
+
+victor.silva@posgrad.ufsc.br, simoes.costa@.ufsc.br, vmiranda@inesctec.pt
+Abstract This paper presents a robust state estimation based on Maximum Correntropy Criterion for power
+systems. A specialized orthogonal algorithm based on Givens Rotations is used to solve the problem. The proposed approach leads to a robust estimator and self-healing properties, so that gross errors in analog measurements
+are automatically rejected. As a consequence, robust estimates are produced without the need of running again
+the state estimator after bad data identification and elimination. The method is validated by using a 4-bus test
+system and the IEEE 30-bus network considering different scenarios of load and generation.
+Keywords Real time power system modeling, robust state estimation, maximum correntropy criterion,
+orthogonal algorithms.
+Resumo Este artigo propoem um estimador robusto de estados modelado com base no Criterio de Maxima
+Correntropia para sistemas_de_potencia. O problema e resolvido a partir de um algoritmo ortogonal especializado,
+que tem por base as Rotacoes de Givens. O metodo e fundamentado em um algoritmo com caractersticas de
+robustez e de resiliencia aplicado a estimacao_de_estados, que tende a expurgar automaticamente os erros_grosseiros
+presentes nas medidas analogicas e assim obter estimativas confiaveis, sem a necessidade de re-execucao da
+estimacao_de_estados apos a identificacao e eliminacao de erros_grosseiros. O metodo e validado a partir de um
+sistema-teste e 4 barras e da rede de 30 barras do IEEE, considerando diferentes cenarios de demanda e geracao.
+Palavras-chave .
+
+1
+
+Introducao
+
+A Estimacao de Estados em Sistema de Potencia (EESP) e a principal ferramenta utilizada nos
+Centros de Operacao do Sistema, pois subsidia
+as acoes de controle do Operador visando a seguranca da operacao do sistema eletrico. A solucao classica deste problema baseia-se no metodo
+dos Mnimos Quadrados Ponderados (MQP), que
+retorna estimativas proximas ao ponto otimo do
+problema na hipotese de que as medidas a serem
+processadas pelo estimador estao isentas de erros
+grosseiros. Entretanto, a presenca de qualquer
+medida espuria ira contaminar de forma severa os
+resultados da estimacao_de_estados. Desta forma,
+e importante dotar o estimador da capacidade de
+processar medidas portadoras de erros_grosseiros.
+De acordo com esta metodologia, portanto,
+para obter uma estimativa confiavel e imprescindvel a inclusao de uma etapa de pos-processamento,
+baseada frequentemente no metodo do maximo resduo normalizado (Monticelli, 1999) para a apropriada deteccao, identificacao e remocao de medidas espurias. Como consequencia da deteccao de
+erros_grosseiros, todo o processo deve ser refeito
+para se obter estimativas isentas da influencia dos
+erros. O fato de que tudo se passa em ambiente
+de tempo_real, com limites estritos de tempo de
+execucao para o calculo de estimativas confiaveis,
+constitui-se em um fator agravante e que motiva
+a busca de solucoes menos susceptveis a este tipo
+de erro.
+
+ISSN 2525-8311
+
+Para desvincular a etapa de processamento
+de erros_grosseiros, foram desenvolvidas tecnicas
+baseadas em criterios nao-quadraticos para viabilizar a estimacao_de_estados como um processo generalizado e automatico. As primeiras
+propostas como apresentadas em (Merrill and
+Schweppe, 1971 Handschin et al., 1975) sao baseadas na deteccao e rejeicao automatica de medidas
+cujos resduos apresentam valores de magnitude
+muito elevada, de modo a suprimir a influencia
+destas na estimacao_de_estados. Outras propostas
+como (Mili et al., 1996 Pires et al., 1999), utilizam fundamentos de robustez estatstica para a
+deteccao e identificacao de erros_grosseiros. Por
+outro lado, os metodos citados podem resultar em
+problemas de mnimos locais e de convergencia.
+A busca de algoritmos robustos e de rapido processamento levou a concepcao de um metodo baseado no Criterio de Maxima Correntropia (CMC) (Liu et al., 2007 Erdogmus and Principe, 2002 Miranda et al., 2009), caracterizado
+como um algoritmo de estimacao_de_estados dotado de propriedades de resiliencia superiores ao
+dos estimadores existentes. Neste artigo, o termo
+resiliencia deve ser entendido como a propriedade
+do algoritmo rejeitar automaticamente dados espurios. Desta forma, um algoritmo de estimacao
+de estados resiliente e capaz de fornecer estimativas de boa qualidade mesmo na presenca de medidas portadoras de erros_grosseiros. Em outras
+palavras, o algoritmo nao requer um estagio de
+pos-processamento_de_erros_grosseiros para produ-
+
+2193
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+zir estimativas confiaveis. Atualmente, os metodos mais utilizados para a resolucao_de_problemas
+baseados no CMC e o metodo de Gauss-Newton
+(Miranda et al., 2009).
+A proposta deste artigo e a apresentacao de
+um estimador de estados aplicado a sistemas de
+potencia concebido com base um algoritmo numericamente robusto e resiliente face a ocorrencia de
+erros_grosseiros. Para associar tais propriedades,
+utiliza-se o CMC, cuja solucao e obtida mediante
+a implementacao de um algoritmo ortogonal baseado na versao rapida das Rotacoes de Givens.
+O artigo e organizado da seguinte forma. A
+secao 2 apresenta os fundamentos de formulacao
+e modelagem da estimacao_de_estados baseada no
+metodo CMC. A secao 3 descreve como o problema proposto e resolvido com base nas rotacoes
+de Givens. A descricao das simulacoes numericas
+e resultados com os sistemas-testes de 4 e de 30
+barras do IEEE, e as conclusoes finais sao sumarizadas nas secoes 4 e 5, respectivamente.
+2
+2.1
+
+Estimacao de Estados baseada no
+Criterio de Maxima Correntropia
+Modelo do Problema, Janelas de Parzen e
+Correntropia
+
+O problema da EESP e resolvido a partir de
+um conjunto sobredeterminado de equacoes naolineares como
+z  h(x) + 
+(1)
+onde x e o vetor_de_estados (n  1) composto pelas magnitudes de tensao nas barras e angulos, e
+z, h() e  sao os vetores (m  1) das quantidades medidas, das funcoes nao-lineares das medidas
+e dos erros de medicao supostamente com media
+zero, respectivamente.
+Um estimador no modelo CMC e baseado na
+maxima extracao de informacao sobre as medidas que formam a obervacao atual do sistema (Liu
+et al., 2007 Miranda et al., 2009). A otimizacao
+e feita atraves do metodo das janelas de Parzen
+(Parzen, 1962). Esta tecnica utiliza a funcao densidade de probabilidade (fdp) do kernel Gaussiano
+ () centrada em cada ponto xk e especificada
+pelo parametro , o qual fundamenta a largura do
+kernel. Tal funcao e definida para cada medida da
+seguinte forma
+1
+ (zi  zi )  
+2i
+
+(zi  zi )2
+
+2i2
+e
+
+(2)
+
+sendo zi  hi (xk ). Desta forma, os resduos das
+medidas sao estimados a partir da funcao de correntropia entre as quantidades medidas z e as
+quantidades estimadas z, dada por
+V(z, z) 
+
+1 Pm
+ (zi  hi (x))
+m i1
+
+(3)
+
+pela maximizacao da fdp contnua do kernel Gaussiano  () (Erdogmus and Principe, 2002). Entao, a funcao-objetivo de Maxima Correntropia do
+modelo CMC para a EESP pode ser descrita de
+acordo com a equacao (4), rejeitando os termos
+constantes que nao resultam em nenhum impacto
+ao processo de maximizacao.
+JCM C  max
+
+(zi  hi (x))2
+2i2
+i1 e
+
+Pm
+
+
+
+Uma das caractersticas da correntropia e que
+ela envolve todos os momentos pares entre os vetores z e h(x). Desta forma, destaca-se a importancia do parametro , que determina o ajuste para
+a largura das janelas de Parzen no processo iterativo, isto e, o kernel Gaussiano. Quando  e substancialmente grande, o metodo CMC e equivalente
+ao metodo MQP, pois os momentos de ordem superiores entre os referidos vetores decaem rapidamente, e o momento_de_segunda_ordem tende a
+prevalecer, indicando que a correntropia se aproxima da correlacao associada aos vetores z e h(x),
+a qual e a base do metodo MQP (Liu et al., 2007).
+2.2
+
+Modelagem Matematica
+
+A modelagem para a solucao matematica do problema em (4) e realizada de acordo com a teoria
+de otimalidade, no que diz respeito as condicoes
+de primeira e de segunda ordem, dadas por
+JCM C  H T Dz  0
+2
+
+T
+
+ JCM C  GCM C  H DI  RP H
+
+ISSN 2525-8311
+
+(5)
+(6)
+
+onde GCM C e a matriz ganho (n  n), H e a matriz Jacobiana de h() computada em um dado
+ponto xk , z  z  h(xk ), I uma matriz identidade (m  m) e RP e D sao matrizes diagonais
+(mm) com os i -esimos elementos definidos como
+RP,ii  (zi  hi (xk ))2 i2
+1
+k 2
+2
+Dii  2 e(zi hi (x )) 2i
+i
+
+(7)
+(8)
+
+Uma condicao para satisfazer o problema de otimizacao e que a aproximacao da matriz Hessiana
+2 JCM C em (6) deve ser definida negativa. Portanto, o produto matricial
+D I  RP   W > 0
+
+(9)
+
+deve gerar uma matriz definida positiva. Entretanto, a simples presenca de medidas portadoras
+de erros_grosseiros, cujos resduos atingem valores
+significativamente grandes, pode nao satisfazer a
+equacao (9). Na ocorrencia destas condicoes, as
+componentes da diagonal Wii  0 devem, agora,
+serem ajustadas para um valor proximo a zero.
+Desta forma, o pre-requisito em (9) deve ser definido como
+Wii  Dii (1  RP,ii )  
+
+O processo dado pelas equacoes (2) e (3) pode
+ser entendido considerando-se que a minimizacao dos valores dos resduos das medidas ocorre
+quando as funcoes de V() tendem a funcao delta
+de Dirac, as quais sao aproximadas localmente
+
+(4)
+
+(10)
+
+em que  e um valor positivo e pequeno, como
+  1  106 . Nota-se que, se a condicao em
+(10) e assegurada, o primeiro pre-requisito em (9)
+e atendido.
+
+2194
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Esta simplificacao reduz ao metodo classico
+de Gauss-Newton, que recai na Equacao Normal
+GCM C  x  H T W z
+
+(11)
+
+em que z  I  RP 1 z .
+Desta forma, a estimacao_de_estados e resolvida por um processo iterativo em que cada iteracao os estados sao atualizados de acordo com
+(12), ate que a norma infinta de x seja menor
+que uma tolerancia pre-especificada.
+x(k+1)  xk + x
+
+2.3
+
+(12)
+
+Estrategia de Ajuste das Janelas de Parzen
+
+Para suprimir os erros_grosseiros do processo de
+otimizacao em (4), o valor de  deve decrescer
+ate o suposto nvel do rudo Gaussiano admitido
+pelo modelo de medicao em (1). Desta forma,
+se as medidas disponveis estiveres isentas de erros_grosseiros, a solucao do metodo CMC torna-se
+equivalente a solucao do metodo MQP. Para tal,
+o algoritmo deve ser inicializado com um valor de
+ 0 que torne as janelas de Parzen suficientemente
+grandes para abranger todos os rudos Gaussianos
+das medidas, e que, posteriormente aos ajustes implementados, se torne pequeno o suficiente para
+processar as propriedades da funcao de correntropia e eliminar os erros_grosseiros que deterioram
+a solucao do estimador de estados.
+A alternativa descrita neste artigo para o
+ajuste das janelas de Parzen, realizado apos a obtencao dos estados estimados em (12), faz o uso
+do desvio-padrao de cada resduo i, computado
+a partir da matriz de covariancia dos resduos ,
+conforme em (Monticelli, 1999), e ponderados pelo
+maximo resduo normalizado do conjunto de medidas, de acordo com a seguinte equacao
+i 
+
+
+ii  maxj
+
+zj  hj (x)
+p
+jj
+
+!
+, i, j  1, . . . , mS
+
+(13)
+
+sendo S um conjunto selecionado de medidas suspeitas de conter erros_grosseiros, que sera definido
+posteriormente. Este processo e entendido como
+a normalizacao das janelas de Parzen com o objetivo de suprimir a presenca de medidas espurias
+dentro do processo iterativo, ao inves da utilizacao
+propriamente dita do metodo do resduo normalizado como etapa de pos-processamento. Neste
+contexto, o valor da largura do kernel Gaussiano
+para cada medida decresce a cada iteracao ate que
+todos os valores de i estejam abaixo de um limiar
+min pre-estabelecido. Este limiar deve ser maior
+ou igual ao maximo desvio-padrao esperado para
+as medidas, para evitar a eliminacao de medidas
+aproveitaveis ao estimador de estados. Neste trabalho, utiliza-se min  0, 02 p.u.
+2.4
+
+Algoritmo
+
+A base teorica desenvolvida nas subsecoes 2.1 a
+2.3 podem agora propor um algoritmo para a estimacao_de_estados com base no criterio de maxima correntropia. E assumido que um conjunto
+de medidas disponveis assegure a observabilidade
+
+ISSN 2525-8311
+
+do sistema. Portanto, o princpio do algoritmo
+para o estimador de estados no modelo CMC segue abaixo
+Algoritmo 1. Estimador de Estados CMC
+Definir  0 e min 
+Iniciar x0 como partida plana dos estados
+Fazer i   0 
+Iniciar k  0
+Enquanto ik > min
+Computar xk atraves de (11) e (12)
+Calcular ri  zi  zi e ii 
+Se ri  > ik
+zi e suspeita de conter erros_grosseiros
+S  i
+i  0
+Atualizar ik conforme (13)
+k k+1
+xCM C  xk
+O algoritmo CMC proposto e resolvido mediante a aplicacao do metodo de Gauss-Newton, que
+pode ser substitudo por metodos ortogonais baseados no algoritmo das rotacoes rapidas de Givens,
+que sera discutido a seguir. Outro fator que podese destacar e a atuacao das janelas de Parzen, cujas larguras sao normalizadas durante o processo
+de otimizacao com base nos desvios-padrao dos
+resduos das medidas. Isto permite associar o modulo do resduo rik  a largura do kernel Gaussiano
+ik , e quando o primeiro torna-se maior que a largura associada, a medida i e identificada como
+erronea (S  i), e que por sua vez, o tamanho
+do kernel a ela associado e considerado zero. Isto
+torna-se claro ao analisar a funcao-objetivo em (4)
+e a modelagem matematica em (5) e (6), pois ao
+fazer i  0, interrompe-se a retirada de informacao sobre a medida identificada com erro grosseiro,
+desconsiderando-se a mesma ate a convergencia do
+metodo.
+E importante enfatizar que o Estimador de
+Estados CMC desempenha dentro de todo o seu
+processo de otimizacao as tres funcoes caractersticas da analise de erros_grosseiros, ou seja, deteccao, identificacao e eliminacao de medidas espurias, sem a necessidade de um processamento
+adicional.
+3
+
+Solucao via Rotacoes de Givens
+
+O uso de metodos ortogonais para a resolucao da
+EESP propoem garantir robustez e efetividade numerica, e tal tecnica pode ser facilmente conciliada
+com o metodo dos mnimos_quadrados (Simoes
+Costa and Quintana, 1981 Vempati et al., 1991).
+Em contrapartida, o problema de otimizacao em
+(4) pode ser revolvido mediante a aplicacao de um
+algoritmo baseado nas rotacoes ortogonais rapidas
+de Givens (G3M ) (Gentleman, 1973), ao inves da
+equacao normal em (11). Para delinear o algoritmo, sucessivas rotacoes ortogonais devem ser
+aplicadas a matriz H e ao vetor z , com o objetivo de encontrar um sistema triangular superior
+de equacoes, em que ambos devem ser escalonados por pesos computados com base no processo
+
+2195
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+de otimizacao da maxima correntropia. Considerando a matriz ortogonal Q que armazena cumulativamente as rotacoes individuais, tem-se que
+Q
+
+
+
+
+ 
+1
+U c
+W 2 H  z 
+0 e
+
+(14)
+
+onde W e o produto matricial definido em (9), U
+e uma matriz (n  n) triangular superior e c e um
+vetor (n1). A versao das rotacoes de Givens com
+tres multiplicadores e baseada na decomposicao
+da matriz U (Simoes Costa and Quintana, 1981
+Gentleman, 1973)
+1
+2
+
+U  T U
+
+(15)
+
+em que T e uma matriz diagonal de pesos e U
+e uma matriz triangular superior cujos elementos
+da diagonal sao iguais a 1. Como o vetor z e
+considerado como uma coluna extra de H, isto resulta que o vetor c seja escalonado pelas transformacoes ortogonais, e entao denotado por c. Este
+artifcio torna-se atrativo por tornar desnecessario
+o calculo de razes quadradas presentes em (14),
+pois na pratica apenas T e efetivamente calculado (Simoes Costa and Quintana, 1981 Gentleman, 1973).
+Ao final das transformacoes dadas por (15),
+o vetor de incrementos x e obtido a partir da
+solucao do sistema triangular de equacoes
+Ux  c
+
+(16)
+
+Umas das qualidades que o algoritmo G3M
+reporta para a resolucao do metodo CMC e a facilidade em que os pesos de W sao introduzidos nas
+transformacoes, e que por sua vez, sobre eles estao
+inseridas as propriedades da correntropia. Como
+ocorre a rotacao de uma medida por vez, o peso
+Wii e prontamente verificado sobre as condicoes
+em (9) e (10). Outra facilidade esta relacionada
+com a nao necessidade da rotacao de medidas ja
+identificadas com erros_grosseiros no processo iterativo, pois, de acordo com o modelo de correntropia, o resduo da medida e grande o suficiente
+comparado ao seu kernel Gaussiano e nenhuma informacao a mais precisa ser retirada, e portanto,
+segue-se para a proxima medida a ser rotacionada.
+4
+
+Simulacoes e Resultados Numericos
+
+Os resultados dos estudos de casos apresentados
+nesta secao ilustram a aplicacao do metodo de Estimacao de Estados com base no Criterio de Maxima Correntropia. Para tal, sao selecionados dois
+sistemas-testes para demonstrar a aplicabilidade
+do metodo proposto um sistema de 4 barras e o
+de 30 barras do IEEE.
+As simulacoes apresentadas neste artigo foram obtidas atraves da implementacao em software MATLABr , e ambos os sistemas sao modelados na versao nao-linear da rede eletrica. As medidas sao computadas mediante a adicao de erros
+aleatorios sobre os valores de parametros fornecidos pelo fluxo de potencia convergido. Assume-se
+que a exatidao das medidas de magnitude de tensao e de potencia e de 1  102 p.u.
+As subsecoes a seguir descrevem os resultados
+numericos obtidos nas simulacoes.
+
+ISSN 2525-8311
+
+Figura 1 Sistema-teste de 4 barras
+4.1
+
+Sistema-teste de 4 Barras
+
+Para melhor ilustrar a aplicacao do metodo proposto, sao realizadas simulacoes utilizando o
+sistema-teste de 4 barras, cuja rede eletrica e o
+conjunto de medidas sao visualizados na Figura
+1. O objetivo da avaliacao do algoritmo atraves
+deste sistema e de ilustrar o comportamento e as
+propriedades da correntropia, assim como apresentar os principais valores numericos obtidos na
+solucao, o que nao e inteiramente possvel para um
+sistema de grande porte, devido as limitacoes de
+espaco. Desta forma, um erro grosseiro de magnitude de 15 desvios-padrao e adicionado a medida
+de injecao de potencia ativa da barra 4. O valor
+computado pelo fluxo de potencia e o simulado sao
+destacados na Tabela 1. Assim, os estados estimados tanto pelos metodos MQP quanto CMC sao
+apresentados na Tabela 2, enfatizando-se que nenhuma etapa de pos-processamento de erro grosseiro e realizada para o metodo MQP.
+Tabela 1 Medidas e resduos dos metodos MQP
+e CMC
+Medida
+V1
+V3
+p2 1
+p1 3
+p2 3
+p2 4
+p3 4
+p4 3
+q2 1
+q1 3
+q2 3
+q2 4
+q3 4
+q4 3
+P2
+P4
+Q2
+Q4
+
+Fluxo de
+potencia
+1,0300
+1,0600
+-0,5734
+0,7472
+-0,2119
+0,1853
+0,8066
+-0,7951
+-0,0533
+-0,1754
+-0,1314
+-0,0651
+0,3034
+-0,1770
+-0,6001
+-0,9799
+-0,2498
+-0,1500
+
+Valor
+medido
+1,0343
+1,0615
+-0,5755
+0,7419
+-0,2140
+0,1857
+0,8058
+-0,7916
+-0,0529
+-0,1728
+-0,1333
+-0,0635
+0,3016
+-0,1788
+-0,6024
+-1,1899
+-0,2515
+-0,1507
+
+Medida Estimada
+MQP
+CMC
+1,0442 1,0333
+1,0731 1,0627
+-0,5789 -0,5733
+0,7496 0,7429
+-0,2143 -0,2129
+0,2100 0,1835
+0,8642 0,8049
+-0,8515 -0,7936
+-0,0556 -0,0547
+-0,1731 -0,1732
+-0,1312 -0,1309
+-0,0612 -0,0653
+0,3145 0,3023
+-0,1707 -0,1777
+-0,5832 -0,6027
+-1,0610 -0,9767
+-0,2479 -0,2509
+-0,1448 -0,1513
+
+Resduo
+MQP
+CMC
+-0,0099 0,0009
+-0,0116 -0,0012
+0,0034 -0,0022
+-0,0078 -0,0010
+0,0003 -0,0011
+-0,0244 0,0021
+-0,0584 0,0009
+0,0598 0,0019
+0,0027 0,0019
+0,0003 0,0004
+-0,0021 -0,0025
+-0,0023 0,0019
+-0,0129 -0,0007
+-0,0081 -0,0011
+-0,0192 0,0003
+-0,1289 -0,2132
+-0,0036 -0,0006
+-0,0059 0,0006
+
+Tabela 2 Estados estimados pelos metodos MQP
+e CMC
+Angulos
+Magnitudes de Tensao
+Fluxo de
+Fluxo de
+Barra Potencia MQP CMC Potencia MQP
+CMC
+0,0
+0,0
+1
+1,0300 1,0442 1,0333
+0,0
+2
+0,9657 0,9800 0,9688 -0,2313 -0,2269 -0,2297
+3
+1,0600 1,0731 1,0627 -0,1406 -0,1373 -0,1389
+4
+0,9877 1,0001 0,9907 -0,3290 -0,3346 -0,3259
+
+Com o objetivo de comparar os resultados das
+estimativas obtidas por ambos os metodos (ver tabela 2), uma metrica de tensao nodal, baseada em
+(KEMA, 2006), e utilizada para calcular o erro
+vetorial total, e dada por
+
+MV 
+
+1 PN  estimado  verdadeiro
+V
+ Vi
+N i1 i
+
+2
+
+ 12
+
+(17)
+
+2196
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ estimado e V
+ verdadeiro sao as tensoes noonde V
+i
+i
+dais estimada e a obtida pelo fluxo de potencia na
+barra i, respectivamente. Deste modo, ao aplicar
+a equacao (17) aos resultados das estimativas dos
+metodos, obtem-se MV,M QP  0, 01 para o metodo tradicional MQP e MV,CM C  0, 0025 para
+o metodo que utiliza a maxima correntropia.
+Nota-se que o erro grosseiro na medida P4
+afeta de forma severa tanto a estimacao_de_estados quanto os parametros computados atraves
+do metodo MQP, o que nao ocorre pelo metodo
+CMC, pois os efeitos do erro grosseiro sao atenuados no processo iterativo. Para compreender tal fato, um passo pre-determinado foi utilizado na diminuicao das janelas de Parzen, isto e
+ik+1  ik  , o que possibilita a visualizacao
+da evolucao da fdp dos resduos das medidas para
+cada largura das janelas de Parzen  k , como apresentado na Figura 2 (em vermelho). Na mesma figura, constata-se que o resultado da fdp dos erros
+das medidas obtida pelo metodo MQP gera uma
+funcao nao-Gaussiana (em azul), para um kernel
+M QP  0, 02, devido a presenca do erro grosseiro. Por sua vez, ao analisar a solucao final do
+metodo CMC (em verde), tambem para um kernel
+CM C  0, 02, percebe-se que a maior parte dos
+erros aleatorios sobre as medidas estao concentrados em torno da media zero, e um erro entorno
+de 0, 21 p.u., caracterizado pela supressao dos
+efeitos do erro grosseiro na medida P4 .
+
+Figura 2 Comparacao da fdp dos erros das medidas obtidas pelos metodos MQP e CMC
+4.2
+
+Sistema-teste de 30 Barras do IEEE
+
+O segundo sistema-teste selecionado para a aplicacao da metodologia proposta e o de 30 Barras
+do IEEE, mostrado na Figura 3 juntamente com
+o plano de medicao. As simulacoes realizadas desempenham todo o processo previamente apresentado para a estimacao_de_estados com base no criterio de maxima correntropia. Anteriormente as
+simulacoes, foram desenvolvidas uma serie de casos que englobam o sistema-teste em questao, o
+que inclui
+a) A construcao de 10.000 cenarios baseados em
+uma curva_de_carga, cujos nveis de carregamento do sistema estao distribudos em intervalos horarios, com patamares de carga leve,
+media e pesada. Desta forma, o sistema e
+submetido a um carregamento dentro da faixa
+de 70 a 100 do carregamento total
+b) Simulacao de variacoes sobre as cargas em
+cada barra a partir da adicao de um rudo
+Gaussiano, com um desvio-padrao de 3
+
+ISSN 2525-8311
+
+Figura 3 Sistema de 30 barras do IEEE
+c) Sorteio de diversas condicoes operativas de
+geracao, assim como a execucao do despacho
+economico das unidades que estao em operacao.
+Para averiguar a efetividade do metodo, o sistema foi submetido a uma serie de simulacoes, o
+que inclui a verificacao do desempenho do algoritmo com e sem a presenca de medidas espurias.
+Quando pelo menos uma das medidas disponveis
+ao estimador de estados possui erro grosseiro, o valor da magnitude deste erro encontra-se na faixa
+de 10 a 25 desvios-padrao. Os resultados sao sintetizados na Tabela 3. O numero de medidas com
+erros_grosseiros varia de 1 a 5 medidas aleatorias
+geradas por simulacao. Os conjuntos sao submetidos a 1.000 simulacoes em cada uma das faixas
+de magnitude de erros estipulados, conforme subdivididos na Tabela 3. Outras 1.000 simulacoes
+foram realizadas para averiguar o desempenho do
+algoritmo sem erros_grosseiros.
+Para melhor apresentar os resultados da Tabela 3, foram detalhados os valores obtidos de sucesso e falha, assim como a eficiencia para cada
+conjunto de erros_grosseiros simulados. Nesta
+perspectiva, entende-se por sucesso (S) a propriedade do algoritmo incluir todas as medidas simuladas com erros_grosseiros no conjunto de medidas
+rejeitadas pelo estimador. Caso isto nao ocorra,
+considera-se que houve falha (F) no processamento de erro grosseiro. Enfatiza-se que o teste
+realizado e extremamente amplo, o que gera baixa
+probabilidade de um grande numero de erros_grosseiros afetarem somente um conjunto de medidas
+locais nas simulacoes realizadas. Alem disso, a
+aleatoriedade utilizada para o sorteio dos conjuntos de medidas espurias estabelece uma grande diversificacao na formacao destes conjuntos. Consequentemente, este pode incluir tanto erros_grosseiros multiplos em medidas correlacionadas como
+nao correlacionadas.
+Os resultados da Tabela 3 mostram que para
+os casos em que nao ha erros_grosseiros e na presenca de um erro, a eficiencia do algoritmo e de
+100. Por outro lado, quando sao simuladas duas
+ou mais medidas erroneas, a eficiencia de atenuacao do algoritmo decresce conforme o numero de
+
+2197
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Tabela 3 Eficiencia do algoritmo sobre presenca
+de 0-5 erros_grosseiros em medidas aleatorias
+Mag. Do
+Numero de Erros Grosseiros
+Erro
+0
+1
+2
+3
+4
+5
+0
+6
+16
+43
+53
+10  15 F
+S
+1000
+994
+984
+957
+947
+15  20 F
+0
+3
+11
+35
+50
+S
+1000
+997
+989
+965
+950
+20  25 F
+0
+7
+16
+29
+52
+S
+1000
+993
+984
+971
+948
+Eficiencia 100,00 100,00 99,47 98,57 96,43 94,83
+
+Tabela 4 Qualidade das estimativas apos simulacoes com erros_grosseiros
+Mag. Do
+Erro
+10  15
+15  20
+20  25
+Eficiencia
+
+1
+99,60
+99,90
+100,00
+99,83
+
+Numero de Erros Grosseiros
+2
+3
+4
+98,69
+99,59
+99,58
+99,50
+99,80 100,00
+99,70
+99,90
+99,90
+99,30 99,76 99,83
+
+5
+100,00
+99,79
+99,79
+99,86
+
+erros, entretanto, permanece com taxas de sucessos elevadas acima de 94, mesmo sobre grandes
+pertubacoes, como o caso de simulacoes realizadas com 5 erros_grosseiros. Outro fator que devese avaliar e a qualidade das estimativas fornecidas
+pelo estimador CMC. Desta forma, considerandose somente os casos em que ocorreram sucessos
+na presenca de erros_grosseiros, as referidas sadas
+do estimador sao submetidas a Equacao (17), e
+os respectivos resultados sao comparados a um limiar de MV  0, 01. Com isto, as eficiencias sobre
+as qualidades das estimativas sao apresentadas na
+Tabela 4, mostrando valores satisfatorios, proximas a 100 dos sucessos obtidos nas simulacoes.
+5
+
+Conclusoes
+
+Neste trabalho apresenta-se um estimador de estados numericamente robusto baseado no criterio
+de maxima correntropia (CMC). A metodologia
+proposta e fundamentada na teoria da informacao, de maneira a extrair das medidas disponveis o maximo de conhecimento sobre a condicao
+operativa atual do sistema. Para tal, o metodo
+e resolvido mediante um algoritmo ortogonal baseado na versao rapida das rotacoes de Givens, o
+qual facilita o processamento de medidas ponderadas, que resultam da aplicacao das propriedades
+de correntropia. Os resultados apresentados tem o
+objetivo de validar o metodo proposto, sendo um
+sistema-teste de 4 barras utilizado para ilustrar
+as etapas de aplicacao do CMC. Posteriormente,
+uma grande quantidade de simulacoes foram realizadas com o sistema-teste de 30 barras do IEEE,
+visando uma analise_estatstica para os resultados,
+quando o algoritmo e submetido a diferentes condicoes de operacao e a diferentes erros_grosseiros.
+Os resultados alcancados tiveram exito superior a
+94 das simulacoes com a presenca de medidas espurias, o que pode ainda ser melhorado mediante
+a aplicacao de tecnicas mais robustas para evitar
+problemas de maximos locais gerados pelo modelo.
+Embora analises mais detalhadas sobre os requisitos de esforco computacional do metodo proposto
+ainda nao tenham sido realizadas, uma vantagem
+evidente neste sentido advem de sua propriedade
+intrnseca de fornecer estimativas confiaveis sem a
+necessidade da etapa de pos-processamento para
+deteccao, identificacao e eliminacao de erros gros-
+
+ISSN 2525-8311
+
+seiros.
+Agradecimentos
+
+Os autores agradecem o suporte financeiro do
+CNPq, mediante os projetos 3120372013-9 (A.
+Simoes Costa) e 4007992014-6. O autor Vladimiro Miranda reconhece igualmente o apoio do
+FEDER - Fundo Europeu de Desenvolvimento Regional, atraves do seu Programa Operacional para
+a Competitividade e Internacionalizacao COMPETE 2020, bem como da FCT - Fundacao para a
+Ciencia e Tecnologia (refa POCI-01-0145-FEDER016731).
+Referencias
+Erdogmus, D. and Principe, J. C. (2002). Generalized
+information potential criterion for adaptive system training, IEEE Trans. on Neural Networks
+13(5) 10351044.
+Gentleman, W. M. (1973). Least squares computations by Givens transformations without square
+roots, Journal of the Institut of Mathematical Applications 12 329336.
+Handschin, E., Schweppe, F. C., Kohlas, J. and Fiechter, A. (1975). Bad data analysis for power
+system state estimation, IEEE Trans. on Power
+Apparatus and Systems 94(2) 329337.
+KEMA (2006). Metrics for Determining the Impact of Phasor Measurements on Power System
+State Estimation, DRAFT. Eastern Interconnection Phasor Project.
+Liu, W., Pokharel, P. P. and Principe, J. C. (2007).
+Correntropy Properties and applications in nongaussian signal processing, IEEE Transactions
+on Signal Processing 55(11) 52865298.
+Merrill, H. M. and Schweppe, F. C. (1971). Bad data
+suppression in power system static state estimation, IEEE Trans. on Apparatus and Systems
+PAS-90(6) 27182725.
+Mili, L., Cheniae, H. G., Vichare, N. S. and Rousseeuw, P. J. (1996). Robust state estimation based
+on projection statistic of power systems, IEEE
+Trans. on Power Systems 11(2) 11181127.
+Miranda, V., Santos, A. and Pereira, J. (2009). State
+estimation based on correntropy a proof of concept, IEEE Trans. on Power Systems 24(4) 1888
+ 1889.
+Monticelli, A. (1999). State Estimation in Electric
+Power Systems A Generalized Approach, Power
+Electronics and Power Systems, Springer US,
+New York.
+Parzen, E. (1962). On estimation of a probability density function and mode, Annals of Matlhematical
+Statistic 33 10651076.
+Pires, R. C., Simoes Costa, A. and Mili, L. (1999).
+Iteratively reweighted least-squares state estimation through Givens rotations, IEEE Trans. on
+Power Systems 14(4) 14991507.
+Simoes Costa, A. and Quintana, V. H. (1981).
+An orthogonal row processing algorithm for
+power system sequential state estimation, IEEE
+Trans. on Power Apparatus and Systems PAS100(8) 37913800.
+Vempati, N., Slutsker, I. W. and Tinney, W. F. (1991).
+Enhancements to Givens rotations for power system state estimation, IEEE Trans. on Power Systems 6(2) 842849.
+
+2198

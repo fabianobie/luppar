@@ -1,0 +1,975 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+DESENVOLVIMENTO DE UM CONTROLADOR PREDITIVO NÃO LINEAR BASEADO EM
+MODELO COMPENSADO APLICAD0 A UMA COLUNA DE DESTILAÇÃO SIMULADA,
+CARACTERIZADA POR UM MODELO NARMAX
+MANOEL O. S. SOBRINHO, ADHEMAR B. FONTES, CARLOS E. T. DÓREA.
+Colegiado de Engenharia Elétrica, Fundação Universidade Federal do Vale do São Francisco,
+Av. Antônio Carlos Magalhães, 510, Bairro Santo Antônio, CEP 48.902-300, Juazeiro - BA.
+E-mail manoel.sobrinho@univasf.edu.br
+Departamento de Engenharia Elétrica, Universidade Federal da Bahia,
+Rua Aristides Novis, 02, Bairro Federação, CEP 40.210-630, Salvador - BA.
+E-mail adhemar@ufba.br
+Departamento de Engenharia de Computação e Automação,
+Universidade Federal do Rio Grande do Norte  UFRN-CT-DCA, CEP 59078-900 Natal - RN.
+E-mail cetdorea@dca.ufrn.br
+Abstract  In this paper, a nonlinear predictive controller based on compensated linear models will be developed. A new
+technique of extended quasilinearization of a NARMAX model is presented and used in order to obtain a quasilinear model. This
+model is compensated in order to reduce the prediction error. The obtained controller is used to control a distillation column
+simulated in HYSYS and identified for a NARMAX model. Simulation results are presented in order to illustrate the good performance of this method.
+Keywords  Nonlinear Predictive Control NARMAX Models Distillation Column.
+Resumo  Neste artigo desenvolve-se um controlador_preditivo não_linear baseado em modelos lineares compensados. A técnica da quasilinearização estendida de um modelo NARMAX é uma inovação apresentada e utilizada para se obter um modelo quasilinear. Este modelo é compensado objetivando reduzir o erro de predição. O controlador obtido é utilizado para controlar uma
+coluna_de_destilação simulada no HYSYS e identificada para a obtenção de um modelo NARMAX. Resultados de simulação são
+apresentados, mostrando o bom desempenho do método.
+Palavras-chave
+ .
+
+1
+
+Introdução
+
+Os processos químicos e petroquímicos apresentam características que requerem soluções de controle específicas, geralmente diferentes dos demais
+sistemas. Colunas de destilação são bons exemplos
+dessa especificidade. Estas constituem um dos mais
+frequentes e importantes processos na Indústria Química, em que a implementação de técnicas de controle_avançado é um esforço indispensável. Isto exige a
+identificação de modelos adequados, e assim, muitas
+dificuldades surgem devido  complexidade destes
+processos. Dentre estas dificuldades pode-se destacar
+a dinâmica lenta e complexa, o alto grau de acoplamento entre as variáveis, as não_linearidades, o atraso
+de transporte, as perturbações estocásticas, etc. A
+operação de um processo desse tipo, caracteristicamente multivariável, que possui restrições, requer na
+maioria dos casos um controle também multivariável
+que considere o acoplamento entre as diversas variáveis e também as restrições, tanto das variáveis controladas quanto das manipuladas (Riggs, 1998). De
+fato, um melhor controle permite que muitos processos operem próximo ao regime ótimo (Astrm and
+Wittenmark, 1995). O comportamento não_linear do
+processo aparece como um grande desafio de contro-
+
+ISBN 978-85-8001-069-5
+
+le, justificando a pesquisa por soluções de melhor
+desempenho.
+Os modelos_bilineares têm sido muito utilizados
+para caracterizar uma coluna_de_destilação, os quais
+obtiveram resultados satisfatórios (Toledo and Gallegos, 1987, Fontes et al, 2001). Alguns trabalhos já
+foram propostos na literatura para o controle_avançado de colunas_de_destilação utilizando modelos_bilineares (Fontes e Ângelo, 2006 Kawathekar e Riggs,
+2007). Evidentemente existem outras dinâmicas na
+coluna_de_destilação, diferentes das dinâmicas bilineares. Um modelo mais realístico do processo requer, naturalmente, uma ampliação deste modelo.
+Uma alternativa possível seria a identificação de um
+modelo do tipo NARMAX, mais amplo que o modelo
+bilinear, que seja mais representativo para caracterizar a coluna_de_destilação.
+O processo de destilação contribui com mais de
+50 dos custos operacionais de uma planta industrial, devido ao elevado consumo_de_energia para aquecimento e resfriamento. Desta forma, a melhor maneira de reduzir os custos operacionais é aumentar
+sua eficiência e operação, por meio da otimização e
+controle do processo (Riggs, 1998). Esquemas de
+controle_avançado, tal como controle_preditivo, permitem a operação do processo de forma otimizada e a
+sua manutenção dentro dos limites operacionais.
+
+1711
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+O controle_preditivo baseado em modelo (MPC) é
+uma técnica de controle bastante conhecida e utilizada tanto no meio acadêmico como na indústria (Qin
+and Badgwell, 2003). Em plantas industriais mais
+complexas, como no caso de colunas_de_destilação, é
+crescente a demanda pelo controle_preditivo não
+linear (NMPC). Isto é devido a fatores tais como o
+atual nível de especificação de alta qualidade de
+produção a crescente demanda de produtividade a
+atual legislação ambiental, que é mais rigorosa e
+ainda, as exigentes considerações econômicas na
+indústria que levam os processos a operar mais próximos dos limites admissíveis.
+Do ponto de vista conceitual o NMPC não apresenta dificuldades já que é possível considerar a
+mesma função objetivo utilizada no caso linear e um
+modelo não_linear para o cálculo das predições (Bravo et al, 2008). O que se pretende novamente é encontrar o controle que minimize a função objetivo
+sujeito a um conjunto de restrições. Já do ponto de
+vista prático, são várias as dificuldades encontradas
+neste problema, se comparado ao caso linear, quais
+sejam (a) a determinação do modelo do processo,
+quando o mesmo deve ser obtido por identificação
+(b) a obtenção do sinal de controle que requer, em
+geral, a solução de um problema de otimização não
+convexo e (c) a análise_de_estabilidade e robustez da
+solução (Henson, 1998, Mayne et al, 2000).
+Um dos métodos mais difundidos para a solução
+do NMPC é a utilização de modelos linearizados na
+predição da saída, a qual é considerada na função
+objetivo. Neste caso, a otimização linear pode ser
+utilizada, o que consiste na principal vantagem do
+método. Na literatura encontram-se diversas abordagens para esta metodologia, tais como a utilização de
+múltiplos modelos lineares, que é muito explorada
+para o desenvolvimento do MPC robusto (Torrico e
+Normey-Rico, 2004 Sakizlis et al, 2005), do MPC
+escalonado (Lu and Arkunl, 2003) e do MPC adaptativo o método min-max, (Wan and Kotare, 2002) e
+linearização a cada período de amostragem, utilizada, por exemplo, na técnica da quasilinearização
+(Goodhart, et al, 1994) e NEPSAC (De Keyser, 1998
+Ionescu et al, 2008). Em Fontes (Fontes et al, 2002),
+foi desenvolvido um controlador_preditivo bilinear, o
+qual utiliza a quasilinearização do modelo bilinear de
+entrada-saída. O modelo quasilinear obtido é, então,
+modificado para compensar o erro de predição, utilizando-se apenas um tipo de termo de compensação.
+Em Fontes (Fontes et al, 2004) e Sobrinho (Sobrinho
+et al, 2011a), são apresentadas inovações para este
+método utilizando-se ainda um tipo de termo de
+compensação. Já em Sobrinho (Sobrinho, et al,
+2011b) é apresentado um controlador_preditivo bilinear compensado baseado em variáveis de estado,
+porém, utilizando dois tipos de termos de compensação.
+Neste artigo é desenvolvido um controlador_preditivo não_linear baseado em modelos lineares compensados. A linearização é obtida utilizando-se uma
+versão estendida da quasilinearização apresentada
+por Goodhart (Goodhart et al, 1994), para modelos
+
+ISBN 978-85-8001-069-5
+
+bilineares. A versão estendida da quasilinearização,
+que representa uma inovação desta técnica, possibilita a quasilinearização para uma classe mais ampla de
+modelos NARMAX. O controlador assim obtido é,
+então, aplicado ao controle de uma coluna_de_destilação desbutanizadora simulada no HYSYS e caracterizada por um modelo NARMAX.
+2 Desenvolvimento do método
+O modelo quasilinear por degrau de tempo apresentado por Goodhart (Goodhart et al, 1994), foi desenvolvido para modelos_bilineares. Considere um sistema SISO descrito pelo seguinte modelo bilinear
+A(q 1 ) y ( k )  q  d B ( q 1 )u ( k  1) +
+na
+
+m
+
+
+
+( i  d ), j
+
+u ( k  j  i + 1) y ( k  i )
+
+(1)
+
+i 1 j 1
+
+sendo A(q ), B(q-1), definidos pela seguinte forma
+polinomial
+-1
+
+(2)
+
+P(q -1 )  p 0 + p 1 q -1 + p 2 q -2 + + p np q -np .
+
+sendo a01 e b0 (i-d),j0,  (i  d )  0  u(k) a
+sequência de entradas y(k) a sequência de saída q-1 o
+operador atraso tal que q  j y ( k )  y ( k  j )  m um
+número inteiro previamente definido de acordo com
+o modelo desejado d  1 o atraso expresso como
+múltiplo inteiro do período de amostragem. O modelo quasilinear por degrau de tempo consiste em reescrever a equação (1) na seguinte forma
+na
+
+y ( k )    a i ( u ) y ( k  i ) + q  d B ( q  1 )u ( k  1),
+
+(3)
+
+i 1
+
+em que
+m
+
+
+a i ( u )   a i    ( i  d ) j u ( k  i  j + 1)  .
+j 1
+
+
+
+A equação (3) pode reescrita na seguinte forma
+A ( q  1 , u ) y ( k )  q  d B ( q 1 )u ( k  1)
+
+(4)
+
+em que
+A( q 1 , u )  1 + a1 (u ) q 1 + a 2 (u ) q 2 + ... + ana (u ) q  na .
+
+Para se calcularem os coeficientes ai(u) e efetuar
+as predições, que são características dos controladores preditivos, são requeridos os valores futuros das
+entradas u(.). A aproximação quasilinear por degrau
+de tempo consiste em assumir como constante os
+valores futuros das entradas u(.) e iguais ao último
+valor conhecido da entrada, u(k-1).
+É possível aplicar a estratégia da quasilinearização a outros termos pertencentes  classe dos mode-
+
+1712
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+los NARMAX. Como a estrutura NARMAX é muito
+ampla, para a finalidade deste trabalho, a quasilinearização estendida será aplicada a modelos com a
+seguinte estrutura
+A(q 1 ) y ( k )  q  d B( q 1 )u (k  1) +
+na
+
+r1
+
+m
+
+  
+
+u (k  j  i + 1) p1 y (k  i ) +
+
+( i  d ), j , p1
+
+e(k + i )  ynL (k + i )  yq (k + i ),
+
+(8)
+
+em que ynL(k+i) e yq(k+i) são as predições de saída
+obtidas pelo uso dos modelos não_linear e quasilinear, respectivamente. A figura 1 ilustra esta situação.
+
+(5)
+
+i 1 p11 j 1
+nb
+
+r2
+
+m
+
+  
+
+( i  d ), j , p 2
+
+y (k  j  i + 1) p 2 u (k  i ),
+
+i 1 p 2 1 j 1
+
+sendo r1 e r2 números inteiros positivos.
+A quasilinearização estendida consiste, agora,
+em reescrever (5) na seguinte forma
+Figura. 1. Erro de predição devido ao uso do modelo quasilinear .
+na
+
+y (k )   ai (u ) y (k  i ) + q
+
+nb
+
+d
+
+i 1
+
+ b ( y)u (k  i) ,
+i
+
+(6)
+
+i 1
+
+em que
+
+ai (u )   ai 
+
+
+r1
+
+m
+
+ 
+
+( i  d ) j , p1
+
+p 11 j 1
+
+
+bi 1 ( y )   bi 1 +
+
+
+r2
+
+
+u ( k  i  j + 1) p1 
+
+
+m
+
+ 
+p 2  1 j 1
+
+(i  d ) j , p 2
+
+e
+
+
+y ( k  i  j + 1) p 2 
+
+
+Deve-se observar que, para calcular os coeficientes ai(u) e bi(y) e efetuar as predições, são requeridos
+os valores futuros das entradas e saídas. Na estratégia
+quasilinear, os valores futuros de u são aproximados,
+a cada instante de amostragem, para o último valor
+de u conhecido, ou seja, u(k-1). De maneira análoga,
+na quasilinearização estendida os valores futuros da
+saída são aproximados para o valor mais recente de y.
+O modelo quasilinear estendido pode ser escrito
+na seguinte forma
+A(q 1 , u ) yq (k )  q  d B ( q 1 , y )u ( k  1) ,
+
+(7)
+
+sendo
+A(q 1 , u )  1 + a1 (u )q 1 + a2 (u ) q 2 + ... + ana (u )q  na e
+B (q 1 , y )  b0 ( y ) + b1 ( y ) q 1 + b2 ( y ) q 2 + ... + bnb ( y ) q  nb .
+
+Devido  aproximação da quasilinearização, haverá
+erro de predição, o qual aumenta com o horizonte de
+predição. A estratégia da compensação é reduzir este
+erro de predição adicionando-se termos de
+compensação ao modelo quasilinear. Para obter os
+termos de compensação, uma sequência de entradas
+do tipo PRS (Pseudo Random signal), é aplicada ao
+modelo quasilinear e ao modelo não_linear identificado do sistema. A diferença entre as saídas geradas
+por cada um destes modelos é o erro de predição,
+cometido pelo uso do modelo quasilinear estendido.
+O erro de predição é então dado por
+
+ISBN 978-85-8001-069-5
+
+Este erro, obtido em cada horizonte de predição, é
+então mapeado utilizando-se uma estrutura adequada.
+Ou seja, obtém-se um modelo identificado para caracterizar o erro de predição. Os elementos obtidos
+deste mapeamento são os termos de compensação.
+Neste trabalho, utilizou-se o algoritmo dos mínimos
+quadrados recursivos (Aguirre, 2004) para se efetuar
+este mapeamento. Deve-se ter em vista que a estrutura do modelo escolhida para se mapear o erro deve
+conservar a linearidade da equação (7), quando esta
+estrutura for somada  mesma. Portanto a estrutura de
+modelo escolhida para o erro deve ser também linear.
+Assim, para cada horizonte de predição i, com
+i1...Ny, sendo Ny o horizonte máximo de predição,
+propõe-se a seguinte estrutura do modelo para mapeamento do erro
+Ae ,i ( q 1 )e(k + i )  Be , i (q 1 )u ( k + i  1),
+
+(9)
+
+Sendo Ae,i(q-1) e Be,i(q-1) os termos de compensação
+desejados, dados por
+
+Ae ,i (q 1 )  1 + 1,i q -1 +  2,i q -2 + . . . +  na ,i q -na
+Be ,i (q -1 )   0,i + 1,i q 1 +  2,i q 2 + . . . +  nb ,i q  nb .
+
+(10)
+
+Ou seja, propõe-se um modelo ARX para o erro, semelhante ao modelo_linearizado do sistema descrito
+pela equação (7). Deve-se observar que a ordem de
+Ae,i(q-1) e Be,i(q-1) foi tomada como sendo a mesma de
+A(q-1) e B(q-1), respectivamente, para que o erro
+e(k+i) seja calculado levando-se em conta o mesmo
+número de regressores utilizados para se calcular a
+saída predita, (k+i), pelo modelo_linearizado.
+O modelo preditor compensado é então obtido a
+partir da relação
+y c ( k + i )  y q ( k + i ) + e( k + i )
+
+(11)
+
+De (7) tem-se que
+A(q 1 , u ) yq (k + i )  q  d B (q 1 , y )u ( k + i  1),
+
+(12)
+
+Substituindo-se as equações (12) e (9) em (11), temse que
+
+1713
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+y c ( k + i ) 
+
+Be , i (q 1 )
+B (q 1 , y )
+(
++
+
+1)
++
+u
+k
+i
+u ( k + i  1)
+A( q 1 , u )
+Ae , i (q 1 )
+
+Manipulando os termos obtém-se
+y c (k + i ) 
+
+B ( q 1 , y ) Ae ,i ( q 1 ) + Be,i (q 1 ) A( q 1 , u )
+A( q 1 , u ) Ae, i ( q 1 )
+
+u ( k + i  1)
+
+Fazendo Ac ,i (q 1 )  A(q 1 , u ) Ae ,i (q 1 ) e
+
+Bc ,i (q 1 )  B(q 1 , y ) Ae ,i (q 1 ) + Be ,i (q 1 ) A(q 1 , u ),
+o modelo preditor compensado pode ser escrito na
+seguinte forma
+
+Ac ,i (q 1 ) y c (k + i )  Bc ,i (q 1 )u (k + i  1)
+
+(13)
+
+Ressalta-se aqui uma melhoria na aplicação dos
+termos de compensação. Observa-se que a dinâmica
+do modelo compensado, dada pelo polinômio Ac,i(q-1)
+é influenciada tanto pela dinâmica do modelo_linearizado como pela dinâmica do erro. Já o ganho do
+modelo compensado, dado pelo polinômio Bc,i(q-1),
+leva em conta tanto as dinâmicas como os ganhos do
+sistema linearizado e do erro. Isto contribui fortemente para tornar o modelo compensado mais eficiente, tendo em vista que o mesmo deve efetuar predições mais próximas de seus valores verdadeiros, ou
+seja, os valores de predições que seriam obtidos utilizando-se o modelo não_linear. Assim, o modelo
+compensado dado pela equação (13) pode ser usado
+para se projetar um controlador_preditivo compensado, utilizando-se a teoria do GPC linear (Clark,
+1987). Como já foi mencionado, este modelo permite que se utilize a otimização linear e consequentemente, usufruir dos benefícios decorrentes da utilização desta técnica.
+3 Caracterização de uma coluna_de_destilação
+utilizando termos NARMAX
+A coluna_de_destilação desbutanizadora, objeto de
+estudo deste trabalho, representa um sistema_multivariável em função do acoplamento existente entre suas
+malhas. A desbutanizadora é uma coluna fracionadora largamente encontrada na indústria petroquímica e
+de petróleo. A carga que este tipo de coluna recebe é
+geralmente composta por C4 (butano) e substâncias
+mais pesadas, em geral ricas em C5 (pentano). A
+função da coluna desbutanizadora é separar os componentes C4 na saída de topo da mesma, retirando os
+componentes mais pesados na saída de fundo.
+Os modelos dinâmicos de colunas_de_destilação
+estão entre os mais complexos encontrados nos sistemas_de_controle_de_processos. A complexidade dos
+modelos é devida ao grande número de equações
+diferenciais fortemente não_lineares que devem ser
+resolvidas a fim de se estudar a resposta_dinâmica da
+temperatura e composição em cada prato da coluna e
+a composição dos produtos (Smith e Corripio, 1985).
+
+ISBN 978-85-8001-069-5
+
+A caracterização da coluna em estudo foi realizada utilizando-se um modelo MIMO de duas entradas e duas saídas. As variáveis de entrada foram a
+vazão de refluxo e a temperatura de fundo, e as variáveis de saída foram as concentrações dos contaminantes na composição de topo e fundo. Analisando-se
+o funcionamento da coluna_de_destilação pode-se
+observar que o comportamento dinâmico em cada
+prato depende das dinâmicas dos pratos vizinhos e
+que esta interação dinâmica prato a prato obviamente
+terá influência nas composições dos produtos de topo
+e de fundo. Estas últimas são decorrentes do resultado das equações de balanço de massa no condensador
+e no refervedor, respectivamente. Com isto, pode-se
+intuir que um modelo_dinâmico paramétrico para a
+coluna_de_destilação com as variáveis manipuladas e
+controladas conforme escolhidas, devem conter termos multiplicativos mais amplos e complexos que os
+termos bilineares. Um modelo que inclua tais termos
+deve caracterizar melhor as dinâmicas da coluna de
+destilação que um modelo bilinear. Estes termos
+podem ser descritos por aqueles encontrados nos
+modelos pertencentes  classe dos modelos
+NARMAX. Alguns trabalhos encontrados na literatura
+utilizaram modelos polinomiais NARMAX para caracterização de uma coluna_de_destilação, obtendo
+bons resultados no controle aplicado baseado nestes
+modelos (Karacan et al, 2007).
+Os modelos polinomiais NARMAX são bastante
+amplos, pois possuem uma variedade de termos capazes de representar diferentes tipos de dinâmicas.
+Isto torna estes tipos de modelos bastante apropriados
+para caracterizar uma coluna_de_destilação, principalmente quando se pretende utilizar o modelo obtido
+para se projetar um controlador_preditivo não_linear
+baseado em modelo polinomial. Assim, baseando-se
+na fenomenologia do processo da coluna_de_destilação, propõe-se um modelo NARMAX para a mesma,
+com a estrutura apresentada pela equação (5), porém
+aplicada ao caso MIMO com duas entradas e duas
+saídas. O funcionamento da coluna é simulado no
+HYSYS, um simulador dinâmico bastante eficiente
+para reproduzir o comportamento dinâmico da coluna
+de destilação.
+Assim, utilizando-se dois sinais do tipo PRS
+(Pseudo Random Signal) descorrelacionados, aplicados simultâneamente a cada uma das entradas, e o
+algoritmo dos mínimos_quadrados recursivos, obteve-se o seguinte modelo para a coluna desbutanizadora
+Saída 1- Composição de Topo
+A1,1 ( q 1 ) y1 (k )  B1,1 (q 1 )u1 ( k  1) + B1,2 (q 1 )u2 ( k  1) +
+D1,1 (q 1 )u1 ( k  1) y1 (k  1) + D1,2 ( q 1 )u1 (k  2) y1 ( k  1) +
+D1,3 ( q 1 )u2 (k  1) y1 (k  1) + D1,4 (q 1 )u2 ( k  2) y1 (k  1) +
+D1,5 (q 1 )u1 ( k  1) y1 (k  1) 2 + D1,6 ( q 1 )u1 (k  1) y1 (k  2) 2 +
+D1,7 (q 1 )u2 ( k  1) y1 ( k  1) 2 + D1,8 ( q 1 )u2 (k  1) y1 (k  2) 2 +
+D1,9 ( q 1 )u1 (k  1) 2 y1 ( k  1) + D1,10 (q 1 )u1 ( k  2) 2 y1 (k  1) +
+D1,11 (q 1 )u2 ( k  1) 2 y1 (k  1) + D1,12 ( q 1 )u2 (k  2) 2 y1 (k  1).
+
+1714
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+- Saída 2- Composição de Fundo
+A2,2 (q 1 ) y2 (k )  B2,1 (q 1 )u1 (k  1) + B2,2 (q 1 )u2 (k  1) +
+D2,1 (q 1 )u1 ( k  1) y2 (k  1) + D2,2 ( q 1 )u1 (k  2) y2 ( k  1) +
+D2,3 ( q 1 )u2 (k  1) y2 (k  1) + D2,4 (q 1 )u2 ( k  2) y2 (k  1) +
+D2,5 (q 1 )u1 ( k  1) y2 (k  1) 2 + D2,6 (q 1 )u1 (k  2) y2 (k  1) 2 +
+D2,7 (q 1 )u2 ( k  1) y2 (k  1) 2 + D2,8 (q 1 )u2 (k  2) y2 ( k  1) 2 +
+D2,9 ( q 1 )u1 (k  1) 2 y2 ( k  1) + D2,10 (q 1 )u1 ( k  2) 2 y2 ( k  1) +
+D2,11 (q 1 )u2 ( k  1) 2 y2 (k  1) + D2,12 ( q 1 )u2 (k  2) 2 y2 (k  1).
+
+Sendo
+
+A1,1 (q 1 )  1  2.3973q -1 + 2.2083q -2  0.9239q -3 +
+0.1411q -4 
+A2,2 (q 1 )  1  1.7196 q -1 + 0.8270q -2  0.0735q -3 +
+ 0.1118q -4 .
+Os polinômios Bi,j(q ) e Di,j(q ) são descritos pela
+equação (2). Seus coeficientes estão listados na tabela 1.
+-1
+
+Tabela 1.Valores dos coeficientes dos polinômios Bi,j(q-1 )e Di,j(q-1)
+
+q0
+
+q-1
+
+q-2
+
+q-3
+
+-0.6252
+0.0436
+-0.0390
+-0.00075
+0.00563
+0.00523
+0.00224
+0.00070
+-0.00197
+-0.00114
+0.00051
+0.00180
+0.00020
+0.00036
+1.72214
+-1.09162
+-0.01438
+-0.02301
+-0.02679
+-0.01406
+0.00008
+0.00007
+-0.00019
+0.00027
+0.00111
+-0.00025
+0.00077
+0.00151
+
+0.8536
+0.0916
+0.0720
+0.00063
+-0.0105
+-0.00135
+0.00147
+0.00086
+-0.00085
+-0.00111
+-0.00029
+-0.00060
+-0.75752
+-0.22001
+0.00329
+0.02620
+-0.01838
+0.00095
+-0.00027
+-0.00116
+-0.00007
+-0.00100
+0.00020
+-0.00131
+-0.00067
+
+0.2508
+-0.0940
+-0.0347
+-1.60806
+0.63039
+-0.02310
+0.00352
+-0.00035
+-
+
+0.0071
+-0.0223
+0.44416
+0.31649
+-
+
+O período de amostragem utilizado para obtenção
+dos dados na coluna foi de 360 segundos. Os gráficos
+das figuras 2 e 3 mostram as respostas de saída, do
+modelo e da planta aos sinais do tipo PRS descorrela-
+
+ISBN 978-85-8001-069-5
+
+Os valores das variáveis no ponto de operação em
+que foram realizadas as simulações são os seguintes
+vazão de refluxo26,5m3h
+
+-1
+
+B1,1
+B1,2
+D1,1
+D1,2
+D1,3
+D1,4
+D1,5
+D1,6
+D1,7
+D1,8
+D1,9
+D1,10
+D1,11
+D1,12
+B2,1
+B2,2
+D2,1
+D2,2
+D2,3
+D2,4
+D2,5
+D2,6
+D2,7
+D2,8
+D2,9
+D2,10
+D2,11
+D2,12
+
+cionados aplicados, simultaneamente, s duas entradas. Foram utilizados dados diferentes daqueles utilizados para a identificação, constituindo-se assim,
+uma validação do modelo obtido. Observa-se nestes
+gráficos que o modelo consegue representar bem as
+principais dinâmicas da coluna_de_destilação, com
+uma aderência aos dados de 83,7 e 85,8, respectivamente. A aderência foi calculada com base no
+erro médio quadrático normalizado. Os gráficos das
+figuras 4 e 5 mostram as respostas ao degrau, do
+modelo e da planta, para as composições de topo e
+fundo, respectivamente. Nestas curvas, houve necessidade de se fazer uma correção do ganho estático,
+uma vez que o sinal PRS, utilizado na identificação,
+não é adequado para se obter este ganho.
+
+temperatura do prato 129C
+concentração de contaminantes no topo em fração de
+massa 9,53x10-4
+concentração de contaminantes no fundo em fração
+de massa 59,1x10-6.
+Nos gráficos foram utilizadas as variáveis desvio em
+torno deste ponto de operação.
+
+Figura2. Concentração de contaminantes na composição de topo.
+Comparação das respostas do modelo e da planta ao PRS.
+
+Figura 3.Concentração de contaminantes na composição de fundo Comparação das respostas do modelo e da planta ao PRS.
+
+1715
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Tabela 3.Valores dos termos de compensação para o modelo da
+composição de fundo.
+
+Figura 4. Respostas ao degrau da planta e do modelo para a composição de topo.
+
+Figura 5. Respostas ao degrau da planta e do modelo para a composição de fundo.
+
+4 Aplicação do controlador compensado  coluna
+de destilação simulada no HYSYS.
+Utilizando-se o modelo não_linear da coluna, obtido
+na seção anterior, desenvolveu-se um controlador
+compensado, conforme anteriormente descrito. Inicialmente, obtém-se o modelo quasilinear estendido
+apresentado na equação (6) com d0, considerandose que o sistema não tem atraso. A partir deste e do
+modelo não_linear da coluna, obtêm-se os termos de
+compensação, diferenciados para cada horizonte de
+predição. Os conjuntos dos termos de compensação
+obtidos para os modelos de topo e fundo, para os
+quatros primeiros horizontes, estão apresentados nas
+tabelas 2 e 3, respectivamente.
+
+a2,1,e
+a2,2,e
+a2,3,e
+a2,4,e
+b2,1,0,e
+b2,1,1,e
+b2,1,2,e
+b2,1,,3e
+b2,2,0,e
+b2,2,1,e
+b2,2,2,e
+b2,1,3,e
+
+Ny1
+
+Ny2
+
+Ny3
+
+Ny4
+
+0.50889
+0.38874
+0.24890
+0.12661
+-0.11348
+-0.71054
+-0.78763
+-0.74332
+0.67570
+1.08235
+0.31553
+-0.05089
+
+0.12627
+0.33706
+0.09342
+0.10100
+0.45529
+-0.89524
+-1.33343
+-1.28235
+0.83218
+1.61800
+1.37285
+-0.10418
+
+-0.03597
+0.13791
+0.20051
+-0.02201
+0.88169
+-0.48198
+-1.56070
+-1.70659
+0.46854
+2.34915
+1.58063
+0.84026
+
+-0.13189
+0.03908
+0.11929
+0.11599
+1.09651
+-0.09221
+-1.08456
+-1.93744
+0.32819
+1.01528
+1.57877
+1.40837
+
+O controlador compensado projetado foi aplicado  coluna desbutanizadora simulada no HYSYS.
+Este controlador foi sintonizado com um horizonte de
+predição Ny15 e as ponderações nas ações de controle foram 1400 e 2400. Para verificação de
+desempenho foi projetado também um controlador
+baseado no modelo quasilinear estendido. Utilizandose o mesmo horizonte de predição para sintonizar
+este controlador, as ponderações nas ações de controle foram 1750 e 2400. Para valores menores que
+estes, observou-se que a ação de controle oscilava
+bastante. A simulação foi realizada com a coluna
+operando no ponto em que se obteve o modelo da
+mesma. Os resultados do desempenho de saída para
+as composições de topo e fundo estão mostrados nas
+figuras 6 e 7, respectivamente. Observa-se uma melhoria considerável, na otimização do controle, quando se utilizou o controlador compensado, principalmente na composição de topo, em que o tempo para
+se alcançar o regime_permanente foi de 300 minutos.
+Utilizando-se o controlador quasilinear, este tempo
+foi de 462 minutos, ou seja, uma redução de 35
+aproximadamente. A oscilação que aparece em regime_permanente é inerente ao processo. O esforço de
+controle está mostrado nas figuras 8 e 9 para as composições de topo e fundo, respectivamente.
+
+Tabela 2.Valores dos termos de compensação para o modelo da
+composição de topo.
+
+Ny1
+a1,1,e
+a1,2,e
+a1,3,e
+a1,4,e
+b1,1,0,e
+b1,1,1,e
+b1,1,2,e
+b1,1,,3e
+b1,2,0,e
+b1,2,1,e
+b1,2,2,e
+b1,1,3,e
+
+0.07001
+0.04461
+0.01132
+-0.00673
+-0.20582
+0.00768
+-0.05113
+-0.19307
+0.00831
+-0.00325
+0.00426
+0.00238
+
+Ny2
+-0.01249
+0.05007
+-0.01076
+-0.00613
+-0.22118
+-0.37797
+0.095762
+-0.38151
+0.01206
+0.01217
+-0.00823
+0.01687
+
+ISBN 978-85-8001-069-5
+
+Ny3
+
+Ny4
+
+-0.05984
+0.03149
+-0.00035
+-0.01999
+0.368212
+-0.38569
+0.03805
+-0.01225
+0.02231
+0.01248
+-0.01256
+-0.38569
+
+0.01543
+-0.00191
+-0.00187
+0.16625
+0.04526
+-0.85629
+-0.43792
+0.01541
+-0.01073
+0.03025
+0.01186
+0.01543
+
+Figura 6. Desempenho dos controladores compensado e quasilinear na saída 1 - composição de topo.
+
+1716
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Referências
+
+Figura 7. Desempenho dos controladores compensado e quasilinear na composição de fundo.
+
+Figura 8. Esforço de controle dos controladores compensado e
+quasilinear na composição de topo.
+
+Figura 9. Esforço de controle dos controladores compensado e
+quasilinear na composição de fundo.
+
+5
+
+Conclusão
+
+Neste artigo foi desenvolvido um controlador_preditivo não_linear baseado em modelos lineares com
+compensação do erro de predição. O controlador
+obtido foi aplicado ao controle de uma coluna de
+destilação simulada no HYSYS, identificada por um
+modelo NARMAX. Os resultados mostraram o melhoramento no controle, quando comparado com o resultado obtido utilizando-se o controlador baseado no
+modelo quasilinear. As principais contribuições deste
+artigo foram a identificação da coluna por um modelo mais representativo que os modelos_bilineares e a
+utilização de dois termos para compensação do erro
+de predição do modelo quasilinear.
+
+ISBN 978-85-8001-069-5
+
+Aguirre, L. A. (2004). Introdução  Identificação de
+Sistema, 2 ed., Editora UFMG, Belo Horizonte MG.
+strm, K. J. and Wittenmak B. (1995). Adaptive
+Control. Addison-Wesley Publishing Company.
+Bravo, C. O. A., Normey-Rico, J. E. e Torrico, B. C.
+(2008). Nova Técnica para controle de plantas
+não_lineares utilizando controle_preditivo linear
+baseado em modelo. XVII Congresso Brasileiro
+de Automática, Juiz de Fora - MG.
+Clarke, D. W., Mohtadi, C. and Tuffs, P. S. (1987)
+Generalized Predictive Control, Automatica,
+vol. 21, n 2.
+De Keyser, R. M. C. (1998). A gentle introduction to
+model based predictive control. In PADI2 International Conference on Control Engineering and
+Signal Processing, Piura, Peru.
+Fontes A. B., Duarte A. A. and Maitelli A. L. (2001).
+Identification of a Bilinear Model for a Toluene
+Distillation Column, International Conference on
+Systems Science, Systems Science XIV,
+Wroclaw, Polônia.
+Fontes, A. B., Maitelli, A. L. and Salazar, A. O.
+(2002). A new Bilinear Generalized Predictive
+Control Approach Algorithm and Results. In
+15th Triennial World Congress of the International Federation of Automatic Control, Barcelona.
+Fontes, A. B., Maitelli, A. L., Cavalcanti, A. L. O.
+(2004). Bilinear Compensated Generalized Predictive Control An Adaptive Approach. In 5th
+Asian Control Conference, Melbourne, Australia, p.1781-1785.
+Fontes, A. B. e Ângelo, E. (2006). Controle Preditivo
+Generalizado Bilinear Aplicado a uma Coluna de
+Butadieno 1,3 A Compensação Iterativa, Uma
+Nova Abordagem. XVI Congresso Brasileiro de
+Automática, Salvador-BA.
+Goodhart S. G., K. J. Burnham. and D. James.
+(1994). Bilinear self-tuning control of a high
+temperature heat treatment plant. IEE Procedure
+Control Theory Applications. Vol. 141, No 1,
+pp. 12 -18.
+Henson, M.A. (1998). Nonlinear model predictive
+control current status and future directions.
+Computer and Chemical engineering, 23, 187202.
+Ionescu, C. Hodrea R. and De Keyser. R. (2008).
+Impact of Disturbance Filter in Nonlinear
+EPSAC Predictive Control of Blood Glucose
+Level in Type I Diabetic Patients. 17th IEEE International Conference on Control Applications.Part of 2008 IEEE Multi-conference on
+Systems and Control San Antonio, Texas, USA,
+September 3-5.
+Karacan, S., Hapaglu, H., and Alpbaz, M. (2007).
+Multivariable system identification and generic
+model control of a laboratory scale packed distillation column. Science Direct - Applied Thermal
+Engineering 27, 10171028.
+
+1717
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Kawathekar, R. and Riggs, J. B. (2007). Nonlinear
+model predictive control of a reactive distillation
+column. Control Engineering Practice 15, 231
+239.
+Lu, Y. and Arkunl, Y. A. (2003). Practical multiple
+model adaptive strategy for single-loop mpc.
+Control Engineering Practice, 11141159.
+Mayne, D. Q., Rawlings, J. B., Rao, C. V., and
+Scokaert, P. O. M. (2000). Constrained model
+predictive control Stability and optimality.
+Automatica, 36, 789814.
+Qin, S. J. and Badgwell T. A. (2003). A Survey of
+Industrial Model Predictive Control technology.
+Control Eng. Practice 11, 733764.
+Riggs, J. B. (1998). Improve Distillation Column
+Control, Chemical Engineering Process, pg. 3147.
+Sakizlis, V., Manthanwar, A. M. and. Pistikopoulos,
+E. N. (2005). Robust parametric predictive control design for polytopically uncertain systems.
+American Control Conference.
+Smith, C. A. and Corripio, A. B. (1985). Principles
+and Practice of Automatic Process Control. New
+York, John Wiley  Sons.
+Sobrinho, M. O. S., Fontes, A. B. and Dórea, C. E. T.
+(2011a). Bilinear Compensated Predictive Controller A State Variable Approach. In 19th
+Mediterranean Conference on Control and Automation. Corfu, Greece.
+Sobrinho, M. O. S., Fontes, A. B. and Dórea, C. E. T.
+2011(b). A New Algorithm for Bilinear Predictive Control. In 9th IEEE International Conference on Control and Automation. Santiago,
+Chile.
+Toledo, B. C. and Gallegos J. A. (1987). Identification and Bilinear Control of a Binary Distillation
+Column. Int. J. Systems Sci. Vol. 18, n. 12, pp.
+2209-2228.
+Torrico, B. C. e Normey-Rico, J. E. (2004). Controle
+Preditivo de Sistemas não Lineares com Atraso,
+XV Congresso Brasileiro de Automática.
+Wan, Z. and Kotare, M. V. (2002). Robust output
+feedback model predictive control using off-line
+linear matrix inequalities. Journal of Process
+Control 12, 763-774.
+
+ISBN 978-85-8001-069-5
+
+1718

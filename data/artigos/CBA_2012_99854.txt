@@ -1,0 +1,806 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+DESENVOLVIMENTO DE UM SIMULADOR DE CLP COMO UM COMPILADOR
+
+FELIPE NUNES, MARCELO DA S. HOUNSELL, ROBERTO S. U. ROSSO JR.
+LAboratory for Research on Visual Applications (LARVA), Depto. De Ciência da Computação (DCC),
+Universidade do Estado de Santa Catarina (UDESC).
+Rua Paulo Malschitzki, SN - Campus Universitário Prof. Avelino Marcante - Bairro Zona Industrial Norte Joinville-SC - Brasil. CEP 89219-710.
+E-mails fnunes14@hotmail.com,marcelo,rosso@joinville.udesc.br
+Abstract - The Programmable Logic Controller (PLC) is an equipment broadly used for factory floor automation. Most
+simulators are proprietary solutions and allow the control logic to be defined using the IEC 61131-3 standard. This standard was
+used to develop an open source freeware simulator, called PLC4u, implemented in Java that interprets "Instructions List" which
+is the text version of Ladder language (programming via visual interface). PLC4u allows cycle-by-cycle and multiple entries to
+be simulated and visualized using a separate but compatible module, called I  O. The PLC4u and I  O modules allow a control
+logic to be tested in lexical, syntactic (thanks to the use of a parser generator) and semantic (through the display of events
+generated) levels. This paper describes the advantages PLC4u and its development. The PLC4u can be used as an aid for
+teaching PLC programming.
+Keywords - PLC, IEC 61131-3, Simulator, Compiler.
+Resumo - O Controlador Lógico Programável (CLP) é um equipamento largamente utilizado na automação do chão de fabrica.
+A maioria dos simuladores existentes são soluções proprietárias e permitem a lógica de controle a ser definida usando a norma
+IEC 61131-3. E com isso foi desenvolvido um simulador de código aberto freeware chamado PLC4u, implementado na
+linguagem Java, usado para interpretar uma Instructions List que é a versão textual da linguagem Ladder (programação via
+interface visual). O PLC4u permite a simulação ciclo-a-ciclo e múltiplas entradas a serem simuladas e visualizadas através de
+um módulo desacoplado, mas compatível chamado Módulo IO. O PLC4u e o Módulo IO, permitem que um programa de
+controle seja testado em nível léxico, sintático (graças ao uso de um gerador de parser) e semântico (graças a visualização dos
+eventos gerados). O PLC4u pode ser usado como um recurso auxiliar para ensino de programação de CLPs. Este texto descreve
+o PLC4u, suas vantagens e desenvolvimento .
+Palavras-chave 1131-3, Simulador, Compilador.
+
+1 Introdução
+As indústrias de bens de produção e de bens de
+consumo são caracterizadas pelo crescente nível de
+automação e utilização de máquinas, sendo
+gerenciados
+pelos
+Controladores
+Lógicos
+Programáveis (CLP), cuja programação controla as
+ações que devem ocorrer em nível de chão de fábrica
+(PLCMANUAL, 2011).
+Segundo a definição
+NEMA ICS3-1973 (2011), o CLP é um aparelho
+eletrônico digital que utiliza uma memória
+programável para o armazenamento interno de
+instruções para implementações específicas, tais
+como lógica, sequenciamento, temporização,
+contagem e aritmética, para controlar através de
+módulos de entradas e saídas, vários tipos de
+máquinas ou processos.
+Foi criada a norma IEC 61131, com o intuito de
+padronizar a linguagem de programação do CLP e
+promover sua portabilidade. Todavia, apesar do CLP
+ter normas, estas deixam margens para que os
+fabricantes as interpretem eou a implementem de
+formas diferentes, implicando na incompatibilidade
+entre os CLPs (FONSECA, 2007). Estudar todas as
+variantes de linguagens de CLP em cada um dos
+equipamentos tem um custo (tendo em vista o seu
+preço) que pode oscilar muito dependendo da
+variedade e quantidade de tipos de entradassaídas,
+
+ISBN 978-85-8001-069-5
+
+número de pontos de entradasaída, velocidade e
+características do processador do CLP.
+O uso de simuladores possui um custo menor que os
+equipamentos físicos, não tem custo de manutenção
+e têm boa interatividade. Entretanto, existem muitos
+fabricantes de CLPs e muita variação nas
+características das linguagens (apesar de existir uma
+norma para isso) o que requereria grande
+flexibilidade dos simuladores para que estas
+variantes fossem acomodadas. Mas isso não é o que
+se verifica. É neste sentido que foi desenvolvido um
+simulador
+de
+CLP
+denominado
+PLC4u
+(Programmable Logic Controller for yoU), que
+simula conceitos básicos de um CLP físico,
+utilizando um gerador de compilador, (tecnologia
+que permite analisar diversas gramáticas de
+linguagens, desde que previamente definidas) e
+portanto, permite acomodar uma grande variedade
+de linguagens textuais.
+Na seção 2 serão apresentados o CLP e sua forma
+programação. Na seção 3 serão apresentados alguns
+simuladores existentes e suas características. Na
+seção 4 serão apresentados a tecnologias que
+viabilizaram este projeto, em especial o gerador de
+compilador. Na seção 5 será apresentado o
+simulador que foi implementado com a forma de
+implantar as limitações identificadas. Na seção 6, o
+simulador é colocado em teste para verificar se
+
+3945
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+realmente se comporta como o equipamento real e,
+finalmente, a seção 7 conclui este texto,
+
+2 Estruturas Básicas do CLP
+O CLP possui como componentes integrantes o
+processador, interfaces de entradasaída, memória,
+barramento, terminal de programação e fonte de
+alimentação, (ver Figura 1), sendo esses os
+elementos básicos de um CLP, independente da sua
+complexidade ou tamanho (BOLTON, 2006). O CLP
+realiza a leitura dos sinais de entrada. Esses sinais
+enviam informações sobre as condições e estados
+dos dispositivos (como por exemplo, os sensores).
+As informações recebidas são armazenadas em uma
+memória e, em seguida, são tratadas de acordo com
+a programação inserida no CLP.
+
+Diagram ou Diagrama Ladder FBD - Function
+Block Diagram ou Diagrama de blocos de funções
+IL - Instructions List ou Lista de Instruções ST Structured Text ou Texto Estruturado, e SFC 
+Sequential Function Chart ou Diagramas de
+Funções Sequenciais.
+2.1 Diagrama Ladder
+A linguagem de Diagrama Ladder, ou diagrama
+de relés, é uma linguagem gráfica muito utilizada
+devido ao fácil aprendizado, por usar esquemas
+elétricos conforme demonstrado na Figura 2. O
+Diagrama Ladder possui duas barras de energização
+que alimentam os contatos e as bobinas de ligações.
+A execução da programação se faz sempre da
+esquerda para direita, de cima para baixo, partindo
+da barra de energização, para direita (IEC, 2003).
+
+Figura 1 Componentes de um CLP.
+Após o processamento, o CLP atualiza suas saídas,
+com a finalidade de controlar equipamentos que
+estão conectados a ele, realizando assim a lógica de
+controle, garantindo desta maneira o ciclo de
+varredura, controlando um sistema_automatizado. A
+varredura das entradas do CLP, normalmente
+demanda cerca de 2 milissegundos e o tempo de
+processamento das instruções depende da quantidade
+de passos do programa, que pode demandar de 1 a
+80 ms em alguns modelos. Já o tempo da escrita das
+saídas do CLP é em torno de 3 milissegundos
+(BOLTON, 2006).
+Por mais que um CLP possa parecer com um
+computador ele tem comportamento muito particular
+em função de sua arquitetura As entradas são
+avaliadas (lidas) periodicamente e seus valores são
+usados na lógica de controle programada que é
+executada sequencialmente, alterando valores de
+saída eou de estados de memória interna. Estes
+valores podem ser usados imediatamente em seguida
+a sua alteração. Mas uma sequencia rígida do
+programa tem que ser seguida. Somente ao final de
+toda a execução do programa é que as variáveis de
+saída alteram o seu estado elétrico dos bornes de
+saída. As entradas, portanto não geram uma resposta
+imediata na execução do programa do CLP, assim
+como as saídas não são usados imediatamente nas
+saídas. Todas estas características conferem um
+modo de funcionamento diferenciado ao CLP em
+relação a uma CLP convencional.
+A norma IEC 61131-3 visa unificar as linguagens de
+programação entre diferentes CLPs, sendo um
+padrão internacional. Como tal, especifica a sintaxe,
+semântica, utilizada nas linguagens de programação
+do CLP. Essas linguagens são LD - Ladder
+
+ISBN 978-85-8001-069-5
+
+Figura 2 Exemplo da linguagem Ladder Adaptado
+da (IEC, 2003).
+Na Figura 2, a bobina C só será energizada,
+quando um dos contatos A ou B estiver ligado,
+ou seja, tiverem valor lógico 1. O Ladder utiliza os
+operadores booleanos AND, OR e NOT, NAND
+(NOT AND), NOR (NOT OR) e XOR (eXclusive
+OR) (IEC, 2003).
+2.2 Lista de Instruções
+A linguagem denominada Lista de Instruções
+(IL) é uma linguagem textual de baixo nível
+constituída por instruções semelhante  linguagem
+assembly, conforme mostra a Tabela 1. Cada
+instrução começa em uma linha e conterá um
+operador com modificadores (IEC, 2003).
+Tabela 1 Operadores da Lista de Instruções
+
+Fonte (IEC, 2003).
+
+3946
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A IL é executada com maior rapidez no CLP, do que
+o Ladder. Ela é também mais compacta e consumirá
+um espaço menor da memória do CLP e é menos
+visual que o Ladder e isso faz com que seja mais
+difícil adquirir um senso do programa que está sendo
+executado e quais erros estão ocorrendo (IEC, 2003).
+A Figura 3 mostra o equivalente da linguagem
+Ladder da Figura 2, porém escrito em Lista de
+Instruções (IL). Esta linguagem de programação
+resulta em algumas linhas de código, com cada linha
+representando exatamente uma operação.
+
+de entradas e saídas e utiliza a linguagem Ladder
+(ver Figura 6).
+
+Figura 3 Programação em Lista de instruções.
+3 Análise de Simuladores de CLP
+Existem vários simuladores de CLP, alguns dos
+quais são analisados a seguir
+O simulador de CLP Trilogi (TRIANGLE,
+2011) é um software desenvolvido na linguagem
+Java. Utiliza linguagem Ladder em sua
+programação, como mostra a Figura 4, sendo esta
+programação e verifica a procura de erros antes de
+sua execução. Caso um erro seja encontrado este
+será realçado e a sua localização será informada.
+
+Figura 4 Simulador Trilogi (TRIANGLE, 2011).
+O Trilogi possui uma tela que simula as 256
+interfaces de entrada_e_saída como mostra a Figura
+5, porém, o Trilogi não possui nenhuma planta
+virtual para ser utilizada em sua simulação.
+
+Figura 5 Interface de simulação (TRIANGLE,
+2011).
+O CLIC é um simulador de CLP da WEG
+Automação (WEG, 2011). Possui de 10 a 20 pontos
+
+ISBN 978-85-8001-069-5
+
+Figura 6 simulador CLIC (WEG, 2011).
+Após inserir a lógica programação no CLP, deve
+verificar-se o seu status no modo de operação. Na
+Figura 7, ao selecionar o modo RUN, o simulador
+inicia seu processo de simulação, destacando as
+cores de entrada_e_saída, quando elas são ativadas. A
+interface mostrada na Figura 7 é uma replica da
+interface do CLP real denominado CLIC.
+
+Figura 7 CLIC no modo RUN (WEG, 2011).
+Este simulador tem o monitoramento dos parâmetros
+do programa on-line, permitindo simular seu
+funcionamento off-line, inclusive sinais analógicos,
+sendo possível visualizar o processo de simulação
+mostrando suas entradas e saídas e seu atual estado,
+mas não apresenta nenhuma célula virtual associada
+ sua visualização.
+Existem simuladores (www.holobloc.com) que
+facilitam a edição de programas de CLP sendo
+abertos e gratuitos mas, usam FB (IEC 61499), ao
+invés de LD ou IL, não tem sido atualizado
+recentemente e não tem recursos de simulação
+gráfica.
+Também
+existem
+simuladores
+(www.edusoft.co.zaladsim.htm) com editor gráfico
+de LD com vários recursos implementados e um
+simulador gráfico de algumas tarefas para
+automação, permite acoplar uma placa para conectar
+com dispositivos externos mas, as tarefas são prédeterminadas num total de 8, a apresentação das
+
+3947
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+tarefas são todas em 2D e o código é fechado, pago e
+com hardlock.
+Nos
+simuladores
+apresentados
+algumas
+características se destacam como o fato de que há
+uma clara preferência pelo uso de Diagrama Ladder,
+mesmo que isto seja de fato, armazenado de forma
+textual as formas de apresentação das saídas são
+graficamente simples e a simulação se restringe a
+possibilidade do usuário atuar em determinadas
+entradas individuais e verificar o resultado na saída,
+e as formas de visualização estão integradas ao
+simulador. O simulador CLP4u, que será detalhado
+adiante, resolve estas limitações.
+4 O Processo de Compilação
+Nesse projeto foi implementada a parte da
+Lista de Instruções (IL) (ver tabela 1), referente aos
+operadores booleanos e foram deixados de lado os
+operadores aritméticos, pois se utilizam apenas
+sinais digitais (ligardesligar).
+A interpretação da IL, foi feita, com o auxilio da
+ferramenta JavaCC (Java Compiler Compiler),
+seguindo a estrutura da linguagem IL, que se
+organiza da seguinte forma
+ Cada instrução (instrução  operador +
+operando) ocupa uma linha
+ Cada instrução usa ou muda o valor de um
+único registrador denominado registro de
+resultado ou acumulador.
+O JavaCC é uma ferramenta que lê uma
+especificação formal de gramática através de uma
+especificação Backus-Naur Form (BNF), que é
+usada para expressar gramáticas livres de contexto
+isto é, um modo formal de descrever linguagens
+formais (DELAMARO, 2004). Essa BNF é
+convertida em um programa Java que reconhece a
+gramática. Isto é um diferencial, pois facilita a
+mudança da linguagem de programação para
+qualquer fabricante de CLP, sendo necessária apenas
+a alteração da especificação.
+4.1 Compiladores e Interpretadores
+Um compilador é um programa que traduz um
+código-fonte descrito em outra linguagem de alto
+nível para um equivalente em baixo nível (código de
+máquina), para que este possa ser executado por um
+processador (DELAMARO, 2004). O processo de
+compilação pode ser divido nas seguintes partes
+ Análise decompõe o código-fonte em suas
+partes básicas. Essa fase pode ser subdividida
+nas seguintes partes
+o Análise léxica recebe como entrada o
+próprio código-fonte e o lê linearmente,
+fazendo a identificação dos elementos
+mais básicos (tokens), como nomes de
+variáveis, constantes, etc
+
+ISBN 978-85-8001-069-5
+
+
+
+o Análise sintática recebe o conjunto de
+tokens gerado pelo analisador léxico,
+agrupando-os de maneira hierárquica,
+resultando em uma árvore sintática para
+identificar, por exemplo, se a sequencia
+está correta
+o Análise semântica recebe a árvore sintática
+gerada pelo analisador sintático, e faz a
+verificação do significado do códigofonte. O resultado deste processo é um
+código intermediário.
+Síntese utiliza o resultado das análises para
+gerar o código objeto. A síntese pode ser
+dividida da seguinte forma
+o Geração de código onde o código
+intermediário gera um código de
+máquina
+o Otimização de código recebe o código de
+máquina e faz otimizações nesse código
+para torná-lo mais eficiente.
+
+O interpretador ao contrário do compilador executa
+o código-fonte e o converte em um código
+executável, onde traduz linha a linha um programa e
+o converte  medida que vai sendo executado. Cada
+vez que um programa for executado ele precisa ser
+interpretado (DELAMARO, 2004).
+O interpretador realiza uma análise sintática e
+semântica do programa, e se não houver nenhum
+erro nestas analises, o programa poderá ser
+executado. Essa forma de execução tem a vantagem
+de permitir realizar correções e alterações mais
+facilmente, e consome menos memória do
+computador, porém a execução do programa é mais
+lenta se comparado com um compilado
+(DELAMARO, 2004).
+4.2 JavaCC (Java Compiler Compiler)
+O JavaCC é um gerador de analisador sintático
+(parser) de uma gramática a partir de um BNF, que a
+partir de sua descrição gera programa em Java.
+Todavia, o JavaCC gera analisadores sintáticos
+descendentes, chamado top-down (analisando um
+código fonte de "cima para baixo", de acordo com a
+ordem que os códigos vão aparecendo) onde é
+construída uma árvore de derivação sintática em préordem (da esquerda para a direita) para a sentença
+em questão (DELAMARO, 2004).
+Para geração do analisador é necessário criar um
+arquivo com extensão .jj. Dentro de um mesmo
+arquivo é permitido definir o Analisador Léxico e o
+Sintático, e ainda a construção da árvore sintática
+(DELAMARO, 2004).
+No arquivo .jj, deve ser definida uma classe parser
+entre
+os
+marcadores
+PARSERBEGIN
+e
+PARSEREND, especificando um token (conjunto de
+caracteres de um alfabeto, por exemplo) com um
+significado coletivo que pode ser manipulado por
+um PARSER. Nessa parte se faz necessário nomear a
+
+3948
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+classe que irá abrigar o analisador sintático, como
+por exemplo, um PARSERBEGIN (simulador),
+como mostra a Listagem 1.
+
+Listagem 1 Nomeação PARSER.
+Essa nomeação dá origem a uma classe simulador,
+que será a classe do analisador sintático, e um
+arquivo simulador.java que contém essa classe, e
+ainda é criada a classe simuladorTokenManager.java
+responsável por administrar os tokens que a
+linguagem contém.
+Em seguida, o próximo passo na construção do
+arquivo .jj, é indicar ao JavaCC, quais caracteres
+do código-fone devem ser ignorados. Esses
+caracteres são definidos no skip, como mostrado na
+Listagem 2.
+
+5 PLC4u Um Simulador de CLP para você
+5.1 Arquitetura do PLC4u
+A arquitetura do PLC4u foi implementada em
+módulos, como mostrado na Figura 8, constituído
+pelo módulo Lógico, como mostrado no destaque
+A, cuja interface é feita por arquivos texto
+mostrados no destaque B e também, pelo módulo
+IO como mostrado no destaque C responsável por
+visualizar entrada_e_saída.
+
+Listagem 2 skip - Caracteres que devem ser
+ignorados.
+Após definido os skip, será necessário estabelecer as
+palavras reservadas, ou seja, o conjunto de tokens,
+que será utilizado para definir quais as cadeias a
+serem reconhecidas e quais os tipos de tokens que
+elas correspondem. Quando o JavaCC faz a análise
+léxica e reconhece os tokens na ordem que forem
+estruturados no arquivo .jj, a primeira situação que
+for compatível será utilizada na interpretação.
+Quando há associação de uma cadeia de entrada com
+um dos tokens definidos, o analisador léxico
+reconhece a cadeia e produz um arquivo Token.java.
+Também, uma classe em Java chamada
+TokenMsgError é criada para tratar os erros léxicos
+que por ventura ocorram.
+O arquivo de extensão .jj criado, contém toda a
+descrição dos tokens a serem reconhecidos pelo
+simulador que segue a estrutura da IL. Esse arquivo
+é analisado pelo JavaCC e ao término são geradas
+classes Java, responsáveis por ler a lógica de
+programação e fazer seu tratamento léxico e
+sintático da IL, gerando assim um interpretador. Essa
+lógica é tratada junto com os sinais de entrada do
+PLC4u, onde ao final do ciclo de processamento
+geram os sinais de saída, gerando então o simulador.
+Resumindo, o arquivo .jj contém toda a
+especificação para fazer a análise léxica e sintática
+de uma lógica descrita em IL que é analisada e gera
+um programa em Java que efetivamente é um
+interpretador cuja execução leva ao simulador
+CLP4u
+
+ISBN 978-85-8001-069-5
+
+Figura 8 Arquitetura do PLC4u.
+O módulo Lógico fica responsável por fazer o
+tratamento da IL iniciando o ciclo de processamento,
+e o módulo IO é responsável por visualizar os sinais
+de entrada_e_saída utilizados pelo CLP. Fazendo uso
+de conceito de modularização, o PLC4u destaca-se
+por possuir as seguintes vantagens (SAID, 2007)
+ Cada módulo está separado no sistema,
+realizando funções completas e independentes
+de outros módulos
+ Facilita a implementação, testes e o tratamento
+de erros
+ Viabiliza o acréscimo de novas funcionalidades
+ Reduz a complexidade do sistema, dividindo-o
+em partes mais simples
+ Possibilita a reutilização de código.
+
+3949
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+5.2 Módulo Lógico
+O módulo Lógico se refere a parte onde será
+tratada a lógica utilizada no controle da célula fabril.
+Nesse módulo apenas as instruções booleanas,
+listadas na Tabela 1, passarão pelo processo de
+tratamento léxico e sintático. Caso as instruções não
+possuam nenhum erro léxico nem sintático, inicia-se
+o ciclo de processamento, onde são lidas as entradas,
+que são processadas junto com as instruções, e por
+fim resultando nas saídas.
+O módulo Lógico está divido em duas partes como
+mostrado na Figura 9 uma responsável por
+interpretar a programação do CLP como mostrado
+no destaque A, e a outra responsável pelo controle
+do CLP e pelo ciclo de processamento, como
+mostrado no destaque B. Ao iniciar o processo de
+simulação, deve-se entrar com uma programação
+utilizando a IL no editor de texto, e em seguida
+acionar o botão play na interface do PLC4u.
+O botão play, faz o PLC4u enviar o programa ao
+interpretador para serem feitos os tratamentos léxico
+e sintático. Sendo feito ainda o tratamento dos
+arquivos de entrada_e_saída que representam os
+sinais digitais. Esse tratamento dos arquivos de
+entrada_e_saída se faz necessário como forma de
+padronizar os arquivos utilizados na simulação.
+
+A interface do PLC4u possui as funcionalidades
+listadas a seguir conforme os botões que aparecem
+na parte superior da tela aparecem da esquerda para
+a direita
+ Abrir uma programação em IL
+ Salvar a IL inserida na textArea
+ Iniciar o processo de simulação, onde é
+feita a análise léxica e sintática, das
+instruções
+ Pausar o processo de simulação
+ Executar ciclo a ciclo, utilizado na
+visualização do processo de simulação um
+ciclo por vez. Esta forma de visualização
+ajuda detectar erros na lógica programação
+ Abrir a interface do Módulo IO, lembrando
+que para cada módulo existe um executável
+.jar separado.
+ Estabelecer intervalo de processamento (o
+default é 200 milissegundos) que é o tempo
+é satisfatório para visualizar a modificação
+dos sinais digitais nas portas de entrada e
+saída do simulador.
+Ao iniciar o processo de simulação é feita uma
+análise da IL e se houver um erro nesta analise, irá
+aparecer uma mensagem de erro na textArea abaixo
+do editor e em seguida é encerrando a simulação.
+Isso porque a string ANDE não é um operador da IL.
+Nessa tela de mensagem irá aparecer a linha e a
+coluna em que ocorreu o erro. O usuário poderá
+identificá-lo seguindo a numeração de borda contida
+na tela de instruções. Mostra ainda quais as possíveis
+instruções que o CLP estava esperando. Para dar
+continuidade na simulação, basta clicar no botão
+stop, corrigir o erro apresentado, e clicar novamente
+no botão play.
+5.4 Módulo IO
+
+Figura 9 Estrutura do Módulo Lógico.
+Após o tratamento, e se não houver nenhum erro,
+inicia-se o ciclo de processamento do CLP os sinais
+contidos nos arquivos de entrada (rever destaque B
+na Figura 8) simulam os sinais aplicados s entradas
+de um CLP físico e a cada ciclo (varredura) todos
+esses sinais são lidos. Ao término do ciclo de
+varredura, os resultados são transferidos para um
+arquivo de saída simulando desta maneira, a
+atribuição dos sinais aos terminais de saída de um
+CLP físico.
+5.3 TelaInterface
+A interface do simulador PLC4u, foi
+implementada de modo a facilitar sua usabilidade,
+como mostrado no destaque A da Figura 8.
+
+ISBN 978-85-8001-069-5
+
+O Módulo de IO é responsável pela visualização
+dos sinais manipulados pelo Módulo Lógico que
+simula o CLP. Porém, é independente deles para o
+seu funcionamento. Este módulo além de visualizar
+os sinais de entrada_e_saída, permite alterar os sinais
+de cada porta de entrada do CLP.
+A tela mostrada no destaque C da Figura 8 é
+utilizada para leitura e escrita dos sinais de entrada,
+e apenas para leitura dos sinais de saída. Para alterar
+o nível lógico de uma entrada, basta acionar o radio
+button Input respectivo.
+Estes sinais são guardados em arquivos em formato
+.txt, como mostrado no destaque B da Figura 8.
+O arquivo de entrada (IN.txt) vai ser processado pelo
+simulador, junto com as instruções de programação
+do CLP e em seguida escreve em um arquivo de
+saída (OUT.txt) o nível lógico resultante da
+programação do simulador (lembrando que ao
+iniciar o CLP, todas as saídas são atribuídas com
+nível lógico 0).
+
+3950
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Esses formatos de arquivo são fixosobrigatórios,
+pois também passarão por processos de tratamentos
+léxico e sintático, e se estes arquivos estiverem em
+um formato diferente, não serão reconhecidos pelo
+Módulo Lógico e nem pelo Módulo IO. As
+verificações dos arquivos de entrada_e_saída são
+realizadas em um intervalo de tempo, definido na
+tela da janela IO. Por default, essa verificação é
+realizada em 200 milissegundos, porém poderá ser
+alterada pelo usuário, entrando com um novo valor
+de tempo no campo intervals.
+O usuário pode ainda selecionar individualmente
+uma entrada por vez clicando no radio button
+especifico, ou um grupo de entradas, mas para isso
+precisa selecionar o radio button Hold Input,
+selecionar as entradas que desejar e em seguida
+clicar novamente no radio button Hold Input, para
+dar continuidade  simulação. Essa funcionalidade
+facilita a visualização de saída em diferentes
+combinações de entrada. Como o ciclo de
+processamento do CLP implementado, trabalha na
+casa dos milissegundos, se torna quase impossível o
+usuário que queira entrar com grupo de entradas ao
+mesmo tempo, pois parte das entradas seriam
+processadas pelo CLP em um ciclo, e a outra parte
+das entradas em outro ciclo, a menos que coloque no
+CLP, um ciclo de varredura muito grande,
+lembrando que o simulador tem que ler todas as
+entradas, atualizar o mapa de memória das entradas,
+executar o programa, atualizar o mapa de memória
+das saídas e por fim atualizar as saídas.
+6 Testes e Resultados
+Foram implementadas cerca de 50 das
+instruções da linguagem de programação que está na
+Tabela 1, tendo em vista, que não foram utilizados
+os operadores aritméticos, uma vez que as variáveis
+em uso são digitais.
+O simulador de CLP implementado faz uso de 10
+entradas e 10 saídas e variáveis auxiliares, que
+poderão ser utilizadas juntas com as instruções de
+programação do CLP. Porém, este número de
+entradas e saídas é facilmente extensível, basta
+alterar o PARSER que trata das entradas e saídas no
+arquivo de definição da linguagem e recompilar.
+Com a possibilidade de alterar o tempo do ciclo de
+varredura e atualização do Módulo IO é possível
+simular problemas de falta de sincronismo entre
+planta e CLP, o que pode ocorrer com processos
+muito rápidos ou CLPs muito simples.
+O primeiro teste realizado foi utilizando parênteses,
+fazendo uso de uma porta ANDN, como mostra a
+Figura 10, onde foi mostrada a programação em DL
+do lado esquerdo e a mesma em IL do lado direito. O
+PLC4u permite quantos níveis de aninhamento o
+usuário quiser e o uso de todos os operadores
+booleanos.
+
+Figura 10 Teste utilizando a porta ANDN e
+parênteses.
+O segundo teste foi o de Contato Selo (JACK,
+2011), exemplificado na Figura 11, uma situação
+bastante usual na prática. Como se pode observar, a
+entrada I1 dá condição ligar a saída Q5. Nesse caso,
+Q5 só depende de I0 para ligar. Observe que em
+paralelo com I0 existe o contato do próprio Q5,
+fazendo a função de selo, que mesmo que I0 fique
+aberto, o selo manterá a saída Q5 ligada, mantendo
+assim a saída do CLP também ligada.
+
+Figura 11 Teste de Contato Selo.
+Observe que o contato I1 está dando condição de
+ligar Q5 e quando tiver alterado esse contato perderá
+essa condição, interrompendo a ligação de Q5 que se
+desliga, perdendo também a condição de contato
+selo, voltando em seu estado normal aberto. O
+PLC4u executou corretamente esta situação.
+O terceiro teste realizado utilizou-se sub-rotinas, que
+servem para armazenar seções da lógica do
+programa que devem ser executadas a partir de
+diversos pontos dentro de um projeto, como mostra a
+Figura 12, onde dentro de um programa principal
+foram feitas as chamadas das sub-rotinas. Subrotinas são pequenos programas dentro de
+programas maiores, cuja finalidade é simplificar a
+resolução de problemas, dividindo-os em partes
+menores. O PLC4u permite a criação de quantas
+sub-rotinas o programa quiser.
+
+Figura 12 Chamadas de sub-rotinas.
+Isso possibilita utilizar essas mesmas sub-rotinas em
+outros programas. Para fazer as chamadas das sub-
+
+ISBN 978-85-8001-069-5
+
+3951
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+rotinas é usada a função CALL seguida do nome,
+permitindo o desvio do fluxo normal do programa
+para execução das instruções contidas no arquivo.
+Quando a sub-rotina encontra o token RET, retorna
+ao ponto de interrupção no programa inicial.
+O PLC4u é de código aberto e livre e está disponível
+em www2.joinville.udesc.brlarvaplc4uplc4u.php,
+onde poderá ser feito download e obter informações
+necessárias para executar o simulador.
+
+economia de tempo e dinheiro, pois não é preciso ter
+laboratórios com equipamentos físicos.
+Agradecimentos
+Os autores gostariam de agradecer aos
+professores Nazareno de O. Pacheco e André B.
+Leal, pelas sugestões e contribuições sobre o
+funcionamento de um Controlador Lógico
+Programável.
+
+7 Conclusão
+Referências
+Neste trabalho foi realizado um levantamento de
+simuladores de CLP, onde foi possível identificar
+lacunas como
+ Falta de simuladores de código aberto e
+gratuito
+ Ausência de implementação formal e
+flexível (compilador), necessária devido a
+variedades de linguagensfabricantes
+ Necessidade de ferramenta de auxílio na
+aprendizagem (educação eou treinamento)
+sobre CLP.
+Então, foi usada a ferramenta JavaCC, que permite a
+reutilização das classes construídas e que simplifica
+futuras adaptações, nomeadamente a adição de
+novas instruções ou até mesmo a implementação de
+outra linguagem de programação de CLP bastando
+para tal alterar o arquivo de definição da linguagem
+(arquivo.jj) e recompilar.
+A implementação usou como base a norma IEC
+61131-3, de modo a simular algumas características
+e conceitos fundamentais dos CLPs, visto que o
+simulador executa operações lógicas para o controle
+de um sistema de automação.
+As principais características do PLC4u são
+ O desenvolvimento do simulador como um
+interpretador permite que extensões ou
+outras linguagens possam ser feitas de
+forma mais facilitada
+ A interface do PLC4u dispõe de vários
+controles que permitem a execução de
+programas de controle de forma a facilitar o
+desenvolvimento e aprendizagem
+ Possui a função ciclo a ciclo, que permite
+a visualização da execuçãoteste da Lista de
+Instruções (IL), desta forma podendo
+detectar erros na lógica programação
+ O Módulo IO permite que, independente
+do tempo do ciclo, possam ser gerados mais
+de um eventosinal ao mesmo tempo, além
+da visualização do estado de todos os
+sinaistestes.
+
+BOLTON, W. Programmable Logic Controllers.
+Burlington, MA Elsevier, 4ed. p.p 3-15. 2006.
+DELAMARO, M. E. Como Construir um
+Compilador Utilizando Ferramentas Java.
+São Paulo Novatec, 2004.
+FONSECA, M. O. SEIXAS, C. F. BOTTURA, J.
+A. F.. Padrão de CLPs através da IEC 61131.
+Revista Mecatrônica Atual, 2007.
+IEC International Electrotechnical Commission.
+International
+standard
+IEC
+61131-3,
+Programmable
+Controllers,
+Part
+3
+Programming Languages. Geneva, second
+edition, 2003.
+JACK, H. Automating Manufacturing Systems
+with PLCs. WebBook. Version 4.7, 2005. p.p.
+20-100.
+Disponível
+em
+www.webbooks.netfreestuffplc.pdf, acessado
+em 19 nov. 2011.
+KARL, H. J. TIEGELKAMP, M.. IEC 61131-3
+Programming Industrial Automation Systems.
+1995.
+NATIONAL ELECTRICAL MANUFACTURERS
+ASSOCIATION. NEMA ICS3-1973. Disponível
+em <httpwww.nema.org>, acessado em 19
+nov. 2011.
+PLCMANUAL. PLC History. Disponível em
+<httpwww.plcmanual.com>, acessado em 19
+nov. 2011.
+SAID, R. Curso de Lógica de Programação.
+Editora Digerati. 2007.
+TRIANGLE RESEARCH INTERNATIONAL.
+Trilogi. Disponível em <httpwww.triplc.comtrilogi.htm>, acessado em 19 de nov.
+2011.
+WEG.
+Clic
+WEG.
+Disponível
+em
+<httpwww.weg.netbr>, acessado em 19 nov.
+2011.
+
+Sendo assim, a principal vantagem ao utilizar o
+PLC4u, é permitir errar ao aprender sem sofrer as
+consequências danosas de um erro real, podendo ser
+utilizado não apenas para treinamento, mas também
+para o ensino técnico. Lembrando ainda que leva 
+
+ISBN 978-85-8001-069-5
+
+3952

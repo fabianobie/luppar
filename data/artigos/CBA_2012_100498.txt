@@ -1,0 +1,623 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+FILTRAGEM E ESTIMACAO DE ESTADOS COM RESTRICOES APLICADO AO
+SLAM VISUAL
+Vincius de Oliveira, Paulo Drews Jr., Renan de Oliveira
+
+
+Centro de Ciencias Computacionais (C3), Universidade Federal de Rio Grande (FURG)
+Rio Grande, RS, Brasil
+Emails vinicius@ieee.org, paulodrews@furg.br, renano@gmail.com
+
+Abstract The simultaneous localization and mapping (SLAM) is a common problem in robotics, where the
+robot must build a map of the unknown environment and keep track of its very localization inside this environment. The SLAM problem is generally based on the state estimation of the robot and one of the most famous
+technique is the Kalman Filter. Such technique is optimal for linear systems and Gaussian noise conditions. In
+the nonlinear general case, this technique is suboptimal and may not give a feasible solution. In both cases the
+filter uses two forms of information, which is the numerical model of the system and the sensor data retrieved
+by a sensor, which is known as measurement. Classical implementations of the Kalman filter technique does not
+consider information from the constraints of the system due. The aim of this work is to consider the constraints
+of the system in the estimation technique applied to the implementation of SLAM module for the TATUBOT, a
+duct inspection robot.
+Keywords
+
+Visual SLAM, State Estimation, Extended Kalman Filter.
+
+Resumo O problema de localizacao_e_mapeamento_simultaneos (SLAM) e comum na area de robotica. O
+problema de SLAM e normalmente resolvido atraves de estimacao_de_estados, sendo o filtro de Kalman o mais
+utilizado. O filtro de Kalman obtem a solucao otima quando o rudo nos dados e Gaussiano e o sistema e linear.
+Quando essas premissas nao sao validas, a solucao e sub-otima e pode divergir, em alguns casos. Assim, utilizar
+as restricoes do sistema pode melhorar a estimacao nesses casos. O presente trabalho busca explorar as restricoes
+de sistemas para melhorar a estimacao_de_estados utilizando um filtro de Kalman Estendido. Resultados foram
+obtidos aplicando-se restricoes na estimacao de localizacao e mapeamento visual do robo de inspecao de dutos
+TATUBOT.
+Palavras-chave
+
+.
+
+Introducao
+
+A estimacao_de_estados e estudada nas mais diversas areas, por isso se encontra na literatura
+uma grande quantidade de trabalhos sobre o tema.
+Uma das tecnicas alternativas mais conhecidas e
+a tecnica de Monte Carlo Markov Chains (Robert
+and Casella, 1999 Geyer, 1992).
+Outra tecnica bastante encontrada na literatura e o filtro de Partculas. O filtro de Partculas
+apresenta, para um numero grande de amostras
+(chamadas de partculas), uma aproximacao melhor para a estimacao dos sistemas_nao-lineares
+do que o filtro de Kalman estendido, embora tenha uma demanda computacional muito maior
+que e dependente do numero de partculas e da
+complexidade do modelo. O artigo (Carpenter
+et al., 1999) demonstra como melhorar as implementacoes do filtro de Partculas para serem estruturalmente eficientes, prevenindo contra o colapso
+das partculas e a perda de eficiencia computacional.
+Novas tecnicas hbridas comecaram a surgir
+com as transformadas unscented que incluem a
+aplicacao dessas transformadas dentro do Filtro de
+Kalman (Julier and Uhlmann, 1997) e dentro do
+Filtro de Partculas (van der Merwe et al., 2000).
+Em paralelo com o desenvolvimento de novas
+tecnicas para estimacao_de_estados, ocorre a pesquisa da aplicacao de tecnicas de restricoes aos
+
+ISBN 978-85-8001-069-5
+
+diferentes tipos de estimadores. Muitas tecnicas
+foram desenvolvidas para a aplicacao de restricoes
+aos diferentes tipos de problemas, em (Simon and
+Chia, 2002), e possvel encontrar algumas dessas
+tecnicas para restricoes_de_igualdade e suas aplicacoes no filtro de Kalman. Os trabalhos (Teixeira
+et al., 2009 Simon, 2010) apresentam uma quantidade significativa de tecnicas para os mais diversos
+sistemas, que incluem sistemas_lineares com restricoes lineares, sistemas_nao-lineares com restricoes lineares e sistemas_nao-lineares com restricoes
+nao-lineares.
+O Filtro de Kalman (Kalman, 1960) e um metodo estatstico cujo principal objetivo e analisar
+medicoes imprecisas feitas ao longo do tempo e,
+atraves de uma serie de equacoes matematicas,
+minimizar a media do erro quadratico. O Filtro
+de Kalman e otimo para sistemas_lineares, desde
+que suas propriedades Gaussianas e a premissa
+de que o sistema e linear sejam satisfeitas. Assim, quando trate-se de sistemas_nao-lineares, nao
+ha garantia de convergencia dos resultados. Uma
+forma de tratar problemas nao-lineares e aplicar
+o filtro de Partculas (Arulampalam et al., 2002),
+que resolve de forma aproximada problemas naolineares e nao Gaussianos, mas com elevado custo
+computacional, tornando inviavel a sua aplicacao
+em sistemas_de_tempo_real.
+Existem diferentes tipos de restricoes com diferentes tipos de propriedades. As restricoes po-
+
+4043
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+dem ser do tipo hard constraints, essas restricoes
+sao do tipo que impossibilitam o estado, ou seja, a
+probabilidade do sistema se encontrar nesse estado
+e zero. Outro tipo de restricao e conhecida como
+soft constraint, essas restricoes nao tem probabilidade nula, mas a probabilidade e tao baixa que e
+muito mais provavel que seja um erro contido no
+estado do que o valor real do estado. Restricoes
+soft tambem incluem os tipos onde a funcao de
+restricao nao e conhecida exatamente.
+A abordagem sobre restricoes hard e restricoes
+soft geralmente e a mesma, para simplificacao do
+problema, ambas sao tratadas como a primeira.
+Porem, encontrado-se na literatura trabalhos que
+atribuem um peso nfimo ao valor que viola as
+restricoes soft para levar em consideracao caso o
+estado do sistema se encontre sobre o limite entre a area irrestrita do sistema e a area restrita
+(Benavoli et al., 2007). A aplicacao de restricoes
+na estimacao_de_estados tem recebido cada vez
+mais atencao nos ultimos anos, tanto no ambiente
+academico, quanto no ambiente industrial, que notaram a sua utilidade devido as melhorias significativas obtidas nos resultados de estimadores com
+restricoes (Simon, 2006).
+O presente trabalho visa aplicar restricoes sobre a versao estendida do filtro de Kalman. O filtro sera utilizado especificamente para a aplicacao
+de tecnicas de localizacao e mapeamento simultaneo (SLAM, do ingles Simultaneous Localization
+and Mapping) em um robo de inspecao de dutos.
+2
+
+Filtro de Kalman
+
+O filtro desenvolvido por Kalman em 1960,
+(Kalman, 1960) e a ferramenta mais conhecida
+que soluciona de forma otima e recursiva o problema de estimacao_de_estados. A condicao de
+otimalidade esta fortemente baseada nas premissas de linearidade e rudo Gaussiano que o sistema deve ser composto (Teixeira et al., 2009).
+Existem diversas aplicacoes do filtro de Kalman,
+como biomedicina, controladores aeroespaciais e
+robotica, com enfase em sua aplicacao para localizacao e mapeamento simultaneo (SLAM) e navegacao, economia e previsao do tempo. A seguir
+serao apresentadas as equacoes do passo de predicao e do passo de atualizacao que compoem o
+filtro de Kalman.
+2.1
+
+Predicao
+
+A etapa de predicao tem como objetivo prever o
+estado com media e covariancia atuais e e composta pelo calculo das seguintes equacoes
+Xkk1
+Pkk1
+
+
+
+Ak Xk1k1 + Bk uk
+
+(1)
+
+
+
+Ak Pk1k1 Atk
+
+(2)
+
++ Qk
+
+A Equacao 1 prediz a estimativa do estado,
+Xkk1 , sendo Ak a matriz de transicao de esta-
+
+ISBN 978-85-8001-069-5
+
+dos que determina a relacao do estado anterior
+com o estado atual. Bk e a matriz de entradas que
+relaciona as entradas do controlador uk com o estado. Ja a matriz da covariancia do erro Pkk1 e
+predita atraves da Equacao 2, tambem com informacoes do passo anterior. A componente Qk tem
+os valores de erro do modelo de predicao, sendo
+geralmente uma matriz identidade composta pelo
+desvio padrao do modelo de transicao.
+2.2
+
+Atualizacao
+
+O objetivo desse passo e atualizar o estado predito com as informacoes medidas, isto e, a partir
+da recepcao dos valores medidos pelos sensores,
+obtendo um estado posterior com a mnima covariancia possvel. Esse estado final e uma fusao das
+informacoes do estado predito e do estado observado pelos sensores
+ zk  Ck Xkk1 ,
+
+(3)
+
+Sk
+
+ Ck Pk1k1 Ckt + Rk ,
+
+(4)
+
+Kk
+
+ Pkk1 Ckt Sk1 ,
+
+(5)
+
+Xkk
+
+ Xkk1 + Kk y,
+
+(6)
+
+Pkk
+
+
+
+y
+
+(I  Kk Ck )Pkk1 .
+
+(7)
+
+Primeiramente calcula-se a diferenca entre a
+media do estado medido pelos sensores e a media do estado predito, chamada de inovacao sobre
+a medicao, dado pela Equacao 3. O vetor contendo as medias do estado observado e nomeado
+zk . Junto com a inovacao da medicao estima-se
+a matriz de inovacao da covariancia, Sk (Equacao
+4). A matriz Rk , assim como Qk no passo de predicao, contem o desvio padrao dos elementos do
+vetor de medicao. Com base na diferenca entre o
+estado observado e o estado predito e calculado o
+ganho de Kalman, Kk (Equacao 5). O ganho de
+Kalman e aplicado para a media na Equacao 6 e
+para a covariancia na Equacao 7.
+2.3
+
+Filtro de Kalman Estendido
+
+Para sistemas_nao_lineares, a solucao para o problema de estimacao_de_estados e complicada devido ao fato da distribuicao probabilstica nao ser
+somente caracterizada por sua media e covariancia. Por isso foram desenvolvidas aproximacoes
+para o filtro de Kalman que aproximam a media
+do estado e a covariancia, Xkk e Pkk , a partir de
+xx
+seu estado inicial, x00 e P00
+que e assumidamente
+conhecido.
+O Filtro de Kalman Estendido (EKF) e o filtro de Kalman que lineariza a media e a covariancia de um modelo nao-linear para ser tratado
+pelo filtro de Kalman. Ao linearizar ha perda de
+informacoes, assim o filtro de Kalman Estendido
+se torna sub-otimo e tende a divergir mais facilmente que o filtro de Kalman. O EKF e uma
+solucao aproximada para sistemas_nao_lineares e
+
+4044
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+nao garante a solucao otima para esses sistemas,
+mas garante a solucao otima para as variaveis lineares caso existiam, pois, nesse caso, o filtro se
+comporta da mesma maneira que sua forma normal.
+Desse modo, as equacoes de predicao do filtro de Kalman, equacoes 1 e 2, serao alteradas
+para usar Fk conforme a Equacao 8 e Equacao 9
+demonstram, respectivamente.
+Xkk1
+Pkk1
+
+
+
+Fk Xk1k1 + Bk uk ,
+
+(8)
+
+
+
+Fk Pk1k1 Fkt
+
+(9)
+
++ Qk .
+
+No passo de atualizacao as equacoes 3, 4, 5
+e 7 sao alteradas, permanecendo apenas a Equacao 6 inalterada. As equacoes impactadas pelas
+modificacoes do filtro de Kalman estendido sao
+apresentas abaixo, respectivamente, conforme as
+equacoes 10, 11, 12 e 13.
+y
+
+2.4
+
+ zk  Hk Xkk1 ,
+
+Sk
+
+
+
+Kk
+
+
+
+Hk Pk1k1 Hkt
+Pkk1 Hkt Sk1 ,
+
+Pkk
+
+
+
+(I  Kk Hk )Pkk1 .
+
++ Rk ,
+
+(10)
+(11)
+(12)
+(13)
+
+Filtro de Kalman Estendido com Restricoes
+
+Existem uma variedade de tecnicas propostas na
+literatura para aplicar restricoes no filtro de Kalman, as diferentes tecnicas trabalham com diferentes tipos de restricoes e algumas ate com mais
+de um tipo. Somente em (Teixeira et al., 2009),
+foram demonstradas quatorze tecnicas de restricao. Destas tecnicas foi estudada e implementada
+a tecnica de projecao de estimativa (Simon and
+Chia, 2002), devido a sua simplicidade e eficiencia,
+e foi aplicada no filtro de Kalman Estendido. Esta
+tecnica segue a mesma metodologia de aplicacao
+das restricoes apos a etapa de correcao do filtro de
+Kalman, conforme demonstrado na Figura 1.
+
+locais em relacao ao estado do sistema.
+Dk1 Xkk  dk1 ,
+
+(14)
+
+onde Dk e dk sao definidos previamente com o problema de estimacao do sistema, junto com quais
+variaveis serao monitoradas no estado e quais dessas variaveis dentro do estado sao observaveis. Ao
+final do filtro de Kalman sao adicionadas as equacoes 15 e 16, respectivamente, em uma etapa extra, que foi chamada de etapa de restricao. O
+primeiro passo na etapa de restricao e encontrar a
+media do estado ao se projetar a estimativa sobre
+a area irrestrita da distribuicao. A media e obtida
+atraves da Equacao 15, onde Xkk e a media do
+estado restrito no passo k.
+Xkk  Xkk  W 1 Dt (DW 1 Dt )1 (DXkk  d).
+(15)
+A matriz W e uma matriz definida positiva,
+caso os rudos de processo e medicao sejam Gaussianos. Ela e igualada a inversa da matriz de co1
+variancia do erro, W  Pkk
+, obtendo-se a estimativa de maxima probabilidade do estado sujeito
+a restricoes. Assumindo a matriz de pesos igual
+a identidade, W  I, e obtida a estimativa de
+mnimos_quadrados do estado sujeito a restricoes
+(Simon, 2010). Na aplicacao da tecnica no presente trabalho, como os rudos eram considerados
+1
+Gaussianos, W foi inicializada como Pkk
+.
+Ainda e preciso recalcular a matriz de covariancia do erro para a nova media, feito atraves
+da Equacao 16. O calculo da matriz do erro de
+covariancia restrito nao e necessario caso o estado
+restrito nao seja utilizado para predizer o proximo
+passo.
+Pkk  I  W Dt (DW Dt )1 DPkk .
+
+(16)
+
+No caso de predicao utilizando o estado restrito as equacoes 8 e 9 sao alteradas resultando
+em
+Xkk1
+Pkk1
+
+ Fk Xk1k1 + Bk uk ,
+
+
+Fk Pk1k1 Fkt
+
++ Qk .
+
+(17)
+(18)
+
+O filtro de Kalman estendido restrito entao
+e composto, em ordem, pelas equacoes 17 e 18
+no estagio de predicao, pelas equacoes 10 a 13 no
+estagio de atualizacao e, pelas equacoes 15 e 16,
+no estagio de restricao.
+3
+
+Experimentos Realizados
+
+Figura 1 Etapas do Filtro de Kalman com Restricoes.
+
+3.1
+
+Para a tecnica de projecao de estimativa sera
+utilizada a Equacao 14 para representar que o mapeamento e as restricoes podem sofrer variacoes ao
+longo dos passos. Isso se deve ao fato que a referencia das restricoes podem nao ser globais, mas
+
+Neste trabalho utilizou-se como objeto de experimentacao o robo de inspecao de dutos TATUBOT
+(Estrada et al., 2008), desenvolvido pelo Grupo
+de Automacao e Robotica Inteligentes (NAUTEC) do Centro de Ciencias Computacionais da
+
+ISBN 978-85-8001-069-5
+
+Plataforma TATUBOT  Robo de Inspecao
+de Dutos
+
+4045
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+FURG1 . A principal funcao desta plataforma robotica e inspecionar cabos de distribuicao de energia no interior de dutos. O TATUBOT, como e
+chamado, e equipado com atuadores e sensores que
+permitem sua locomocao no interior dos dutos, e
+tambem a inspecao dos cabos encontrados dentro do duto. Na Figura 2 encontra-se o prototipo
+deste robo. Maiores detalhes a respeito da plataforma podem ser obtidos em (Estrada et al., 2008).
+
+posicao, velocidade, orientacao e velocidade_angular com seis_graus_de_liberdade. Essa tecnica mantem todas as variaveis mencionadas no estado do
+filtro de Kalman e, alem disso, mantem o estado
+com tamanho dinamico devido a todos os pontos
+mapeados no ambiente tambem serem armazenados no estado. Essa aproximacao permite a predicao de posicao dos pontos no passo seguinte pelo
+filtro a fim de obter estimativas a partir da diferenca dos pontos.
+3.3
+
+Figura 2 Robo de inspecao de dutos, onde o retangulo vermelho ilustra a camera utilizada para
+obter as imagens utilizadas na tecnica de SLAM.
+
+3.2
+
+Localizacao e Mapeamento
+
+Um dos problemas que devem ser resolvidos para
+permitir a inspecao pelo TATUBOT e a localizacao, visto que GPS tipicamente nao funcionam
+dentro de dutos e tecnicas classicas de deadreckoning sao de difcil implementacao. Assim, o
+SLAM surge como uma alternativa para localizar
+o veculo e permitir identificar o local de uma falha, por exemplo.
+A tecnica implementada para SLAM utiliza a
+aproximacao por amostragem aleatoria de pontos
+de uma imagem usando camera monocular dentro
+de um EKF (Civera et al., 2010), onde se mapeia
+pontos no ambiente e tenta correlacionar pontos
+iguais em medicoes sequenciais da camera. Essa
+tecnica estima os parametros de um modelo_matematico atraves de um conjunto de dados observados. Sobre esses pontos e utilizada a tecnica
+de Random Sample Consensus de um ponto, utilizando a informacao a priori do EKF.
+A tecnica de RANSAC visa escolher entre os
+pontos da amostragem quais sao mais inovadores
+em termos de informacao, quais sao menos inovadores e quais devem ser ignorados, seja por nao
+trazer informacao nova ou por se tratar de um
+falso positivo, i.e., pontos que foram correlacionados em amostragens sequenciais mas na verdade
+nao sao os mesmos.
+O resultado obtido atraves do correlacao dos
+pontos da amostragem permite a estimativa da
+1 C3
+
+ Universidade Federal do Rio Grande
+
+ISBN 978-85-8001-069-5
+
+Implementacao
+
+A tecnica de SLAM, que contem a tecnica de
+RANSAC de um ponto e o filtro de Kalman estendido, encontra-se implementada em MATLAB c .
+O codigo da tecnica de SLAM foi disponibilizado
+por (Civera et al., 2010), mas para viabilizar sua
+aplicacao no TATUBOT foram necessarias modificacoes. Dentre as modificacoes se ressalta a adaptacao dos parametros de desvio padrao da posicao
+e da velocidade, e tempo de captura da camera.
+O ambiente de utilidade do TATUBOT e propcio a aplicacao de restricoes pelo fato do robo ter
+somente dois_graus_de_liberdade, mas seu estado
+dentro do filtro e composto por seis_graus_de_liberdade devido a tecnica de SLAM que supoe que
+o veculo esteja livre no ambiente. Assim, como
+a tecnica de localizacao e aplicada no passo de
+correcao, e possvel utilizar a informacao de que
+o veculo tem somente dois_graus_de_liberdade ao
+aplicar o passo de restricao.
+Considerando a tecnica onde o estado restrito
+e utilizado para predizer o proximo passo, houve
+o desafio extra de fazer a tecnica de restricao nao
+ter grande impacto sobre a tecnica SLAM, ou seja,
+nao impedir o funcionamento da tecnica de RANSAC, evitar a divergencia do filtro de Kalman e
+nao ter grande influencia sobre a correlacao dos
+pontos. Para facilitar a identificacao desta tecnica
+ela foi nomeada, para o presente trabalho, como
+metodo das restricoes postergadas.
+No EKF da tecnica de SLAM foram acrescentadas as equacoes da tecnica de projecao de
+estimativa para tratar as restricoes. Todas as restricoes foram consideradas como restricoes hard,
+embora as restricoes de posicao sejam soft. Isso se
+deve ao fato da variacao ser tao baixa que nao ha
+um ganho significativo de informacao que justifique o fato de aumentar o peso computacional da
+tecnica para tratar essa variabilidade de posicao.
+3.4
+
+Resultados Obtidos
+
+Foram obtidas sequencias de imagens conforme
+mostra a Figura 3, onde a entrada do sensor e
+mostrado do lado esquerdo(a imagem da camera
+capturada pelo TATUBOT), com os pontos de interesse detectados, e do lado direito, mostra uma
+ilustracao do mapeamento e do deslocamento do
+veculo.
+
+4046
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+sultado e mais proximo da realidade no espaco
+de maior probabilidade do estado, como pode ser
+visto ao se comparar os valores das duas imagens.
+A distribuicao demonstrada nessas imagens representa o espaco amostral onde o veculo tem maior
+probabilidade de se encontrar, onde, conforme as
+propriedades de distribuicoes Gaussianas, o deslocamento real tem probabilidade de 68,26 de se
+encontrar dentro dos desvios padroes e 95,44 de
+se encontrar dentro de dois desvios padroes, que e
+o intervalo demonstrado nas figuras.
+Figura 3 Estado ao final do passo. (a) Entrada
+do sensor (Imagem fornecida pela camera). (b)
+Estado mapeado.
+A Figura 3(a) mostra a imagem processada
+pela tecnica de SLAM e utilizada como medicao
+pelo filtro de Kalman. Nessa imagem encontramse os pontos utilizados para correlacao, a coloracao
+dos pontos indicam qual a informacao que trazem.
+Em magenta, sao os pontos descartados, em azul
+os pontos que nao foram correlacionados em imagens diferentes e, em vermelho com linhas grossas e finas, sao os pontos utilizados para estimar
+as velocidades e posicoes relativas entre os passos. Onde o vermelho com linha fina representa
+os pontos mais inovadores.
+A imagem do mapeamento, Figura 3(b), apresenta a posicao do veculo e a sua orientacao vistas
+do topo, que e ilustrado pelo triangulo preto, onde
+sua orientacao e o sentido em que esse triangulo
+aponta e seu centro e o ponto que contem o valor
+da media do estado. A reta preta e a rota que o
+veculo percorreu, criada a partir de informacoes
+dos estados anteriores. Por ultimo, existem os tracejados e crculos vermelhos, que sao os pontos
+utilizados pela tecnica de RANSAC dispostos no
+mundo. As setas apontando para fora do ambiente mapeado sao pontos que tem sua distancia no
+infinito, esses sao os pontos que foram mapeado,
+pela primeira vez, portanto ainda nao tiveram sua
+distancia ao veculo estimada.
+O primeiro teste foi o deslocamento do veculo para a frente por 111cm, utilizando a tecnica de restricao sem propagar seu resultado para
+o proximo passo. O objetivo principal foi verificar o quao proximo da realidade o estado final se
+encontrou, e a diferenca dos resultados do algoritmo sem aplicar restricoes, aplicando restricoes
+mas sem propagar para o proximo passo e utilizando o estado restrito para predizer o proximo
+passo.
+Os graficos mostrados na Figura 4 demonstram a distancia deslocada pelo veculo entre o
+estado inicial e o estado final e seu desvio padrao
+para o primeiro caso de teste. O desvio padrao
+da tecnica com restricao e maior que o desvio padrao sem a utilizacao da tecnica, porem seu re-
+
+ISBN 978-85-8001-069-5
+
+Figura 4 Distribuicao do deslocamento no estado final estimado sem e com restricoes, respetivamente. Medidas em centimetros.
+A Figura 5 contem o comparativo das trajetorias mapeadas, e importante observar que sem
+restricoes, o veculo nao realiza uma trajetoria retilnea, demonstrando o erro que e filtrado ao utilizar a informacao das restricoes. Essa distribuicao tambem tem seus limites em torno de dois
+desvios padroes da media, correspondendo a probabilidade de 95,44 do estado real se encontrar
+nesse intervalo.
+
+Figura 5 Comparativo das rotas de deslocamento
+do veculo, tracejado preto, das estimativas dos
+estados finais sem restricao (esquerda) e com restricao (direita) no primeiro teste.
+Um segundo teste realizado visou estabelecer
+a integridade do caminho percorrido, o veculo foi
+deslocado em sentido para frente e para tras alternadamente sem parar. Esse teste teve como
+objetivo acompanhar a trajetoria mapeada pelo
+robo e se essa trajetoria esta correta conforme a
+realidade. O intervalo do incio de movimentacao em um sentido ate sua mudanca de sentido foi
+chamado de intervalo de movimento.
+Os resultados do segundo teste demonstraram
+que a tecnica sem restricoes tem facilidade em perder a continuidade do caminho percorrido, o que
+a tecnica com restricoes nao demonstra, embora
+nao tenha sido possvel determinar o real deslocamento em cada intervalo de movimento do veculo. O comparativo dos caminhos percorridos e
+
+4047
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+encontrado na Figura 6, onde e possvel verificar,
+no caso sem restricoes, deslocamento no eixo das
+abcissas e rotacoes em torno de outros eixos sem
+ser o eixo de deslocamento (que na figura e o eixo
+das ordenadas), o que tambem nao e possvel de
+existir devido a caracterstica construtiva do duto
+e do TATUBOT.
+
+king, IEEE Transactions on Signal Processing 50(2) 174188.
+Benavoli, A., Chisci, L., Farina, A., Ortenzi, L.
+and Zappa, G. (2007). Hard-constrained vs.
+soft-constrained parameter estimation, IEEE
+Transactions on Aerospace and Electronic
+Systems 42(4) 12241239.
+Carpenter, J., Clifford, P. and Fearnhead, P.
+(1999). Improved particle filter for nonlinear
+problems, Journal of Radar, Sonar and Navigation 146(1) 27.
+
+Figura 6 Comparativo das rotas de deslocamento
+do veculo, tracejado preto, das estimativas dos
+estados finais sem restricao (esquerda) e com restricao (direita) no segundo caso de teste (deslocamento para a frente e para tras de modo contnuo).
+
+4
+
+Conclusao e Perspectivas Futuras
+
+Embora a aplicacao de restricoes no filtro de Kalman esteja em estudo a mais de vinte anos, ainda
+nao se encontra na literatura muitos trabalhos sobre a aplicacao na area de robotica e automacao.
+Com os resultados obtidos nesse trabalho, visa se
+acrescentar informacoes sobre a atuacao de restricoes na aplicacao do filtro de Kalman Estendido utilizado no modulo de SLAM. Neste trabalho obteve-se resultados mais precisos em comparacao a nao utilizacao da informacao das restricoes, comparando uma tecnica estado-da-arte em
+estimacao_de_estados baseadas em imagens.
+Apesar dos testes terem dado uma boa demonstracao da tecnica, uma sequencia maior de
+testes sera realizada como trabalhos futuros, visto
+que alguns modulos da plataforma TATUBOT estao em fase final de construcao. Tem-se como continuidade deste trabalho corrigir as incompatibilidades da tecnica de truncamento da distribuicao probabilstica, pois essa tecnica trabalha com
+restricoes intervalares e permitira a aplicacao de
+restricao tambem aos pontos da tecnica RANSAC
+armazenados no estado, diferentemente da tecnica
+de projecao de estimativa que foi implementada
+para ignorar esses pontos. Pretende-se tambem
+a utilizacao de sensoriamento complementar baseado em dados inerciais com uso de acelerometros
+e girometros.
+Referencias
+Arulampalam, M. S., Maskell, S. and Gordon, N.
+(2002). A tutorial on particle filters for online nonlinearnon-Gaussian bayesian trac-
+
+ISBN 978-85-8001-069-5
+
+Civera, J., Grasa, O. G., Davison, A. J. and Montiel, J. M. M. (2010). 1-point RANSAC for
+EKF filtering. application to real-time structure from motion and visual_odometry, Journal of Field Robotics 27(5) 609631.
+Estrada, E., Silveira, L., Correa, U., de Oliveira,
+V. and Botelho, S. (2008). Arquitetura de
+navegacao de linhas subterraneas de distribuicao de energia, Vetor 18(1) 3245.
+Geyer, C. J. (1992). Practical markov chain monte
+carlo, Statistical Science 7(4) 473483.
+Julier, S. J. and Uhlmann, J. K. (1997). A new extension of the Kalman filter to nonlinear_systems, Proc. of Society of Photographic Instrumentation Engineers (SPIE) - Vol. 3068,
+pp. 182193.
+Kalman, R. E. (1960). A new approach to linear
+filtering and prediction problems, Transaction of the ASME Journal of Basic Engineering pp. 3545.
+Robert, C. P. and Casella, G. (1999). Monte Carlo
+Statistical Methods, Springer.
+Simon, D. (2006). Optimal State Estimation, John
+Wiley  Sons.
+Simon, D. (2010). Kalman filtering with state
+constraints A survey of linear and nonlinear
+algorithms, IET Control Theory  Applications 4(8) 1303  1318.
+Simon, D. and Chia, T. L. (2002). Kalman filtering with state equality constraints, IEEE
+Transactions on Aerospace and Electronic
+Systems 38(1) 128136.
+Teixeira, B. O. S., Torres, L. A. B. and Aguirre,
+L. A. (2009). Filtragem de Kalman com restricoes para sistemas_nao-lineares Revisao e
+novos resultados, Revista Controle  Automacao 21(2).
+van der Merwe, R., Doucet, A., de Freitas, N. and
+Wan, E. (2000). The unscented particle filter,
+Advances in Neural Information Processing
+Systems (NIPS) 13 584590.
+
+4048

@@ -1,0 +1,1405 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+ALOCACAO OTIMA DE EQUIPAMENTOS FACTS VIA ALGORITMO GENETICO
+MULTIOBJETIVO E FLUXO DE POTENCIA OTIMO
+Charles Marques de Farias Katia Campos de Almeida
+
+
+
+
+Departamento de Engenharia Eletrica - Universidade Federal de Santa Catarina
+Florianopolis, SC, Brasil
+Email charles.mf@labspot.ufsc.brkatia@labspot.ufsc.br
+
+Resumo Este artigo descreve uma metodologia para resolver o problema de alocacao otima de equipamentos
+FACTS em sistemas de transmissao considerando os criterios economico e tecnico. Um algoritmo_genetico multiobjetivo (AGMO), e empregado para gerar o conjunto de solucoes de Pareto do problema. A factibilidade da solucoes
+obtidas e garantida atraves de um programa de fluxo_de_potencia_otimo (FPO). O processo de otimizacao obtem
+as localizacoes otimas dos equipamentos FACTS, os tipos empregados e suas capacidades. Dois equipamentos sao
+considerados o compensador estatico de reativos (SVC) e o compensador serie variavel (TCSC). Sao analisados testes
+com o sistema de 30 barras do IEEE e com um equivalente do sistema ingles contendo 40 barras.
+Palavras-chave 
+Abstract This paper presents a computational tool that solves the problem of optimally allocating FACTS
+equipment in a transmission system considering economic and technical criteria. A Multiobjective Genetic Algorithm
+(MOGA) is used to generate the set of Pareto solutions for the problem. The feasibility of the solutions created
+by MOGA is guaranteed via an optimal power flow (OPF) algorithm. The procedure yields the optimal locations
+for the FACTS equipment, their types and working rates. The static var compensator (SVC) and the thyristor
+controlled series capacitor (TCSC) are considered. Results are presented for the IEEE 30-bus test system and for a
+40-bus equivalent of the British system.
+Keywords
+
+1
+
+FACTS Equipment, Multiobjective Genetic Algorithms, Optimal Power Flow
+
+Introducao
+
+e no regime dinamico, auxiliando no controle de oscilacoes eletromecanicas e de tensao. Algoritmos para a
+determinacao da localizacao otima desses equipamentos
+no sistema foram propostos em varios estudos. Entre os
+metodos analticos propostos estao aqueles baseados na
+tecnica de Branch  Bound ou Branch  Cut (Minguez
+et al., 2007 Lima et al., 2003) e os que utilizam analise_de_sensibilidade (Fang et al., 2009). Alem desses,
+ha na literatura tambem diversos trabalhos que propoem
+o uso de meta-heursticas para resolver o problema de
+alocacao. Os trabalho de Chung e colaboradores propoem o uso de AG para encontrar os locais de insercao
+de equipamentos FACTS visando minimizar o custo total de geracao no sistema (Leung e Chung, 1999 Chung
+e Li, 2000). Em (Gerbex et al., 2001) e apresentado um
+estudo sobre a relacao entre o numero de equipamentos
+FACTS instalados e o maximo_carregamento dos sistemas. Em (Lima et al., 2008) e descrita uma metodologia, baseada em nuvem de partculas e no uso de um
+programa de fluxo_de_potencia_otimo, para alocacao de
+TCPST (trasformadores defasadores controlados a tiristor). Em (Radu e Besanger, 2006) o problema de alocacao e formulado respeitando sua natureza multiobjetivo, sendo criterios tecnicos e economicos considerados.
+Em (Volpi e Almeida, 2009) e descrita a aplicacao dessa
+ultima metodologia na alocacao de SVCs e TCSCs em
+uma rede do Sistema Interligado Nacional. A alocacao
+dos equipamentos considerando o modelo reestruturado
+do setor eletrico e avaliada em (Cai et al., 2004).
+
+O planejamento da expansao de sistemas_de_potencia tem
+o objetivo de encontrar o plano otimo de insercao de novos geradores e circuitos de transmissao e distribuicao, de
+forma a atender simultaneamente a previsao de aumento
+da demanda e o fornecimento contnuo de energia. Em
+uma etapa inicial, o planejamento da transmissao considera apenas a demanda de potencia ativa e nessa etapa
+e usada a representacao CC da rede eletrica. Estando
+definido o plano otimo de expansao considerando os requisitos de potencia ativa, utiliza-se a modelagem AC da
+rede eletrica para o planejamento de reativos. Apesar
+das simplificacoes usualmente introduzidas na primeira
+etapa, o problema a ser resolvido e inteiro-misto, podendo ser tambem nao linear (Sanchez et al., 2005). No
+planejamento de reativos, o problema a ser resolvido se
+torna ainda mais complexo devido a necessidade de se representar a rede eletrica atraves do modelo CA. Devido a
+grande complexidade desses problemas, um numero consideravel de metodos matematicos foi proposto para sua
+resolucao (Latorre et al., 2003).
+O contnuo aumento na demanda, acompanhado pela
+adocao de normas cada vez mais restritivas para a construcao de novas usinas de geracao e linhas_de_transmissao, torna imprescindvel fazer o melhor uso possvel
+dos sistemas existentes. Neste contexto, os equipamentos FACTS (Hingorani, 1988) surgem como uma alternativa para a expansao do sistema. Tais equipamentos
+sao baseados em eletronica de alta potencia e foram desenvolvidos com a ideia de tornar os sistemas mais flexveis do ponto de vista de controle. Devido a sua versatilidade, equipamentos FACTS podem atuar no regime
+permanente, controlando variaveis ate entao inacessveis,
+
+Um ponto comum dos trabalhos anteriores e o uso,
+pelas meta-heursticas, de algoritmos capazes de obter os
+pontos de operacao do sistema apos tenham sido geradas
+novas posicoes e definidos os tipos e capacidades dos equipamentos. Para tanto, sao usados de algoritmos de fluxo
+
+592
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+de carga (Leung e Chung, 1999 Gerbex et al., 2001 Radu
+e Besanger, 2006 Volpi e Almeida, 2009), ou de fluxo de
+potencia otimo linear (Lima et al., 2003) ou nao linear
+(Lima et al., 2008 Chung e Li, 2000). O presente trabalho se enquadra na ultima categoria. Propoe-se aqui o
+uso de um algoritmo_genetico multiobjetivo, em conjunto
+com um algoritmo de fluxo_de_potencia_otimo (Almeida
+e Salgado, 2000), para alocar equipamentos FACTS na
+rede eletrica. Para tanto, leva-se em consideracao, simultanemente, o desempenho do equipamento (criterio
+tecnico) e seu custo (criterio economico). Dois criterios
+tecnicos foram analisados independentemente minimizacao dos desvios quadraticos das tensoes em relacao ao
+perfil plano e maximizacao da transferencia de potencia
+entre areas. A consideracao simultanea dos criterios tecnico e economico faz com que a atencao se volte para
+a obtencao da fronteira de eficiencia do problema (fronteira de Pareto). O trabalho e uma extensao dos estudos realizados em (Radu e Besanger, 2006 Volpi e Almeida, 2009), atraves da inclusao do FPO com modelos
+mais detalhados para o SVC e o TCSC e da introducao
+de mecanismos para a preservacao da diversidade populacional gerada pelo AGMO.
+O restante do artigo esta divido em quatro secoes.
+Na Secao 2 sao abordadas as questoes relacionadas com
+alocacao otima dos equipamentos FACTS e e descrita a
+formulacao matematica do problema. Na Secao 3 e descrito o AGMO implementado. Na Secao 4 sao discutidos
+os resultados obtidos em testes no sistema de 30 barras
+do IEEE e em um equivalente de 40 barras do sistema
+ingles. Por fim, na Secao 6, sao tiradas algumas conclusoes.
+2
+
+tiobjetivo e que a otimizacao vise a obtencao da fronteira
+de eficiencia (Pareto-otima), ou seja, encontrar as solucoes nao dominadas do problema (Deb, 2001).
+Dois criterios tecnicos, representados por diferentes
+funcoes objetivo, Ft , sao analisados. A primeira funcao
+objetivo, denominada MDT, representa a o desvio quadratico das magnitudes de tensao em relacao a um valor
+de referencia. Alocam-se os equipamentos FACTS que
+minimizem o valor de MDT, que e expressa como
+!2
+Ã
+n
+X
+Vkref  Vk
+(1)
+M DT 
+Vkref
+k1
+onde Vkref e Vk representam o valor de referencia e o valor
+calculado da magnitude de tensao da barra k, respectivamente, e n e o numero de barras do sistema.
+A segunda funcao tecnica analisada representa o somatorio dos fluxos nas linhas que interligam diferentes
+areas do sistema (MFL). A insercao dos equipamentos e
+feita para maximizar MFL, que pode ser expressa como
+X
+f li
+(2)
+MFL 
+i
+
+onde  representa o conjunto de linhas de interligacao e
+f li representa o fluxo de potencia ativa na linha i.
+O criterio economico, expresso por Fe , representa os
+custos dos equipamentos SVC (Csh ) e TCSC (Cs ). Tais
+custos sao obtidos atraves de aproximacoes quadraticas
+das curvas apresentadas em (Cai et al., 2004)
+Csh  0, 004 (Qsh )2 0, 4251Qsh +129, 38 (USkvar) (3)
+Cs  0, 001 (Qs )2 0, 8230Qs +133, 75 (USkvar) (4)
+
+onde Qsh e Qs sao as potencias reativas em Mvar injetadas pelo SVC e TCSC, respectivamente. Assim, a funcao
+economica (Fe ) e definida como sendo
+
+Alocacao Otima de FACTS
+
+Os estudos necessarios para se determinar os tipos, capacidades e localizacoes otimas de equipamentos FACTS
+na rede podem ser classificados como estudos de expansao do sistema. O problema a ser resolvido possui uma
+formulacao matematica complexa, exigindo que o modelo_nao_linear da rede eletrica seja considerado e que
+uma analise do comportamento dinamico do sistema seja
+feita. Mesmo que o desempenho dinamico do sistema
+nao seja considerado, como acontece no presente trabalho, as equacoes algebricas nao lineares da rede eletrica
+elevam consideravelmente a complexidade do problema
+de otimizacao a ser resolvido que e descrito a seguir.
+2.1
+
+Fe  Csh + Cs
+
+(USkvar)
+
+(5)
+
+As solucoes com equipamentos FACTS devem satisfazer todas as restricoes de balanco de potencia ativa e reativa da rede, os limites fsicos e operacionais do sistema,
+inclusive os limites dos proprios equipamentos FACTS, e
+tambem as equacoes que regem a operacao desses equipamentos em regime_permanente. O problema de otimizacao a ser resolvido pode ser representado de forma
+compacta como
+M in
+s.a
+
+Formulacao do Problema
+
+Dois criterios sao cruciais na definicao de reforcos do sistema o economico e o tecnico. A busca de uma solucao
+que minimize o primeiro criterio levara a uma solucao
+mais viavel. A escolha da solucao com maior potencial de
+resolver os problemas detectados na operacao, ou ainda,
+com maior potencial tecnico, levara, em ultima analise,
+ao uso eficiente do equipamento por um perodo maior.
+Entretanto, esses dois criterios sao, muitas vezes, antagonicos. Alem disso, devido as suas naturezas diversas, os
+dois criterios nao podem ser combinados. Portanto, e
+necessario que o problema seja abordado na forma mul-
+
+F  Ft (u, x), Fe (u, x)
+g(u, x)  0
+
+(6)
+(7)
+
+h(u, x)  0
+u  1, 2, ...
+
+(8)
+(9)
+
+O problema (6)-(9) possui dois tipos de variaveis x
+e o vetor de variaveis reais, composto por geracoes de potencia ativa e reativa, magnitudes e angulos das tensoes
+de barra, susceptancias shunt dos SVCs, taps de transformadores de tensao variaveis e reatancias de TCSCs e u e
+o vetor de variaveis inteiras, composto pelos ndices das
+posicoes dos equipamentos FACTS. As restricoes (7) representam as equacoes de balanco de potencia no sistema.
+
+593
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+3
+
+Por fim, (8) representa os limites fsicos e operacionais do
+sistema. Como g e h sao nao lineares (nao convexas), F e
+vetorial e u  N , o problema e nao-linear, multiobjetivo
+e inteiro-misto. Deve-se observar que o problema e formulado como sendo de minimizacao. Desta forma, caso
+se queira adotar como criterio tecnico a maxima transferencia de potencia entre regioes obtida com a insercao
+dos equipamentos FACTS, deve-se fazer Ft  M F L.
+Os modelos usados para representar o SVC e o TCSC
+sao descritos a seguir.
+2.2
+
+Os AGs sao tecnicas que tentam emular o processo de
+adaptacao artificialmente. Diretamente relacionado com
+o comportamento natural das especies, os AGs trabalham com uma populacao de indivduos representando
+cada um uma solucao para o problema. A cada indivduo e atribudo uma medida de aptidao e atraves das
+operacoes geneticas os indivduos mais aptos tendem a
+permanecerem na populacao ao longo das geracoes. Na
+abordagem multiobjetivo, a aptidao e avaliada atraves do
+rank dos indivduos, que e calculado usando o conceito
+de dominancia de solucoes (Deb, 2001).
+Seja y  (x, u). Dadas duas solucoes do problema,
+y1 e y2 , diz-se que y1 domina y2 se F (y1 )  F (y2 ), ou
+seja, Ft (y1 )  Ft (y2 ) e Fe (y1 )  Fe (y2 ). Um ponto y 
+factvel e uma solucao eficiente (ou Pareto-otima) se nao
+existe qualquer outra solucao factvel y que domine y  .
+O conjunto de todas as solucoes eficientes e denominado
+conjunto eficiente ou conjunto Pareto-otimo. A imagem
+do conjunto eficiente no plano Ft Fe e denominada fronteira de eficiencia ou fronteira Pareto-otima.
+A seguir e descrito o mecanismo usado pelo AGMO
+para a determinacao da fronteira de eficiencia do problema (6)-(9).
+
+Representacao dos Equipamentos FACTS
+
+As representacoes do SVC e do TCSC sao mostradas na
+Figura 1.
+i
+i
+
+j
+
+bk
+ZLinha
+
+xTCSC
+
+xlmmin  xlm  xlmmax
+
+(a)
+
+bkmin  bk  bkmax
+
+(b)
+
+Figura 1 Representacao dos FACTS (a) TCSC e (b) SVC
+Atraves da modificacao da reatancia da linha de
+transmissao, o TCSC atua como uma compensacao serie
+capacitiva. Para representa-lo, na modelagem do FPO
+inclui-se uma reatancia variavel na linha, cujos limites
+tambem devem ser considerados
+max
+min
+ xlm  xlm
+xlm
+
+3.1
+
+(10)
+
+local1 ... localnfacts tipo1 ... tipo nfacts
+
+As tres subdivisoes do cromossomo da Figura 2 possuem nf acts gens, sendo nf acts o numero de equipamentos instalados. A primeira subdivisao faz referencia a localizacao do equipamento no sistema de potencia,
+atraves da identificacao da linha no qual o equipamento
+FACTS e instalado. Quando o AG informa a linha contendo o equipamento SVC, ha um sorteio entre as duas
+barras terminais para definir em qual o equipamento sera
+instalado.
+A segunda subdivisao do cromossomo informa o tipo
+de equipamentos (SVC ou TCSC). Por fim, a ultima subdivisao do cromossomo representa a variavel ri associada
+a cada equipamento. Usada para definir a capacidade do
+equipamento, ri e uma variavel aleatoria com distribuicao uniforme entre 0 e 1. A capacidade do SVC e definida
+limitando-se sua susceptancia
+
+(12)
+
+onde bk e Vk sao a suceptancia shunt variavel e a magnitude de tensao na barra em que o equipamento esta
+conectado, respectivamente. A modelagem de cada equipamento introduz novas restricoes ao problema. Em primeiro lugar tem-se a inclusao de limites para a compensacao shunt
+bmin
+ bk  bmax
+(13)
+k
+k
+sao os limites mnimo e maximo da suse bmax
+onde bmin
+k
+k
+ceptancia shunt, respectivamente. Alem disso, a tensao
+no barramento em que o equipamento esta conectado e
+controlada atraves de uma equacao to tipo
+Vkesp
+
+ Vk +  bk Vk2
+
+r1 ... rnfacts
+
+Figura 2 Estrutura simplificada do Cromossomo
+
+(11)
+
+0
+onde xlm
+e a reatancia original da linha e Im e o modulo
+da corrente na linha_de_transmissao onde e inserido o
+TCSC.
+O SVC atua como uma compensacao shunt variavel,
+cuja potencia reativa injetada no sistema e dada por
+
+Qsh  bk Vk2
+
+Codificacao
+
+A codificacao do problema passa, obrigatoriamente, pela
+codificacao do cromossomo, pois e este que vai introduzir
+as opcoes de local de instalacao do FACTS, tipo do equipamento e capacidade operacional. A Figura 2 apresenta
+a estrutura basica dos tres primeiros conjuntos de gens
+do cromossomo.
+
+onde xlm e a nova reatancia da linha com TCSC, ou seja,
+a soma da reatancia original da linha e da compensacao
+do TCSC, (xT CSC ). A potencia reativa gerada pelo equipamento (Qs ) e dada por
+2
+0
+2
+Qs  xT CSC Im
+ (xlm  xlm
+)Im
+
+Solucao via AGMO
+
+bmin
+ ri
+i
+
+(14)
+
+bmax
+ ri
+i
+
+(15)
+
+A capacidade do TCSC e definida limitando-se a reatancia total da linha compensada
+
+onde  e a inclinacao da reta que representa a faixa de
+controle_linear do equipamento e Vkesp e a tensao especificada para a barra na qual o SVC esta conectado.
+
+xlimin 
+
+594
+
+
+1
+ri x0i
+2
+
+xlimax 
+
+
+1
+ri x0i
+2
+
+(16)
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+A estrutura completa do cromossomo e mostrada na
+Figura 3. Nele estao tambem os valores de Ft e Fe , o rank
+e o valor da aptidao compartilhada (fitness sharing) da
+solucao. Os gens rank e fitness sharing sao referentes
+ao processo de otimizacao_multiobjetivo, apresentado a
+seguir.
+
+e j e quantificada pela distancia Euclidiana entre elas,
+calculada no espaco objetivo
+v
+uM Ã
+uX
+dij  t
+k1
+
+local1 ... localnfacts tipo1 ... tipo nfacts
+
+r1 ... rnfacts
+
+Ft
+
+Fe
+
+rank
+
+fitness
+sharing
+
+(max)
+
+Abordagem Multiobjetivo
+
+(t)
+
+fsh 
+
+mi 
+
+onde
+representa o numero de indivduos da geracao t que dominam i. Assim, todos os indivduos naodominados na geracao t possuem rank  1. Na Figura 4 (Deb, 2001) e apresentado um exemplo do processo de atribuicao de rank para os indivduos, onde
+pode-se verificar que todas as solucoes nao dominadas
+possuem rank  1.
+
+fi
+mi
+
+(20)
+
+N
+X
+
+Sh (dij )
+
+(21)
+
+j1
+
+onde N o numero de indivduos no nicho e a funcao
+Sh(di,j ) e expressa
+(
+Sh (dij ) 
+
+
+1
+0,
+
+dij
+share
+
+
+
+se di,j  share
+caso contrario
+
+(22)
+
+1
+
+sendo share e o parametro de compartilhamento.
+Analisando (22) observa-se que, se nao houver nenhuma solucao a uma distancia menor do que share do
+indivduo i, mi  1 e fi nao e modificada. Por outro
+lado, quanto maior o numero de indivduos proximos a
+i (com distancias menores do que share ), maior e mi ,
+ou ainda, mais degradada e fi . Portanto, o fitness sharing atua atraves da reducao da funcao aptidao de cada
+indivduo da sub-populacao por um fator proporcional a
+quantidade de indivduos similares, ou ainda, de acordo
+com o numero de indivduos no nicho definido pelo raio
+share . Consequentemente, ha a reducao da probabilidade de tais indivduos serem selecionados para a operacao de cruzamento nas geracoes posteriores e a diversificacao da populacao e obtida.
+
+3
+5
+1
+2
+
+1
+
+1
+1
+
+Ft
+
+Figura 4 Fronteira de eficiencia e rank dos indivduos
+Tendo como base o rank dos indivduos, e estabelecido um valor de aptidao para cada solucao do problema (Deb, 2001). A funcao aptidao e dada por
+fi  N 
+
+rX
+i 1
+
+ (k)  0, 5 ( (ri )  1)
+
+3.4
+
+Algoritmo de Solucao
+
+O procedimento para a obtencao da fronteira de eficiencia do problema tem inicio com leitura dos parametros
+da simulacao, tais como numero de geracoes, numero de
+indivduos, probabilidade de cruzamento, probabilidade
+de mutacao, entre outros. Na sequencia, ha a definicao
+de forma aleatoria da populacao inicial para dar incio
+ao processo iterativo. O procedimento consiste em obter n cromossomos, sendo cada um uma solucao factvel
+do problema. E sobre essa populacao que serao aplicadas as proximas etapas do processo. Tal tarefa nao e
+das mais complicadas, pois basta gerar n solucoes factveis para o problema e agrupa-las. Os indivduos sao
+avaliados, atraves da execucao de um FPO, e a tecnica
+de fitness sharing e aplicada. Em seguida os operadores
+
+(18)
+
+k1
+
+onde fi e a funcao aptidao do indivduo, ri e o rank do
+indivduo i, (ri ) e o numero de solucoes com rank ri e
+N e o maximo rank dos indivduos.
+3.3
+
+(19)
+
+sendo o fator de degradacao, mi , definido como
+
+(17)
+
+(t)
+pi
+
+Fe
+
+(min)
+
+ Fk
+
+(min)
+
+Na abordagem multiobjetivo, a aptidao de cada indivduo zi esta relacionada com seu rank, que pode ser calculado como
+rank (i, t)  1 + pi
+
+(max)
+
+Fk
+
+!2
+
+onde Fk
+e Fk
+sao os valores maximo e mnimo
+da kesima funcao objetivo, respectivamente, Fk,i (Fk,j )
+e o valor da funcao objetivo k para o indivduo i (j) e M
+e o numero de objetivos.
+A tecnica empregada (fitness sharing) degrada as
+funcoes de aptidao de solucoes que pertencem a um
+mesmo nicho, criando uma aptidao compartilhada
+
+Figura 3 Estrutura completa do cromossomo
+
+3.2
+
+Fk,i  Fk,j
+
+Diversificacao das Solucoes
+
+Estrategias de diversificacao buscam obter solucoes bem
+distribudas ao longo da fronteira de eficiencia. A ideia
+central dessas estrategias e dividir a populacao em diferentes sub-populacoes (nichos) de acordo com a proximidade das solucoes. A proximidade de duas solucoes i
+
+595
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+selecao, cruzamento e mutacao sao aplicados. O procedimento e realizado ate que o numero maximo de geracoes
+seja atingido. O algoritmo simplificado e apresentado na
+Figura 5. Os operadores geneticos usados na implementacao sao detalhados a seguir.
+
+Os pontos de cruzamento escolhidos de maneira aleatoria, sendo diferentes a cada operacao de cruzamento.
+
+12
+
+Capacidade
+Tipo
+
+12
+
+1
+
+3
+2
+
+23
+
+21
+
+11
+
+0,2 23
+1
+
+Local
+
+7
+
+Leitura de Parâmetros
+
+Obtenção da População Inicial
+
+Obtenção de uma nova população,
+através da aplicação dos operadores
+genéticos seleção, cruzamento e
+mutação
+
+4
+
+12
+
+21
+2
+
+11
+1
+
+5
+1
+
+7
+
+3
+
+23
+
+15
+
+1
+
+2
+15
+
+0,1
+
+2
+0,5 0,2
+1
+
+Resultados Numericos
+
+Neste trabalho, serao apresentados os resultados obtidos
+para os sistemas IEEE 30 barras (IEEE-30) e para o equivalente do sistema ingles com 40 barras (ENG-40). Algumas informacoes sobre esses sistemas sao apresentadas
+na Tabela 1. O sistema ingles e usado para comparar os
+resultados do AGMO com os apresentados em(Minguez
+et al., 2007) para o problema de alocacao otima de SVCs.
+Os resultados mostrados a seguir sao os que apresentam
+maior diversidade considerando repetidas simulacoes. Os
+valores em pu estao na base 100MVA
+
+Figura 5 Algoritmos para solucao do problema
+
+Operadores Geneticos
+Selecao
+
+Cada nova populacao e obtida da seguinte maneira 50
+dos mais aptos sao repassados diretamente para a nova
+populacao e o restante e obtido usando o processo de cruzamento, mantendo o numero de indivduos na populacao
+constante. Para definir os indivduos que participarao do
+processo de cruzamento, emprega-se a tecnica de Selecao por Roleta (Deb, 2001). Primeiramente ordenamse os indivduos de acordo com suas aptidoes, do mais
+apto ao menos apto. Em seguida calcula-se o somatorio
+das aptidoes (ftot ) e seleciona-se um numero aleatorio, 
+com distribuicao uniforme no intervalo 0, ftot . Por fim,
+percorre-se a lista ordenada de indivduos somando-se as
+correspondentes aptidoes e comparando essa soma com .
+A posicao da lista ordenada em que tal soma e maior ou
+igual a  corresponde a posicao do indivduo selecionado.
+
+Tabela 1 Resumo dos sistemas simulados
+
+Sistema
+IEEE-30
+ENG-40
+
+Barras
+32
+40
+
+Geradores
+5
+8
+
+ptot
+d (MW)
+283
+41
+
+qdtot (Mvar)
+126
+7
+
+Diversos testes foram realizados para escolha dos parametros das simulacoes e os melhores resultados, considerando os dois sistemas simulados, sao 40 indivduos na
+populacao, 100 geracoes para a convergencia, 1 de probabilidade de mutacao e share  0, 5. Os limites de magnitudes de tensao foram desconsiderados nas simulacoes
+utilizando o sistema ENG-40. Para o sistema IEEE-30
+foram considerados vkmin  0, 950pu e vkmax  1, 050pu.
+4.1
+
+3.5.2
+
+1
+
+Não
+
+Fim
+
+3.5.1
+
+2
+
+O operador mutacao e utilizado para introduzir uma
+diversificacao adicional na populacao com o intuito de
+evitar a convergencia para otimos locais. Cada indivduo da populacao tem a probabilidade pmut de sofrer
+mutacao ao longo das geracoes. A mutacao e realizada
+simultaneamente nas tres primeiras subdivisoes do cromossomo e consiste na geracao aleatoria de novos locais
+de instalacao, tipos e capacidades dos equipamentos.
+
+Cálculo do fitness e aplicação da
+técnica fitness sharing
+
+3.5
+
+0,2
+
+5
+
+0,2 0,3
+
+2
+
+Figura 6 Cruzamento de ponto duplo
+
+Avaliação da função técnica
+através da execução FPO
+
+N máximo de
+gerações ?
+
+12
+
+0,4
+
+0,1
+
+2
+
+Início
+
+Avaliação da função econômica
+
+Cromossomos Filhos
+
+Cromossomos Pais
+
+Cruzamento e Mutacao
+
+Resultados Obtidos para o Sistema ENG-40
+
+O sistema ENG-40 (Minguez et al., 2007) foi usado para
+analisar o desempenho do AGMO quando o criterio tecnico e o MDT. O resultado da aplicacao da metodologia proposta considerando a alocacao de 4 equipamentos
+FACTS e apresentado na Tabela 2. Sao apresentadas
+as 13 solucoes nao dominadas resultantes do processo de
+otimizacao.
+Verifica-se que a solucao que minimiza a funcao tecnica e a inclusao de um FACTS nas barras 29, 32, 33 e 37
+
+A ideia principal do cruzamento e propagar as caractersticas positivas dos indivduos mais aptos da populacao
+por meio da troca de gens entre os mesmos, originando
+novos indivduos. Neste trabalho sao escolhidos dois pontos de cruzamento e, a partir desses, os materiais geneticos dos pais sao trocados de forma intercalada, como
+pode ser observado na Figura 6, na qual e apresentado
+o exemplo de alocacao de quatro equipamentos FACTS.
+
+596
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+dos FACTS da solucao que minimiza o criterio tecnico e
+praticamente a mesma quando o fitness sharing e considerado. Ha somente a substituicao da alocacao do SVC
+na barra 37 por um na barra 19, porem o valor de Ft e
+praticamente o mesmo. Por outro lado, a solucao que
+minimiza o criterio economico apresenta alocacoes em
+barras completamente diferentes das apresentadas com
+o fitness sharing. Embora diferentes, as alocacoes com e
+sem o fitness sharing levam a praticamente o mesmo valor de Fe . Uma possibilidade para essa diferenca na alocacao e a geracao aleatoria de indivduos na populacao
+inicial que, dependendo do caso, pode levar a resultados
+diferentes.
+Alem do fato de a simulacao sem o fitness sharing
+apresentar um numero menor de indivduos na fronteira
+de eficiencia, as solucoes nao estao bem distribudas ao
+longo da fronteira, ou seja, e pequena a diversidade das
+solucoes otimas obtidas pelo AGMO. Isso se deve ao fato
+de que nao e considerado nenhuma degradacao da funcao
+aptidao de indivduos com funcoes tecnica e economica
+semelhantes.
+
+Tabela 2 Resultados para o Sistema IT-40
+Solucao
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+
+Barras
+29, 32, 33, 37
+31, 4, 29, 33
+33, 32, 11, 29
+33, 1, 29, 23
+30, 31, 11, 29
+31, 4, 11, 29
+33, 1, 8, 30
+33, 1, 4, 16
+33, 1, 23, 7
+31, 4, 8, 30
+5, 9, 8, 30
+5, 9, 4, 16
+5, 9, 16, 4
+5, 9, 23, 7
+
+Ft
+0.48
+0.61
+0.65
+0.67
+1.03
+1.07
+1.07
+1.36
+1.44
+1.57
+1.66
+1.96
+1.96
+2.05
+
+Fe (USkvar)
+403.88
+403.69
+403.13
+402.59
+401.27
+401.10
+398.86
+398.74
+397.67
+395.84
+395.50
+395.16
+395.16
+393.35
+
+(solucao 1). Em (Minguez et al., 2007) todas essas barras foram escolhidas, usando o metodo de Benders, para
+a alocacao otima de SVCs. As simulacoes indicaram que
+o sistema, na composicao original, apresenta uma regiao
+com problema de suporte de reativos composta pelas barras 29, 30, 31, 33, 34, 35, 36 e 37. Como pode ser verificado na Tabela 3, as barras nas quais os SVCs foram
+inseridos tem suas tensoes corrigidas. A barra 29 e a que
+apresenta maior carga entre as quatro barras apresentadas e por isso, mesmo com a insercao do SVC, a tensao
+nessa barra ainda apresenta um valor reduzido.
+
+Barra
+29
+32
+33
+37
+
+Tabela 4 Resultados para o sistema IT-40
+Solucao
+1
+2
+3
+4
+5
+6
+7
+8
+
+Tabela 3 Tensao nas barras crticas
+V orig (pu)
+0,899
+0,931
+0,914
+0,951
+
+V com SVC (pu)
+0,935
+0,968
+0,954
+0,988
+
+bk (pu)
+0,83
+0,72
+0,75
+0,42
+
+Barras
+33, 29, 19, 32
+33, 29, 34, 38
+29, 32, 4, 33
+29, 32, 4, 33
+5, 33, 10, 22
+3, 14, 6, 31
+32, 18, 7, 19
+24, 35, 3, 16
+
+Ft
+0,49
+0,49
+0,57
+0,57
+0,92
+1,18
+1,19
+1,26
+
+Fe (USkvar)
+408,47
+398,77
+397,54
+398,64
+394,56
+394,00
+393,59
+392,94
+
+(USKVAr)
+
+Função Econômica
+
+Por outro lado, a inclusao dos equipamentos nas barras 5, 7, 9 e 23 (solucao 14) e a solucao que minimiza o
+criterio economico e, portanto, apresenta a funcao tecnica mais elevada entre as 14 solucoes apresentadas. As
+demais solucoes representam alternativas para a alocacao
+do equipamento, todas pertencentes a fronteira de eficiencia do problema que e mostrada na Figura 7. Observa-se
+que essa fronteira nao e convexa.
+
+408
+404
+400
+396
+392
+390
+0.4
+
+0,6
+
+0,8
+
+1,0
+
+1,2
+
+1,4
+
+(pu)
+
+Função Técnica
+
+(USKVAr)
+
+Figura 8 Resultados para ENG-40, sem fitness sharing
+
+Função Econômica
+
+404
+402
+
+4.2
+
+400
+398
+
+Para avaliar a metodologia considerando o criterio tecnico MFL, e utilizado o sistema IEEE 30 barras, representada na Figura 9. As seguintes alteracoes foram realizadas no sistema_teste a constituicao de duas areas
+distintas denominadas Areas 1 e 2 e a consideracao de 5
+geradores, conectados as barras 1, 2, 5, 11 e 13. A funcao Ft e composta pela somas dos fluxos de potencia nas
+linhas 2-5, 2-6, 4-6, 16-17 e 18-19 e 23-24, , maximizando
+a transferencia de potencia da Area 1 para a Area 2.
+O resultado do AGMO, considerando a insercao de
+2 equipamentos FACTS dos tipos SVC e TCSC, e apresentado na Tabela 5. Na segunda coluna e apresentado o
+
+396
+394
+392
+0.4
+
+0.8
+
+1.2
+
+1.4
+
+1.8
+
+Resultados para MFL
+
+2.2 ( pu)
+
+Função Técnica
+
+Figura 7 Fronteira de eficiencia para ENG-40
+O resultado de uma simulacao considerando os mesmos parametros, porem sem a aplicacao do fitness sharing e apresentado na Tabela 4. Nota-se que a alocacao
+
+597
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+23
+
+30
+
+29
+
+Pode-se verificar que a inclusao de dois equipamento
+FACTS do tipo TCSC nas linhas 9-10 e 5-7 (solucao 11),
+e a solucao de apresenta melhor criterio economico. No
+entanto, tal solucao representa uma transferencia de potencia de 1, 21 pu, bem abaixo da apresentada pela solucao 1.
+Na Figura 10 e apresentada a fronteira de eficiencia do problema na qual e possvel verificar que, assim
+como no caso anterior, ela nao e convexa. Nota-se que a
+consideracao do fitness sharing leva a uma fronteira de
+eficiencia uniformemente distribuda e composta por um
+grande numero de indivduos.
+
+28
+
+27
+
+25
+14
+
+15
+
+18
+
+26
+
+24
+
+22
+19
+21
+SVC
+16
+13
+
+20
+
+17
+
+12
+
+10
+
+G
+
+11
+
+G
+
+TCSC
+SVC
+
+G
+9
+
+1
+
+3
+
+4
+
+6
+
+7
+
+(USKVAr)
+
+2
+G
+
+AREA 1
+
+AREA 2
+
+5
+
+Função Econômica
+
+TCSC
+
+8
+G
+
+Figura 9 Sistema IEEE 30 Barras
+
+290
+285
+280
+275
+270
+
+local de instalacao do equipamento (ndice da barra, no
+caso de SVC ou a linha, no caso de TCSC).
+
+265
+1,2
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+
+Local
+10
+16
+17
+16
+19
+12
+12
+19
+15
+18
+10
+12  16
+12
+5
+10
+26
+9
+10  21
+10
+9  11
+9  10
+57
+
+Tipo
+SVC
+SVC
+SVC
+SVC
+SVC
+SVC
+SVC
+SVC
+SVC
+SVC
+SVC
+TCSC
+SVC
+SVC
+SVC
+TCSC
+SVC
+TCSC
+SVC
+TCSC
+TCSC
+TCSC
+
+Ft (pu)
+
+Fe (USkvar)
+
+1.639
+
+286.83
+
+1.621
+
+283.30
+
+1.554
+
+275.18
+
+1.553
+
+275.18
+
+1.486
+
+273.39
+
+1.373
+
+273.13
+
+1.371
+
+268.81
+
+1.289
+
+267.42
+
+1.249
+
+267.81
+
+1.243
+
+267.78
+
+1.219
+
+267.30
+
+1,4
+
+1,5
+
+1,6
+
+(pu)
+
+Função Técnica
+
+Figura 10 Fronteira de eficiencia para IEEE-30
+
+Tabela 5 Solucoes nao-dominadas para o Sistema IEEE-30
+Solucao
+
+1,3
+
+Na Figura 11 e apresentada uma comparacao da
+transferencia de potencia considerando o caso Base (sem
+adicao de FACTS), e das solucoes 1 e 11. O valor da
+transferencia de potencia sem a insercao de nenhum equipamento FACTS, quando considerada a maximizacao do
+carregamento nos circuitos da interligacao, e 1, 19pu.
+Utilizando TCSCs na linhas 9-10 e 5-7 (solucao 11), o
+valor da transferencia de potencia e 1, 22pu, ou seja, um
+acrescimo de 2, 52 em relacao ao Caso Base. Porem,
+com a insercao de um FACTS do tipo SVC na barra 10
+e um SVC na barra 16 (solucao 1), o valor da transferencia de potencia e 1, 64pu, ou seja um acrescimo de
+37, 82 em relacao ao Caso Base. O restante das solucoes apresentadas na Tabela 5 sao alternativas para a
+inclusao de equipamentos, as quais ponderam os criterios
+tecnico e economico, e estao contidas dentro do intervalo
+de transferencia 1, 22 1, 64pu e o intervalo de custo
+267, 30 286, 83 USkvar.
+
+Transferência (pu)
+
+Neste caso, o AGMO obteve 11 solucoes nao dominadas, sendo 6 prevendo somente a instalacao de SVCs.
+Pode-se verificar que a inclusao de dois equipamento
+FACTS do tipo SVC nas barras 10 e 16 (solucao 1) e
+a solucao que apresenta melhor criterio tecnico, uma vez
+que a transferencia de potencia alcanca os 1, 63pu. Devido ao fato do sistema apresentar baixa capacidade de
+suporte de reativos no entorno das barras 10 e 16, a inclusao dos equipamentos SVCs eleva as tensoes nessas
+regioes e possibilita uma maior transferencia de potencia
+nos circuitos da interligacao. Com a insercao dos SVCs,
+a transferencia de potencia passa a ser limitada somente
+pela potencia ativa gerada pelos geradores da Area 2, os
+quais apos a otimizacao estao todos em seus respectivos
+limites mnimo de geracao, nao havendo, portanto, condicoes para elevecao da transferencia.
+
+2
+
+1,64
+1,19
+
+1,22
+
+Caso Base
+
+Solução 11
+
+1
+
+0
+Solução 1
+
+Figura 11 Comparacao das solucoes para o sistema IEEE-30
+
+5
+
+Conclusoes
+
+Neste artigo foi possvel solucionar o problema de alocacao otima de equipamentos FACTS considerando dois
+
+598
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+aspectos muito importantes tecnico e economico. O
+AGMO desenvolvido apresentou resultados satisfatorios,
+tanto para funcao tecnica de minimizacao do desvio quadratico de tensao quanto para a maximizacao da transferencia de potencia entre areas. Foi possvel validar os
+resultados obtidos, atraves da comparacao com metodos
+analticos para a alocacao de SVCs. Alem disso, a consideracao do FPO na modelagem do problema permitiu o
+atendimento das diversas restricoes fsicas e operacionais
+do sistema, alem da otimizacao de uma funcao objetivo.
+Foi observado, conforme apresentado nos resultados
+numericos, um numero expressivo de solucoes presentes
+na fronteira de eficiencia. Alem disso, constatou-se que
+as solucoes estao bem distribudas ao longo da fronteira
+de eficiencia, o que indica a atuacao eficaz da tecnica de
+diversificacao utilizada.
+Na sequencia dos estudos, esta prevista a analise das
+solucoes no que diz respeito a estabilidade para pequenos
+sinais, bem como a consideracao de outros equipamentos
+FACTS na modelagem do problema.
+
+Leung, H. C. e Chung, T. S. (1999). Optimal placement of
+facts controller in power system by a genetic-based algorithm,
+IEEE 1999 International Conference on Power Electronics
+and Drive Systems, PEDS 99, July 1999, Hong Kong. .
+Lima, F., Galiana, F., Kockar, I. e Munoz, J. (2003). Phase
+shifter placement in large-scale systems via mixed integer linear programming, Power Systems, IEEE Transactions on
+18(3) 10291034.
+Lima, F., Moreno, R., Hashimoto, S. e Amorim, E. (2008). Determinacao do maximo_carregamento do sistema eletrico incorporando dispositivos icpst e otimizacao hbrida Parametrica
+e nuvem de partculas, Anais do XVII Congresso Brasileiro
+de Automatica.
+Minguez, R., Milano, F., Zarate-Miano, R. e Conejo, A. (2007).
+Optimal network placement of svc devices, Power Systems,
+IEEE Transactions on 22(4) 18511860.
+Radu, D. e Besanger, Y. (2006). A multi-objective genetic algorithm approach to optimal allocation of multi-type facts devices for power systems security, Power Engineering Society
+General Meeting, 2006. IEEE, pp. 8 pp..
+Sanchez, I., Romero, R., Mantovani, J. e Rider, M. (2005).
+Transmission-expansion planning using the dc model and
+nonlinear-programming technique, IEE Proceedings - Generation, Transmission and Distribution 152(6) 763769.
+
+Agradecimentos
+
+Volpi, N. e Almeida, K. (2009). Metodologia multicriterio para alocacao Otima de facts numa rede de transmissao, XI Simposio
+de Especialistas em Planejamento da Operacao e Expansao
+Eletrica .
+
+Os autores agradecem o apoio financeiro fornecido pela
+CAPES e CNPq para realizacao deste trabalho.
+Apendice
+Tabela 6 Dados dos Geradores - Sistema IEEE-30
+
+Barra
+1
+2
+5
+11
+13
+
+Pmin (pu)
+1
+0
+0, 5
+0, 5
+0, 5
+
+Pmax (pu)
+3
+0, 5
+1
+1
+1
+
+Qmin (pu)
+1, 0
+0, 4
+0, 6
+0, 3
+0, 3
+
+Qmax (pu)
+1, 0
+0, 5
+0, 5
+0, 24
+0, 24
+
+Referencias
+Almeida, K. e Salgado, R. (2000). Optimal power flow solutions
+under variable load conditions, Power Systems, IEEE Transactions on 15(4) 1204 1211.
+Cai, L., Erlich, I. e Stamtsis, G. (2004). Optimal choice and allocation of facts devices in deregulated electricity market using
+genetic algorithms, Power Systems Conference and Exposition, 2004. IEEE PES, pp. 201207 vol.1.
+Chung, T. e Li, Y. (2000). A hybrid ga approach for opf with consideration of facts devices, Power Engineering Review, IEEE
+20(8) 54 57.
+Deb, K. (2001). Multi-Objective Optimization using Evolutionary
+Algorithms, Wiley-Interscience Series in Systems and Optimization, John Wiley  Sons, Chichester.
+Fang, X., Chow, J., Jiang, X., Fardanesh, B., Uzunovic, E. e Edris,
+A.-A. (2009). Sensitivity methods in the dispatch and siting
+of facts controllers, Power Systems, IEEE Transactions on
+24(2) 713720.
+Gerbex, S., Cherkaoui, R. e Germond, A. (2001). Optimal location
+of multi-type facts devices in a power system by means of
+genetic algorithms, Power Systems, IEEE Transactions on
+16(3) 537544.
+Hingorani, N. (1988). Power electronics in electric utilities role of
+power electronics in future power systems, Proceedings of the
+IEEE 76(4) 481482.
+Latorre, G., Cruz, R., Areiza, J. e Villegas, A. (2003). Classification of publications and models on transmission expansion
+planning, Power Systems, IEEE Transactions on 18(2) 938
+946.
+
+599

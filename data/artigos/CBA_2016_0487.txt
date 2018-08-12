@@ -1,0 +1,612 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ESTUDO DE ARQUITETURA EM MICROCONTROLADORES E DEFINICAO DE
+CONCEITO OTIMO PARA APLICACAO DE BEAMFORMERS EM FPGA
+Herman L. dos Santos, Wagner Endo, Paulo R. Scalassara
+
+
+Universidade Tecnologica Federal do Parana
+Campus Cornelio Procopio
+Cornelio Procopio, Parana, Brasil
+
+Emails herman@alunos.utfpr.edu.br, wendo@utfpr.edu.br, prscalassara@utfpr.edu.br
+Abstract In this paper we present a preliminary study on Texas Instrument R s DSP TMS320F2833x2823x
+family architecture. Through the study about one known architecture is intended to define a optimum one for a
+spatial filtering and signal source direction of arrival estimation aplications through Array Processing. We search
+for assembly the architecture defined on a FPGA device for real time purposes. We discuss the peripherals that
+will be needed to implement the array and also the Arithmetic Logic Unit specification for the designed processor.
+Keywords Array Processing, DSP, Beamformer.
+Resumo Neste artigo e apresentado um estudo preliminar de arquitetura do DSP Texas Instrument R famlia
+TMS320F2833x2823x. Atraves do estudo de uma arquitetura conhecida pretende-se definir uma otima para
+aplicacao de filtragem espacial e deteccao de direcao_de_chegada atraves de tecnicas de Array Processing. Buscase embarcar esta arquitetura em um dispositivo FPGA para utilizacao em tempo_real. Discuti-se aqui a presenca
+de perifericos necessarios para a a criacao do sistema assim como a necessidade da Unidade Logica Aritmetica
+do processador.
+Palavras-chave
+
+.
+
+Introducao
+
+Aplicacoes de formacao_de_feixe, do ingles beamforming, sao amplamente utilizadas em diversas
+areas como radar, sonar, estimacao de direcao de
+chegada de uma fonte emissora de sinais, sismologia e bioengenharia (Van Trees, 2004). O conceito
+de Array Processing utilizando a formacao_de_feixe
+para filtragem espacial e deteccao_de_sinais se assemelha a mover uma antena, apontando para a
+direcao que se deseja obter o sinal ou encontrando
+a direcao_de_chegada, aqui denominada DOA, do
+ingles Direction of Arrival, atraves de uma informacao a priori do sinal que se deseja. Porem, ao
+inves de utilizar-se de uma montagem que pode se
+mover no espaco, o direcionamento do captador de
+sinal e todo feito de forma eletronica (Manolakis
+et al., 2005), o que sera discutido mais adiante
+neste artigo.
+Nestas aplicacoes utilizam-se diversos sensores, dando a eles diferentes ganhos no sinal
+detectado(Naidu, 2009), a fim de fazer a filtragem
+do sinal, como em um filtro de resposta impulsiva
+finita FIR (Van Veen and Buckley, 1988). Este
+processo, dependendo da tecnica empregada, pode
+ser muito custoso computacionalmente, o que leva
+a discussao do que seria uma arquitetura de microprocessador otima para embarcar um sistema
+de captura e processamento de um arranjo de sensores.
+Dependendo da necessidade de precisao na
+aplicacao, e necessario utilizar tecnicas diferentes
+para calcular os ganhos mencionados, o que torna
+cada vez o processo mais custoso computacionalmente. Em Yasin et al. (2010), Qiang et al. (2008),
+
+ISSN 2525-8311
+
+Zhang et al. (2008), Sarevska and Salem (2008),
+Tian et al. (2001), Treder et al. (2016) e Oswal
+et al. (2016) sao apresentadas diversas aplicacoes
+de beamformers. Para embarcar qualquer uma das
+tecnicas mencionadas e necessario a utilizacao de
+um processador para as operacoes aritmeticas.
+Processadores convencionais possuem limitacoes devido a suas arquiteturas de hardware e perifericos fixos. Porem, atraves do advento de dispositivos de arquitetura configuravel, estes problemas de hardware podem ser sanados e o processamento otimizado, sendo uma alternativa atrativa
+(Vemuri and Harr, 2000). Um exemplo destes dispositivos sao os Field Programable Gate Array FPGA.
+Devido a forma como e construdo, um FPGA
+pode assumir diversas arquiteturas, sendo estas
+programadas pelo usuario, de acordo com suas limitacoes internas. Em Netti et al. (2015), e apresentada a implementacao em tempo_real de Beamformer em um dispositivo FPGA, que e a intencao
+de estudo deste artigo. Tambem sao apresentados
+em diversas fontes, como Fei et al. (2011) e Fan
+(2011), sistemas de aquisicao e processamento de
+dados utilizando estes dispositivos. A desvantagem na utilizacao destes dispositivos esta em sua
+complexidade de operacao. Por isso sera comparado a utilizacao de logica reconfiguravel com a
+utilizacao de processadores de alto_desempenho
+(DSPs) para a analise de viabilidade de projeto.
+Este artigo e organizado da seguinte forma.
+Na Secao 2, sao apresentados conceitos necessarios para a organizacao do modulo de aquisicao
+de dados. Consequente, na Secao 3, sao apresentadas e analisadas arquiteturas de processadores
+
+1662
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+convencionais. Na Secao 4 e apresentada a definicao de arquitetura otima obtida para a aquisicao
+destes dados. A Secao 5 contem as conclusoes obtidas.
+2
+
+Aquisicao e Processamento de Dados
+
+Nesta secao serao feitos comentarios e analises sobre aquisicao em tempo_real de dados e tempo
+de processamento. Primeiramente, e apresentado
+dados referentes a aquisicao. Sao apresentados
+conceitos de armazenamento para futuro processamento de dados e de processamento de arranjo
+de sensores.
+2.1
+
+Aquisicao de Dados
+
+Em aplicacoes de aquisicao e processamento de
+sinais e indispensavel que se tenha dados sobre
+o sinal a ser coletado, como sua frequencia. Na
+aquisicao_de_dados temporais nao se deve perder
+informacoes devido a sua frequencia de amostragem. Para garantir que serao coletadas amostras
+suficientes, utiliza-se o criterio de Nyquist. Este
+teorema diz que um sinal deve ser amostrado com,
+no mnimo, o dobro da frequencia maxima onde
+se encontram informacoes relevantes (Oppenheim
+et al., 1989), Eq. (1).
+fs  2B
+
+(1)
+
+sendo B a frequencia maxima do sinal de interesse
+e fs a frequencia de amostragem mnima.
+Considera-se uma aplicacao com multiplos
+sensores trabalhando em paralelo. As ondas de
+um sinal se propagam por um meio e sao captadas
+por sensores. Estes sensores estao espacados um
+do outro e, portanto, o tempo de chegada em cada
+sensor sera diferente, ocorrendo um atraso. Este
+atraso temporal de chegada gera atrasos de fase
+quando comparados os elementos no mesmo instante de tempo. Por estes sinais serem periodicos,
+um atraso de fase maior que 2 rad gera uma ambiguidade. Esta ambiguidade gera erros no processamento do sinal e pode ser evitado analisando
+as frequencias que serao captadas no arranjo e arranjando o espacamento entre os elementos.
+Seja  o comprimento de onda de um sinal
+que se propaga em um espaco com velocidade de
+propagacao c a uma frequencia f , tem-se que o
+comprimento de onda deste sinal e dado segundo
+a Equacao (2).
+
+
+c
+f
+
+(2)
+
+Segundo Manolakis et al. (2005), para prevenir a ocorrencia de ambiguidades espaciais e necessario que o espacamento entre os sensores esteja
+ajustado de acordo com o comprimento de onda e
+do meio que este se propaga. Portanto, a Equacao
+
+ISSN 2525-8311
+
+(3), onde d e a distancia em metros, da o espacamento maximo possvel.
+d
+
+
+2
+
+(3)
+
+Apesar de imprimir uma maior definicao no
+resultado, a utilizacao de sensores muito proximos nao traz vantagens em questoes de hardware.
+Quanto mais proximos os sensores estiverem menor sera o atraso entre os sinais.
+Em sistemas regidos por um processador digital trabalha-se com tempos discretos. Portanto,
+quanto mais proximos estiverem os sensores maior
+a necessidade de uma amostragem cada vez maior
+a fim de prevenir ambiguidades na leitura temporal.
+2.2
+
+Aplicacao de Tecnicas de Filtragem e Estimacao de Direcao de Chegada
+
+As tecnicas mais simples, porem efetivas, e que
+garantem possibilidade de generalizacao da arquitetura nesta aplicacao sao a aplicacao da filtragem atraves da formacao_de_feixe, conhecida como
+Matched Filter e a obtencao da matriz de correlacao cruzada dos sinais captados. Estas tecnicas
+funcionam bem para um sinal isolado, sem a presenca de interferencia (Jan et al., 1995).
+A vantagem da definicao da aplicacao destas
+tecnicas e que, principalmente a obtencao de matriz de correlacao cruzada de um vetor todo, e custosa computacionalmente e existem tecnicas mais
+refinadas que se pode trabalhar com menos dados.
+Portanto, para a aplicacao desta forma de estimar
+a direcao_de_chegada implementa-se a Equacao
+(4), onde xM + 1 e o conjunto de sinais captados
+pelo elemento sequente menos espacado de xM .
+
+xM n  xM +1 n 
+
+N
+X
+
+xM nxM +1 n + k (4)
+
+k0
+
+sendo xM n o complexo conjugado de xM n e N
+o comprimento do sinal em amostras.
+Sera entao gerado um vetor com o comprimento dos vetores somados. O pico da funcao e
+correspondente ao maximo de similaridade. Como
+xk e xk+1 sao sinais similares de mesmo comprimento e com atraso temporal entre os mesmos,
+pode-se encontrar a direcao_de_chegada do sinal
+pela quantidade de amostras de diferenca entre
+o pico de correlacao e o ponto central do vetor.
+Espera-se que os vetores de correlacao cruzada do
+arranjo possuam o mesmo tempo de atraso.
+A aplicacao do beamformer e feito para um
+angulo de direcionamento, que e encontrado pelo
+processo descrito anteriormente. Deve-se deslocar os sinais de forma a alinhar suas fases para o
+angulo escolhido e entao soma-los. Tem-se assim
+uma descaracterizacao dos sinais em angulos que
+
+1663
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+nao sejam o escolhido para o direcionamento e reconstrucao dos sinais que sao emitidos do angulo
+de escolha. Este metodo e descrito pela Equacao
+(5) (Manolakis et al., 2005).
+
+3
+
+i
+1 h j2us
+1e
+   ej2(M 1)us
+y(n)  
+M
+
+
+
+s(n)
+
+
+
+
+
+
+ ej2us s(n) 
+
+
+
+ 
+(5)
+ + w(n)
+..
+
+
+
+
+.
+
+
+
+
+ j2(M 1)us
+
+e
+s(n)
+sendo y a sada do arranjo, M o numero de elementos, s o sinal de interesse captado e w o rudo
+termico dos sensores.
+Sinais temporais sao armazenados em vetores contendo os dados amostrados a cada perodo.
+Para o processamento de vetores e necessario que
+estes estejam armazenados em memorias. Portanto, para realizar a aquisicao e processamento
+dos sinais, precisa-se que os mesmos estejam arquivados em uma ou mais memorias que se conectam a uma Unidade Logica Aritmetica, como na
+figura 1.
+ULA
+Processamento
+Unidade Lógica
+Aritmética
+
+Unidade de Controle
+
+Memória Principal
+
+01001...
+
+Conversor
+AD
+Sinal
+
+d
+1
+
+2
+
+3
+
+...
+
+Arranjo Linear Uniforme
+
+Figura 1 Captacao de sinais em um arranjo de
+sensores e conexao com unidade de processamento
+Os dados se agrupam em uma memoria de
+forma binaria em palavras de ordem 2n e os dados
+coletados em circuitos integrados de conversores
+AD podem variar dependendo da qualidade do
+circuito integrado e deve ser especificado de acordo
+com o excursionamento de magnitude presente no
+sinal captado.
+A quantidade de amostras e o espaco binario
+que estas vao ocupar para armazenamento dependera da frequencia dos sinais de trabalho e devem
+ser especificadas de acordo com o caso. Na Secao 4
+sera definida a arquitetura para se trabalhar com
+um arranjo de microfones para sinais de audio.
+
+ISSN 2525-8311
+
+n
+
+Texas Instruments
+TMS320F2833x2823x
+
+Nesta secao sera feito um estudo sobre arquiteturas ja conhecidas de microcontroladores e DSPs.
+Serao apresentados estudos sobre o DSP da famlia C2833xC2823x de fabricacao Texas Instruments, apresentando as limitacoes do mesmo para
+processamento de multiplos sinais paralelos.
+E de suma importancia numa aplicacao, em
+que sao utilizados diversos sensores, que haja meio
+de se armazenar os sinais capturados pelos mesmos. Para isso, e necessario que haja modulos de
+conversao destes sinais contnuos para registros de
+dados de forma simultanea.
+A famlia 2833x2823x fabricada pela Texas
+Instruments sao DSPs de desempenho medio, possuindo frequencia de operacao 100 (F283332) ou
+150 (F28334 e F28335) MHz. Possuem temporizadores de 32 bits e memorias extensas de palavras
+de 16 bits. O conversor AD e de 12 bits e com
+taxa maxima de 12.5 MHz (Instruments, 2007).
+Segundo o manual do fabricante o modulo
+AD destes dispositivos atua como 2 modulos de
+8 canais independentes, podendo ser configurado
+como um de 16 canais em cascata. Sendo o modulo mais importante para a obtencao de sinais
+analogicos, explicitaremos suas caractersticas e limitacoes.
+O conversor AD deste sistema funciona da seguinte forma. O processador envia um sinal de
+clock, denominado SYSCLKOUT, a um prescaler
+de alta velocidade, que controla o temporizador
+interno de conversao atraves de um High Speed
+Clock, (HSPCLK), e esta ligado a um bloco de
+controle do sistema.
+O bloco de controle do sistema envia dois sinais ao modulo, HALT e ADCENCLK. O primeiro
+e utilizado para deixar o modulo AD em baixo
+consumo e parar o HPSCLK, parando o modulo.
+O ADCENCLK serve para, ao iniciar ou na ocorrencia de reset, serve para que todos os registradores e modos fiquem em estado padrao. Este sinal tambem habilita o funcionamento do modulo
+(Instruments, 2007). O diagrama_de_blocos parcial, fornecido pelo fabricante, esta representado
+na Figura 2.
+A limitacao deste modulo da-se por conta dos
+canais do conversor AD e como estes funcionam.
+Como dito anteriormente este modulo atua com
+16 canais (ADCINA07 e ADCINB07) divididos
+entre dois multiplexadores e cada qual com seu
+circuito segurador de ordem zero. O conversor
+recebe os valores destas conversoes e armazenaos em 16 registradores de resultado. Parte deste
+sistema esta ilustrado na Figura 3.
+Portanto este microcontrolador nao possui capacidade para aquisicao paralela devido a presenca de apenas dois circuito SH e que nao trabalham em paralelo. Em sua taxa de aquisicao ma-
+
+1664
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+viavel a utilizacao deste dispositivo em um sistema
+como este. Na proxima secao, sera apresentada
+uma proposta de construcao de arquitetura para
+multiplas aquisicoes, assim como o circuito para
+implementacao da mesma em um FPGA.
+4
+
+Figura 2 Comunicacao e controle do DSP com o
+conversor AD. (Instruments, 2007)
+
+Figura 3 Comunicacao dos pinos com o conversor
+AD. (Instruments, 2007)
+
+xima, tem-se a aquisicao de uma amostra a cada
+80 ns. Dependendo do tipo de sinal e meio com
+que se trabalha pode-se ter um atraso de fase a
+gerar ambiguidade (Secao 2.1) em caso de uma
+aquisicao multiplexada.
+Para um caso de multiplexacao em um arranjo
+contendo 15 sensores, utilizando este dispositivo e
+extraindo sua capacidade maxima de 12,5 MHz,
+atraves do sombreamento dos canais A e B e desconsiderando qualquer outra utilizacao para processamento, havera uma diferenca de 1,2 s entre
+a aquisicao do primeiro e do ultimo sensor. Isso,
+em um sinal de alta frequencia com componentes
+importantes na faixa de 417 kHz nao obedecera o
+criterio de Nyquist, gerando os erros mencionados.
+Este erro de tempo se propaga conforme a aquisicao de um vetor de sinais para o processamento.
+Conclui-se que este sistema somente e utilizavel em caso de arranjos pequenos e de sinais de
+baixa ou media frequencia. Como exemplo, Lin
+et al. (2016) utiliza um conceito de Array Processing para a construcao de um radar de onda
+contnua modelada em frequencia - FMCW - em
+uma aplicacao automotiva. Estes sinais possuem
+largura de banda de ate 1500 MHz, tornando in-
+
+ISSN 2525-8311
+
+Arquitetura para Embarque em FPGA
+
+Pretende-se trabalhar com sinais de voz na localizacao de fontes emissoras e filtragem em ambientes ruidosos. A frequencia de um sinal de voz
+emitida por meio de fala pode variar ate 4 kHz (Li
+et al., 2003). Portanto de acordo com a Equacao
+(1) deve-se garantir que o sistema capte as amostras a pelo menos 8 kSs.
+O problema da amostragem paralela, tema
+central deste artigo, se da pela incapacidade dos
+microcontroladores classicos realizarem este tipo
+de aquisicao, como mostrado na Secao 3. Sera utilizado entao um dispositivo de arquitetura configuravel, o FPGA, junto de memorias e conversores
+AD a serem integrados no sistema.
+Todo FPGA trabalha apenas com logica digital. Portanto estes nao possuem conversores AD,
+sendo necessario integrar perifericos para o processamento dos mesmos. Sao disponveis em mercado conversores AD que atuam com sada paralela ou serial. Por trabalharem apenas com logica
+digital, os circuitos FPGA nao possuem capacidade de aquisicao de sinais para processamento.
+Deve-se entao integrar tais circuitos externamente
+e utiliza-lo como processador entre entradas, armazenamento e sada.
+4.1
+
+Modulo de Conversao de Sinais
+
+O conversor AD e o elemento de maior importancia em um sistema digital que necessita trabalhar
+com sinais analogicos. Estes sao disponveis em
+diversas configuracoes.
+Estes circuitos atuam sob pulsos de clock e
+tem em sua entrada um sinal de tensao analogica.
+Para o caso adotado nesta secao, um sinal proveniente de um microfone. O conversor entao digitaliza este sinal, transformando seus nveis de tensao
+em bits de acordo com as tensoes eletricas de referencia colocadas nos mesmos. A sada em nveis
+logicos 0 ou 1 e dada de forma paralela ou serial,
+com uma frequencia e resolucao dependendo do
+dispositivo utilizado.
+As topologias de conversao sao diversas como
+rampa, aproximacoes sucessivas, rampa dupla,
+flash, sigma-delta e tensao-frequencia (TOCCI
+and WIDMER, n.d.). Cada uma destas formas de
+conversao utilizadas nestes componentes possuem
+suas particularidades e fica por conta do projetista
+a escolha de qual circuito utilizara.
+Em aplicacoes de array_processing deve-se garantir o paralelismo entre os sinais. Portanto devese utilizar um circuito conversor AD para cada
+
+1665
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Tabela 1 Parametros de trabalho com dados provenientes de voz humana
+Parametro
+Unidades
+
+Figura 4 Memoria RAM generia de n bits e k bits
+de enderecos
+elemento no arranjo. Portanto, o processamento
+torna-se possvel apenas com a presenca destes
+componentes. O proximo elemento a ser discutido
+e a memoria. A utilizacao de memorias e importante para armazenamento dos dados obtidos para
+processamento.
+4.2
+
+Memorias RAMSDRAM
+
+O proximo circuito que deve ser integrado ao sistema sao memorias para gravacao dos dados. Para
+os dados que serao processados sao necessarios vetores de amostras dos mesmos para a aplicacao
+das tecnicas. Necessita-se entao que se tenha uma
+quantidade ns de amostras.
+Cada aquisicao temporal pode ser salva em
+uma posicao de memoria de um dispositivo
+SDRAM, que apresentam funcionamento rapido.
+Opta-se por utilizacao de memorias SDRAM pois
+almeja-se um sistema que funcione em tempo_real,
+portanto, nao ira salvar dados para futura utilizacao.
+O processo de leitura e escrita na memoria
+RAM e controlada por ciclos de clock e por nvel
+logico em um pino de escritaleitura. Em aplicacoes de processamento de sinal, utiliza-se estas
+memorias para armazenar temporariamente os dados adquiridos nos sensores. Portanto, para cada
+aquisicao realizada pelos M sensores, habilita-se a
+escrita na memoria RAM e retem-se os valores das
+amostras daquele instante de tempo. Estes dados
+estarao salvos na memoria RAM enquanto houver alimentacao da mesma. O diagrama de uma
+memoria RAM generica pode ser visto na Figura
+4.
+4.3
+
+Montagem do sistema de aquisicao_de_dados
+sonoros
+
+Nas subsecoes anteriores, foram apresentados conceitos de perifericos que devem ser integrados ao
+sistema processador de um array. Sera gerado entao um sistema virtual que pode ser aplicado. Este
+sistema pode ser embarcado em qualquer dispositivo que se trabalhe com paralelismo e tenha sua
+arquitetura reconfiguravel. A Tabela 1 apresenta
+caractersticas de projeto para trabalho com estes
+sinais.
+onde B e a frequencia maxima do sinal de interesse, fs e a frequencia de amostragem adotada,
+
+ISSN 2525-8311
+
+B
+fs
+c
+d
+ns
+
+4 kHz
+44.1 kSs
+343,3 ms
+4,29 cm
+1024
+
+c e a velocidade do som no ar, d e o espacamento
+entre os sensores e ns e a quantidade de amostras que necessita-se para aplicacao da correlacao
+cruzada.
+Com estes dados, pode-se fazer a escolha dos
+componentes que serao utilizados. Como objeto
+de estudo nao havera preocupacao com numeros
+de pinos em componentes. Definimos como 8 o
+numero de elementos no arranjo. Define-se um
+conversor AD de 44.1 kSs e 8 bits. Escolhese esta frequencia de amostragem para uma melhora na resolucao do sistema. Tem-se, por iteracao de filtragem eou estimacao, 8192 bytes de
+dados. Como sera necessario utilizar espaco de
+memoria para as matrizes de correlacao cruzada,
+que ocupam ns  2  (M  1)  8 bits, sao necessarios entao de 14336 bytes adicionais. Este valor
+pode ser encontrado facilmente em memorias comerciais, tendo ela espaco de palavra de 2 bytes
+e 11 bits de enderecos ou 1 byte de palavra e 13
+bits de enderecos. Esta escolha fica a escolha do
+projetista.
+A ULA deste sistema deve contar com circuitos somadores e multiplicadores e ser capaz de
+acessar a memoria de modo randomico. Seus barramentos devem conter 8 bits para um registrador
+de instrucoes, este com pelo menos 3 bits de instrucao para as operacoes de soma, escrita, apagar,
+deslocamento e transferir, que sao as operacoes basicas para realizacao dos procedimentos descritos
+anteriormente.
+Um exemplo que pode ser aplicado neste
+sistema e a utilizacao do FPGA Cyclone IV
+EP4CE115F29, presente no kit DE2-115 da ALTERA. Este FPGA conta com 114480 elementos
+logicos configuraveis, memoria de 3888 Kb, alem
+das duas memorias de 64MB presentes no kit, e
+mais de 200 pinos que podem ser utilizados pelo
+usuario.
+5
+
+Conclusoes
+
+Neste estudo, apresentou-se o que e necessario
+para a montagem de um dispositivo de aquisicao
+e processamento de multiplos dados destinado a
+array_processing. A generalizacao proposta torna
+acessvel a implementacao para qualquer sistema
+desde que sejam obedecidos os criterios de construcao tambem apresentados aqui.
+Objetiva-se entao a implementacao deste sis-
+
+1666
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+tema em um FPGA para trabalhos futuros e aplicacao de tecnicas mais refinadas. Pode-se perceber que a complexidade do sistema aumenta conforme deseja-se um melhor desempenho, aumentando o numero de sensores, a frequencia de amostragem ou as tecnicas a serem empregadas.
+Agradecimentos
+Agradecemos a instituicao de ensino UTFPR por
+ter possibilitado a realizacao deste trabalho e a
+Fundacao Araucaria processo no 33812 pelo kit
+utilizado.
+Referencias
+Fan, Y. (2011). FPGA-based data acquisition system, Signal Processing, Communications and
+Computing (ICSPCC), 2011 IEEE International Conference on, pp. 13.
+Fei, W., Zhijie, W., Hong, C. and Yi, X. (2011).
+High-speed data acquisition system based on
+FPGASoPC, Electronic Measurement Instruments (ICEMI), 2011 10th International
+Conference on, Vol. 1, pp. 2427.
+Instruments, T. (2007). TMS320F2883x2823x.
+Revised August 2012.
+
+Oppenheim, A. V., Schafer, R. W., Buck, J. R.
+et al. (1989). Discrete-time signal processing,
+Vol. 2, Prentice hall Englewood Cliffs, NJ.
+Oswal, A., Jha, A., Neal, S., Reid, A., Bradbury,
+D., Aston, P., Limousin, P., Foltynie, T.,
+Zrinzo, L., Brown, P. and Litvak, V. (2016).
+Analysis of simultaneous MEG and intracranial LFP recordings during deep brain stimulation A protocol and experimental validation, Journal of Neuroscience Methods
+261 2946.
+Qiang, Q., Minglu, J. and Qian, L. (2008). Cyclostationary LMS beamforming algorithm, Wireless Communications, Networking and Mobile Computing, 2008. WiCOM 08. 4th International Conference on, pp. 14.
+Sarevska, M. and Salem, A.-B. (2008). Antenna
+array beamforming algorithms for smart antenna system, World Academy of Science,
+Engineering and Technology 24 941945.
+Tian, Z., Bell, K. and Van Trees, H. (2001).
+A recursive least squares implementation for
+LCMP beamforming under quadratic constraint, IEEE Transactions on Signal Processing 49(6) 11381145.
+TOCCI, R. and WIDMER, N. S. (n.d.).
+
+Jan, E., Svaizer, P. and Flanagan, J. L. (1995).
+Matched-filter processing of microphone array for spatial volume selectivity, Circuits and Systems, 1995. ISCAS 95., 1995
+IEEE International Symposium on, Vol. 2,
+pp. 14601463 vol.2.
+Li, Y., Ho, K. C. and Kwan, C. (2003). Design
+of broad-band circular ring microphone array for speech acquisition in 3-d, Acoustics,
+Speech, and Signal Processing, 2003. Proceedings. (ICASSP 03). 2003 IEEE International Conference on, Vol. 5.
+
+Treder, M., Porbadnigk, A., Shahbazi Avarvand,
+F., Muller, K.-R. and Blankertz, B. (2016).
+The LDA beamformer Optimal estimation
+of ERP source time series using linear discriminant analysis, NeuroImage 129 279291.
+Van Trees, H. L. (2004). Detection, estimation,
+and modulation theory, optimum array_processing, John Wiley  Sons.
+Van Veen, B. and Buckley, K. (1988). Beamforming A versatile approach to spatial filtering, IEEE ASSP Magazine 5(2) 424.
+
+Lin, J.-J., Li, Y.-P., Hsu, W.-C. and Lee, T.-S.
+(2016). Design of an FMCW radar baseband
+signal processing system for automotive application, Springer 5(1) 116.
+
+Vemuri, R. and Harr, R. (2000). Configurable computing Technology and applications,
+Computer 33(4) 3940.
+
+Manolakis, D. G., Ingle, V. K. and Kogon, S. M.
+(2005). Statistical and adaptive signal processing spectral estimation, signal modeling, adaptive filtering, and array_processing,
+Vol. 46, Artech House Norwood.
+
+Yasin, M., Akthar, P., Khan, M. and Naqvi,
+S. (2010). Enhanced sample matrix inversion is a better beamformer for a smart antenna system, World Applied Sciences Journal 10(10) 11671175.
+
+Naidu, P. S. (2009). Sensor array signal processing, CRC press.
+
+Zhang, X., Wang, Z. and Xu, D. (2008). Wavelet packet transform-based least mean square
+beamformer with low complexity, Progress In
+Eletromagnetics Research 86 291304.
+
+Netti, A., Diodati, G., Camastra, F. and Quaranta, V. (2015). FPGA implementation of
+a real-time filter and sum beamformer for
+acoustic antenna, Internoise2015 129 279
+291.
+
+ISSN 2525-8311
+
+1667

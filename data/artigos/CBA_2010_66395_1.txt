@@ -1,0 +1,953 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+CONTROLE DE FORMACAO ENTRE UMA PESSOA E UM ROBO MOVEL
+BASEADO EM VISAO ESTEREO
+Marino Frank Cypriano, Flavio Garcia Pereira, Raquel Frizera Vassallo
+
+
+Universidade Federal do Esprito Santo
+Av. Fernando Ferrari, 514, Goiabeiras, Vitoria  ES  Brasil. CEP. 29075-910
+Emails marino@ele.ufes.br, flaviog@ele.ufes.br, raquel@ele.ufes.br
+Abstract This paper presents a reactive nonlinear formation control between a human and a mobile robot
+based on stereo vision. The human, who is considered the leader of the formation, is positioned behind the
+robot and moves around the environment while the robot executes movements according to the human motion.
+The robot has a stereo vision system that is used to detect the human face and estimate its 3D coordinates.
+These coordinates are used to determine the relative pose between the human and the robot, which is send to
+the controller to allow the robot to achieve and keep a desired formation with the human. Experiments were
+performed with a human and a mobile robot, as the leader and follower respectively, to show the performance
+of the control system. In this paper a load was put on a mobile robot in which the nonlinear_controller was
+applied, allowing the transportation of this load from an initial point to a desired position. In order to verify the
+proposed method some experiments were performed and shown in this paper.
+Keywords
+
+Formation Control, Stereo Vision.
+
+Resumo Este artigo apresenta um controle_de_formacao reativo nao-linear entre um ser humano e um robo
+movel baseado em visao_estereo. O ser humano, que e considerado o lder da formacao, esta posicionado atras do
+robo e se move aleatoriamente no ambiente enquanto o robo executa movimentos correspondentes a fim de manter
+sua posicao e orientacao em relacao a pessoa. O robo possui um sistema de visao_estereo usado para detectar
+a face humana e estimar as suas coordenadas 3D. Atraves destas coordenadas e possvel determinar a posicao
+relativa entre a pessoa e o robo, a qual e utilizada pelo controlador do robo para garantir a formacao desejada.
+Experimentos foram realizados com uma pessoa e um robo_movel, como o lder e seguidor, respectivamente, a fim
+de avaliar o desempenho do sistema. Uma carga foi colocada sobre o robo_movel no qual o controlador nao-linear
+foi aplicado, permitindo o transporte coordenado de um ponto inicial ate uma posicao desejada.
+Palavras-chave
+
+.
+
+presenca dos humanos e do seu desejo de interagir.
+
+Introducao
+
+Em (Bowling and Olson, 2009) uma equipe
+e composta por dois robos holonomicos e um ser
+humano. Os autores consideram o caso no qual
+a pessoa efetua uma curva rapidamente em uma
+esquina e os robos nao devem perde-la de vista. A
+estrategia baseia-se no caculo do centro de massa
+da formacao e na analise de sua rotacao.
+
+Navegacao e seguimento sao as duas funcionalidades dos robos_moveis e sao, atualmente, temas ja bastante estudados. Varias estrategias
+tem sido desenvolvidas para os mais diversos tipos
+de ambientes tanto para sistemas com um unico
+agente quanto para sistemas_multiagentes (Bicho
+and Monteiro, 2003 Das et al., 2002 Egerstedt
+and Hu, 2001 Egerstedt et al., 2001 Jadbabaie
+et al., 2002 Kang and Xi, 1999 Vidal et al., 2003).
+Na maioria desses estudos, os robos sao usados para navegar ate atingir um ponto especfico no ambiente enquanto desviam de obstaculos (Althaus et al., 2004). Entretanto, devido as
+limitacoes nos sensores, na maioria das vezes os
+robos nao conseguem operar em ambientes complexos, mesmo se forem dotados de sensores precisos como um laser 3D. Assim, acredita-se que
+sistemas_de_navegacao homem-robo sao boas solucoes para esse tipo de problema, desde que o
+ser humano possa liderar o robo em uma tarefa
+cooperativa.
+A motivacao para o trabalho apresentado
+neste artigo surge de situacoes onde os robos sao
+usados para ajudar pessoas em uma tarefa de
+transporte de objetos na qual a pessoa nao carrega
+a carga, ela apenas guia o robo pelo ambiente.
+A interacao_entre_homens_e_robos depende da
+
+O trabalho proposto neste artigo consiste em
+permitir que uma pessoa coordene os movimentos de um robo_movel para transportar uma carga
+de um ponto ate outro de uma maneira segura.
+Nesse sistema, o homem, que e considerado o lder da formacao, e responsavel por guiar o robo
+pelo ambiente para, assim, transportar uma carga
+de um ponto inicial ate uma determinada posicao,
+enquanto o robo, o seguidor, executa movimentos de acordo com o lder. Esse tipo de trabalho
+cooperativo necessita que o robo adquira informacoes suficientes sobre a posicao do ser humano de
+forma que a tarefa possa ser executada. Isso e realizado atraves de um controlador_nao_linear baseado em visao, o qual estima as velocidades linear
+e angular que o robo deve executar para seguir o
+ser humano. Essa aplicacao e util pois, como a
+carga esta posicionada no robo, a pessoa nao precisa carrega-la. A funcao da pessoa e apenas guiar
+o robo pelo ambiente de trabalho ate alcancar a
+posicao desejada.
+
+245
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Diferentemente da cooperacao lder-seguidor
+convencional, onde o lder da formacao fica a
+frente do seguidor, o controle_de_formacao proposto neste trabalho leva em consideracao o fato
+do robo navegar em frente ao ser humano, o qual
+e considerado lder da formacao. Como o controle
+de formacao e baseado em visao e o sistema de
+visao_estereo aponta para a parte de tras do robo,
+o mesmo navega olhando para a face da pessoa,
+ao inves de olhar para as costas da mesma, o que
+e uma vantagem pois a face de uma pessoa possui caractersticas que possibilitam sua deteccao, o
+que nao acontece com as costas. Alem disso, uma
+outra vantagem desse tipo de formacao e o fato do
+lder observar o comportamento do robo durante a
+tarefa de cooperacao e poder notar a presenca de
+obstaculos e guiar o robo a fim de evita-los, haja
+visto que, ate o momento, o robo nao possui algoritmo de desvio_de_obstaculos. Isso e interessante
+pois o robo possui um algoritmo para controlar
+sua posicao e orientacao em relacao ao humano,
+e nao um controlador para seguimento_de_trajetoria. Assim, se a pessoa que guia o robo fosse a sua
+frente, mesmo que ela desviasse de um obstaculo,
+o robo poderia colidir com o mesmo.
+Este artigo esta organizado como segue. A
+tecnica para estimar a postura da face e rapidamente discutida na Secao 2 e o controle_de_formacao assim como sua analise_de_estabilidade sao
+mostrados na Secao 3. Alguns resultados experimentais podem ser vistos na Secao 4 e, finalmente,
+as conclusoes e propostas para trabalhos futuros
+sao apresentados na Secao 5.
+2
+
+tema de visao_estereo e as caractersticas faciais
+encontradas.
+
+Figura 1 Imagens capturadas pelo sistema de visao_estereo.
+As coordenadas 3D da face sao consideradas
+como sendo a media das coordenadas das caractersticas faciais detectadas, isto e,
+X, Y, Z 
+
+N
+1 X
+xi , yi , zi ,
+N i1
+
+(1)
+
+onde N e o numero de caractersticas detectadas
+e xi , yi , zi , sao as coordenadas 3D de cada caracterstica facial detectada no referencial do sistema
+de visao acoplado ao robo. A Figura 2 ilustra os
+referenciais do robo e do sistema de visao_estereo.
+
+Deteccao da Pessoa
+
+O controlador_nao_linear que sera apresentado na
+Secao 3 necessita da distancia (d) do ser humano
+ate o robo e o angulo () entre o vetor que une a
+posicao da pessoa e o centro do robo com o vetor
+que representa a orientacao do robo. Para estimar
+estas duas variaveis, e usado um sistema de visao
+estereo calibrado que esta montado sobre o robo.
+A postura do ser humano em relacao ao robo e
+determinada atraves da recuperacao das coordenadas 3D das caractersticas faciais dos rostos encontrados nas duas imagens.
+A deteccao_de_faces e feita utilizando-se o algoritmo proposto em (Viola and Jones, 2001), o
+qual utiliza varias imagens para treinar um algoritimo de deteccao baseado no Adaboost. Apos
+detectar a face em ambas as imagens, um algoritmo para detectar algumas caractersticas faciais e aplicado e as coordenadas desses pontos no
+plano da imagem sao determinadas. Conhecendo
+as posicoes desses pontos nas duas imagens, as coordenadas 3D dos mesmos podem ser calculadas.
+Estas caractersticas faciais sao, por exemplo, os
+olhos, o nariz e a boca. As Figuras 1 (a) e (b)
+mostram um par de imagens capturadas pelo sis-
+
+Xc
+Referencial do
+Sistema de Visão
+
+Zc
+
+Yc
+
+Xr
+Referencial do
+Robô
+
+Yr
+
+Zr
+
+Figura 2 Referenciais do robo e do sistema de
+visao.
+A relacao entre entre estes dois referenciais e
+dada por uma rotacao de 180 no eixo-x e uma
+
+246
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+translacao de 1, 2 m no eixo-y. Assim,
+(2)
+
+onde Rf e Cf sao, respectivamente, as coordenadas no referencial do robo e no referencial do
+sistema de visao. A translacao no eixo-y e representada por Ty (.) enquanto Rx (.) e a rotacao no
+eixo-x.
+Apos estimar as coordenadas 3D da face, as
+variaveis d e  sao calculadas no plano-XZ do sistema de visao. Esse plano representa o plano do
+chao. A Figura 3 ilustra as posicoes da pessoa e
+do sistema de visao no plano-XZ.
+
+Pessoa
+
+q
+
+q
+
+d
+
+a posicao da pessoa ao centro do robo faz com a
+orientacao do mesmo e  e o erro angular.
+Os valores de d e  sao obtidos a partir das
+coordenadas 3D do meio da face apos a reconstrucao 3D. Esses valores sao obtidos de acordo com
+o explicado na Secao 2.
+Apos determinar d e , os erros de distancia e
+ ) sao calculados como
+orientacao (d,
+
+ d  dd  d
+(5)
+
+  d  ,
+
+Sistema de Visão
+(0, 0, 0)
+
+d
+Pessoa
+(X, Y, Z)
+
+Figura 3 Posicoes de uma pessoa e do sistema de
+visao vistos no plano-XZ.
+Assim, os valores de d e  que sao a distancia
+da pessoa ao robo e o angulo entre a orientacao do
+robo e o vetor que une a posicao do ser humano
+com o centro do robo, sao determinados como
+
+
+d 
+X2 + Z2
+
+
+
+ 
+(3)
+X
+
+
+,
+   atan
+Z
+
+onde dd e d sao, respectivamente, a distancia e
+a orientacao desejadas que o robo deve manter do
+humano
+Para o referido sistema, e proposto um controlador_nao_linear a fim de realizar o objetivo de
+controle, isto e, fazer com que o robo siga o ser
+humano com distancia e orientacao especificadas.
+Para esse controlador, as velocidades angular e linear sao calculadas como
+
+
+1
+
+
+vh  kd tanh(d)
+vr 
+
+
+
+cos()
+
+onde X e Z sao as coordenadas x e z da face.
+3
+
+vh
+
+vr
+
+Figura 4 Posicao relativa entre o robo e uma pessoa.
+
+x
+z
+
+Vision
+Stereode
+Sistema
+Visão
+Estéreo
+System
+
+Rf  Ty (1, 2) Rx (180) Cf
+
+w
+
+Controlador
+
+O objetivo do controlador proposto e manter o
+robo a uma distancia e orientacao desejadas do ser
+humano para realizar uma tarefa especfica. Isso
+e feito usando-se informacoes obtidas do par de
+imagens capturadas pelo sistema de visao_estereo
+montado sobre o robo.
+A Figura 4 ilustra uma pessoa atras de um
+robo_movel com um sistema de visao_estereo montado. Considerando esse caso, as equacoes cinematicas que descrevem o movimento do robo com
+relacao a pessoa sao dadas por
+
+
+d  vh  vr cos()
+
+
+(4)
+
+
+    + vr sin() + vh sin() ,
+d
+d
+
+
+
+
+ 
+
+ k tanh()  vr
+
+sin()
+sin()
+ vh
+,
+d
+d
+
+(6)
+com kd , k > 0.
+A estrutura de controle usada neste trabalho
+pode ser vista na Figura 5. As operacoes de detectar faces e caractersticas faciais, recuperar as
+coordenadas 3D e determinar os valores de d e
+, sao executadas pelo bloco Processamento de
+Imagens.
+
+qd dd vh
+Processamento
+das Imagens
+
+onde vr e  sao, respectivamente, as velocidades
+angular e linear do robo, vh e a velocidade da pessoa, d e a distancia entre a pessoa e o robo enquanto  representa o angulo que o vetor que liga
+
+d
+
+vr
+Controlador
+
+q
+
+w
+
+Robô
+
+Figura 5 Estrutura de controle.
+
+247
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+3.1
+
+Analise da Estabilidade
+
+Para o controlador_nao_linear proposto em (6),
+considerou-se a seguinte funcao candidata de Lyapunov para verificar a estabilidade do sistema
+ )  1 d2 + 1 2 ,
+V (d,
+2
+2
+
+(7)
+
+a qual e semi-definida positiva e possui a seguinte
+derivada temporal
+
+ )  dd + .
+V (d,
+
+(8)
+
+Assim, derivando-se (5) com relacao ao tempo
+e substituindo o resultado em (8) obtem-se
+ )  dd  .
+V (d,
+
+(9)
+
+Agora, os valores de d e  em (9) sao substitudos pelos respectivos valores dados na Equacao (4). Assim, obtem-se
+
+
+ )  dv
+ h vr cos() + vr sin() + vh sin() .
+V (d,
+d
+d
+(10)
+
+4.1
+
+Substituindo as acoes de controle propostas
+em (6) na Equacao (10), a derivada temporal da
+funcao candidata de Lyapunov pode ser re-escrita
+como
+ )  kd tanh(d)
+ d  k tanh().
+V (d,
+
+Figura 6 Robo utilizado para realizar os experimentos.
+Experimento 1
+
+Neste experimento, a pessoa guia o robo de um
+ponto inicial cujas coordenadas sao (X, Z) 
+(0 m, 0 m) ate as coordenadas (X, Z) 
+(3 m, 5 m) em uma caminho similar a letra
+S. A trajetoria descrita pelo robo pode ser vista
+na Figura 7.
+
+(11)
+
+Como ja foi mencionado, kd e k sao positivos
+e funcoes do tipo x.tanh(x)  0  x. Assim, (8)
+e semi-definida negativa, o que implica a estabilidade assintotica do controlador_nao_linear pro   0 quando t  .
+posto, isto e, d,
+Note que para estimar a velocidade_angular do
+robo e necessario conhecer a velocidade da pessoa,
+vh . Essa velocidade pode ser estimada como
+
+Trajetória Descrita pelo Robô
+0
+
+1
+
+y m
+
+2
+
+3
+
+d(t)  d(t  1)
+vh 
+ vr cos().
+t
+4
+
+(12)
+4
+
+Resultados Experimentais
+
+1
+
+Com o objetivo de comprovar a eficacia do metodo proposto, tres experimentos serao mostrados
+nesta secao. Esses experimentos foram realizados
+com um robo_movel Pioneer 3AT e um sistema de
+visao_estereo construdo com duas cameras USB
+que proporcionam imagens com 320x240 pixels.
+Um computador portatil com processador Intel
+Core2Duo, 1,81 GHz e 4 GB de RAM e usado
+para processar as informacoes necessarias para o
+controlador. O sistema_de_controle foi escrito em
+C++ e cada loop de controle, executado em 250
+ms. O robo com o sistema de visao_estereo utilizado para realizar os experimentos pode ser visto
+na Figura 6.
+
+0
+
+1
+
+2
+x m
+
+3
+
+4
+
+Figura 7 Experimento 1 Trajetoria descrita pelo
+robo.
+As velocidades linear e angular desempenhadas pelo robo sao mostradas, respectivamente, nas
+Figuras 8 (a) e (b). As linhas contnuas representam as velocidades calculadas pelo controlador
+enquanto as velocidades executadas pelo robo sao
+representadas pelas linhas pontilhadas.
+Na Secao 3.1 foi demonstrada a estabilidade
+do sistema_de_controle proposto, isto e, foi provado
+que os erros do sistema tendem para zero com o
+passar do tempo. Para ilustrar isso, os graficos
+
+248
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Velocidade Linear
+
+Observando a Figura 7 e possvel ver que o
+robo alcancou o objetivo descrevendo a trajetoria desejada. Alem disso, como pode ser visto na
+Figura 9, tanto o erro de posicao quanto o erro
+angular tendem para zero, ou seja, o robo completou a tarefa. Nos proximos experimentos estes
+erros nao serao mostrados.
+
+150
+
+v mms
+
+100
+
+50
+Calculada
+Efetuada
+
+0
+
+50
+0
+
+20
+
+40
+
+60
+t s
+
+80
+
+100
+
+4.2
+
+120
+
+Neste experimento a pessoa deveria guiar o robo
+de uma posicao inicial (X, Y )  (0 m, 0 m) ate
+as coordenadas finais (X, Y )  (5 m, 0 m). Entretanto, havia um objeto circular com diametro
+igual a 0.4 m no meio da trajetoria. A trajetoria
+descrita pelo robo durante a execucao desta tarefa
+e mostrada ne Figura 10.
+
+(a)
+Velocidade Angular
+10
+
+5
+
+w grauss
+
+Experimento 2
+
+0
+
+5
+Calculada
+Efetuada
+
+Trajetória Descrita pelo Robô
+
+10
+
+15
+0
+
+2
+20
+
+40
+
+60
+t s
+
+80
+
+100
+
+120
+
+1.5
+
+(b)
+y m
+
+1
+
+Figura 8 Experimento 1 Velocidades linear (a) e
+angular (b).
+
+0.5
+0
+0.5
+1
+
+apresentados na Figura 9 trazem os valores dos
+erros durante o experimento. A Figura 9 (a) mostra o erro de distancia durante o experimento enquanto o erro angular e mostrado na Figura 9 (b).
+
+1.5
+1
+
+2
+
+3
+
+4
+
+5
+
+x m
+
+Figura 10 Experimento 2 Trajetoria descrita
+pelo robo.
+Erro de Distância
+0.6
+
+E importante mencionar que o robo nao possui algoritmo de desvio_de_obstaculos. Assim,
+o desvio do obstaculo que pode ser visto na Figura 10 ocorreu devido a acao do ser humano, isto
+e, a pessoa que lidera a formacao percebeu o objeto no meio da trajetoria desejada e guiou o robo
+para que ele desviasse do obstaculo.
+A velocidade linear e mostrada na Figura 11 (a) enquanto a velocidade_angular aparece
+na Figura 11 (b).
+Note que proximo do 20 segundo do experimento, tanto a velocidade linear quanto a velocidade_angular calculadas pelo controlador sao
+iguais a zero. Isso aconteceu porque, nesse instante, o robo perdeu a informacao a respeito da
+pessoa em, pelo menos, uma das imagens do sistema de visao_estereo. Esse comportamento foi
+adotado para evitar que o robo ficasse fora de controle toda vez que o sistema de visao perdesse informacao do ser humano. Assim, em qualquer instante que o robo perca informacao a respeito do
+seu lder, ele para e aguarda ate que sejam detectadas faces nas duas imagens do sistema de visao.
+E importante mencionar que, mesmo com um
+obstaculo posicionado no meio da trajetoria, o ser
+
+0.5
+
+erro m
+
+0.4
+0.3
+0.2
+0.1
+0
+0.1
+0
+
+20
+
+40
+
+60
+t s
+
+80
+
+100
+
+120
+
+80
+
+100
+
+120
+
+(a)
+Erro Angular
+40
+
+erro graus
+
+20
+
+0
+
+20
+
+40
+
+60
+0
+
+20
+
+40
+
+60
+t s
+
+(b)
+
+Figura 9 Experimento 1 Erro de distancia (a) e
+erro de orientacao (b).
+
+249
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Velocidade Linear
+
+Velocidade Linear
+
+120
+
+40
+20
+
+100
+
+20
+
+v mms
+
+v mms
+
+0
+
+Calculada
+Efetuada
+
+80
+
+Calculada
+Efetuada
+
+60
+
+40
+60
+
+40
+
+80
+20
+0
+0
+
+100
+10
+
+20
+
+30
+t s
+
+40
+
+50
+
+120
+0
+
+60
+
+10
+
+40
+
+50
+
+(a)
+
+Velocidade Angular
+
+Velocidade Angular
+
+6
+
+2
+
+4
+
+0
+
+2
+
+2
+w grauss
+
+w grauss
+
+30
+t s
+
+(a)
+
+0
+2
+
+4
+6
+
+4
+6
+8
+0
+
+20
+
+8
+
+Calculada
+Efetuada
+10
+
+20
+
+30
+t s
+
+40
+
+50
+
+10
+0
+
+60
+
+Calculada
+Efetuada
+10
+
+20
+
+30
+
+40
+
+50
+
+t s
+
+(b)
+
+(b)
+
+Figura 11 Experimento 02 Velocidades Linear
+(a) e angular (b).
+
+Figura 13 Experimento 3 Velocidades linear (a)
+e angular (b).
+
+humano foi capaz de guiar o robo de forma a evitar
+o obstaculo e atingir o ponto desejado.
+4.3
+
+maneira de guiar o robo. No entanto, este experimento foi realizado para mostrar a viabilidade do
+controlador proposto. Note que a velocidade linear (Figura 13 (a)) e predominantemente menor
+que zero, o que significa que o robo executou um
+movimento em marcha a re.
+
+Experimento 3
+
+Neste experimento, o ser humano guiou o robo
+desde a posicao inicial (X, Y )  (0 m, 0 m) ate
+o ponto (X, Y )  (4 m, 1.5 m) em um movimento em marcha a re. A Figura 12 mostra a
+trajetoria descrita pelo robo durante este experimento.
+
+5
+
+Conclusoes e Trabalhos Futuros
+
+Trajetória Descrita pelo Robô
+2
+
+Este artigo apresentou um metodo para realizar o
+controle_de_formacao entre um robo_movel e um
+ser humano. A estrategia utiliza o metodo de deteccao de objetos apesentado em (Viola and Jones, 2001) para detectar as caractersticas faciais
+necessarias para estimar a posicao do ser humano.
+Foi proposto, para isso, um controlador_nao_linear
+estavel. A eficacia do metodo proposto foi verificada atraves de experimentos onde uma pessoa
+leva um robo desde uma posicao inicial ate um
+ponto final desejado, movendo-se para frente ou
+para tras.
+
+1.5
+
+y m
+
+1
+0.5
+0
+0.5
+3.5
+
+3
+
+2.5
+
+2 1.5
+x m
+
+1
+
+0.5
+
+0
+
+Figura 12 Experimento 3 Trajetoria descrita
+pelo robo.
+
+Os trabalhos futuros estao focados em melhorar a deteccao das caractersticas faciais a fim de
+obter uma melhor estimativa da posicao e orientacao do ser humano que guia o robo. Alem disso,
+tambem pretende-se introduzir um segundo robo
+a equipe. Dessa maneira, os robos seriam capazes
+de carregar uma carga maior e mais pesada.
+
+As velocidades linear e angular desempenhadas pelo robo sao mostradas, respectivamente, nas
+Figuras 13 (a) e (b).
+Um movimento em marcha a re nao e a melhor
+
+250
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Agradecimentos
+
+robots with omnidirectional visual servoing
+and motion segmentation, Robotics and Automation, 2003. Proceedings. ICRA 03.
+IEEE International Conference on, Vol. 1,
+pp. 584589 vol.1.
+
+Os autores gostariam de agradecer a FAPES
+(Fundacao de Amparo a Pesquisa do Esprito
+Santo) pelo suporte financeiro atraves do projeto
+454432112009.
+
+Viola, P. and Jones, M. (2001). Rapid object detection using a boosted cascade of simple features, Proceedings of the 2001 IEEE Computer Society Conference on Computer Vision
+and Pattern Recognition, 2001. CVPR 2001.
+1 I511I518 vol.1.
+
+Referencias
+Althaus, P., Ishiguro, H., Kanda, T., Miyashita,
+T. and Christensen, H. (2004). Navigation
+for human-robot interaction tasks, ICRA 04.
+2004 IEEE International Conference on Robotics and Automation, 2004. Proceedings.,
+Vol. 2, pp. 18941900 Vol.2.
+Bicho, E. and Monteiro, S. (2003). Formation control for multiple mobile robots a non-linear
+attractor dynamics approach, Intelligent Robots and Systems, 2003. (IROS 2003). Proceedings. 2003 IEEERSJ International Conference on, Vol. 2, pp. 20162022 vol.2.
+Bowling, A. and Olson, E. (2009). Human-robot
+team dynamic performance in assisted living
+environments, PETRA 09 Proceedings of
+the 2nd International Conference on PErvsive Technologies Related to Assistive Environments, ACM, New York, NY, USA, pp. 1
+6.
+Das, A., Fierro, R., Kumar, V., Ostrowski, J.,
+Spletzer, J. and Taylor, C. (2002). A visionbased formation control framework, Robotics and Automation, IEEE Transactions on
+18(5) 813825.
+Egerstedt, M. and Hu, X. (2001). Formation
+constrained multi-agent control, Robotics and
+Automation, 2001. Proceedings 2001 ICRA.
+IEEE International Conference on, Vol. 4,
+pp. 39613966 vol.4.
+Egerstedt, M., Hu, X. and Stotsky, A. (2001).
+Control of mobile platforms using a virtual
+vehicle approach, Automatic Control, IEEE
+Transactions on 46(11) 17771782.
+Jadbabaie, A., Lin, J. and Morse, A. (2002). Coordination of groups of mobile autonomous
+agents using nearest neighbor rules, Decision
+and Control, 2002, Proceedings of the 41st
+IEEE Conference on, Vol. 3, pp. 29532958
+vol.3.
+Kang, W. and Xi, N. (1999). Formation control of multiple autonomous vehicles, Control
+Applications, 1999. Proceedings of the 1999
+IEEE International Conference on, Vol. 2,
+pp. 10271032 vol. 2.
+Vidal, R., Shakernia, O. and Sastry, S. (2003).
+Formation control of nonholonomic mobile
+
+251

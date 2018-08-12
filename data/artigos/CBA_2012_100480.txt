@@ -1,0 +1,1805 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+MODELAGEM E CONTROLE NÃO LINEAR SUBATUADO DE UM QUAD-ROTOR PARTE 2
+A LEXANDRE S. B RANDÃO, I GOR H. B. P IZETTA, M ARIO S ARCINELLI F ILHO, R ICARDO C ARELLI
+
+
+
+
+Departamento de Engenharia Elétrica, Centro de Ciências Exatas e Tecnológicas
+Universidade Federal de Viçosa, Viçosa  MG, Brasil
+
+Programa de Pós-Graduação em Engenharia Elétrica, Universidade Federal do Espírito Santo
+Vitória  ES, Brasil
+
+
+Instituto de Automática, Universidad Nacional de San Juan, San Juan, Argentina
+
+Emails alexandre.brandao@ufv.br, igorpizetta@gmail.com,
+mario.sarcinelli@ele.ufes.br, rcarelli@inaut.unsj.edu.ar
+Abstract This paper proposes a low- and high-level underactuated nonlinear_controller capable to guide a UAV during a 3D
+flight. In its first part the dynamic models of the actuator and the rigid body of a quad-rotor are presented. Explicitly such model
+highlights its underactuated character. Following, a suitable controller based on the Theory of Lyapunov and partial feedback
+linearization technique is designed for stabilizing the rotorcraft, besides guiding it during positioning and trajectory tracking tasks.
+Simulated and experimental results using a quad-rotor are presented, which validate the proposed controller and, consequently, its
+dynamic model.
+Keywords
+
+UAV, Nonlinear Control, Underactuated Model.
+
+Resumo Este artigo propõe um controlador de baixo e alto nível não_linear subatuado, capaz de guiar um VANT em missões
+de voo 3D. A primeira parte do artigo contempla a modelagem_dinâmica dos atuadores e do corpo rígido de um quad-rotor. Explicitamente, o modelo proposto destaca sua característica subatuda. Na sequência, um controlador baseado na teoria de Lyapunov
+e técnicas_de_linearização por retroalimentação parcial é projetado para estabilizar a aeronave, além de possibilitar a realização de
+manobras de posicionamento e seguimento de trajetória. Resultados de simulação e experimentais utilizando um quad-rotor são
+apresentados para validação do controlador e, consequentemente, do modelo_dinâmico.
+Palavras-chave
+
+.
+
+1 Introdução
+Nas últimas décadas, as pesquisas científicas envolvendo veículos_aéreos_não_tripulados (VANT) têm
+crescido substancialmente ao redor do mundo, visando tanto aplicações militares quanto civis, tais
+como inspeção de grandes áreas em segurança pública (Maza et al., 2010), gerenciamento de riscos
+naturais, transporte cooperativo de cargas utilizando
+(Nathan Michael and Kumar, 2010), inspeção de linhas_de_transmissão (Ma and Chen, 2004), fotogrametria (Eisenbeiss, 2004), intervenção em ambientes
+hostis, gerenciamento de infraestruturas e agricultura
+de precisão (Hsieh et al., 2007 Kendoul et al., 2010).
+Com respeito aos VANTs mais pesados que o ar,
+dois grupos podem ser claramente diferenciados os
+de asas fixas (aviões e planadores) e os de asas rotativas (helicópteros e quad-rotors). Uma diferença importante entre eles está na versatilidade do segundo
+grupo de decolar verticalmente e realizar voo pairado.
+Em um contexto geral, pesquisadores ao redor do
+mundo têm se dedicado ao desenvolvimento de controladores para estabilização e navegação de tais veículos. Tradicionalmente, os controladores implementados estão baseados na estratégia de loop interno e
+externo, os quais visam estabilizar a orientação da aeronave e em seguida fazê-la navegar no espaço 3-D
+(Antunes et al., 2010). Porém, garantir a estabilidade
+e o desempenho de dois sistemas_de_controle em separado não garante a estabilidade e o desempenho do
+sistema como um todo. Por outro lado, outra linha de
+
+ISBN 978-85-8001-069-5
+
+pesquisa visa encontrar uma solução integrada para o
+controle de posicionamento e orientação da aeronave,
+comumente baseada em técnicas não_lineares.
+Diferentes estratégias já foram apresentadas na literatura específica para o controle de quad-rotors, normalmente baseadas em alguma técnica de linearização
+(A. Benallegue and Fridman, 2006 Voos, 2009). Em
+(Mistler et al., 2001), um sistema linear e controlável é obtido e controlado por linearização por retroalimentação. Como resultado da linearização, o sistema
+tornou-se um conjunto de sistemas SISO independentes, que podem ser considerados desacoplados.
+Em (Bouabdallah, Murrieri and Siegwart, 2004),
+uma proposta de estabilização de atitude de uma
+VANT é apresentada através da modelagem de baixo
+nível através de motores CC e controle de alto nível
+utilizando técnicas de controle não_linear baseadas na
+teoria de Lyapunov. Em adição, o artigo apresenta
+uma comparação entre o comportamento do sistema
+real e o simulado destacando o desempenho da estratégia implementada. Em (Bouabdallah, Noth and Siegwart, 2004) os autores estendem seus experimentos
+no projeto OS4, e comparam os resultados com as respostas obtidas por controladores clássicos PD e PID e
+um controlador ótimo adaptativo LQ durante a orientação e estabilização de um VANT. Foi verificado que
+os controladores clássicos são mais eficientes que os
+LQ, quando erros paramétricos e pequenos distúrbios
+são considerados. Ainda em termos de controle, propostas baseadas em backstepping são apresentadas em
+(Madani and Benallegue, 2006) e (Das et al., 2009).
+
+3102
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Este trabalho propõe um controlador não_linear de
+alto nível para um quad-rotor, considerando seu modelo_dinâmico subatuado, sem adotar qualquer estratégia de linearização. A contribuição deste manuscrito
+é dupla a) representação do modelo do helicóptero
+segundo a forma subatuada (apresentado na Parte 1
+deste trabalho) e b) proposta de um controlador não
+linear baseado na dinâmica_inversa. A estabilização
+do veículo durante o voo é garantida, uma vez que se
+prova a estabilidade do equilíbrio do sistema em malha
+fechada utilizando o controlador proposto.
+2
+
+A Estratégia de Controle Proposta Aplicada a
+VANTs de Asas Rotativas
+
+O modelo_dinâmico subatuado de um veículo aéreo,
+cuja descrição de sua parte ativaatuada é dada por
+(Brandao et al., 2012)
+Map qp + Maa qa + Ea  fa  R4 ,
+
+(1)
+
+e sua parte passivanão atuada, nomeada restrição de
+segunda ordem, é descrita por
+Mpa qa + Mpp qp + Ep  0p  R2 ,
+
+(2)
+
+a qual representa um forte acoplamento inercial entre
+os graus de liberdade diretamente atuados e aqueles
+indiretamente atuados, aqui representados por qa 
+z   T e qp  x yT , respectivamente. Note-se
+que esta consideração é importante para a proposta do
+controlador a seguir.
+Considerando as funções de saída yp  f1 (q)
+e ya  f2 (q), que realizam o mapeamento das variáveis de estado de um VANT do referencial inercial
+hei para o referencial espacial hsi, com q referenciado
+na origem do sistema de coordenadas globais, pode-se
+concluir que f1  R6 7 R2 e f2  R6 7 R4 .
+Tomando agora a primeira derivada temporal de
+cada uma das funções de mapeamento, obtém-se
+yp  Jp q + Jp q,
+ya  Ja q e ya  Ja q + Ja q,
+
+yp  Jp q
+
+e
+
+(3)
+(4)
+
+onde Jp e Ja representam as matrizes Jacobiano passiva e ativa relativas s velocidades da aeronave de hei
+para hsi.
+Ao considerar yp  qp e ya  qa , tem-se
+
+
+
+
+
+
+Jp  Jpp Jpa  I2
+
+ 
+Ja  Jap Jaa  0
+
+
+
+
+0 , com Jp  0 0 , (5)
+
+
+
+I4 , com Ja  0 0 , (6)
+
+que reduz (3) e (4) a yp  qp e ya  qa , respectivamente.
+De acordo com (Spong, 1994), que lida com sistemas subatuados, a aplicação da estratégia de linearização parcial por retroalimentação é possível para
+sistemas com elevado acoplamento inercial, como é
+o caso dos helicópteros e quad-rotors. A representação de outros sistemas mecânicos segundo a notação
+
+ISBN 978-85-8001-069-5
+
+subatuada utilizando uma estratégia de controle similar é detalhada em (Shin and Lee, 1997 Siqueira and
+Terra, 2004 Shkolnik and Tedrake, 2008 Watanabe
+and Izumi, 2009 Nagarajan, 2010).
+Neste contexto, visando controlar um VANT de
+asas rotativas segundo tal abordagem, a restrição de
+segunda ordem (2) deve ser escrita como
+qp  M1
+pp (Mpa qa + Ep ),
+
+(7)
+
+onde Mpp é inversível e positiva definida. Ao substituir em (1), obtém-se
+1
+fa  (Maa  Map M1
+pp Mpa )qa + Ea  Map Mpp Ep
+
+ Maa qa + Ea .
+
+(8)
+
+Aplicando uma linearização por retroalimentação
+não_linear, pode-se propor o seguinte sinal de controle
+  + E
+ ,
+fa  M
+aa a
+a
+
+(9)
+
+ e E
+ são os valores estimados das matrizes
+onde M
+aa
+a
+Maa e Ea , respectivamente, enquanto  a  R4 é uma
+entrada de controle adicional, definida a seguir.
+Substituindo (9) em (8), obtém-se
+
+
+qa   a + M1
+aa (Maa  a + Ea ),
+
+(10)
+
+
+
+
+
+sabendo que M
+aa  Maa + Maa e Ea  Ea + Ea ,
+ e E
+ sendo matrizes de erro de estimação.
+com M
+aa
+a
+Se yad  qad (t) representa a posição desejada
+ou um perfil de trajetória para os graus de liberdade
+atuadosativos, pode-se propor
+ a  qad + Ka1 tanh Ka2 q a + Ka3 tanh Ka4 qa ,
+(11)
+onde qa  qad  qa indica o erro de seguimento e
+Kai  R4 são matrizes de ganho diagonais positivas.
+Finalmente, tem-se
+ a + Ka1 tanh Ka2 q a + Ka3 tanh Ka4 qa 
+q
+
+
+ M1
+(12)
+aa (Maa  a + Ea )  a (q,  a , t).
+Na sequência, após linearizar a parte atuada do
+sistema, a restrição de segunda ordem (2) pode ser escrita como
+qa  M
+pa (Mpp qp + Ep ),
+
+(13)
+
+a fim de utilizar a linearização na parte subatuada,
+T
+T 1
+sendo M
+a pseudo-inversa 
+pa  Mpa (Mpa Mpa )
+direta de Moore-Penrose. Agora, após substituir (13)
+em (1), tem-se
+
+fa  (Maa  Maa M
+pa Mpp )qp + Ea  Maa Mpa Ep
+
+ Mpp qp + Ep .
+
+(14)
+
+É importante mencionar que um sistema com um
+forte acoplamento inercial, de acordo com (Spong,
+1994), requer um número de graus de liberdade ativosatuados (NDOF a ) maior que o número de graus
+
+3103
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+de liberdade passivos (NDOF p ). Note-se que isto é
+verificado para o sistema descrito anteriormente, uma
+vez que NDOF a  4  NDOF p  2. Em adição, a condição de forte acoplamento inercial ocorre
+para um helicóptero ou quad-rotor se, e somente se,
+rank(Mpa )  2.
+Ao adotar o sinal de controle
+  + E
+ ,
+fa  M
+pp p
+p
+
+(15)
+
+tem-se o sinal de controle das variáveis diretamente
+atuadas, guiadas pelo comportamento das variáveis
+
+
+não atuadas. Note que M
+pp e Ep são matrizes estimadas de Mpp and Ep , respectivamente, e  p  R4 é
+outro sinal de controle adicional, definido na sequência.
+Após algumas manipulações algébricas, tem-se
+
+
+qp   p + M
+pp (Mpp  p + Ep ),
+
+(16)
+
+
+
+
+
+sabendo que M
+pp  Mpp + Mpp e Ep  Ep + Ep ,
+ e E
+ sendo as matrizes de erro de estimacom M
+pp
+p
+ção. Vale mencionar que (16) indica a linearização
+parcial por retroalimentação das variáveis não atuadaspassivas, que são agora desacopladas (se as matrizes de incerteza são desconsideradas), assim como
+descreve a dinâmica atuadaativa de acordo com a dinâmica interna do sistema.
+De forma similar quela apresentada para as variáveis atuadasativas, se ypd  qpd (t) representa
+um perfil de referência para as variáveis não atuadaspassivas, pode-se propor o sinal de controle
+ p  qpd + Kp1 tanh Kp2 q p + Kp3 tanh Kp4 qp ,
+(17)
+onde qp  qpd  qp indica o erro de seguimento e
+Kpi  R2 são matrizes de ganho diagonais positivas.
+Substituindo (17) em (16) tem-se, finalmente,
+ p + Kp1 tanh Kp2 q p + Kp3 tanh Kp4 qp 
+q
+
+
+ M
+(18)
+pp (Mpp  p + Ep )  p (q,  p , t).
+2.1 Análise de Estabilidade usando a Teoria de Lyapunov
+A fim de analisar a estabilidade do equilíbrio do sistema VANT, (12) e (18) podem ser escritas como
+ + K1 tanh K2 q + K3 tanh K4 q  (q,  a ,  p , t),
+q
+(19)
+
+
+Kpi
+0
+onde Ki 
+com i  1, 2, 3, 4 e  
+0
+Kai
+ 
+p
+.
+a
+A fim de analisar a estabilidade em laço fechado
+usando a Teoria de Lyapunov para sistemas_não_lineares, a função candidata de Lyapunov
+  AK3 ln cosh(K4 q) + 1 q T q > 0 (20)
+V (q, q)
+2
+
+ISBN 978-85-8001-069-5
+
+
+
+é proposta, com A  1 1 1 1 1 1 . Tomando sua primeira derivada temporal e usando (19),
+tem-se
+  q T K3 tanh(K4 q) + q T q
+
+V (q, q)
+T
+ + q T ,
+ q K1 tanh(K2 q)
+
+(21)
+(22)
+
+cuja condição suficiente para se ter V semi-definida
+ > q T .
+negativa é q T K1 tanh(K2 q)
+Nota 1 Para completar a análise_de_estabilidade, é
+importante verificar o comportamento do sistema para
+uma região finita de valores de q. Primeiramente,
+para grandes valores de q, pode-se considerar que
+ > K1 sgn(q), onde 0 <  < 1.
+K1 tanh(K2 q)
+Portanto, V será semi-definida negativa se, e somente
+se, min K1  > kk, que faz o erro de seguimento
+q diminuir. Em contraste, para pequenos valores de
+ > K1 K2 q.
+ Neste caso, V
+q, tem-se K1 tanh(K2 q)
+será semi-definida negativa se, e somente se, kqk >
+kkminK1 K2 . Se ambas as condições são respeitadas, q e q são limitadas ou, em outras palavras,
+q, q  L .
+Aplicando o Teorema de La Salle para sistemas
+autônomos, levando em consideração o sistema descrito em (19), desconsiderando os distúrbios, o maior
+conjunto_invariante M na região
+ 
+
+   
+q
+q
+q
+
+    V (q, q)  0
+
+
+
+0
+q
+q
+existe somente para q  0. Portanto, o único conjunto
+
+T
+
+T
+invariante M é o equilíbrio q q
+ 0 0 ,
+que é assintoticamente estável. Em outras palavras,
+
+q(t),
+q(t)  0 para t  .
+2.2 Perfil de Referência no Espaço 3-D
+Durante uma tarefa de voo 3-D, um perfil de referência no espaço Cartesiano é dado ao controlador do veículo aéreo, a fim de executar uma tarefa de posicionamento, rastreamento_de_trajetória ou seguimento_de_caminho. Entretanto, para alcançar tal postura desejada
+e
+d , a aeronave deve modificar sua orientação durante
+o voo. Portanto, torna-se necessária a determinação de
+um perfil de referência de atitude e d .
+É fácil verificar que a rota de referência no espaço
+e a posição de referência da aeronave são coincidentes
+no referencial inercial hei, embora isto não ocorra para
+sua orientação. Neste caso, sabendo que a referência
+de guinada pode ser definida independentemente, então o foco aqui é determinar o perfil de referência de
+rolagem e arfagem.
+Considerando uma situação em que a aeronave
+não está gerando propulsão e que não há distúrbios
+translacionais Dt atuando sobre ela, tem-se o modelo
+dinâmico translacional descrito por
+
+  
+x
+0
+RT  y   0 ,
+(23)
+z + g
+0
+
+3104
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+
+
+
+c c c s s  s c c s c + s s
+com R  s c s s s + c c s s c  c s  .
+s
+c s
+c c
+Tomando as duas primeiras equações, tem-se
+c c x + s c y  s (z + g)  0
+c x + s x
+ tan  
+z + g
+
+(24)
+
+e
+(c s s  s c )x + (s s s + c c )y+
++c s (z + g)  0
+s x  c x
+ tan   c
+.
+z + g
+
+(25)
+
+Finalmente, usando (10) e (16), e desconsiderando os erros de estimação paramétricos, pode-se definir
+s x  c y
+z + g
+c x + s y
+.
+tan d 
+z + g
+
+tan d  cd
+
+e
+
+(26)
+(27)
+
+Para completar o perfil de referência de atitude, se
+a orientação de guinada do veículo deve ser, por exemplo, tangente ao caminho (ou trajetória) de referência,
+pode-se adotar
+yd
+tan d 
+.
+(28)
+xd
+Note-se que é possível assumir orientação de guinada
+zero durante uma missão de voo.
+3 Resultados e Discussões
+3.1 Resultados de simulação
+Esta seção apresenta duas simulações de voo para um
+quad-rotor no espaço 3-D, usando o controlador descrito na Seção 2 para posicionamento e rastreamento
+de trajetória. O objetivo das simulações é verificar
+a estabilidade em laço fechado do sistema ao adotar o controlador proposto. As simulações são realizadas em uma plataforma de simulação desenvolvida
+em Matlab c , que considera um modelo apurado do
+veículo baseado nas equações de Euler-Lagrange, levando em consideração a matriz de inércia diagonal e
+imposições físicas de saturação nos controladores de
+alto e baixo nível. Nestas simulações, os efeitos de
+solo não são desconsiderados e o centro de massa do
+veículo coincide com a origem do sistema de referência espacial.
+A aeronave considerada nas simulações é um
+quad-rotor ArDrone Parrot, cujos parâmetros adotados
+são mostrados na Tabela 1.
+Tabela 1 Parâmetros do ArDrone Parrot
+m  0.380kg
+k1  0.1782m
+k2  0.0290m
+
+Quad-rotor
+Ixx  9.57  103 kgm2 
+Iyy  18.57  103 kgm2 
+Izz  25.55  103 kgm2 
+
+ISBN 978-85-8001-069-5
+
+A trajetória a ser seguida na simulação foi escolhida visando uma excitação dinâmica do veículo durante a execução das manobras 3-D. Vale dizer que
+o veículo primeiro decola verticalmente, para, em seguida, executar movimentos laterais ou longitudinais.
+A primeira simulação descreve um controle de
+posicionamento e seguimento de trajetória para um
+quad-rotor, cuja referência é um plano inclinado descrito por xd  2 cos 0.25t, yd  2 sin 0.25t, zd 
+2.5  2 cos 0.25t. A segunda simulação ilustra seu
+comportamento enquanto segue uma referência em
+t
+espiral caracterizada por xd  20
+cos 0.75t, yd 
+t
+t
+sin
+0.75t,
+z
+
++
+1.5.
+Em
+ambas
+as simulad
+20
+20
+ções, os ângulos de referência são dados por (26), (27)
+e (28).
+Fig. 1 ilustra o caminho percorrido e a evolução
+temporal da postura do quad-rotor para o primeiro voo
+simulado. Note-se que antes de iniciar o seguimento
+de trajetória, o quad-rotor deve decolar verticalmente
+até atingir 1.5m. Após realizar o seguimento de trajetória, ele deve realizar uma nova tarefa de posicionamento a 1.5m, de onde se inicia o processo de aterrissagem. É importante mencionar que o mesmo controlador é utilizado em todas as etapas do voo.
+Fig. 2 ilustra as manobras do mesmo veículo
+durante o seguimento de uma trajetória em espiral.
+Nesta simulação um distúrbio é adicionado ao sistema, a fim de simular uma situação de rajadas de
+vento lateral. Um ruído Gaussiano com (0, 0.5)N é
+aplicado durante toda a simulação, e uma força constante de 0.15,  0.05, 0.02T é aplicada no intervalo
+entre 20s < t < 40s. Note-se que apesar dos distúrbios o controlador proposto é capaz de seguir a forma
+da trajetória de referência. Observa-se, portanto, que
+a trajetória de referência é efetivamente seguida pelo
+veículo quando ele é controlado pelo controlador proposto, sem oscilações excessivas sobre o valor de referência ou atraso no estado estacionário. Vale frisar,
+novamente, que uma tarefa de posicionamento foi realizada com o mesmo controlador em ambas as simulações, como no caso anterior.
+3.2 Resultados Experimentais
+Esta seção descreve um controle_de_altitude e guinada,
+usando o controlador projetado na Seção 2. Um quadrotor Ar.Drone Parrot foi utilizado para realizar tal tarefa. Apesar de muito simples, o objetivo dos experimentos aqui ilustrados é confirmar a estabilidade em
+laço fechado do sistema ao guiar uma aeronave real.
+A primeira tarefa de voo executada contempla posicionamento e hovering, i.e., o ArDrone deve alcançar
+um dada altitude, incrementar e decrementar sua altitude, enquanto segue a referência de altitude e controla
+sua orientação. Mais especificamente, 5s após a decolagem o quad-rotor deve alcançar os seguintes valores
+de referência 0.75 1.0 1.0 e 0 90 0, para altitude e
+guinada, respectivamente.
+A evolução temporal da aeronave é mostrada na
+Figura 3. Pode-se observar que o controlador pro-
+
+3105
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+(a) Referência inclinada.
+
+(a) Referência em espiral.
+
+xh m
+
+2
+4
+0
+
+yh m
+
+4
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+2
+0
+2
+4
+0
+
+80
+
+2
+
+4
+
+0
+
+2
+
+yh m
+
+xh m
+
+2
+
+2
+4
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+zh m
+
+zh m
+
+10
+
+20
+
+30
+
+40
+Time s
+
+50
+
+60
+
+70
+
+h degree
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+10
+
+20
+
+30
+
+40
+Time s
+
+50
+
+60
+
+70
+
+80
+
+4
+2
+
+2
+0
+
+0
+5
+10
+15
+0
+
+80
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+10
+
+20
+
+30
+
+40
+Time s
+
+50
+
+60
+
+70
+
+80
+
+5
+h degree
+
+h degree
+h degree
+
+70
+
+5
+
+4
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+0
+5
+10
+15
+0
+
+80
+
+200
+
+200
+h degree
+
+h degree
+
+60
+
+(b) Evolução temporal das variáveis de posição.
+
+4
+
+0
+200
+0
+
+50
+
+6
+
+0
+0
+
+80
+
+2
+0
+
+8
+0
+
+40
+
+8
+
+(b) Evolução temporal das variáveis de posição.
+
+8
+0
+
+30
+
+0
+
+5
+
+0
+0
+
+20
+
+2
+4
+0
+
+80
+
+10
+
+10
+
+20
+
+30
+
+40
+Time s
+
+50
+
+60
+
+70
+
+80
+
+0
+200
+0
+
+(c) Evolução temporal das variáveis de atitude.
+
+(c) Evolução temporal das variáveis de atitude.
+
+Figura 1 Resultados de simulação para seguimento de
+trajetória com um quad-rotor, considerando uma referência 3D inclinada.
+
+Figura 2 Resultados de simulação para seguimento de
+trajetória com um quad-rotor, considerando uma referência 3D em espiral, incluindo perturbação e efeitos
+de rajada de vento.
+
+posto é capaz de guiar o veículo durante uma tarefa
+de posicionamento, com variações bruscas de referência. A Figura 3(a) ilustra o comportamento da posição
+da aeronave durante o experimento. Pode-se verificar
+o comportamento assintótico, sem sobre-sinal, durante
+as manobras de controle_de_altitude. Entretanto, também fica evidente os efeitos de deslizamento (drifting)
+no plano xy, resultante da polarização dos sensores,
+o que influencia diretamente na odometria calculada
+pelos sensores_inerciais instalados na aeronave. Este
+efeito é refletido nos ângulos de rolagem e arfagem,
+conforme pode ser visto na Figura 3(b). Vale mencionar que apesar da oscilação em torno de zero, o VANT
+executou a missão de voo de forma estável. Em adi-
+
+ISBN 978-85-8001-069-5
+
+ção, a Figura 3(b) ilustra a convergência assintótica da
+guinada aos valores desejados.
+Os sinais de controle abstratos e reais são mostrados nas Figuras 3(c) e 3(d), respectivamente. Conforme esperado, os sinais de controle abstratos, referentes s forças de propulsão aplicadas ao quad-rotor,
+apresentaram o mesmo perfil de comportamento, dada
+a disposição dos motores e a forma como as forças
+são geradas. Os sinais de controle reais aplicados 
+aeronave estão ilustrados na Fig. 3(d). Como é possível verificar, há uma grande oscilação nos ângulos
+de arfagem e rolagem, que indica um controle de es-
+
+3106
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+2
+1
+0
+1
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+Tempo s
+
+50
+
+60
+
+70
+
+80
+
+2
+1
+0
+1
+
+1.4
+
+z h m
+
+1.2
+1
+0.8
+
+(a) Evolução temporal das variáveis de posição.
+5
+
+0
+
+5
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+Tempo s
+
+50
+
+60
+
+70
+
+80
+
+10
+5
+0
+5
+
+h graus
+
+100
+0
+100
+200
+
+(b) Evolução temporal das variáveis de atitude.
+f 1 N
+
+3
+2
+1
+0
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+Tempo s
+
+50
+
+60
+
+70
+
+80
+
+2
+
+f 2 N
+
+tabilização da aeronave para a manutenção da missão
+de voo. Por outro lado, é possível verificar um comportamento suave das taxas de variação de guinada e
+de altitude. Vale ressaltar que durante a alteração da
+altitude e guinada simultaneamente, a aeronave tende
+a perder sustentação, o que resulta em oscilações no
+controle_de_altitude, principalmente. Esta situação enfatiza os efeitos do forte acoplamento dinâmico deste
+tipo de veículo.
+O segundo experimento realizado corresponde a
+uma tarefa de seguimento de trajetória de altitude com
+alteração do ângulo de guinada. A função de referência é dada por z  1  0.5 sin(0.125t). O resultado
+deste experimento é mostrado na Figura 4. Neste experimento, é interessante observar os distúrbios na altitude que ocorrem nos instantes 20s, 40s e 60s (ver
+Figura 4(a)), os quais são consequência da alteração
+na referência de guinada nestes mesmos instantes, que
+afeta a sustentação da aeronave, como visto em 4(b).
+Com respeito aos sinais de controle de alto nível,
+pode-se observar a ação conjunta das forças aplicadas
+durante o experimento. Em um caso mais simples,
+pode-se notar que um incrementodecremento de força
+ocorre quando a aeronave incrementadecrementa sua
+altitude, como visto nos instantes 50-60s e 70-80s da
+Figura 4(c).
+Note-se, também, que os mesmos efeitos de drifting são observados neste experimento, embora o seguimento de trajetória proposto tenha sido executado
+sem qualquer oscilação ou atraso consideráveis. Uma
+alternativa plausível para minimizar os efeitos de deslizamento seria através de um sensoriamento global
+(GPS), ou mesmo local (sistema de visão_artificial).
+
+1
+0
+
+4 Considerações Finais
+
+f 3 N
+
+3
+2
+1
+0
+
+ISBN 978-85-8001-069-5
+
+f 4 N
+
+2
+1
+0
+
+(c) Evolução temporal dos sinais de controle.
+ graus
+
+0.1
+0
+0.1
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+Tempo s
+
+50
+
+60
+
+70
+
+80
+
+ graus
+
+0.1
+0
+0.1
+
+ grauss
+
+0.5
+0
+0.5
+0.5
+
+z ms
+
+Um modelo_dinâmico é proposto para caracterizar a
+dinâmica de um quad-rotor, enfatizando a característica subatuada do VANT. Com base em tal modelo, um
+controlador não_linear é proposto, o qual é plenamente
+capaz de guiar um quad-rotor tanto em uma tarefa de
+posicionamento quanto em uma tarefa de seguimento
+de trajetória. A estabilidade do sistema_de_controle em
+malha_fechada, quando se usa o controlador proposto
+para fechar a malha, é demonstrada para tal VANT.
+Mais ainda, a eficiência do controlador proposto ao
+guiar o veículo durante o cumprimento de uma tarefa
+de voo é observada através de missões simuladas, na
+presença de um distúrbio Gaussiano contínuo, simulando situações de rajada de vento. Além disto, o controlador foi capaz de estabilizar a aeronave em missões
+experimentais de controle_de_altitude e guinada, para
+seguimento de trajetória e posicionamento, validando,
+assim, o controlador e o modelo propostos.
+Vale destacar que o sistema_de_controle aqui apresentado pode ser adaptado para qualquer sistema subatuado, não somente para quad-rotor ou outros tipo de
+veículo aéreo não tripulado, desde que os parâmetros
+incluídos no modelo sejam selecionados corretamente
+para representá-lo.
+
+0
+0.5
+1
+
+(d) Evolução temporal dos sinais de controle.
+
+Figura 3 Controle de posicionamento.
+
+3107
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+0.5
+
+x h m
+
+0
+0.5
+1
+1.5
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+2
+
+y h m
+
+1
+
+A sequência deste trabalho prevê a implementação de um controlador a bordo de um quad-rotor ArDrone, com realimentação visual, visando minimizar
+os efeitos de drifting e fornecer uma melhor estimativa
+de sua posição em relação a um marcador.
+
+0
+1
+2
+
+Agradecimentos
+
+2
+
+z h m
+
+1.5
+1
+0.5
+0
+
+0
+
+10
+
+20
+
+30
+
+40
+Tempo s
+
+50
+
+60
+
+70
+
+80
+
+(a) Evolução temporal das variáveis de posição.
+h graus
+
+15
+10
+5
+0
+5
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+Os autores agradecem ao CNPq - agência de fomento
+do Ministério da Ciência e Tecnologia, e  CAPES fundação ligada ao Ministério da Educação, ambos do
+Brasil, e  SPU - Secretaria de Políticas Universitárias do Ministério da Educação da Argentina, pelo suporte financeiro dado  realização desde projeto. Prof.
+Brandão também agradece  Universidade Federal de
+Viçosa, Brasil, pelo suporte  sua participação neste
+trabalho.
+
+80
+
+5
+
+h graus
+
+Referências
+0
+
+5
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+Tempo s
+
+50
+
+60
+
+70
+
+80
+
+h graus
+
+100
+50
+0
+50
+100
+
+(b) Evolução temporal das variáveis de atitude.
+f 1 N
+
+2
+1
+0
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+Tempo s
+
+50
+
+60
+
+70
+
+80
+
+f 2 N
+
+2
+1
+0
+
+f 3 N
+
+2
+1
+0
+
+A. Benallegue, A. M. and Fridman, L. (2006).
+Feedback linearization and high order sliding
+mode observer for a quadrotor uav, International Workshop on Variable Structure Systems,
+pp. 365372.
+Antunes, D., Silvestre, C. and Cunha, R. (2010).
+On the design of multi-rate tracking controllers
+application to rotorcraft guidance and control,
+International Journal of Robust and Nonlinear
+Control 20 18791902.
+Bouabdallah, S., Murrieri, P. and Siegwart, R. (2004).
+Design and control of an indoor micro quadrotor,
+Proceedings of IEEE International Conference
+on Robotic and Automation (ICRA 2004), Vol. 5,
+pp. 43934398.
+
+f 4 N
+
+2
+1
+0
+
+(c) Evolução temporal dos sinais de controle.
+
+Bouabdallah, S., Noth, A. and Siegwart, R. (2004).
+Pid vs lq control techniques applied to an indoor
+micro quadrotor, Technical report, Swiss Federal
+Institute of Technology.
+
+ graus
+
+0.1
+0
+0.1
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+ graus
+
+0.5
+0
+0.5
+
+ grauss
+
+0.5
+0
+0.5
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+Tempo s
+
+50
+
+60
+
+70
+
+80
+
+z ms
+
+0.5
+0
+
+Brandao, A. S., Pizzeta, I. H. B., Carelli, R. and
+Sarcinelli-Fillho, M. (2012). Modelagem e controle não_linear subatuado de um quad-rotor
+Parte 1, XIX Congresso Brasileiro de Automática, Campina Grande-PB, Brasil.
+Das, A., Lewis, F. and Subbarao, K. (2009). Backstepping approach for controlling a quadrotor using
+lagrange form dynamics, Journal of Intelligent
+and Robotic Systems 56(1) 127151.
+
+0.5
+1
+
+(d) Evolução temporal dos sinais de controle.
+
+Figura 4 Controle de seguimento de trajetória e posicionamento.
+
+Eisenbeiss, H. (2004). A mini unmanned aerial vehicle (uav) System overview and image acquisition, Proceedings of the International Workshop
+on Processing and Visualization Using HighResolution Imagery, Pitsanulok, Thailand.
+Hsieh, M. A., Chaimowicz, L., Cowley, A., Grocholsky, B., Keller, J. F., Kumar, V., Taylor, C. J.,
+
+ISBN 978-85-8001-069-5
+
+3108
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Endo, Y., Arkin, R. C., Jung, B., Wolf, D. F.,
+Sukhatme, G. and MacKenzie, D. C. (2007).
+Adaptive teams of autonomous aerial and ground
+robots for situational awareness, Journal of Field
+Robotics 24(11-12) 9911014.
+Kendoul, F., Yu, Z. and Nonami, K. (2010). Guidance and nonlinear control system for autonomous flight of minirotorcraft unmanned aerial
+vehicles, Journal of Field Robotics 27(3) 311
+334.
+Ma, L. and Chen, Y. (2004). Aerial surveillance system for overhead power line inspection, Technical report, Center for Self-Organizing and Intelligent Systems (CSOIS) Department of Electrical and Computer Engineering College of Engineering, Utah State Universtiy USA.
+
+Spong, M. (1994). Partial feedback linearization of
+underactuated mechanical systems, Proceedings
+of the IEEERSJGI International Conference on
+Intelligent Robots and Systems, and Advanced
+Robotic Systems and the Real World, Vol. 1,
+pp. 314321.
+Voos, H. (2009).
+Nonlinear control of a quadrotor micro-uav using feedback-linearization,
+IEEE International Conference on Mechatronics, pp. 16.
+Watanabe, K. and Izumi, K. (2009). Unmanned
+vehicles control system The development of
+underactuated control system for vehicles with
+six states and four inputs, International Conference on Instrumentation, Control  Automation
+ICA2009.
+
+Madani, T. and Benallegue, A. (2006). Control of a
+quadrotor mini-helicopter via full state backstepping technique, Proc. 45th IEEE Conference on
+Decision and Control.
+Maza, I., Caballero, F., Capitán, J., de Dios, J. M.
+and Ollero, A. (2010). Experimental results in
+multi-uav coordination for disaster management
+and civil security applications, Journal of Intelligent and Robotic Systems 64(1-4) 563585.
+Mistler, V., Benallegue, A. and MSirdi, N. K. (2001).
+Exact linearization and noninteracting control of
+a 4 rotors helicopter via dynamic feedback, IEEE
+International Workshop on Robot and Human Inter. Communic.
+Nagarajan, U. (2010). Dynamic constraint-based
+optimal shape trajectory planner for shapeaccelerated underactuated balancing systems,
+Proceedings of the 2010 Robotics Science and
+Systems, Zaragoza, Spain.
+Nathan Michael, J. K. and Kumar, V. (2010). Coopertative manipulation and transportation with aereal robots, Autonumous Robots 30(1) 7386.
+Shin, J.-H. and Lee, J.-J. (1997). Dynamic control of
+underactuated manipulators with free-swinging
+passive joints in cartesian space, Proceedings of
+the IEEE International Conference on Robotics
+and Automation (ICRA97), pp. 32943299.
+Shkolnik, A. and Tedrake, R. (2008).
+Highdimensional underactuated motion planning via
+task space control, Proccedings of the 2002
+IEEERSJ International Conference on Intelligent Robots and System, Vol. 1, Nice,France,
+pp. 37623768.
+Siqueira, A. A. G. and Terra, M. H. (2004). Nonlinear
+h control for underactuated manipulators with
+robustness test, Revista Controle  Automação
+15(3) 339350.
+
+ISBN 978-85-8001-069-5
+
+3109

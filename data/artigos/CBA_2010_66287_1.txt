@@ -1,0 +1,875 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+UMA FERRAMENTA PARA ANÁLISE DO POSICIONAMENTO DE NÓS EM REDES SEM FIO APLICADAS EM
+AUTOMAÇÃO INDUSTRIAL
+
+MÁRCIO S. COSTA E JORGE L. M. AMARAL
+Programa de Pós-Graduação em Engenharia Eletrônica, Universidade do Estado do Rio de Janeiro (UERJ)
+Rua São Francisco Xavier, n. 524,sala 5002 E, CEP 20550-900 Rio de Janeiro, RJ, Brasil
+E-mails gma.costa@uol.com.br, jamaral@uerj.br
+Abstract
+ This article describes the initial development stage of a tool for analyzing the positioning of nodes in wireless networks applied in industrial automation. Using the information gathered from the network, the tool is able to evaluate the coverage, the amount of potential critical nodes, the availability of alternative paths for all devices, and the latency. If it is necessary,
+it also suggests the smallest number of additional nodes (routers) and their locations to insure that the resulting network will
+reach safetys requirements, reliability and efficiency.
+Keywords
+ Wireless Network, router placement, Industrial Automation.
+Resumo
+ Este trabalho apresenta os estágios iniciais do desenvolvimento de uma ferramenta para analisar o posicionamento
+dos nós em uma rede_sem_fio em ambiente industrial. A partir das informações sobre os pontos que o usuário deseja instrumentar, a ferramenta avalia a cobertura da rede formada, a presença de nós críticos, a presença de caminhos alternativos e a latência
+obtida e, se necessário, sugere o menor número de nós intermediários adicionais (roteadores) e suas coordenadas para garantir
+que a rede atenda aos requisitos de segurança, confiabilidade e eficiência necessários s aplicações a que forem submetidas.
+Palavras-chave
+ .
+
+1
+
+municação e a integridade dos dados transmitidos
+(Santos, 2007), (Zheng  Myung, 2006). Estabelecer
+a comunicação entre todos os nós da rede torna-se
+um grande desafio por causa das complicações inerentes aos ambientes industriais, como interferências
+eletromagnéticas provenientes da existência de outras
+redes_sem_fio para comunicação de dados (como
+WLAN e Bluetooth) e de rádios de comunicação e
+obstáculos (instalações e tubulações industriais). Isto
+tem motivado o desenvolvimento de padrões específicos para redes_sem_fio em ambientes industriais.
+Cabe destacar o surgimento de dois padrões WirelessHart (WirelessHart, 2007) e o ISA-SP100.11a
+(ISA-SP100.11a, 2007). Eles utilizam técnicas de
+espalhamento em freqência para lidar com as interferências eletromagnéticas e utilizam topologia em
+malha ou árvore em que uma mensagem pode ser
+transmitida de um nó para outro com auxílio de outros nós intermediários que roteiam as mensagens
+para outros nós, até que ela chegue a seu destino. Isto
+permite que a rede consiga um maior alcance e também apresente uma maior tolerância a falhas, pois se
+um nó intermediário apresentar uma falha ou não
+puder receber uma mensagem, esta pode ser direcionada para outro nó (Hoffert at al, 2007).
+Entretanto, uma rede em malha também exige um
+estudo cuidadoso do posicionamento dos nós. Isto é
+necessário para verificar se os requisitos temporais
+são obedecidos e para garantir que todos os nós da
+rede tenham acesso ao nó central, assim como para
+verificar a existência de nós críticos, isto é, nós cuja
+perda por falha pode acarretar em grande perda de
+conectividade e ou desempenho.
+Este trabalho apresenta os estágios iniciais do desenvolvimento de uma ferramenta para analisar o posicionamento dos nós em uma rede em malha para au-
+
+Introdução
+
+O interesse na utilização de tecnologia de transmissão_de_dados sem fio em soluções para automação
+industrial tem crescido bastante nos últimos anos.
+Isto se deve s diversas vantagens na utilização deste
+tipo de transmissão em sistemas_de_automação_industrial. Algumas destas vantagens são a facilidade de
+instalação, a flexibilidade para alterar instalações já
+existentes, a integração de equipamentos móveis 
+rede, e a possibilidade de colocação de sensores e
+atuadores em locais de difícil acesso. Entretanto, uma
+pesquisa realizada pela ControlGlobal (ControlGlobal, 2007) mostrou que o uso de redes_sem_fio em
+sistemas_de_automação ainda é muito pequeno
+(63,7 dos entrevistados possuem menos de 10 dispositivos sem fio em suas plantas) que os usuários
+têm receio de utilizá-las em aplicações de controle
+(apenas 24,6 estariam dispostos a usar dispositivos
+sem fio em aplicações de controle mesmo que o tempo de ciclo seja maior que 2 segundos) e ainda que
+existe uma grande preocupação com a confiabilidade
+e segurança dos dados (66,4). Os resultados apresentados mostram que a utilização de comunicação
+sem fio em ambientes industriais ainda gera inseguranças e dúvidas nos usuários, pois a maioria das
+aplicações nestes ambientes exige segurança, confiabilidade e eficiência. Isto significa dizer que uma
+rede_sem_fio deve garantir, mesmo na presença de
+interferências e condições adversas ao meio de
+transmissão, que as mensagens chegarão aos seus
+destinos e que os requisitos temporais de baixa latência e determinismo na troca de mensagens serão respeitados e, por fim, assegurar a privacidade de co-
+
+1521
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+do a partir de um conjunto de posições predeterminadas.
+Em Muthaiah  Rosenberg (2008), trata-se do problema de posicionar apenas o gateway para a Internet
+em uma rede_sem_fio. Através de heurísticas, procurase determinar a melhor posição para o gateway entre
+(N+1) posições pré-especificadas, sendo que as N
+posições remanescentes são preenchidas pelos nós.
+Neste trabalho, utiliza-se um modelo bem definido
+para a camada física que leva em conta a interferência gerada por ruídos.
+Em Whitaker at al (2004), um algoritmo de otimização_multiobjetivo é proposto para garantir a cobertura de uma rede de telefonia celular em uma determinada área usando o menor número de estações.
+A cobertura e o menor número de estações são objetivos conflitantes que são otimizados.
+Os artigos relacionados demonstram a importância do
+posicionamento de nós em uma rede_sem_fio e suas
+variações. Todos eles mencionam que o problema de
+posicionamento é um problema NP-Hard e por isso é
+comum o uso de heurísticas e de métodos de otimização_estocástica como os algoritmos_genéticos. Embora o trabalho aqui apresentado possua diversas semelhanças com os artigos relacionados, como por exemplo, o fato de tratar o problema de posicionamento como um problema de otimização, existem também algumas diferenças. Primeiramente, uma vez que
+se está tratando de um ambiente industrial, os nós que
+fazem parte da rede estão posicionados nos locais
+que devem ser instrumentados e, portanto, a conectividade destes com o nó central (localizado na sala de
+controle) é absolutamente necessária, pois, caso contrário, as consequências podem ser catastróficas.
+Esta situação é diferente da rede_sem_fio de computadores para acesso a internet, na qual a conectividade
+pode ser perdida e depois retomada sem grandes prejuízos para o usuário, pois o interesse maior está em
+obter uma alta vazão. Em segundo lugar, neste trabalho se apresenta uma estratégia para levar em conta
+os obstáculos presentes em instalações_industriais
+quando, normalmente, os artigos tratam o ambiente
+em que a rede está presente como um campo em aberto. Em terceiro lugar, permite-se que o usuário
+especifique quais são os critérios mais importantes a
+serem seguidos para o posicionamento dos nós adicionais, enquanto alguns artigos utilizam-se de apenas um critério como, por exemplo, a vazão de dados.
+
+xiliar o usuário a encontrar as melhores configurações para a sua rede. A partir das informações sobre
+os pontos que o usuário deseja instrumentar, a ferramenta avalia a cobertura da rede formada, a presença
+de nós críticos, a presença de caminhos redundantes e
+a latência obtida e, se necessário, sugere o menor
+número de nós intermediários adicionais (roteadores)
+e suas coordenadas para garantir que a rede atenda
+aos critérios estabelecidos pelo usuário.
+A procura de melhores configurações é vista como
+um problema de otimização, onde os parâmetros de
+entrada são o número e as coordenadas geográficas
+dos nós roteadores adicionais e a função de custo a
+ser otimizada levará em conta critérios tais como a
+otimização da menor quantidade de nós roteadores
+necessários  rede, da menor quantidade de nós críticos potenciais (pontos de falhas) e da maior quantidade de caminhos alternativos para os dispositivos da
+rede.
+Esse artigo está organizado da seguinte forma a seção 2 apresenta alguns trabalhos relacionados ao estudo do posicionamento de nós em redes_sem_fio a
+seção 3 descreve o método desenvolvido na seção 4
+apresentam-se os resultados obtidos e as conclusões
+estão descritas na seção 5.
+2 Posicionamento de nós em Redes sem Fio
+O estudo de problemas relacionados ao posicionamento de nós em redes_sem_fio tem recebido bastante
+atenção e pode ser encontrado em redes_de_sensores
+(Molina et al, 2008), (Youssef  Mohamed, 2007),
+em redes_de_computadores Wi-Fi (Wang et. al,
+2007), (Muthaiah  Rosenberg , 2008) e no planejamento de infraestrutura para telefonia celular (Whitaker et al., 2004).
+Em Molina et al (2008), trata-se do problema de encontrar o melhor layout para uma rede_de_sensores,
+isto é, encontrar o menor número de nós e seu respectivo posicionamento. O problema de posicionamento
+é visto como um problema de otimização em que os
+parâmetros_são as coordenadas dos nós sensores e
+dois objetivos são otimizados, a saber a energia consumida nas comunicações e o número de sensores
+colocados. A cobertura obtida pela rede é vista como
+uma restrição.
+Em Youssef  Mohamed (2007), são propostos dois
+algoritmos baseados em Algoritmos Genéticos para
+resolver o problema de colocação de um número fixo
+de gateways que servirão como nós coletores de informação em uma rede_de_sensores sem fio. O posicionamento dos gateways é feito com o objetivo de
+minimizar a latência, que é medida através do cálculo
+do atraso médio por pacote de informação recebido.
+Wang et al (2007) estudam o problema do posicionamento_de_roteadores para uma rede_sem_fio (Wi-Fi)
+de modo a atingir a vazão de dados desejada. Neste
+artigo, se determina o número de roteadores que devem ser colocados e o seu posicionamento é escolhi-
+
+3 Método Proposto
+Esta seção descreve o método utilizado pela ferramenta para auxiliar o usuário a encontrar as melhores configurações para a sua rede. Conforme foi dito
+anteriormente, este é visto como um problema de
+otimização no qual os parâmetros de entrada são o
+número de nós roteadores adicionais, e as suas coordenadas e a função de custo leva em conta os seguin-
+
+1522
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+tes critérios menor quantidade de nós roteadores,
+menor quantidade de nós críticos, maior quantidade
+de caminhos alternativos e menor latência. Além disso, o problema está sujeito a uma série de restrições
+como a quantidade máxima de dispositivos permitidos na rede, a total conectividade entre todos os dispositivos, a garantia de caminhos alternativos através
+de quantidade mínima de nós vizinhos e, por fim, a
+garantia de existir uma quantidade mínima de dispositivos conectados diretamente ao nó central.
+A técnica de otimização utilizada no desenvolvimento do trabalho são os Algoritmos Genéticos (AGs).
+Os AGs constituem uma técnica de busca e otimização altamente paralela, inspirada nos mecanismos de
+evolução natural e recombinação genética (Davis,
+1990). O princípio Darwiniano da seleção natural diz
+que indivíduos que possuem características favoráveis, ao se adaptarem a um determinado ambiente,
+têm maiores chances de sobreviver e reproduzir do
+que aqueles com características menos favoráveis. Se
+estas características favoráveis estiverem associadas
+aos códigos genéticos dos indivíduos (que são armazenados nos cromossomos), então estes códigos se
+tornarão cada vez mais comuns nas gerações seguintes da população, enquanto que aqueles que forem
+desfavoráveis se tornarão cada vez mais raros. Usando os aspectos fundamentais destes princípios como
+inspiração, é possível construir algoritmos computacionais iterativos em que uma população de representações abstratas de possíveis soluções evolui na busca
+de melhores soluções para um determinado problema. O fluxograma da Figura 1 mostra o procedimento
+básico de otimização por AGs. A evolução ocorre
+durante um determinado número de ciclos, que são
+chamados de gerações, e geralmente é iniciada a partir de um conjunto de soluções criado aleatoriamente
+(população inicial). A cada geração, avalia-se o grau
+de adaptação (grau de aptidão) de cada indivíduo da
+população em relação ao problema, classificando
+cada indivíduo segundo o seu grau de adaptação. A
+seguir, de acordo com a estratégia de seleção adotada, escolhem-se os indivíduos mais aptos. Então,
+serão aplicados sobre os escolhidos, os operadores
+genéticos de cruzamento (crossover) e mutação para
+obter uma nova população. Este procedimento é realizado até que o critério de parada seja alcançado.
+Segundo Michalewick (1994), os algoritmos_genéticos devem ser caracterizados através dos seguintes
+componentes uma representação genética para as
+possíveis soluções do problema uma forma de criar a
+população inicial uma função de avaliação que desempenha o papel do ambiente, classificando soluções de acordo com sua aptidão operadores genéticos que modificam a composição dos descendentes
+(seleção, crossover e mutação), e valores para os
+vários parâmetros que o algoritmo_genético utiliza
+(tamanho da população, probabilidades de aplicação
+dos operadores genéticos etc.).
+A seguir apresentaremos uma breve discussão
+sobre os elementos principais a representação da
+solução e a função de avaliação utilizada.
+
+Início
+
+Representação
+
+Inicialização da
+População
+
+t0
+
+Avaliação
+
+Condição
+de Parada?
+
+tt+1
+
+N
+Seleção
+
+S
+
+Crossover
+Mutação
+
+Fim
+
+Figura 1. Fluxograma de um Algoritmo Genético.
+
+3.1 Representação Utilizada
+
+A representação do cromossomo é dada pelas coordenadas dos n roteadores, que devem ser colocados
+para fazer com que a rede atenda as especificações
+determinadas pelo usuário. A Figura 3 mostra a representação do cromossomo. O número n de roteadores determina o número máximo de roteadores que o
+usuário aceita colocar na sua rede para que esta atenda s suas especificações. Uma vez que a toolbox
+GAOT utilizada para algoritmos_genéticos no Matlab
+(Houck, 1995) não admite a utilização de cromossomos de tamanho variável, foi utilizado um artifício
+para que se pudesse obter o número mínimo de roteadores (um número entre 0 e n). A Fig. 3(a) mostra
+uma região demarcada pelas coordenadas (0,0),
+(0,x2), (0,y2) e (x2,y2) cuja a área é dada por (A1 +
+A2). Esta é a região na qual o AG pode posicionar os
+roteadores. Entretanto, somente serão utilizados na
+solução final os roteadores que estiverem dentro da
+região cuja área é A1, que é a região onde se encontra a instalação industrial de fato. Deste modo, dependendo de onde o AG coloca os roteadores, eles
+são contabilizados ou não. Por exemplo, a Fig. 3(b)
+mostra a situação na qual o número máximo de roteadores é igual a 5, mas apenas 3 são contabilizados
+(aqueles que estão na área A1). Para que não haja
+uma tendência de o AG colocar os roteadores na área
+A1 ou na área A2, elas possuem o mesmo valor.
+
+x1
+
+y1
+
+x2
+
+y2
+
+x3
+
+y3
+
+......
+
+Figura 2. Representação Utilizada.
+
+1523
+
+xn
+
+yn
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+A segunda parcela (FR) se refere s penalidades
+impostas  função de avaliação. O objetivo de utilizar
+penalidades é fazer com que soluções que não atendam s restrições impostas pelo problema tenham
+uma avaliação menor, diminuindo a probabilidade de
+serem escolhidas para gerar novas soluções. O problema em questão pode estar sujeito a uma série de
+restrições que podem ser impostas de acordo com o
+desejo do usuário. Normalmente, são mais comuns as
+restrições que obrigam a que a rede esteja totalmente
+conectada, isto é, que todo nó possa se comunicar
+com o nó central, e a restrição que limita o número de
+saltos (hops) usados para transmitir uma mensagem
+de um nó para outro. A função que calcula a penalidade é mostrada na Eq. (5) e é formada pela soma de
+restrições individuais (p1 a pk). A Eq. (6) mostra o
+cálculo das restrições individuais, que é feito seguindo dois critérios o primeiro é o de que uma solução
+que não obedeça  restrição imposta deve ter uma
+avaliação pior do que uma solução que respeita a
+restrição o segundo é o de que o valor da penalidade
+(p) deve ser proporcional ao grau de infração da restrição (u) (Molina et al, 2008). Além disso, de acordo com a Eq. (6), o valor da penalidade depende do
+número de objetivos utilizados (NObj). Isto é feito
+para que quando forem utilizados poucos objetivos, o
+valor da penalidade não fique excessivamente grande, o que faria com que as avaliações de soluções que
+não obedecessem s restrições ficassem muito próximas, o que poderia levar a uma perda de diversidade
+na população.
+Para que o cálculo da função de avaliação possa
+ser realizado, primeiro se obtém uma rede que é formada por nós e segmentos. Os nós são dados pelos
+pontos que o usuário deseja instrumentar e pelos roteadores adicionais, cujas coordenadas estão no cromossomo. Os segmentos indicarão se existe uma ligação entre dois nós, então, se existir um segmento
+entre o nó i e o nó j, será possível enviar uma mensagem de i para j.
+
+Figura 3. Contabilização de Roteadores.
+
+3.2 Função de Avaliação
+A função de avaliação (Faval), mostrada na Eq. 1
+é composta por duas parcelas a primeira corresponde
+a uma soma_ponderada de diferentes funções a serem
+otimizadas (Fspobj) e a segunda corresponde s restrições s quais o problema está sujeito (FR).
+
+Faval  Fspobj  FR
+
+(1)
+
+Na primeira parcela, diferentes objetivos que se
+desejam alcançar são representados como funções
+individuais, que depois serão combinadas em uma
+única avaliação através de uma soma_ponderada conforme visto na Eq.(2).
+
+Fspobj  w1 f obj1 + w2 f obj 2 + L + wm f objm
+
+(2)
+
+Dessa forma o usuário pode definir através dos
+pesos quais objetivos são mais importantes. De acordo com a Eq. (2), se o usuário tivesse interesse apenas no objetivo 1, ele faria w1  1 e todos os outros
+iguais a 0. Por outro lado, se ele considerasse todos
+os objetivos igualmente importantes, os valores dos
+pesos w1, w2, ..., wm seria igual 1m. Esta forma de
+agregação para atender múltiplos objetivos necessita
+que todas as funções correspondentes aos objetivos
+individuais sejam normalizadas. As Eqs.(3) e (4)
+mostram exemplos de funções objetivos individuais
+que podem ser utilizadas. A Eq.(3) mostra a função
+objetivo utilizada para minimizar o número de roteadores adicionais. Observa-se que esta função está
+normalizada entre 0 e 1, assumindo o valor máximo
+se nenhum roteador adicional (NumRotUsados) for
+usado. A Eq.(4) mostra a função utilizada para minimizar nós críticos.
+
+f obj1 
+
+NumMaxRot  NumRotUsad os
+NumMaxRot
+
+f obj 2 
+
+NumTotalNos  NumNoCrit
+NumTotalNos
+
+(3)
+
+FR  p1 + K + pk
+
+(5)
+
+(u  0), p  0
+(0 < u  0.001), p  NObj
+
+(0.001 < u  0.01), p  2 * NObj
+
+(0.01 < u  0.1), p  3 * NObj
+(0.1 < u  0.2), p  4 * NObj
+(0.2 < u  0.4), p  5 * NObj
+
+(0.4 < u  0.6), p  6 * NObj
+(0.6 < u  0.8), p  7 * NObj
+
+(u > 0.8), p  8 * NObj
+
+(6)
+
+A existência de um segmento entre o nó i e o nó j
+é dada por os nós i e j devem estar em visada direta.
+Isto minimiza o problema de interferências causadas
+
+(4)
+
+1524
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Figura 4. Parque de Tanques.
+
+por obstáculos (reflexões, interferência por multipath etc.). Além disso, a distância máxima permitida
+entre os nós i e j devem ser menor ou igual a dmax,
+que é a distância máxima permitida para que uma
+mensagem possa ser transmitida e chegue no receptor
+com potência suficiente para ser corretamente compreendida.
+
+900
+
+3 2
+
+4
+5
+
+800
+700
+7
+
+6
+
+9
+
+10
+
+1
+
+(m)
+
+600
+
+4 Estudo de Caso
+
+8
+
+500
+
+11
+
+400
+
+A Fig. (4) mostra um parque de tanques que servirá
+como motivação para o estudo de caso. Suponha que
+se deseja colocar 16 instrumentos_de_medição que
+devem se comunicar com um nó central (gateway).
+Os pequenos círculos em amarelo indicam os locais
+onde os instrumentos devem ser colocados, e o circulo em vermelho representa o nó central. A utilização
+de redes_sem_fio neste tipo de aplicação é extremamente atrativa pelo fato de estes tanques estarem posicionados em locais afastados e de as grandezas envolvidas possuírem grandes dimensões. Atualmente,
+as soluções para a colocação de instrumentos usando
+redes cabeadas seriam muito mais onerosas e complexas, tendo em vista os custos de materiais e mãode-obra, além do maior tempo de execução do projeto. Uma vez que se dispõe das localizações dos instrumentos, a ferramenta pode analisar a rede formada
+e indicar possíveis problemas. Para que isso aconteça, é fornecida uma representação computacional
+deste cenário, com a representação dos 16 instrumentos (2 a 17), do nó central (1) e dos obstáculos presentes (tanques e construções), conforme pode ser
+visto na Fig. 5. Pode-se observar que, de acordo com
+os critérios estabelecidos anteriormente (visada direta
+e distância máxima), a rede original não apresenta
+todos os nós completamente conectados. Isto é uma
+indicação de que a ferramenta irá sugerir a colocação
+de nós adicionais.
+No estágio atual de desenvolvimento da ferramenta estão implementadas somente a parte da função de avaliação que minimiza o número de roteadores adicionais e duas restrições a cobertura da rede
+deve ser igual a 100 e o número de saltos deve ser
+
+300
+
+13
+
+200
+
+16
+
+12
+
+14
+15
+17
+
+100
+0
+
+0
+
+200
+
+400
+
+600
+
+800
+
+1000
+
+(m)
+
+Figura 5. Representação Computacional.
+
+menor que um valor especificado. O primeiro estudo
+de caso foi feito utilizando somente a restrição de
+cobertura.
+A Tabela 1 mostra os valores utilizados para os
+seguintes parâmetros Número Máximo de Roteadores (NumMaxRot), Distância máxima permitida (dmax)
+e Número Máximo de Saltos (MaxHops) .
+Foram realizados dez experimentos e em todos
+eles a ferramenta sugeriu a colocação de três nós adicionais para garantir a cobertura da rede. As Figs. 6 e
+7 mostram exemplos de redes formadas por sugestão do programa.
+Os parâmetros para os Algoritmos Genéticos podem ser vistos na Tabela 2.
+
+Tabela 1. Parâmetros Usados nos Estudos de Caso.
+Primeiro
+
+Segundo
+
+Estudo de
+Caso
+
+Estudo de
+Caso
+
+5
+300 m
+NA
+
+5
+300 m
+4
+
+Parâmetro
+
+NumMaxRot
+dmax
+MaxHops
+
+Tabela 2. Parâmetros para Algoritmo Genético.
+Parâmetro
+
+Valor
+
+população
+No de Gerações
+Taxa de Crossover
+Taxa de mutação
+
+100
+100
+0.9
+0.08
+
+Note que em ambos os casos foram incluídos os roteadores indicados pelos números 18, 19 e 20, fazendo
+com que a rede ficasse totalmente conectada. A ferramenta calculou a quantidade mínima necessária de
+nós roteadores para ter a cobertura total dos dispositivos na rede e foram determinadas as melhores coordenadas geográficas destes novos nós. Observe que o
+posicionamento dos nós roteadores nos dois exem1525
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+11-1. Agora, observando a Fig. 8, verifica-se que
+para uma mensagem do nó 4 chegar ao nó 1 serão
+necessários apenas 4 saltos, pois ela passará pelo nós
+4-18-12-19-1. É importante observar que em todos os
+exemplos mostrados, existem nós que estão sobrecarregados, isto é, são utilizados como intermediários
+por um grande número de nós, como por exemplo, os
+nós 6 e 11. Isto significa que o número de transmissões feitas por estes nós será significativamente maior do que outros (como o nó 3), o que fará com que
+sua bateria se esgote mais rapidamente, causando a
+falha do nó e a consequente perda de conectividade e
+desempenho da rede. Uma possível solução para este
+problema seria adicionar uma restrição para limitar o
+número de vezes que um nó pode ser usado como
+intermediário.
+
+plos é diferente e que se observam diferentes benefícios adicionais. Na Fig. 6, o nó 18, que foi incluído
+por sugestão da ferramenta, além de garantir a conexão do nó 8  rede, também proporcionou um caminho alternativo para os nós 2 e 3. Observe que anteriormente os nós 2 e 3 tinham apenas um caminho
+que utilizava o nó 6 para alcançar o nó 1. Caso o nó 6
+falhasse, seria perdida a comunicação com os nós 2 e
+3. Na Fig. 7, o posicionamento do nó 19 criou um
+caminho alternativo entre o nó 10 e o nó 1.
+900
+
+3 2
+
+4
+5
+
+800
+
+18
+
+700
+7
+
+6
+
+9
+
+10
+
+1
+
+(m)
+
+600
+
+8
+
+500
+
+11
+
+400
+300
+
+13
+
+200
+
+16
+
+14
+15
+
+20
+
+12
+
+5 Conclusões
+
+19
+
+17
+
+Este trabalho apresentou os estágios iniciais de
+uma ferramenta para análise do posicionamento de
+nós em redes_sem_fio. Nos estudos de casos realizados, ela foi capaz de analisar um cenário inicial de
+uma rede_sem_fio e propor a inclusão do menor número de nós adicionais para que a rede resultante
+obedecesse s restrições impostas (cobertura e máximo de saltos). Observou-se ainda que algumas soluções propostas também aumentavam a confiabilidade
+da rede pelo fato de terem aumentado o número de
+caminhos alternativos, dando mais opções para o
+tráfego das mensagens entre os nós. Também foi verificada a presença de nós sobrecarregados. Nos próximos passos do trabalho pretende-se implementar no
+programa uma restrição adicional que limite a participação de nós da rede, como nós intermediários,
+para evitar sua sobrecarga. Além disso, as outras parcelas da função de avaliação serão adicionadas, especialmente no que se refere  minimização de nós críticos. A seguir será feita uma avaliação da contribuição de cada uma destas parcelas na formação da rede
+final e a comparação dos resultados obtidos por agregação com aqueles obtidos por algoritmos de otimização_multiobjetivo, baseados na obtenção do Conjunto ótimo de Pareto (Coello  Lamont, 2004).
+
+100
+0
+
+0
+
+200
+
+400
+
+600
+
+800
+
+1000
+
+(m)
+
+Figura 6. Exemplo de Rede no Primeiro Estudo de caso.
+
+900
+
+3 2
+
+4
+18
+
+5
+
+8
+
+20
+
+800
+700
+7
+
+6
+
+9
+
+10
+
+1
+
+600
+(m)
+
+19
+500
+
+11
+
+400
+300
+
+13
+
+200
+
+16
+
+12
+
+14
+15
+17
+
+100
+0
+
+0
+
+200
+
+400
+
+600
+
+800
+
+1000
+
+(m)
+
+Figura 7. Outro exemplo de Rede no Primeiro Estudo de caso.
+
+Isto significa que agora os nós 7 e 9 tem um caminho
+alternativo para o nó 1 que não passa pelo nó 6. Pelo
+que foi observado, a colocação de nós adicionais
+pode gerar caminhos alternativos. Isto sugere que
+deve ser acrescentado um objetivo adicional que maximize a formação de caminhos alternativos.
+No segundo estudo de caso, além da restrição de
+cobertura, foi também exigido que o número máximo
+de saltos fosse igual a 4. Esta restrição é normalmente usada para garantir que uma mensagem proveniente de qualquer nó chegue ao nó central dentro de um
+determinado intervalo de tempo. Foram feitos dez
+experimentos e, novamente, em todos eles a ferramenta sugeriu a colocação de 3 nós adicionais. A
+presença da restrição do número de saltos pode ser
+facilmente identificada comparando-se as Figs. 6 e 8.
+Observe que, de acordo com a Fig. 6, para que uma
+mensagem do nó 4 chegasse ao nó 1 seriam necessários 6 saltos, pois ela passaria pelo nós 4-5-20-12-19-
+
+900
+
+3 2
+
+4
+5
+
+800
+20
+
+700
+7
+
+6
+
+9
+
+10
+
+1
+
+(m)
+
+600
+
+18
+
+8
+
+500
+
+19
+11
+
+400
+300
+
+13
+
+200
+
+16
+
+12
+
+14
+15
+17
+
+100
+0
+
+0
+
+200
+
+400
+
+600
+
+800
+
+1000
+
+(m)
+
+Figura 8. Exemplo de Rede no Segundo Estudo de caso.
+
+1526
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Agradecimentos
+
+HICSS. IEEE Computer Society, Washington,
+DC, 90287.1.
+WirelessHart Device specification (2007). HCFSPEC-290.
+Youssef, W. and Younis, M. (2007). Intelligent
+Gateways Placement for Reduced Data Latency
+in Wireless Sensor Networks, ICC 07
+International Conference on Communications,
+Glasgow, pp. 3805-3810.
+Zheng J. and Myung J. L,(2006) A Comprehensive
+Performance Study of IEEE 802.15.4, Sensor
+Network Operations, IEEE Press, Wiley
+InterScience, Chapter 4, pp. 218-237.
+
+Os autores agradecem a PETROBRAS S.A pelo suporte financeiro a parte desta pesquisa.
+Referências Bibliográficas
+
+Coello,
+C.A.C
+and
+Lamont,G.B.
+(2004)
+Applications of Multi-objective Evolutionary
+Algortihms, World Scientific Books Publishing
+Co, Singapore.
+ControlGlobal
+(2007).
+Disponível
+em
+httpwww.controlglobal.comMediaMediaMan
+agerCT0708wirelessGraphs.pdf. Acesso em 01
+de fevereiro de 2010.
+Davis, L., Handbook of Genetic Algorithms,VNR
+Comp. Library, 1990.
+Hoffert, J., Klues and Orjih O. (2007) Configuring
+the IEEE 802.15.4 MAC Layer for SinglesinkWireless Sensor Network Applications.
+Technical
+Report.
+Disponível
+em
+httpwww.cs.wustl.edujoeh802154Eval
+Report.pdf. Acesso em 12 de dezembro de 2009.
+Houck C. , Joines, J. and Kay, M. (1995). A Genetic
+Algorithm for Function Optimization A Matlab
+Implementation NCSU-IE TR 95-09.
+ISA-SP100.11a
+(2007).
+Disponível
+em
+httptinyos.stanford.eduttx2007viewgraphsst
+andards-sp100.pdf. Acesso em 01 de fevereiro
+de 2010.
+Michalewicz, Z. (1994) Genetic Algorithms+Data
+StructuresEvolution
+Programs,
+SpringerVerlag.
+Molina, G. and Alba, E. and Talbi,E.G., 2008,
+Optimal Sensor Network Layout Using MultiObjective Metaheuristics- Journal of Universal
+Computer Science, vol.14 , no 15, pp. 25492565.
+Muthaiah, S. N. and Rosenberg, C. P. (2008). Single
+Gateway Placement in Wireless Mesh Networks.
+Disponível em http www.ece.uwaterloo.ca
+cathiscn08.pdf. Acesso em 26 de janeiro de
+2010.
+Santos, S. T.(2007), Redes de Sensores Sem Fio em
+Monitoramento e Controle. Dissertação de
+Mestrado - Universidade Federal do Rio de
+Janeiro, COPPEUFRJ .
+Wang, J., Xie, B., Cai, K. and Agrawal, D. P. (2007).
+Intelligent Gateways Placement for Reduced
+Data Latency in Wireless Sensor Networks,
+IEEE International Conference on Mobile
+Adhoc and Sensor Systems, Pisa, pp. 1-9.
+Whitaker, R. M., Raisanen, L., and Hurley, S. 2004.
+A Model for Conflict Resolution between
+Coverage and Cost in Cellular Wireless
+Networks. In Proceedings of the Proceedings of
+the 37th Annual Hawaii international
+Conference on System Sciences (Hicss04) Track 9 - Volume 9 (January 05 - 08, 2004).
+
+1527

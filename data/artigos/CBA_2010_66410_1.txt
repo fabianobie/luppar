@@ -1,0 +1,753 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+CLASSIFICAÇÃO DE TAREFAS MENTAIS EM TEMPO REAL PARA APLICAÇÃO DE
+CONTROLE DE DISPOSITIVOS ROBÓTICOS
+ALESSANDRO B. BENEVIDES(1), TEODIANO F. BASTOS(1), JUAN CARLOS GARCIA(2),
+JOSÉ LUIS MARTÍN(2)
+(1)
+Laboratório de Automação Inteligente, Departamento de Engenharia Elétrica, Universidade Federal
+do Espírito Santo - Av. Fernando Ferrari, 514, Goiabeiras, Vitória, Espírito Santo, Brasil
+(2)
+GEINTRA Group, Departamento de Electrónica, Universidad de Alcalá
+Pza. San Diego, Alcalá de Henares, Madrid, Spain
+E-mails sandrobotti@gmail.com, tfbastos@ele.ufes.br, jcarlos@depeca.uah.es,
+jlmartin@depeca.uah.es
+Abstract This paper presents the classification of two mental tasks, using the electroencephalogram (EEG) signal and simulating a real-time process. The method proposed in this paper uses feed-forward backpropagation Artificial Neural Networks to
+recognize the mental tasks, which are the imagination of right and left hand movements. For the sampling rate selection, an
+analysis of the linear and nonlinear autocorrelation functions was performed. The real-time simulation uses the sliding window
+technique and the parcial autocorrelation function to give an estimation of the time-windows length. A reclassification model is
+proposed to stabilize the classifier. Finally, it is expected that the proposed method can be implemented in a brain-computer interface associated with a robotic wheelchair.
+Keywords Artificial Neural Networks, Pattern recognition, Autocorrelation function, Partial Autocorrelation function, Realtime classification.
+Resumo Este artigo apresenta a classificação de duas tarefas mentais utilizando o sinal eletroencefalográfico e simulando um
+processo em tempo-real. O método proposto utiliza redes_neurais para realizar o reconhecimento das tarefas mentais, que são a
+imaginação_de_movimento das mãos esquerda e direita. Realizou-se uma análise das funções de autocorrelação linear e nãolinear para a escolha da freqência de amostragem do sinal. A simulação do processo em tempo-real utilizou a técnica de janelas
+deslizantes. Para a escolha do tamanho das janelas de tempo, foi realizada uma análise dos coeficientes da função_de_autocorrelação parcial e se propõe um modelo de reclassificação do sinal para a estabilização do classificador. Por fim, espera-se que o
+método proposto possa ser implementado em uma interface_cérebro-computador associada a uma cadeira_de_rodas robótica.
+Palavras-chave .
+
+1
+
+Por exemplo, em Jia et al. (2004, pp.5-8) filtra-se o
+sinal entre 10 e 12 Hz e utiliza-se a análise por discriminante Linear (LDA) em Liu et al. (2005,
+pp.5408-5411) o sinal é filtrado em duas bandas distintas de freqências, entre 0 a 3 Hz e 9 a 31 Hz, utiliza-se a decomposição espacial em subespaços comuns (CSSD) e uma rede_neural artificial (RNA) em
+Anderson et al. (2007, pp.261-278) filtra-se o sinal
+entre 8 e 30 Hz, utiliza-se Short-Time Principal
+Component Analysis (STPCA) para a extração de
+características e um classificador LDA em Blankertz
+et al. (2007, pp.85-102) utiliza-se o método Common
+Spatial Pattern (CSP) para determinação de filtros e
+um classificador LDA.
+
+Introdução
+
+O Grupo de Robótica de Reabilitação do Laboratório de Automação Inteligente da Universidade
+Federal do Espírito Santo desenvolve uma cadeira de
+rodas robótica para pessoas com deficiência (Figura
+1). Nesse contexto aplicam-se os conceitos de Interface Homem-Máquina (IHM) e Interface CérebroComputador (ICC).
+IHM é aplicada  cadeira_de_rodas robótica no
+intuito de adaptá-la a usuários com diversos níveis de
+deficiência, mas que ainda possuem algum movimento voluntário. Dessa forma, a cadeira_de_rodas robótica pode ser controlada por sinais elétricos musculares
+(eletromiograma - EMG) provenientes de piscada dos
+olhos por sinais elétricos provenientes da movimentação do globo ocular (eletrooculagrama - EOG) e
+utilizando imagens obtidas por câmera para o reconhecimento de posição da cabeça ou dos olhos.
+ICC é aplicada para adaptar a cadeira_de_rodas
+robótica a usuários com perda de todos os movimentos voluntários. A ICC utiliza a atividade elétrica
+cerebral (eletroencefalograma - EEG) para identificar
+padrões no sinal de EEG relacionados  realização de
+tarefas mentais. Nesse âmbito, os métodos de préprocessamento, extração_de_características e classificação de ICCs de vários grupos foram analisados.
+
+Figura 1. Cadeira de rodas robótica da UFES
+
+2283
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Os três primeiros trabalhos citados realizam
+classificação pseudo-online das tarefas mentais, enquanto o último implementa uma ICC realimentada
+com classificação online. Nesses trabalhos não é realizada uma análise para a seleção dos parâmetros
+para a classificação_em_tempo_real. Parâmetros como
+taxa de amostragem do sinal de EEG, tamanho e sobreposição das janelas de tempo são prédeterminados por cada grupo. Portanto, o presente
+estudo analisa técnicas para seleção dos parâmetros
+da classificação_em_tempo_real e o resultado é testado
+com um classificador simples, que utiliza o sinal de
+EEG filtrado entre 8 e 12 Hz como característica de
+entrada para uma RNA.
+2
+
+2.1 Características do EEG durante a realização das
+tarefas mentais
+A atividade cognitiva inicial responsável pela realização de uma tarefa motora, seja de imaginação de
+movimento de um membro ou o movimento físico do
+mesmo, ocorre no córtex frontal, pré-frontal e parietal. Esse sinal se propaga para o estriado nas profundezas do encéfalo onde percorre o circuito da alça
+motora novamente em direção ao córtex. Na alça
+motora, esse estímulo alcança o núcleo ventral lateral
+do tálamo (VL) que está conectado  área motora
+suplementar (AMS), que por sua vez está intensamente interconectada com o córtex motor primário
+(M1).
+No tálamo existem circuitos oscilatórios formados
+por uma pequena população de neurônios marcapasso, então, o ritmo talâmico se propaga através do
+circuito tálamo-cortical para uma grande população
+de neurônios corticais, originando os ritmos que se
+observa no córtex em repouso. Porém, durante a intenção de movimento o estímulo que alcança VL
+suprime o envio dos ritmos talâmicos  AMS, para
+enviar os respectivos sinais relacionados ao desempenho da tarefa motora (Bear, et al., 2008).
+
+Materiais e Métodos
+
+Neste trabalho foram utilizados os dados de sinais
+cerebrais disponibilizados por José del R. Millán e
+Chiappa Silvia do Instituto de Pesquisa IDIAP para o
+BCI competition III, em junho de 2005. Este conjunto de dados contém os sinais de EEG de 3 indivíduos
+normais durante 4 sessões sem retroalimentação. As
+sessões possuem duração de 4 minutos com intervalos de 5-10 minutos. O conjunto de dados não disponibiliza o rótulo da última sessão, utilizada para avaliação dos classificadores no BCI competition III,
+portanto, no presente estudo, utilizou-se apenas as 3
+sessões previamente rotuladas de cada indivíduo e
+duas tarefas mentais distintas, que são a imaginação
+de movimento das mãos esquerda e direita.
+O indivíduo realizou cada tarefa mental por cerca
+de 15 segundos e depois muda-se aleatoriamente para
+outra tarefa a pedido do operador. Os dados de EEG
+não são divididos em ensaios já que os indivíduos
+exerceram continuamente qualquer das tarefas mentais.
+Os sinais de EEG foram gravados com o sistema
+Biosemi usando uma touca com 32 eletrodos integrados, e localizados nas posições-padrão do Sistema
+Internacional 10-20 (Becker, et al., 1994) (Figura
+2). A taxa de amostragem foi de 512 Hz. Os sinais
+foram adquiridos sem rejeição de artefato, e nenhuma
+filtragem ou correção foi empregada.
+
+Figura 3. Principais áreas do córtex.
+
+De maneira similar, estudos de Pfurtscheller e
+Lopes (1999, pp. 1842-1857) mostram que a realização de tarefas mentais provoca alterações na energia
+de bandas de freqências do EEG. As freqências de
+EEG na banda  (8-12 Hz) e  (16-25 Hz) observadas no córtex em repouso são bloqueadas durante a
+realização de tarefas mentais motoras, indicando que
+as freqências da banda  e  estão relacionadas com
+os ritmos marca-passos talâmicos que são suprimidos
+durante a comunicação entre o córtex frontal e o córtex motor através da alça motora.
+Se essa alteração de energia que ocorre nas bandas de freqências do EEG é uma diminuição, isso é
+chamado de Dessincronização Relacionada a Evento
+(ERD), enquanto o aumento da energia se chama
+Sincronização Relacionada a Evento (ERS). O
+ERDERS é observado no hemisfério cerebral com
+lateralidade oposta ao membro imaginado, e isso se
+
+Figura 2. Sistema Internacional de posicionamento de eletrodos
+10-10 e 10-20.
+
+2284
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+deve  contralateralidade dos movimentos motores,
+pois o caminho percorrido pelo sinal desde M1 até os
+músculos efetivos, chamado tracto piramidal, é cruzado. Todos os axônios dos neurônios do tracto piramidal se cruzam, ou na decussação das pirâmides
+do bulbo ou na medula (Guyton  Hall, 2006).
+Bianchi et al. (1998, pp.1486-1489) utilizou a analise do ERDERS e a fase da Densidade Espectral
+de Potencia (PSD) do sinal de EEG filtrado na banda
+ e , e confirmou o fluxo de ativação desde a área
+frontal até a área central durante a preparação do
+movimento. Portanto, no presente estudo foram utilizados 8 eletrodos para a classificação dos padrões
+mentais F7, Fz, F8, C3, C4, P7, Pz e P8. Foram utilizados os eletrodos C3 e C4 posicionados sobre o
+córtex motor, os eletrodos F7, Fz e F8 posicionados
+no lobo frontal e os eletrodos P7, Pz e P8 no lobo
+parietal, de forma a monitorar toda área envolvida no
+fluxo de ativação.
+Devido  grande quantidade de ruído presente no
+sinal de EEG os padrões ERDERS somente são observados calculando-se a média de dezenas a centenas de registros de EEG, durante a realização da
+mesma tarefa mental. Portanto, essa informação não
+pode ser utilizada para a predição de uma determinada tarefa mental em uma classificação_em_tempo_real.
+No entanto, será mostrado que o desempenho do
+classificador em tempo_real definido neste trabalho
+apresenta desempenho superior quando utilizamos os
+sinais filtrados na banda , que possui o mesmo intervalo da banda , porém medida sobre o córtex
+motor.
+
+y
+
+
+
+2 2
+
+y
+
+
+
+
+
+
+
+
+
+ c   E  y 2  k   y 2  k     y 2  k   c   y 2  k   (2)
+
+
+
+
+
+
+ c  0,1, ,
+em que E é a esperança matemática e a linha acima
+indica média em relação ao tempo. O índice m é definido a seguir
+
+
+
+ m  min  y , y
+
+2
+
+
+
+(3)
+
+em que o índice y é o tempo em que ocorre o primeiro mínimo de yy e y é definido de forma análoga
+para yy. Por fim, o período de amostragem, TS, é
+encontrado através da seguinte regra heurística (Aguirre, 1995)
+
+m
+20
+
+ TS 
+
+m
+
+(4)
+
+10
+
+Foram calculadas ambas as funções, FAC e FAC
+não-linear, para 8 eletrodos selecionados em todas as
+sessões e indivíduos. A figura 4 mostra a FAC e FAC
+não-linear, respectivamente, dos sinais de EEG do
+canal Pz da sessão 1 do indivíduo 3, que obteve os
+menores valores para os mínimos. Na figura, as linhas horizontais representam o intervalo de confiança
+de 95 e o marcador indica a localização do primeiro mínimo.
+O primeiro mínimo foi obtido para um atraso de
+154 amostras, representando um m de 0.3s, que define o seguinte intervalo,
+
+2.2 Seleção da Taxa de Amostragem
+Os sinais de EEG foram originalmente adquiridos
+a uma taxa de amostragem de 512 Hz. Como foi abordado na seção anterior, a informação útil para o
+classificador se encontra na banda de freqências  e,
+portanto, a taxa de amostragem estaria muito acima
+do necessário para a classificação das tarefas mentais.
+Se o período de amostragem TS é demasiado pequeno, os dados estarão muito correlacionados, levando a problemas de mau condicionamento numérico nos estágios de identificação, o que é chamado de
+problema de redundância. No outro extremo, se TS é
+muito grande, os dados podem não apresentar correlação nenhuma o que é chamado de problema de
+irrelevância.
+Para determinar se o sinal está subamostrado ou
+superamostrado, utilizou-se a análise dos mínimos
+das Funções de Autocorrelação Linear (FAC), yy, e
+Autocorrelação Não-Linear, yy, respectivamente
+(Aguirre, 1995)
+
+0.015s  TS  0.03s
+
+(5)
+
+66.49 Hz  FS  33.3Hz
+em que FS é a freqência de amostragem, TS 1FS.
+Dessa forma, subamostrou-se o sinal por uma potência de 2 que mantivesse a nova freqência de amostragem no intervalo acima. A freqência original
+de amostragem foi reduzida 8 vezes, ou seja, para
+64Hz.
+
+Figura 4. Esquerda Primeiro mínimo da função_de_autocorrelação Direita Primeiro mínimo da função_de_autocorrelação nãolinear.
+
+
+
+
+ 
+
+ yy  c   E  y  k   y  k     y  k   c   y  k    (1)
+ 
+
+
+ c  0,1, ,
+
+2285
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+qente. Normalmente este tipo de estrutura de rede
+tem três tipos de camadas. A primeira é a camada de
+entrada, que é passiva, ou seja, não possui neurônios,
+somente faz as conexões com os sinais de entrada. A
+segunda camada, também chamada camada oculta,
+tem um número variável de neurônios, assim como a
+terceira camada, que é a camada de saída. Os neurônios de uma mesma camada possuem a mesma função de ativação (Duda, et al., 2000).
+
+2.3 Simulação de Classificação em Tempo-Real
+Para simular a classificação_em_tempo-real, ou seja, uma classificação pseudo-online, foram tomadas
+pequenas janelas de tempo com um número fixo de
+amostras, S, do sinal de EEG de um dado canal. As
+janelas de tempo são continuamente deslocadas por 1
+amostra, que corresponde a técnica de janela deslizante. Dessa forma, após a aquisição das amostras
+para a primeira janela de tempo, as janelas seguintes
+são deslocadas, e sobrepostas por S-1 amostras (figura 5). E taxa de classificação será igual  taxa de amostragem do sinal, isto é, uma nova classificação a
+cada 0.0156 s (Anderson, et al., 2007).
+
+Figura 6. Função de autocorrelação parcial calculada para C4.
+
+A RNA utiliza o algoritmo de aprendizado regulação Bayesiana, que é um aprendizado_supervisionado, com retro-propagação de erro. Este algoritmo é
+baseado no algoritmo Bayesiano de David MacKay.
+Nesta estrutura, os pesos e vieses da rede são assumidos como variáveis aleatórias com distribuições especificadas (Demuth  Beale, 2000).
+A camada de entrada da RNA recebe um vetor
+com as amostras da janela de tempo atual de todos os
+8 canais concatenados, resultando em um vetor de
+entrada com (8*54) 464 amostras. A camada de saída
+da RNA possui um neurônio que fornece uma saída
+binária relacionada s classes, e utiliza uma função
+de transferência de limite rígido.
+O número de neurônios na camada oculta é uma
+preocupação na aplicação de redes_neurais. Utilizouse a regra heurística, conhecida como regra de BaumHaussler, para determiná-los (Baum  Haussler,
+1988)
+
+Figura 5. Técnica de janela deslizante (C  saída do classificador).
+
+Não se sabe a priori o número de amostras necessárias para caracterizar um padrão capaz de ser reconhecido pela RNA. Mas, assumindo que amostras
+individuais possuem informação importante sobre o
+padrão, o tamanho das janelas de tempo deve ser
+suficiente para que contenha a maior parte da influência de uma amostra nas amostras seguintes.
+Para se obter uma estimativa do tamanho das janelas de tempo, calcularam-se os coeficientes da
+Função de Autocorrelação Parcial (FACP) para os
+sinais de EEG dos 8 canais já citados, em todas as
+sessões de todos os indivíduos. E estes coeficientes
+informam como y(k) está auto-correlacionado com
+y(k-c) (Lin, et al., 1995). Dessa forma, procura-se
+pelos maiores coeficientes, para se estimar por quanto tempo as amostras passadas mantêm sua influência
+nas amostras presentes. O atraso do último coeficiente fora do intervalo de confiança de Bartlett foi utilizado como estimativa para o número mínimo de amostras das janelas de tempo.
+A figura 6 mostra a FACP calculada para o sinal
+de EEG do canal C4, sessão 3, do indivíduo 1, que
+obteve o maior valor para o atraso. Na figura, as
+linhas horizontais representam o intervalo de confiança de 95 e as linhas em cinza representam o intervalo de confiança de Bartlett superior e inferior. O
+último coeficiente fora do intervalo de confiança de
+Bartlett possui atraso de 58 amostras, que será o tamanho das janelas de tempo.
+
+Noculto 
+
+Ntreinamento  Etolerância
+Nentrada  N saída
+
+(6)
+
+em que Noculto é o número de neurônios da camada
+oculta, Ntreinamento é o número de exemplos de treinamento, Etolerância é a tolerância do erro, Nentrada é o
+número de amostras do vetor de entrada da RNA, e
+Nsaída é o número de neurônios da camada de saída.
+Então, para a quantidade de dados analisada, e tomando Etolerância  0.01, Nentrada  464, Noutput 1, obtém-se Noculto  6.11. Portanto, a camada oculta da
+RNA possuirá 6 neurônios, e estes utilizam a função
+de transferência tangente sigmóide.
+Os dados utilizados para treinar e validar a rede
+são os sinais de EEG das 3 sessões rotuladas do banco_de_dados. Para cada indivíduo foram utilizadas 2
+sessões para o treinamento, isto é, 66,67 do banco
+de dados, e uma sessão para validação do classificador, isto é, 33,33 do banco_de_dados.
+
+2.4 Redes Neurais Artificiais
+Utilizou-se uma rede multicamadas feed-forward
+backpropagation. Em redes feed-forward os neurônios são dispostos em camadas, geralmente duas camadas ativas, e os neurônios de uma camada somente
+estão conectados com os neurônios da camada subse2286
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Os ensaios presentes nas duas sessões utilizadas
+para o treinamento foram separados, agrupados em
+sua respectiva classe e concatenados. Utilizou-se
+aproximadamente o mesmo número de exemplos para
+representar cada classe e, portanto, todos os eventos
+são equiprováveis a priori, o que impede um viés de
+classificação pela rede.
+Os dados de treinamento são filtrados na banda 
+e normalizados no intervalo -1 1. A normalização é
+necessária porque foi utilizada a função_de_transferência tangente sigmóide como função de ativação
+dos neurônios da camada oculta, e o domínio desta
+função é limitado ao referido intervalo. Finalmente,
+os dados de treinamento são aleatoriamente misturados.
+Os dados de validação são filtrados na banda  e
+normalizados, mas não são misturados aleatoriamente, dessa forma, mantêm a ordem temporal em que
+foram adquiridos, permitindo a simulação de classificação_em_tempo-real. Os processos de filtragem e
+normalização dos sinais de EEG utilizados nas etapas
+de treinamento e validação são realizados em pequenas janelas de sinal, de acordo com os parâmetros
+calculados para a técnica de janela deslizante.
+
+liza sua distância  amostra presente, ou seja, as amostras passadas da janela possuem importância decrescente em relação  amostra presente, seguindo
+uma progressão geométrica com termo inicial unitário e razão de 0,9. Ademais, grupos de amostras de
+mesma classe têm seu peso elevado ao tamanho do
+grupo, penalizando, dessa forma, as amostras eventuais entre várias classificações idênticas, que representam um ruído de classificação.
+Para exemplificar o processo de reclassificação,
+desenvolve-se abaixo o cálculo dos pesos de cada
+amostra de uma janela de classificação dada pelo
+vetor J, mostrada na tabela 1. Os resultados de classificação possuem índice 1 ou 2, correspondendo 
+cada uma das duas tarefas mentais analisadas.
+Tabela 1. Exemplo de uma janela de classificação.
+
+J(8)
+1
+
+J(7)
+1
+
+J(6)
+1
+
+J(5)
+2
+
+J(4)
+1
+
+J(3)
+2
+
+J(2)
+2
+
+J(1)
+2
+
+O vetor g representa o número de amostras idênticas que formam um grupo, e para esse exemplo, o
+vetor g obtido é mostrado na tabela 2.
+Tabela 2. Vetor g do exemplo.
+
+3
+
+3 Resultados
+
+3
+
+3
+
+1
+
+1
+
+3
+
+3
+
+3
+
+O vetor de pesos, P, atribuído a cada amostra da
+janela é calculado por
+
+Utilizando a taxa de classificação de 64 Hz a saída do classificador foi extremamente ruidosa (Figura
+7). Nessa figura, a classe 1 corresponde  tarefa mental de imaginação_de_movimento da mão esquerda
+enquanto a classe 2 corresponde  mesma tarefa para
+a mão direita. Portanto desenvolveu-se um método
+para estabilizar as classificações. Foram tomadas
+janelas de classificação, que se comportam como as
+janelas de tempo, e realizam uma reclassificação dos
+dados. Essas janelas são continuamente deslocadas a
+cada classificação, resultando numa classificação 
+mesma taxa de amostragem do sinal.
+
+P(i)   0.9    g (i) 
+i 1
+
+g (i )
+
+(7)
+
+i 1,2 N
+
+em que N é o tamanho da janela de classificação, e a
+amostra em i1 corresponde ao momento presente. O
+vetor de pesos calculado para o exemplo é mostrado
+na tabela 3.
+Tabela 3. Vetor de pesos do exemplo.
+
+12.9
+
+14.3
+
+15.9
+
+0.6
+
+0.7
+
+21.9
+
+24.3
+
+27
+
+Na tabela 3 se pode notar uma grande diferença
+de valor entre os pesos atribuídos s amostras individuais e s amostras que compõem um grupo. A saída
+do classificador será a classe que apresenta maior
+soma de pesos na janela de classificação, que no presente exemplo seria a classe 2, visto que nessa janela
+de classificação está ocorrendo uma mudança de
+classe, da classe 1 para a 2. E mesmo ocorrendo alguns ruídos de classificação durante a transição das
+classes, a classe próxima ao instante presente possui
+maiores pesos e será atribuída  saída do classificador.
+Variou-se o tamanho das janelas de classificação
+entre 1 a 320, que representa levar em consideração
+as classificações de até 5 s anteriores. As taxas de
+acerto dos indivíduos, utilizando o sinal de EEG filtrado na banda  estão mostradas na tabela 4. Na
+mesma tabela é mostrado o número de amostras, N,
+das janelas de classificação que obtiveram melhor
+resultado.
+
+Figura 7. Classe Real (linha pontilhada) e saída do classificador
+utilizando sinal de EEG filtrado na banda  (linha contínua).
+
+A nova saída do classificador será a classe com
+peso majoritário na presente janela de classificação.
+Cada amostra dessa janela recebe um peso que pena2287
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Tabela 4. Taxas de acerto e N (sinal de EEG filtrado na banda ).
+
+Indivíduo
+
+Taxa de acerto
+
+N
+
+1
+2
+3
+
+(80,4161,82)
+(89,3991,44)
+(87,7631,44)
+
+70
+110
+100
+
+Por fim, compararam-se as taxas de acerto obtidas
+anteriormente, utilizando o sinal de EEG filtrado na
+banda  com a classificação utilizando sinais de EEG
+não filtrados. A Tabela 8 mostra os melhores resultados obtidos
+
+A Figura 8 mostra a saída do classificador para
+cada indivíduo, utilizando os parâmetros_supracitados. Nessa Figura, a classe 1 corresponde  tarefa
+mental de imaginação_de_movimento da mão esquerda enquanto a classe 2 corresponde  mesma tarefa
+para a mão direita, e pode-se notar uma grande diminuição no ruído de classificação.
+
+Tabela 8. Taxas de acerto e N (sinal de EEG não filtrado).
+
+Indivíduo
+
+Taxa de acerto
+
+N
+
+1
+2
+3
+
+(75,2191,98)
+(59,7512,28)
+(57,6732,16)
+
+20
+30
+120
+
+A Figura 9 mostra a saída do classificador para
+cada indivíduo, utilizando os parâmetros_supracitados. Não se faz necessário analisar as matrizes de
+confusão, já que todos os resultados obtidos com esse
+classificador foram piores e, portanto, não será utilizado.
+
+Figura 8. Classe Real (linha pontilhada) e saída do classificador
+utilizando sinal de EEG filtrado na banda  (linha contínua).
+
+Nas tabelas 5, 6 e 7 estão mostradas as matrizes
+de confusão de cada indivíduo. A matriz de confusão
+é uma ferramenta de visualização que nos dá uma
+prévia do desempenho do classificador. Cada linha
+da matriz representa as instâncias da predição de uma
+classe, enquanto que cada coluna representa as instâncias da classe real. Desse modo, é fácil saber se o
+sistema confunde duas classes. Pode-se notar que a
+classificação correta é sempre maior do que a confusão com outras classes.
+
+Figura 9. Classe Real (linha pontilhada) e saída do classificador
+utilizando sinal de EEG não filtrado (linha contínua).
+
+4 Conclusão
+Neste trabalho foram abordados vários métodos
+com vista a uma correta classificação_de_padrões
+mentais, tais como a técnica de janela deslizante o
+método para definição da taxa de amostragem o
+método para atribuição do tamanho das janelas de
+tempo a regra para escolha do número de neurônios
+da camada intermediária da RNA e o método
+proposto para estabilizar as classificações. A
+aplicação de tais métodos resultou em um
+classificador capaz de identificar as duas classes, que
+são a imaginação_de_movimento da mão direita e
+imaginação_de_movimento da mão esquerda, com a
+obtenção de resultados acima do aleatório em uma
+simulação de classificação_em_tempo-real.
+Apesar das características de ERDERS não
+serem observáveis numa análise em tempo-real do
+sinal de EEG, há uma grande melhora no
+desempenho do classificador utilizando sinais de
+EEG filtrados na banda .
+
+Tabela 5. Matriz de Confusão do indivíduo 1.
+
+Classe
+1
+2
+
+1
+2408
+1324
+
+2
+108
+3472
+
+Tabela 6. Matriz de Confusão do indivíduo 2.
+
+Classe
+1
+2
+
+1
+1960
+520
+
+2
+228
+4348
+
+Tabela 7. Matriz de Confusão do indivíduo 3.
+
+Classe
+1
+2
+
+1
+3500
+300
+
+2
+640
+3504
+
+2288
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Comparando-se os resultados das tabelas 4 e 8
+verifica-se que a filtragem do sinal de EEG na banda
+ proporcionou uma melhoria aproximada de 10 na
+taxa de acerto do classificador, para os indivíduos 2 e
+3. Entretanto, para o indivíduo 1, a filtragem do sinal
+de EEG na banda  proporcionou uma melhoria
+aproximada de 5 na taxa de acerto do classificador.
+A pequena melhoria obtida para o indivíduo 1
+resulta do fato de a banda  (8-12 Hz) ser uma
+aproximação para a média da população. Espera-se
+que os eventos ERDERS relacionados  imaginação
+de tarefas motoras ocorram no intervalo pré-definido
+da banda , no entanto, cada indivíduo apresenta sua
+própria banda , com pequenos desvios em relação 
+banda  padrão. Portanto, julgamos que os indivíduos
+2 e 3 se ajustam melhor  banda  padrão do que o
+indivíduo 1.
+Por fim, concluímos que a estabilidade do sinal
+do classificador e sua taxa de classificação
+possibilitam a sua aplicação em ICCs associadas a
+dispositivos robóticos, cujo controle será efetuado
+em tempo-real.
+
+Anderson, C. W Knight, J. N Kirby, J. M e
+Hundley, D. G, 2007. Classification of TimeEmbedded EEG using short-time principal
+component analysis. In Dornhege, G Millán, J.
+M Hinterberger, T McFarland, D. J and Mller,
+K. R., eds. 2007. Toward Brain-Computer
+Interfacing. Cambridge The MIT Press, pp.261278.
+Baum, E. B e Haussler D., 1988. What size net gives
+valid generalization?. Neural Computation, 1,
+pp. 151-160.
+Bear, M. F. Connors, B. W. e Paradiso, M. A., 2008.
+Neurociências
+Desvendando
+o
+Sistema
+Nervoso. 3 ed. São Paulo Artmed S. A.
+Bianchi, A. M Leocani, L Mainardi, L. T Comi, G
+e Cerutti, S., 1998. Time-Frequency Analysis of
+Event-Related Brain Potencials. Proceedings of
+the 20th Annual Internacional Conference of the
+IEEE Engineering in Medicine and Biology
+Society, 20 (3), pp.1486-1489.
+Blankertz, B Dornhege G Lemm S Krauledat, M
+Curio, G e Mller, K. R., 2007. The Berlim
+Brain-Computer Interface Machine Learning
+Based Detection of User Specific Brain States.
+In Dornhege, G Millán, J. M Hinterberger, T
+McFarland, D. J and Mller, K. R., eds. 2007.
+Toward
+Brain-Computer
+Interfacing.
+Cambridge The MIT Press, pp.85-102.
+Bcker, K. B. E., Avermaete, van, J. A. G. e
+Berglenssen, van den, M. M. C., 1994. The
+International 10-20 System Revised Cartesian
+ans Spherical Coordinates. Brain Topogr., 6, pp.
+231-235.
+Demuth, H. e Beale, M., 2000. Neural Network
+Toolbox. The MathWorks Inc.
+Duda, R. O Hart, P. E e Stork, D. G., 2000. Pattern
+Classification, 2rd ed. United States John Wiley
+ Sons Inc.
+Guyton, A. C. e Hall, J. E., 2006. Textbook of
+Medical Physiology. 11 Ed. Philadelphia
+Editora.
+Jia, W Zhao, X Liu, H Gao, X Gao, S e Yang, F.,
+2004. Classification of Single Trial EEG during
+Motor Imagery based on ERD. Proceedings of
+the 26th Annual Internacional Conference of the
+IEEE Engineering in Medicine and Biology
+Society, pp.5-8.
+Lin, F Huo, X. Y Gregor, S e Irons, R., 1995. Times
+Series Forecasting with Neural Networks.
+Complexity Internacional, 2.
+Liu, B Wang, M Li, T e Liu, Z., 2005. Identification
+and Classification for finger movement based on
+EEG. Proceedings of the 27th Annual
+Internacional Conference of the IEEE
+Engineering in Medicine and Biology Society,
+pp.5408-5411.
+Pfurtscheller, G. e Lopes da Silva, F. H., 1999.
+Event-Related EEGMEG Synchronization and
+Desynchronization Basic Principles. Elsevier,
+Clinical Neurophysiology, 110, pp. 1842-1857.
+
+5 Trabalhos Futuros
+Em prosseguimento ao presente estudo sugerimos
+o cálculo individual do intervalo de freqências em
+que se observam os eventos ERDERS. Esse cálculo
+pode ser realizado através da comparação da média
+dos espectros de amplitude de sinais EEG registrados
+durante um período de referência e sinais EEG
+registrados durante a tarefa mental. E também pode
+ser efetuado comparando-se a média dos coeficientes
+da Transformada Wavelet aplicada em sinais de EEG
+contendo o período de referência e a tarefa mental,
+como mostram Pfurtscheller e Lopes (1999, pp.
+1842-1857).
+Por fim, sugerimos a aplicação de diferentes
+classificadores associados aos métodos discutidos
+nesse estudo. Em substituição  RNA poderiam ser
+utilizados os métodos Support Vector Machine
+(SVM), Análise por Discriminante Regularizado
+(RDA) ou Sparse Fisher Discriminant (SFD).
+6 Agradecimentos
+Agradecemos a CAPES e MECD-DGU por proporcionar o intercâmbio de um ano de estudos no
+projeto em conjunto (EINTA, Projeto 15007) entre a
+Universidade Federal do Espírito Santo, e a Universidade de Acalá, na Espanha.
+Bibliografia
+Aguirre, L. A., 1995. A Nonlinear Correlation
+Function for Selecting the Delay Time in
+Dynamical Reconstructions. Physics Letters A,
+203, pp. 88-94.
+
+2289

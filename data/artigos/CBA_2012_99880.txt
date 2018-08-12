@@ -1,0 +1,1065 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+OBSERVADOR POR MODOS DESLIZANTES EM TEMPO DISCRETO PARA
+CONTROLE SENSORLESS DE MAQUINAS DE INDUCAO
+Rodrigo Padilha Vieira, Cristiane Cauduro Gastaldini, Rodrigo Zelir Azzolin,
+Hilton Ablio Grundling
+
+
+Universidade Federal do Pampa - UNIPAMPA
+Alegrete, RS, Brasil
+
+
+
+Universidade Federal do Rio Grande - FURG
+Rio Grande, RS, Brasil
+
+
+Universidade Federal de Santa Maria
+Santa Maria, RS, Brasil
+
+Emails rodrigovie@gmail.com, gastaldini@ieee.org, rodrigoazzolin@gmail.com,
+ghilton03@gmail.com
+Abstract This paper presents the development of a discrete-time sliding mode rotor speed and rotor ux
+observer applied to induction machine drives. The conditions for the sliding hyperplane existence are discussed.
+The sliding hyperplane are formed by the stator currents estimation errors and by the observed rotor uxes.
+Simulation results and experimental results using the DSP TMS320F2812 are presented aiming to verify the
+eectiveness of the proposed scheme.
+Keywords
+
+Induction machine, sliding mode observer, sensorless control.
+
+Resumo Este trabalho apresenta o desenvolvimento de um observador da velocidade rotorica e dos uxos
+rotoricos por modos_deslizantes em tempo_discreto aplicado a maquinas_de_inducao. Sao discutidas as condicoes
+para existencia das superfcies de deslizamento as quais sao produtos do erro de estimacao das correntes estatoricas e dos uxos rotoricos estimados. Resultados de simulacao e resultados experimentais utilizando o DSP
+TMS320F2812 sao apresentados para vericar a ecacia do sistema proposto.
+Palavras-chave
+
+.
+
+Introducao
+
+As maquinas_de_inducao tem sido usadas extensivamente como forca de trabalho da industria durante decadas. Os esquemas de Controle
+com Orientacao pelo Campo (FOC) sao preferencialmente utilizados devido a melhor resposta
+dinamica. No entanto, tais metodos de controle
+necessitam da informacao da velocidade rotorica.
+Com isso metodos de estimacao_de_estados, entre
+estes a velocidade rotorica, e o controle_sensorless
+sao amplamente discutidos na literatura (Finch
+and Giaouris, 2008) (Holtz, 2005) (Vas, 1998).
+Entre os esquemas mais difundidos na literatura para estimacao_de_estados, destacam-se os
+estimadores pelo metodo MRAS (Model Reference Adaptive System), o observador_de_estados
+utilizando Filtro de Kalman Extendido (EKF),
+os esquemas utilizando identicares por Mnimos
+Quadrados Recursivos (RLS) e ainda os metodos
+de observacao por modos_deslizantes, como pode
+ser visto nos trabalhos de (Schauder, 1992) (Peng
+and Fukao, 1994) (Barut et al., 2007) (VelezReyes et al., 1989) (Utkin, 1993).
+Os metodos por modos_deslizantes sao caracterizados pela sua simplicidade de implementacao,
+robustez a dinamicas nao-modeladas e rejeicao a
+disturbios, sendo empregados tanto para controle
+de sistemas ou observacao de estados (Ghanes and
+Zheng, 2009) (Utkin, 1993). O trabalho de Utkin
+
+ISBN 978-85-8001-069-5
+
+(1993) descreve o projeto_de_controladores por
+modos_deslizantes aplicados a maquinas_eletricas
+(corrente contnua, inducao e sncronas). Alem
+disso, alguns trabalhos ilustram o uso de metodos
+por modos_deslizantes para a estimacao_da_velocidade rotorica e estados de maquinas_de_inducao.
+Em (Derdiyok et al., 2001) e proposto um algoritmo para estimacao_da_velocidade rotorica e da
+constante de tempo rotorica para motores de inducao. Tal metodo e realizado sem a necessidade
+da informacao do uxo rotorico. No trabalho de
+(Derdiyok et al., 2001) e apresentada a analise
+de estabilidade usando funcoes Lyapunov. Ja
+nos trabalhos (Derdiyok, 2003) e (Derdiyok, 2005)
+um metodo de observacao da velocidade rotorica
+baseado na estimacao das correntes estatoricas e
+uxos rotoricos. A partir destas estimacoes um algoritmo e desenvolvido para calcular a resistencia
+rotorica e a velocidade rotorica do motor_de_inducao. Yan et al. (2000) apresenta um observador
+em tempo contnuo do uxo rotorico e da velocidade rotorica, onde as superfcies de deslizamento
+sao denidas pelo erro de estimacao das correntes
+estatoricas e uxos rotoricos observados. Alem
+disso, em todos os trabalhos citados, os metodos
+desenvolvidos bem como as analises de estabilidade sao apresentados em tempo contnuo. No
+entanto, recentemente verica-se uma demanda
+crescente de sistemas desenvolvidos em tempo_discreto para aplicacoes com micro-controladores e
+
+1776
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+processadores digitais de sinal. Dessa forma, a
+implementacao digital da metodologia de projeto
+desenvolvida em tempo contnuo nao pode ser
+diretamente aplicada a sistemas de tempo_discreto. Na implementacao de tais algoritmos em
+processadores digitais, o perodo de amostragem
+do mesmo pode causar efeitos que levam o sistema a instabilidade, alem de causar chattering,
+tal como reportado em (Jung and Tzou, 1996) e
+(Utkin et al., 1999).
+Em (Vieira et al., 2011) e apresentado um
+metodo para estimacao_da_velocidade rotorica por
+modos_deslizantes em tempo_discreto aplicado a
+maquinas_de_inducao simetricas e assimetricas.
+Sao apresentadas as provas de estabilidade do
+algoritmo proposto, a partir da analise de Lyapunov, bem como sao apresentados os limites dos
+ganhos dos observadores relacionados ao tempo de
+amostragem.
+Neste trabalho e apresentado um esquema
+para estimacao_da_velocidade rotorica e observacao dos uxos rotoricos baseado na abordagem
+por modos_deslizantes em tempo_discreto. Sao
+apresentadas as condicoes de existencia das superfcies de deslizamento em tempo_discreto e
+verica-se que diferentemente dos metodos em
+tempo contnuo, os ganhos de chaveamento possuem limites superior e inferior, os quais dependem do tempo de amostragem e da distancia ao
+hiperplano de chaveamento. Resultados de simulacao e experimentais utilizando processador digital de ponto xo sao apresentados para comprovar
+a ecacia da tecnica proposta.
+2
+
+Modelo matematico da maquina de
+inducao
+
+O comportamento dinamico de uma maquina
+de inducao no referencial estacionario pode ser
+denido por equacoes_diferenciais das correntes
+estatoricas e dos uxos rotoricos de acordo com
+(Krause et al., 1995). Tais equacoes_diferenciais podem ser dicretizadas pelo Metodo de Euler,
+com um perodo de amostragem Ts , obtendo-se
+as equacoes diferencas que modelam o comportamento da maquina_de_inducao, da forma,
+isq(k+1)  (1  Ts ) isq(k) + Ts rq(k) 
+1
+pr(k) Ts rd(k) +
+Ts Vsq(k)
+Ls
+
+(1)
+
+rd(k+1)  (1  Ts ) rd(k)  pr(k) Ts rq(k) +
+Lm Ts isd(k)
+(4)
+
+Te(k) 
+
+)
+3 Lm (
+p rd(k) isq(k)  rq(k) isd(k)
+2 Lr
+
+(5)
+
+)
+)
+1 (
+Bn
+r(k+1)  1 
+Ts r(k) + Ts Te(k)  TL(k)
+J
+J
+(6)
+onde, Rs , Rr , Ls , Lr , e Lm sao as resistencias
+e indutancias estatoricas, rotoricas e mutua, respectivamente isq , isd , rq , rd , vsq , e vsd sao as
+correntes estatoricas, os uxos rotoricos e as tensoes estatoricas, r e a velocidade rotorica, Te e
+o torque eletromagnetico, TL e o torque de carga,
+J e o momento de inercia, Bn e o coeciente de
+atrito, e p e o numero de pares de polos. As constantes nas equacoes acima, sao denidas como,
+Rs
+L2
+Lm
+,
++ Lm ,  , 1  m ,  ,
+,
+Ls
+Ls Lr
+Ls Lr
+Rr
+e,
+.
+Lr
+As transformadas das variaveis relacionadas a
+um sistema trifasico (ABC) sao dadas por,
+(
+
+ 
+2
+onde T 
+3
+3
+
+xqd  T xABC
+1 12
+0  23
+
+21
+ 23
+
+(7)
+
+
+Observador por modos_deslizantes do
+fluxo e da velocidade rotorica
+
+Um observador dos uxos rotoricos e da velocidade rotorica em tempo_discreto pode ser obtido
+da forma,
+bisq(k+1)  bisq(k)  Ts isq(k) + Ts brq(k) 
+1
+preq(k) Ts brd(k) +
+Ts Vsq(k)   brq(k) Ts (k)
+Ls
+(8)
+bisd(k+1)  bisd(k)  Ts isd(k) + preq(k) Ts brq(k) +
+1
+Ts Vsd(k)   brd(k) Ts (k)
+Ts brd(k) +
+Ls
+(9)
+
+isd(k+1)  (1  Ts ) isd(k) + pr(k) Ts rq(k) +
+1
+Ts rd(k) +
+Ts Vsd(k)
+Ls
+(2)
+
+brq(k+1)  (1  Ts ) brq(k) + preq(k) Ts brd(k) +
+Lm Ts isq(k)  C brd(k) Ts (k)
+(10)
+
+rq(k+1)  (1  Ts ) rq(k) + pr(k) Ts rd(k) +
+Lm Ts isq(k)
+(3)
+
+brd(k+1)  (1  Ts ) brd(k)  preq(k) Ts brq(k) +
+Lm Ts isd(k) + C brq(k) Ts (k)
+(11)
+
+ISBN 978-85-8001-069-5
+
+1777
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+onde req(k) e (k) sao funcoes descontnuas e,
+(
+)
+req(k)  W0 sign sn(k)
+
+(12)
+
+(
+)
+(k)  0 sign s(k)
+
+(13)
+
+onde, C, W0 , e 0 sao constantes positivas e limitadas.
+As superfcies de deslizamento sn(k) e s(k)
+sao dadas por,
+sn(k)  isq(k) brd(k)  isd(k) brq(k)
+
+(14)
+
+s(k)  isq(k) brq(k) + isd(k) brd(k)
+
+(15)
+
+Teorema. Sejam as superfcies de deslizamento em tempo_discreto sn(k) e s(k) dadas em
+(14) e (15), respectivamente e ainda os observadores das correntes estatoricas e uxos rotoricos denidos em (8)-(11). Entao, existem valores
+positivos de C, W0 e 0 que forcam a ocorrencia da superfcie de deslizamento em sn(k)  0 e
+s(k)  0, e ainda forcam a convergencia dos erros de estimacao isq(k) e isd(k) para zero. Alem
+disso, os uxos rotoricos estimados brq(k) e brd(k)
+convergem para os uxos rotoricos rq(k) e rd(k)
+e, o valor da componente fundamental da funcao
+descontnua req(k) tende ao valor da velocidade
+rotorica r(k) .
+Prova
+As condicoes para existencia de uma superfcie de deslizamento em tempo_discreto sao diferentes das condicoes desenvolvidas para os algoritmos em tempo contnuo. Em tempo_discreto, uma
+condicao necessaria e suciente pode ser obtida a
+partir da analise_de_estabilidade por uma funcao
+Lyapunov. Para tanto, obtem-se as condicoes
+necessaria e suciente para a existencia de uma
+superfcie de modos_deslizantes em tempo_discreto
+conforme apresentado em (Sarpturk et al., 1987).
+
+
+
+(
+)
+si(k+1)  si(k) sign si(k) < 0
+
+(16)
+
+
+
+
+(
+)
+si(k+1) + si(k) sign si(k)  0
+
+(17)
+
+A prova de convergencia dos observadores
+apresentados (8)-(11), bem como as condicoes
+para existencia das superfcies de deslizamento
+(14) e (15) podem ser obtidas a partir da vericacao das condicoes apresentadas em (16) e (17).
+Para tanto, considere que as equacoes dos erros
+de observacao de uxo e das correntes estatoricas
+podem ser escritas da forma,
+isq(k+1)  isq(k) + Ts rq(k)  Ts p r(k) brd(k) 
+Ts pr(k) rd(k)  Ts brq(k) (k)
+(18)
+
+ISBN 978-85-8001-069-5
+
+isd(k+1)  isd(k) + Ts p r(k) brq(k) +
+Ts pr(k) rq(k) + Ts rd(k)  Ts brd(k) (k)
+(19)
+rq(k+1)  (1  Ts ) rq(k) + p r(k) Ts brd(k) +
+pr(k) Ts rd(k)  C brd(k) Ts (k)
+(20)
+rd(k+1)  (1  Ts ) rd(k)  p r(k) Ts brq(k) +
+pr(k) Ts rq(k) + CTs brq(k) (k)
+(21)
+onde isq(k)  isq(k)  isq(k) , isd(k)  isd(k)  isd(k) ,
+rq(k)  rq(k)  rq(k) , rd(k)  rd(k)  rd(k) e
+ r(k)  req(k)  r(k) .
+A equacao diferenca do produto de duas
+funcoes em tempo_discreto, tal como em (14) pode
+ser dada por,
+sn(k)  isq(k+1) brd(k)  isq(k) brd(k) +
+isq(k) brd(k+1)  isq(k) brd(k)  isd(k+1) brq(k) +
+isd(k) brq(k)  isd(k) brq(k+1) + isd(k) brq(k) + esn(k)
+(22)
+b
+b
+onde esn(k) , isq(k) rd(k)  isd(k) rq(k) , e
+sn(k)  sn(k+1)  sn(k)
+O passo (k + 1) da superfcie de deslizamento
+sn(k) pode ser obtido de (22), tal que,
+sn(k+1)  isq(k+1) brd(k) + isq(k) brd(k+1) 
+isq(k) brd(k)  isd(k+1) brq(k) + isd(k) brq(k) 
+isd(k) brq(k+1) + esn(k)
+(23)
+Substituindo (10), (11), (18) e (19) em (22)
+vem,
+2
+
+2
+
+sn(k) Ts preq(k) b(k) +Ts pr(k) b(k) 
+)
+(
+Ts pr(k) e1(k)+Ts brq(k) isd(k)  brd(k) isq(k) +
+(
+)
+Ts e2(k)preq(k) Ts brq(k) isq(k)+ brd(k) isd(k) +
+(
+)
+Lm Ts i(sd(k) isq(k)  isq(k) isd(k) +)
+CTs (k) brq(k) isq(k) + brd(k) isd(k) + esn(k)
+(24)
+
+onde, e1(k)  rq(k) brq(k) + rd(k) brd(k) ,
+
+
+e2(k)  rq(k) brd(k)  rd(k) brq(k) , b(k) 
+
+b2dr(k) + b2rq(k) .
+Multiplicando ((24) em
+) ambos os lados da
+igualdade por sign sn(k) com o intuito de obter
+a forma de (16),
+
+
+(
+)
+sn(k+1)
+ sn(k) sign) sn(k) 
+(
+2
+
+  b(k) + s(k) pTs W0
+)
+(
+)
+(
++f1 isqd(k) , e12(k) , sn(k) sign sn(k)
+
+(25)
+
+1778
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+onde,
+2
+(
+)
+f1 isqd(k) , e12(k) , sn(k)  + b(k) Ts pr(k) 
+Ts pr(k) e1(k) + CT(s (k) s(k)  Ts sn(k) + )
+Ts e2(k) + Lm Ts isq(k) isd(k)  isq(k) isd(k) +
+esn(k)
+(26)
+A partir de (25) e possvel vericar uma das
+condicoes para existencia da superfcie de deslizamento sn(k) em tempo_discreto. Assim, para atender a condicao de (16) o ganho W0 deve ser projetado tal que,
+
+(
+
+
+
+(
+)
+s(k+1)
++ s(k) sign )s(k) 
+(
+2
+
+  b(k) + Csn(k) Ts 0 +
+(
+)
+(
+)
+f2 isqd(k) , e12(k) , sn(k) sign s(k) + 2 s(k)
+(32)
+A partir de (32) e possvel obter o limite superior do ganho de chaveamento 0 ,
+(
+(
+)
+)
+2 s(k) +f2 isqd(k) , e12(k) , sn(k) sign s(k)
+(
+)
+0 
+2
+ b(k) + Csn(k) Ts
+(33)
+
+)
+
+(
+)
+f1 isqd(k) , e12(k) , sn(k)
+)
+W0 > (
+sign sn(k) (27)
+2
+ b(k) + s(k) pTs
+A segunda condicao, chamada de suciente,
+para existencia da superfcie de deslizamento em
+tempo_discreto e apresentada em (17). Escrevendo
+sn(k) na forma de (17),
+
+
+(
+)
+(sn(k+1) + sn(k) sign
+) sn(k)  2 sn(k) 
+2
+ b(k) + s(k) Ts pW0 +
+)
+(
+)
+(
+f1 isqd(k) , e12(k) , sn(k) sign sn(k)
+(28)
+A partir de (28) e usando a condicao (17),
+pode-se estabelecer o limite superior de W0 , da
+forma,
+(
+)
+(
+)
+2 sn(k) +f1 isqd(k) , e12(k) , sn(k) sign sn(k)
+(
+)
+W0 
+2
+ b(k) + s(k) Ts p
+(29)
+A equacao diferenca da superfcie s(k) pode
+ser escrita na forma de (16), tal que,
+
+
+(
+)
+s(k+1)
+ s(k) sign )s(k) 
+(
+2
+
+  b(k) + Csn(k) Ts 0 +
+)
+(
+)
+(
+f2 isqd(k) , e12(k) , sn(k) sign s(k)
+
+(30)
+
+onde, es(k) , isq(k) brq(k) + isd(k) brd(k) ,
+)
+(
+f2 isqd(k) , e12(k) , sn(k)  Ts e1(k) +
+Ts pr(k)
+( e2(k)  Ts s(k) + pTs )W0 sn(k) +
+Lm Ts isq(k) isq(k) + isd(k) isd(k) + es(k)
+Com isso, e possvel obter o limite inferior do
+ganho 0 ,
+)
+(
+(
+)
+f2 isqd(k) , e12(k) , sn(k)
+) sign s(k) (31)
+0 > (
+2
+ b(k) + Csn(k) Ts
+Escrevendo a equacao soma de s(k+1) e s(k)
+e possvel encontrar,
+
+ISBN 978-85-8001-069-5
+
+
+A partir de (27), (29), (31) e (33) e possvel
+vericar que os limites dos ganhos das funcoes de
+chaveamento, de onde se obtem as superfcies de
+deslizamento sn(k) e s(k) nao podem ser determinados de maneira exata. Estes limites dependem
+dos erros de estimacao das correntes, dos erros
+de estimacao dos uxos rotoricos, do perodo de
+amostragem, bem como do valor do modulo das
+funcoes sn(k) e s(k) . De maneira geral, verica-se
+que ambos os ganhos W0 e 0 apresentam maiores
+limites quando as funcoes sn(k) e s(k) estao mais
+distantes de zero. Com isso, pode-se fazer o projeto de funcoes de chaveamento com amplitudes
+variantes no tempo. Tais amplitudes dos ganhos
+de chaveamento podem variar diretamente com as
+funcoes de deslizamento, tal como a partir de uma
+funcao sigmoide, como segue,
+(
+f (x)  Ksig 0.5 +
+
+1
+1 + esig x
+
+)
+(34)
+
+onde sig e a constante de tempo da funcao, Ksig e
+um ganho positivo, e x e a funcao de deslizamento.
+A velocidade rotorica pode ser obtida a partir
+da funcao descontnua req(k) com a utilizacao de
+um ltro passa-baixas, da forma que a velocidade
+rotorica e a componente de baixa frequencia de
+req(k) , assim,
+zr(k+1)  (1  f r Ts ) zr(k) + f r Ts req(k) ,
+zr(k)  r(k)
+(35)
+onde, f1r e a constante de tempo do ltro passabaixas. De acordo com (Yan et al., 2000), f r deve
+ser um valor pequeno suciente comparado com o
+componente de baixa frequencia de req(k) .
+4
+
+Resultados de simulacao
+
+Resultados de simulacao sao realizados com o intuito de vericar o desempenho do sistema_de_controle_de_velocidade sensorless apresentado neste
+trabalho. O diagrama simplicado do sistema
+
+1779
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+2
+
+isq , (A)
+
+de controle e apresentado na Figura 1, onde
+um metodo de controle por orientacao indireta
+(IFOC) no campo e usado. A maquina_de_inducao
+(IM) simulada tem 4 polos, potencia nominal de
+1,2 kW. Os parametros eletricos sao Rs  3, 24,
+Rr  4, 96, Ls  402, 4mH, Lr  404, 8mH e
+Lm  388, 5mH. A frequencia de chaveamento
+inversor (VSI), e discretizacao das equacoes adotada e denida em 5 kHz.
+
+i sq
+
+1
+i sq
+
+0
+
+1
+2
+5
+
+5.01
+
+5.02
+
+5.03
+
+tempo (s)
+
+5.04
+
+5.05
+
+5.06
+
+(a)
+
+isd (A)
+
+2
+
+isd
+
+1
+i sd
+
+0
+
+1
+2
+5
+
+5.01
+
+5.02
+
+5.03
+
+tempo (s)
+
+5.04
+
+5.05
+
+5.06
+
+(b)
+
+Figura 1 Diagrama simplicado do sistema.
+ rq
+
+A Figura 2 ilustra a resposta de velocidade
+simulada. Verica-se nesta gura a boa capacidade de estimacao_da_velocidade rotorica com a
+utilizacao do esquema proposto.
+
+rq (Wb)
+
+0.5
+
+ rq
+
+0
+
+0.5
+5
+
+5.01
+
+5.02
+
+5.03
+
+tempo (s)
+
+5.04
+
+5.05
+
+5.06
+
+(c)
+
+rads
+
+80
+60
+ r
+
+40
+
+r
+20
+ref
+
+rd , rd (Wb)
+
+100
+
+ rd
+
+0.5
+
+ rd
+
+0
+
+0.5
+5
+
+5.01
+
+5.02
+
+5.03
+
+tempo (s)
+
+5.04
+
+5.05
+
+5.06
+
+(d)
+
+0
+0
+
+2
+
+4
+
+6
+
+tempo (s)
+
+8
+
+10
+
+Figura 2 Resposta de velocidade do sistema simulado.
+
+A Figura 3 mostra a estimacao das correntes
+estatoricas e dos uxos rotoricos. E possvel vericar nas Figuras 3 (c) e (d) a boa estimacao dos
+uxos rotoricos.
+5
+
+Resultados experimentais
+
+A validacao_experimental do sistema proposto e realizada usando processador digital de
+sinais (DSP TMS320F2812), inversor trifasico e
+maquina_de_inducao. Os parametros da maquina
+de inducao sao listados na secao de resultados
+de simulacao. O diagrama do sistema testado e
+apresentado na Figura 1. Um esquema de controle IFOC e implementado onde a frequencia de
+
+ISBN 978-85-8001-069-5
+
+Figura 3 Resultados de simulacao estimacao das
+correntes estatoricas e uxos rotoricos. (a) Estimacao de isq . (b) Estimacao de isd . (c) Estimacao
+de sq . (d) Estimacao de sd .
+
+chaveamento adotada e 5 kHz. As correntes estatoricas sao medidas a partir de sensores de efeito
+hall, enquanto as tensoes sao estimadas a partir do
+ndice de modulacao e do valor do barramento CC.
+A velocidade rotorica e medida a partir de um encoder apenas para comparacao com a velocidade
+rotorica estimada.
+A Figura 4 apresenta a resposta de velocidade
+experimental do sistema apresentado neste trabalho. Verica-se nesta gura a boa capacidade
+de estimacao_da_velocidade rotorica, bem como o
+bom rastreamento da referencia de velocidade.
+
+A Figura 5 ilustra o comportamento das
+
+1780
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+4
+
+isq (A)
+
+100
+
+rads
+
+80
+60
+
+2
+0
+
+i sq
+
+2
+i sq
+
+4
+
+ r
+
+40
+
+5
+
+5.01
+
+r
+20
+
+5.02
+
+0
+4
+
+6
+
+8
+
+tempo (s)
+
+Figura 4 Resposta de velocidade utilizando o observador pelo metodo do uxo rotorico e das correntes estatoricas.
+
+s
+
+0
+
+i sd
+
+2
+i sd
+4
+5.02
+
+5.04
+
+5.05
+
+5.06
+
+0
+ rq
+5
+
+5.01
+
+5.02
+
+5.03
+
+tempo (s)
+
+0.5
+
+5.04
+
+5.05
+
+5.06
+
+(c)
+2
+
+4
+
+6
+
+tempo (s)
+
+8
+
+0.5
+
+10
+
+rd (Wb)
+
+0
+
+0.5
+
+sn
+
+5.03
+
+tempo (s)
+
+0.5
+
+0.5
+
+0
+
+5.01
+
+(b)
+
+rq (Wb)
+
+0.5
+
+5.06
+
+2
+
+5
+
+superfcies de deslizamento adotadas, s e sn .
+Verica-se nesta gura que s apresenta valores
+proximos a zero, enquanto sn tem a forma da resposta de velocidade rotorica.
+
+5.05
+
+4
+
+10
+
+isd (A)
+
+2
+
+5.04
+
+(a)
+
+ref
+0
+
+5.03
+
+tempo (s)
+
+0
+ rd
+
+0
+0.5
+
+0.5
+0
+
+2
+
+4
+
+6
+
+tempo (s)
+
+8
+
+10
+
+Figura 5 Superfcies de deslizamento. (a) s . (b)
+sn .
+A Figura 6 apresenta as correntes estatoricas
+e os uxos rotoricos estimados. Verica-se nas Figuras 6 (a) e (b) a boa estimacao das correntes
+estatoricas, bem como ausencia de oscilacoes caractersticas em sistemas_chaveados, tal como esquemas por modos_deslizantes. Isto e decorrente
+do uso de funcoes com amplitudes variantes no
+tempo (34), como realizado neste trabalho.
+6
+
+Conclusao
+
+Este artigo apresentou o desenvolvimento de um
+observador da velocidade rotorica e dos uxos
+rotoricos por modos_deslizantes em tempo_discreto aplicado a maquinas_de_inducao. Foram
+apresentadas as condicoes para existencia das superfcies de deslizamento em tempo_discreto, as
+
+ISBN 978-85-8001-069-5
+
+5
+
+5.01
+
+5.02
+
+5.03
+
+tempo (s)
+
+5.04
+
+5.05
+
+5.06
+
+(d)
+
+Figura 6 Estimacao das correntes estatoricas e
+uxos rotoricos. (a) Estimacao de isq . (b) Estimacao de isd . (c) sq . (d) sd .
+
+quais dependem da distancia da funcao de chaveamento a zero, tempo de amostragem e parametros da maquina. Vericou-se que o uso de ganhos de chaveamento variantes no tempo resulta
+na melhora de desempenho do sistema proposto.
+Com isso, fez-se o uso da funcao sigmoide como
+funcao de chaveamento. O desenvolvimento em
+tempo_discreto possibilita a implementacao direta
+em processadores digitais de sinais e microcontroladores. Resultados de simulacao e experimentais
+validam a analise teorica e mostram o bom desempenho do sistema proposto.
+
+1781
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Referencias
+Barut, M., Bogosyan, S. and Gokasan, M.
+(2007). Speed-sensorless estimation for induction motors using extended kalman lters,
+IEEE Transactions on Industrial Electronics
+54(1) 272 280.
+Derdiyok, A. (2003). Simple method for speed
+and rotor resistance estimation of induction
+machines, IEE - Electric Power Applications
+150(3) 289  294.
+Derdiyok, A. (2005). Speed-sensorless control of
+induction motor using a continuous control
+approach of sliding-mode and ux observer,
+IEEE Transactions on Industrial Electronics
+52(4) 1170  1176.
+Derdiyok, A., Yan, Z., Guven, M. and Utkin,
+V. (2001). A sliding mode speed and rotor time constant observer for induction machines, Annual Conference of the Industrial
+Electronics Society, 2001. IECON 01.
+Finch, J. and Giaouris, D. (2008). Controlled AC
+electrical drives, IEEE Transactions on Industrial Electronics 55(2) 481 491.
+Ghanes, M. and Zheng, G. (2009). On sensorless induction motor drives Sliding-mode
+observer and output feedback controller,
+IEEE Transactions on Industrial Electronics
+56(9) 3404 3413.
+
+Utkin, V. (1993). Sliding mode control design
+principles and applications to electric drives,
+IEEE Transactions on Industrial Electronics
+40(1) 23 36.
+Utkin, V. I., Guldner, J. and Shi, J. (1999). Sliding
+Mode Control in Electromechanical Systems,
+1 edn, Taylor  Francis.
+Vas, P. (1998). Sensorless Vector and Direct
+Torque Control, Oxford Univ. Press.
+Velez-Reyes, M., Minami, K. and Verghese, G.
+(1989). Recursive speed and parameter estimation for induction machines, Conference
+Record of the Industry Applications Society
+Annual Meeting, 1989. pp. 607611 vol.1.
+Vieira, R. P., Gastaldini, C. C., Azzolin, R. Z. and
+Grundling, H. A. (2011). Discrete-time sliding mode approach for speed estimation of
+symmetrical and asymmetrical induction machines, 37th Annual Conference on IEEE Industrial Electronics Society, pp. 1819 1824.
+Yan, Z., Jin, C. and Utkin, V. (2000). Sensorless sliding-mode control of induction motors,
+IEEE Transactions on Industrial Electronics
+47(6) 1286  1297.
+
+Holtz, J. (2005). Sensorless control of induction
+machines With or without signal injection?,
+IEEE Transactions on Industrial Electronics
+53(1) 7  30.
+Jung, S.-L. and Tzou, Y.-Y. (1996). Discrete
+sliding-mode control of a PWM inverter for
+sinusoidal output waveform synthesis with
+optimal sliding curve, IEEE Transactions on
+Power Electronics 11(4) 567 577.
+Krause, P. C., Wasynczuk, O. and Sudho, S. D.
+(1995). Analysis of Electric Machinery, 2
+edn, Piscataway, NJ IEEE Press.
+Peng, F.-Z. and Fukao, T. (1994). Robust speed
+identication for speed-sensorless vector control of induction motors, IEEE Transactions
+on Industry Applications 30(5) 12341240.
+Sarpturk, S., Istefanopulos, Y. and Kaynak, O.
+(1987). On the stability of discrete-time sliding mode control systems, IEEE Transactions on Automatic Control 32(10) 930 
+932.
+Schauder, C. (1992). Adaptive speed identication
+for vector control of induction motors without rotational transducers, IEEE Transactions on Industry Applications 28(5) 1054
+1061.
+
+ISBN 978-85-8001-069-5
+
+1782

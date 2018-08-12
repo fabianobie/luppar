@@ -1,0 +1,625 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+USO DA TÉCNICA DIAKOPTICS E PROCESSAMENTO PARALELO PARA SIMULAÇÕES DE
+TRANSITÓRIOS ELETROMAGNÉTICOS
+BRUNA, L. FERRARI, PEDRO DA COSTA JR., JOSÉ E. C. CASTANHO, ANDRÉ N. DE SOUZA
+Laboratório de Sistemas de Potência e Técnicas Inteligentes (LSISPOTI),
+Departamento de Engenharia Elétrica, UNESP - Univ Estadual Paulista
+Av. Eng. Luiz Edmundo C. Coube 14-01, CEP 17033-360 - Bauru - SP  São Paulo - Brasil
+E-mails bruna.ferrari@feb.unesp.br, costajr@feb.unesp.br,
+castanho@feb.unesp.br, andrejau@feb.unesp.br
+
+Abstract In this paper, the Diakoptics technique is reviewed and used to analyse electrical circuits. This technique allows partitioning of systems for parallel processing in the solution of electromagnetic transients. The Diakoptics technique is explained
+using examples of application and the performance of parallel processing with multiple cores of a CPU is evaluated.
+Keywords Simulation of Power Systems, Electromagnetic Transients, MATLAB, Multicore, Partitioning, Diakoptics, EMTP,
+Algorithms, Dynamic Power System, Parallel Processing.
+Resumo Nesse artigo, a técnica Diakoptics é revisada e empregada para análise de circuitos elétricos. Essa ferramenta permite
+o particionamento de sistemas para o processamento_paralelo na solução de transitórios_eletromagnéticos. A técnica Diakoptics é
+explicada através de exemplos de aplicação e o desempenho do processamento_paralelo com vários núcleos de uma CPU é avaliado.
+Palavras-chave .
+
+1
+
+brou-se o potencial de utilizá-la para viabilizar a solução das simulações de transitórios_eletromagnéticos
+em sistemas de processamento_paralelos visando acelerar o tempo de execução (M. Uriate, 2013). O uso
+da metodologia Diakoptics para aceleração da obtenção do transitório_eletromagnético apresenta grande
+potencial de desenvolvimento considerando as atuais
+condições de disponibilidade de sistemas multiprocessados de baixo_custo, tanto os sistemas com processadores multicores como unidades processamento
+gráfico de propósito geral ou GPGPU (General Purpose Graphics Processing Unit) (Kirk and Hwu,
+2013 Stone et al., 2010) . Nesse artigo a viabilidade
+do emprego desta metodologia é demonstrada e o seu
+potencial de utilização é avaliado. Na próxima seção
+é feita uma revisão da técnica Diakoptics.
+
+Introdução
+
+É notória a importância econômica das simulações de transitórios_eletromagnéticos para estudar
+ocorrências de falhas indesejáveis em um sistema de
+potência.
+A simulação de transitórios_eletromagnéticos é empregada para estimar o estresse que transitórios de
+tensões e corrente podem provocar  instalação do
+sistema_elétrico_de_potência. Esse tipo de simulação,
+entretanto, apresenta alto custo_computacional e limita o número de casos que podem ser simulados ao
+consumir uma quantidade excessiva de homenshora e horas de máquina. Existem vários fatores que
+afetam o tempo de simulação o tamanho_do_passo de
+tempo da simulação, o tamanho da janela de tempo
+de interesse, a ordem e a complexidade do modelo
+matemático usado, limitação dos recursos computacionais, eficiência de programação, e a natureza sequencial da solução (M. Uriate, 2013). Atualmente
+requer-se simuladores tão rápidos quanto os de estabilidade_transitória (TS) e tão detalhados quanto um
+simulador de Transitórios Eletromagnéticos (EMT)
+(Fan and Ding, 2012).
+A metodologia Diakoptics foi proposta e desenvolvida por Gabriel Kron (Kron, 1963) para resolver problemas de sistemas com alta complexidade, e consiste basicamente em um conjunto de procedimentos de
+particionamento do sistema original em subproblemas tratáveis. Entretanto, como esta ferramenta permite o particionamento de sistemas_lineares, vislum-
+
+2 Diakoptics
+A metodologia conhecida como Diakoptics, cujo
+prefixo Dia e sufixo koptic significam sistema e cortar, respectivamente, foi inicialmente proposta por
+Gabriel Kron (Kron, 1963) para resolver problemas
+de sistemas_de_potência.
+A técnica Diakoptics consiste em particionar um sistema de grande porte em subsistemas mantendo a
+identidade do sistema original nos subsistemas (Olobaniyi et al., 2012) usando eou revelando alguns
+detalhes do sistema que teriam perdido importância
+em outras simplificações (M. Uriate, 2013).
+
+1932
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+A técnica Diakoptics foi empregada em diversas
+áreas onde sistemas grandes eou complexos devem
+ser desmembrados (Aitchison, 1987).
+Quando a técnica de particionamento Diakoptics foi
+desenvolvida, as ferramentas computacionais eram
+escassas e lentas. Com o avanço dos computadores, a
+velocidade foi apenas um dentre vários benefícios
+oferecidos por este tipo de particionamento. Basicamente, o método reduz a dimensão das matrizes que
+podem ser tratadas individualmente, de forma concomitante.
+A técnica Diakoptics é uma ferramenta muito útil que
+pode ser explorada em análises de sistemas_de_potência modernos, porém ainda é pouco utilizada. Algumas razões pelo pouco uso dessa técnica como uma
+ferramenta universal de análise de sistemas_de_potência é devido principalmente pelo sucesso das técnicas
+de esparsidade (Sato and Tinney, 1963 Tinney et
+al., 1985). Mas é no contexto de simuladores em
+tempo_real (Marti and Linares, 1994), e particularmente de soluções com multiprocessamento que as
+vantagens da técnica Diakoptics se destacam (Marti
+et al., 2000). Embora tanto as técnicas de esparsidade
+quanto a técnica Diakoptics tirem proveito da esparsidade do sistema, a técnica Diakoptics mantém a
+identidade dos subsistemas, fato que é muito difícil
+de ser conseguido com as técnicas de esparsidade
+para decomposição de matrizes. A manutenção da
+individualidade dos subsistemas permite, por exemplo, o pré-cálculo (fora do laço de simulação) da inversão das submatrizes para aqueles subsistemas cuja
+topologia não se altera, enquanto que apenas alguns
+subsistemas exigem recálculo (J. R. Marti et al.,
+2002).
+Para ilustrar a aplicação da técnica Diakoptics, considere o circuito da Figura 1.
+
+Figura 2. Circuito Elétrico Equivalente
+
+Na Figura 2, as resistências equivalentes dos indutores e capacitor são obtidas através das equações (1),
+(2), e (3).
+2 Lj
+(1)
+RL j 
+t
+2L
+(2)
+RL 
+t
+t
+(3)
+RC 
+2C
+As correntes fictícias ( I Lj , I L , e I C ), que aparecem
+devido  integração numérica no domínio_do_tempo,
+são atualizadas através das equações (4), (5), e (6),
+em função das tensões nodais e1  t  , e2  t  , e e3  t  .
+
+I Lj (t ) 
+
+t
+ e1 t   e2 t   I Lj (t  t )
+Lj
+
+t
+e1  t   I L (t  t )
+L
+t
+I C (t )  e2  t   I C (t  t )
+Lj
+I L (t ) 
+
+(4)
+(5)
+(6)
+
+A Figura 3 apresenta os ramos que foram retirados
+após o seccionamento do circuito entre os nós 1 e 2.
+Nesta mesma figura, eLj  ek  e1  e2 .
+
+Figura 1. Circuito Elétrico
+Figura 3. Ramos de Intersecção.
+
+A Figura 2 apresenta o circuito_equivalente ao da
+Figura 1, quando discretizado usando o método de
+integração trapezoidal (Dommel, 1969). Observe que
+o corte foi realizado entre os nós 1 e 2.
+
+A Figura 4 apresenta os dois subsistemas obtidos
+com o seccionamento do sistema equivalente original, apresentado na Figura 2.
+
+1933
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Substituindo e c , da equação (14) na equação (13), e
+isolando ic , segue a equação (15).
+
+ic   Rcc 
+
+1
+
+ e1 
+C e2 
+ e3 
+t
+ca
+
+(15)
+
+Os subsistemas são descritos pelas equações matriciais (16) e (17).
+
+GS1  GL e1    I1  i 1 
+GC  G23
+ G
+23
+
+
+Na Figura 4, as condutâncias G são obtidas através
+das equações de (7) a (11).
+
+   v1   J1  j1 
+G 11
+
+ 
+G 22  v2   J 2  j2 
+
+
+(18)
+
+(8)
+
+v1  e1 
+
+(19)
+
+(9)
+
+e 
+v2   2 
+ e3 
+J1  j1   I1  i 1 
+
+(7)
+
+Onde
+
+(10)
+(11)
+
+ I 2  i 2 
+J 2  j2  
+
+ I 3  i 3 
+G 11  GS1  GL 
+
+Enquanto a equação (12) relaciona o vetor de correntes fictícias com as correntes dos ramos retirados, a
+equação (13) relaciona as correntes de ramos com as
+quedas de tensão nos ramos retirados no seccionamento do circuito original.
+
+i 1   1 1
+iLj 
+
+i a  Cac ic  i 2    1 1   
+i
+i 3   0 0   k 
+0  iLj  e Lj 
+R
+Rcc ic  e c   Lj
+    
+ 0 Rk   ik   e k 
+
+(17)
+
+A equação (18) é obtida a partir da combinação das
+equações (16) e (17).
+
+Figura 4. Subsistemas equivalentes após o seccionamento.
+
+GS1  1 RS1
+GL  1 RL
+GC  1 RC
+G23  1 R23
+GS 3  1 RS 3
+
+ e2   I 2  i 2 
+
+GS 3  G23   e3   I 3  i 3 
+G23
+
+(16)
+
+G  G23
+G 22   C
+ G23
+
+G23 
+GS 3  G23 
+
+(20)
+(21)
+(22)
+(23)
+(24)
+
+A equação (18) pode ser novamente reduzida  notação da equação (25), onde G aa é uma matriz diagonal por blocos.
+
+(12)
+
+(13)
+
+G aa va  J a  ja
+
+(25)
+
+Onde
+
+ 
+G 
+G aa   11
+
+G
+22 
+
+v 
+va   1 
+v2 
+
+Assim, a matriz Cac , na equação (12) relaciona as
+correntes fictícias injetadas em cada nó do sistema
+em função das correntes nos ramos retirados no processo de particionamento do circuito.
+Por outro lado, podemos escrever a equação (14).
+
+e   e  e 
+e c   Lj    1 2  
+ e k  e1  e2 
+ e1 
+ e1 
+1 1 0   
+
+t 
+
+e
+
+C
+ca  e2 
+ 2
+1
+
+1
+0
+
+ e 
+ e3 
+ 3
+
+J 
+Ja   1 
+J2 
+i 1 
+ j1   
+ja     i 2   Cac ic
+ j2  i  
+ 3
+
+(14)
+
+(26)
+(27)
+(28)
+
+(29)
+
+Isolando va na equação (25), e substituindo ja pela
+equação (29), obtém-se a equação (30).
+
+Observando a equação (14), verifica-se que a matriz
+Ccat relaciona as quedas de tensão nos ramos retirados com o vetor de tensões nodais do sistema.
+1934
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+va   G aa  J a   G aa  Cac ic
+1
+
+1
+
+(30)
+
+Substituindo a equação (15) em (30), obtemos a
+equação (31).
+
+G aa va  J a  Cac  Rcc  Ccat va
+1
+
+(31)
+Figura 5. Processamento em Paralelo
+
+Separando os termos em va (31), obtém-se a equação
+(32).
+
+G 
+
+aa
+
+
+
+ Cac  Rcc  Ccat va  J a
+1
+
+O processamento em paralelo, usando a tecnologia
+multicore e a análise Diakoptics, torna possível o
+processamento de um sistema de grandes proporções
+quando dividido em subsistemas com características
+similares quelas apresentas pelo sistema original.
+De acordo com a equação (18) e (35), nota-se que
+G 11 , G 22 e R cc podem ser tratadas simultaneamente em processadores diferentes para posterior
+solução da equação (33).
+
+(32)
+
+Usando a identidade de Sherman-MorrisonWoodbury (Woodbury, 1950), obtém-se a equação
+(33).
+
+
+
+va   G aa    G aa  Cac  R cc  C t ca  G aa 
+1
+
+1
+
+1
+
+1
+
+J
+
+a
+
+(33)
+
+4 Verificação
+
+Onde
+
+C t ca  C t ac
+
+(34)
+
+R cc  Rcc  C ca  G aa  Cac
+t
+
+Como exemplo representativo, considere o problema que exija a inversão de uma matriz de condutâncias G150150 . A técnica de Diakoptics fornece uma
+metodologia eficiente para particionar o problema e
+que substitui a necessidade de inversão da matriz
+original pela inversão de 3 matrizes com dimensões
+ 50 ), que podem ser invertidas simulmenores (e.g, G50
+taneamente em unidades de processamento individuais.
+Para verificar computacionalmente a aplicabilidade
+da técnica Diakoptics, implementou-se em Matlab
+um algoritmo para estimar o tempo para inverter as
+matrizes G 11 e G22 e o tempo para inverter a matriz
+
+1
+
+(35)
+
+3 Processamento Paralelo
+Processamento em paralelo consiste em uma técnica de interligação de várias unidades de processamento (computadores individuais, não necessariamente homogêneos) de maneira que um processo de
+grande consumo seja executado na unidade mais
+disponível, ou mesmo subdividido por várias unidades. Consegue-se, portanto, ganhos nestas soluções
+uma tarefa qualquer, se divisível em várias subtarefas
+pode ser realizada em paralelo. Analogamente, podese pensar nessas subtarefas como os subsistemas criados na análise do Diakoptics.
+Utilizando múltiplos processadores simultaneamente
+para solucionar um problema existe uma expectativa
+de que haja um decréscimo do tempo necessário para
+resolver um problema, ou seja, uma melhora de desempenho.
+A tecnologia multicore que consiste em colocar mais
+de um núcleo no interior de um único chip processador, possibilita que haja divisões de tarefas, sendo
+assim que cada núcleo solucione as subtarefas simultaneamente proporcionando uma simulação mais rápida.
+
+G aa , para diversas quantidades de núcleos. Lembrando que G 11 e G 22 correspondem a inversão das
+matrizes em dois núcleos processadores separados.
+Para usar três núcleos particiona-se a matriz G aa em
+três submatrizes G 11 , G 22 e G 33 , e assim por diante.
+A Figura 6 apresenta o tempo necessário para inversão de matrizes de dimensões diferentes, usando apenas um núcleo e o tempo necessário para inversão de
+n submatrizes obtidas com a partição Diakoptics
+usando n núcleos.
+
+Figura 6. Gráfico do Tempo Médio
+
+1935
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+dimensões de G 11 e G 22 deve-se ao fato de que ambos os núcleos devem realizar tarefas de preferência
+ao mesmo tempo, afinal não adianta um núcleo terminar sua tarefa muito antes do outro.
+
+A Figura 6 apresenta o tempo médio, ou seja, a média
+aritmética do tempo usado para o processamento com
+n núcleos. Conclui-se que conforme a dimensão da
+matriz de condutâncias aumenta, a redução do tempo
+de simulação, usando mais de um núcleo, se acentua.
+Por exemplo, quando a matriz apresenta a dimensão
+3000  3000 , o tempo de simulação é aproximadamente 2,6 vezes menor usando dois núcleos, 4,2 vezes menor usando três núcleos e 5,6 vezes menor
+usando quatro núcleos, tomando como referência o
+tempo necessário para o processamento feito com
+apenas um núcleo.
+A Tabela 1 apresenta as dimensões mínimas das matrizes a partir das quais o processamento_paralelo
+apresenta-se mais rápido quando comparado com o
+processamento feito com apenas um núcleo. Os dados dessa tabela são os mesmo usados para fazer o
+gráfico da Figura 6. A Tabela 1 informa, por exemplo, que as matrizes com dimensões inferiores a 119
+são mais rapidamente processadas usando apenas um
+núcleo.
+
+Figura 8. Tensões nodais obtidas sem processamento_paralelo.
+
+Tabela 1. Dimensões para as quais o tempo de processamento é
+aproximadamente igual ao tempo de processamento com 1 núcleo
+Número de Núcleos
+
+Dimensão da Matriz
+
+2
+3
+4
+
+119  119
+92  92
+80  80
+
+Figura 9. Solução usando Diakoptics e processamento_paralelo.
+
+A Figura 7 apresenta um circuito elétrico que foi
+usado para verificar a viabilidade da técnica Diakoptics.
+
+A Figura 10 apresenta os resultados obtidos com o
+PSCAD. Esses resultados validam tanto a implementação da solução na forma tradicional quanto usando
+a técnica Diakoptics.
+Embora o exemplo apresentado seja simples, demonstrou-se que a técnica Diakoptics permite particionar um sistema complexo, possibilitando de forma
+eficiente a alocação dos subsistemas em diferentes
+unidades de processamento, com o consequente ganho de desempenho.
+Alguns aspectos do problema, tais como o desenvolvimento de métodos que permitam particionar os
+sistemas de forma a balancear a carga dos processadores devem investigados. Outro aspecto a ser explorado é o estabelecimento de diferentes perfis de sistemas levando em conta as características dos processadores disponíveis para execução, tais como quantidade e localidade de memória, latência, etc.
+
+Figura 7. Circuito usado para avaliar a técnica Diakoptics.
+
+A Figura 8 apresenta as tensões nodais calculadas
+usando a abordagem tradicional, na qual a matriz de
+condutâncias nodais é usada na sua forma não particionada. Basicamente solucionou-se a equação (36).
+GV  I
+
+(36)
+
+A Figura 9 apresenta a solução do circuito da Figura
+1 usando a equação (33) para validar a técnica Diakoptics. O corte foi realizado entre os nós 5 e 6 de
+modo a manter as dimensões das submatrizes dos
+sistemas particionados com aproximadamente a
+mesma dimensão. Isso é feito para balancear as tarefas de inversão das submatrizes entre os dois núcleos
+de processamento. A importância da relação entre as
+Figura 10. Tensões ao Longo da Linha (PSCAD)
+
+1936
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+M. Uriate, F., 2013. Multicore Simulation of Power
+System Transients. Institution of Engineering and Technology, London, United
+Kingdom.
+Marti, J.R., Hollman, J.A., Calvino-Fraga, 2000. Implementation of a real-time distributed
+network simulator with PC-cluster, in International Conference on Parallel Computing
+in Electrical Engineering, 2000. PARELEC
+2000. Proceedings. Presented at the International Conference on Parallel Computing in
+Electrical Engineering, 2000. PARELEC
+2000.
+Proceedings,
+pp.
+223227.
+doi10.1109PCEE.2000.873633
+Marti, J.R., Linares, L.R., 1994. Real-time EMTPbased transients simulation. IEEE Trans.
+Power
+Syst.
+9,
+1309
+1317.
+doi10.110959.336135
+Olobaniyi, F., Nouri, H., Ghauri, S., 2012. Investigation of Diakoptics as a resourceful tool in
+power system analysis, in Universities Power Engineering Conference (UPEC), 2012
+47th International. Presented at the Universities Power Engineering Conference
+(UPEC), 2012 47th International, pp. 16.
+doi10.1109UPEC.2012.6398587
+Sato, N., Tinney, W.F., 1963. Techniques for Exploiting the Sparsity or the Network Admittance
+Matrix. IEEE Trans. Power Appar. Syst. 82,
+944950. doi10.1109TPAS.1963.291477
+Stone, J.E., Gohara, D., Guochun Shi, 2010. OpenCL A Parallel Programming Standard for
+Heterogeneous Computing Systems. Comput.
+Sci.
+Eng.
+12,
+6673.
+doi10.1109MCSE.2010.69
+Tinney, W.F., Brandwajn, V., Chan, S.M., 1985.
+Sparse Vector Methods. IEEE Trans. Power
+Appar.
+Syst.
+PAS-104,
+295301.
+doi10.1109TPAS.1985.319043
+Woodbury, M.A., 1950. Inverting modified matrices
+(Memorandum No. 42). Princeton University, Princeton, N. J.
+
+Conclusão
+Esse artigo consiste em uma revisão do método
+de partição de redes elétricas, conhecido como Diakoptics, apresentando uma aplicação na solução de
+circuitos elétricos.
+Inicialmente, demonstrou-se que a utilização da técnica Diakoptics só é vantajosa quando a dimensão da
+matriz do sistema original é tal que o tempo de processamento numérico usando apenas um núcleo é
+superior ao processamento de várias submatrizes por
+vários núcleos, uma vez que existe um sobrecarga de
+tempo para o gerenciamento dos processos paralelos.
+Os resultados obtidos com o PSCAD validaram as
+implementações em MATLAB da técnica Diakoptics,
+a qual viabiliza o uso de múltiplos núcleos para solução de múltiplos subsistemas.
+A presente pesquisa deverá prosseguir investigando
+metodologias que permitam a partição automática de
+circuitos elétricos para viabilizar o emprego da técnica Diakoptics em processamentos paralelos de sistemas de grande porte.
+
+5 Agradecimentos
+Agradeço  FAPESP que financia esta pesquisa,
+através do processo 201302139-6.
+Referências Bibliográficas
+Aitchison, P.W., 1987. Diakoptics as a general approach in engineering. J. Eng. Math. 21, 47
+58. doi10.1007BF00127693
+Dommel, H.W., 1969. Digital Computer Solution of
+Electromagnetic Transients in Single-and
+Multiphase Networks. IEEE Trans. Power
+Appar.
+Syst.
+PAS-88,
+388
+399.
+doi10.1109TPAS.1969.292459
+Fan, S., Ding, H., 2012. Time Domain Transformation Method for Accelerating EMTP Simulation of Power System Dynamics. IEEE
+Trans. Power Syst. 27, 17781787.
+doi10.1109TPWRS.2012.2188913
+J. R. Marti, L. Linares, J. A. Hollman, F. A. Moreira,
+2002. OVNI Integrated SoftwareHardware
+Solution for Real-Time Simulation of Large
+Power Systems. Presented at the Power Systems Computation Conference (PSCC02),
+Sevilla, Spain, pp. 17.
+Kirk, D., Hwu, W., 2013. Programming massively
+parallel processors a hands-on approach,
+second
+edition.
+Elsevier 
+Morgan
+Kaufmann, Amsterdam Boston Waltham,
+Mass.
+Kron, G., 1963. Diakoptics The Piecewise Solution
+of Large Scale Systems. MacDonald Publishing.
+
+1937

@@ -1,0 +1,544 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+UMA ABORDAGEM HIBRIDA PARA NAVEGACAO EM AMBIENTES DINAMICOS
+BASEADA NA DRRT
+Stephanie Kamarry, Phillipe Cardoso, Lucas Molina, Elyson Adan Nunes Carvalho,
+Eduardo Oliveira Freire
+
+
+Grupo de Pesquisa em Robotica da UFS (GPRUFS)
+Departamento de Engenharia Eletrica da Universidade Federal de Sergipe (DELUFS)
+Av. Marechal Rondon, Sao Cristovao, SE, Brasil
+Emails skamarry@gprufs.org, phillipe@gprufs.org, lmolina@ufs.br, ecarvalho@ufs.br,
+efreire@ufs.br
+Abstract In this paper it is proposes a hybrid approach to mobile robot navigation in dynamic environments
+based on the DRRT planning algorithm and a reactive control obstacle avoidance with no need of replanning. This
+is possible because of DRRT characteristics of building a compact representation of the environment, enabling
+the robot to go from any point to the destination. This planning is switched with a reactive obstacle avoidance
+control according to the necessity of the system by a supervisor automaton. The proposed methodology was tested
+in simulation environment with maps that typically generate local minimum problems for reactive navigations
+combined with moving obstacles that causes problems to deliberative approaches. Results demonstrate the
+method applicability.
+Keywords
+
+RRT, DRRT, Robotics, Hybrid Navigation.
+
+Resumo Neste trabalho e proposta uma abordagem hbrida para navegacao de robos_moveis em ambientes
+dinamicos baseada no algoritmo de planejamento da DRRT e um controle reativo de desvio_de_obstaculos sem
+que haja a necessidade de um replanejamento. Isso e possvel gracas as caractersticas da DRRT que constroi
+uma representacao compacta do ambiente de modo que possiblita o robo sair de qualquer ponto e chegar ao
+destino. Esse planejamento e chaveado com um controle reativo de desvio_de_obstaculos de acordo com a
+necessidade do sistema atraves da supervisao de um automato. A metodologia proposta foi testada em ambiente
+de simulacao com mapas que normalmente geram problemas de mnimo local para navegacoes reativas aliados a
+obstaculos moveis que impossibilitam a aplicacao de abordagens deliberativas. Os resultados obtidos demonstram
+a aplicabilidade do metodo.
+Palavras-chave
+
+.
+
+Introducao
+
+Uma suposicao comum em algoritmos de planejamento_de_movimento e que o ambiente e bem
+denido, de tal forma que a localizacao do robo
+em relacao aos obstaculos e a posicao de destino
+sao conhecidos (Latombe, 2012). Esta suposicao
+e valida em ambientes estaticos, no entanto, em
+ambientes reais, o processo de planejamento de
+movimento para navegacao_autonoma de um robo
+movel envolve a superacao de varios desaos como
+alteracoes nao modeladas no ambiente estatico,
+a presenca de obstaculos dinamicos, ou mesmo a
+presenca de outros robos no ambiente, cujas acoes
+e objetivos nem sempre sao conhecidas pelo sistema de planejamento.
+Em geral, a assuncao de um ambiente estatico
+bem denido nao se sustenta. Existe um grau de
+incerteza que surge como resultado de erros de
+deteccao e de rudo, alem da imprecisao dos atuadores e outros fatores incontrolaveis, como a patinagem das rodas. Estes desaos sao amplicados
+quando o espaco de planejamento possui dimensao
+elevada.
+Metodos de planejamento baseados em amostragem (ou aproximados), apesar de nao representarem elmente o espaco de interesse, possibilitam uma representacao mais compacta do mesmo,
+
+ISSN 2525-8311
+
+o que torna possvel a aplicacao de tecnicas de
+planejamento em espacos de dimensao elevada em
+tempo_real (Latombe, 2012). Entre os planejadores de movimento baseados em amostragem, estao
+os planejadores probabilsticos, que tem como seus
+maiores representantes o PRM (do ingles, probabilistic road map) (Kavraki et al., 1996) e a RRT (do
+ingles, Rapidly-exploring Random Tree) (LaValle
+and Kuner, 2001).
+A RRT foi apresentada por Lavalle como uma
+estrutura de dados eciente que visa realizar uma
+busca em espacos com grandes dimensoes. A ideia
+chave e tender em direcao a exploracao de partes inexploradas do ambiente atraves da amostragem aleatoria de pontos no espaco de trabalho.
+Por ser probabilisticamente completa sob condicoes gerais, o sucesso do desempenho da RRT em
+muitos problemas de planejamento_de_movimento
+tem levado a grandes extensoes e aplicacoes desta
+abordagem, ate mesmo em ambientes com obstaculos moveis.
+Planejamento de movimento em ambientes dinamicos e incertos e um problema importante na
+area de navegacao de robos_moveis. Uma maneira
+de abordar o problema de planejamento dinamico
+e simplesmente re-executar o algoritmo RRT original para cada iteracao de planejamento (Zucker
+et al., 2007). Porem, ainda que exista a chance
+
+3634
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+de que todos os obstaculos e a posicao de destino
+tenham sido movidos, e bastante possvel que as
+alteracoes no ambiente sejam pequenas o suciente para que o plano da iteracao anterior ainda
+seja valido. Neste caso, o custo_computacional
+extra de construcao de um novo planejamento a
+partir do zero e ineciente (Frazzoli, 2001).
+A observacao de que a informacao de planejamento de iteracoes anteriores deve ser preservada levou ao desenvolvimento de tres modicacoes no algoritmo da RRT ERRT (do ingles, Execution Extended RRT ) (Bruce and Veloso, 2006),
+RRT Dinamica (Ferguson et al., 2006) e RRF (do
+ingles, Reconfigurable Random Forests) (Li and
+Shie, 2002).
+A ERRT e frequentemente citada como o primeiro algoritmo desenvolvido para ser utilizado
+em ambientes dinamicos em tempo_real (Bruce
+and Veloso, 2006). O algoritmo da ERRT mantem uma unica arvore e caso durante a navegacao
+do robo seja detectada uma possibilidade de colisao, a arvore e descartada e outra e construda.
+Alem disso, quando um planejamento e gerado
+com sucesso, os estados ao longo do caminho da
+conguracao inicial (qinit ) ate a conguracao de
+destino (qgoal ) sao inseridos em um waypoint cache que sera utilizado para polarizar o sorteio de
+novas amostras nas proximas interacoes de planejamento. Este algoritmo e motivado pelo pressuposto de que, se o algoritmo e atualizado com uma
+frequencia elevada, uma pequena porcentagem da
+arvore original tem de ser modicada porque os
+estados que foram utilizados em um planejamento
+previamente bem sucedido tendem a ser bons estados intermediarios no plano atual.
+RRT Dinamica baseia-se na ideia de que e
+mais eciente para o planejamento reparar a arvore existente, do que, reconstruir inteiramente
+uma nova arvore. Esta abordagem primeiramente
+gera uma RRT padrao a partir de uma conguracao inicial e um conguracao de meta. Quando
+ocorrem alteracoes no espaco de conguracoes, todas as partes da RRT que sao invalidadas por estas
+mudancas sao cortadas. Ao contrario da ERRT,
+apenas as conguracoes que colidem e seus nos
+lhos sao descartados de maneira eciente. A
+RRT Dinamica utiliza a mesma tecnica de polarizacao de sorteio aplicada na ERRT. No entanto,
+ela supera ERRT por reparar a arvore.
+Crescer varias arvores para tras a partir de
+um conjunto de conguracoes de destino tem
+se mostrado eciente no contexto do planejamento one-shot para manipuladores_redundantes
+(Hirano et al., 2005). O algoritmo RRF constroi
+uma oresta de RRTs desconectadas para efeito
+de planejamento de consulta multipla, com o objetivo de incrementalmente construir uma estrutura de dados que, eventualmente, capta toda a
+topologia do espaco livre.
+Alem dos metodos ja citados, outros algo-
+
+ISSN 2525-8311
+
+ritmos ja foram propostos para buscar solucionar o problema (Ferguson et al., 2006) (Aguinaga
+et al., 2008) (Otte and Frazzoli, 2015). Porem, apesar da ampla variedade de abordagens
+para planeamento de movimento dinamico, ainda
+nao ha uma solucao geralmente aplicavel ao problema. Alguns dos inconvenientes das atuais abordagens incluem diculdade em replanejar em espacos com alta dimensionalidade, planejamento com
+restricoes nao-holonomicas ou diferenciais, planejamento com obstaculos moveis e eciente tratamento das alteracoes de estado inicial e nal.
+Neste trabalho e proposta uma abordagem hbrida para o problema de planejamento_de_movimento em ambientes dinamicos eou incertos.
+Para isso, a etapa de planejamento e feita baseada
+em uma tecnica variante da RRT, a DRRT (do ingles, Dispersion RRT ) (Kamarry et al., 2015). Na
+tarefa de rastreamento da trajetoria gerada pela
+DRRT, o robo pode, se necessario, navegar guiado
+conjuntamente por um controlador reativo para
+desvio_de_obstaculos dinamicos. O sistema_de_navegacao do robo e supervisionado por um automato responsavel por determinar qual acao deve
+ser tomada.
+Isso so e possvel devido a caracterstica de
+construcao da DRRT, em que o objetivo nao e encontrar um caminho entre dois pontos, mas obter
+uma representacao compacta do ambiente, com
+um menor custo_computacional. Com isso, uma
+arvore e gerada de forma que e possvel partir de
+qualquer ponto do ambiente e chegar ao destino.
+Este e o ponto chave para a possibilidade de aplicacao para ambientes dinamicos sem a necessidade
+de replanejamento, uma vez que a abordagem deliberativa da DRRT pode ser chaveada com uma
+abordagem reativa sempre que um obstaculo que
+nao estava no planejamento inicial e encontrado
+na trajetoria do robo, fazendo com que o mesmo
+desvie do obstaculo e logo em seguida ja se conecte
+a outro no que o levara a posicao de destino.
+Este trabalho esta organizado da seguinte
+forma Na secao 2 e apresentada a tecnica de planejamento utilizada. A abordagem proposta e detalhada na secao 3. Os resultados comparativos
+sao discutidos na secao 4. Por m sao apresentadas as conclusoes na secao 6, seguida pelas referencias bibliogracas.
+2
+
+DRRT Uma nova abordagem para
+aumentar a dispersao dos nos na RRT
+
+A RRT classica possui muita redundancia de informacao no que concerne a quantidade de nos representando um pequeno espaco, ou seja, mais de
+um no cobrindo uma determinada area do ambiente. Para resolver esse problema a DRRT propoe
+o acrescimo de uma nova regra de selecao dos pontos, de forma a aumentar a cobertura do ambiente
+para uma mesma quantidade de nos em compara-
+
+3635
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+cao com a RRT classica.
+Para cada no e denida uma area que e caracterizada como restricao de sorteio de acordo com
+a funcao C(qi , r), esta funcao gera um crculo de
+raio r e centro na conguracao qi . Para uma arvore de tamanho de aresta xo (d) o raio e denido
+como o proprio tamanho_do_passo (Figura 1).
+
+Figura 1 Crculo da restricao de sorteio.
+Aplicando essa regra para todos os nos pertencentes a arvore e fazendo a uniao dos crculos
+resultantes e encontrada a area de restricao de sorteio (Figura 2). Assim, pontos sorteados dentro da
+area de restricao sao descartados da mesma forma
+que pontos que geram colisao com obstaculos.
+
+(a)
+
+(b)
+
+Figura 2 (a) Aplicacao da funcao C(qi , r) para
+todos os nos (b) Area de restricao obtida atraves
+da uniao de (a).
+
+3
+
+Abordagem Proposta
+
+O algoritmo RRT classico exige informacao inicial
+perfeita relativa ao ambiente se novas informacoes
+sao detectadas apos a geracao do planejamento,
+um novo plano tem de ser gerado a partir do zero.
+Na navegacao de robos_moveis que envolve ambientes dinamicos, a necessidade de mudancas no
+planejamento original e bastante comum. Nesses
+casos, efetuar o replanejamento do caminho pode
+ser computacionalmente custoso e, em muitos casos, intratavel visto que enquanto a nova arvore
+e criada o mapa pode ser modicado novamente
+(Elbanhawi and Simic, 2014).
+Diante deste problema e proposta a criacao
+de uma arvore enraizada na posicao de destino e
+que represente, de forma compacta, todo o ambiente de navegacao, a DRRT. No trabalho original
+e apresentada uma medida de dispersao que permite avaliar a ocupacao do ambiente pela DRRT.
+Essa medida foi utilizada para crescer uma arvore
+a partir do destino ate que a mesma ocupe 100
+do ambiente. Dessa forma, e possvel que o robo
+
+ISSN 2525-8311
+
+saia de qualquer parte do mapa e chegue a posicao desejada, a menos que um obstaculo que nao
+foi considerado surja no meio da trajetoria. Nessas situacoes, e necessario uma postura reativa do
+robo para evitar a colisao.
+Para resolver esse problema, um automato governado por eventos_discretos e modelado para
+trabalhar como supervisor da navegacao do robo
+de forma a chavear a arquitetura de navegacao
+sempre que um obstaculo, que nao estava inicialmente previsto, e detectado.
+O automato desenvolvido pode ser visto na gura 3 e e formado pelos eventos da tabela 1. Nele
+o sistema e iniciado apos o planejamento criado
+pela DRRT. A partir da, o robo primeiramente e
+conectado ao no mais proximo (evento n) e entao
+segue o galho (evento c1 ) ate que o destino, que
+e o galho mais proximo, seja alcancado (evento
+x). Caso algum obstaculo que nao estava no planejamento apareca no caminho do robo (evento
+o), um controlador reativo de desvio_de_obstaculos e ativado (evento c2 ) ate que o robo consiga
+desviar do mesmo (evento d). No momento em
+que os obstaculos que nao foram previstos deixam de ser detectados pelo robo, e provavel que o
+robo nao se encontre mais no galho o qual ele estava seguindo. Em outras abordagens, esse seria
+o momento em que um novo planejamento seria
+executado. No entanto, como a DRRT gera uma
+representacao completa do mapa, o robo precisa
+apenas reconectar-se ao no mais proximo (evento
+n) e seguir o novo galho ate que o destino nal
+seja alcancado.
+
+Figura 3 Automato supervisor da navegacao do
+robo.
+
+Tabela 1 Descricao dos eventos do automato supervisor
+Evento
+n
+c1
+x
+o
+c2
+d
+
+Descricao
+Conectar ao no mais proximo
+Ativar controlador para seguir o galho
+Robo alcancou o ponto de destino
+Obstaculo detectado
+Ativar controlador de evitar obstaculos
+Robo desviou do obstaculo
+
+Para que o robo siga a trajetoria gerada pela
+
+3636
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+arvore foi desenvolvido um controlador de posicao
+nal em que o no conectado ao ponto no qual o
+robo se encontra e considerado, temporariamente,
+como posicao desejada. Esse processo se repete de
+forma que o robo percorra todo o galho e chegue
+ao ponto de destino.
+O controlador utilizado foi feito com base no
+apresentado em (Secchi, 1999) e contem as seguintes equacoes para as velocidades linear (Vpf ) e
+(Wpf ) angular do robo, respectivamente
+Vpf  kvpf tanh()cos()
+
+Wpf  kwpf  + kvpf
+
+(1)
+
+tanh()
+tanh()cos() (2)
+
+
+em que kvpf e kwpf sao constantes positivas,
+ e a distancia entre o sistema de coordenadas do
+robo e o sistema de coordenadas do destino e 
+o erro de orientacao do robo com relacao a linha
+que liga o robo ao proximo no que e considerado
+como ponto de destino temporario.
+Com relacao ao desvio_de_obstaculos, foi utilizado um controlador inspirado no desenvolvido
+em (Freire et al., 2004), que consiste em manter uma velocidade linear constante e controlar a
+velocidade_angular a partir de um ponto de destino virtual mantido a uma distancia xa do robo.
+Quando nenhum obstaculo e detectado, o ponto
+de destino virtual e posicionado no eixo x do sistema de coordenadas do robo. Caso contrario, e
+realizada uma rotacao no ponto de destino virtual, de forma que o mesmo seja mantido oposto
+ao obstaculo, formando um angulo de 180 entre o
+novo ponto de destino e o obstaculo, com relacao
+ao robo.
+As equacoes que regem este controle sao
+Veo  k1
+
+(3)
+
+tanh( )
+tanh( )cos( )
+
+(4)
+em que k1 e uma constante positiva,  o erro de
+orientacao do robo com relacao ao ponto de destino virtual,  uma distancia, mantida constante,
+entre o robo e o ponto de destino virtual e kweo e
+kveo constantes positivas relativas a este controlador.
+Ambos os controladores foram escolhidos por
+terem estabilidade demonstrada nas suas respectivas referencias. Alem disso, no que diz respeito
+ao supervisor, a linguagem gerada pelo automato
+e igual a linguagem marcada do mesmo, ou seja,
+nao ha nenhum conjunto de eventos que leve o sistema a um estado onde nao e mais possvel atingir
+o estado marcado, que e alcancado quando o robo
+cumpre seu objetivo.
+A abordagem proposta foi testada para ambientes dinamicos e os resultados podem ser vistos
+na proxima secao.
+Weo  kweo  + kveo
+
+ISSN 2525-8311
+
+4
+
+Resultados
+
+Para evidenciar a eciencia do metodo foram
+executados testes por simulacao atraves do software Matlab R2013a. Nestes experimentos sao
+inseridos elementos dinamicos (como obstaculos
+moveis) no ambiente previamente mapeado pela
+DRRT. A velocidade dos obstaculos foi denida
+como igual ou inferior a velocidade do robo, sendo
+essa a unica restricao imposta ao movimento dos
+obstaculos dinamicos. Alem disso, o sistema de
+navegacao do robo nao tem nenhum conhecimento
+previo do tipo de movimentacao executada pelos
+obstaculos.
+A arvore gerada pela DRRT possui tamanho
+de aresta de 20 cm e e gerada com um afastamento
+mnimo de 60 cm em relacao aos obstaculos. No
+que diz respeito ao controlador de evitar obsaculos, foi considerado que este deve ser ativado em
+casos onde um obstaculo e detectado a menos de
+60 cm pelos sensores frontais ou a menos de 40 cm
+pelos sensores laterais. Dessa forma, o robo consegue detectar quando tem algum obstaculo que nao
+estava no planejamento a sua frente ou se aproximando pelas laterais ao mesmo tempo que consegue navegar em corredores sem que as paredes
+sejam vistas como obstaculos.
+Para este experimento foram utilizados dois
+mapas com dimensao de 800800 cm. O primeiro
+mapa e conhecido como ambiente tipo trap e e utilizado para evidenciar o maior problema da navegacao_reativa mnimo local. No segundo mapa, os
+obstaculos se movem de modo a bloquear, temporariamente, as unicas passagens possveis ao robo.
+4.1
+
+Experimento 1
+
+Na gura 4 e apresentado o resultado da navegacao do robo em um ambiente tipo trap utilizando
+a abordagem proposta, neste ambiente a maior
+parte das arquiteturas de navegacao_reativa levaria o robo a car preso dentro da conguracao U
+de obstaculos. Caso o robo apenas seguisse a trajetoria gerada pela DRRT iria colidir com os obstaculos moveis presentes no ambiente. Portanto,
+as duas arquiteturas de navegacao foram combinadas em uma abordagem hbrida onde ocorre um
+chaveamento entre as mesmas de acordo com a
+necessidade do sistema. Isso so e possvel devido
+a caracterstica de mapear o ambiente completo
+da DRRT, sem qualquer conhecimento previo do
+ponto de partida do robo, que permite que o robo
+possa desviar dos obstaculos e partir de qualquer
+ponto do ambiente para o destino.
+No experimento realizado, inicialmente (Figura 4.(a)) o robo navega seguindo a trajetoria
+planejada pela DRRT (em vermelho), ao detectar um obstaculo que nao foi previsto na etapa
+de planejamento (em (b)) o automato supervisor
+seleciona o controlador de desviar de obstaculos
+
+3637
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+permitindo que o robo deixe de seguir a trajetoria
+inicialmente planejada para garantir a seguranca
+(trajetoria em azul). O robo se conecta a arvore
+novamente a partir do momento em que deixa de
+detectar a presenca do obstaculo dinamico, caso
+um novo obstaculo seja detectado (em (c)) este
+processo se repete ate o robo chegue ao ponto de
+destino (em (d )).
+
+(a)
+
+(b)
+
+(c)
+
+(d)
+
+caminhos possveis que levam o robo ao ponto de
+destino. Neste tipo de ambiente a estrategia de replanejamento, utilizada por maior parte das abordagens, levaria o robo a execucao de uma trajetoria muito mais longa, uma vez que ao encontrar
+um obstaculo no corredor direito do mapa, a nova
+trajetoria seria gerada pelo corredor esquerdo.
+Com a aplicacao da abordagem proposta, o
+robo inicia seguindo a arvore em direcao ao corredor direito do mapa (Figura 6.(a)), mas ao detectar um obstaculo que nao estava previsto no
+planejamento, o controlador de evitar obstaculo e
+selecionado pelo supervisor e o robo desvia do obstaulo movel (Figura 6.(b) e Figura 6.(c)), seguindo
+ate o ponto de destino pelo mesmo corredor onde
+foi encontrado o obstaculo (Figura 6.(d )).
+
+(a)
+
+(b)
+
+(c)
+
+(d)
+
+Figura 4 Trajetoria executada pelo robo no Experimento 1 (a) O robo navega seguindo a trajetoria
+planejada pela DRRT (b) e (c) O robo desvia dos
+obstaculos dinamicos (d) o robo chega ao ponto
+de destino.
+A arvore planejada pela DRRT (em verde) e
+a trajetoria executada pelo robo (em vermelho e
+azul) apos a suavizacao do caminho sao apresentadas na Figura 5.
+
+Figura 6 Trajetoria executada pelo robo no Experimento 2 (a) O robo navega seguindo a trajetoria
+planejada pela DRRT (b) e (c) O robo desvia dos
+obstaculos dinamicos (d) o robo chega ao ponto
+de destino.
+A arvore planejada pela DRRT (em verde) e a
+trajetoria executada pelo robo apos a suavizacao
+do caminho (em vermelho e azul) sao apresentadas
+na Figura 7.
+6
+
+Figura 5 Arvore planejada pela DRRT (em
+verde) e a trajetoria executada pelo robo (em vermelho e azul).
+
+5
+
+Experimento 2
+
+Na gura 6 e apresentado o resultado da navegacao do robo em um ambiente onde os obstaculos dinamicos interrompem temporariamente os
+
+ISSN 2525-8311
+
+Conclusao
+
+Com o objetivo de fornecer solucoes de alta qualidade no que concerne ao tempo de execucao da
+tarefa e a seguranca do robo em ambientes dinamicos, foi proposta uma abordagem hbrida atraves da combinacao do algoritmo de planejamento
+da DRRT com um controlador de evitar obstaculos para criar um algoritmo de navegacao em
+ambientes com obstaculos moveis, sem a necessidade de um replanejamento. Essa abordagem so
+
+3638
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Elbanhawi, M. and Simic, M. (2014). Samplingbased robot motion planning A review,
+IEEE Access 2 5677.
+Ferguson, D., Kalra, N. and Stentz, A. (2006). Replanning with rrts, ICRA, IEEE, pp. 1243
+1248.
+
+Figura 7 Arvore planejada pela DRRT (em
+verde) e a trajetoria executada pelo robo (em vermelho e azul).
+
+foi possvel devido a caracterstica de representacao completa e compacta do ambiente da DRRT
+que permite o robo partir de qualquer ponto do
+ambiente e chegar ao ponto de destino.
+Como a DRRT mantem apenas uma arvore,
+ela oferece uma serie de vantagens quando comparada com abordagens de replanejamentos no
+que diz respeito ao problema de planejamento em
+tempo_real. DRRTs sao simples de implementar
+e envolvem muito poucos parametros, bastando
+apenas acrescentar a nova regra de restricao de
+sorteio de nos a RRT classica e utilizar como criterio_de_parada do crescimento da arvore a densidade de ocupacao do ambiente.
+Os resultados apresentados por simulacao destacam o sucesso do metodo proposto em executar
+uma tarefa em ambiente dinamico, garantindo a
+seguranca do robo.
+Como trabalhos futuros sugere-se a expansao
+e adaptacao do metodo proposto para ambientes
+inexatos. Alem disso, e preciso fazer a analise das
+situacoes em que os obstaculos obstruem o galho
+principal da DRRT de modo a impossibilitar a
+conclusao da tarefa.
+7
+
+Agradecimentos
+
+Os autores gostariam de agradecer ao CNPq e a
+FAPITEC pelo apoio nanceiro que tornou possvel a realizacao desse trabalho.
+Referencias
+Aguinaga, I., Borro, D. and Matey, L. (2008). Parallel rrt-based path planning for selective disassembly planning, The International Journal of Advanced Manufacturing Technology
+36(11-12) 12211233.
+Bruce, J. R. and Veloso, M. M. (2006). Safe
+multirobot navigation within dynamics constraints, Proceedings of the IEEE 94(7) 1398
+1411.
+
+ISSN 2525-8311
+
+Frazzoli, E. (2001). Robust Hybrid Control for Autonomous Vehicle Motion Planning, Department of aeronautics and astronautics, Massachusetts Institute of Technology, Cambridge,
+MA.
+Freire, E., Bastos-Filho, T., Sarcinelli-Filho, M.
+and Carelli, R. (2004).
+A new mobile
+robot control approach via fusion of control signals, IEEE Transactions on Systems,
+Man, and Cybernetics, Part B (Cybernetics)
+34(1) 419429.
+Hirano, Y., Kitahama, K.-i. and Yoshizawa, S.
+(2005). Image-based object recognition and
+dexterous handarm motion planning using
+rrts for grasping in cluttered scene, IROS,
+IEEE, pp. 20412046.
+Kamarry, S., Molina, L., Freire, E. O. et al. (2015).
+Compact rrt A new approach for guided
+sampling applied to environment representation and path planning in mobile robotics,
+LARS-SBR, IEEE, pp. 259264.
+Kavraki, L. E., Svestka, P., Latombe, J.-C. and
+Overmars, M. H. (1996). Probabilistic roadmaps for path planning in high-dimensional
+conguration spaces, Robotics and Automation, IEEE Transactions on 12(4) 566580.
+Latombe, J.-C. (2012). Robot motion planning,
+Vol. 124, Springer Science  Business Media.
+LaValle, S. M. and Kuner, J. J. (2001). Randomized kinodynamic planning, The International
+Journal of Robotics Research 20(5) 378400.
+Li, T.-Y. and Shie, Y.-C. (2002). An incremental
+learning approach to motion planning with
+roadmap management, ICRA, Vol. 4, IEEE,
+pp. 34113416.
+Otte, M. and Frazzoli, E. (2015).
+Realtime motion planningreplanning for environments with unpredictable obstacles, Algorithmic Foundations of Robotics XI, Springer, pp. 461478.
+Secchi (1999). Control de Vehculos Autoguiados
+con Realimentacion Sensorial, Disertacion de
+Maestra, Universidad Nacional de San Juan.
+Zucker, M., Kuner, J. and Branicky, M. (2007).
+Multipartite rrts for rapid replanning in dynamic environments, IEEE ICRA, pp. 1603
+1609.
+
+3639

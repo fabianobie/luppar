@@ -1,0 +1,699 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+DETERMINACAO DA CURVA APROXIMADORA UTILIZANDO TRECHOS DE
+CURVAS DE BEZIER E O RECOZIMENTO SIMULADO
+Edson Kenji Ueda, Marcos de Sales Guerra Tsuzuki, Rogerio Yugo Takimoto,
+Andre Kubagawa Sato, Thiago de Castro Martins,
+Roberto Slvio Ubertino Rosso Jr
+
+
+Laboratorio de Geometria Computacional
+Departamento de Engenharia Mecatronica e de Sistemas Mecanicos
+Escola Politecnica da Universidade de Sao Paulo
+Avenida Prof. Mello Morais, 2231, CEP 05508-030 - Sao Paulo, SP, Brasil
+
+
+Universidade do Estado de Santa Catarina
+Joinville, SC, Brasil
+
+Emails ueda.edson@gmail.com, mtsuzuki@usp.br, takimotoyugo@gmail.com,
+andre.kubagawa@gmail.com, thiago@usp.br, rosso@joinville.udesc.br
+Abstract In CAD (computer aided design), one important task is the determination of an approximation
+curve from a given sequence of points. This work proposes an algorithm to determine a piecewise Bezier curve
+that approximates a sequence of points. The optimization is done using the simulated_annealing with adaptive
+neighborhood aiming at minimizing the discrepancy between the given sequence of points and the curve. The
+curve length is used as a regularization factor. The discrepancy between the given sequence of points and the
+curve is determined by the sum of the distance between each point from the sequence and the approximation
+curve. To calculate the distance from a point to the curve, the curve is discretized.
+Keywords
+
+Bezier curve, simulated_annealing, curve fitting.
+
+Resumo Em CAD, uma tarefa muito importante e a determinacao de curvas aproximadoras a partir de
+uma sequencia fornecida de pontos. Este trabalho propoe um algoritmo que determina uma curva de Bezier
+por trechos que aproxima uma sequencia fornecida de pontos. A otimizacao utiliza o recozimento_simulado com
+vizinhanca adaptativa com o intuito de minimizar a discrepancia entre a sequencia fornecida de pontos e a curva
+aproximadora. O comprimento da curva e utilizado como um fator de regularizacao. A discrepancia entre a
+sequencia fornecida de pontos e a curva e determinada pela somatoria da distancia de cada ponto da sequencia
+ate a curva aproximadora. Para o calculo da distancia de um ponto a curva, a curva e discretizada.
+Palavras-chave
+
+.
+
+Introducao
+
+A determinaccao de curvas a partir de uma
+sequencia de pontos e muito importante na engenharia. Ela e util na engenharia reversa, na reconstrucao de objetos, ao determinar curvas que
+auxiliam na determinacao de superfcies (Piegl
+and Tiller, 1996). Outra aplicacao da determinacao de curvas a partir de uma sequencia de pontos
+e no planejamento_de_trajetorias, definindo pontos
+onde o veculo deve passar e, consequentemente, a
+sua trajetoria.
+A tarefa de determinar uma curva a partir
+de uma sequencia de pontos pode ser feita por
+duas diferentes abordagens, uma por interpolacao (Maekawa et al., 2007) e outra por aproximacao (Pandunata and Shamsuddin, 2010 Hasegawa
+et al., 2013). A primeira determina uma curva que
+passe por todos os pontos, enquanto a segunda
+determina uma curva que melhor aproxima uma
+sequencia de pontos.
+Este trabalho apresenta uma nova tecnica de
+aproximacao de curvas que utiliza trechos de curvas de Bezier para aproximar uma sequencia de
+pontos com uma nova funcao objetivo.
+Este trabalho e estruturado da seguinte
+
+ISSN 2525-8311
+
+forma. A secao 2 possui uma breve revisao sobre
+curvas de Bezier e curvas de Bezier por trechos. A
+secao 3 explica o problema de ajuste_de_curvas utilizando somente uma curva. A secao 4 apresenta
+a funcao custo a ser minimizada, assim como a
+modelagem do problema. A secao 5 mostra os resultados, e as conclusoes sao feitas na secao 6.
+2
+
+Curva de Bezier
+
+A curva de Bezier P(u) e dada por
+P(u) 
+
+n
+X
+
+pi Bi,n (u)
+
+(1)
+
+i0
+
+onde u  0, 1 e pi sao os pontos de controle,
+n + 1 e o numero de pontos de controle e Bi,n (u)
+sao as funcoes bases calculadas com o polinomio
+de Bernstein definidas por
+ 
+n i
+Bi,n (u) 
+u (1  u)ni
+(2)
+i
+
+onde i  0, . . . , n e ni e o binomial dado por
+ 
+ 
+0
+n
+n!
+ 1.
+(3)
+
+i!(n  i)!
+0
+i
+
+2419
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+p1
+
+p2
+
+p1
+d1,u10,24
+
+p3
+P(u1)
+
+p0
+
+p0,P(u0),d0,u00
+
+p4
+
+d2,u20,47
+P(u2)
+
+P(u3)
+
+PontoSdeScontroleS(p)
+
+d3,u30,76
+
+CurvaSdeSBézier(P)
+
+p5
+
+p9
+
+p3,P(u4),d4,u41
+
+PontosSdiscretizadosSdaScurvaSdeSBézierS(u)S
+SérieSdoSpontosS(d)
+
+p2
+
+ErroSdaScurva
+
+p8
+
+p6
+
+Figura 2 Distancia do ponto a curva determinada
+por metodos aproximados.
+
+p7
+
+Figura 1 Sequencia de tres curvas cubicas de Bezier. Os pontos p3 e p6 sao pontos de transicao
+entre curvas de Bezier.
+2.1
+
+Curva de Bezier por Trechos
+
+Os pontos de controle de uma curva de Bezier
+modificam toda a curva. Uma forma de amenizar esta caracterstica e utilizar sequencias de
+curva de Bezier. Esta sequencia e feita de modo
+que possua continuidade C 1 -fraca, que relaxa a
+condicao de continuidade, onde as derivadas possuem a mesma direcao, mas nao necessariamente
+o mesmo modulo. Para criar estas curvas, o ultimo ponto de controle de uma curva e o primeiro
+ponto de controle da curva seguinte, e para determinar o segundo ponto de controle de um segmento, considera-se que
+p3i+4  p3i+3  (p3i+2  p3i+3 )  3i+4
+
+(4)
+
+onde i  0, . . . , j 1 e j 1 e o numero de segmentos e i e um fator de continuidade. Um exemplo
+e mostrado na Fig. 1, que e a composicao de tres
+segmentos de curvas cubicas de Bezier.
+3
+
+Ajuste com uma Unica Curva de Bezier
+
+O objetivo do problema de ajuste_de_curvas e aproximar uma sequencia de pontos fornecida por uma
+curva pela determinacao de seus pontos de controle (p0 , ..., pn ). Para determinar estes pontos
+de controle, deve-se minimizar a discrepancia entre a curva e a sequencia de pontos fornecida. Isto
+corresponde a minimizar a somatoria da distancia
+de cada ponto da sequencia ate a curva. A funcao
+que descreve a funcao a ser minimizada e
+
+elementos. dk P(uk ) e a distancia de um ponto
+dk ate a curva de Bezier. uk e o valor do parametro que define o ponto da curva mais proximo
+ao ponto dk , isto tambem e conhecido como projecao do ponto dk sobre a curva. Os pontos d0 e
+dm nao sao considerados na somatoria, uma vez
+que a curva de Bezier sempre passa pelo primeiro
+e ultimo pontos de controle.
+Existem varios metodos para determinar o parametro uk , que define a projecao do ponto dk
+sobre a curva. Hasegawa et al. (2013) e Pandunata and Shamsuddin (2010) calcularam este parametro de forma aproximada, utilizando a parametrizacao pela corda que aproxima uk como
+sendo uma fracao entre a somatoria de cordas ate
+o respectivo ponto dk e a somatoria de todas as
+cordas. Maekawa et al. (2007) determinaram este
+parametro considerando que o segmento que une
+P(uk ) e dk e ortogonal a tangente em P(uk ), e
+isto pode ser resolvido pelo metodo de NewtonRaphson. Tavares et al. (2011) utiliza uma proposta distinta onde a curva e discretizada por uma
+sequencia de pontos e todos estes pontos sao comparados ao ponto fornecido dk e determina-se o
+ponto da curva discretizada que mais se aproxima
+de dk .
+
+(5)
+
+Os metodos propostos por Hasegawa et al.
+(2013) e Pandunata and Shamsuddin (2010) podem determinar pontos incorretos como mostra a
+Fig. 2. O metodo proposto por Maekawa et al.
+(2007) e mais vantajoso, mas demanda um tempo
+de processamento mais elevado. O metodo proposto por Tavares et al. (2011) e o mais vantajoso
+considerando que existe um balanco entre precisao e tempo de processamento. Quanto maior a
+discretizacao da curva, melhora a qualidade e aumenta o tempo de processamento.
+
+onde 0  k  m e n + 1 e o numero de pontos de
+controle, d e uma sequencia de pontos com m + 1
+
+Este trabalho procura aprimorar a proposta
+feita por Tavares et al. (2011) melhorando a qualidade sem aumentar o tempo computacional.
+
+f (p0 , ..., pn ) 
+
+m1
+X
+
+dk  P(uk )2
+
+k1
+
+ISSN 2525-8311
+
+2420
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+dk
+
+P(uk1 )
+
+P(uk )
+
+P(uk+1 )
+
+Sequência de Pontos
+Pontos de Controle
+
+Figura 3 Encontrado o ponto P(uk ) da curva discretizada que mais se aproxima de um ponto dk ,
+sao definidos dois triangulos.
+d0 d1 d2 d3 d4
+
+P10 P11
+
+...
+
+P1v-1 P1v
+
+...
+
+...
+
+Pj0 Pj1
+
+...
+
+Pj1v-1 Pjv
+
+Última Curva
+
+Figura 4 Mapeamento entre os pontos da sequencia fornecida dk e os pontos da curva discretizada
+P jv . Alguns pontos da curva discretizada sao associados diretamente a pontos da sequencia.
+4
+
+Definicao da Funcao Custo
+
+A expressao (5) considera que a curva aproximadora e exclusivamente definida pela discrepancia
+entre a curva e os pontos fornecidos. Esta restricao nao e suficiente para definir uma unica solucao
+e cria uma famlia de solucoes. Neste trabalho,
+acrescenta-se um fator regularizador para que a
+curva de menor comprimento que minimize a expressao (5) seja encontrada.
+A nova funcao custo e definida por
+f (p0 , ..., pn )  W1 
+
+m1
+X
+
+dk P(uk )2 +W2 L (6)
+
+k1
+
+onde W1 e W2 sao pesos que controlam a influencia de cada parte da funcao de forma que
+W1 + W2  1, e L e a diferenca o comprimento
+da curva e o comprimento da sequencia de pontos
+fornecida. Ou seja, a nova funcao custo e a composicao de dois termos discrepancia entre a curva
+e a sequencia de pontos fornecida, e diferenca entre o comprimento da curva e o comprimento da
+sequencia de pontos fornecida.
+O calculo da distancia entre o ponto e a curva
+foi baseado no metodo proposto por Tavares et al.
+(2011), onde a curva e discretizada. Ao se determinar o ponto da curva discretizada que mais se
+aproximada de um ponto dado dk , sao considerados dois triangulos como mostra a Fig. 3. Os
+pontos mostrados por quadrados sao pontos da
+curva discretizada e o ponto mostrado por um crculo e um ponto da sequencia fornecida de pontos.
+Em um primeiro passo, e feita uma busca para determinar qual ponto da curva discretizada e mais
+
+ISSN 2525-8311
+
+(a)
+
+dm-4 dm-3 dm-2 dm-1 dm
+
+j-2 Curvas
+
+1a Curva
+
+Curva de Bézier
+
+Sequência de Pontos
+Pontos de Controle
+Curva de Bézier
+
+(b)
+
+Figura 5 (a) Primeiro limite de deslocamento da
+juncao de curvas (b) Segundo limite de deslocamento da juncao de curvas.
+
+proximo do ponto da sequencia dk , este ponto sera
+denominado por P(uk ). Considerando a Fig. 3,
+dois triangulos sao definidos, o primeiro triangulo
+e definido pelos pontos dk , P(uk ) e P(uk1 ) e
+o segundo triangulo e definido pelos pelos pontos
+dk , P(uk ) e P(uk+1 ).
+Em seguida, e avaliado qual dos triangulos
+possuem a menor area. A seguir e feito uma verificacao se o triangulo com menor area e agudo
+ou obtuso, especificamente nos angulos entre os
+segmentos dk P(uk ) e P(uk )P(uk1 ) para o primeiro triangulo, e dk P(uk ) e P(uk )P(uk+1 ) para
+o segundo triangulo. Se o triangulo de menor area
+possuir este angulo como agudo, e calculada a altura do triangulo referente ao segmento definidos
+pelos dois pontos da curva discretizada e, esta altura e a distancia entre ponto e a curva discretizada. Se o triangulo de menor area possuir este
+angulo como obtuso sera utilizado o outro triangulo para o calculo da altura, e caso os dois triangulos possurem angulos obtusos, ambos os triangulos sao descartados e e considerado que a distancia entre o ponto e a curva discretizada e a
+distancia entre dk e P(uk ).
+Neste metodo, e considerada uma sequencia
+de curvas de Bezier. Assim, uma curva de Bezier e associada a um subconjunto de pontos da
+sequencia fornecida de pontos. Esta propriedade
+
+2421
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+e exibida na Fig. 4. Este fato permite definir
+uma segunda modificacao na direcao de acelerar a
+busca pelo ponto mais proximo. Dado um ponto
+da sequencia dk , o ponto da curva discretizada
+mais proximo deve ser procurado entre os pontos inicial e final da curva de Bezier discretizada
+associada. No exemplo da Fig. 4, os pontos d5
+e dm4 sao os pontos onde ocorrem transicao de
+curvas de Bezier. Neste caso, cada curva de Bezier
+possui v pontos e existem j curvas. Assim, para os
+pontos d1 , d2 , d3 e d4 , a busca pelo ponto mais
+proximo sera realizada somente na primeira curva
+de Bezier definida pelos pontos P11 , . . . , P1v1 .
+E para os pontos dm4 , dm3 , dm2 e dm1 ,
+a busca pelo ponto mais proximo sera realizada
+apenas na ultima curva de Bezier definida pelos
+pontos Pj1 , . . . , Pjv1 .
+Para o calculo do comprimento uma vez que
+a curva esta discretizada, e feita a somatoria de
+todos os segmentos que compoem a curva discretizada.
+4.1
+
+Parametrizacao do problema
+
+Para resolver o problema de otimizacao foi utilizado o recozimento_simulado com vizinhanca
+adaptativa proposto por Martins et al. (2012). O
+recozimento_simulado com vizinhanca adaptativa
+processa muito bem variaveis contnuas como coordenadas de pontos de controle ou dimensao de
+vetores. A dimensao do vetor esta associada ao
+parametro  definido na expressao (4). Mas, ainda
+existem alguns parametros inteiros que correspondem a ndices associados aos pontos da sequencia
+que indicam os pontos de transicao entre as curvas de Bezier. Utilizando como exemplo a curva
+com tres curvas de Bezier cubicas da Fig. 1, os
+parametros contnuos serao os seguintes
+ Coordenada x do ponto p1 (p1x)
+ Coordenada y do ponto p1 (p1y)
+ Coordenada x do ponto p2 (p2x)
+ Coordenada y do ponto p2 (p2y)
+ Fator de continuidade 4 do ponto p4
+ Coordenada x do ponto p5 (p5x)
+
+4.2
+
+Geracao do novo candidato
+
+Como ja foi explicado, o recozimento_simulado
+com vizinhanca adaptativa proposto por Martins
+et al. (2012) processa muito bem variaveis contnuas. E para as variaveis inteiras foram definidas novas regras. Considera-se que inicialmente,
+os pontos de transicao sao selecionados segundo
+a divisao do numero de pontos da sequencia e o
+numero de curvas de Bezier. Assim, a selecao de
+qual ponto da sequencia sera um ponto de transicao nao e aleatoria. Para movimentar o ndice
+associado ao ponto de transicao, e gerado um valor aleatorio entre 0, 1, se o valor for menor que
+0.5 diminui-se uma unidade o valor deste ndice,
+caso contrario acrescenta-se uma unidade ao ndice. Esta operacao permite modificar o ponto da
+sequencia fornecida de pontos que sera utilizado
+como ponto de transicao entre duas curvas de Bezier. Esta regra obedece as seguintes restricoes
+ a mudanca nao pode ser maior que quatro
+unidades em relacao a posicao original, tanto
+em incremento e decremento. Isto foi adotado para evitar que surjam ndices que modifiquem demasiadamente as posicoes iniciais
+e finais de cada curva de Bezier. Este limite
+e mostrado na Fig. 5(a), onde o quadrado em
+azul e a posicao inicial de transicao de duas
+curvas de Bezier e esta posicao pode ser modificada para qualquer um dos quadrados em
+verde.
+ cada parametro precisa ter uma distancia mnima em relacao ao parametro anterior e posterior, pois desta forma evitara a criacao de
+curvas de Bezier demasiadamente curtas que
+aproximem poucos pontos da sequencia fornecida de pontos. Assim foi adotada que a
+distancia mnima e de 4 unidades. Este limite e mostrado na Fig. 5(b), onde o quadrado em azul e a posicao inicial de transicao de duas curvas de Bezier e os quadrados
+em verde mostram as posicoes possveis dessa
+transicao, note que de acordo com a primeira
+restricao, o limite de deslocamento poderia
+ser maior, mas como o incio e o fim das curvas de Bezier sao proximos este deslocamento
+e menor.
+
+ Coordenada y do ponto p5 (p5y)
+ Fator de continuidade 7 do ponto p7
+ Coordenada x do ponto p8 (p8x)
+ Coordenada y do ponto p8 (p8y)
+e os parametros discretos sao ndices que correspondem a algum ponto da sequencia fornecida de
+pontos, de modo que estes pontos da sequencia serao considerados como pontos de transicao entre
+curvas de Bezier.
+
+ISSN 2525-8311
+
+5
+
+Resultados
+
+O metodo desenvolvido foi utilizado em dois exemplos. Cada exemplo foi gerado ao criar uma curva
+no formato desejado e discretizando-os com 50
+pontos, e um rudo foi adicionado nas coordenadas de cada ponto. Os formatos escolhidos para
+teste foram uma parabola e uma curva com autointerseccao. Cada exemplo foi testado com diversos valores para W1 e W2 , e com tres distintos
+numeros de curvas de Bezier para cada exemplo,
+
+2422
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+(a)
+
+(b)
+
+(a)
+
+(b)
+
+(c)
+
+(c)
+
+Figura 6 Exemplo de uma parabola com (a) 1
+curva de Bezier (b) 2 curvas de Bezier (c) 3 curvas de Bezier.
+
+Figura 7 Exemplo de uma curva com autointerseccao com (a) 5 curvas de Bezier (b) 6
+curvas de Bezier (c) 7 curvas de Bezier.
+
+sendo que cada curva de Bezier foi discretizado
+com 100 pontos. Para o recozimento_simulado com
+vizinhanca adaptativa, foi adotado como criterio
+de parada local um maximo de 1.000 candidatos
+gerados ou 500 candidatos aceitos, e como parada
+global um mnimo 1 de candidatos aceitos (ou
+condicao de congelamento). As Figs. 6(a), (b) e
+(c) mostram a determinacao da curva parabolica,
+respectivamente, com 1, 2 e 3 trechos de curvas
+de Bezier. As Figs. 7(a), (b) e (c) mostram a
+determinacao da curva com auto-interseccao, respectivamente, com 5, 6 e 7 trechos de curvas de
+Bezier.
+A Fig. 8(a) mostra um grafico entre os valores da discrepancia entre a sequencia de pontos e
+a curva aproximadora com a variacao do peso W1
+para o exemplo da curva parabolica. A discrepancia e definida pela expressao (5). E possvel observar que o valor da discrepancia pouco se altera,
+mas com o aumento do numero de curvas, a discrepancia diminui. Inicialmente essa diminuicao
+pode ser incorretamente associada ao maior numero de pontos que a curva foi discretizada. Mas
+testes com 1 curva que possua 300 pontos de discretizacao nao foram obtidos resultados melhores
+que os testes com 3 curvas com 100 pontos cada.
+Assim, de fato, o que resulta em um menor valor
+de discrepancia e o maior numero de pontos de
+controle que permite controlar localmente regioes
+da curva. A Fig.8(b) mostra a diferenca entre os
+comprimentos com a variacao do peso W1 para o
+exemplo da curva parabolica, que pouco se variou
+com diversas configuracoes. A Fig.8(c) mostra a
+variacao do custo com a variacao do peso W1 para
+o exemplo da curva parabolica, e e possvel observar que com o aumento de W1 o custo tambem
+aumenta.
+A Fig. 9(a) mostra um grafico entre os valores
+da discrepancia entre a sequencia de pontos e a
+curva aproximadora com a variacao do peso W1
+
+ISSN 2525-8311
+
+para o exemplo da curva com auto-interseccao.
+E possvel observar que, novamente, com o aumento no numero de curvas, ocorre uma diminuicao na valor da discrepancia, porem diferentemente do exemplo anterior, com o aumento do
+peso W1 ocorreu uma diminuicao da discrepancia.
+A Fig. 9(b) mostra a diferenca entre os comprimentos com a variacao do peso W1 e a Fig. 9(c)
+mostra a variacao do custo com a variacao do peso
+W1 .
+
+6
+
+Conclusoes e Trabalhos Futuros
+
+Foi desenvolvido um algoritmo para se resolver o
+problema de ajuste_de_curvas, onde foi utilizado
+trechos de curvas de Bezier com continuidade C 1 fraca junto com o recozimento_simulado com vizinhanca adaptativa. Tambem foi definido uma
+nova funcao objetivo, composta pela discrepancia
+entre uma sequencia de pontos e curva aproximadora e pela diferenca de comprimentos da sequencia de pontos e da curva. Este algoritmo, juntamente com o nova funcao objetivo foi aplicado
+com sucesso em dois exemplos, e pode-se esperar
+que com a utilizacao desta nova funcao objetivo o
+comprimento da curva aproximadora gerada funcione como regularizacao, evitando a criacao de
+curvas com grande tortuosidade.
+Como trabalhos futuros, e necessario fazer
+um estudo para determinar a quantidade de trechos de curvas otima, e tambem a implementacao
+deste algoritmo com outras curvas, como NURBS
+(N on U nif orm Rational Basis Spline). Tambem sera feita uma analise multi-objetivo do problema, assim sera possvel analisar o valor mais
+adequado de W1 .
+
+2423
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Discrepancia
+
+Discrepancia
+
+5
+4.5
+4
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+5
+4.5
+4
+0.2
+
+1
+
+0.4
+
+0.6
+
+0.8
+
+1
+
+0.8
+
+1
+
+0.8
+
+1
+
+W1
+
+W1
+(a)
+
+(a)
+
+0.4
+
+L
+
+L
+
+0.6
+0.5
+
+0.2
+0
+
+0
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+0.2
+
+1
+
+0.4
+
+W1
+
+W1
+(b)
+
+(b)
+
+4
+Custo
+
+Custo
+
+4
+
+2
+
+0
+
+0.6
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+1
+
+2
+
+0.2
+
+0.4
+
+0.6
+W1
+
+W1
+(c)
+
+(c)
+
+Figura 8 Resultados para o exemplo da parabola
+(a) W1  Discrepancia (b) W1  Comprimento
+(c) W1  Custo. Azul  1 Curva, Vermelho  2
+Curvas, Marrom  3 Curvas.
+
+Figura 9 Resultados para o exemplo da autointerseccao (a) W1  Discrepancia (b) W1 
+Comprimento (c) W1  Custo. Azul  5 Curvas,
+Vermelho  6 Curvas, Marrom  7 Curvas.
+
+Agradecimentos
+
+Martins, T., Sato, A. and Tsuzuki, M. (2012).
+Adaptive Neighborhood Heuristics for Simulated Annealing over Continuous Variables,
+InTech.
+
+MSG Tsuzuki e TC Martins possuem suporte
+parcial do CNPq (respectivamente, processos
+310.66320130 e 306.41520127). RY Takimoto
+e EK Ueda sao suportados pelo CNPq (respectivamente, processos 15050820158 e 1405182015
+0). AK Sato e suportado pela CAPESPNPD.
+Referencias
+Hasegawa, A. Y., Jr., R. S. U. R. and Tsuzuki,
+M. S. G. (2013). Differential evolution optimization for bezier curve fitting, 11th IFAC
+Workshop on Intelligent Manufacturing Systems, pp. 233238.
+Maekawa, T., Matsumoto, Y. and Namik, K.
+(2007). Interpolation by geometric algorithm,
+Computer-Aided Design 39 313323.
+
+ISSN 2525-8311
+
+Pandunata, P. and Shamsuddin, S. (2010). Differential evolution optimization for bezier
+curve fitting, Computer Graphics, Imaging
+and Visualization (CGIV), 2010 Seventh International Conference on, pp. 6872.
+Piegl, L. and Tiller, W. (1996). Algorithm for approximate nurbs skinning, Computer-Aided
+Design 28(9) 699  706.
+Tavares, R., Martins, T. and Tsuzuki, M. (2011).
+Simulated annealing with adaptive neighborhood A case study in off-line robot path
+planning, Expert Systems with Applications
+38(4) 2951  2965.
+
+2424

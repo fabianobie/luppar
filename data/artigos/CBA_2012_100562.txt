@@ -1,0 +1,608 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+IMPLEMENTACAO EM SISTEMA DE TEMPO REAL EM FPGA DE UMA REDE DE
+DISTRIBUICAO PARA APLICACAO EM CONTROLE DE APLC
+Camila S. Gehrke, Italo R. F. M. P. da Silva, Alexandre C. Oliveira, A. M. N. Lima
+
+
+Centro de Engenharia Eletrica e Informatica
+Departamento de Engenharia Eletrica
+Universidade Federal de Campina Grande
+Rua Aprgio Veloso, 882, 58429-970 Bairro Universitario, Campina Grande, PB, Brasil
+Emails camila.gehrke@ee.ufcg.edu.br, italo.silva@ee.ufcg.edu.br, aco@dee.ufcg.edu.br,
+amnlima@dee.ufcg.edu.br
+Abstract Harmonic distortion in the eletric power system (EPS) degrades the quality power. To improve
+power quality several studies point to the use of active power line conditioners (APLC)s. Considering several
+APLCs distributed and cooperative operating, the strategies evaluation to compensate harmonics and power
+factor in EPS is only possible to be investigated by simulation. In this work it is proposed a Hardware-inthe-loop(HIL) system for testing the APLCs operation. Although still a simulated structure, the proposed HIL
+system can evaluate the performance of the APLC control strategies, performed by the same DSP devices used
+to control a real APLC. Furthermore, the physical integration of blocking and triggering power switches used
+to implement the emulated APLC is significantly closer to the behavior of the corresponding real power static
+converter.
+Keywords active power line conditioner, electric power quality, distributed active power compensation,
+hardware-in-the-loop simulation.
+Resumo O aumento da distorcao_harmonica no sistema de potencia eletrico (EPS) degrada a qualidade
+de energia. Para melhorar da qualidade_de_energia, varios estudos apontam para a utilizacao de compensadores
+ativos de potencia (APLC)s. Considerando varios APLCs distribudos operando de forma cooperativa, a avaliacao
+de estrategias de compensacao_de_harmonicos e fator de potencia em um EPS so e possvel ser investigada por
+meio de um cenario via simulacao. Neste trabalho, e proposto um sistema Hardware-in-the-loop(HIL) para
+teste e avaliacao funcional dos APLCs. Apesar de ainda ser uma estrutura simulada, o sistema HIL proposto
+permite avaliar o desempenho das estrategias_de_controle dos APLCs, executadas pelos mesmos dispositivos
+DSP empregados no controle de um APLC real. Alem disso, a integracao de caractersticas fsicas de disparo e
+bloqueio das chaves de potencia, usadas para implementar o APLC simulado, aproximam significativamente o
+comportamento deste com o correspondente conversor estatico de potencia do APLC real.
+Palavras-chave 
+
+1
+
+Introducao
+
+Com a larga utilizacao de equipamentos eletroeletronicos na rede de distribuicao, muitos harmonicos sao injetados no sistema_eletrico_de_potencia (em ingles Electric Power System) (EPS).
+Esses harmonicos distorcem as formas de onda
+de tensaocorrente, degradando a qualidade de
+energia, o que pode resultar em mau funcionamento e queima de equipamentos. A instalacao de compensadores ativos de potencia (em ingles Active Power Line Conditioner ) (APLC)s
+distribudos em alguns pontos de acoplamento
+comum (em ingles Point of Common Coupling)
+(PCC)s do EPS, permite compensar os harmonicos e melhorar a qualidade_de_energia (Chang and
+Grady, 1997 Keypour and Seifi, 2004 Ziari and
+Jalilian, 2010 Gehrke et al., 2010).
+Os trabalhos de (Chang and Grady, 1997
+Keypour and Seifi, 2004 Ziari and Jalilian, 2010)
+apresentam resultados, somente em nvel de simulacao offline, com EPS complexos. Em (Gehrke
+et al., 2010) foram apresentados resultados de simulacao, Figura 1, com varios segmentos de linha
+e variacao dinamica de cargas no tempo. Resulta-
+
+ISBN 978-85-8001-069-5
+
+Figura 1 Representacao simplificada do sistema
+de potencia de referencia (Gehrke et al., 2010).
+
+Figura 2 Representacao simplificada do sistema
+de potencia estudado no presente trabalho.
+
+dos praticos tambem foram avaliados, entretanto,
+em cenarios de EPS simplificados (poucos segmentos de linha e sem variacao de cargas no tempo),
+Figura 2, devido a dificuldade de representar cenarios complexos em laboratorio.
+De forma geral, observa-se que a avaliacao da
+operacao e coordenacao dos APLCs interagindo
+com o EPS e feita em simuladores offline ou com
+
+4703
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+cenarios limitados em laboratorio, pois o teste em
+EPS reais nao e segura suficiente, antes do que
+o software e o hardware do APLC serem testados exaustivamente. Entretanto, em simuladores offline os componentes sao considerados ideais, e as efetivas interacoes dinamicas dos diversos
+subsistemas nao sao adequadamente representados (Qian et al., 2007 Xiaopin et al., 2010 Dinavahi et al., 2001). De modo geral, os laboratorios
+possuem limitacoes fsicas para representar uma
+rede de distribuicao real (linhas com varios quilometros de comprimento como a apresentada por
+(Chang and Grady, 1997), bem como eventos tais
+como por exemplo faltas e ressonancias) dificultando a sintonia dos controladores, alem de restricoes financeiras para implementar um APLC,
+(Xiaopin et al., 2010). Devido a esses fatores,
+existe certa dificuldade de validar uma solucao
+desenvolvida em um simulador offline, principalmente em relacao a operacao com seguranca e
+estabilidade dos APLCs distribudos. Uma solucao alternativa para a validacao dessas solucoes,
+especificamente no caso da operacao cooperativa
+dos APLCs, sao os sistemas de simulacao com
+hardware na malha  Hardware-in-the-loop (HIL),
+(Ding et al., 2008 Xiaopin et al., 2010).
+No sentido de contribuir no estudo de solucoes que permitam superar as dificuldades apontadas anteriormente, no que tange ao estudo de
+APLCs distribudos e operando de forma cooperativa, conectados em um EPS, este trabalho apresenta a implementacao de um sistema de simulacao de tempo_real (simulador digital de tempo_real
+(em ingles Real-Time Digital Simulator ) (RTDS))
+para simular os ramos de uma rede de distribuicao, a carga, bem como a estrutura do APLC.
+Para obter uma representacao mais acurada do
+APLC, as chaves de potencia foram representadas
+realisticamente, permitindo observar transitorios
+de comutacao, bem como possibilitando avaliacao
+de perdas, (Myaing and Dinavahi, 2011). A configuracao da plataforma_de_teste utilizada neste
+trabalho possibilita a implementacao do controle
+em tempo_real de APLCs operando de forma cooperativa em um sistema de potencia de relativa
+complexidade. O sistema proposto e ilustrado na
+Figura 3.
+A velocidade de resposta associada a implementacao de modelos de sistemas fsicos em
+hardware e a possibilidade de execucao de atividades (quase) simultaneas sao caractersticas
+factveis em sistemas implementados em Fieldprogrammable gate array (FPGA), (Myaing and
+Dinavahi, 2011), o que possibilita a representacao de transitorios como abertura e fechamento
+dos interruptores de potencia do APLC e faltas
+do EPS. A implementacao do RTDS foi realizada
+utilizando esses dispositivos.
+A primeira parte deste trabalho trata da descricao do sistema implementado, ou seja Sistema
+
+ISBN 978-85-8001-069-5
+
+Figura 3 Configuracao do sistema de simulacao
+com hardware na malha (HIL) a lei de controle
+a ser testada e implementada no processador de
+sinais e o sistema de potencia e simulado no dispositivo de logica programavel.
+HIL composto de Modulo FPGA (RTDS) e Digital signal processing (DSP) (controle). Na segunda parte, sao apresentados os resultados experimentais, que permite a avaliacao da interacao do
+APLC e EPS.
+2
+
+Sistema HIL
+
+Um sistema HIL proporciona uma solucao alternativa para testes de validacao de projetos de sistemas_embarcados, a qual oferece seguranca, confiabilidade, contribuindo para reducao de custo e
+do tempo de implementacao. O HIL e composto
+de um RTDS, uma interface de entrada e sada
+para o controle, compondo, assim, a parte de sistema de potencia e sistema_de_controle, conforme
+apresentados no diagrama unifilar da Figura 4.
+
+Figura 4 Diagrama de blocos do sistema HIL
+a lei de controle que gera os sinais de comando
+dos interruptores de potencia e implementada no
+processador de sinais enquanto que a rede de distribuicao, carga nao linear e estagio de potencia
+do filtro_ativo (sistema_eletrico_de_potencia) sao
+simulados no dispositivo de logica programavel.
+O RTDS foi implementado em uma placa
+de desenvolvimento Altera DE2 (FPGA Cyclone
+EP2C70F896). No RTDS, simulou-se o sistema
+de potencia (EPS), composto por uma fonte trifasica, um segmento de linha RL, uma carga nao
+linear e um APLC. A corrente do EPS e enviada
+para o DSP, que gera os pulsos de controle para
+as correntes de compensacao do APLC. A lei de
+controle foi implementada no kit de desenvolvi-
+
+4704
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+mento EZDSP320F28335 da Texas, que recebe os
+sinais de corrente do FPGA, gera e envia os pulsos
+para comando das chaves do APLC por intermedio da interface de entrada e sada. A interface
+de entrada sao os pinos de entradasada (em ingles General Purpose InputOutput) (GPIO) da
+placa DE2 e a interface de sada e um conversor
+digital-analogico (em ingles Digital-Analogic Converter ) (DAC) R-2R de 12 bits.
+2.1
+
+RTDS em FPGA
+
+O sistema de potencia simulado baseia-se em uma
+rede de distribuicao de 12,5 kV e 10 MVA. Para
+simplificar a analise do sistema, adotou-se o sistema por unidade (p.u.) para efetuar todos os
+calculos de tensao e corrente, com tensao de base
+igual a 12,5 kV e potencia base igual a 10 MVA. A
+Figura 5 ilustra um diagrama_de_blocos referente
+ao modulo rede3f. Este modulo simula o sistema
+de potencia trifasico, uma carga nao linear e um
+APLC paralelo.
+O APLC (tipo shunt) e conectado em paralelo
+com a rede e com a carga, onde atua como um dispositivo que injeta ou drena uma corrente do PCC
+de modo que a corrente total drenada da rede, que
+e a corrente da carga mais a do filtro, seja senoidal.
+A compensacao paralela atua como uma fonte de
+corrente CA controlada e e usada, principalmente,
+em sistemas eletricos que possuem cargas nao lineares, para compensacao do fator de potencia,
+dos harmonicos de corrente, da potencia reativa,
+de cargas desequilibradas e compensacao da corrente do neutro. Atraves da compensacao destes
+disturbios de corrente e possvel atenuar tambem
+distorcoes na tensao entregue a carga.
+
+ordem por meio de uma integracao numerica para
+um passo de calculo bastante pequeno.
+
+2.1.1
+
+Rede Trifasica
+
+A rede trifasica (gerador e linhas de distribuicao)
+e implementada pelo modulo rede sim que simula
+uma fonte de tensao trifasica sob influencia da
+corrente trifasica da carga e do APLC. A implementacao deste modulo baseia-se nas tensoes
+trifasicas de referencia (vk , tal que k  a, b, c) e
+nos segmentos de linha RL, onde R  0, 032 p.u.
+(R  0, 5) e L  6, 4 p.u. (L  0, 1 mH).
+As tensoes da rede com influencia da corrente da
+carga (vkn ) sao calculadas partir de
+vk (t)  vkn (t) R ik (t  t)
+
+,
+1 + tL
+1 + tL
+vkn (t)  vk (t)  R ik (t)  vLk (t),
+
+vLk (t) 
+
+(1)
+(2)
+
+nas quais t representa o tempo contnuo, t e o
+passo de calculo igual a 1 s, vLk e a tensao nos
+terminais do indutor L e L  LR e a constante
+de tempo do segmento RL serie.
+Tendo em vista que o EPS estudado neste trabalho e constitudo por apenas um segmento de
+linha RL serie, a corrente da rede (ik ) pode ser
+determinada somente pela analise nodal das correntes do PCC. A Figura 6 ilustra o circuito eletrico equivalente do modulo rede sim.
+
+Figura 6 Circuito eletrico equivalente do modulo
+rede sim.
+
+2.1.2
+Figura 5 Diagrama de blocos implementados no
+dispositivo de logica programavel indicando os sinais de entrada e sada.
+A implementacao dos modelos discretos dos
+circuitos eletricos que representam o EPS simulado foi realizada a partir do metodo de integracao
+de numerica de Euler Regressivo. Escolheu-se este
+metodo de discretizacao pela capacidade e velocidade de processamento do FPGA, pois este metodo soluciona equacoes_diferenciais de primeira
+
+ISBN 978-85-8001-069-5
+
+Carga nao linear
+
+A carga nao linear e implementada pelos modulos retif 3f e carga rl. O modulo retif 3f simula
+o comportamento de um retificador trifasico nao
+controlado ideal. O modulo carga rl baseia-se em
+um modelo discreto de uma carga de natureza indutiva alimentada pela tensao de linha do retificador nao controlado ideal. Os parametros do circuito RL serie utilizados para os testes da simulacao sao Ro  0, 64 p.u. (Ro  10 ) e Lo  128 
+p.u. (Lo  2 mH). A tensao e a corrente do reti-
+
+4705
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ficador, vo e io , sao calculadas por
+vLo (t)
+
+
+
+io (t)
+
+
+
+vo (t)
+Ro io (t  t)
+
+, (3)
+1 + tLo
+1 + tLo
+t
+vLo (t) + io (t  t),
+(4)
+Lo
+
+sendo vLo a tensao nos terminais do indutor Lo
+e Lo  Lo Ro a constante de tempo da carga
+RL. A Figura 7 ilustra o circuito eletrico dos modulos retif 3f e carga rl. A partir das correntes,
+
+Figura 8 Circuito eletrico do modulo filtro acpinversor 3f.
+que a frequencia de Nyquist. Pela equacao (7),
+determina-se a frequencia de Nyquist, fN .
+fN 
+Figura 7 Circuito eletrico do modulo retif 3fcarga rl.
+idj (j  1,    , 6), que circulam pelos diodos do
+retificador (ver circuito da Figura 7) e possvel determinar as correntes de linha da carga nao linear,
+iLk (k  a, b, c)
+
+2.1.3
+
+iLa
+
+ id1  id4 ,
+
+iLb
+
+ id2  id5 e
+
+iLc
+
+ id3  id6 .
+
+(5)
+
+APLC
+
+ia
+
+ iLa  iF a ,
+
+ib
+
+ iLb  iF b e
+
+ic
+
+ iLc  iF c .
+
+(6)
+
+As tensoes de polo do inversor sao definidas por pulsos com perodo de 100 s (10 kHz).
+Em uma simulacao digital, o passo de amostragem deve ser escolhido de maneira que a frequencia maxima do sinal simulado seja bem menor
+
+ISBN 978-85-8001-069-5
+
+(7)
+
+Para uma boa aproximacao da solucao discreta, utiliza-se o criterio aproximado, de que a
+frequencia mais alta do sinal simulado seja, no
+maximo, um quinto da frequencia de Nyquist. Entao, a frequencia de Nyquist para o sinal a 10
+kHz, segundo o criterio aproximado, e de fN  50
+kHz. Sendo assim, o passo de calculo mnimo
+e determinado segundo a equacao (7), ou seja,
+tmin  10 s. Entao, para obter melhor resolucao da corrente da sada, arbitrou-se um perodo
+de calculo t de 1 s. Esse passo de calculo define
+a frequencia do oscilador clk inv.
+2.2
+
+O APLC e implementado pelo modulo inversor 3f,
+simulando o comportamento de um inversor trifasico do tipo fonte de tensao ideal controlado pelo
+DSP. O modulo filtro acp baseia-se em um modelo discreto de uma carga de natureza puramente
+indutiva alimentada pelas tensoes de polo do inversor. O valor da indutancia do indutor (iguais
+para as tres fases) de acoplamento utilizado nos
+testes da simulacao foi LF  256 p.u. (LF  4
+mH). A Figura 8 ilustra o circuito eletrico dos modulos filtro acp e inversor 3f. Determinadas as
+correntes iLk e iF k , as correntes da rede ik sao
+calculadas por
+
+1
+2t
+
+Interruptores de potencia - IGBT
+
+Um dos grandes desafios para simulacao em tempo
+real e a modelagem dos sistemas e suas partes
+constituintes, tais como os transistores bipolares
+de porta isolada (em ingles Insulated Gate Bipolar Transistors) (IGBT)s, (Myaing and Dinavahi, 2011). A utilizacao destes dispositivos e bastante difundida em conversores estaticos de potencia. O tempo de comutacao dos IGBTs pode
+alcancar faixa de nanosegundos, o que exige alta
+velocidade de processamento dos simuladores em
+tempo_real para a representacao das suas curvas
+caractersticas reais. A implementacao de modelos de interruptores de potencia mais detalhados
+permite a analise de perdas do APLC. A Figura 9
+ilustra as curvas caractersticas genericas Vce e Ic
+do IGBT para os estados de conducao e bloqueio,
+com os respectivos tempos de comutacao.
+Para a implementacao do sistema HIL,
+realizou-se uma leitura de um ciclo completo do
+seno de referencia, a partir da tecnica Look-up Table. Isso resultou na utilizacao de 56 dos recursos do FGPA destinados as funcoes combinacionais, entretanto, a utilizacao desses recursos pode
+
+4706
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+3
+3.1
+
+Figura 9 Caractersticas de chaveamento tpicas de um IGBT transicoes bloqueio-conducao e
+conducao-bloqueio (Myaing and Dinavahi, 2011).
+
+ser otimizada com armazenamento de apenas um
+quarto do ciclo da senoide. Portanto, o circuito
+pode ser expandido para varios segmentos, cargas
+e APLCs, permitindo a avaliacao mais realstica
+da operacao cooperativa de APLCs.
+
+2.3
+
+Controlador de corrente
+
+A malha_de_controle foi implementada no DSP,
+Figura 7. Os sinais analogicos de tensao de
+referencia e de corrente da rede, recebidos do
+conversor R-2R, sao convertidos pelo conversor
+analogico-digital (em ingles Analogic-Digital Converter ) (ADC) do DSP e armazenados. Como somente uma das fases da corrente da rede e lida
+(ia ), as outras duas fases (ib e ic ) sao determinadas a partir do deslocamento de mais e menos
+120 , respectivamente, da corrente ia . Isso ocorreu pela disponibilidade de apenas um DAC, o
+que pode ser aperfeicoado com a implementacao
+de mais canais DAC. Para obtencao do angulo da
+fase de referencia, , foi implementado um Phase
+Locked Loop (PLL), em que a entrada e a tensao
+va . A partir deste angulo sao calculadas as correntes de referencia (ia , ib , ic ), que devem estar em
+fase com as tensoes (va , vb , vc ). As correntes de
+referencia (ia , ib , ic ) subtradas das correntes da
+rede (ia , ib , ic ) resultam nos erros (ea , eb , ec ), os
+quais aplicados a um controlador R e comparadas
+a um sinal triangular simetrico de 10 kHz, geram
+os pulsos de comando (q1 , q2 , q3 ) para o APLC.
+
+Resultados e Discussao
+
+Sistema HIL
+
+Os resultados obtidos neste trabalho foram implementados em simulacoes, utilizando a plataforma
+PSIM, e experimentalmente com o sistema HIL
+composto de um FPGA e um DSP. Emulou-se um
+EPS composto por uma fonte trifasica, um segmento de linha RL, uma carga nao linear RL e um
+APLC. Avaliou-se a resposta transitoria, com e
+sem a injecao de compensacao do APLC no PCC.
+Com auxlio do PSIM, plotaram-se os graficos
+de tensao va e corrente ia , antes e depois da compensacao dos harmonicos, Figura 11(a). Plotouse, tambem, o grafico da corrente de compensacao
+iF a , Figura 12(a). Estes graficos possibilitaram a
+comparacao com os resultados obtidos a partir do
+RTDS implementado no FPGA, respectivamente,
+Figuras 11(b) e 12(b). Observam-se que os sinais
+ilustrados nas Figuras 11(b) e 12(b) sao semelhantes aos sinais das Figuras 11(a) e 12(a), respectivamente. Analisando os resultados obtidos nas
+Figuras 11(a) e 11(b), percebe-se que a corrente
+ia apresenta uma forma praticamente senoidal decorrente da injecao das correntes de compensacao
+do APLC a rede.
+
+(a)
+
+(b)
+
+Figura 10 Diagrama de blocos estrategia_de_controle implementada no DSP.
+
+ISBN 978-85-8001-069-5
+
+Figura 11 Tensao de referencia va e a corrente da rede ia (a) PSIM (Corrente (rosa),
+Tensao (azul)) e (b) HIL (Corrente (CH3-rosa)
+500 mAdiv Tensao (CH2-azul) 500 mVdiv
+Tempo 10msdiv).
+
+4707
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+(a)
+(a)
+
+(b)
+(b)
+
+Figura 12 Corrente de compensacao do APLC
+iF a (a) PSIM (Corrente (azul)) e (b) HIL (Corrente (CH2-azul) 500 mAdiv Tempo 5msdiv).
+
+A acao do APLC permite corrigir o fator de
+potencia, reduzindo o conteudo harmonico da corrente ia e corrigindo o fator de deslocamento da
+corrente ia com a tensao va . A distorcao_harmonica_total (em ingles Total Harmonic Distortion)
+(THD) da corrente ia , antes e apos a compensacao do conteudo harmonico, pode ser observada
+na Figura 13(a) e 13(b), respectivamente. E importante destacar que o foco do trabalho e a avaliacao do sistema HIL, portanto, a sintonia dos
+ganhos do controlador nao foi explorada. Entretanto, percebe-se que apos compensacao do APLC
+houve uma reducao de mais de 50 do conteudo
+harmonico da corrente da rede  o nvel de THD
+passou de 30 para 14,2. As maiores reducoes
+sao nos harmonicos de ordem 5 e 7. Um ajuste
+nos ganhos do controlador pode acarretar em uma
+menor distorcao_harmonica da corrente da rede.
+3.2
+
+Caraterizacao experimental dos interruptores de potencia
+
+Para a caracterizacao dos interruptores de potencia (transicoes bloqueio-conducao e conducaobloqueio) realizou-se um ensaio expeimental baseado no trabalho de (Myaing and Dinavahi, 2011).
+Nesse ensaio utilizou-se o IGBT IRG4BC30UD e
+uma carga RL, da qual a parte resistiva e composta por 3 resistores em paralelo de 50 200 W
+
+ISBN 978-85-8001-069-5
+
+Figura 13 THD da corrente da rede ia antes (a)
+e depois (b) da compensacao dos harmonicos.
+
+e a parte indutiva e um indutor de 253 mH. A tensao de alimentacao foi de 20 V e a frequencia de
+amostragem 200 MHz. Na emulacao no FPGA, os
+resultados experimentais foram convertidos para
+o sistema p.u., com uma tensao base igual a 40
+V e corrente base igual a 1 A. A frequencia de
+amostragem utilizada na emulacao dos pontos em
+FPGA foi de 50 MHz.
+A Figura 14(a) ilustra as curvas caractersticas referentes ao estado de conducao obtidas experimentalmente. Estas curvas sao utilizadas pelo
+FPGA para emular as caractersticas reais das
+chaves do APLC, 14(b).
+A Figura 15(a) ilustra as curvas caractersticas referentes ao estado de bloqueio obtidas experimentalmente. Estas curvas sao utilizadas pelo
+FPGA para emular as caractersticas reais das
+chaves do APLC, 15(b).
+
+4
+
+Analise de perdas
+
+As perdas no chaveamento (psw ) sao decorrentes
+da dissipacao de potencia durante o transitorio do
+chaveamento. Para uma alta frequencia de modulacao por largura de pulso (em ingles Pulse-Width
+Modulation) (PWM), estas perdas tornam-se significativas e devem ser consideradas. As perdas
+por chaveamento sao proporcionais ao produto da
+tensao Vce pela corrente Ic no instante da comu-
+
+4708
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+(a)
+
+(a)
+
+(b)
+
+(b)
+
+Figura 14 Transitorio para o estado de conducao
+a) experimental (Ic (CH4-verde) 200 mAdiv, Vce
+(CH1-amarelo) 10 Vdiv, Tempo 1usdiv). b)
+emulado (Ic (CH4-verde) 200 mAdiv, Vce (CH1amarelo) 200 mVdiv, Tempo 1usdiv).
+
+Figura 15 Transitorio para o estado de bloqueio
+a) experimental (Ic (CH4-verde) 200 mAdiv, Vce
+(CH1-amarelo) 10 Vdiv, Tempo1 usdiv). b)
+emulado (Ic (CH4-verde) 200 mAdiv, Vce (CH1amarelo) 200 mVdiv, Tempo1 usdiv).
+
+tacao, conforme a equacao (8).
+
+do controlador. Ademais, a analise do transitorio
+do IGBT, possibilitou a avaliacao de perdas do
+APLC.
+Ao final deste trabalho, com base nos resultados, conclui-se que o sistema HIL, apesar de
+ser um sistema ainda simples com apenas um trecho de linha e uma carga, viabiliza a avaliacao
+da interacao entre APLC e EPS. Isso deve-se ao
+fato de que a solucao apresentada e escalavel, ou
+seja, para um cenario com mais trechos do EPS,
+APLCs e cargas se faz necessario, apenas, multiplicar o numero de instanciacao dos modulos, possibilitando, inclusive, expandir o(s) sistema(s) simulado(s) alem dos limites definidos pelo FPGA
+de uma placa DE2, a partir da interligacao de outras placas.
+
+psw (t)  Vce (t)Ic (t)
+
+(8)
+
+Os dados de tensao Vce e corrente Ic obtidos
+no experimento e na emulacao em FPGA foram
+multiplicados ponto a ponto, resultando nas formas de onda das perdas durante a comutacao forcada do IGBT para estado de bloqueio. Devido a
+condicoes de ensaio (tensao de 20 V, corrente de
+520 mA e carga predominantemente indutiva), as
+perdas decorrentes do transitorio para o estado de
+conducao foram desprezveis. A forma de onda das
+perdas no chaveamento para estado de bloqueio
+pode ser visualizada nas Figuras 16(a) e 16(b).
+5
+
+Conclusoes
+
+Os resultados do sistema HIL apresentaram curvas
+semelhantes aos resultados em simuladores offline
+(PSIM), o que valida a implementacao proposta.
+O APLC emulado em FPGA e controlado a partir dos pulsos gerados pelo DSP possibilitou obter
+as correntes para compensacao dos harmonicos de
+corrente do EPS. A compensacao foi significativa,
+visto que houve uma reducao de mais de 50 da
+THD, no entanto, e possvel obter resultados melhores de compensacao com uma melhor sintonia
+
+ISBN 978-85-8001-069-5
+
+Agradecimentos
+Os autores agradecem a CAPES, ao CNPq, ao
+PPgEEUFCG e ao DEEUFCG, pelo suporte financeiro a realizacao deste trabalho.
+Referencias
+Chang, W. and Grady, W. (1997). Minimizing
+harmonic voltage distortion with multiple
+
+4709
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Myaing, A. and Dinavahi, V. (2011). Fpga-based
+real-time emulation of power electronic systems with detailed representation of device
+characteristics, Industrial Electronics, IEEE
+Transactions on 58(1) 358 368.
+
+(a)
+
+Qian, L., Liu, L. and Cartes, D. (2007). A reconfigurable and flexible experimental footprint for control validation in power electronics and power systems research, Power Electronics Specialists Conference, 2007. PESC
+2007. IEEE, pp. 1995 2000.
+Xiaopin, Y., Xiaoming, Z. and Shangsheng, L.
+(2010). Study on hardware-in-the-loop of active power filer based on rtds, Electrical and
+Control Engineering (ICECE), 2010 International Conference on, pp. 4295 4298.
+Ziari, I. and Jalilian, A. (2010). A new approach for allocation and sizing of multiple active power-line conditioners, Power Delivery,
+IEEE Transactions on 25(2) 1026 1035.
+
+(b)
+
+Figura 16 Formas de onda das perdas para o
+transitorio de bloqueio a) experimental (Ic (CH2azul) 200 mAdiv, Vce (CH1-amarelo) 10 Vdiv,
+q1 (CH3-rosa) 5 Vdiv Perdas (Math-vermelho)
+1 VAdiv Tempo 1 sdiv). b) emulado (Ic
+(CH2-azul) 200 mAdiv, Vce (CH1-amarelo) 200
+mVdiv, q1 (CH3-rosa) 5 Vdiv Perdas (Mathvermelho) 1 VAdiv Tempo1 sdiv).
+current-constrained active power line conditioners, Power Delivery, IEEE Transactions
+on 12(2) 837 843.
+Dinavahi, V. R., Iravani, M. R. and Bonert, R.
+(2001). Real-time digital simulation of power
+electronic apparatus interfaced with digital controllers, Industrial Electronics, IEEE
+Transactions on 16(4).
+Ding, H., Liu, W., Li, Y., Duan, X., Wu, D., Lin,
+Y., Chen, J., Zhang, R. and Zhang, J. (2008).
+Development of an active power filter physical simulator connected with rtds, Electrical
+Machines and Systems, 2008. ICEMS 2008.
+International Conference on, pp. 1206 1211.
+Gehrke, C., Lima, A. and Oliveira, A. (2010). Cooperative filters Localization and injected
+current control, pp. 102 107.
+Keypour, R. and Seifi, H. (2004). Genetic based
+algorithm for active power filter allocation
+and sizing, Elsevier Trans. Electrical Power
+Syst. Res. 71(1) 41.
+
+ISBN 978-85-8001-069-5
+
+4710

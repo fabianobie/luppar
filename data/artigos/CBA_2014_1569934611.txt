@@ -1,0 +1,865 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+ARQUITETURA E AMBIENTE DE SIMULAÇÃO PARA SISTEMA DE MISSÃO DE AUVS BASEADO EM CONTROLE
+SUPERVISÓRIO
+SANDRO BATTISTELLA, MAX H. DE QUEIROZ
+Depto. de Automação e Sistemas (DAS), Universidade Federal de Santa Catarina (UFSC)
+88040-900 Florianópolis, SC, Brasil
+Depto. de Engenharia Elétrica, Universidade Estadual do Oeste do Paraná (UNIOESTE)
+85856-070, Foz do Iguaçu, PR, Brasil
+E-mails sandro.battistella@unioeste.br, max.queiroz@ufsc.br
+Abstract Performing missions for autonomous underwater vehicles (AUVs) requires the coordination of multiple software
+and hardware components distributed through its embedded control architecture. Through the Supervisory Control Theory (SCT)
+it is possible to derive formal models based on modular automata for these components in way to ensure, by design, compliance
+with several vehicle operation and safety requirements. This paper presents an architecture for the Mission Control System
+(MCS) of AUVs based on SCT, and a simulation environment for validating this architecture. The proposed architecture allows
+the direct implementation of the formal models used during the system analysis stage, through automatic code generation, maintaining desired properties of the system, such as absence of deadlocks and compliance with specifications. The architecture and
+the simulation environment are implemented in CC++ and Java languages, running on ROS (robot operating system) middleware and integrated with MatlabSimulink software. At the end of the study, two mission scenarios are presented, showing the
+flexible and safe operation of the proposed architecture.
+Keywords Mission control, underwater robotics, supervisory control theory, robotic architectures, discrete event systems.
+Resumo A realização de missões por veículos subaquáticos autônomos (autonomous underwater vehicles ou AUVs) exige a
+coordenação de vários componentes de software e hardware distribuídos pela sua arquitetura_de_controle_embarcado. Através da
+Teoria de Controle Supervisório (TCS) é possível derivar modelos formais baseados em autômatos modulares para tais
+componentes, de modo a garantir, por projeto, o atendimento a diversos requisitos de operação e segurança do veículo. Este
+trabalho apresenta uma arquitetura para o Sistema de Controle de Missão (SCM) de AUVs baseado na TCS, e um ambiente de
+simulação para validação da respectiva arquitetura. A arquitetura proposta permite a implementação direta dos modelos formais
+empregados durante a etapa de análise do sistema, através da geração automática de código, mantendo propriedades desejadas
+para o sistema, como ausência de deadlocks e garantia de cumprimento de especificações. A arquitetura e o ambiente de
+simulação são implementados em linguagem CC++ e Java, executados no middleware ROS (robot operating system) e
+integrados com o software MatlabSimulink. Ao final do trabalho, dois cenários de missões são apresentados, mostrando o
+funcionamento flexível e seguro da arquitetura proposta.
+Palavras-chave .
+
+1
+
+robustez e tolerância a falhas disponibilidade de
+ferramentas de desenvolvimento, entre outros. A
+escolha adequada de uma arquitetura favorece o
+desenvolvimento e validação do sistema_embarcado
+do veículo robótico.
+O AUV possui um comportamento de natureza
+híbrida, envolvendo dinâmicas dirigidas pelo tempo,
+ou contínuas (navegação, localização, sensoriamento,
+controle_de_movimento, etc.) e dirigidas a eventos, ou
+discretas (tomada de decisão, controle_de_missão,
+descrição de comportamento de componentes, etc.).
+Nesse sentido, teorias da área de Sistemas a Eventos
+Discretos (SEDs) vêm sendo aplicadas  robótica
+móvel como formalismo matemático para a
+modelagem e a análise do comportamento dinâmico
+de veículos_autônomos, como por exemplo em
+planejamento de missões (Xu, Zhang e Feng, 2004)
+descrição da evolução de componentes da
+arquitetura (Barrouil e Lemaire, 1996) topologia de
+ambientes e descrição de comportamentos
+(Christensen e Pirjanian, 1997) representação de
+dinâmica híbrida, como manobras (Bhattacharyya et
+al., 2005) ou sistemas multi-robôs (Xiang et al.,
+2007). Outros trabalhos, além de empregar teorias de
+
+Introdução
+
+Veículos subaquáticos autônomos (autonomous
+underwater vehicles  AUVs) são dispositivos
+robóticos inteligentes que atuam na água, com
+capacidades de percepção sensorial, tomada de
+decisão, planejamento_de_tarefas, controle de
+movimento e execução de ações (Bian et al., 2009).
+AUVs são empregados na pesquisa oceanográfica,
+exploração de recursos marinhos, acompanhamento
+de ecossistemas, inspeção e manutenção de estruturas
+submersas, entre outros.
+A organização das funcionalidades e equipamentos
+de um veículo autônomo se traduz no projeto e
+construção de um sistema_embarcado, organizado em
+uma arquitetura robótica, que determina as estrutura
+de dados, o conjunto de componentes de software e
+hardware e a interação entre os mesmos (Valavanis et
+al., 1997). Como características desejáveis para uma
+arquitetura robótica citam-se abstração com respeito
+ao hardware facilidade de inclusão de novas
+funcionalidades e equipamentos perfomance
+razoável frente as imposições de natureza tempo-real
+4044
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+arquitetura. O emprego de ferramentas de simulação
+permite a análise, validação e correção do sistema
+antes do mesmo ser construído, diminuindo os custos
+e aumentando o sucesso no desenvolvimento desse
+tipo de sistemas. A arquitetura proposta e o ambiente
+de simulação são desenvolvidos a partir da integração
+do middleware ROS robot operating system (ROS)
+com o software MatlabSimulink e uma interface
+homem-máquina (IHM) desenvolvida em Java.
+O trabalho é organizado da seguinte forma. A seção 2
+descreve o processo de modelagem e síntese de
+supervisores empregado pelo CSML aplicado ao
+problema de missões de AUV. A seção 3 apresenta a
+arquitetura para o SCM baseado no CSML. O
+ambiente de simulação para a validação do SCM é
+descrito na seção 4. Simulações para dois cenários de
+missão são mostradas na seção 5. Ao final, são
+apresentadas as conclusões do trabalho.
+
+SEDs para a modelagem e análise, propõem eou
+implementam arquiteturas embarcadas baseadas em
+tais teorias. Tal abordagem permite que os modelos
+derivados durante a etapa de análise sirvam também
+de modelos para componentes do sistema_embarcado
+do veículo, preservando certas propriedades, como
+ausência
+de
+bloqueios,
+cumprimento
+s
+especificações de segurança e intertravamento, dentre
+outras. Exemplos dessa abordagem podem ser
+encontrados nos trabalhos de Dias et al. (2006) e
+Palomeras et al. (2009).
+Particularmente em Battistella, Queiroz e Santos
+(2012) propõe-se o uso da Teoria de Controle
+Supervisório (TCS) para a modelagem e análise de
+AUVs empregando autômatos modulares como
+modelos de subsistemas e de especificações de
+operação e segurança. Além disso, tal trabalho utiliza
+o Controle Supervisório Modular Local (CSML)
+(Queiroz e Cury, 2002) para derivar estruturas de
+controle, denominadas de supervisores, responsáveis
+por garantir que tais especificações sejam atendidas,
+independente do tipo de missão a ser realizada pelo
+veículo. A abordagem de CSML empregada pelos
+autores permite a modelagem do comportamento
+dinâmico do AUV baseada na natureza modular da
+planta, ou seja, levando em consideração seus
+subsistemas, além de prever a ocorrência de eventos
+não-deterministas, como falhas e erros, porém sem
+fixar a missão a uma sequência única de eventos,
+permitindo, portanto, o veículo completar missões
+através da realização de caminhos alternativos
+queles especificados no arquivo de missão. Tais
+características diferem das abordagens usuais de
+teorias de SEDs em problemas de missão de AUVs.
+Por exemplo, em Xu, Zhang e Feng (2004), aplica-se
+a TCS. Porém, erros e falhas implicam no
+cancelamento da missão, não explorando, assim, os
+diversos caminhos habilitados pelo controle
+supervisório. Por sua vez, em Palomeras et al.
+(2009), empregam-se redes de Petri para o problema
+de missão. Contudo, a abordagem é centralizada, não
+explorando a modularidade dos diversos subsistemas
+do veículo.
+O presente trabalho extende e implementa a
+arquitetura para o Sistema de Controle de Missão
+(SCM) para AUVs atuando em lagos de barragens de
+hidrelétricas, cuja modelagem é originalmente
+apresentada em Battistella, Queiroz e Santos (2012),
+incluindo o Gerenciador de Missão (GM), estrutura
+baseada em regras, responsável pela tradução do
+arquivo de missão e pela subsequente seleção de uma
+entre várias sequências de eventos habilitada pelos
+modelos formais do CSML. Tais eventos são
+mapeados pela arquitetura do CSML em comandos
+que irão guiar o AUV em direção aos objetivos da
+missão. A estrutura de CSML é obtida pela geração
+automática de código, diretamente a partir dos
+modelos empregados durante a fase da análise do
+sistema, minimizando, portanto, erros devidos 
+codificação manual. O trabalho também apresenta um
+ambiente distribuído de simulação para validação da
+
+2
+
+Modelagem de AUV usando a TCS
+
+Ambientes de lagos de barragens costumam ser
+mais complexos que os ambientes marinhos, devido 
+presença de objetos desconhecidos, existência de
+regiões proibidas  navegação e correntezas de maior
+intensidade. Portanto, a operação de um AUV nesse
+tipo de ambiente exige a capacidade de tomada de
+decisões que o permita completar uma missão de
+maneira segura. Assim, a TCS é empregada nesse
+trabalho na modelagem de especificações de
+operação do veículo de modo a garantir sua
+integridade e segurança, independente do tipo de
+missão a ser realizada.
+2.1 Teoria de Controle Supervisório (TCS)
+A TCS apresenta um framework formal para a
+síntese de supervisores ótimos não-bloqueantes
+baseados em autômatos modelando o comportamento
+em malha_aberta, denominado de planta, e
+especificações desejadas de comportamento para um
+sistema_a_eventos_discretos (SEDs) (Ramagde e
+Wonham,
+1989).
+Eventos
+são
+gerados
+espontaneamente pela planta, e podem ser divididos
+em eventos controláveis, cuja ocorrência pode ser
+impedida por um agente externo ou supervisor, e
+eventos não-controláveis. O supervisor é a estrutura
+responsável por observar a evolução da planta e
+habilitar e desabilitar eventos controláveis,
+informando  planta os caminhos possíveis de serem
+realizados e impedindo sequências consideradas
+indesejadas. A controlabilidade é a condição
+necessária e suficiente para a existência do supervisor
+não-bloqueante que atenda uma determinada
+especificação desejada para a planta. Quando essa
+condição não é satisfeita, é possível sintetizar um
+supervisor ótimo minimanente restritivo que atenda a
+especificação, dado pela máxima sublinguagem
+controlável (Ramadge e Wonham, 1989).
+
+4045
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+O Controle Supervisório Modular Local (CSML)
+(Queiroz e Cury, 2002) explora características
+modulares do sistema físico e das especificações para
+o cálculo de um conjunto de supervisores que agem
+localmente sobre a planta, mas levam  uma solução
+global ótima. A complexidade computacional da
+síntese e tamanho dos supervisores locais é reduzida,
+evitando o problema de explosão de estados
+encontrado na abordagem monolítica, onde somente
+um supervisor global é obtido. Assim, a planta é
+modelada como um conjunto de autômatos
+assíncronos, e as especificações, como autômatos
+modulares que restringem o comportamento da
+planta. Através do processo de síntese é obtido então
+um supervisor ótimo local para cada especificação. A
+condição de não-conflito entre os supervisores locais
+garante o comportamento global não-bloqueante e
+minimamente restritivo.
+
+suspensas podem ser finalizadas (finm). Erros de
+execução de manobras são representados pelo evento
+erm, sendo possível reinicializálas (rstm). De
+modo similar, empregam-se autômatos para
+representar cada um dos demais 11 subsistemas ou
+plantas modulares.
+A composição das plantas modulares representa o
+conjunto de todas as sequências de eventos_discretos
+que o AUV é capaz de realizar. Entretanto, existem
+sequências de eventos não desejadas e que devem ser
+evitadas pela ação dos supervisores locais sobre a
+planta. Tais sequências independem do tipo de
+missão a realizar pelo AUV e são obtidas através de
+especificações de segurança, como por exemplo,
+evitar a realização simultânea de manobras,
+suspender a missão enquanto houver erros de
+posicionamento, cancelar a missão caso ocorram
+falhas ou quando o nível de bateria for muito baixo,
+entre outras. Para esse trabalho foram consideradas
+57 especificações. A figura 2 apresenta o autômato
+da especificação que evita a realização da manobra
+de navegação quando ocorrer falhas (f), impedindo
+início da manobra (stm) ou sua retomada (rsmm).
+Mais detalhes sobre os autômatos que descrevem as
+plantas, as especificações e o processo de síntese dos
+supervisores podem ser obtidos em Battistella,
+Queiroz e Santos (2012).
+
+2.2 Modelagem do AUV segundo o CSML
+Como cenário de missão foi adotada a realização
+de tarefas de aquisição_de_dados em lagos de
+barragens de hidrelétrica. Nesse sentido, o SCM deve
+ser capaz de coordenar o funcionamento de vários
+componentes de software e hardware do AUV,
+selecionando ações que levem o veículo a cumprir
+seus objetivos e impedindo ações que violem
+especificações de segurança. Para esse trabalho
+foram considerados os seguintes subsistemas nível
+de bateria disponível carga útil (sonar de batimetria,
+câmera e GPS) sensores e algoritmos envolvidos na
+determinação da posição e orientação geração de
+trajetórias de referência e controle_de_movimento do
+veículo previsão e detecção_de_falhas. A partir do
+estudo desses subsistemas foram derivados 12
+modelos baseados em autômatos e que descrevem o
+comportamento em malha_aberta das funcionalidades
+do AUV estado da bateria colisão falhas sensores
+CTD GPS câmera sonar de batimetria submersão
+do veículo e 4 tipos de manobras (navegação,
+descida, subida e retorno).
+
+Figura 2. Autômato da especificação que impede o início ou
+retomada da manobra de navegação ante a ocorrência de falhas.
+
+Os modelos da planta e das especificações e a
+obtenção dos supervisores modulares locais ótimos
+não-bloqueantes foram feitas através da ferramenta
+Supremica (Akesson, 2002). Para esse trabalho, as
+plantas modulares modeladas possuem cerca de 3 a 4
+estados, as especificações locais, 2 estados, com
+exceção da especificação que impede a ativação
+simultânea de manobras, com 5 estados (figura 2).
+Como todas as especificações são controláveis e nãobloqueantes, é possível empregá-las diretamente
+como supervisores modulares. Através da ferramenta
+é possível ainda emular o funcionamento da planta
+sob controle dos supervisores modulares, permitindo
+a comprovação das especificações e correções de
+possíveis erros cometidos ainda durante a fase de
+modelagem.
+
+Figura 1. Autômato para a manobra de navegação.
+
+3 Arquitetura para o SCM
+
+Na figura 1 é possível visualizar o autômato que
+representa a evolução de uma manobra de navegação
+do AUV. Eventos controláveis são representados por
+um arco com traço. O início da manobra é
+representada pelo evento stm e a finalização pelo
+evento endm. Manobras podem ser suspensas
+(susm) ou retomadas (rsmm), e manobras
+
+Um dos componentes essenciais para a
+realização de missões complexas consiste no Sistema
+de Controle de Missão (SCM), responsável por
+traduzir cada uma das sentenças contidas em um
+arquivo de missão em ações correspondentes que irão
+gerar o funcionamento desejado para o AUV
+4046
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+representa os modelos abstratos das plantas
+modulares. E no nível inferior da arquitetura, as
+Sequências Operacionais (SO) atuam com a planta
+real. De acordo com a ocorrência de eventos nas
+plantas modulares, os supervisores habilitam ou
+desabilitam eventos controláveis. O SP envia
+comandos ao nível SO correspondentes aos eventos
+controláveis que estão habilitados. Finalmente, as
+sequências operacionais traduzem os comandos do
+nível SP em sinais de entrada para o sistema real e lê
+os sinais de saída do mesmo, gerando as respostas
+enviadas ao SP.
+
+(Christensen e Pirjanian, 1997 Palomeras et al.,
+2009). Eventos não-controláveis são utilizados para
+representar a ocorrência não-determinista de
+situações no plano de missão, possibilitando o
+planejamento condicional da missão, ou seja, a
+escolha de caminhos alternativos ao contido no
+arquivo de missão. Por sua vez, os eventos
+controláveis representam opções de ativação 
+desativação de componentes ou operações do AUV.
+O método de síntese de supervisores modulares do
+CSML garante que a ação dos mesmos sobre o
+sistema seja ótima, ou minimante restritiva
+(Ramadage e Wonham, 1989), conferindo
+flexibilidade no sentido que vários caminhos, ou
+sequência de eventos controláveis, possam ser
+escolhidos com o objetivo de completar a missão.
+Uma segunda estrutura do SCM, denominada de
+Gerenciador de Missão (GM) é responsável por
+traduzir o arquivo de missão em eventos controláveis
+e parâmetros para os vários componentes do sistema.
+Por exemplo, sempre que o arquivo de missão
+especificar uma trajetória entre dois pontos
+quaisquer, o GM escolhe o evento controlável que
+indica o início de uma manobra para realizar tal
+trajetória, contendo os parâmetros relacionados a
+esse deslocamento, como os pontos inicial e final, e
+timeouts para realização da manobra, sempre que a
+estrutura de CSML permitir que tal evento seja
+possível de ser ativado. Além disso, o GM explora os
+vários caminhos habilitados pelo CSML, permitindo
+então ao veículo completar uma missão sem,
+necessariamente, seguir o caminho sequencial de
+fases especificados no arquivo de missão.
+
+3.2 SCM com Gerenciador de Missão
+A arquitetura do CSML é adaptada ao problema
+de controle de missões em AUV, ao incluir o
+Gerenciador de Missão (GM), e pode ser vista na
+figura 4.
+
+3.1 Arquitetura para Implementação do CSML
+Através de uma arquitetura hierárquica de 3
+camadas (figura 3) é possível implementar o CSML,
+possibilitando a implementação direta dos modelos
+formais da planta e os supervisores em uma
+linguagem de programação (Queiroz e Cury, 2002).
+
+Figura 4. Sistema de Controle de Missão baseado no CSML.
+
+O nível sequência operacionais é responsável pela
+troca de sinais entre os vários subsistemas do AUV
+(planta real) e o nível SP do CSML. No nível SP os
+modelos abstratos são atualizados, e os eventos
+controláveis são habilitados ou desabilitados pelos
+supervisores modulares. Cabe ao CSML desabilitar
+os eventos que levam o sistema a estados
+considerados indesejados. Além disso, pelo método
+de síntese formal, a ação conjunta dos supervisores
+modulares do CSML é ótima ou minimamente
+restritiva. Portanto, várias são as sequência de
+eventos consideradas seguras que são permitidas pelo
+CSML, ficando a cargo do GM escolher uma entre
+tais sequências. A escolha desses eventos pelo GM
+pode ser feita com base em métodos de otimização,
+buscando minimizar critérios de consumo_de_energia,
+tempos e distâncias dos deslocamentos, prioridades
+de fases, entre outros, possibilitando explorar os
+vários caminhos habilitados pelo CSML. O GM
+também é responsável pela leitura e tradução do
+arquivo de missão, que contém os parâmetros para
+
+Figura 3. Arquitetura do Controle Supervisório Modular Local.
+
+Os Supervisores Modulares (SM) estão situados no
+nível superior da arquitetura do CSML. O nível
+seguinte contém o Sistema-Produto (SP) que
+4047
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+gera o evento controlável de início de manobra,
+desde que esteja habilitado pelo CSML.
+Finalmente, o arquivo de missão, no formato texto,
+contém as várias fases da missão. Cada fase é
+definida pelas coordenadas (x, y, z, , , ) dos
+pontos inicial e final da fase pelo estado de cada um
+dos sensores de carga útil (varíavel tipo booleana
+contendo truefalse para indicar a ação de
+ligardesligar o sensor) pelo tipo de manobra
+(navegação, subida, descida e retorno) pela margem
+de erro empregada para considerar se o veículo
+alcançou ou não uma determinada posição e pelo
+timeout ou tempo máximo para alcançar o ponto final
+da fase atual.
+
+cada uma das fases da missão do AUV, em uma
+sequência de eventos controláveis que irá comandar o
+veículo.
+Sempre que um evento controlável é selecionado
+pelo GM, o mesmo é enviado para o nível SP que
+atualiza o estado das plantas, atualizando também o
+estado dos supervisores no nível SM. Por sua vez, o
+nível SP envia para o nível SO o evento ativado, que
+é traduzido em comandos para os demais
+componentes distribuídos pela arquitetura de
+simulação. Os parâmetros de missão também são
+enviados para o nível de SO. Do mesmo modo,
+respostas enviadas pelos componentes ao nível de SO
+são traduzidos em eventos não-controláveis para o
+nível SP, que os repassa para o GM.
+
+4
+
+Ambiente de Simulação
+
+3.3 Implementação do SCM
+Para validação do SCM baseado no CSML foi
+desenvolvido um ambiente distribuído para a
+simulação dos demais componentes do AUV, através
+do uso do middleware ROS, do software
+MatlabSimulink e de uma interface_homem-máquina
+(IHM) desenvolvida em Java. A figura 5 apresenta o
+ambiente de simulação, em execução na plataforma
+Linux, onde é possível observar os principais
+componentes do ambiente dinâmica contínua,
+simulada através do software MatlabSimulink
+dinâmica dirigida a eventos, simulada através da
+IHM desenvolvida em linguagem Java o SCM e os
+demais processos ou threads em execução no sistema
+operacional Linux e gerenciados pelo ambiente ROS.
+
+O SCM composto pelo gerenciador e pelos 3
+níveis do CSML é implementado em um processo em
+execução na plataforma Linux, desenvolvido na
+linguagem CC++ e sob supervisão do middleware
+ROS. Esse processo é então validado através de um
+ambiente que simula os demais componentes do
+AUV, e que será apresentado na seção 4.
+Os modelos abstratos teórico-formais que descrevem
+o comportamento do AUV em malha_aberta são
+representados por 12 autômatos, e correspondem aos
+subsistemas ou plantas modulares comentadas na
+seção 2.2, compondo o nível SP. Os supervisores
+modulares do nível SM correspondem s 57
+especificações, pois as mesmas são controláveis, o
+que permite usar diretamente a especificação como
+um supervisor. De modo a minimizar ou evitar erros
+na codificação destes modelos, foi desenvolvido um
+parser em C.Net para tradução automática dos
+autômatos, codificados pela ferramenta Supremica
+em formato XML, para código C++. Os eventos
+controláveis e não-controláveis, definidos no nível de
+representação dos autômatos contidos no SP e SM,
+são traduzidos para comandos e respostas no nível
+SO.
+Em uma primeira implementação do GM, visando a
+validação da arquitetura proposta, foi utilizada uma
+solução mais simples para a heurística de seleção dos
+eventos controláveis, baseado em um conjunto de
+regras considerando o estado atual da missão e do
+veículo e os eventos controláveis habilitados pelo
+CSML. Essa base de regras também emprega a
+natureza modular dos modelos formais do CSML.
+Por exemplo, sempre que a bateria entrar no estado
+de nível baixo de energia, ocasião em que um evento
+não-controlável é gerado pela planta e enviado ao
+SCM, a manobra em curso deve ser finalizada e a
+missão cancelada. Contudo, como o CSML somente
+impede que uma manobra possa ser iniciada ou
+retomada, é necessário que o GM selecione o evento
+controlável de finalização de manobra. Da mesma
+forma,  medida em que a missão é realizada, o GM
+lê a próxima fase com o respectivo ponto destino, e
+
+4.1 Processos em Execução no Ambiente ROS
+O ambiente ROS (robot operating system) é um
+middleware e conjunto de ferramentas, bibliotecas e
+componentes que permite o desenvolvimento e
+execução de aplicações robóticas. Os processos ou
+threads desenvolvidos em CC++ em execução na
+plataforma Linux e gerenciados pelo ROS, empregam
+mecanismos
+de
+comunicação
+do
+tipo
+publishersubscriber
+e
+clienteservidor,
+disponibilizados pelo próprio ambiente ROS. A
+comunicação destes processos com os demais
+componentes do ambiente de simulação foi realizada
+via sockets TCPIP. Os processos desenvolvidos para
+o ambiente ROS, representados na figura 5, são
+apresentados na sequência.
+Sistema de Controle de Missão (SCM)
+implementação baseada no CSML, já apresentado na
+subseção 3.3.
+Dados sensoriais (sensorimubroadcaster) recebe
+os dados de posição e orientação atual do AUV e os
+disponibiliza aos demais componentes através da
+publicação da mensagem pose.
+Navegador (navigator) com base na posição e
+orientação atuais e dos objetivos da missão, envia ao
+MatlabSimulink, através da porta TCPIP 4050, os
+valores de referência de posição e orientação (x, y, z,
+
+4048
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Figura 5. Sistema de controle_de_missão e ambiente de simulação baseado em ROS, MatlabSimulink e IHM desenvolvida em Java.
+
+, , ) para o ponto final da fase atual da missão. A
+
+AUV por meio da ferramenta gráfica RVIZ
+disponível no ambiente ROS.
+
+comunicação com o SCM é feita via mecanismo
+clienteservidor. Um timeout, configurado no arquivo
+de missão, indica o tempo máximo permitido para o
+veículo alcançar a posição e orientação desejados,
+gerando um erro de execução de manobra no caso do
+valor deste timeout ser alcançado. Nesse trabalho,
+desconsiderou-se a geração de trajetórias de
+referência, assumindo que o veículo deve se deslocar
+a velocidade constante até atingir uma determinada
+região em torno ao ponto (posição e orientação) final
+desejado.
+Estado
+do
+Sistema
+e
+da
+Missão
+(scmstatusbroadcaster) envia para a IHM, pela
+porta TCPIP 8000, informações a respeito do estado
+do veículo (estado de um sensor ou equipamento,
+estado de uma manobra), estado da missão (posição e
+orientações atuais), e o estado lógico das várias
+plantas locais que representam os diversos
+subsistemas e componentes do AUV.
+Estado do AUV (auvstatusbroacaster) informa
+aos demais componentes do ambiente ROS, o estado
+dos sensores de carga útil, GPS, câmera, nível de
+bateria. Os dados da IHM são recebidos via porta
+TCPIP 7000 e publicados através da mensagem
+auvstatus.
+Eventos
+gerados
+manualmente
+(controlledeventssimulator)
+representa
+os
+comandos associados a eventos controláveis,
+disponíveis somente no modo manual, recebidos pela
+porta TCPIP 7050.
+Além disso, através da posição e orientações
+simuladas pelo MatlabSimulink e publicadas no
+tópico pose, é possível visualizar o movimento do
+
+4.2 Dinâmica Contínua
+O comportamento cinemático e dinâmico do
+AUV e o sistema_de_controle_de_movimento é
+simulado através do software MatlabSimulink. O
+modelo de AUV empregado neste trabalho consiste
+no NEROV, cujos parâmetros podem ser encontrados
+em (Fjellstad, 1994). Os dados referentes  posição
+(x, y, z) e orientação (rotações em torno a esses eixos,
+ou , , ) (Fossen, 1994) são enviados ao demais
+componentes do ambiente através da porta TCPIP
+5000. Desse modo é possível simular, para o SCM, a
+geração de dados típicos dos subsistemas de
+localização. O veículo possui 6 graus de liberdade,
+sendo empregado um PID para cada posição e
+orientação, uma vez que a faixa de velocidade, a
+geometria e a disponibilidade e disposição de seus 6
+propulsores permite o desacoplamento entre os graus
+de liberdade. De modo a simplificar o modelo
+contínuo, não foi empregado o controle de
+velocidade. As referências (coordenadas x, y, z, , ,
+ do ponto final desejado) para os controladores PID
+são enviados pelo SCM e recebidos pelo
+MatlabSimulink através da porta TCPIP 5050.
+Também foram desenvolvidos 2 parsers com o
+objetivo de adequar o formato dos dados e
+mensagens trocadas entre os processos em execução
+no ROS e o MatlabSimulink.
+
+4049
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+4.3 Dinâmica Dirigida a Eventos
+Mediante uma interface_homem-máquina (IHM)
+desenvolvida em linguagem Java é possível enviar e
+receber comandos relacionados com a dinâmica
+discreta ou dirigida a eventos do AUV.
+Basicamente, através de vários botões, a IHM
+permite gerar sinais que representam a ocorrência de
+falhas de instrumentação, o nível de bateria
+disponível, ações de ligar ou desligar equipamentos e
+sensores, e diversas outras ações relacionadas 
+execução de manobras.
+O modo de operação, manual ou automático, define
+quais são os comandos possíveis de serem gerados
+pelo ser humano. No modo manual, todos os
+comandos estão disponíveis. Porém, no modo
+automático, somente os comandos associados 
+eventos não-controláveis estão disponíveis, ficando,
+neste caso, a cargo do SCM gerar a melhor sequência
+de comandos de modo a guiar o veículo conforme o
+arquivo de missão. Os comandos relacionados aos
+eventos não-controláveis implementados foram falha
+em sensor de carga útil, câmera ou GPS o nível de
+bateria disponível e a condição do veículo estar na
+superfície ou submerso. Por sua vez, os comandos
+relacionados  eventos controláveis foram início,
+suspensão, retomada, finalização e reinício de todas
+as manobras disponíveis ações de ligar, desligar e
+reinício dos vários equipamentos e sensores do
+veículo.
+Além disso, a IHM também permite visualizar o
+estado lógico dos modelos formais, ou autômatos,
+que representam a planta, os estados lógicos dos
+eventos não-controláveis e controláveis, bem como o
+estado atual da missão e os objetivos ainda não
+alcançados pelo veículo. A IHM emprega a porta
+TCPIP 7000 para enviar comandos relacionados aos
+eventos não-controláveis para os processos em
+execução no ROS a porta 7050 para enviar
+comandos associados aos eventos controláveis e a
+8000 para receber o estado lógico do sistema e da
+missão. A figura 6 mostra a IHM com os eventos
+não-controláveis situados  esquerda, e os
+controláveis  direita. Através dessa interface é
+possível gerar eventos não-controláveis que
+representam o funcionamento do veículo, bem como
+os eventos controláveis quando no modo manual. Na
+parte inferior da figura 6, é possível visualizar, 
+esquerda, a realização da simulação de uma missão
+através da ferramenta gráfica RVIZ, pertencente ao
+middleware ROS, e  direita, a mesma missão, em
+um gráfico do programa MatlabSimulink.
+5
+
+Figura 6. Interface homem-máquina (IHM) e ferramentas de
+visualização RVIZ e MatlabSimulink.
+
+e, a partir dessa profundidade, aproximar-se de uma
+área para realização de perfil de trajetória para a
+aquisição de imagens, ocasião em que a câmera
+deverá estar ligada. Ao finalizar a aquisição, o
+veículo se aproxima do ponto próximo  segunda
+área, para levantamento de dados de temperatura,
+condutividade e profundidade, além do levantamento
+da topografia do fundo do lago do reservatório. Os
+deslocamentos entre as áreas é realizado com a carga
+útil desligada, a fim de economizar energia. Ao
+finalizar a missão, o veículo retorna ao ponto inicial.
+No segundo cenário, a mesma missão do cenário
+anterior deve ser realizada pelo AUV, porém
+considera-se
+a
+ocorrência
+de
+falhas
+de
+posicionamento, ocasião em que o SCM deve ser
+capaz de suspender a missão, dirigir o veículo 
+superfície para correção via GPS, e retornar ao ponto
+anterior  suspensão da missão.
+No primeiro cenário, a missão é realizada através da
+escolha pelo GM daqueles eventos controláveis que
+correspondam s fases contidas no arquivo de
+missão, e que não violem as especificações de
+segurança, definidas pelo CSML. No segundo
+cenário, apesar da ocorrência não-determinista de
+erros de posicionamento, a missão não é cancelada,
+pois a heurística de escolha de caminhos,
+implementada pelo GM, permite a seleção de
+caminhos alternativos que possibilitem continuar a
+missão. Assim, mesmo que tal caminho contenha
+passos ou fases não incluídos no arquivo de missão,
+como por exemplo, a necessidade de subir 
+superfície e correção de erros via GPS, o AUV é
+capaz de realizar a missão. Além disso, tais caminhos
+também não violam especificações de segurança
+devido a ação do CSML. A figura 7 apresenta a
+simulação da missão para o segundo cenário.
+
+Simulações
+6
+
+Com o objetivo de mostrar o funcionamento da
+arquitetura de CSML, dois cenários de missões em
+um lago de reservatório de hidrelétricas são
+considerados. No cenário inicial, a missão do AUV
+consiste em submergir a uma profundidade específica
+
+Conclusão
+
+O presente trabalho apresentou uma proposta de
+arquitetura para o Sistema de Controle de Missão
+(SCM) de um AUV basedo no Controle Supervisório
+
+4050
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Bian, X. Chen, T. Yan, Z. Qin, Z. (2009b),
+Autonomous Management and Intelligent
+Decision for AUV. Proceeding of the IEEE
+International Conference on Mechatronics and
+Automation. Changhun, China. p. 2101-2106.
+Bhattacharyya, S. Kumar, R. Tangirala, S.
+OConnor, M. Holloway, L. E. (2005), HybridModel Based Hierarchical Mission Control
+Architecture for Autonomous Underwater
+Vehicles. American Control Conference.
+Portland, EUA. p. 668-673.
+Christensen, H. I. Pirjanian, P. (1997), Theorical
+Methods for Planning and Control in Mobile
+Robotics. First International Conference on
+Knowledge-Based
+Intelligent
+Eletronics
+Systems. Adelaide, Austrália. p. 81-86. 1997.
+Dias, P. S. Gomes, R. M. F. Pinto, J. Gonçalves, G.
+M. Sousa, J. B. Pereira, F. L. (2006), Mission
+Planning and Specification in the Neptus
+Framework. Proceedings of the IEEE
+International Conference on Robotics and
+Automation. Orlando, Flórida, EUA. p. 32203225.
+Fjellstad, O. E. (1994), Control of Unmanned
+Underwater Vehicles in Six Degrees of Freedom
+A Quaternion Feedback Aproach. Tese de
+doutorado. Noruega.
+Fossen, T. I. (1994), Guidance and Control of Ocean
+Vehicles. Ed. John Wiley  Sons.
+Palomeras, N. Ridao, P. Carreras, M. Silvestre, C.
+(2009), Using Petri Nets to Specify and Execute
+Missions for Autonomous Underwater Vehicles.
+The IEEERSJ International Conference on
+Intelligent Robots and Systems. St. Louis, EUA.
+p. 4439-4444.
+Queiroz, M. H. Cury, J. E. R. (2002), Synthesis and
+Implementation of Local Modular Supervisory
+Control for a Manufacturing Cell. 6th
+International Workshop on Discrete Event
+Systems. Espanha.
+Ramadge, P. J. G. Wonham, W. M. (1989), The
+Control of Discrete Event Systems. Proceedings
+of the IEEE, Vol. 77. N. 1. p. 81-98.
+ROS. Robot Operation System. Disponível em
+<httpwiki.ros.org>. Acessado em janeiro 2014.
+Valavanis, K. P. Matijasevic, M. Kolluru, R.
+Demetriou, G. A. (1997), Control Architecture
+for Autonomous Underwater Vehicles. IEEE
+Control System. p. 48-64.
+Xiang, X. Xu, G. Zhang, Q. Xiao, Z. Huang, X.
+(2007), Coordinated Control for Multi-AUV
+Systems based on Hybrid Automata. Proceedings
+of the 2007 IEEE International Conference on
+Robotics and Biomimetics. Sanya, China. p.
+2121-2126.
+Xu, H. Zhang, Y. Feng, X. (2004), Discrete
+Hierarquical Supervisory Control for Automous
+Underwater Vehicle. International Symposium
+on Underwater Techonology. p. 417-421.
+
+Figura 7. Missão com falhas de posicionamento e ajuste via GPS.
+
+Modular Local (CSML), validada por ambiente de
+simulação. A modelagem formal dos subsistemas e
+componentes do AUV e a obtenção de supervisores
+conforme o CSML, permite garantir o atendimento 
+requisitos e especificações de operação e segurança
+na realização de diversos tipos de missões. O SCM
+permite a escolha alternativa de caminhos contidos
+no arquivo de missão, possibilitando a realização da
+mesma ante a ocorrência não-determinista de
+situações como erros e falhas, ao mesmo tempo que
+garante que as especificações de segurança sejam
+atendidas para qualquer tipo de missão. Além disso, a
+geração automática de código permite a tradução
+direta dos modelos teórico-formais do CSML para o
+sistema_embarcado do AUV, reduzindo erros devido
+a programação do sistema. Como perspectivas para
+continuidade do trabalho citam-se o emprego de
+algoritmos de busca em árvore para escolha de
+caminhos ótimos pelo gerenciador de missão, e a
+própria implementação do SCM em um AUV.
+Agradecimentos
+Os autores são gratos pelo suporte financeiro
+fornecido pela Fundação Parque Tecnológico
+ITAIPU (PTI), localizado em Foz do Iguaçu, PR.
+Referências Bibliográficas
+Akesson, K. (2002), Methods and Tools in
+Supervisory Control Theory. Tese de doutorado.
+Suécia.
+Barrouil, C. Lemaire, J. (1999), Advanced RealTime Mission Management for an AUV.
+Symposium on Advanced Mission Management
+and System Integration Technologies for
+Improved Tactical Operations. Florença, Itália.
+Battistella, S. Queiroz, M. H., Santos, C. H. F.
+(2012), Modelagem e Síntese de Supervisores
+para Controle de Missão de AUVs atuando em
+Lagos de Barragens de Hidrelétricas baseado na
+Teoria de Controle Supervisório. XIX Congresso
+Brasileiro de Automática. Campina Grande, PB,
+Brasil. p. 1870-1877.
+
+4051

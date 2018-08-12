@@ -1,0 +1,1033 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+CONSTRUCAO E CONTROLE DIGITAL DE UM PENDULO INVERTIDO
+TRANSLACIONAL
+Gabriel Pereira das Neves, Bruno Augusto Angelico
+
+
+Dept. de Eng. de Telecomunicacoes e Controle
+Escola Politecnica da Universidade de Sao Paulo, Sao Paulo, Brazil
+Emails gabriel.pereira.neves@usp.br, angelico@lac.usp.br
+Abstract This paper presents the development, modeling and control of a translational inverted pendulum.
+The mechanical system was developed with recycled materials of a dot matrix printer, which made the final cost
+very reduced. A swing-up algorithm was developed to raise the pendulum. Hence, close to equilibrium point,
+a LQR digital control is designed to stabilize the system . The final results were very satisfactory in terms of
+prototype construction, performance and robustness of the controller.
+Keywords
+
+Digital Control, Inverted Pendulum, LQR, Swing-Up.
+
+Resumo Este artigo apresenta o desenvolvimento, modelagem_e_controle de um pendulo_invertido translacional. O sistema mecanico foi desenvolvido com materiais reaproveitados de uma impressora matricial, o que tornou
+o custo final bem reduzido. Um algoritmo swing-up foi desenvolvido para levantar o pendulo. Entao, proximo ao
+ponto de equilbrio, um controle_digital LQR foi projetado para estabilizar o sistema. Os resultados finais foram
+muito satisfatorios em termos da construcao do prototipo e do desempenho e robustez do controlador.
+Palavras-chave
+
+.
+
+Introducao
+
+O pendulo_invertido e um dos problemas de controle mais utilizados com exemplo em textos didaticos de Engenharia de Controle (Franklin et al.,
+2013 Ogata, 2003). Trata-se de um sistema naturalmente instavel. Ha diversas aplicacoes praticas
+onde o sistema a ser controlado possui caractersticas semelhantes ao pendulo_invertido, como lancamento de foguetes, veculos de duas rodas autoequilibrados (ex. Segway) e robos_bpedes.
+Dois modelos de pendulo_invertido sao comumente estudados em cursos de controle o pendulo
+translacional e o pendulo rotacional, este ultimo
+proposto em (Masaki YAMAKITA, 1999). Outra
+variacao e o pendulo com roda de reacao (Jepsen
+et al., 2009). Robos autoequilibrados com duas
+rodas (W. An, 2013) e monociclos (S. I. Ha, 2015)
+sao exemplos de sistemas baseados em pendulo_invertido.
+Para estabilizar o pendulo na posicao invertida, geralmente considera-se um controlador com
+caracterstica de avanco de fase projetado no domnio da frequencia, como o PID (proporcionalintegral-derivativo), rede de avanco-atraso de fase.
+Outra abordagem consiste no controle por realimentacao_de_estados, por alocacao_de_polos ou o
+regulador linear quadratico (LQR).
+Para o pendulo sair da posicao de repouso,
+utiliza-se um algoritmo de swing-up, sendo o mais
+comum baseado em energia (K. J. Astrom, 1996).
+O trabalho apresentado em (Debasish Chatterjeea, 2002) faz uma variacao do swing-up para sistemas com restricao de deslocamento do carro.
+Para projetar um controlador_digital existem duas formas projetar o controle contnuo
+e achar uma aproximacao discreta ou discretizar
+
+ISSN 2525-8311
+
+a planta e projetar o controle_discreto (Franklin
+et al., 2006).
+O controle LQR (Sigurd Skogestad, 2005) e
+considerado um controle_otimo pois e construdo
+para minimizar um funcao custo. Tal controle e
+muito estudado e aplicado em diversos sistemas
+dinamicos. Este trabalho mostrara o projeto de
+um controlar LQR discreto com e sem integrador.
+Sera apresentada a construcao de um pendulo
+de baixo_custo em que foi aplicado o controle LQR
+discreto. Tambem e proposta uma nova abordagem para o swing-up aplicada a esse pendulo.
+
+2
+
+Construcao
+
+O pendulo foi construdo utilizando carcaca de
+uma impressora matricial. O motor_de_passo (originalmente presente na impressora) foi trocado
+por um motor CC, tambem reutilizado. Foram
+colocados duas chaves de fim de curso como uma
+medida de seguranca para equipamento. O angulo do pendulo e medido atraves de um encoder
+incremental e a posicao do carro (por consequencia a velocidade do eixo do motor) e obtida atraves
+de um sensor optico de posicao. O sistema construdo apresenta uma excursao maxima de 34 cm
+(17 cm para a direita e 17 cm para a esquerda).
+A construcao final pode ser vista na Figura 1.
+O driver de acionamento e uma ponte H, com
+sinal PWM na frequencia de chaveamento de 15
+kHz. O hardware de controle utilizado foi o kit
+FRDM K64F da Freescale.
+Os parametros reais desse pendulo, que serao
+utilizados no projeto do controlador, estao presente na Tabela 1.
+
+2660
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+senta porcentagem do duty cycle da tecnica de modulacao por largura de pulso.
+O angulo que se deseja controlar e o aquele
+entre o pendulo e a linha vertical, defini-se entao
+    .
+Substituindo os valores da Tabela 1 nas equacoes (1), (2) e (3) e linearizando em torno do ponto
+(xp  0, xp  0,   0 e   0), obtem-se o seguinte sistema descrito em espaco_de_estados
+ 
+ 
+xp
+xp
+xp 
+xp 
+   A   + Bu,
+(4)
+
+  
+
+
+
+Figura 1 Sistema construdo.
+Tabela 1 Parametros do Pendulo
+
+onde
+M
+m
+b
+J
+g
+
+n
+r
+Rm
+Ke
+Kt
+
+Parametro
+Massa do carro Kg
+Massa do pendulo Kg
+Atrito N s2 m
+Momento de inercia N s2 rad
+Aceleracao da gravidade ms2 
+Distancia ate o CM m
+Reducao do motor
+Raio do rotor m
+Resistencia do motor 
+Cte. de f.c.e.m. V s2 m
+Cte. de torque N mA
+3
+
+valor
+0,6242
+0,1722
+1,0
+0,0006
+9,8
+0,2050
+5,9
+0,0141
+1,4
+0,0194
+0,0164
+
+Modelagem
+
+Considerando a Figura 2, as equacoes da dinamica
+do pendulo sao
+
+
+0
+1
+0 3, 3516
+A
+0
+0
+0 15, 0918
+e
+
+
+0
+0
+2, 4437 0
+,
+0
+1
+55, 1312 0
+
+
+0
+ 91, 9629 
+.
+B
+
+
+0
+414, 0919
+
+(5)
+
+
+
+(6)
+
+Discretizando o sistema a um perodo de
+amostragem Ts  1100s, considerando o efeito
+do segurador de ordem zero (ZOH), e definindo o
+vetor_de_estados como xk obtem-se
+xk + 1  xk + uk,
+
+(7)
+
+onde
+
+
+
+1, 0000 0, 0098 0, 0001 0, 0000
+ 0
+0, 9670 0, 0241 0, 0001
+(M + m)xp + bxp + m cos   m2 sin   F, (1)
+,
+
+
+0
+0, 0007 1, 0028 0, 0100
+2
+(J + m ) + mg sin   mxp cos . (2)
+0
+0, 1486 0, 5500 1, 0028
+(8)
+Como nesse prototipo o carro e puxado por
+e
+
+
+um cabo de aco preso em um motor CC, a forca
+0, 0045
+F e calculada dada por
+0, 9046
+
+
+(9)
+0, 0205 .
+nKt
+Ke xp
+F 
+(12P W M 
+),
+(3)
+4, 0761
+rRm
+nr
+Assim, tem-se o modelo discreto do sistema.
+onde P W M e a entrada do sistema u que repre4
+
+Controle LQR Discreto
+
+O controle LQR digital (Franklin et al., 2006) e
+aquele que minimiza a funcao custo
+
+J
+
+
+X
+
+xk> Qxk + uk> Ruk,
+
+(10)
+
+k0
+
+onde xk e o vetor_de_estados, uk e o vetor de
+entrada e Q e R sao matrizes semi-positivas de
+ponderacao.
+Sabe-se que a solucao e do tipo
+Figura 2 Desenho esquematico.
+
+ISSN 2525-8311
+
+uk  Kxk,
+
+(11)
+
+2661
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+rk
+
+ek
+
++
+-
+
++
+
+z-1
+
+KI
+
++
+
++
+
+uk
+
+
+
+-
+
++
+
+xk+1
+
+z-1I
+
+xk
+
+C
+
+yk
+
++
+
+
+K
+
+Figura 3 LQR com integrador.
+e K e obtido fazendo-se
+
+>0
+
+K  (R + > P )1 > P ,
+
+<0
+
+(12)
+
+onde P e a solucao da equacao algebrica de Riccati
+discreta (DARE) (Franklin et al., 2006)
+Figura 4 Angulo do swing-up.
+> (P  P (R + > P )1 > P ) + Q  P. (13)
+Ao escolher
+
+0, 2 0 0
+ 0 0 0
+Q
+ 0 0 10
+0 0 0
+obtem-se
+
+K  1, 0312 1, 2278
+
+5
+
+0
+0
+ , R  0, 3,
+0
+0
+
+(14)
+
+
+0, 4152 ,
+(15)
+como uma realimentacao_de_estados que estabiliza
+o pendulo.
+Outra forma de fazer o projeto e colocar um
+integrador e assim fazer o carro seguir uma referencia. A Figura 3 mostra o diagrama_de_blocos do novo sistema, onde rn e a referencia e
+en  rn  yn.
+O projeto do LQR e o mesmo descrito acima,
+porem, deve ser projetado para a planta aumentada correspondente a Figura 3, ou seja,
+
+
+
+a 
+C
+
+4, 8980
+
+
+ 
+0
+
+, a 
+,
+I
+0
+
+e o controlador resultando do LQR e
+
+
+Ka  K KI .
+
+(16)
+
+(17)
+
+Como o integrador foi inserido para fazer o
+carrinho
+seguir
+
+ uma referencia, considera-se C 
+1 0 0 0 .
+Para esse caso, as seguintes matrizes de ponderacao foram escolhidas
+
+
+0, 2 0 0 0
+0
+ 0 0 0 0
+0 
+
+
+
+0 
+Q   0 0 10 0
+ , R  0, 3, (18)
+ 0 0 0 0
+0 
+0 0 0 0 103
+o que resultou em
+K  4, 1409  2, 0906 5, 7494 0, 6083 0, 0405
+(19)
+
+ISSN 2525-8311
+
+Algoritmo de Swing up
+
+Existe diversos algoritmos de swing-up propostos
+na literatura para movimentar o carrinho e fornecer energia para girar o pendulo ate atingir uma
+posicao proxima a de equilbrio. Uma forma simplificada aplicada na pratica da forma apresentada
+em (K. J. Astrom, 1996), e
+u  Kmax sgn( cos()),
+
+(20)
+
+onde Kmax e uma constante que corresponde ao
+maximo valor de porcentagem do PWM. Com essa
+realimentacao o carrinho ira manter um sentido
+ate a velocidade do pendulo trocar de sinal (e parar o carrinho para   90 ). Considere o desenho esquematico da Figura 4. Para  < 90 ,
+se  > 0 entao x > 0 e vice-versa. Com o angulo
+ > 90 , o sinal de cos() muda, e assim o carrinho troca de sentindo para forcar o pendulo a ir
+para o ponto de operacao.
+Essa tecnica, nao resolve o problema do pendulo deste trabalho, pois a excursao disponvel
+para o carro se movimentar e muito pequena.
+Quando ocorre o caso de  > 90 , o carrinho
+vai manter o sentido ate atingir o ponto de operacao e, como a limitacao na excursao, o carinho
+atinge o limite antes disso.
+Logo, e necessario propor uma forma pratica
+de ponderar o ganho Kmax , limitando assim o deslocamento do carro, e tambem fazer com que uma
+quantidade maior de energia seja transferida para
+o pendulo quando  > 90 . A seguinte solucao
+foi proposta
+u  Kmax cos()sgn().
+
+(21)
+
+Desta forma, quanto mais proximo de   90 ,
+menor sera a realimentacao, ou seja, menor sera o
+movimento do carrinho.
+Apos alguns testes empricos, o algoritmo de
+swing-up implementado e da forma
+u  0, 45 cos()sgn(),
+
+(22)
+
+2662
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+velocidade do carro cms
+
+posição do carro cm
+
+15
+10
+5
+0
+-5
+-10
+0
+
+5
+
+10
+
+15
+
+20
+
+25
+
+1
+0.5
+6
+0
+-0.5
+
+4
+
+-1
+
+30
+
+0
+
+5
+
+10
+
+100
+0
+-100
+-200
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+
+20
+
+25
+
+30
+
+2
+
+Tensão aplicada V
+
+ângulo do pêndulo 
+
+200
+
+0
+
+15
+
+Tempo (s)
+velocidade_angular do pêndulo s
+
+Tempo (s)
+20
+10
+0
+
+0
+
+-2
+
+-10
+-20
+0
+
+5
+
+Tempo (s)
+
+10
+
+15
+
+20
+
+25
+
+30
+
+-4
+
+Tempo (s)
+
+-6
+
+Figura 5 Dados medidos com o controlador LQR
+sem integrador e com Swing-up.
+
+0
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+
+Tempo (s)
+
+Figura 6 Esforco de controle com o LQR sem
+integrador e com Swing-up.
+
+para  < 150 . Apos  atingir o valor de 150
+pela primeira vez,
+
+(23)
+(24)
+
+velocidade do carro cms
+
+u  0, 3 cos()sgn(), para   143 ,
+u  0, para  > 143 .
+
+posição do carro cm
+
+10
+
+
+
+5
+0
+-5
+-10
+20
+
+22
+
+24
+
+26
+
+28
+
+0.05
+
+0
+
+-0.05
+
+-0.1
+20
+
+30
+
+22
+
+24
+
+dessa forma, se o pendulo entrar pela direita ( <
+0) ou pela esquerda ( > 0) nao fara diferenca para
+o controle. O swing-up implementado funciona
+ate que  < 5 , a partir disso, o controle LQR e
+habilitado.
+Considerando o controlador LQR sem integrador (15), como pode ser visto na Figura 5, o algoritmo proposto para o swing-up funcionou perfeitamente. A Figura 7 e o mesmo grafico porem
+apenas mostrando o funcionamento do controlador estabilizante. Pode-se observar que o LQR
+funcionou como esperado, pois as variacoes do angulo do pendulo (visto na Figura 7) sao, no maximo, 0, 4 , o que esta muito proximo de zero.
+As Figuras 6 e 8 correspondem aos esforcos de
+controle, gerados multiplicando-se o duty-cicle do
+P W M por 12 V  (tensao nominal).
+Considerando agora o LQR com integrador
+(19) e aplicando uma onda quadrada como trajetoria a ser seguida pelo carrinho, os resultados
+obtidos sao apresentados na Figura 9. Como o
+algoritmo de swing-up e o mesmo do LQR sem integrador, os graficos so mostram o funcionamento
+do controle. Observa-se que o pendulo continua
+estavel junto com o movimento do carrinho.
+A Figura 10 mostra a posicao do carro junto
+com a referencia. Observa-se que o carrinho seguiu a referencia, porem, ha pequenas variacoes
+menores que 2 cm. Isso e devido a efeitos nao
+modelados como o atrito seco entre o carrinho e
+o trilho. O esforco_de_controle pode ser visto na
+
+ISSN 2525-8311
+
+ângulo do pêndulo 
+
+-0.2
+
+24
+
+30
+
+26
+
+28
+
+30
+
+28
+
+30
+
+0.2
+0
+-0.2
+-0.4
+20
+
+22
+
+24
+
+Tempo (s)
+
+26
+
+Tempo (s)
+
+Figura 7 Dados medidos com o controlador LQR
+sem integrador e sem Swing-up.
+
+2.5
+2
+1.5
+1
+0.5
+0
+-0.5
+-1
+-1.5
+-2
+-2.5
+20
+
+21
+
+22
+
+23
+
+24
+
+25
+
+26
+
+27
+
+28
+
+29
+
+30
+
+Tempo (s)
+
+Figura 8 Esforco de controle com o LQR sem
+integrador e sem Swing-up.
+
+20
+
+velocidade do carro cms
+
+(25)
+
+0
+
+22
+
+28
+
+0.4
+
+10
+0
+-10
+-20
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+0.4
+0.2
+0
+-0.2
+-0.4
+
+80
+
+0
+
+10
+
+20
+
+30
+
+Tempo (s)
+
+2
+
+0
+
+-2
+0
+
+10
+
+20
+
+30
+
+40
+
+Tempo (s)
+
+40
+
+50
+
+60
+
+70
+
+80
+
+50
+
+60
+
+70
+
+80
+
+Tempo (s)
+
+4
+
+50
+
+60
+
+70
+
+80
+
+velocidade_angular do pêndulo s
+
+      sgn(),
+
+0.2
+
+-0.4
+20
+
+Tensão aplicada V
+
+Para realizar o swing-up e considerado o angulo
+ e no controle estabilizante utiliza-se o angulo .
+A relacao entre eles e dada por
+
+0.4
+
+posição do carro cm
+
+Resultados Praticos
+
+ângulo do pêndulo 
+
+6
+
+26
+
+Tempo (s)
+velocidade_angular do pêndulo s
+
+Tempo (s)
+0.6
+
+2
+
+0
+
+-2
+
+-4
+0
+
+10
+
+20
+
+30
+
+40
+
+Tempo (s)
+
+Figura 9 Dados medidos com o controlador LQR
+com integrador e sem Swing up.
+
+2663
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+15
+
+Franklin, G., Powell, J. and Emami-Naeini, A.
+(2013). Sistemas de Controle para Engenharia - 6ed, Bookman Editora, Porto Alegre,
+RS.
+
+Posição medida
+Refência
+
+10
+
+posição do carro cm
+
+5
+
+0
+
+Franklin, G., Powell, J. and Workman, M. (2006).
+Digital Control of Dynamic Systems, 3rd ed.
+(reprint) edn, Ellis-Kagle Press.
+
+-5
+
+-10
+
+-15
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+Tempo (s)
+
+Figura 10 Posicao medida do carro e a referencia.
+4
+
+3
+
+K. J. Astrom, K. F. (1996). Swinging up a pendulum by energy control, 13th IFAC World
+Congress pp. 115.
+
+2
+
+Tensão aplicada V
+
+Jepsen, F., A. Soborg, A. R. P. and Yang, Z.
+(2009). Development and control of an inverted pendulum driven by a reaction wheel,
+pp. 28292834.
+
+1
+
+0
+
+Masaki YAMAKITA, Tasuku HOSHINO, K. F.
+(1999). Control practice using pendulum,
+American Control Conference pp. 490494.
+
+-1
+
+-2
+
+-3
+
+-4
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+Tempo (s)
+
+Figura 11 Esforco de controle com o LQR com
+integrador.
+Figura 11. Pode-se ver que o esforco esta bem
+abaixo da saturacao do controle (12 V ).
+7
+
+Conclusoes
+
+O sistema construdo e de baixo_custo e tem
+grande potencial para ser utilizado em laboratorios didaticos de controle. O algoritmo swing-up
+conseguiu levar o pendulo para a regiao proxima
+ao ponto de equilbrio, mesmo com a excursao reduzida do trilho do carro. O algoritmo LQR digital conseguiu estabilizar o pendulo e ainda possibilitar que o carro seguisse uma referencia na forma
+de pulso retangular. O resultado final do projeto
+foi bem satisfatorio. O prototipo sera convertido
+em um produto com melhor acabamento para ser
+utilizado no laboratorio didatico da Escola Politecnica da USP.
+
+Ogata, K. (2003). Engenharia de Controle Moderno, 4 ed. edn, Prentice-Hall, Sao Paulo,
+SP.
+S. I. Ha, J. M. L. (2015). Balancing and velocity
+control of a unicycle robot based on the dynamic model, IEEE Transactions on Industrial
+Electronics 62(1) 405413.
+Sigurd Skogestad, I. P. (2005). Multivariable Feedback Control Analysis and Design, 2nd edn,
+Wiley.
+W. An, Y. L. (2013). Simulation and control of
+a two-wheeled self-balancing robot, pp. 456
+461.
+
+Agradecimentos
+Os autores agradecem a Fundacao de Amparo a
+Pesquisa do Estado de Sao Paulo (FAPESP) pelo
+processo 201600729-9 e a Freescale pela doacao
+da placa FRDM-K64F.
+Referencias
+Debasish Chatterjeea, Amit Patraa, H. K. J.
+(2002). Swing-up and stabilization of a cartpendulum system under restricted cart track
+length, Systems e Control Letters 47 355
+364.
+
+ISSN 2525-8311
+
+2664

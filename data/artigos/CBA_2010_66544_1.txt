@@ -1,0 +1,910 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+SISTEMA DE AQUISICAO DE DADOS EM TEMPO REAL UTILIZANDO
+PRODUTOS DE SOFTWARE LIVRE E REDE ETHERNET PARA LABORATORIO
+DE CONTROLE
+Elaine de Mattos Silva, Jose Paulo Vilela Soares da Cunha, Orlando Bernardo Filho
+
+
+Departamento de Eletronica e Telecomunicacoes  Faculdade de Engenharia
+Universidade do Estado do Rio de Janeiro  Rua Sao Francisco Xavier 524, sala 5001E  20559-900
+
+
+Departamento de Sistemas e Computacao  Faculdade de Engenharia
+Universidade do Estado do Rio de Janeiro  Rua Sao Francisco Xavier 524, sala 5014D  20559-900
+Emails elaine@lee.eng.uerj.br, jpaulo@ieee.org, orlando@eng.uerj.br
+Resumo Descreve-se um sistema de aquisicao_de_dados descentralizado, baseado no paradigma clienteservidor utilizando software_livre o sistema operacional Linux, o pacote de calculo numerico Scilab e o
+simulador Scicos. Foram desenvolvidos blocos para o Scicos que permitem a interface com placas de aquisicao
+de dados atraves de um computador servidor onde estao instaladas. O sistema pode disponibilizar o hardware
+de aquisicao_de_dados a diversos usuarios (clientes), permitindo o compartilhamento de recursos do laboratorio.
+Testes com aquisicao e sntese de sinais, medicao de atrasos e experimentos de controle_hardware_in_the_loop indicam a boa aplicabilidade do sistema. Este sistema foi desenvolvido no Laboratorio de Eletronica de Potencia e
+Automacao da Universidade do Estado do Rio de Janeiro tendo-se em vista cursos de graduacao e pos-graduacao
+em controle.
+Palavras-chave
+
+.
+
+Abstract This article describes a decentralized data acquisition system based on the clientserver paradigm
+using free software the Linux operating system, the numerical computational package Scilab and its simulator
+Scicos. Blocks have been developed to allow the interface between data acquisition cards and Scicos through a
+server computer where the cards are installed. The system provides the availability of data acquisition hardware
+to multiple users (clients), allowing shared laboratory resources. Tests with signal acquisition and synthesis,
+delay measurement and hardware_in_the_loop control experiments indicate the applicability of the system. The
+system was developed at the Laboratory of Power Electronics and Automation of the State University of Rio de
+Janeiro aiming at undergraduate and graduate control courses.
+Control education, Free software, Hardware in the loop, Comedi, Scilab, Scicos.
+
+Keywords
+
+1
+
+A motivacao para o desenvolvimento de um
+sistema de aquisicao_de_dados via rede Ethernet
+utilizando software_livre veio da necessidade de
+atualizar os sistemas de aquisicao_de_dados legados ao Laboratorio de Eletronica de Potencia e
+Automacao (LEPAT) da Faculdade de Engenharia da Universidade do Estado do Rio de Janeiro
+(UERJ). Esses sistemas eram compostos de placas
+de aquisicao_de_dados com barramento ISA de 8 e
+16 bits de fabricantes como Keithley Instruments
+e National Instruments e nao podiam ser atualizados pois havia incompatibilidade de hardware entre os computadores modernos, que nao incluem
+mais os slots de barramento ISA e as placas de
+aquisicao_de_dados disponveis. Havia tambem o
+problema com a indisponibilidade de drivers, aplicativos de aquisicao e calibracao para versoes atuais de sistemas_operacionais. Assim, a aquisicao e
+analise dos dados era realizada em computadores
+obsoletos, cujos sistemas_operacionais nao podiam
+ser atualizados ou trocados.
+
+Introducao
+
+O uso de software de computacao numerica para
+simulacao_de_sistemas_dinamicos vem se tornando
+cada vez mais comum em disciplinas de circuitos
+eletricos e controle. Entretanto, o alto custo do
+software proprietario tradicional dificulta a implantacao de laboratorios para o ensino e pesquisa nessas areas dentro das universidades publicas, onde os recursos financeiros sao geralmente
+escassos (Silva and Cunha, 2006).
+Pases como Franca, Italia, China e India vem
+utilizando e desenvolvendo extensoes para o software_livre de computacao numerica e simulacao
+de sistemas_dinamicos hbridos ScilabScicos para
+fins educacionais e industriais. Na area educacional destaca-se o RLTOOL, uma extensao para o
+Scilab que facilita o projeto e a analise de sistemas_de_controle monovariaveis, permitindo interacoes como a manipulacao de polos e zeros e a
+visualizacao dos efeitos da mudanca de parametros do controlador no lugar das razes e no desempenho do sistema (Pendharkar, 2005). Entre
+as iniciativas industriais destacam-se projetos com
+simulacao hardware_in_the_loop (HIL) (Mannori
+et al., 2006) e desenvolvimento de controladores
+embutidos a partir da geracao de codigo standalone (Ma et al., 2008).
+
+Uma das alternativas de baixo_custo para realizar a aquisicao_de_dados e o uso de microcontroladores com conversores AD e interface
+USB (universal serial bus) para comunicacao com
+microcomputadores. No entanto, caractersticas
+como o rudo de medicao sao inferiores aquelas
+
+278
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+das placas disponveis. Uma alternativa que emprega software_livre e o uso do sistema operacional
+Linux com os drivers para placas de aquisicao de
+dados fornecidos pelo projeto Comedi e os blocos
+do Scicos HIL, que funcionam como interface entre placas de aquisicao_de_dados e o Scicos. Com
+esta configuracao e possivel realizar o controle de
+sistemas reais a partir do Scicos, em tempo_real
+brando (soft real time). Outra alternativa e o uso
+do conjunto composto por Linux, RTAI, Scicos e
+RTAI-Lib. O RTAI e uma extensao para o kernel
+do Linux que permite que alguns aplicativos sejam
+executados em tempo_real rgido (hard real time)
+e o RTAI-Lib e um conjunto de blocos do Scicos
+(geradores de funcao, atuadores, conversores AD
+e DA, osciloscopios, etc.) preparados para execucao em tempo_real (Bucher et al., 2008). Esta
+solucao possibilita o projeto, implementacao e monitoracao de controladores em tempo_real rgido
+(Grzegorz et al., 2008).
+Entretanto, como as placas de aquisicao de
+dados disponveis eram padrao ISA, ainda seria
+necessario ter computadores obsoletos executando
+o Scicos em tempo_real, seja ele brando ou rgido.
+Para contornar esses problemas, desenvolveuse no LEPAT um sistema onde a aquisicao e
+analise foram descentralizadas, utilizando apenas
+um computador legado (servidor) para realizar
+a aquisicao_de_dados, fazendo interface com as
+plantas e enviando os dados para computadores
+mais avancados (clientes), onde o controle e realizado. Mesquita and Kienitz (2005) utilizaram
+computadores organizados numa arquitetura mestreescravo, interligados por interface serial (RS232) para a otimizacao de controladores em tempo
+real. Para manter compatibilidade com os computadores atuais, que podem nao possuir interface
+RS-232, e disponibilizar o sistema a mais usuarios, a comunicacao entre o servidor e os clientes
+e realizada atraves de uma rede_local (Local Area
+Network  LAN) de forma similar ao sistema descrito por Kutlu and Aydogan (2009).
+A Secao 2 apresenta os produtos de software
+utilizados no desenvolvimento do sistema de aquisicao_de_dados e controle. Na Secao 3 sao abordados detalhes de software e hardware do sistema de
+aquisicao_de_dados. As Secoes 4 e 5 apresentam
+os testes realizados com o sistema de aquisicao de
+dados. A Secao 6 apresenta conclusoes sobre este
+trabalho.
+
+real, pois nao e possvel garantir prazos estritos de
+temporizacao de processos, porem existem patches
+e extensoes para o kernel que, uma vez instaladas,
+garantem a execucao de tarefas prioritarias dentro de prazos rgidos (Farines et al., 2000). Uma
+dessas extensoes e o RTAI  Real-Time Application Interface. Ao ser instalado, o RTAI torna-se o
+principal escalonador do sistema, executando o Linux como um processo de baixa prioridade, monitorando e tratando as interrupcoes e as redirecionando para o Linux quando necessario. Aplicacoes
+que necessitam de prioridades especiais podem ser
+escritas utilizando a API (Application Programming Interface  conjunto de programas e funcoes que permitem a interacao com outros programas) do RTAI. Entretanto, se o computador
+utilizado para executar aplicativos em tempo_real
+e um computador de uso geral, o usuario pode
+perder o controle da maquina para os processos
+de tempo_real.
+Existem solucoes mais simples que o RTAI.
+Os patches para o kernel como o UTIME e os
+hrtimers  high resolution timers sao programas
+que aplicam modificacoes ao subsistema de temporizacao do kernel aumentando a resolucao de
+tipicamente 4 ms, limitada pelo perodo de interrupcao do relogio da CPU (clock  chip 8254)
+(Balaji et al., 2001).
+Na implantacao de um laboratorio de controle com computadores executando programas
+em tempo_real, Arzen et al. (2005) demonstraram
+que e possvel obter frequencias de amostragem
+de ate 2 kHz, com o kernel 2.4.18 modificado pelo
+patch UTIME. Smith and Christensen (2009) obtiveram tempos de latencia menores que 100 s
+ao usar o kernel 2.6.19 modificado com o patch
+hrtimers para controlar um manipulador de alto
+desempenho (ball catcher ). Esses resultados sao
+comparaveis aos geralmente obtidos com o RTAI.
+No entanto, considerando o avanco do hardware e a reducao da complexidade do algoritmo de
+escalonamento do kernel 2.6, que passou de O(n)
+(o tempo de escalonamento era uma funcao do numero de processos ativos) para O(1) (o tempo de
+escalonamento passou a ser fixo e independente do
+numero de processos ativos) (Jones, 2006), nao foram utilizados recursos de extensao do kernel no
+desenvolvimento do sistema remoto de aquisicao
+de dados.
+2.2
+
+2
+2.1
+
+Descricao do Software Utilizado
+
+Scilab e Scicos
+
+O Scilab e um software de computacao numerica,
+de codigo fonte aberto e gratuito, desenvolvido
+para uso cientfico. Inclui bibliotecas (toolboxes)
+para diversas areas, destacando-se processamento
+de sinais, sistemas_de_controle, simulacao, integracao numerica e algebra linear.
+O programa tambem possui uma interface
+grafica capaz de gerar graficos 2D, 3D, curvas de
+
+Sistema operacional Linux
+
+Na ultima decada, o Linux tornou-se a principal
+alternativa aos sistemas_operacionais proprietarios, com seu baixo_custo de implantacao e manutencao, eficacia e alta confiabilidade (Guedes and
+Silva, 2005). O Linux nao e um sistema de tempo
+
+279
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+O cliente foi implementado na forma de blocos
+do Scicos. Estes blocos solicitam ao servidor a execucao de funcoes da API do Comedi e foram criados conforme ilustrado em (Gomez et al., 1999) e
+(Campbell et al., 2005). Os blocos sao
+
+nvel e graficos parametricos que podem ser exportados para diversos formatos, dentre os quais
+destacam-se GIF, Xfig, PostScript e Latex.
+O Scicos (Scilab connected object simulator ) e
+um toolbox para a simulacao_de_sistemas_dinamicos de tempo contnuo, tempo_discreto e sistemas
+hbridos representados por diagramas de blocos interconectados. E muito apropriado para simulacoes de sistemas_de_controle, comunicacao, processamento_de_sinais e no estudo de sistemas fsicos
+e biologicos (Mannori et al., 2006).
+Blocos com funcoes afins sao organizados em
+grupos denominados palettes. Ha palettes para
+sistemas_lineares, geradores de sinais, elementos
+eletricos e hidraulicos entre outros. E possvel incorporar blocos ao Scicos para execucao de programas escritos em C, FORTRAN e na linguagem
+do Scilab.
+O Scicos possui um gerador de codigo C que
+permite a criacao de aplicativos stand-alone a partir do diagrama_de_blocos. Com isso e possvel
+sua utilizacao como um CACSD (computer-aided
+control system design), projetando, simulando e
+gerando codigo para controladores que pode ser
+adaptado para execucao em sistemas_embutidos
+(Grzegorz et al., 2008).
+2.3
+
+SERVIDOR
+planta 1
+
+placa de aquisição 2
+
+planta 2
+...
+
+..
+.
+
+placa de aquisição 2
+
+planta n
+
+placa de rede
+
+LANInternet
+
+CLIENTE 1
+
+CLIENTE n
+.
+
+.
+
+.
+
+CLIENTE 2
+
+Figura 1 Arquitetura de hardware.
+ remote analog data input  solicita leitura de um canal do subdispositivo de entrada analogica (AD)
+
+Comedi
+
+O projeto Comedi (common measurement device
+interface) foi desenvolvido para suprir a demanda
+por drivers de placas de aquisicao_de_dados para
+o Linux. Alem do desenvolvimento de drivers, o
+projeto fornece ferramentas e uma biblioteca de
+funcoes (Comedilib API, escrita na linguagem de
+programacao C) que permite a criacao de aplicativos para diversas formas de aquisicao_de_dados
+leitura e escrita de sinais digitais e analogicos, contagem de pulsos ou frequencia, geracao de pulsos,
+codificacao, etc. (Schleef et al., 2003).
+O projeto disponibiliza tres pacotes
+
+ remote analog data output  solicita escrita em um canal do subdispositivo de sada
+analogica (DA)
+ remote digital data input  solicita leitura de um canal do subdispositivo de entrada digital
+ remote digital data output  solicita escrita em um canal do subdispositivo de sada
+digital.
+No computador cliente foram instalados a
+distribuicao Mandriva 2010 do Linux com kernel 2.6.31 e o Scilab versao 4.1.2. A Tabela 1
+mostra as acoes executadas pelos blocos durante
+as fases de inicializacao, atualizacao das sadas e
+finalizacao da simulacao no Scicos.
+O servidor recebe as mensagens do cliente,
+executa as funcoes solicitadas e envia de volta
+ao cliente os valores obtidos ou uma mensagem
+de erro. A distribuicao do sistema operacional
+Linux escolhida para o computador servidor foi
+a Vector Linux VL 5.9 Light Edition, com kernel 2.6.22. Esta distribuicao provou ser a mais
+adequada para o uso com computadores de recursos limitados pois e bastante compacta e simples.
+Nesse computador tambem foi instalado o pacote Comedi (comedi-0.7.76) e o pacote Comedilib
+(comedilib-0.8.1).
+O programa do servidor, acqd (acquisition daemon), foi escrito na linguagem de programacao
+
+ comedi  drivers para diversas placas de
+aquisicao_de_dados
+ comedilib  API com funcoes de calibracao,
+escrita, leitura e configuracao
+ kcomedilib  funcoes da comedilib modificadas para execucao em modo supervisor (para
+uso com o LinuxRTAI).
+3
+
+placa de aquisição 1
+
+Descricao do Sistema de Aquisicao
+
+O sistema de aquisicao foi desenvolvido na linguagem de programacao C e na linguagem do Scilab,
+de acordo com o modelo clienteservidor.
+A Fig. 1 ilustra a arquitetura de hardware do
+sistema. Neste sistema o controle e realizado pelo
+cliente, o servidor apenas realiza as aquisicoes.
+
+280
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Tabela 1 Fases da simulacao e acoes realizadas pelos blocos desenvolvidos.
+Bloco
+
+Inicializacao
+
+Atualizacao das sadas
+
+Finalizacao
+
+remote analog data input (AD)
+
+Verifica dados digitados pelo
+usuario e inicializa dispositivo.
+
+Solicita execucao das funcoes comedidataread()
+e comeditophys().
+
+Fecha dispositivo.
+
+remote analog data output (DA)
+
+Verifica dados digitados pelo
+usuario e inicializa dispositivo. Inicializa valor seguro.
+
+Solicita execucao das funcoes comedifromphys()
+e comedidatawrite().
+
+Solicita escrita do
+valor seguro e fecha dispositivo.
+
+remote digital data input
+
+Verifica dados digitados pelo
+usuario e inicializa dispositivo.
+
+Solicita execucao da funcao comedidioread().
+
+Fecha dispositivo.
+
+remote digital data output
+
+Verifica dados digitados pelo
+usuario e inicializa dispositivo.
+
+Solicita execucao da funcao comedidiowrite().
+
+Solicita escrita do
+valor seguro e fecha dispositivo.
+
+uma placa de aquisicao_de_dados da Keithley Instruments modelo DAS-1602. Esta placa possui entradas analogicas com 16 canais simples ou 8 diferenciais, com resolucao de 12 bits 2 canais de
+sada analogica com resolucao de 12 bits 4 canais
+de entrada e 4 canais de sada digital, com 4 bits
+cada. O cliente foi implementado em um computador com processador Intel Pentium 4, 2,40 GHz,
+com memoria RAM de 1 GB. Cliente e servidor
+foram conectados atraves de um link Ethernet direto de 100 Mbps.
+O comando nice foi utilizado no servidor para
+priorizar o processo acqd e no cliente para priorizar o processo scilab. A sintaxe do comando e
+nice -n prioridade comando, no qual a prioridade varia de -20 (maior prioridade) a 20 (menor).
+Os comandos sao da seguinte forma
+
+C escolhida por ser uma linguagem flexvel e compatvel com as funcoes do Comedi executadas pelo
+servidor, que tambem sao escritas em C. Um fluxograma simplificado do programa servidor acqd
+foi ilustrado na Fig. 2.
+As Figs. 3 e 4 mostram a interface grafica do
+modulo de configuracao de placas de aquisicao criados para o Scicos. Estes modulos executam a
+funcao modprobe, que carrega o driver da placa
+escolhida para o kernel do servidor, e o comando
+comediconfig, que associa o driver a uma entrada de dispositivo, por exemplo devcomedi0.
+As figuras tambem mostram as respostas aos comandos executados pelo servidor ao cliente.
+A comunicacao entre cliente e servidor e realizada atraves do protocolo de transporte TCP
+(transmission control protocol ), de forma similar a
+(Zeiger et al., 2009). Esse protocolo foi o escolhido
+devido as garantias oferecidas em relacao a correta
+notificacao de recebimento, sequenciamento e controle_de_fluxo de pacotes. Dependendo do tipo de
+sinal amostrado, as perdas de pacotes ou trocas
+em sua sequencia poderiam afetar a forma como
+os sinais sao interpretados pelo usuario ou prejudicar os sistemas_de_controle.
+O protocolo de aplicacao utilizado foi o HTTP
+por ser universal e simples. A escolha deste protocolo tambem esta associada a ideia de estender o sistema para implementar um weblab hbrido com a possibilidade de acesso a experimentos via navegador de Internet (browser ) (Gomes
+and Bogosyan, 2009). Atualmente pode-se configurar e testar as placas do servidor remotamente
+utilizando comandos simples via browser.
+4
+
+sudo nice -n -20 .scilab
+sudo nice -n -20 .acqd
+
+4.1
+
+Aquisicao de sinais
+
+Para o teste de aquisicao de sinais, o canal 0
+do subdispositivo de entrada analogica (conversor AD) da placa de aquisicao_de_dados foi acoplado a um gerador senoidal de amplitude 3 Vp e
+frequencia 10 Hz. O diagrama_de_blocos do Scicos
+apresentado na Fig. 5 foi configurado para realizar uma leitura a cada 10 ms e exibir os dados
+graficamente (Fig. 6).
+
+4.2
+
+Geracao de sinais
+
+Os testes de geracao de sinais foram realizados
+com o subdispositivo de sada analogica da placa
+de aquisicao (conversor DA), canal 0. Um bloco
+gerador de senoides do Scicos foi ligado ao bloco
+de sada analogica conforme a Fig. 7. Foi testada a geracao de uma senoide de amplitude 4 Vp ,
+frequencia 10 Hz e perodo de amostragem 10 ms.
+O sinal gerado pelo conversor DA e medido por
+um osciloscopio e apresentado na Fig. 8.
+
+Teste do Sistema
+
+Foram realizados testes com o sistema de aquisicao
+de dados a fim de avaliar o atraso de amostragem,
+a precisao da temporizacao na geracao e aquisicao
+de sinais.
+O computador servidor, com processador Intel
+Pentium II, 300 MHz e memoria RAM de 256 MB,
+com slots para barramento ISA, foi equipado com
+
+281
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+INÍCIO
+
+Abre conexão
+com a rede
+
+Associa conexão
+a porta 3490
+
+Escuta requisições
+
+Figura 3 Modulo de configuracao  modprobe.
+Existe requisição?
+
+N
+
+S
+
+Estabelece conexão
+com cliente
+
+Recebe mensagem
+do cliente e
+armazena no buffer
+
+Trata mensagem
+do cliente
+
+Figura 4
+Modulo
+comediconfig.
+
+Executa função
+Comedi solicitada
+pelo cliente
+
+Figura 2 Fluxograma simplificado do servidor de
+aquisicao.
+Medicao do atraso
+
+A medicao do atraso devido a amostragem, comunicacao e processameto foi realizada da seguinte
+forma uma senoide de 3 Vp e 10 Hz era fornecida
+por um gerador analogico conectado ao conversor
+AD. O sinal digitalizado pelo conversor AD foi
+enviado ao conversor DA conforme o diagrama
+do Scicos na Fig. 9. O perodo de amostragem era
+10 ms. Os sinais gerados pelo DA e pelo gerador de sinais foram medidos por um osciloscopio
+e apresentados na Fig. 10. Ao comparar os sinais,
+constata-se que o atraso maximo entre o sinal analogico e o sinal amostrado e 4 ms.
+5
+
+configuracao
+
+
+
+da sua aplicacao em sistemas reais. Foi utilizado o servomecanismo de posicionamento rotativo SRV-02 em conjunto com o modulo amplificador de potencia PA0103, ambos da Quanser
+Consulting. O servomecanismo e composto de um
+motor DC com caixa de reducao. Um potenciometro mede a posicao_angular da carga acoplada
+ao eixo do servomecanismo.
+Escolheu-se o controle proporcional por ser o
+mais simples, porem, o Scicos poderia implementar uma estrategia_de_controle mais complexa. Os
+resultados obtidos na simulacao do sistema serao
+comparados com os experimentais.
+Para realizar simulacoes, o sistema foi modelado pelo diagrama_de_blocos implementado no
+Scicos, Fig. 12, no qual o servomecanismo e modelado pela funcao de transferencia
+
+Envia resultados
+ao cliente
+
+4.3
+
+de
+
+G(s) 
+
+y(s)
+1, 68  106
+
+, (1)
+u(s)
+s(s + 57)(s + 14, 4  103 )
+
+na qual u e a tensao aplicada ao motor e y e a
+tensao gerada pelo potenciometro transdutor de
+posicao. Os coeficientes de G(s) foram calculados
+a partir dos parametros fsicos do servomecanismo
+disponveis no manual (Apkarian, 1995). O sinal
+de referencia e uma onda quadradada com amplitude 2 Vp e perodo 4 s. Os conversores AD e
+o DA foram modelados pelos blocos sample and
+hold (SH) e um saturador que limita os sinais a
+
+Aplicacao em um Servomecanismo
+
+O sistema de aquisicao remota de dados foi utilizado para controlar a posicao do servomotor na
+Fig. 11 com o objetivo de mostrar a viabilidade
+
+282
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Figura 7 Diagrama do Scicos para testes de sntese de sinais pelo conversor DA.
+
+Figura 5 Diagrama do Scicos para testes de aquisicao_de_dados pelo conversor AD.
+
+4
+3
+2
+
+y
+
+1
+0
+1
+2
+3
+4
+0.00 0.02 0.04 0.06 0.08 0.10 0.12 0.14 0.16 0.18 0.20
+t
+T  0,1s
+
+Figura 8 Sinal de 10 Hz gerado com perodo de
+amostragem 10 ms.
+
+Figura 6 Senoide com frequencia 10 Hz amostrada com periodicidade 10 ms.
+
+6
+
+Conclusoes
+
+O sistema de aquisicao_de_dados desenvolvido
+e discutido neste artigo permitiu o reaproveitamento de equipamentos legados existentes no
+LEPATUERJ. A arquitetura clienteservidor
+melhorou a utilizacao dos recursos, visto que nao
+ha a necessidade de uma placa de aquisicao_de_dados em cada microcomputador, disponibilizando o
+sistema de aquisicao a mais alunos.
+Os testes realizados permitem verificar a possibilidade de uso do sistema desenvolvido para a
+realizacao de experimentos classicos na area de
+controle. Sem nenhum recurso de extensao do kernel do Linux para a execucao de programas em
+tempo_real, foi possvel realizar simulacoes com
+perodo de amostragem de ate 10 ms alcancando
+bons resultados. Para perodos de amostragem
+menores que 10 ms, o sistema apresenta problemas de temporizacao e precisao dos valores amostrados. Parte do problema e devido ao grande
+numero de conexoes abertas entre cliente e servidor, que causa o esgotamento do numero de portas disponveis no cliente e o overhead decorrente
+do estabelecimento de conexoes multiplas, que sao
+abertas a cada instante de amostragem.
+O sistema continua em desenvolvimento e novas versoes do servidor darao suporte a versao 1.1
+
+uma faixa de -5 V a +5 V. A simulacao foi realizada com perodo de amostragem 10 ms. O ganho
+do controlador proporcional, Kp  5, foi ajustado
+para que a resposta ao degrau seja rapida, mas
+sem overshoot. Os sinais de sada y e de referencia r sao exibidos na Fig. 13. O sinal de controle
+u e apresentado na Fig. 14.
+Para realizar o experimento com o servomecanismo, os blocos SH e o saturador foram substitudos pelos blocos remote analog data input, configurado para adquirir sinais do AD da
+placa DAS-1602, e o remote analog data output, configurado para enviar sinais ao DA. A
+Fig. 15 mostra o novo diagrama.
+Comparando-se os resultados experimentais
+(Figs. 16 e 17) com os simulados (Figs. 13 e 14),
+nota-se que sao bastante parecidos, diferindo apenas pelo rudo de medicao presente nos experimentos. O sistema de aquisicao_de_dados desenvolvido para realizar os experimentos hardware
+in the loop teve um bom desempenho no controle
+deste servomecanismo.
+
+283
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Modelo do
+Servomecanismo
+
+square wave
+
++
+
+generator
+
+5
+
+SH
+
+Kp
+
+DA
+
+num(s)
+den(s)
+
+
+
+r
+
+SH
+
+u
+
+y
+
+Mux
+
+AD
+
+Figura 12 Diagrama do Scicos para simulacao do
+sistema_de_controle de posicao.
+
+Figura 9 Diagrama do Scicos para medicao do
+atraso de amostragem, comunicacao e processamento.
+
+3
+2
+
+y,r(V)
+
+1
+0
+1
+
+y
+
+r
+2
+3
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10
+
+t(s)
+
+Figura 10 Sinal de 10 Hz usado para a medicao
+do atraso de amostragem.
+
+Figura 13 Sinais de referencia (r) e sada (y) simulados.
+5
+4
+3
+2
+1
+0
+1
+2
+3
+4
+5
+
+u(V)
+
+do protocolo HTTP, o que permitira que a troca
+de mensagens seja realizada atraves de conexoes
+persistentes, resolvendo assim o problema de conexoes multiplas. Alem disso, o codigo do servidor esta sendo paralelizado para permitir o tratamento de mais solicitacoes simultaneas.
+Um limite do sistema e o atraso inserido pelo
+tempo de round-trip dos pacotes na rede Ethernet.
+Com o servidor e o cliente conectados atraves de
+um link direto, o tempo de round-trip medio medido pelo comando traceroute foi 0,24 ms.
+Ma et al. (2008) apresentaram um sistema
+de controle_via_rede Ethernet onde um tanque
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+t(s)
+
+6
+
+7
+
+8
+
+9
+
+10
+
+Figura 14 Sinal de controle (u) simulado.
+
+Figura 11 Bancada para os experimentos de controle. O computador cliente, a esquerda, executa
+o ScilabScicos. No centro esta o servomecanismo
+e a direita esta o computador servidor, que hospeda a placa de aquisicao_de_dados.
+
+Figura 15 Diagrama do Scicos para realizar experimentos de controle de posicao.
+
+284
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+tion, Quanser Consulting.
+3
+
+Arzen, K.-E., Blomdell, A. and Wittenmark, B. (2005).
+Laboratories and real-time computing, IEEE Contr.
+Sys. Mag. 25(1) 3034.
+
+y,r (V)
+
+2
+1
+
+Balaji, R. M., Ansari, F., Keimig, J. and Sheth, A. (2001).
+Utime - micro-second resolution timers for linux. Disponvel em httpwww.ittc.ku.eduutime.
+
+0
+
+1
+
+Bucher, R., Mannori, S. and Netter, T. (2008). RTAILab tutorial Scilab, Comedi, and real-time control.
+Disponvel em httpswww.rtai.orgRTAILAB.
+
+y
+
+r
+
+2
+
+Campbell, S. L., Chancelier, J.-P. and Nikoukhah, R.
+(2005). Modeling and Simulation in ScilabScicos,
+Springer-Verlag.
+
+3
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+t(s)
+
+6
+
+7
+
+8
+
+9
+
+10
+
+Farines, J. M., Fraga, J. S. and Oliveira, R. S. (2000).
+Sistemas de Tempo Real, 12a Escola de Computacao,
+IME-USP.
+
+Figura 16 Sinais de referencia (r) e sada (y) experimentais.
+
+Gomez, C., Bunks, C., Chancelier, J., Delebecque, F.,
+Goursat, M., Nikoukhah, R. and Steer, S. (1999). Engineering and Scientific Computing with Scilab, 3a
+edn, Prentice Hall.
+
+u(V)
+
+5
+4
+3
+2
+1
+0
+1
+2
+3
+4
+5
+
+Gomes, L. and Bogosyan, Z. (2009). Current trends in
+remote laboratories, IEEE Trans. on Ind. Electronics
+56(12) 47444756.
+
+Grzegorz, S., Tomasz, Z. and Andrzej, B. (2008). Rapid control prototyping with ScilabScicosRTAI for
+PC-based and ARM-based platforms, Proc. Int. Multiconference on Computer Science and Information
+Technology, Wisla, Poland, pp. 739744.
+0
+
+1
+
+2
+
+3
+
+4
+
+5 6
+t(s)
+
+7
+
+8
+
+9
+
+Guedes, R. M. and Silva, E. M. (2005).
+troducao ao uso do Linux.
+Disponvel
+httpwww.lee.eng.uerj.brelaine.
+
+10
+
+Inside
+the
+LiJones,
+M.
+T.
+(2006).
+nux
+scheduler.
+Disponvel
+em
+httpwww.ibm.comdeveloperworkslinuxlibrary.
+
+Figura 17 Sinal de controle (u) experimental.
+
+Kutlu, A. and Aydogan, T. (2009). Performance analysis
+of MicroNet A higher layer protocol for multiuser
+remote laboratory, IEEE Trans. on Ind. Electronics
+56(12) 47844790.
+
+de agua simulado por um modelo no Scicos era
+controlado remotamente por um controlador embutido. O sistema de aquisicao_de_dados pode
+ser utilizado para experimentos com projeto de
+controladores para uma planta desconhecida. Um
+modelo da planta pode ser construdo no Scicos,
+em um computador inacessvel aos alunos. Esse
+modelo envia sinais para o servidor e recebe sinais dele. Esses sinais sao capturados pelos computadores dos alunos que podem entao construir
+seus controladores baseados no comportamento da
+planta desconhecida.
+Futuramente o sistema podera ser usado como
+base para um laboratorio remoto (weblab). Um
+servidor_web pode ser implementado depois de definidas polticas de acesso e seguranca. Assim, o
+aluno podera acessar os experimentos via browser.
+Todo o codigo-fonte do sistema de
+aquisicao desenvolvido esta disponvel em
+
+Ma, L., Xia, F. and Peng, Z. (2008). Integrated design
+an implementation of embedded control systems with
+Scilab, Sensors International Open Access Journal
+pp. 55015515.
+Mannori, S., Nikoukhah, R. and Steer, S. (2006). ScicosHIL  Scicos Hardware In the Loop. Disponvel em
+httpwww.scicos.orgscicoshil.html.
+Mesquita, A. R. and Kienitz, K. H. (2005). Otimizacao
+em tempo de execucao de controladores usando hardware computacional na configuracao mestre-escravo,
+Revista Controle  Automacao 16(1) 7683.
+Pendharkar, I. (2005). Rltool for Scilab, IEEE Contr. Sys.
+Mag. 25(1) 2325.
+Schleef, D., Hess, F. and Bruyninckx, H. (2003). The control and measurement device interface handbook. Disponvel em httpwww.comedi.orgdocindex.html.
+Silva, E. M. and Cunha, J. P. V. S. (2006). Scilab, scicos e rltool Softwares livres no ensino_de_engenharia
+eletrica, Proc. XVI CBA Congresso Brasileiro de Automatica., Salvador, BA, pp. 16201625.
+
+httpwww.lee.eng.uerj.brelaineacqd.html.
+
+7
+
+Inem
+
+Smith, C. and Christensen, H. I. (2009). Robot manipulators - constructing a high-performance robot from commercially available parts, IEEE RoboticsAutomation Mag. 16(4) 7583.
+
+Agradecimentos
+
+Este trabalho foi parcialmente financiado pelo
+CNPq, Faperj e CAPES.
+
+Zeiger, F., Schmidt, M. and Schilling, K. (2009). Remote
+experiments with mobile-robot hardware via internet
+at limited link capacity, IEEE Trans. on Ind. Electronics 56(12) 47984805.
+
+Referencias
+Apkarian, J. (1995). A Comprehensive and Modular Laboratory for Control Systems Design and Implementa-
+
+285

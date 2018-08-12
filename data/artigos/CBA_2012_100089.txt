@@ -1,0 +1,717 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+FACE TRACKING FRAMEWORK USING FACE DETECTION IN COLOR IMAGE MULTI VIEW
+WITH MULTI SKIN TONES
+CORNÉLIA JANAYNA P. PASSARINHO, EVANDRO O. T. SALLES, MÁRIO SARCINELLI-FILHO
+LabCISNE, Department of Electrical Engineering, Federal University of Espírito Santo
+Av. Fernando Ferrari 514, 29075-910, Vitória, ES, Brasil,
+E-mailsjanayna@.ele.ufes.br, evandro@.ele.ufes.br, mario.sarcinelli@ufes.br
+Abstract
+ This paper proposes a framework combining an SVM classifier, a Kalman filter and Gabor responses, to track multi-view faces in color video sequences, hereinafter referred to as Dynamic Support Vector Tracker (DSVT). The adjacent locations of the target point are predicted in a search window, thus reducing the number of image regions that are candidates to be
+faces. The method can predict the object motion more accurately, and presented good results for both indoor and outdoor unconstrained videos, considering multi-view scenes containing multi skin tone subjects, partial occlusion and bad illumination. The
+result is a system able to recover the face location not detected in a previous frame, what makes the framework to be faster, presenting a quite satisfactory performance.
+Keywords
+ face tracking, SVM, Gabor filter, skin color.
+Resumo
+ Este artigo propõe uma arquitetura combinando um classificador SVM, um filtro de Kalman e respostas de Gabor
+para seguir faces em múltiplas vistas em sequencias de vídeo colorido, doravante referida como Dynamic Support Vector Tracker (DSVT). As localizações adjacentes ao local do alvo são preditas numa janela de busca, assim, reduzindo o número de regiões da imagem que são candidatas a face. O método pode predizer o movimento do objeto mais precisamente e apresenta bons
+resultados para vídeos internos e externos, considerando cenas de múltiplas vistas contendo indivíduos com múltiplos tons de
+pele, oclusão parcial e má iluminação. O resultado é um sistema capaz de recuperar a localização da face não detectada em um
+quadro anterior, o que faz o framework ser rápido, apresentando um desempenho bastante satisfatório.
+Palavras-chave
+ .
+
+1
+
+Introduction
+
+Human-face detection and tracking plays an important role in many applications, such as video surveillance, face recognition, and face identification
+(Gong et al., 2000). The foregoing works consider
+mainly the detection and tracking of one frontal face
+(Frba and Ernst, 2003 Lui, 2003 Louis and
+Plataniotis, 2010 Viola and Jones, 2001). Such a
+restriction may limit their practical use because faces
+in images can occur with various poses, like in-plane
+or out-of-plane rotations, or under various situations,
+such as lighting conditions, facial expressions and
+occlusions. So, the visual appearances and features of
+faces could vary enormously when considering the
+environment in which the image is captured. For instance, Viola and Jones (2001) use a scheme in which
+the computation time is reduced, with the disadvantage that it is generally difficult to establish a reliable detector, especially when the face is not in
+frontal view.
+Other restriction in the works available in the literature is related to the target to detect. Several researchers have detected face by combining colorbased methods to obtain high performance and high
+speed (Yang, 2000). The advantages are that such
+methods are fast and have high detection ratio, although being limited in the presence of varying lighting and objects having a color that is similar to the
+color of the target (the face to be detected).
+
+ISBN 978-85-8001-069-5
+
+Many papers present feature-based methods to
+detect faces (Castaeda, 2004 Ruan, 2009). However, feature-based face detection demands huge computational effort, resulting in low-speed operation. In
+those cases, the problem of detecting faces has been
+replaced by the problem of detecting multiple, similarly complex and deformable, parts (Ruan, 2009).
+Such methods are useful for facial analysis and feature correspondence in face identification, because
+detection and alignment of facial features demands
+images of relatively high spatial resolution. However,
+in dynamic scenes, face detection often needs to be
+achieved in a much lower resolution. Occlusions
+caused by changes in the viewpoint are the main
+problem with the local feature-based approaches,
+because correspondences among certain features do
+not exist under occlusion.
+In this paper a detection and tracking algorithm
+that can detect human faces in color images under
+poor lighting conditions and different views is proposed. Such approach does not use face color model
+or deformable face parts to find faces in an unconstrained video. Instead, face image is the feature considered for SVM (Support Vector Machine) training.
+Several papers in the literature utilize SVM to detect
+face in a video sequence. However, they use gray
+level videos, disregarding the constraints of the real
+world they do not address the ill posed problem of
+illumination changing, for instance. These methods
+also perform face detection in a sequence of images,
+but do not consider the displacement of individuals in
+the video. Differently, the method here proposed
+
+4057
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+deals with the problem of partial occlusion along with
+face tracking in a video.
+The location of the face is estimated in a search
+window in each frame, by using a Kalman filter. The
+prediction function of the Kalman filter decreases the
+area to be searched. It is also used lighting compensation to improve the performance of the framework.
+The result is a method that is effective under facial
+changes, such as eye-closing, glass-wearing or emotions, for faces having distinct profiles and under
+bright variation. To validate the proposed architecture, tracking results obtained with the proposed
+method applied to unconstrained outdoor and indoor
+video sequences are presented.
+The proposed method, the DSVT, not only deals
+with the problem of partial occlusion, but also tracks
+the face of interest, thus being more complete than
+the method proposed in (Hotta, 2009), for instance.
+That method uses SVM and particle filter to detect
+and track faces, restricted to image sequences in gray
+level. Moreover, it is evaluated only under partial
+occlusion. Situations like faces in profile, tilted or at
+different scales are not considered.
+The DSVT image pre-processing is accomplished by using RGB color space only, as stressed in
+Section 2. Thus, it is not necessary to transform the
+RGB color space in any other one. DSVT uses a
+combination of face detection through SVM and a
+Kalman filter to track the faces of interest. The assumption of uniform displacement of individuals in
+the videos is enough to obtain satisfactory results.
+Thus, it is not necessary to train a SVM for several
+face poses, whose computational cost is much higher.
+Moreover, it is not feasible to estimate all possible
+changes that the object could take.
+The paper is hereinafter split in a few sections, to
+address the above mentioned topics. Face detection is
+discussed in Section 2 Section 3 describes the DSVT
+framework, and Section 4 presents some experimental results. Finally, the main conclusions are
+highlighted in Section 5.
+2
+
+Face Detection
+
+2.1 Illumination Compensation Problem
+Color is not an attribute that can be attached to
+the objects around us (Ebner, 2007). The object color
+in the scenes is determined by illuminant, another
+objects in the scene and the reflectance property of
+the surface of the object of interest. Color normalization is a required property when working with unconstrained environments. It is the expected illumination
+behavior in the real world. The ability of determining
+the colors of objects irrespective of the illumination
+is found out in the human visual system. Without
+color constancy, objects could no longer be reliably
+identified by their color. To know the actual color of
+
+ISBN 978-85-8001-069-5
+
+object of interest is a difficult task, due to the fact
+that the information available is the product of the
+reflectance of the object and the measure of light
+intensity focusing the object. Thus, approaches in the
+literature have been tried to solve the problem. Many
+tasks become much simpler if accurate color object is
+known. However, illumination is an ill posed problem in computer_vision.
+In this work it is proposed the use of an illumination fit algorithm, in the pre-processing step, for skin
+color pixel detection, to decrease the illumination
+effects in the color objects in the scenes. To reduce
+the effect of the real-world environmental illumination, a lighting compensation algorithm is indispensable for robust skin-tone color detection. By using
+lighting compensation, the skin-tone color constraints
+can be more accurately defined, thus decreasing the
+non-face image regions detected as face regions. As a
+result, the computational effort in the following steps
+involved in face detection can be decreased.
+First of all, considering that light reflected by the
+objects or persons in a scene varies with the illuminant, the method proposed in (Pai et al., 2006) is applied to each frame in the video sequence under analysis to achieve a less unstable object color perception. Such method estimates the illuminant using the
+average color pixel. Such method is based on the
+equation
+
+S
+
+Cstd
+Cavg
+
+(1)
+
+where S is a scale factor for one specific color channel (R, G or B). C std is the standard mean gray value
+m
+
+ max(N R , NG , N B ) + min(N R , NG , N B )
+Cstd 
+
+1
+
+2n
+
+nm
+
+m
+
+ (N R  N G  N B )
+1
+
+where m is the number of pixels of the image and n is
+the number of non-black pixels in the image. Cavg is
+the mean value of the specific channel (R, G, B). The
+method was suitable for use in unconstrained images.
+For instance, images with dark foreground objects
+and light background will be not over-compensated.
+Similar performance is achieved in images with
+bright background and dark objects of interest. In this
+work it is proposed not range the S value. In the original method is recommended the S value to be restrict
+to the range 0.8 1.2 (Chen and Christos, 2005). The
+fixed range presents more accurate results in medium
+skin tones. The performance of the algorithm will be
+shown on some sample images (Figure 1), gotten
+from the dark skin color database (Face-place) and
+from a celebrity pictures available in the internet.
+It is observed that the algorithm does not generate overcompensation, and is reliable in images with
+dark background. The method presents fit results for
+
+4058
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+(a)
+
+(b)
+
+(c)
+
+Figure 1. Original mages from the dark skin color database
+(first and second rows) and celebrity pictures (third and
+fourth rows) (a), after color illumination compensation (b),
+and after using HSV Retinex (c).
+(a)
+
+images in which the foreground is light and the background is dark. These assumptions were not hold by
+Retinex algorithm using HSV color space applied to
+the same pictures. As a result, the images obtained by
+applying Retinex to the images gotten from the celebrities data base presented overcompensation, and the
+images obtained considering the dark skin color database are brighter than the originals.
+2.2 Skin Tone Pixel Detection
+After compensating for the illumination, the algorithm proposed in (Gayathri, 2001) is used to detect
+skin color pixels in the images. Such approach uses
+the constraints on the RGB values of each pixel in the
+image to identify the skin color pixel regions. Some
+works in the literature have reported that the skintones are in a fixed color range in 95 for R, 40 for G
+and 20 for B (Kovac et al., 2003), varying from the
+orange to the red spectrum. This assumption is not
+entirely true in some real world images, especially in
+dark skin-tones. In this work, the thresholds applied
+to each image pixel are 20 for R, 30 for G and 100
+for B, which are suitable to identify several skin-tone
+pixels (see Figure 2). We have also tested the HSV
+color space threshold (Oliveira and Conci, 2009) and
+the association YCbCr and HSV space colors (Vezhnevets et al., 2003). Unfortunately, for the wellknown illumination invariant HSV color space the
+results are something unstable in unconstrained images, as those taken in CISNE Lab. Figure 3 show
+some results from that investigation. The three methods present acceptable results if applied in the dark
+skin database image (Figure 3, column (a), first row).
+These results are expected for both HSV and YcbCr-
+
+ISBN 978-85-8001-069-5
+
+(b)
+
+Figure 2. Images from the dark skin color database, a snapshot
+taken by an unprofessional camera and an celebrity image
+gotten from the internet. Original images (a) and respective
+skin color pixel areas detected after applying the illumination
+compensation algorithm (b).
+
+HSV association because the HSV does not work
+very well in environments where some color range is
+lacking (Mileva et al., 2007). However, it should be
+emphasized that the tested methods were combined
+with the compensation algorithm to minimize the
+unconstrained illumination (Khan, 2012). No skin
+color pixels were identified, disregarding the previous step of light compensation.
+Such tests were accomplished to search for a reliable method to detect skin color pixels, aiming at
+decreasing the image patch face candidates, thus allowing to reduce the computational effort in the next
+steps of our framework and getting higher hit rate.
+Retinex theory addresses the problem of separating the illumination from the reflectance in a given
+image and thereby compensating for non-uniform
+lighting. Thus, it was tested a Retinex illumination
+compensation in the HSV color space. The results
+from these experiments are shown in Figure 4. Although the HSV color space has been widely used in
+the literature, it should be emphasized that most of
+those works presented experiments with image databases with strictly controlled illumination.
+2.3 Gabor Filter
+After the image preprocessing step, Gabor filter
+outcomes are presented to an SVM to detect the faces. Defined as a plane wave enveloped by a Gaussian
+
+4059
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+pixels, where 3040 is the face image dimension.
+Initial experiments also used 1515 pixel training
+images in which the faces were more tightly cropped,
+but got slightly worse results. By choosing four Gabor filter output it was possible to use a higher patch
+dimension to get feature vector size of acceptable
+dimension. The position, x, which gives large Gabor
+outputs are different, depending on the orientation
+parameter of the Gabor filter. Thus, location Gabor
+properties are suitable to enhance the different target
+poses in a video sequence.
+2.4 Support Vector Machines
+
+(a)
+
+(b)
+
+(c)
+
+(d)
+
+Figure 3. An image from the dark skin color database and three
+snapshots taken by an unprofessional camera. Original images
+(a), respective skin color pixel detected using RGB (b), respective skin color pixel detected using YCbCr+HSV (c) and respective skin color pixel detected using HSV plus Retinex (d).
+
+function, the Gabor filter is able to extract features in
+a visual scene corresponding to a certain spatial frequency and orientation with a convolution operation.
+The general definition of a Gabor wavelet is
+
+
+
+ x 2 y 2 
+exp f 02  r2 + r2  exp(2if 0 xr + i)
+
+
+ x y
+
+ x  y 
+
+f 02
+
+(2)
+
+where f 0 stands for the frequency of the plane wave,
+ x and  y define the widths of the Gaussian envelope
+
+along
+
+x
+
+and
+
+y
+
+axes, x r  (x  x 0 ) cos 
+
++ ( y  y 0 ) sin  , y r   (x  x 0 ) sin  + ( y  y 0 ) cos 
+, x0 and y0 define the position of the wavelet,  is the
+
+anti-clockwise angle between the direction of propagation of the plane wave and the x axis, and  is an
+offset of the wave plane.
+It is usual to apply several Gabor filters with different orientations and frequencies in order to extract
+the most significant features in an image. One of the
+most popular Gabor filter banks is the classical
+bank one, characterized by 5 frequencies and 8 orientations. However many authors use their own parameterization. Many authors use their own parameterization. There are results showing that Gabor features of only one frequency level lead to a good performance in face recognition (Hotta, 2009). In the
+experiments here reported Gabor filters of four different orientations (   0,,3), with one frequency
+level, f 0 , are used, for the sake of speeding up the
+detection task. The results show that 4 size Gabor
+filter leads to a satisfactory detection rate.
+Gabor features of a local image in sliding window are extracted based on its Gabor representations,
+which are obtained by convolving the image with
+Gabor filters.
+The size of the Gabor filters was set to 30404
+ISBN 978-85-8001-069-5
+
+SVM is the classifier used to detect the faces in
+this work. Support Vector Machines present satisfactory results on detection task. SVM determines the
+optimal hyper plane that maximizes the distance between the hyperplane and the nearest sample, called
+margin (Bishop, 2005). When the training set (labeled
+samples)
+is
+denoted
+as
+
+S  ((z1 , y1 ),L, (z L , y L )) the optimal hyperplane
+is defined by
+
+f (z ) 
+
+  y K (z , z ) + b ,
+
+iSV
+
+i
+
+i
+
+i
+
+(3)
+
+where SV is a set of support vectors, b is the thresh-
+
+old and  i is the solution of a quadratic programming problem. The training samples with non-zero
+are called support vectors.
+
+K (z i , z) is the inner
+
+product (z i ) (z) between the support vector zi
+and the input vector z in high dimensional space. In
+our implementation, normalized linear kernel is
+adopted as the kernel function, which is defined as
+zT y .
+K (z , y ) 
+(4)
+z y
+To implement the SVM classifier, we have chosen
+the well-known Light SVM library (Joachims, 1999).
+Tests presented relevant results by using two degree
+Polynomial kernel and, c  100.
+T
+
+3
+
+Tracking a Detected Face
+
+Kalman filter (Bishop, 2005) is the filter most
+commonly used to solve problems of optimum estimation. By using the Kalman filter the posterior location of the face in the frame is predicted based on the
+current position information. This step avoids the
+need of searching for the face in the entire image.
+SVM together with Kalman filter improve face detection by estimating faces not detected by SVM. It is
+not reliable training SVM to detect several possible
+face poses. However, the Kalman filter achieves estimate position for the face in the next frame. Thus,
+Kalman filter recover face location not detected in a
+previous frame. At each time instant it is supposed
+that the face is moving with a constant velocity,
+
+4060
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+which does not represent a problem to most cases of
+tracking.
+In this paper, the face detector and the face
+tracker are used simultaneously. The Dynamic Support Vector Tracker is described in the 4 steps below
+ Step 1 - in the first frame, as a previous estimate of the face position is not available,
+the face is searched for in all the image regions of skin color. The face thus detected
+becomes the current observation for the
+Kalman filter, and is obtained by using the
+SVM in each skin color region. Therefore,
+the skin color surrounding the face is all the
+regions of skin in the frame
+ Step 2 - the estimate of the face location for
+the next frame is then obtained by the
+Kaman filter
+ Step 3 - a new observation is achieved in the
+estimated point obtained in the previous
+step. If this new observation is not obtained,
+a search is performed in a window in the
+skin color vicinity, centered in the position
+estimated, using SVM again (such search
+vicinity is bounded by a window of dimension 8060 pixels)
+ Step 4 - if the target is detected in the region
+of interest, the algorithm returns to step 2.
+However, if the target is not detected in such
+region, the algorithm returns to step 1, to
+search for a new initial observation.
+4
+
+Results
+
+Face detection has two measures for evaluation
+false positive rate (FPR) and true positive rate (TPR).
+A false positive means that a non-face sample is misclassified as the face class. A true positive means that
+a face sample is correctly classified. To evaluate these two measures simultaneously, a Receiver Operating Characteristic (ROC) curve is used. Therefore,
+the performance of a classifier becomes a curve in the
+FPR-TPR plane. It is evaluated the SVM with global
+kernel and the SVM with the summation of local kernels. Figure 4 shows the ROC curves, for these two
+cases. The horizontal axis shows FPR and the vertical
+axis shows TPR. High TPR and low FPR means good
+performance. Therefore, upper left curve is the best.
+The ROC curve in the Figure 4 shows ROC curve to
+the SVM face detection results for the video
+HONDA. The video was chosen by presenting natural and artificial illumination, several pose changes,
+and complex background. SVM classified correctly
+93 of the face occurrence in the video.
+From the tests reported in the sequel, it can be
+seen that the use of the global features gives the best
+accuracy under view, illumination and scale changes.
+In other words, the effectiveness of the proposed
+DSVT method is checked. The size of the test images
+used is 240320 pixels. Two of the test video se-
+
+ISBN 978-85-8001-069-5
+
+Figure 4. ROC curve for the linear SVM kernel
+
+quences used were captured using a common camera
+in an indoor and an outdoor environment (see Figures
+5(c) and 5(a), respectively), and the third one is the
+HONDA video sequence (HONDA, 2001) (see Figure 5(b)). Such video sequences were chosen because
+they present complex face movement, scale variation,
+partial occlusion and face view changing.
+For training the classifier, face and non-face images taken from videos and some face databases
+(Yang et al., 2000) are used. The face regions of these images are cropped by using the positions of the
+nose. In the sequel, four Gabor features are obtained
+from each image. Next, we prepare the face and nonface images for training the SVM. In this experiment,
+Gabor features are used, and SVM are applied to
+each one of the outputs of the Gabor filters.
+In spite of all image changes along the video sequences used in the test of the proposed face tracker,
+due to body movements, light intensity changes, and
+
+(a)
+
+(b)
+
+(c)
+Figure 5. Snapshots of the three face tracking test videos. (a)
+Outdoor video sequence, (b) HONDA video sequence and (c)
+indoor video sequence with partial occlusion.
+
+4061
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+even partial occlusion, it was able to effectively track
+the face of a person. The results are also very good
+when considering the sequence in Figure 5(a), which
+corresponds to an outdoor environment, where light
+conditions are much variable and shadows are constantly appearing in the scene, making more difficult
+to detect the face. The objective of this test is to
+check the robustness of the proposed tracker in real
+situations. In this case, the man in the video sequence
+moves away from the camera, the background of the
+scene presents several different textures and the illumination is frequently changing due to the shadows
+surrounding the man. Finally, it is worth mentioning
+that the snapshots from this video sequence present
+scale variation and the camera was not fixed while
+capturing the image frames. The sequence showed in
+Figure 5 (b) is the HONDA data video. The woman
+in the snapshots is sat in front of the camera in an
+office. The background here is quite complex, including some windows in the room. This means that the
+environment receives natural and artificial illumination at the same time. In this test, the proposed method detects and tracks the face through changing
+brightness. Finally, the detection and tracking performance is successful even when the person looks to
+some point in the wall and when she moves the forehead to look up. We also checked the effectiveness of
+the proposed method under face rotation and partial
+occlusion, using the third test video, an indoor sequence of frames presenting such situations (see Figure 5 (c)). In spite of such problems, the target face is
+correctly tracked through the frames, as exemplified
+by the snapshots shown in the figure.
+The face detector proposed by Viola and Jones
+(2001) was tested with the same videos used to test
+the DSVT method, and the result is that it failed in
+every frame in which the person sketched partial profile. It also failed in those frames in which the person
+looks up or down. The Haar features there used are
+low cost and effective for frontal face detection, but
+are not indicated for faces at arbitrary poses. The
+Gabor features used here increase the computational
+complexity, although still being efficient, but may
+significantly improve the performance of the face
+detector, as the results here reported show. Thus,
+compared to the cascade detector in (Viola and
+Jones, 2001) (with 32 layers and 4297 features), our
+method is more efficient to detect multi-view faces.
+Actually, there are several works in the literature
+proposing face detection using SVM classifiers. In
+the work of Heisele et al. (2003), the face detector
+reaches 90 for correct face detection. The authors
+utilize PCA and Haar features to represent gray face
+images. In (Romdhani et al., 2001) it is used a hierarchy of SVM classifiers, with different resolutions, in
+order to speed up the overall system. The method
+presented 80 of right face detection. Considering
+the work of Osuna (1997), it is reported an index of
+97 of correct face detection. However, it was tested
+only with frontal faces in gray level images. In a
+more recent work (Yan, 2001), the method trains
+ISBN 978-85-8001-069-5
+
+three SVM classifiers to detect face in multi-view. An
+ensemble mechanism (SVM Regression) is introduced to combine the decisions they got from the
+view-specific SVM classifiers and make the final
+decisions. The authors report 91 of right face detection. Wang and Ji (2004) remarked that in the real
+world the face poses may vary greatly and many
+SVMs are needed. They proposed an approach to
+combine cascade and bagging for multi-view face
+detection. Namely, a cascade of SVMs is first trained
+through bootstrapping. The remaining positive and
+negative examples were then randomly partitioned to
+train a set of SVMs, whose outputs were then combined through majority voting. The method achieved
+93 of right face detection rate.
+For DSVT, the tracking speed is 2 frames per second on a standard PC with a Dual Core CPU over a
+Matlab platform. This frame rate includes all processing tasks, such as image reading, skin and face
+detection, the next target position estimation, showing the results in the frame, plotting the rectangles for
+the face detected and the position foreseen for the
+next frame, respectively.
+As a result of all tests performed, the Dynamic
+Support Vector Machine performs multi-view face
+detection and tracking in both indoor and outdoor
+video sequences, with 99 of correct face tracking,
+thus outperforming other methods in the literature.
+5 Conclusion
+An efficient face tracking framework, the Dynamic Support Vector Tracker - DSVT, is proposed
+in this paper, which has shown satisfactory results
+working on real world videos, when the image is influenced by some more realistic effects, such as rotation, light changing, partial occlusion, and so on. The
+skin color region detection shows to be effective to
+detect regions of skin tones in the image that could be
+faces. The contribution of the work is tracking arbitrary pose faces by associating detection with next
+face position estimation based on a Kalman filter in
+color images. It is worth noticing that the tracker depends on the detection step. Thus, the tracker fails in
+video sequences in which skin tone image region do
+not match with face image patches. Nevertheless, the
+framework remains precise by estimating face locations when the face detector does not find face in the
+search window.
+Acknowledgement
+The authors would like to thank all people who have
+allowed them to use thir images in the tests, and the
+Graduate Program on Electrical Engineering of
+UFES, for providing the necessary support for the
+development of this research.
+
+4062
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+References
+Bishop C. (2006). Pattern Recognition and Machine
+Learning, 1st ed, 740p. , Springer.
+Castaeda B., Luzanov Y. and Cockburn J. C (2004).
+Implementation of a modular real-time featurebased architecture applied to visual face
+tracking, in Proc. of the 17th International
+Conference on Pattern Recognition, Cambridge,
+UK, August 23-26, pp. 167- 170.
+Chen L. and Grecos C (2005). A fast Skin Region
+Detector for Colour Images, IEE Conference on
+Visual Information Engineering, Glasgow, 4-6th
+April.
+Eber M. (2007). Color Constancy Volume 6 de The
+Wiley-IST Series in Imaging Science and
+Technology, John Wiley  Sons, 408 p.
+Face-place, Stimulus images courtesy of Michael J.
+Tarr, Center for the Neural Basis of Cognition,
+Carnegie
+Mellon
+University,
+httpwww.tarrlab.org
+Frba B. and Ernst A (2003). Fast frontal-view face
+detection using a multi-path decision tree, In
+Proc. of Audio and Video Based Biometric
+Person Authentication, Guild-ford, Uk, June.
+Gayathri (2001). Face A skin color Matlab code.
+Software
+available
+at
+httpwww.mathworks.commatlabcentralfileex
+change24851-illumumination-compensation-inrgb-space?
+controllerfileinfosdownloadtrue.
+Gong S., McKenna S. and Psarrou A (2000).
+Dynamic Vision from Images to Face
+Recognition. 1st ed., Imperial College Press
+Clarendon.
+Heisele B., Serre T., Prentice S., and Poggio T
+(2003). Hierarchical classification and feature
+reduction for fast face detection with support
+vector machines, Pattern Recognition, vol. 36,
+pp. 20072017.
+HONDA
+database
+video
+available
+in
+httpvision.ucsd.eduleekcHondaUCSDVideo
+DatabaseHondaUCSD.html.
+Hotta K. (2009), Adaptive weighting of local
+classifiers by particle filters for robust tracking,
+Patter Recognition, vol. 42, issue 5, pp. 619628.
+Joachims T. (1999). Making Large-Scale SVM
+Learning Practical. Advances in Kernel Methods
+- Support Vector Learning, B. Schlkopf and C.
+Burges and A. Smola (ed.), MIT-Press, Software
+available httpsvmlight.joachims.org.
+Khan R., Hanbury A., Stttinger J. and Bais A (2012)
+Color based skin classification, Parttern
+Recognition Lettrers, 33, 157-163.
+Kovac J., Peer P. and Solina F (2003). Human Skin
+Colour Clustering for Face Detection.
+International Conference on Computer as a Tool
+EUROCON 2003, Eds. B. Zajc, Ljubljana,
+Slovenia, September.
+
+ISBN 978-85-8001-069-5
+
+Liu C. (2003) A bayesian discriminating features
+method for face detection, IEEE Trans. on
+PAMI, vol. 25, issue 6, pp. 725740.
+Loius W. and Plataniotis K (2010). Frontal Face
+Detection for Surveillance Purposes using Dual
+Local Binary Patterns Features, in Proc. of
+IEEE International Conference on Image
+Processing (ICIP), Hong Kong, September 2629, pp. 3809-3812.
+Mileva Y., Bruhn A., Weickert J (2007).
+Illumination-robust variational optical flow with
+photometric invariants. In F. A. Hamprecht, C.
+Schnrr, B. Jhne (Eds.) Pattern Recognition.
+Lecture Notes in Computer Science, Vol. 4713,
+152-162, Springer, Berlin.
+Oliveira V. and Conci A (2009). Skin Detection
+using HSV color space, SIBGRAPI 2009.
+XXIInd Brazilian Symposium on Computer
+Graphics and Image Processing, Pontifícia
+Universidade Católica do Rio de Janeiro (PUCRio), October 11th and 14th, - extended abstracts
+,DVD SIBGRAPI2009- ISSN 2176-0853,
+poster. 2p
+Osuna E., Freund R., and Girosi F (1997). Training
+support_vector_machines An application to face
+detection, In Proc. of CVPR, San Juan, Puerto
+Rico, July 17-19, pp. 130-136.
+Pai Y. T., Ruan S. J., Shie M. C. and Liu Y. C
+(2006). A Simple and accurate color face
+detection algorithm in complex background,
+IEEE International Conference on Multimedia
+and Expo, Toronto, Canadá, July 9-12, pp.15451548.
+Romdhani S., Torr T., Scholkopf B., and Blake A
+(2001). Computationally efficient face detection,
+In Proc. of ICCV, Vancouver, July 7-14, pp.
+695-700.
+Ruan J. and Yin J (2009). Face detection based on
+facial features and linear support vector
+machines, in Proc. of the International
+Conference on Communication Software and
+Networks, February 20-22, pp 371- 375.
+Vezhnevets V. and Sazonov V. and Andreeva A
+(2003). A Survey on Pixel-Based Skin Color
+Detection Techniques, In PROC. GRAPHICON2003, 85  92.
+Viola P. and Jones M (2001). Rapid object detection
+using a boosted cascade of simple features, In
+Proc.of CVPR, Crete, Greece , December 8-14.
+Wang P. and Ji Q (2004). Multi-view face detection
+under complex scene based on combined svms,
+In Proc. of ICPR Cambridge, UK, August 23-26.
+Yan J., Li S., Zhu S., and Zhang H (2001). Ensemble
+svm regression based multi-view face detection
+system, Tech-nical report, Microsoft Research,
+MSR-TR-2001-09.
+Yang M. H., Kriegman D. J. and Ahuja N (2000).
+Detecting faces in images a survey, IEEE
+Transaction on Pattern Analysis and Machine
+Intelligence, vol. 24, no 1, pp. 3458.
+
+4063

@@ -1,0 +1,548 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+SISTEMA DE CLASSIFICAÇÃO AUTOMÁTICA DE DISTÚRBIOS ELÉTRICOS EM TEMPO REAL PARA QUALIDADE
+DE ENERGIA ELÉTRICA
+EDUARDO G. RIBEIRO, GUILHERME L. DIAS, EULER R. S. FARIA, BRUNO H. G. BARBOSA, DANTON D. FERREIRA
+Departamento de Engenharia, Universidade Federal de Lavras
+Campus Universitário, Caixa Postal 3037, CEP 37200-000, Lavras, MG, Brasil
+E-mails eduzero10@gmail.com, guilermelopedias@gmail.com, eulerfaria@gmail.com brunohb@deg.ufla.br, danton@deg.ufla.br
+Abstract This work implements in LabVIEW and real-time, the automatic system for classification of electrical disturbances
+proposed by Barbosa and Ferreira in 2013. Its basic structure can be listed in three stages acquisition, extraction and classification. The first refers to the signal sampling by means of a monitoring embedded system and to filtering through a notch filter in
+order to divide the data into a fundamental component and an error signal. Such components are used in the extraction step, respectively, to calculate the RMS value and for obtaining second order cumulants. The extracted parameters are then sent to the
+classification process, which is based on a decision tree constructed with perceptrons and Bayesian classifiers. It was possible to
+classify twenty classes of multiple and isolated disturbances. The results were satisfactory since there was classification agreement with simulated samples of disturbances and real-time signal monitoring was also coherent.
+Keywords LabVIEW, High-Order Statistics, Real-Time Classification, Decision Tree, Smart Grids.
+Resumo Este trabalho implementa em LabVIEW e em tempo_real, o sistema_automático para classificação de distúrbios elétricos proposto por Barbosa e Ferreira em 2013. Sua estrutura básica pode ser listada em três etapas aquisição, extração e classificação. A primeira delas se refere  amostragem do sinal, através de um sistema_embarcado de monitoramento, e  filtragem,
+através de um filtro Notch, de forma a dividir os dados em uma componente fundamental e um sinal de erro. Tais componentes
+são utilizadas na etapa de extração, respectivamente, para cálculo do valor RMS e para obtenção de cumulantes de segunda ordem. Os parâmetros extraídos são, então, enviados ao processo de classificação, que se baseia em uma árvore_de_decisão construída com perceptrons e classificadores Bayesianos. Foi possível classificar vinte classes de distúrbios múltiplos e isolados. Os
+resultados obtidos foram satisfatórios uma vez que houve concordância de classificação com amostras simuladas de distúrbios e
+a monitoração de sinais em tempo_real também se mostrou coerente.
+Palavras-chave .
+
+1
+
+Introdução
+
+A crescente complexidade do sistema elétrico mundial e o contínuo uso de cargas elétricas poluidoras
+(cargas_não_lineares, flutuantes, não balanceadas,
+variáveis no tempo) (Ming et al., 2010) produzem
+distúrbios indesejáveis na transmissão da energia que
+podem ocasionar mal funcionamento de equipamentos. Por essa razão, a Qualidade de Energia Elétrica
+(QEE) se tornou uma essencial área de estudo.
+A potencialização do processo de medição, regulação e disponibilização de informações aos consumidores, por meio das Smart Grids (IEA, 2011) reafirmam a importância e relevância da área de QEE.
+A definição e as características dos distúrbios de
+QEE podem ser encontradas no documento divulgado
+pelo IEEE para Qualidade de Energia (IEEE Std.
+1159, 1995). Cumpre ressaltar que existe esforço por
+parte das agências reguladoras dos países para manter
+certos padrões de qualidade_da_energia distribuída.
+No Brasil, o PRODIST (Procedimentos de Distribuição), através de seu Módulo 8, que trata da
+Qualidade da Energia Elétrica (ANEEL, 2016), procura estabelecer estes padrões.
+Tais distúrbios se manifestam, de maneira geral,
+como deformidades da forma de onda de tensão e
+
+ISSN 2525-8311
+
+corrente de um sistema_elétrico_de_potência (Ferreira
+et al. 2009).
+Algumas formas conhecidas de deformidades
+isoladas são expostas na Figura 1. Suas definições
+podem ser encontradas na norma IEEE Std. 1159,
+(1995).
+Por suas implicações econômicas e relativas ao
+bem-estar social, estes distúrbios, representados visualmente na onda de tensão, são o centro da questão
+de QEE.
+
+Figura 1. Tipos de distúrbios elétricos. De cima para baixo Sag,
+Swell, Notch, Harmônico, Transiente Impulsivo e Transiente
+Oscilatório
+
+1434
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Para obtenção desta energia_elétrica de qualidade
+é necessário, primeiramente, conhecer e classificar os
+distúrbios elétricos. No campo da classificação, em
+que se encontra o foco deste trabalho, muitas estratégias têm sido desenvolvidas. Uma breve revisão do
+cenário é feita a seguir.
+A representação em Tempo-Frequência (RTF) é
+um método recorrente de extração_de_características
+dos sinais. No trabalho de Wang et al. (2001), a RTF
+é implementada de forma a maximizar a extração
+retendo apenas as melhores características do sinal.
+Para tal, o conceito de Ambiguity Plane e de Discriminante de Fisher e Kernel modificado foram implantados. Como classificador uma rede_neural artificial (RNA) foi construída e o sistema foi capaz de
+classificar 6 classes de distúrbios isolados, porém a
+classificação não ocorreu em tempo_real.
+Em Wang et al. (2003), o mesmo sistema de extração foi construído somando  RNA a função linear
+de Heaviside. A extração em tempo_real foi possível
+com o uso de um Processador Digital de Sinais
+(PDS) para aquisição. Porém, apenas 5 classes foram
+abordadas.
+Ainda em RTF, Abidullah et al. (2014) extraíram
+alguns parâmetros da representação, tais como RMS,
+Valor Fundamental, Distorção Harmônica Total
+(DHT), Distorção Não-Harmônica Total (DnHT) e
+Distorção Total da Onda (DTO). Estes parâmetros
+constroem um Classificador Baseado em Regras que
+é capaz de classificar 6 distúrbios isolados em tempo
+real. Para aquisição dos dados (DAQ) utilizaram-se o
+NI USB 6009 com interface em Visual Basic.
+Em Ferreira et al. (2009) o sinal monitorado é
+decomposto em uma porção fundamental e uma parcela de erro utilizando um filtro Notch. A extração
+dos parâmetros é feita com Estatísticas de Ordem
+Superior (EOS). Uma RNA é utilizada para a classificação. Vale dizer que o trabalho é otimizado pela
+presença de um detector baseado na teoria de Bayes,
+sendo capaz de classificar 6 classes.
+Outros sistemas consideram a Transformada
+Wavelet como forma de extração_de_características.
+Dentre os quais, He e Starzyk (2006) obtiveram bons
+resultados de classificação de distúrbios, incluindo
+dois múltiplos, ao utilizar a técnica em conjunto com
+o SOLAR (Self Organizing Learning Array), método
+alternativo  RNA.
+Bollen et al. (2009) publicaram uma revisão na
+qual as diversas metodologias aplicáveis  extração e
+classificação de distúrbios elétricos são explanadas.
+O objetivo do presente trabalho foi implementar
+em LabVIEW o método de classificação proposto
+por Barbosa e Ferreira (2013) e possibilitar sua execução em tempo_real para monitoração da rede_elétrica.
+Dessa forma, foi utilizado o protocolo FPGA (NI
+Compact-RIO) para aquisição dos dados. Tais dados
+são previamente filtrados por um filtro Notch e divididos em um sinal fundamental e um sinal de erro. A
+extração de cumulantes de segunda ordem (Nikias e
+
+ISSN 2525-8311
+
+Mendel 1999) é aplicada ao sinal de erro e um vetor
+de cumulantes é obtido.
+Aqueles que representam melhor as características do distúrbio são selecionados e servem de entrada
+para uma árvore_de_decisão baseada em perceptrons.
+Como última folha da árvore tem-se um classificador
+Bayesiano baseado no valor RMS extraído da componente fundamental do sinal.
+O sistema é capaz de classificar 20 classes de
+distúrbios múltiplos e isolados em tempo_real. Seu
+funcionamento será explicado na próxima seção.
+2
+
+Método Implementado
+
+A Figura 2 mostra o esquema do sistema proposto na
+forma de um diagrama em blocos. Cada bloco de
+processamento é explanado em seguida.
+
+Figura 2. Diagrama em blocos para aquisição e classificação de
+distúrbios elétricos
+
+2.1 Aquisição
+A aquisição dos dados é realizada pelo sistema
+integrado NI cRIO-9076, que combina um processador de tempo_real e um FPGA (Field-Programmable
+Gate Array) reconfigurável em um único chassi para
+aplicações_embarcadas de controle_e_monitoramento
+de máquinas (National Instruments Corporation,
+2014).
+Apresentando alto_desempenho e grande robustez, sua aplicação é de especial importância para o
+projeto, uma vez que possibilita a aquisição e processamento dos dados em tempo_real. Sua interface é
+feita em LabVIEW e a conexão acontece via redeLAN.
+Os sinais amostrados são provenientes de duas
+fontes. A primeira delas se trata do gerador de funções aleatórias AFG3022B da Tektronix. O gerador
+permite a leitura de arquivos de forma de onda, em
+formato específico, e o gera com as características
+desejadas. Dessa forma, amostras previamente classificadas como distúrbios elétricos puderam ser entregues ao sistema de aquisição.
+A segunda fonte é a energia distribuída pela concessionária. Através da ponta de prova P5 100A da
+Tektronix, a energia fornecida para o campus universitário pôde ser entregue ao sistema de classificação,
+fechando o objetivo de monitoração da rede.
+
+1435
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+A taxa de amostragem escolhida para o projeto é
+de 15,36kHz e o protocolo executado é o de FIFO
+(First In, First Out). Assim são obtidos 256 pontos
+por período da forma de onda analisada de 60 Hz.
+Portanto, um vetor com 4 ciclos, que somados fornecem 1.024 pontos são encaminhados ao filtro Notch
+(Hirano et al. 1974).
+Conforme exposto na Figura 2, ao subtrair o sinal original do filtrado são obtidos outros 1.024 pontos, fn. Estes são associados ao vetor resultante do
+filtro Notch, un, formando 2.048 pontos. Dessa
+forma, uma fila de 2.048 elementos é entregue 15
+vezes por segundo ao sistema de classificação.
+No sistema de classificação os sinais fn e un
+são novamente separados para serem entregues 
+etapa de extração_de_características.
+
+do sistema integrado. Após a execução do processo,
+estes dados são enviados por Network Stream (Habets, 2014) para o computador que contém a interface e, então, a extração das características e a classificação ocorrerá no processador do computador. A
+Figura 4 ilustra parte do processo de aquisição.
+
+Figura 4. Diagrama simplificado da aquisição do sinal
+
+2.2 Extração de Características
+
+2.1.1 Filtro Notch
+Conforme dito, a presença do Filtro Notch (Hirano et al. 1974) é necessária para decomposição do
+sinal monitorado. Sua implementação em LabVIEW
+é possível a partir da definição de seus parâmetros
+em um algoritmo padrão da interface FPGA.
+O modelo seguido é o de um filtro IIR de segunda ordem (Mitra 2006) cuja transformada_z é
+
+H 0 ( z) 
+
+1  (2 cos 0 ) z 1  z 2
+1   0 (2 cos 0 ) z
+
+1
+
+
+
+ 02 z 2
+
+(1)
+,
+
+Os parâmetros definidos foram a frequência
+Notch de 60 Hz e o fator Notch  0 de 0,97. A resposta em frequência da magnitude é exposta na Figura 3.
+O sinal resultante deste filtro, un, contém as informações de harmônicos, transientes e ruídos encontrados em vn, e será a entrada do algoritmo que
+extrai cumulantes de segunda ordem.
+
+2.2.1 Cumulantes de 2 Ordem
+A análise de distúrbios da rede_elétrica com estatísticas_de_ordem_superior tem se mostrado uma
+abordagem promissora (Ferreira et al. 2009 de la
+Rosa et at. 2009). Para encontrar um algoritmo com
+baixo_custo_computacional apenas cumulantes de
+segunda ordem foram extraídos de un (Barbosa e
+Ferreira, 2013).
+Os cumulantes de segunda ordem de x (t ) , um
+processo estacionário de média zero, podem ser expressos por
+
+C2, x ( )  Ex(t ) x(t   )
+
+(2)
+
+em que E. representa o operador de esperança matemática.
+Uma vez que a informação é perdida quando um
+valor  maior que zero é usado, a equação a seguir
+pode ser aplicada (Ribeiro e Pereira, 2007)
+
+
+C 2, x ( ) 
+
+1
+N
+
+N 1
+
+ x(n) x(mod( n   , N )) ,
+
+(3)
+
+n 0
+
+em que x   N e   0,1,..., N  1 .
+Assim, N cumulantes de segunda ordem são obtidos e considerando o alto custo_computacional,
+apenas aqueles que demonstram as maiores diferenças entre classes foram selecionados utilizando o
+Discriminante Linear de Fisher (Barbosa e Ferreira,
+2013). O cálculo e seleção dos melhores cumulantes
+é representado na Figura 5.
+
+Figura 3. Resposta em frequência do filtro projetado
+
+É importante notar que todo o processo de amostragem e filtragem acontece no processador da placa
+NI cRIO, de forma a aproveitar o alto_desempenho
+ISSN 2525-8311
+
+1436
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+2.3.2 Árvore de perceptrons
+
+Figura 5. Extração dos cumulantes de segunda ordem
+
+2.2.2 RMS
+Uma vez que existe dificuldade de classificação
+de algumas classes baseando-se somente nos cumulantes, outro parâmetro do sinal também é extraído. A
+componente fundamental fn tem seu valor RMS
+calculado e este será, então, entregue aos classificadores bayesianos.
+O valor de RMS da componente fundamental é
+calculado por
+
+RMS ( f ) 
+
+
+
+N
+n 1
+
+( f n  f )
+N 1
+
+Após a extração e escolha dos cumulantes e cálculo do valor RMS, estes parâmetros_servirão de entrada para a estrutura em forma de árvore ilustrada na
+Figura 9.
+Para distinguir entre as classes de harmônicos,
+transientes oscilatórios, transientes impulsivos e
+notches (Barbosa e Ferreira, 2013), perceptrons foram utilizados (Duda et al. 2000).
+A ideia básica do perceptron é gerar uma saída
+binária a partir de um vetor de dados. Neste caso, o
+vetor é composto por 5 cumulantes selecionados e
+sua função de ativação é dada por
+(6)
+2
+,
+(1  e 2 x )  1
+em que x é o produto escalar entre o vetor de cumulantes e um vetor de pesos. A Figura 7 mostra a implementação de um perceptron.
+g ( x) 
+
+(4)
+,
+
+sendo N o número de amostras (1.024) por ciclo de
+classificação e f sua média.
+2.3 Classificador
+2.3.1 Classificador Bayesiano
+O classificador Bayesiano aprende distribuições
+de probabilidade através dos dados e classifica o teste ocorrido escolhendo a classe com maior probabilidade posterior (MAP) (Barbosa e Ferreira, 2013). A
+classe é escolhida de forma a satisfazer a seguinte
+equação
+
+H MAP  arg Hi H max p( x  H i ) p( H i )
+
+Figura 7. Perceptron
+
+A saída deste perceptron determina qual será o
+próximo perceptron a ser ativado e ao final do processo as classes serão parcialmente classificadas.
+Para concluí-la, ou seja, separar entre as três classes
+que resultam da penúltima folha da árvore, o classificador_bayesiano é executado. A Figura 8 contém um
+fragmento do fluxo de dados e do processo de classificação.
+
+(5)
+
+em que x é o atributo (RMS) e i  1, 2, 3 correspondem s classes de sag, nem sag e nem swell e swell,
+respectivamente. Maiores detalhes são encontrados
+em Barbosa e Ferreira (2013) e Mitchell (1997).
+A Figura 6 mostra a distribuição de probabilidade obtida.
+
+Figura 8. Fragmento do programa principal de
+classificação
+
+O fluxo da classificação pode ser compreendido
+pela Figura 9, onde os números correspondem s
+classes conforme enumerado na Tabela 1.
+3
+
+Figura 6. Probabilidade a posteriori do classificador Bayesiano
+(RMS). Classes sags (linha pontilhada), swells (linha tracejada) e
+classes sem sags ou swells (linha contínua)
+
+ISSN 2525-8311
+
+Resultados e Discussão
+
+Uma vez que o sistema implementado em LabVIEW é o mesmo desenvolvido por Barbosa e Ferreira
+(2013) em MatLab, tem-se que as estatísticas de classificação daquele algoritmo, expostas na Tabela 1, se
+aplicam ao método atual. Vê-se que a porcentagem
+
+1437
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+de acerto é muito próxima de 100 inclusive para
+classes de distúrbios múltiplos.
+O diferencial deste trabalho se concentra na execução em tempo_real do algoritmo, possibilitando a
+monitoração extensiva da rede_elétrica e sua interpretação detalhada mediante a possibilidade de classificação de 20 classes. Esta implementação foi possível
+devido ao esforço de redução da complexidade com-
+
+putacional e  divisão de processamento entre a placa
+cRIO e o computador.
+Outro ponto relevante e de interesse se trata da
+interface_gráfica disponível em LabVIEW. O resultado final do programa desenvolvido pode ser visto
+na Figura 10.
+
+Figura 9. Árvore de decisão
+
+Figura 10. Interface final do projeto em LabVIEW
+
+4 Conclusão
+Classificação de distúrbios elétricos é uma área de
+possibilidades. Este trabalho procurou suprir a ausência de um sistema capaz de classificar um grande
+
+ISSN 2525-8311
+
+número de classes de distúrbios múltiplos e isolados,
+em tempo_real.
+Reitera-se também sua possibilidade de aplicação nas promissoras Smart Grids.
+Notam-se, entretanto, limitações quanto  dependência de acesso via LAN e  ausência de um
+detector. Este último configura ponto de interesse
+para trabalhos futuros.
+1438
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Tabela 1. Estatísticas do método proposto
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+
+Classe
+
+Porcentagem de
+acerto
+
+Sag
+Swell
+Notch
+Transiente impulsivo
+Transiente oscilatório
+Harmônicos
+Transiente oscilatório + Sag
+Transiente oscilatório + Swell
+Harmônicos + Transiente oscilatório
+Harmônicos + Notch
+Harmônicos + Sag
+Harmônicos + Swell
+Notch + Sag
+Notch + Swell
+Transiente Impulsivo + Sag
+Transiente Impulsivo + Swell
+Harmônicos + Transiente oscilatório + Sag
+Harmônicos + Transiente oscilatório + Swell
+Harmônicos + Notch + Sag
+Harmônicos + Notch + Swell
+
+99 ,61  0,58
+99 ,66  0,54
+99 ,90  0,28
+99 ,90  0,28
+99 ,83  0,29
+97 ,99  1,24
+99 ,63  0,42
+99 ,50  0,47
+94,18  1,86
+99 ,60  0,37
+99 ,99  0,09
+99 ,95  0,30
+99,96  0,15
+99 ,57  0,39
+94 ,21  2,02
+97 ,51  0,99
+96 ,70  1,31
+95,71  1,25
+97 ,67  1,24
+98,30  1,28
+
+Agradecimentos
+Os autores gostariam de agradecer ao CNPq e 
+Fapemig pelo suporte financeiro.
+Referências Bibliográficas
+Abidullah, N.A. Abdullah, A.R. Zuri Shaameri, A.
+Shamsudin, N.H. Ahmad N.H.H. and Jopri,
+M.H. (2014). Real-Time Power Quality
+Disturbances Detection and Classification
+System. World Applied Sciences Journal 32, pp.
+1637-1651, 2014.
+ANEEL (2016). PRODIST Procedimentos de
+Distribuição de Energia Elétrica no Sistema
+Elétrico
+Nacional ,
+Manual
+Técnico,
+www.aneel.gov.br.
+Barbosa, B.H.G. and Ferreira, D.D. (2013).
+Classification of Multiple and Single Power
+Quality Disturbances Using a Decision Tree
+Approach. J Control Autom Electr Syst (2013)
+24, pp. 638- 648.
+Bollen, M. Gu, I. Santoso, S. Mcgranaghan, M.
+Crossley, P. Ribeiro, M. et al. (2009). Bridging
+the gap between signal and power. Signal
+Processing Magazine, IEEE, 26(4), 1231.
+
+ISSN 2525-8311
+
+de la Rosa, J. J. G., Muoz, A. M., Gallego, A.,
+Piotrkowski, R.,  Castro, E. (2009). Higherorder characterization of power quality transients
+and their classification using competitive layers.
+Measurement, 42(3), 478484.
+Duda, R. O., Hart, P. E.,  Stork, D. G. (2000).
+Pattern classification (2nd ed.). London WileyInterscience.
+Ferreira, D.D. Cerqueira, A.S. Marques, C.A.G. e
+Duque, C.A. (2009). Sistema Automático de
+Detecção e Classificação de Distúrbios Elétricos
+em Qualidade da Energia Elétrica. Revista
+Controle  AutomaçãoVol.20 no.1Janeiro,
+Fevereiro e Março 2009.
+Habets, J. (2014). Everything You Ever Wanted to
+Know About Network Streams. ALUGM
+Copenhagen 21 March 2014, www.vi-tech.nlen.
+He, H. and Starzyk, J.A. (2006). A Self-Organizing
+Learning Array System for Power Quality
+Classification Based on Wavelet Transform.
+IEEE Transactions on Power Delivery, February
+2006, pp 286-295.
+Hirano, K., Nishimura, S.,  Mitra, S. K. (1974).
+Design of digital notch filters. IEEE
+Transactions on Communications, 22(7), 964
+970.
+IEEE (1995). Recommended Practice for Monitoring
+Electric Power Quality, IEEE Std. 1159-1995.
+International Energy Agency (2011). Technology
+Roadmap Smart Grids, www.iea.org.
+Ming, Z. Kaicheng, L. and Yisheng, H. (2010).
+DSP-FPGA Based Real-Time Power Quality
+Disturbances Classifier. Metrol. Meas. Syst.,
+Vol. XVII (2010), No. 2, pp. 205-216.
+Mitchell, T. (1997). Machine Learning (1st ed.) New
+York McGrawHill Education.
+Mitra, S. K. (2006). Digital signal processing
+computer-based approach (3rd ed.). New Delhi
+Tata McGraw-Hill Publishing.
+National Instruments (2014). CompactRIO Integrated
+Systems with Real-Time Controller and
+Reconfigurable Chassis NI cRIO-907x, Manual
+Técnico, www.ni.com.
+Nikias, C. and Mendel, J. (1999). Signal processing
+with higher order statistics. IEEE Transactions
+on Signal Processing, 41(1), 1038.
+Ribeiro, M. V.,  Pereira, J. L. R. (2007)
+Classification of single and multiple disturbances
+in electric signals. EURASIP Journal on
+Advances in Signal Processing, 2, 1515.
+Wang, M. Ochenkowski, P. and Mamishev, A.
+(2001). Classification of power quality
+disturbances using time-frequency ambiguity
+plane and neural networks. Power Engineering
+Society Summer Meeting, 2001, Vol 2, IEEE.
+Wang, M. Rowe, G.I. e Mamishev, A.V. (2003).
+Real-Time
+Power
+Quality
+Waveform
+Recognition with a Programmable Digital Signal
+Processor. Power Engineering Society General
+Meeting, 2003, Vol 2, IEEE.
+
+1439

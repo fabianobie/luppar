@@ -1,0 +1,1338 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+IMPLEMENTACAO EM FPGA DE TRANSFORMADA WAVELET PARA
+COMPACTACAO DE SINAIS ELETRICOS DE SISTEMAS DE POTENCIA
+UTILIZANDO PROCESSADOR EMBARCADO
+Eder Barboza Kapisch, Leandro Rodrigues Manso Silva,
+Carlos Henrique Nascimento Martins, Luciano Manhaes Andrade Filho,
+Carlos Augusto Duque
+
+
+Universidade Federal de Juiz de Fora
+Juiz de Fora, Minas Gerais, Brasil
+
+Emails eder.kapisch@engenharia.ufjf.br, leandro.manso@engenharia.ufjf.br,
+chnmartins@gmail.com, luciano.ma.filho@gmail.com, carlos.duque@ufjf.edu.br
+Abstract This work aims to present an implementation of the Wavelet Transform on FPGA (Field
+Programmable Gate Array). Through this tool, a fast compression of electrical signals is possible, smoothing or
+enhancing the details thereof. Furthermore, it compares this tool implemented in an embedded processor with
+a direct implementation that uses various logical blocks, called parallel method. This comparison is performed
+considering the number of logical blocks and the speed for each case. A prototype was developed to deploy both
+methods and it was able to accomplish this compression, in which more than 85  of the samples acquired at a
+rate of 7.68 kHz could be replaced by zero, maintaining over 99.9  of the original signal energy. The error in
+the reconstruction was limited to the range of 102 .
+Wavelet Transform, embedded processor, FPGA, compression.
+
+Keywords
+
+Resumo Este trabalho tem como objetivo apresentar uma implementacao da Transformada Wavelet em
+FPGA (Field Programmable Gate Array). Atraves dessa ferramenta, e possvel a compactacao rapida de sinais
+eletricos, suavizando ou realcando os detalhes dos mesmos. Alem disso, compara-se essa ferramenta embarcada
+em processador com uma implementacao direta, denominada de metodo paralelo, cujos diversos blocos logicos
+compoem a estrutura nao-processada. Essa comparacao e feita considerando-se a quantidade de blocos logicos
+e velocidade despendida em cada caso. Um prototipo desenvolvido foi capaz de implementar os dois metodos
+e de realizar esta tarefa de compressao, na qual mais de 85 das amostras adquiridas a uma taxa de 7,68 kHz
+puderam ser substitudas por zero, mantendo-se mais de 99,9 da energia do sinal original. O erro na reconstrucao
+limitou-se a ordem de 102 .
+Palavras-chave
+
+.
+
+Introducao
+
+baixo_custo_computacional.
+A compressao
+consiste na eliminacao de redundancias do
+sinal atraves do uso de alguma transformada,
+geralmente transformadas integrais.
+A wavelet e um sinal base com determinadas
+propriedades como, por exemplo, energia nita,
+o que a torna adequada para decomposicao
+de outras funcoes (DA SILVA, 2008).
+Seu
+princpio reside na decomposicao hierarquica de
+um sinal de entrada para uma serie de sucessivos
+sinais de resolucao mais baixa. Isso e ecaz
+pois, ao ser aplicada em um sinal, evidencia
+seus detalhes, possibilitando a visualizacao de
+disturbios variantes no tempo. Para intervalos
+de tempo em que a funcao muda rapidamente,
+o metodo pode ampliar a area de interesse
+para melhor deteccao das caractersticas do sinal,
+tornando possvel, por exemplo, a analise de
+transitorios e harmonicos,(Wagner et al., 1993) e
+(Farge et al., 1996).
+Durante muito tempo, as wavelets de
+Haar foram a unica base ortonormal de
+wavelets conhecida.
+Stephane Mallat, em
+1985, impulsionou o surgimento de novas funcoes,
+com o mesmo proposito, atraves de seu trabalho
+em processamento_digital_de_imagens. Pouco
+tempo depois, Ingrid Daubechies construiu
+
+Atualmente existe uma crescente necessidade de
+caracterizar corretamente o comportamento de
+sistemas_de_energia_eletrica. Cerca de duas
+decadas atras, devido a desregulamentarizacao
+do setor eletrico em todo o mundo, usuarios e
+empresas publicas passaram a se preocupar com
+os impactos causados por problemas de qualidade
+de energia.
+Esses problemas surgem como
+resposta ao uso massivo de cargas nao-lineares e
+equipamentos eletronicos em residencias, centros
+comerciais e instalacoes industriais. Alem disso,
+foi percebido que essas deciencias poderiam
+se intensicar caso nao fossem corretamente
+corrigidas. Varias tecnologias tem surgido com o
+intuito de monitorar o comportamento de sistemas
+de energia eletrica em diferentes nveis alta
+tensao (HV), media tensao (MT) e baixa tensao
+(LV) (Tcheou et al., n.d.)
+Alem do monitoramento dos parametro
+eletricos dos sistemas de energia, uma outra
+aplicacao que tambem envolve processamento de
+sinais e a compressao dos dados provenientes
+dos sinais eletricos medidos, cujo objetivo e
+proporcionar uma transmissao ou armazenamento
+de dados de forma mais eciente, visando um
+
+195
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+um conjunto de bases ortonormais de wavelets
+suaves, com suportes compactos e esse trabalho
+e considerado um dos alicerces das aplicacoes
+atuais (de Lima, 2002).
+A Transformada Wavelet tem sido aplicada
+nas mais diversas areas, por meio de algoritmos
+rapidos, fundamentais, tanto para compressao
+de sinais, como para a remocao de rudo.
+Mesmo sendo uma tecnica relativamente nova,
+tem atrado a atencao de muitos estudiosos, pois
+se trata de uma ferramenta muito versatil e de
+conteudo matematico muito rico. Principalmente,
+se pudermos escolher as wavelets que melhor se
+adaptem aos dados, ou truncarmos os coecientes
+da wavelet menores do que um valor previamente
+estabelecido, ou seja, um limiar, os dados
+podem ser esparsamente representados. Essa
+caracterstica faz dessas funcoes uma excelente
+ferramenta no campo de compressao_de_dados
+(Huang et al., 2002).
+Uma forma de implementacao ou realizacao
+dessa ferramenta pode ser obtida atraves
+da FPGA, nesse processo e possvel denir
+varios blocos de hardware, que operam em
+paralelo, acarretando, dessa forma, um aumento
+signicativo na capacidade computacional do
+sistema (Huang et al., 2002).
+R
+Desde a sua invencao em 1984 pela Xilinx
+,
+as FPGAs passaram de um simples chip de
+silcio de logica personalizavel ate verdadeiros
+substitutos de circuitos integrados em aplicacoes
+especcas (application specific integrated circuits
+- ASIC ) para processamento_de_sinais e aplicacoes
+de controle.
+A tecnologia presente na FPGA se destaca
+por oferecer alguns benefcios unicos, tais como
+a capacidade de reconguracao e alta densidade
+de elementos logicos. Os circuitos logicos sao
+desenvolvidos por meio de linguagens descritivas
+de hardware, dentre as quais podem ser citadas
+a VHDL (Very high speed integrated circuit
+(VHSIC) Hardware Description Language) e
+Verilog. Enquanto a primeira suporta tipos de
+dados abstratos criados pelo proprio utilizador, a
+segunda linguagem e mais simples e intuitiva, por
+se assemelhar mais com a linguagem C e, por esse
+motivo, foi adotada neste trabalho.
+De posse dessas ideias, o presente trabalho
+apresenta a implementacao de um sistema
+compactador de sinais utilizando o dispositivo
+FPGA e comparando duas metodologias de
+sntese a sntese paralela e a sntese em
+processador dedicado embarcado.
+Este artigo esta organizado da seguinte
+forma a Secao 2 explica o funcionamento
+da Transformada Wavelet e sua aplicacao na
+compactacao de sinais em sistemas eletricos
+de potencia a Secao 3 apresenta o sistema
+de medicao fsico construdo no Laboratorio
+de Processamento de Sinais e Telecomunicacoes
+
+(LAPTEL) na Universidade Federal de Juiz de
+Fora, bem como as steses dos metodos paralelo e
+com processador_embarcado a Secao 4 mostra os
+resultados obtidos, comparando os dois metodos.
+Por m, a Secao 5 conclui o trabalho e apresenta
+ideias para estudos futuros.
+2
+
+Compactacao de Sinais da Rede
+Eletrica
+
+O sistema_eletrico_de_potencia possui, dentre
+outras caractersticas, a propriedade de ser um
+sistema mais estavel quando comparado com
+outros sistemas menores, ou seja, com menor
+presenca de grandes_perturbacoes. Sua robustez
+lhe confere um melhor desempenho revelado
+atraves de sinais mais comportados sem muitos
+disturbios frequentes. Pode-se tirar proveito dessa
+estabilidade no sentido de se compactar o sinal no
+seu estado permanente, que oscila na frequencia
+da rede eletrica (60 Hz no Brasil).
+Neste trabalho, foi utilizada uma frequencia
+de amostragem de 7680 Hz, o que equivale a uma
+taxa de amostragem de 128 pontos por ciclo de
+60Hz.
+Baseado nesses parametros, um sistema
+compactador de sinais eletricos pode ser
+desenvolvido de tal forma que seja capaz
+de adquirir as amostras do sinal numa taxa
+adequada para posterior reconstrucao.
+A compactacao e importante na area de
+energia eletrica, pois a quantidade de dados
+armazenados dos registros do comportamento dos
+sinais e muito grande. Embora o sistema eletrico
+seja estavel, nao signica que esteja isento de
+perturbacoes ou disturbios. A qualquer momento
+pode haver um defeito ou falta no sistema, seja
+grave ou branda. Por exemplo, um curto-circuito
+fase-terra ou o acionamento de um motor de
+inducao de grande porte.
+O disturbio modica o sinal no trecho em
+que ele ocorre, fazendo com aquele estado seja
+diferente do estado anterior. Chameremos isso
+de inovacao. Portanto, onde existe um disturbio
+pode-se dizer que ha uma inovacao.
+Seja qual for a natureza da perturbacao, o
+sistema compactador deve ser capaz de reconstruir
+todo o tipo de inovacao, mesmo sendo de maior
+frequencia. E nesse cenario que a Transformada
+Wavelet se encaixa.
+Com sua utilizacao, e
+possvel monitorar tanto as componentes de alta
+frequencia como tambem as de baixa frequencia
+em tempo_real.
+Isso confere a wavelet a
+capacidade de ser uma ferramenta de analise
+tempo-frequencia.
+As componentes de alta frequencia geralmente
+possuem a maioria das amostras com nveis muito
+baixos de amplitude, podendo ser descartadas
+quando comparadas a um limite pre estabelecido.
+Esse descarte causa um erro na reconstrucao
+
+196
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+que pode ser desprezvel quando sao comparados
+os sinais original sem compactacao com o
+recontrudo.
+Portanto, podemos dizer nesse
+caso que as componentes de alta frequencia
+sao indiferentes a reconstrucao, ajudando na
+compactacao.
+2.1
+
+Tabela 1 Coecientes dos ltros passa-altas e
+passa-baixas.
+Valores em
+Valores em
+ponto_flutuante ponto_fixo Q15
+a0
+0.3327
+10900
+a1
+0.8069
+26440
+a2
+0.4599
+15069
+HP
+a3
+0.1350
+4424
+a4
+0.0857
+2799
+a5
+0.0352
+1154
+a0
+0.0352
+1154
+a1
+0.854
+2799
+a2
+0.1350
+4424
+LP
+a3
+0.4599
+15069
+a4
+0.8069
+26440
+a5
+0.3327
+10900
+
+Transformada Wavelet
+
+O princpio da Transformada Wavelet se da
+atraves de uma decomposicao hierarquica de um
+sinal de entrada em sucessivos componentes de
+faixas de frequencias distintas (Huang et al.,
+2002), chamados coecientes da wavelet. Atraves
+da wavelet, podemos analisar o sinal em varias
+resolucoes (Mallat, 1989) e (Galli et al., 1996).
+Nela, os sinais com altas frequencias podem
+ser vistos com maior amostragem, enquanto
+os de menores frequencias sao mais espacados.
+Varias aplicacoes de Transformada Wavelet
+existem, inclusive em outras areas (Istepanian and
+Petrosian, 2000).
+A implementacao da Transformada Wavelet e
+possvel utilizando uma cascata de banco de ltros
+digitais passa-altas e passa-baixas, formando uma
+especie de arvore de ltros. Aplicacoes com
+banco de ltros podem ser vistas em (Herley and
+Vetterli, 1993) e (Cohen and Kovacevic, 1996).
+Existem varios tipos de wavelets utilizadas.
+Dentre elas, podem-se destacar as do tipo
+Daubechies. Aplicacoes desse tipo de wavelet
+podem ser vistas, inclusive para outras areas em
+(Michalski and Kacmajor, 2011) e (Elamvazuthi
+et al., 2013). A wavelet utilizada neste trabalho foi
+a Daubechies3. Esse tipo de wavelet foi escolhido
+de forma emprica, devido ao bom desempenho
+mostrado na separacao das frequencias e por sua
+estrutura nao ser tao complexa, facilitando a
+implementacao em hardware.
+Atraves da utilizacao da ferramenta wlters
+R
+presente no software MATLAB
+, podem ser
+facilmente descobertos os valores dos coecientes
+dos ltros digitais a serem cascateados. Sao
+ltros do tipo FIR (Finite Impulse Response)
+de quinta ordem, portanto, representados por 6
+coecientes. Os valores dos coecientes estao
+listados na Tabela 1.
+A operacao de ltragem dos ltros passa-altas
+(HP) e passa-baixas (LP) sao descritas conforme
+a Equacao 1, em que y e a sada do ltro e i e o
+atraso das amostras do sinal de entrada.
+
+Filtro HP1
+
+Filtro HP2
+
+NÍVEL 1
+
+Sinal
+original
+(128 ptcic)
+
+Filtro LP1
+
+CD1
+(64 ptcic)
+
+2
+
+2
+
+CA1
+(64 ptcic)
+
+NÍVEL 2
+Filtro LP2
+
+CD2
+(32 ptcic)
+
+2
+
+Filtro HP3
+2
+
+CA2
+(32 ptcic)
+
+2
+
+CD3
+(16 ptcic)
+
+NÍVEL 3
+Filtro LP3
+
+2
+
+CA3
+(16 ptcic)
+
+Figura 1 Cascata de ltros formando a wavelet
+composta de tres nveis.
+
+Atraves dessa gura, pode-se ver o arranjo de 3
+nveis de bancos de ltros.
+O processo comeca com a entrada do sinal
+no primeiro nvel. Depois ele e decomposto
+nos coecientes de detalhe e de aproximacao do
+primeiro nvel (CD1 e CA1, respectivamente). O
+coeciente CD1 representa uma sada do processo.
+CA1 e dividido novamente com ltros iguais aos
+que existem no primeiro nvel, resultando em
+CD2 e CA2. CD2 se torna outra sada e CA2
+e subdividido por m em CA3 e CD3. Os
+quatro coecientes nais utilizados para a etapa
+de compressao sao CD1, CD2, CD3 e CA3. Nesta
+ordem, esses sinais revelam as componentes de
+mais alta frequencia a mais baixa frequencia do
+sinal original e a partir deles sera possvel a
+compactacao.
+
+(1)
+
+Para reconstruir o sinal a partir dos
+coecientes da wavelet, basta passa-los por ltros
+inversos aos da decomposicao e entao somar os
+resultados.
+
+Os ltros sao conectados em forma de cascata
+ou arvore. A Figura 1 apresenta um arranjo de
+banco de ltros utilizados para a implementacao
+da Transformada Wavelet desejada. Note que a
+terminacao acinzentada representa um decimador,
+cujo fator de decimacao e 2, na sada do ltro.
+
+A Figura 2 mostra uma representacao
+simplicada da resposta_em_frequencia dos ltros
+utilizados no esquema. No eixo das abscissas
+podemos observar a variacao da frequencia, cujo
+valor maximo e a metade da frequencia de
+amostragem Fs . O eixo das ordenadas representa
+o modulo da funcao de transferencia de cada ltro.
+
+y
+
+5
+
+
+xn  iai .
+
+i0
+
+197
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+Filtro LP1
+
+Magnitude
+
+Filtro LP2
+
+Filtro HP1
+
+3dB
+LP3
+
+HP3
+
+Fs16
+
+Filtro HP2
+
+Fs8
+
+Fs4
+
+Fs2
+
+Gerador de
+Sinais
+
+Frequencia(Hz)
+
+Figura 2 Representacao das respostas dos ltros
+em funcao da frequencia de amostragem.
+2.2
+
+Quantizacao de Coeficientes
+
+O sinal de entrada e amostrado por um conversor
+analogico-digital de 16 bits de resolucao. Optou-se
+por quantizar os coecientes dos ltros no mesmo
+formato, ou seja, o formato Q15. Para isso,
+basta normaliza-los e multiplica-los por 215 . Caso
+ainda existam casas decimais, essas devem ser
+truncadas. Essa operacao resulta na ultima coluna
+da Tabela 1.
+3
+3.1
+
+Conversor
+AD
+FPGA
+
+Figura 3 Componentes utilizados.
+
+Sntese da Wavelet em FPGA
+R
+dados do sinal sintetizado em MATLAB
+.
+O gerador e utilizado para produzir os
+disturbios_eletricos dos sinais de teste.
+
+FPGA
+
+Dentre varios circuitos integrados de aplicacao
+especca, a FPGA oferece um grande potencial
+alternativo para acelerar o processo de realizacao
+de hardware (Huang et al., 2002). A FPGA e uma
+matriz de milhares de elementos logicos. Cada
+elemento logico e composto, resumidamente, de
+uma tabela verdade (look-up table ou LUT) e um
+registrador. O resultado da sada de um elemento
+logico pode ser ou nao registrado, dependendo
+das ligacoes entre os blocos. Essas ligacoes sao
+capazes de construir um novo hardware dentro
+da FPGA, que pode ser programada quantas vezes
+forem necessarias, (Elamvazuthi et al., 2013) e
+(Fawcett, 1994).
+Como o Sistema Eletrico Brasileiro e trifasico,
+sao necessarios varios canais de medicao para se
+ter todas as informacoes das tensoes e correntes
+de todas as fases. Ao todo, podemos contabilizar
+oito canais, sendo tres para as tensoes das tres
+fases, outras tres para as correntes nas mesmas e
+os ultimos dois canais, para tensao e corrente de
+neutro.
+3.2
+
+ii) Conversor analogico-digital
+O conversor
+R
+utilizado e o AD7606 da Analog Devices
+.
+Possui 8 canais de conversao simultanea.
+A resolucao e de 16bits.
+A frequencia
+de amostragem pode chegar a ate
+200 ksampless, embora a utilizada seja
+de 7680 Hz.
+iii) FPGA A FPGA utilizada e parte de um kit.
+O menor kit de desenvolvimento da empresa
+R
+ALTERA
+. O kit e chamado DE0Nano.
+Ele Consiste em uma placa pequena que
+contem o FPGA e mais alguns componentes,
+tais como memorias, acelerometros, LEDs,
+chaves, etc, e o modelo da FPGA e
+Cyclone 4 - EP4CE22F17C6. Ela possui
+22320 elementos logicos. Alem disso, possui
+tambem 608 kbits de memoria, 154 pinos e
+132 multiplicadores de 9 bits embarcados.
+
+Sistema fsico
+
+Uma das principais etapas do sistema de
+compactacao corresponde a decomposicao dos
+sinais eletricos utilizando wavelets. A seguir,
+serao mostrados dois metodos de sntese um
+denominado metodo paralelo que utiliza blocos
+convencionais como contadores, multiplicadores,
+etc, e outro, utilizando um processador_embarcado
+dentro da FPGA, especicamente para fazer os
+calculos da Transformada Wavelet.
+
+A Figura 3 mostra o hardware desenvolvido para
+a compressao dos sinais. Nesta gura podemos
+observar os principais componentesequipamentos
+utilizados neste projeto.
+R
+i) Gerador de sinais Gerador da Agilent
+com
+ate 15 MHz de frequencia do sinal gerado.
+Tem conexao serial por onde passam os
+
+198
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Metodo paralelo
+
+Data
+memory
+
+A wavelet e formada por seis ltros, todos
+com o mesmo formato, porem com coecientes
+diferentes. Analisando apenas um ltro, e possvel
+entender todo o sistema.
+A descricao a seguir, se refere a Figura 4.
+De acordo com a equacao 1, podemos observar o
+somatorio de varias amostras multiplicadas pelos
+pesos do ltro. A operacao do ltro requer
+que as amostras sejam continuamente atrasadas
+e multiplicadas novamente pelos pesos do ltro.
+Para isso, e necessario um atrasador de amostras.
+Ao serem atrasadas, as amostras vao sendo
+multiplicadas pelos valores corretos, uma vez
+que eles estao armazenados numa memoria, cujo
+enderecador e o mesmo contador que seleciona o
+multiplexador localizado na sada do atrasador.
+A sada do multiplexador e registrada para chegar
+no mesmo momento que o coeciente do ltro e
+a amostra no multiplicador. Esse, por sua vez,
+registra e passa ao acumulador. O resultado do
+acumulador ja e o resultado da ltragem.
+
+CORE
+
+in
+
+Signal
+
+floating
+point
+
+floating
+point
+fixed
+point
+
+prefetch
+
+Instruction
+decoder
+
+reg. file
+stack pointer
+
+out
+result
+
+Figura 5 Processador.
+operacoes. Esse codigo foi compilado e no m do
+processo foram criadas instrucoes binarias para o
+processador.
+O processador trabalha com tamanho de
+instrucao de 14 bits. A memoria de instrucao
+possui 512 posicoes. A memoria de dados possui
+512 posicoes de 32 bits. A ULA (Unidade Logica
+e Aritmetica) possui 64 bits. A vantagem do
+processador e que ele e desenvolvido para realizar
+uma tarefa especca, procurando otimizar espaco
+logico, podendo trabalhar com altas taxas de
+clock.
+
+Atrasador
+multiplexador
+Multiplicador
+e acumulador
+(MAC)
+
+4
+
+Máquina de
+Estados
+
+4.1
+
+Resultados
+
+Funcionamento do processador
+
+Nesta secao sera mostrado o funcionamento
+do processador_embarcado na FPGA. Para
+isso, o teste foi dividido em algumas etapas.
+Inicialmente, foi a nvel de sof tware, atraves
+de simulacao funcional. Essa simulacao e feita
+a partir de um sinal sintetico carregado ao
+programa. O software utilizado para a simulacao
+R
+foi o Modelsim da empresa Mentor Graphics
+.
+Com ele, e possvel selecionar quais sadas da
+FPGA serao analisadas.
+A Figura 6 mostra a simulacao do
+funcionamento do bloco da wavelet implementado
+na FPGA atraves do processador_embarcado.
+Analisando essa gura de cima para baixo, os
+canais no formato analogico sao, nesta ordem
+O sinal de entrada, em seguida o coeciente
+de detalhe CD1, depois o CD2, abaixo deste o
+CD3, e por m o CA3. E importante observar o
+momento do disturbio transitorio, onde as altas
+frequencias tambem oscilam. E notavel tambem
+a decimacao dos coecientes de mais alta oredem,
+dando um aspecto mais quadriculado a onda.
+As sadas da simulacao foram capturadas
+R
+e exportadas para o MATLAB
+para serem
+
+saída
+
+Figura 4 Filtro FIR wavelet.
+
+3.4
+
+PC
+
+Register
+
+float-index
+
+sinal
+
+Memória dos
+coeficientes
+do filtro
+
+ALU
+
+stack
+
+Filtro
+Contador de
+coeficientes e
+amostras
+
+Instruction
+memory
+
+fixed
+point
+
+3.3
+
+Processador embarcado
+
+Na secao 3.3 foi descrito o metodo paralelo
+para implementacao da wavelet. Nesta secao e
+descrito como um processador dedicado pode ser
+embarcado na FPGA para desenvolver a mesma
+tarefa. A Figura 5 mostra uma representacao do
+processador com suas conexoes internas.
+O
+processador
+desenvolvido
+para
+este
+trabalho
+possui
+arquitetura
+do
+tipo
+Harvard,
+com
+instrucoes
+RISC
+(Reduced Instruction Set Computer).
+Os
+codigos de instrucao que vao para a memoria
+dele foram gerados em um compilador C tambem
+desenvolvido para esse m.
+Foram utilizadas ferramentas gratuitas da
+R
+R
+GNU, como o Flex
+e o Bison
+, ou seja, um
+codigo em C foi digitado representando tudo o
+que os ltros do bloco da wavelet fazem de
+
+199
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+comparadas com a ltragem feita felo proprio
+R
+MATLAB
+utilizando a ferramenta lter.
+Foram entao plotadas as sadas para todos os
+quatro coecientes a m de fazer a comparacao
+(Figura 7). Note que o resultado deu o mesmo
+para a sada do processador e a ltragem no
+R
+MATLAB
+.
+Apos esse teste, os dados foram gravados em
+um chip de FPGA e foi feito o teste com sinais
+eletricos reais provenientes do gerador de sinais.
+O sinal foi decomposto e reconstrudo. Como
+nao foi aplicado nenhum limite nos coecientes
+de detalhe, o sinal foi reconstrudo perfeitamente.
+Caso se aplique um limite que zere todos os valores
+menores que o mesmo, na reconstrucao aparecerao
+pequenas distorcoes devido a compactacao com
+perda.
+A Figura 8 mostra a aplicacao do limite
+nos coecientes de detalhe CD1, CD2 e CD3 da
+wavelet. O limite usado para e ilustracao foi
+obtido utilizando tres vezes o valor do desvio
+padrao do rudo contido no sinal aplicado ao
+sistema. Esse valor limite pode ser observado
+pelas linhas horizontais proximas ao zero. Note
+que o corte insere zeros nos coecientes da wavelet.
+A Figura 9 apresenta a reconstrucao de um
+sinal real proveniente da rede eletrica com o incio
+de uma interrupcao. A reconstrucao foi feita de
+duas maneiras, uma sem a aplicacao de limite
+para os coecientes de detalhe da wavelet e outra
+aplicando-se o limite. Note a diferenca entre
+o sinal original, a reconstrucao sem a aplicacao
+do limite e a reconstrucao aplicando-se o limite.
+Esta diferenca e muito pequena e aparece so nas
+areas de maior turbulencia comparando-se o sinal
+original com a reconstrucao onde foi aplicado o
+limite, ao passo que para o sinal sem o limite
+aplicado, a diferenca e quase nula, podendo ser
+desprezada.
+Ao aplicar esse limite a m de compactar,
+alguns parametros podem ser avaliados
+a
+quantidade de zeros existentes depois do corte
+(quanto mais zeros maior sera a compactacao), a
+energia mantida e o erro medio quadratico entre a
+reconstrucao com o limite aplicado aos coecientes
+de detalhe e o sinal original. A energia E e o erro
+medio quadratico EM Q podem ser calculados de
+acordo com as equacoes 2 e 3, respectivamente,
+onde N e o tamanho do sinal em questao, xorig n
+sao as amostras do sinal original e xrec n sao as
+amostras do sinal reconstrudo.
+N
+1
+
+
+xn2 .
+
+Amplitude quantizada
+
+87,42 das amostras substitudas por zero. A
+energia mantida foi de 99,9352 da energia do
+sinal original. O erro medio quadratico foi de
+0,00024039. Quanto maior o numero de zeros,
+maior e a compactacao. Quanto mais proxima
+de 100 for a energia mantida e quanto menor
+for o erro, signica que houve menor perda na
+compactacao.
+
+N
+1
+
+
+"filter"
+Saída Modelsim
+
+0
+-1000
+-2000
+620
+
+640
+
+660
+
+680
+
+700
+720
+Amostras
+
+740
+
+760
+
+780
+
+800
+
+Amplitude quantizada
+
+x 10
+
+4
+
+1
+
+"filter"
+Saída Modelsim
+
+0
+-1
+
+320
+
+330
+
+340
+
+350
+
+360
+Amostras
+
+370
+
+380
+
+390
+
+400
+
+Amplitude quantizada
+
+(b) CD2
+4
+
+x 10
+
+4
+
+"filter"
+Saída Modelsim
+
+2
+0
+-2
+160
+
+170
+
+180
+
+190
+200
+Amostras
+
+210
+
+220
+
+(c) CD3
+
+(2)
+
+n0
+
+EM Q 
+
+1000
+
+(a) CD1
+
+Amplitude quantizada
+
+E
+
+Figura 6 Entrada e coecientes da wavelet.
+Imagem proveniente do sofware Modelsim.
+
+x 10
+1
+0.5
+0
+-0.5
+-1
+-1.5
+
+4
+
+"filter"
+Saída do Modelsim
+
+150
+
+160
+
+170
+
+180
+
+190
+200
+Amostras
+
+210
+
+220
+
+230
+
+(d) CA3
+
+(xorig n  xrec n)2 N .
+
+(3)
+Figura 7 Coecientes da wavelet implementada
+R
+comparados com o Matlab
+.
+
+n0
+
+Para o teste com sinais reais e usando a
+compactacao com perda, houve uma taxa de
+
+200
+
+240
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+1.000
+
+CD1
+1
+
+0
+-500.0
+-1.000
+1000
+
+CD1 com limite
+
+500
+0
+
+Amplitude normalizada
+
+Amplitude quantizada
+
+500
+
+Sinal original
+
+0.8
+
+Reconstrução sem
+limite aplicado
+
+0.6
+
+Reconstrução com
+limite aplicado
+
+0.4
+0.2
+
+0
+-0.2
+-0.4
+-0.6
+
+-500
+
+-0.8
+
+-1000
+
+800
+
+1000
+
+1200
+
+1400
+
+1600
+
+-1
+1540 1560 1580 1600 1620 1640 1660 1680 1700 1720
+Amostras
+
+Amostras
+
+(a) CD1
+
+Figura 9 Diferenca devido ao limiar.
+3000
+
+CD2
+
+Amplitude quantizada
+
+2000
+1000
+0
+-1000
+3000
+
+CD2 com limite
+
+2000
+
+Tabela 2 Tabela de resultados.
+1c pa 1c pr 8c pa
+BL
+1163
+1018
+13282
+DSP
+20
+2
+132
+BM(Bits)
+0
+5074
+0
+CLK(MHz) 73,46
+82,2
+75,67
+NCU
+50
+250
+56
+
+8c pr
+1621
+2
+33914
+83,96
+1712
+
+1000
+0
+-1000
+200
+
+300
+
+400
+
+500
+
+600
+
+700
+
+800
+
+900
+
+Amostras
+
+(b) CD2
+2000
+
+CD3
+
+Amplitude quantizada
+
+1000
+0
+-1000
+-2000
+2000
+
+CD3 com limite
+
+1000
+0
+-1000
+-2000
+0
+
+100
+
+200
+300
+Amostras
+
+400
+
+500
+
+(c) CD3
+
+Figura 8 Aplicacao do limite aos coecientes de
+detxalhe.
+4.2
+
+Comparacao entre metodos
+
+A comparacao que faremos entre o metodo
+paralelo e o processador_embarcado reside em
+
+201
+
+termos de logica utilizada, maxima velocidade
+de clock permitida e numero aproximado de
+pulsos de clock utilizados, uma vez que ambas as
+estruturas geram os mesmos resultados numericos
+nao apresentados neste trabalho.
+Para ser feita uma melhor comparacao entre
+os metodos paralelo e com processador, foram
+feitas quatro implementacoes cujos resultados
+estao expressos na tabela 2. A primeira foi
+realizada com apenas um canal de medicao
+utilizando a implementacao paralela, representada
+pela segunda coluna da tabela (1c pa). A segunda
+implementacao foi com um canal utilizando o
+metodo do processador_embarcado, representada
+pela terceira coluna (1c pr).
+A quarta e
+a quinta colunas representam as duas ultimas
+implementacoes, nas quais foram utilizados os oito
+canais de medicao com o metodo paralelo e com o
+processador_embarcado, respectivamente.
+As linhas da tabela 2 mostram alguns dos
+recursos utilizados da FPGA numero de blocos
+logicos (BL), numero de blocos DSP, numero de
+bits de memoria utilizados (BM), clock maximo
+permitido (CLK) e numero aproximado de ciclos
+de clock utilizados (NCU). E importante notar
+que para uma canal apenas, os dois metodos
+de implementacao sao equiparaveis em termos
+de logica. Porem, para oito canais, o espaco
+logico ocupado pela implementacao direta e muito
+maior, dicultando a insercao de futuros blocos de
+hardware. Conforme cresce o numero de canais
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+de medicao, a implementacao via processador
+embarcado consome mais memoria da FPGA, pois
+maior e o numero de instrucoes e dados utilizados
+nas respectivas memorias.
+5
+
+de Lima, P. C. (2002). Wavelets uma introducao,
+Matematica Universitaria 33 1344.
+Elamvazuthi, I., Ling, G., Nurhanim, K.,
+Vasant, P. and Parasuraman, S. (2013).
+Surface electromyography (semg) feature
+extraction based on daubechies wavelets, 8th
+IEEE Conference on Industrial Electronics
+and Applications (ICIEA), 2013, IEEE,
+Melbourne, Australia, pp. 14921495.
+
+Conclusao
+
+Este trabalho teve como principal objetivo
+discorrer sobre a implementacao da Transformada
+Wavelet em plataforma FPGA, comparando-se
+dois metodos o metodo paralelo e o metodo
+com processador_embarcado. Pode-se concluir,
+a partir dos resultados apresentados, que essa
+ferramenta, principalmente aliada ao processador
+embarcado em FPGA, representa uma poderosa
+estrategia para decomposicao e compactacao de
+sinais operando em tempo_real. Seu emprego
+permite tambem a deteccao e a analise de
+disturbios, sejam eles, rudos, transitorios ou
+harmonicos.
+A implementacao em processador_embarcado
+mostrou-se mais atrativa com relacao ao uso de
+logica dentro da FPGA, otimizando os recursos
+utilizados, ao passo que a implementacao em
+paralelo utilizou muito mais blocos logicos do que
+a implementacao por processador, mas permitiu
+uma resposta em menos ciclos de clock, o que nao
+e uma forte exigencia visto que as amostras sao
+realizadas a uma taxa muito baixa, na ordem de
+kilohertz.
+O estagio atual da implementacao do
+sistema encontra-se operativo para oito canais,
+contendo alem da implementacao da wavelet, a
+implementacao de outras funcoes que possibilitam
+a deteccao do evento e a compactacao do
+mesmo. Os proximos passos correspondem a
+implementacao de outros processadores especcos
+dentro da FPGA, como por exemplo um
+processador para o calculo dos componentes
+harmonicos de acordo com a norma IEC61000-4-7.
+
+Farge, M., Kevlahan, N., Perrier, V. and
+Goirand, E. (1996). Wavelets and turbulence,
+Proceedings of the IEEE 84(4) 639669.
+Fawcett, B. K. (1994). Tools to speed fpga
+development, Spectrum, IEEE 31(11) 8894.
+Galli, A., Heydt, G. and Ribeiro, P. (1996).
+Exploring the power of wavelet analysis,
+IEEE Computer Applications in Power
+9(4) 3741.
+Herley, C. and Vetterli, M. (1993). Wavelets and
+recursive lter banks, IEEE Transactions on
+signal Processing 41(8) 25362556.
+Huang, S.-J., Yang, T.-M. and Huang, J.-T.
+(2002). Fpga realization of wavelet transform
+for detection of electric power system
+disturbances, IEEE Transactions on Power
+Delivery 17(2) 388394.
+Istepanian, R. S. and Petrosian, A. A. (2000).
+Optimal zonal wavelet-based ecg data
+compression for a mobile telecardiology
+system, IEEE Transactions on Information
+Technology in Biomedicine 4(3) 200211.
+Mallat, S. G. (1989). A theory for multiresolution
+signal
+decomposition
+the
+wavelet
+representation, IEEE Transactions on
+Pattern Analysis and Machine Intelligence
+11(7) 674693.
+Michalski, J. J. and Kacmajor, T. (2011).
+Filter tuning algorithm with compressed
+reection characteristic by daubechies
+d4 wavelet transform, 41st European
+Microwave Conference (EuMC), 2011,
+IEEE, pp. 778781.
+
+Agradecimentos
+Os autores gostariam de ao CNPQ a CAPES e
+a FAPEMIG pelo suporte para a realizacao desse
+trabalho.
+
+Tcheou, M. P., Lovisolo, L., Ribeiro, M. V.,
+da Silva, E. A., Rodrigues, M. A., Romano,
+J. M. and Diniz, P. S. (n.d.). The compression
+of electric signal waveforms for smart_grids
+State of the art and future trends.
+
+Referencias
+Cohen, A. and Kovacevic, J. (1996). Wavelets the
+mathematical background, Proceedings of the
+IEEE 84(4) 514522.
+DA
+
+Wagner, V., Balda, J., Grith, D., McEachern,
+A., Barnes, T., Hartmann, D., Phileggi,
+D., Emannuel, A., Horton, W., Reid, W.
+et al. (1993).
+Eects of harmonics on
+equipment, IEEE Transactions on Power
+Delivery 8(2) 672680.
+
+SILVA, J. F. (2008).
+Sistema de
+armazenamento de imagens comprimidas
+atraves da transformada_wavelet, PhD thesis,
+Dissertacao de Mestrado, Universidade
+Estadual Paulista Julio de Mesquita Filho,
+Ilha Solteira-SP, Brasil.
+
+202

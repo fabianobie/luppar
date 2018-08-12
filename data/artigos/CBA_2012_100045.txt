@@ -1,0 +1,883 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+UMA ABORDAGEM PARA GERACAO E EXECUCAO DE CASOS DE TESTE EM
+PROGRAMAS DE SISTEMAS INSTRUMENTADOS DE SEGURANCA
+Kezia de Vasconcelos Oliveira, Leandro Dias da Silva, Angelo Perkusich, Kyller
+Costa Gorgonio
+
+
+Universidade Federal de Campina Grande - UFCG
+Campina Grande, Paraba, Brasil
+
+
+Universidade Federal de Alagoas - UFAL
+Maceio, Alagoas, Brasil
+
+Emails kezia@copin.ufcg.edu.br, leandro, perkusic, kyller@dee.ufcg.edu.br
+Abstract The goal of this work is to present a method to increase the safety and dependability in the
+automation of the Safety Instrumented Systems (SIS) processes. Therefore, test cases are generated automatically,
+which the output states and timed properties of the system are evaluated from the specification given in ISA
+5.2 diagrams, and they are executed in a PLC program. For this purpose, we use of timed automata networks,
+the technique HIL, supported by using the OPC protocol and the black-box testing approach with the use of
+equivalence classes. A case study is presented in this paper.
+Keywords Safety Instrumented Systems, Programmable Logic Controller, ISA 5.2 Diagrams, Timed Automata Network, Black-Box Testing
+Resumo O objetivo neste trabalho e apresentar um metodo que aumente a confianca e a seguranca na
+automacao_de_processos realizados por Sistemas Instrumentados de Seguranca (SIS). Para tanto, casos de teste sao
+gerados automaticamente, nos quais os estados das sadas e propriedades temporizadas do sistema sao avaliados, a
+partir da especificacao do sistema dada em diagramas ISA 5.2, e os mesmos sao executados em um programa para
+CLP. Para este proposito, faremos uso de redes de automatos temporizados, da tecnica HIL, tendo como suporte
+o uso do protocolo OPC e da abordagem de teste de caixa-preta com a utilizacao de particoes de equivalencia.
+Um estudo de caso e apresentado neste trabalho.
+Palavras-chave .2, Rede de Automatos Temporizados, Teste de Caixa-Preta.
+
+1
+
+Introducao
+
+Sistemas Instrumentados de Seguranca (SIS) sao
+desenvolvidos para garantir a seguranca_operacional de sistemas_industriais e tem a nalidade
+de prevenir a ocorrencia de situacoes indesejadas
+quando da execucao de procedimentos realizados
+automaticamente ou sob a interferencia de operadores humanos (Gruhn and Cheddie, 2006). Estas situacoes podem ocorrer devido as falhas em
+sensores e atuadores da planta, ou ainda podem
+estar relacionadas aos erros na logica em execucao
+do sistema industrial. No caso de falhas, um SIS
+e acionado e o processo_industrial e levado automaticamente a um estado seguro.
+A automacao de SIS e realizada por Controladores Logicos Programaveis (CLP) de seguranca, uma classe de CLP (Bryan and Bryan,
+1997 Parr, 2003) especialmente projetada para
+trabalhar com o conceito de falha segura e ser tolerante a falhas (Jalote, 1994).
+Durante e depois da implementacao, o programa para o CLP (codigo do SIS) deve ser
+vericado para certicar-se de que ele esta de
+acordo com sua especicacao e entrega a funcionalidade desejada aos clientes (Sommerville, 2007).
+Esse processo de vericacao e analise e denominado de vericacao e validacao (VV) (Frey and
+Litz, 2000). Na vericacao e avaliado se o programa desenvolvido esta de acordo com suas especicacoes. Validacao, no entanto e um processo
+
+ISBN 978-85-8001-069-5
+
+mais geral, no qual o objetivo e assegurar que
+o sistema de software atende as necessidades do
+usuario.
+As atividades de VV podem ser realizadas
+de forma manual ou automatica e incluem tecnicas
+de vericacao estatica e dinamica (Sommerville,
+2007).
+Tecnicas de vericacao estatica sao aquelas
+que nao requerem a execucao ou mesmo a existencia de um programa para serem conduzidas. Vericacao formal e vericacao modelos sao exemplos
+de vericacao estatica.
+A maioria dos trabalhos em VV, no contexto
+de programas para CLPs, esta relacionada a vericacao de modelos (Frey and Litz, 2000 Bender
+et al., 2008 Mokadem et al., 2010 Ljungkrantz
+et al., 2011). O problema com o uso desta tecnica
+e que modelos abstratos podem nao representar
+corretamente o comportamento dos sistemas correspondentes face a distancia sintatica e semantica
+geralmente presente entre a linguagem de modelagem e a de programacao (Murphy et al., 2001).
+Alem disso, esta tecnica de vericacao e inadequada para sistemas_complexos pois seu uso pode
+causar explosao do espaco_de_estados.
+Tecnicas de vericacao dinamica sao aquelas
+que se baseiam na execucao de um programa com
+a nalidade de detectar defeitos ou erros. Testes e
+avaliacao de assercoes no codigo sao exemplos de
+vericacao dinamica.
+
+3372
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Teste e uma atividade para avaliar a qualidade, a seguranca e a conanca das aplicacoes e
+e normalmente usado na pratica como uma atividade do processo de vericacao e validacao, pois
+com o uso desta tecnica e possvel validar tanto
+requisitos funcionais quanto nao funcionais de um
+sistema de software (Sommerville, 2007).
+No contexto de programas para CLPs e sistemas_de_tempo_real dois tipos de tecnicas sao
+propostas para realizacao de testes testes baseados em modelos (MBT) e teste do programa.
+MBT e uma tecnica que se baseia em tarefas de geracao e execucao de casos de teste para
+avaliacao de modelos que representam o sistema
+sob teste. Para trabalhos em que esta tecnica e
+adotada (Blom et al., 2005 Li et al., 2008 EnNouaary and Hamou-Lhadj, 2008 Silva et al.,
+2008 Oliveira et al., 2010 Hannsel et al., 2011),
+as metricas de cobertura do modelo utilizadas ou
+sao inecientes na deteccao de erros no sistema ou
+elementos temporizados nao sao avaliados.
+Com a tecnica de teste do programa a vericacao de propriedades especcas e realizada no
+proprio codigo fonte do sistema sob teste. Nesta
+tecnica o hardware dedicado e inserido no processo de teste e a tecnica HIL (hardware-in-theloop) (Bacic, 2005) juntamente com o protocolo
+OPC (Iwanitz and Lange, 2002) sao utilizados no
+processo de teste. Em trabalhos que utilizam HIL
+a tecnica para geracao dos casos de teste e o teste
+sob todas as combinacoes de valores das variaveis de entrada (Chaaban et al., 2011), e nos demais trabalhos, (Schludermann et al., 2000 Jacobs et al., 2005), apenas e ilustrado a realizacao
+de testes, mas nao existe nenhuma tecnica que auxilie na geracao automatica destes. Desta forma,
+nos trabalhos que utilizam a tecnica de teste do
+programa nao sao levadas em consideracao caractersticas tao importantes como criterios de
+cobertura do codigo, propriedades temporizadas,
+quantidade e qualidade dos testes.
+Estas duas tecnicas, testes baseados em modelos e teste do programa, ainda apresentam um problema, pois os estados das sadas do sistema, caracterstica essa tao importante para SIS, nao sao
+avaliados. Testar os estados das sadas de um sistema consiste em avaliar quando as mesmas estao
+ativadas ou desativadas. Estas condicoes de sadas sao relevantes para avaliacao de propriedades
+emergentes, tais como seguranca e conanca, de
+um SIS. Alem disso, com estas condicoes e possvel especicar as operacoes que devem ou nao
+devem ser realizadas por um SIS.
+O objetivo neste trabalho e apresentar um
+metodo no qual casos de teste sao gerados automaticamente, e os estados das sadas e propriedades temporizadas do sistema sao avaliados,
+a partir da especicacao do sistema dada em diagramas ISA 5.2, e que os mesmos sejam executados em um programa para CLP. Para este
+proposito faremos uso de redes de automatos temporizados, da tecnica HIL, tendo como suporte o
+
+ISBN 978-85-8001-069-5
+
+uso do protocolo OPC e da abordagem de teste de
+caixa-preta (Young and Pezze, 2005) com a utilizacao de particoes de equivalencia.
+Neste trabalho e apresentado um novo metodo
+para vericar programas de CLPs para SIS. Neste
+sentido, as principais contribuicoes sao
+ Um novo metodo para teste de programas
+para CLPs, onde a conformidade entre a especicacao, representada por uma rede de
+automatos temporizados, e a implementacao
+real do sistema pode ser vericada
+ Teste do comportamento de elementos temporizados. O comportamento de temporizadores, bem como a logica completa do
+programa de um CLP e vericado em tempo
+de execucao
+ Mapeamento de um modelo referente a especicacao do sistema para o formalismo de
+redes de automatos temporizados, gerando
+assim uma especicacao formal do sistema
+sob teste. Alem disso, a rede de automatos temporizados gerada possui um menor
+numero de localidades e de variaveis quando
+comparada as redes apresentadas nos trabalhos de Silva et. al (Silva et al., 2008) e
+Oliveira et. al (Oliveira et al., 2010)
+ Diferentemente de outros metodos, com o uso
+do metodo apresentado neste trabalho e possvel gerar casos de teste, nao redundantes,
+que contemplam os possveis valores para as
+sadas de um programa de CLP para SIS.
+O restante deste artigo esta organizado da
+seguinte forma. Na Secao II o metodo proposto
+e introduzido. Na Secao III um estudo de caso
+e apresentado. Na Secao IV este trabalho e concludo e sugestoes para trabalhos futuros sao discutidas.
+2
+
+Metodo proposto
+
+Na Figura 1 e apresentado o metodo proposto
+neste trabalho. Primeiro o arquivo que representa
+a especicacao do sistema (diagramas ISA 5.2) e
+transformado em uma rede de automatos temporizados (AT), segundo a sintaxe e semantica da
+ferramenta Uppaal (Mokadem et al., 2010). Apos
+a geracao desta rede de automatos temporizados,
+casos de testes de conformidade sao gerados, de
+forma automatica, a partir desta rede de automatos. Para tal tarefa, uma ferramenta de teste
+foi desenvolvida com o objetivo de gerar um conjunto de casos de testes em que os estados das sadas do sistema e propriedades temporizadas sao
+avaliados. Apos isso, os valores das entradas gerados a partir da rede de automatos temporizados
+sao enviados para o CLP, via protocolo OPC, onde
+esta presente a implementacao do sistema a ser
+
+3373
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+avaliada. Por m, um veredito sobre a conformidade entre especicacao e implementacao do sistema e fornecido, ou seja, as sadas geradas a partir da rede de automatos temporizados sao comparadas com as sadas geradas pelo CLP.
+Especificação
+(ISA 5.2) 1
+
+Conversor
+(ISA to AT)
+
+Rede de AT
+2
+Entradas 3
+Ferramenta de
+Teste
+
+Saídas
+
+CLP
+
+4
+Saídas do CLP e
+Saídas da Rede de AT
+5
+Veredito de Teste
+(SuccessFail)
+
+Figura 1 Metodo utilizado para validar o SIS
+Na ferramenta de teste, a ideia utilizada para
+gerar os casos de teste consiste em construir conjuntos de teste para cada ciclo de varredura do
+CLP. Desta forma, cada caso de teste gerado e
+composto por uma tupla da forma C  (E, S, T)
+onde
+ E e o conjunto de valores booleanos gerados
+para as entradas do modelo referente a especicacao do sistema
+ S e conjunto de valores booleanos correspondentes as sadas processadas do modelo da
+especicacao do sistema a partir do conjunto
+E
+ T e o traco de execucao, ou seja, as sequencias de eventos de sincronizacao executados
+para obtencao das sadas do modelo da especicacao.
+Na ferramenta de teste, primeiramente todas
+as combinacoes de valores possveis para as entradas sao geradas, depois algumas destas combinacoes sao selecionadas para gerar os casos de
+teste. Na selecao das combinacoes dos valores das
+entradas foi utilizada a abordagem de particoes
+de equivalencia. Com o uso desta abordagem e
+possvel testar os estados das sadas do sistema,
+o comportamento dos temporizadores e reduzir o
+numero de casos de teste que apresentam um consideravel grau de redundancia entre si. Dois ou
+mais casos de teste sao considerados redundantes
+se os mesmos forem similares e nao adicionarem
+valor ao conjunto de testes, ou seja, nao detectam
+novos erros e nao garantem uma melhor cobertura,
+seja do modelo, seja dos requisitos sob analise.
+A selecao das combinacoes dos valores das
+entradas depende dos elementos que compoem a
+especicacao do sistema. Para cada variavel de
+
+ISBN 978-85-8001-069-5
+
+sada devem ser selecionadas, de forma aleatoria,
+duas sequencias de entrada uma que desativa e
+outra que ativa a sada. Caso a logica do sistema
+possua elementos temporizados, entao, para cada
+temporizador, serao selecionadas combinacoes de
+valores das entradas para exercitar pelo menos
+uma vez todas as transicoes de todos os temporizadores.
+A vericacao do comportamento dos temporizadores e realizada com base na logica de entrada (IN ) de cada temporizador. Desta forma,
+utilizando a abordagem particoes de equivalencia
+dois tipos de classes sao criadas para cada temporizador, uma classe que contem todas as combinacoes de entrada, dentre todas as possveis geradas, que tornam o valor de IN true e uma outra
+classe composta por todas as combinacoes de entrada que tornam o valor de IN false.
+A forma como sao selecionadas as combinacoes de valores das entradas dos casos de teste
+para temporizadores varia de acordo com o tipo
+de temporizador. Utilizamos a variavel n, onde
+n  PTtScan, para indicar quantas vezes uma
+classe de combinacoes de entrada e utilizada para
+ativar uma determinada transicao de um automato que representa um temporizador.
+Na Figura 2 temos um exemplo de um automato temporizado utilizado para modelar o comportamento de temporizadores do tipo DI (Delay
+Initiation of output). Para temporizadores do tipo
+DI, a seguinte sequencia de combinacoes de entrada disjuntas, se possvel, devem ser utilizadas
+para que o comportamento deste tipo de temporizador possa ser vericado
+ uma combinacao de entrada utilizada para
+ativar a entrada do temporizador. Com essa
+combinacao a transicao 1 do automato e disparada (coberta)
+ uma combinacao de entrada utilizada para
+desativar a entrada do temporizador. Com
+essa combinacao a transicao 2 do automato e
+disparada
+ n combinacoes de entrada utilizadas para ativar a entrada do temporizador. Com essas
+combinacoes as transicoes 1, 3 e 4 do automato sao disparadas
+ uma combinacao de entrada utilizada para
+desativar a entrada do temporizador. Com
+essa combinacao a transicao 5 do automato e
+disparada.
+De forma analoga as combinacoes de valores
+das entradas selecionadas para vericar os temporizadores, a logica denida para cada bloco que
+determina uma sada e vericada e, utilizando a
+abordagem particao de equivalencia dois tipos de
+classes sao criadas para cada sada do sistema
+uma classe que contem todas as combinacoes de
+entrada, dentre todas as possveis geradas, que
+tornam a sada ativada e outra classe composta
+
+3374
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+por todas as combinacoes de entrada que tornam
+a sada desativada. Depois, para cada sada e selecionada duas combinacoes de valores das entradas
+uma que ativa e outra que desativa a sada. Caso
+alguma combinacao ja tenha sido selecionada, entao outra combinacao de entrada que apresenta
+o mesmo comportamento, ou seja, que pertence a
+mesma classe de equivalencia, e escolhida de forma
+aleatoria.
+sync1?
+inputTimer(1) 
+acc1 < 2
+ control1  0
+acc1 + tScan,
+control1  1
+
+sync1?
+inputTimer(1)
+acc1 + tScan,
+control1  1
+1
+
+3
+
+L1
+
+L2
+
+sync1?
+!inputTimer(1)
+acc1  0
+2
+sync1?
+!inputTimer(1)
+outTimer1  false,
+acc1  0
+
+4
+
+5
+
+L3
+
+sync1?
+inputTimer(1) 
+acc1 > 2
+outTimer1  true
+
+Figura 2 Automato para um temporizador DI
+
+ Se for detectado gas na zona, entao o alarme
+sonoro que indica presenca de gas e acionado
+e apos 4 segundos o sistema que fornece
+petroleo para o tanque e desligado e a valvula
+que mantem o sistema estavel e aberta. Esta
+valvula e utilizada para controlar a quantidade de petroleo no tanque de forma que nao
+haja danicacoes as instalacoes e nem desperdcio de material. O alarme sonoro sera
+desligado quando nao houver mais presenca
+de gas na zona.
+3.1
+
+Modelagem da especificacao do sistema de
+seguranca
+
+Na Figura 3 e apresentado o diagrama ISA 5.2
+referente a especicacao do sistema de seguranca.
+Nas Figuras 4 a 7 sao mostrados os modelos de
+automatos temporizados extrados a partir desta
+especicacao. Sao gerados 5 tipos de automatos
+temporizados
+ Automatos temporizados que representam
+variaveis de entrada booleanas
+ Automato temporizado que representa o processo de atualizacao das variaveis de entrada
+
+3
+
+Estudo de Caso
+
+Para apresentar o metodo, foi utilizado um exemplo de um sistema de seguranca. Este sistema e
+utilizado com o objetivo de manter a seguranca
+de uma zona apos a deteccao de fogo ou gas na
+mesma. O sistema e composto por dois sensores
+de fumaca (SF1 e SF2), um tanque, tres sensores
+de gas (SG1, SG2 e SG3), um dispositivo que libera gas CO2 na conrmacao de fogo na zona (DispCO2), um alarme sonoro que indica presenca de
+fogo (AlaFDZ), um alarme sonoro que indica presenca de gas (AlaGDZ) e duas valvulas que sao
+utilizadas para controlar a quantidade de petroleo
+no tanque. Uma destas valvulas e chamada de
+valvula auxiliar, acionada apenas quando ocorre
+vazamento de gas na valvula principal. A valvula
+auxiliar e utilizada para manter o sistema estavel
+evitando eventuais danos as instalacoes da zona.
+As seguintes operacoes sao realizadas no sistema
+ Se algum dos sensores de fumaca for acionado
+entao foi detectado presenca de fogo na zona
+ Se o sensor de gas 1 e o sensor de gas 2 ou
+3 forem acionados, ou se o sensor de gas 2 e
+o sensor de gas 3 forem acionados entao, foi
+detectado presenca de gas na zona
+ Se for detectado fogo na zona, entao um
+alarme sonoro que indica presenca de fogo
+e acionado e apos 2 segundos o dispositivo
+que libera gas CO2 e acionado e a valvula
+principal e desligada. O gas CO2 liberado
+e utilizado para sanar o fogo na zona. O
+alarme sonoro sera desligado quando nao houver mais presenca de fogo na zona
+
+ISBN 978-85-8001-069-5
+
+ Automatos temporizados que representam o
+comportamento de elementos temporizados
+ Automato temporizado que representa o funcionamento da logica do sistema
+ Automato temporizado que representa o ciclo
+de varredura do CLP.
+Na Figura 4 e apresentado o modelo de automato temporizado que representa as variaveis
+de entrada. Cada variavel de entrada e modelada como um automato de uma unica localidade com duas transicoes. Os valores booleanos
+false ou true podem ser denidos para as variaveis quando a este automato e enviada uma mensagem de sincronizacao reset! ou set!. A variavel numInputRead, utilizada como guarda, determina qual variavel de entrada esta sendo atualizada. Na Figura 5 o automato que representa o
+processo de atualizacao das variaveis de entrada e
+apresentado.
+Na Figura 6 e apresentado o modelo de automato temporizado que representa a logica do sistema. A ideia utilizada na modelagem consiste
+em executar sequencialmente blocos que determinam uma sada do sistema atraves do uso de
+funcoes, denominadas calcOutput. A execucao
+destas funcoes e realizada a partir do disparo de
+transicoes que sao sincronizadas com execute!. A
+funcao evaluateGuard e utilizada para dessincronizar o automato temporizado que representa um
+elemento temporizado, no caso timer1 e timer2, e
+o modelo que representa o funcionamento da logica do sistema, para que o proximo bloco que
+determina uma sada seja executado ou para que
+o programa termine sua execucao.
+
+3375
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+DispCO2
+
+SF1
+
+HS
+
+SF2
+
+HS
+
+DI
+
+O
+R
+
+AC
+2s
+
+AlaFDZ
+
+Timer1
+
+AC
+
+SG1
+
+SG2
+
+HS
+A
+N
+D
+
+HS
+O
+R
+
+AuxiliaryValve
+DI
+
+O
+R
+
+SG3
+
+AC
+4s
+
+HS
+
+Timer2
+
+A
+N
+D
+
+AlaGDZ
+AC
+
+Valve
+
+A
+N
+D
+
+AC
+
+Figura 3 Diagrama ISA 5.2 para o sistema de seguranca apresentado no estudo de caso
+
+Quando todos os blocos que determinam uma
+sada do sistema forem executados e o tempo de
+varredura for atingindo entao as sadas sao liberadas, funcao updateOutputs(), e os valores de timer,
+startExecution e numInputRead sao reinicializados.
+
+set?
+numInputRead  0
+SF1  true
+
+reset?
+numInputRead  0
+SF1  false
+
+sync1!
+
+Figura 4 Automato temporizado que representa
+a variavel de entrada SF1
+
+execute?
+evaluateGuard(1)
+calcOutput(1)
+
+sync2!
+
+set!
+numInputRead < numInput
+ !startExecution
+start!
+numInputRead++
+numInputRead  numInput
+ !startExecution  time  0
+startExecution  true
+
+C
+
+execute?
+evaluateGuard(2)
+calcOutput(2)
+
+L2
+
+L1
+
+execute?
+calcOutput(3),
+updateVariables()
+
+update?
+reset!
+numInputRead < numInput
+ !startExecution
+numInputRead++
+
+Figura 5 Automato temporizado que representa
+o processo de atualizacao de variaveis de entrada
+
+Na Figura 7 e ilustrado o automato temporizado que representa o ciclo de varredura de um
+CLP. Na modelagem deste automato sao consideradas as tres etapas que compoem o ciclo de
+varredura leitura de variaveis de entrada, execucao do programa e atualizacao das sadas. Este
+automato e executado da seguinte forma apos
+as atualizacoes das variaveis de entrada serem
+feitas a execucao da logica do sistema e inicializada, esta etapa de processamento nao deve ultrapassar o tempo de varredura (time < tScan).
+
+ISBN 978-85-8001-069-5
+
+update?
+
+Figura 6 Automato temporizado que representa
+a execucao da logica do sistema de seguranca
+
+start?
+time  0
+C
+
+L1
+
+time <
+tScan
+
+L2
+execute!
+startExecution
+
+update!
+time > tScan  !startExecution
+time  0, startExecution  false,
+numInputRead  0, updateOutputs()
+
+Figura 7 Automato temporizado que representa
+o ciclo de varredura de um CLP
+
+3376
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+3.2
+
+Testes realizados no sistema de seguranca
+
+Nesta secao sao apresentados os casos de teste gerados bem como os vereditos de teste fornecidos
+pela ferramenta de teste desenvolvida. Primeiramente, todas as possveis combinacoes de valores
+das entradas sao geradas. Como existem 5 variaveis de entrada, entao 32 (25 ) combinacoes sao
+geradas. Depois algumas destas sao selecionadas
+para gerar os casos de teste. Apos selecionadas
+as entradas dos casos de teste (conjunto E), a
+rede de automatos temporizados e executada para
+cada combinacao de entrada gerando a sequencia de acoes (conjunto T) e os valores das sadas
+do sistema (conjunto S). Para este estudo de caso
+foram selecionados 18 combinacoes de valores das
+entrada, apresentadas a seguir, das quais
+ 5 sao utilizadas para testar o comportamento
+do temporizador Timer1 e consequentemente
+a sada DispCO2 
+ Conjunto E do caso de teste 17 - o temporizador e energizado e a transicao 1 e
+disparada
+ Conjunto E do caso de teste 6 - o temporizador e desenergizado e a transicao
+2 e disparada
+ Conjunto E do caso de teste 25 - o temporizador e energizado, o valor de acc1
+(valor acumulado) e incrementado (acc1
+ tScan) e a transicao 1 e disparada
+
+ Conjunto E do caso de teste 23 - a
+sada do temporizador e liberada (acc2
+ 4*Scan) e as transicoes 3 e 4 sao disparadas
+ Conjunto E do caso de teste 29 - o temporizador e desenergizado e a transicao
+5 e disparada
+ 6 sao utilizadas para testar os estados das sadas que ainda nao foram testadas, no caso as
+sadas AlaFDZ, Valve e AlaGDZ. Estas combinacoes foram escolhidas de forma aleatoria
+e contemplam os estados de cada sada (sada
+ativada e sada desativada)
+ Conjunto E do caso de teste 2 - teste
+para AlaFDZ  0 
+ Conjunto E do caso de teste 22 - teste
+para AlaFDZ  1 
+ Conjunto E do caso de teste 16 - teste
+para Valve  0 
+ Conjunto E do caso de teste 3 - teste
+para Valve  1 
+ Conjunto E do caso de teste 9 - teste
+para AlaGDZ  0 
+ Conjunto E do caso de teste 31 - teste
+para AlaGDZ  1 
+
+ Conjunto E do caso de teste 26 - o temporizador e desenergizado e a transicao
+2 e disparada
+
+Depois de selecionadas as combinacoes dos
+valores de entrada sao gerados os casos de teste.
+Desta forma, a rede de automatos temporizados
+e executada para cada combinacao de entrada
+gerando a sequencia de acoes (conjunto T) e os
+valores das sadas do sistema (conjunto S). Na
+Figura 8, sao apresentados os casos de teste gerados na ferramenta de teste.
+Os valores das entradas (conjunto E) dos casos
+de teste selecionados foram enviados para o CLP
+onde se encontra a implementacao do sistema de
+seguranca, descrita na linguagem Ladder. O veredito dado pela ferramenta de teste desenvolvida
+foi  A Implementacao esta em conformidade com
+a especificacao. Desta forma, nenhuma anormalidade relacionada ao comportamento da implementacao do sistema foi detectada.
+Para ilustrar a validade do metodo, atraves da
+deteccao de erros existentes na implementacao, os
+seguintes erros foram inseridos no programa Ladder que representa o sistema de seguranca
+
+ Conjunto E do caso de teste 32 - o temporizador e energizado, o valor de acc2
+(valor acumulado) e incrementado (acc2
+ tScan) e a transicao 1 e disparada
+
+ Erro 1 trocar um contato normalmente
+aberto por um contato normalmente fechado,
+neste caso, a variavel SF2 sera representada
+por um contato normalmente fechado
+
+ Conjunto E do caso de teste 14 - o
+valor de acc2 e incrementado (acc2 
+2*tScan) e a transicao 3 e disparada
+
+ Erro 2 trocar uma operacao logica AND por
+uma operacao logica OR, no caso, a variavel
+AuxiliaryValve representada por um contato
+normalmente fechado sera colocada em paralelo com a variavel representada pelo contato
+normalmente fechado AlaFDZ 
+
+ Conjunto E do caso de teste 13 - a
+sada do temporizador e liberada (acc1
+ 2*tScan) e as transicoes 3 e 4 sao disparadas
+ Conjunto E do caso de teste 1 - o temporizador e desenergizado e a transicao
+5 e disparada
+ 7 sao utilizadas para testar o comportamento
+do temporizador Timer2 e consequentemente
+a sada AuxiliaryValve
+ Conjunto E do caso de teste 8 - o temporizador e energizado e a transicao 1 e
+disparada
+
+ Conjunto E do caso de teste 4 - o
+valor de acc2 e incrementado (acc2 
+3*tScan) e a transicao 3 e disparada
+
+ISBN 978-85-8001-069-5
+
+3377
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ Erro 3 alterar o valor de PT de Timer2 para
+3 segundos.
+Casos de teste temporizador Timer1
+Caso de teste 1 - A transição 1 de Timer1 é acionada
+E SF1  1, SF2  0, SG1  0, SG2  0, SG3  0
+S DispCO2  0, AlaFDZ  1, Valve  0, AuxiliaryValve  0, AlaGDZ  0
+T set, reset, reset, reset, reset, start, sync1, execute, execute, execute, update
+Caso de teste 2 - A transição 2 de Timer1 é acionada
+E SF1  0, SF2  0, SG1  1, SG2  0, SG3  0
+S DispCO2  0, AlaFDZ  0, Valve  1, AuxiliaryValve  0, AlaGDZ  0
+T reset, reset, set, reset, reset, start, sync1, execute, execute, execute, update
+.
+.
+.
+
+Para o programa Ladder com o erro 2 o veredito foi Erro no caso de teste 1 - Nao ha conformidade entre especificacao e implementacao.
+Para a combinacao de entrada SF1  1, SF2  0,
+SG1  0, SG2  0, SG3  0 era esperado que a
+a sada Valve fosse false, mas ela foi true.
+Para o programa Ladder com o erro 3 o veredito foi Erro no caso de teste 10 - Nao ha conformidade entre especificacao e implementacao.
+Para a combinacao de entrada SF1  0, SF2  0,
+SG1  0, SG2  1, SG3  1 era esperado que a
+a sada Valve fosse true, mas ela foi false. Tambem era esperado que a sada AuxiliaryValve fosse
+false, mas ela foi true.
+
+Casos de teste temporizador Timer2
+
+4
+Caso de teste 6 - A transição 1 de Timer2 é acionada
+E SF1  0, SF2  0, SG1  1, SG2  1, SG3  1
+S DispCO2  0, AlaFDZ  0, Valve  1, AuxiliaryValve  0, AlaGDZ  1
+T reset, reset, set, set, set, start, execute, sync2, execute, execute, update
+.
+.
+.
+Caso de teste 10 - A transição 3 de Timer2 é acionada
+E SF1  0, SF2  0, SG1  0, SG2  1, SG3  1
+S DispCO2  0, AlaFDZ  0, Valve  1, AuxiliaryValve  0, AlaGDZ  1
+T reset, reset, reset, set, set, start, sync1, execute, sync2, execute, execute, update
+.
+.
+.
+Casos de teste para as saídas AlaFDZ, Valve e AlaGDZ
+Caso de teste 13 - Teste para AlaFDZ  0
+E SF1  0, SF2  0, SG1  0, SG2  0, SG3  1
+S DispCO2  0, AlaFDZ  0, Valve  1, AuxiliaryValve  0, AlaGDZ  0
+T reset, reset, reset, reset, set, start, sync1, execute, execute, execute, update
+Caso de teste 14 - Teste para AlaFDZ  1
+E SF1  1, SF2  0, SG1  1, SG2  0, SG3  1
+S DispCO2  0, AlaFDZ  1, Valve  1, AuxiliaryValve  0, AlaGDZ  1
+T set, reset, set, reset, set, start, sync1, execute, sync2, execute, execute, update
+Caso de teste 15 - Teste para Valve  0
+E SF1  0, SF2  1, SG1  1, SG2  1, SG3  1
+S DispCO2  1, AlaFDZ  1, Valve  0, AuxiliaryValve  0, AlaGDZ  1
+T reset, set, set, set, set, start, sync1, sync1, execute, sync2, execute, execute, update
+Caso de teste 16 - Teste para Valve  1
+E SF1  0, SF2  0, SG1  0, SG2  1, SG3  0
+S DispCO2  0, AlaFDZ  0, Valve  1, AuxiliaryValve  0, AlaGDZ  0
+T reset, reset, reset, set, reset, start, sync1, execute, sync2, execute, execute, update
+Caso de teste 17 - Teste para AlaGDZ  0
+E SF1  0, SF2  1, SG1  0, SG2  0, SG3  0
+S DispCO2  0, AlaFDZ  1, Valve  0, AuxiliaryValve  0, AlaGDZ  0
+T reset, set, reset, reset, reset, start, sync1, execute, execute, execute, update
+Caso de teste 18 - Teste para AlaGDZ  1
+E SF1  1, SF2  1, SG1  1, SG2  1, SG3  0
+S DispCO2  1, AlaFDZ  1, Valve  0, AuxiliaryValve  0, AlaGDZ  1
+T set, set, set, set, reset, start, sync1, sync1, execute, sync2, execute, execute, update
+
+Figura 8 Casos de teste gerados para o sistema
+de seguranca
+Para o programa Ladder com o erro 1 o veredito foi Erro no caso de teste 2 - Nao ha conformidade entre especificacao e implementacao.
+Para a combinacao de entrada SF1  0, SF2  0,
+SG1  1, SG2  0, SG3  0 era esperado que a
+sada AlaFDZ fosse false (sada obtida a partir da
+rede de AT), mas ela foi true (sada gerada pelo
+CLP). Tambem era esperado que a a sada Valve
+fosse true, mas ela foi false.
+
+ISBN 978-85-8001-069-5
+
+Conclusoes
+
+O trabalho aqui apresentado introduziu um
+metodo para aumentar a conanca e a seguranca
+no funcionamento de SIS atraves da tecnica HIL,
+tendo como suporte o uso do protocolo OPC e da
+abordagem de teste de caixa-preta. Para tanto,
+casos de testes sao gerados automaticamente a
+partir da especicacao do sistema no formato de
+diagramas ISA 5.2. Nos casos de teste gerados os
+estados das sadas bem como propriedades temporizadas do sistema sao avaliados. Apos gerados e
+selecionados, os valores das entradas dos casos de
+teste sao enviados para o CLP. Por m, e fornecido
+um veredito informando a conformidade entre as
+sadas esperadas (sadas obtidas a partir da rede
+de automatos temporizados) e as sadas geradas
+pelo CLP.
+O principal diferencial deste trabalho para os
+ja conhecidos e que ele se propoe a aumentar a
+conanca e a seguranca no funcionamento de SIS
+atraves da geracao automatica de casos de teste a
+partir do uso da abordagem particao de equivalencia. Alem disso, os valores das sadas esperadas
+(sadas da especicacao) sao comparados como os
+valores das sadas geradas pelo CLP, testando assim o real comportamento do sistema.
+A proxima etapa deste trabalho consiste na
+aplicacao de uma heurstica que auxilie na geracao dos casos de teste sem que haja necessidade de
+gerar todos os possveis casos de teste. Alem disso,
+deve-se introduzir variaveis de relogio nos modelos de automatos temporizados que representam o
+comportamento dos temporizadores para que estes
+sejam modelados com tempo contnuo.
+Agradecimentos
+Os autores gostariam de agradecer o apoio nanceiro da Coordenacao de Aperfeicoamento de Pessoal de Nvel Superior (Capes) e Petrobras, que
+tornou possvel o desenvolvimento deste trabalho.
+
+3378
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Referencias
+Bacic, M. (2005). On Hardware-in-the-Loop Simulation, Proceedings of the 44th IEEE Conference on Decision and Control, and the European Control Conference 2005, pp. 3194 
+3198.
+Bender, D. F., Combemale, B., Cregut, X.,
+Farines, J. M., Berthomieu, B. and Vernadat, F. (2008). Ladder Metamodeling
+and PLC Program Validation Through Time
+Petri Nets, Proceedings of the 4th European
+Conference on Model Driven Architecture
+(ECMDA-FA 08), Springer-Verlag, Berlin,
+Heidelberg, pp. 121136.
+Blom, J., Hessel, A., Jonsson, B. and Pettersson, P. (2005). Specifying and Generating
+Test Cases Using Observer Automata, Procedures of the 4th International Workshop
+on Formal Approaches to Testing of Software
+2004 (FATES04), Vol. 3395, Springer Verlag, pp. 125139.
+Bryan, L. A. and Bryan, E. A. (1997). Programmable Controllers Theory and Implementation, Industrial Text Company.
+Chaaban, W., Schwarz., M., Batchuluun, B.,
+Sheng, H. and Borcsok, J. (2011).
+A
+HiL Test Bench for Verication and Validation Purposes of Model-Based Developed Applications Using Simulink and OPC
+DA Technology, 7th International Conference on Electrical and Electronics Engineering (ELECO2011), pp. II56 II61.
+En-Nouaary, A. and Hamou-Lhadj, A. (2008).
+A Boundary Checking Technique for Testing Real-Time Systems Modeled as Timed
+Input Output Automata (Short Paper), The
+Eighth International Conference on Quality
+Software (QSIC08), pp. 209 215.
+Frey, G. and Litz, L. (2000). Formal Methods
+in PLC Programming, IEEE International
+Conference on Systems, Man, and Cybernetics, Vol. 4, pp. 24312436 vol.4.
+Gruhn, P. and Cheddie, H. L. (2006). Safety Instrumented Systems Design, Analysis, and
+Justification, 2 edn, ISA.
+Hannsel, J., Rose, D., Herber, P. and Glesner,
+S. (2011). An Evolutionary Algorithm for
+the Generation of Timed Test Traces for Embedded Real-Time Systems, IEEE Fourth International Conference on Software Testing,
+Verification and Validation (ICST), pp. 170
+179.
+Iwanitz, F. and Lange, J. (2002). OPC Fundamentals, Implementation, and Application, 2
+edn, Huthig.
+
+ISBN 978-85-8001-069-5
+
+Jacobs, P., Verbraeck, A. and Rengelink, W.
+(2005). Emulation with DSOL, Proceedings
+of the Winter Simulation Conference, p. 10
+pp.
+Jalote, P. (1994). Fault Tolerance in Distributed
+Systems, Prentice Hall.
+Li, L., Liu, L., Wang, Z. and Tang, Y. (2008).
+Research on Interface Automata Testing, International Conference on Computer Science
+and Software Engineering, Vol. 2, pp. 743 
+746.
+Ljungkrantz, O., Akesson, K., Yuan, C. and
+Fabian, M. (2011). Towards industrial formal specication of programmable safety systems, IEEE Transactions on Control Systems
+Technology PP(99) 1 8.
+Mokadem, H. B., Berard, B., Gourcu, V., Smet,
+O. D. and Roussel, J.-M. (2010). Verication
+of a Timed Multitask System With Uppaal,
+IEEE Transactions on Automation Science
+and Engineering 7(4) 921 932.
+Murphy, G., Notkin, D. and Sullivan, K. (2001).
+Software reexion models bridging the
+gap between design and implementation,
+IEEE Transactions on Software Engineering
+27(4) 364 380.
+Oliveira, K. d. V., Gorgonio, K., Perkusich, A.,
+Lima, A. M. N. and Silva, L. D. d. (2010).
+Automatic Timed Automata Extraction from
+Ladder Programs for Model-Based Analysis of Control Systems, in H. Mouratidis
+(ed.), Software Engineering for Secure Systems Industrial and Research Perspectives,
+IGI Global, Hershey, USA, pp. 305328.
+Parr, A. (2003). Programmable Controllers an Engineers Guide, 3 edn, Newnes.
+Schludermann, H., Kirchmair, T. and Vorderwinkler, M. (2000).
+Soft-commissioning
+hardware-in-the-loop-based verication of
+controller software, Proceedings of Winter
+Simulation Conference, Vol. 1.
+Silva, L. D. d., Barbosa, L. P. d. A., Gorgonio,
+K., Perkusich, A. and Lima, A. M. N. (2008).
+On the Automatic Generation of Timed Automata Models from Function Block Diagrams for Safety Instrumented Systems, 34th
+Annual Conference of the IEEE Industrial
+Electronics Society (IECON2008), IEEE Industrial Electronics Society, Orlando, USA,
+pp. 291296.
+Sommerville, I. (2007). Engenharia de Software,
+8 edn, Addison Wesley.
+Young, M. and Pezze, M. (2005). Software Testing
+and Analysis Process, Principles and Techniques, John Wiley  Sons.
+
+3379

@@ -1,0 +1,668 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+REPRESENTAÇÃO EFICIENTE DE SOLUÇÕES PARA O PROBLEMA DE RECONFIGURAÇÃO DE SISTEMAS DE
+DISTRIBUIÇÃO PRIMÁRIA
+BERNARDO S. REIS1, GABRIEL C. SALGADO1, MATEUS A. O. LEITE1, CARLOS HENRIQUE N. R. BARBOSA1,2,3,
+EZEQUIEL C. PEREIRA4, JOÃO A. VASCONCELOS1,2
+1
+
+Laboratório de Computação Evolucionária, Departamento de Engenharia Elétrica,
+Universidade Federal de Minas Gerais
+Av. Antônio Carlos no 6627, Pampulha, 31270-901  Belo Horizonte, MG
+E-mails bernardosouzareis@gmail.com, gabrielcardososalgado@gmail.com,
+maoleletrica@gmail.com
+2
+
+Programa de Pós-Graduação em Engenharia Elétrica, Universidade Federal de Minas Gerais
+Av. Antônio Carlos no 6627, Pampulha, 31270-901  Belo Horizonte, MG
+E-mail carloshnrb@gmail.com,jvasconcelos@ufmg.br
+3
+
+Departamento de Ciências Exatas e Aplicadas, Universidade Federal de Ouro Preto
+Rua 36 no 115, Loanda, 35931-008  João Monlevade, MG
+4
+
+Companhia Energética De Minas Gerais S.A.
+Av. Barbacena, no 1200, Santo Agostinho, 30190-131  Belo Horizonte,MG
+E-mail ezequiel.pereira@cemig.com.br
+Abstract Distribution network reconfiguration is a recurrent issue that has been dealt for thirty years at least. To succeed on
+optimizing such a problem in its multi-objective version, it depends somehow on the solution representation scheme. It is known
+that the search for global optima is hardly affected by the solution coding which must be as representative and free from infeasibilities as possible. This work presents an efficient procedure to discover fundamental loops in graphs which are the basis on
+solving distribution reconfiguration problem through integer codification. Being a more recent coding scheme, integer representation not only reduces considerably the search space but it also enables more feasible solutions. As a secondary goal, we also
+carried out a comparative performance analysis between integer and binary codification schemes using four indexes namely bias,
+coverage, dispersion and gap test. Experimental results were obtained for two known distribution test systems. Shortcomings and
+advantages about using integer representation were highlighted. From our results, it was clear that integer coding has demonstrated its superiority if compared to binary coding when both were applied to the distribution network reconfiguration problem.
+Keywords Distribution System, Reconfiguration, Solution Representation.
+Resumo A reconfiguração de sistemas_de_distribuição é um tema recorrente de complexidade notória. O êxito na otimização
+do problema multiobjetivo, formulado com critérios técnico-operacionais que visam a melhoria das condições operativas do sistema_de_distribuição, depende, de certo modo, da representação da solução. Sabe-se que a busca pelos ótimos globais do problema em questão é tão mais eficiente quanto mais representativa e livre de infactibilidades for a codificação adotada. O presente trabalho tem como objetivo principal a proposição de um modo eficaz de obtenção e análise dos ciclos fundamentais em grafos usados para se gerar ou modificar as configurações radiais que se referem a um dado sistema_de_distribuição primária. Ressalta-se ainda a importância de uma análise da eficiência da representação inteira adotada, por se tratar de um esquema de codificação recente, comparando-a com outro esquema amplamente usado  a representação binária. Dois sistemas já conhecidos na
+literatura foram usados na avaliação comparativa. Aspectos importantes da representação da solução como polarização, cobertura e repetibilidade foram considerados. Os resultados indicaram uma superioridade da codificação inteira em relação  binária
+que se torna ainda maior quando sistemas maiores são avaliados.
+Palavras-chave .
+
+1 Introdução
+O problema de reconfiguração de sistemas de
+distribuição primária de energia_elétrica (PRSDPEE)
+vem sendo estudado desde a década de 70 (Merlin 
+Back, 1975) (Civanlar, et al., 1988) (Baran  Wu,
+1989). A formulação matemática da versão multiobjetivo restrita do PRSDPEE, já discutida em
+(Hsiao, 2004) e (Hong  Ho, 2005), por exemplo,
+retrata o desafio de se manter, em condições ótimas,
+
+ISBN 978-85-8001-069-5
+
+a operação de sistemas reais. Nesse sentido, é relevante identificar as configurações de rede que asseguram as melhores condições operativas para o fornecimento de energia s cargas. A restrição topológica (radialidade) traz uma complexidade adicional, o
+que realça no PRSDPEE sua natureza combinatória e
+justifica sua pertinência  classe NP-difícil, caracterizada por abranger aqueles problemas computacionais
+cujo tempo de resolução é não-polinomial. O emprego de algoritmos evolucionários com codificação
+especializada de indivíduos para representar configurações de rede tem sido investigado por vários pes-
+
+3009
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+quisadores (Morelato  Monticelli, 1989) (Nara, et
+al., 1992) (Zhu, 2002) (Carreno, et al., 2008). Já algoritmos determinísticos ou métodos de solução exata são inviabilizados pela natureza combinatorial,
+discreta e não-diferenciável do problema. É importante resolver o PRSDPEE de modo eficiente e escalável para possibilitar a aplicação de uma solução
+computacional aos sistemas de maior porte como os
+sistemas_de_distribuição metropolitanos. Para tanto, a
+codificação_da_solução é essencial para se atingir
+desempenho superior com algoritmos evolucionários.
+Por isso, nesse artigo, além da proposição de um novo método para análise topológica e verificação de
+radialidade, é feita uma comparação entre as codificações binária e inteira para se determinar o quão
+melhor a última é em relação  primeira. A diversidade das soluções geradas pelas codificações é verificada com a comparação de índices como os de cobertura, polarização e repetibilidade.
+Esse artigo está organizado como se segue. Na Seção
+1, uma breve introdução sobre a aplicabilidade da
+análise proposta é dada. A apresentação e discussão
+dos trabalhos publicados na literatura que se relacionam ao tópico em questão fazem parte da Seção 2.
+Na Seção 3, as codificações e a heurística de detecção de ciclos são descritas. Os aspectos da implementação são discutidos na Seção 4. Na Seção 5, resultados experimentais são analisados e em seguida as
+conclusões pertinentes são apresentadas na Seção 6.
+2 Trabalhos Relacionados
+A codificação especializada de indivíduos tem
+sido um tema recorrente para o problema de otimização da operação de sistemas_elétricos. Várias abordagens já foram apresentadas para tratar o problema de
+reconfiguração de sistemas radiais de distribuição
+primária. Nas últimas três décadas, diversos pesquisadores têm aperfeiçoado metodologias para adaptar
+algoritmos evolucionários no intuito de lidar de modo
+mais eficiente com o problema da reconfiguração.
+Sabe-se que o desempenho desses algoritmos é claramente afetado pelo esquema de representação da
+solução (Rothlauf, 2009). Os esquemas de codificação dividem-se basicamente em codificação nodal e
+codificação de ramo. Há estratégias complementares
+como o percurso-para-nó (path-to-node) (Ramos, et
+al., 2005), os números Prufer (Hong  Ho, 2005), as
+cadeias principais (Delbem, et al., 2005), a teoria das
+matróides (Enacheanu, et al., 2008), as chaves aleatórias de rede (Queiroz  Lyra, 2009), etc. Grande
+parte das propostas de codificação pioneiras aplicadas ao PRSDPEE empregou a representação binária
+(Morelato  Monticelli, 1989) (Nara, et al., 1992)
+(Zhu, 2002) em uma estrutura denominada vetor
+característico por alguns trabalhos (Hsiao, 2004)
+(Shin, et al., 2004) (Kumar, et al., 2006). Ao optar
+por proposta mais concisa, Lin (Lin, et al., 2000)
+discutiu uma estratégia diferencial com codificação
+inteira. Trabalhos mais recentes têm tratado o
+ISBN 978-85-8001-069-5
+
+esquema de codificação inteira via análise
+grafológica em que ciclos fundamentais de um grafo
+equivalente  rede_elétrica são identificados
+(Mendoza, et al., 2006) (Braz  Souza, 2011)
+(Swarnkar, et al., 2011). Apesar da dependência por
+heurísticas, essa modalidade de codificação tem se
+mostrado eficiente em termos de tempo de
+processamento e estrutura de dados reduzida. No
+entanto, frisa-se que há disponibilidade na literatura
+de trabalhos que não empregam mecanismos de
+detecção de laços e utilizam operadores genéticos
+especializados a exemplo da representação que usa
+cadeias principais (Delbem, et al., 2005).
+A realização de uma análise por meio de métricas
+associadas  exploração eficiente do espaço de busca
+do PRSDPEE pode caracterizar cada tipo de
+representação em termos de sua complexidade e
+eficiência. É importante notar que o modo como o
+indivíduo é codificado e modificado deve satisfazer
+propriedades como aquelas mencionadas por Raidl e
+Julstrom (Raidl  Julstrom, 2003), a exemplo da
+factibilidade e da polarização. Para um problema
+complexo do mundo real como é o PRSDPEE, a
+melhoria no desempenho do próprio algoritmo
+evolucionário multiobjetivo também pode ser
+alcançada pela escolha de uma representação de
+solução e de operadores genéticos adequadamente
+projetados. Tais escolhas podem promover maior
+rapidez no processo de identificação da Fronteira
+Pareto Ótima associada ao problema. Como
+comentado na Seção 1, o presente trabalho visa
+também realizar uma análisa comparativa entre as
+codificações binária e inteira para sondar o ganho
+obtido com a adoção daquela mais adequada ao
+problema tratado aqui. Essa análise é meramente
+topológica e não envolve a avaliação elétrica de
+qualquer configuração sugerida pelas heurísticas.
+3 Descrição da Codificação e das Heurísticas
+3.1 Grafo Equivalente do Sistema de Distribuição
+Emprega-se aqui o conceito de Grafo Equivalente ao Sistema de Distribuição (GESD) para representar a rede_de_distribuição. Nele, os barramentos equivalem aos nós e as linhas s arestas. Visto que nem
+todas as linhas_de_distribuição têm chaves, é necessário representar tanto as linhas não-chaveáveis (aresta
+em linha contínua) quanto as chaveáveis (aresta em
+linha tracejada), conforme visto na Figura 1.
+
+Figura 1. Exemplo de GESD equivalente  rede_de_distribuição.
+
+3010
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+3.2 Compressão de Grafos
+Para avaliar um GESD de modo mais eficiente, o
+procedimento de compressão similar ao apresentado
+em (Braz  Souza, 2011) simplificou a análise de
+ciclos fundamentais, a ser descrita nas Seções 3.4 e
+3.5. De agora em diante, alguns conceitos são necessários ciclo fundamental, supergrafo, supernó e superaresta. O ciclo fundamental é entendido como um
+dos caminhos identificáveis em um grafo (ex. GESD)
+onde se é possível percorrer uma sequência de nós
+adjacentes e retornar ao nó inicial sem que os demais
+tenham sido visitados novamente. Esse ciclo deve
+fazer parte de um conjunto mínimo não sobreposto
+que identifica todo e qualquer trajeto recorrente, conforme detalhado em (Mendoza, et al., 2006). Denomina-se aqui supergrafo o grafo comprimido equivalente ao GESD. Nessa representação, empregam-se
+os conceitos de supernó e superaresta, que são extensões análogas de nós e arestas no GESD, respectivamente. Os nós do GESD, interconectados por arestas
+não-chaveáveis, são agrupados em supernós. Na Figura 1, os nós que estão envolvidos pelo mesmo contorno cinza são agrupados em supernós, identificados
+pelos números seguidos de apóstrofe, como pode ser
+visto na Figura 2. Eventualmente, um mesmo par de
+supernós pode ser interconectado por mais de uma
+aresta, a exemplo dos supernós 1 e 4, ligados pelas
+arestas c e d (vide Figura 1). Essas arestas passam
+então a ser agrupadas em uma superaresta, destacada
+em cinza na Figura 2. Ao ser comprimido, o GESD
+equivale ao supergrafo mostrado na Figura 2.
+
+das chaves manobráveis de acordo com a seguinte
+convenção bit ativo (1) representa chave fechada e
+bit inativo, chave aberta (0) (Nara, et al., 1992). Na
+codificação inteira, os genes do indivíduo são identificadores das arestas chaveáveis que permanecem
+abertas para representarem uma configuração radial
+(Mendoza, et al., 2006). Os procedimentos que suportam a codificação para gerar, detectar ciclos e
+ilhamentos, alterar ou combinar configurações radiais, variam de acordo com a codificação.
+Considerando o supergrafo tomado como exemplo ao
+longo desse artigo, mostrado na Figura 2, é possível
+identificar os seguintes ciclos fundamentais
+Ciclo I - formado pelas superarestas 1, 2, 3
+Ciclo II - formado pelas superarestas 2, 4, 5
+Ciclo III - formado pelas superarestas 3, 5, 6
+São necessariamente três ciclos fundamentais, porém
+a sequência das superarestas para cada um deles pode
+ser ligeiramente diferente. Portanto, não há um conjunto único de ciclos fundamentais associados a um
+dado sistema. Nota-se que há superarestas comuns
+entre dois ciclos como, por exemplo, a superaresta 5,
+presente nos laços II e III. Na Figura 3, as duas representações que codificam uma configuração radial
+com as superarestas 1, 2 e 5 abertas são apresentadas.
+Nota-se ainda que, nessa mesma figura, a aresta j
+permanece aberta por razões já esclarecidas. Como a
+superaresta 6 é composta pelas arestas g e j e deve
+estar fechada para a configuração radial escolhida,
+então uma das duas arestas deve ser aberta.
+
+Figura 2. Supergrafo relativo ao exemplo dado.
+
+Figura 3. Esquemas para as representações inteira e binária.
+
+Em um supergrafo, a abertura de uma superaresta sak
+equivale  desconexão das m arestas pertencentes a
+sak (ch(ai)  0 i 1..m). Neste caso, a função ch()
+indica o estado atual da chave na i-ésima linha referida no argumento. O fechamento de uma superaresta
+sak deve corresponder  conexão de apenas uma das
+m arestas. As demais devem permanecer abertas.
+Supondo que as superarestas 1, 2 e 3 do supergrafo
+da Figura 2 sejam escolhidas para serem abertas, as
+arestas associadas no GESD (a, c, d e e)
+serão abertas.
+
+Heurísticas construtivas (Nahman  Strbac, 1994)
+(Glamocanin, 1990) (McDermott, et al., 1999) e destrutivas (Shirmohammadi  Hong, 1989) (Gomes, et
+al., 2005) podem ser implementadas para cada uma
+das codificações.
+
+3.3 Codificação do Indivíduo
+A radialidade das soluções para o PRSDPEE é
+uma restrição básica e necessária para se determinar a
+factibilidade das mesmas. Nesse artigo, duas representações para o indivíduo foram avaliadas (i) binária e (ii) inteira. Na codificação binária, os genes
+formam um vetor de bits que representam o estado
+
+ISBN 978-85-8001-069-5
+
+3.4 Heurística de Detecção dos Ciclos Fundamentais
+A detecção dos ciclos fundamentais (Mendoza,
+et al., 2006) (Braz  Souza, 2011) (Swarnkar, et al.,
+2011) faz parte de um pré-processamento que leva 
+simplificação tanto da codificação das soluções quanto  redução da complexidade de operadores genéticos projetados para um algoritmo evolucionário.
+Apesar de mais complexa do que o esquema de representação binária, a detecção de ciclos obtém êxito
+quando aplicada ao problema de reconfiguração de
+sistemas_de_distribuição radiais. A heurística de detecção de ciclos fundamentais (HCF) é explicada a
+
+3011
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+seguir em cinco passos, sendo estes repetidos até que
+todos os supernós tenham sido sondados
+Passo 1) cômputo das distâncias de cada supernó ao
+supernó da subestação (NR) que será a raiz da árvore.
+Os supernós que são vizinhos imediatos do supernó
+NR recebem distância igual a 1. Os supernós vizinhos
+aos vizinhos de NR têm distância igual a 2, e assim
+por diante, em um procedimento de sondagem que
+segue o padrão da busca em largura (breadth-first
+search).
+
+percorrer o caminho reverso, supernós vizinhos com
+distância absoluta igual ou superior  do máximo são
+desconsiderados (iii) o próximo supernó vizinho a
+ser visitado durante a realização do percurso descrito
+no Passo 3 deve ter distância absoluta sempre menor
+do que o supernó atual.
+
+Passo 2) determinação do(s) máximo(s) absoluto(s).
+Se existir um supernó com conectividade igual ou
+maior do que 2, e sua distância for maior do que todos os seus vizinhos que já tenham suas respectivas
+distâncias definidas, então esse supernó é dito ser
+máximo absoluto. Essa verificação é feita de forma
+concomitante  atribuição das distâncias aos supernós
+do grafo. Nesta etapa, duas situações podem ocorrer
+um supernó ter a maior distância dentre todos os vizinhos ou um par de supernós ter distâncias idênticas,
+sendo esta a maior distância em relação aos demais
+vizinhos. Um máximo ou o par de máximos formará
+o que se denomina aqui de base do ciclo.
+Passo 3) realização do percurso reverso a partir do(s)
+máximo(s) encontrado(s) no passo anterior. Cada
+ciclo a ser detectado deve obrigatoriamente conter a
+base do ciclo. Durante esse procedimento, as distâncias relativas dos supernós em relação a esse(s) máximo(s) são calculadas de forma similar ao Passo 1.
+Pelo menos dois caminhos são sondados simultaneamente. Cada caminho é identificado por um rótulo
+único e exclusivo.
+Passo 4) identificação do ciclo formado. Detecta-se o
+ciclo quando o próximo supernó já teve a sua distância relativa calculada na sondagem feita pelo outro
+caminho (rótulo distinto). Se o supernó em questão
+foi preenchido com o mesmo rótulo, o processo continua. A partir da detecção do ciclo, o histórico de
+superarestas visitadas é recuperado para ambos os
+caminhos.
+Passo 5) reinicialização das distâncias relativas.
+As duas situações mencionadas no Passo 2 são representadas na Figura 4(a-b). Nela, pode-se ver que a
+presença de n vizinhos em torno de um máximo indica que este é base para (n - 1) ciclos. No caso da
+ocorrência de dois máximos vizinhos, dois caminhos
+podem ser obtidos a partir de cada máximo percorrendo-se os supernós nas direções em que as distâncias absolutas decrescem monotonicamente.
+No procedimento de detecção dos ciclos, podem ser
+necessárias sondagens complementares para se identificar todos os ciclos fundamentais. Enquanto houver
+problemas na detecção de todos os ciclos, novas tentativas são realizadas com relaxação de restrições
+grafológicas. As restrições admitidas durante as sondagens são (i) qualquer superaresta do grafo deve
+pertencer a não mais do que dois ciclos (ii) ao se
+
+ISBN 978-85-8001-069-5
+
+(a)
+
+(b)
+Figura 4. (a) Detecção de único máximo. (b) Detecção de dois
+máximos.
+
+3.5 Diagrama de Ciclos
+O Diagrama de Ciclos (DC) é um modo de representação conciso, similar a um grafo, que retrata a
+interdependência entre os ciclos fundamentais detectados previamente. Nele, cada nó corresponde a um
+dos ciclos identificados pela HCF, e cada aresta entre
+pares de nós representa superarestas do supergrafo
+que são compartilhadas entre dois ciclos. Com o DC,
+a eliminação dos ciclos detectados e a análise de configurações radiais tornam-se procedimentos computacionais bastante simplificados. A Figura 5(a) exibe
+o DC equivalente ao supergrafo já mostrado pela
+Figura 2, onde a existência do compartilhamento da
+superaresta 2 pelos ciclos I e II é notada. Verifica-se
+também no DC, entre os ciclos I e III, o compartilhamento da superaresta 3, e entre os ciclos II e III,
+que a superaresta 5 é compartilhada. O DC completo
+é representado pelo grafo não-direcionado (Figura
+5(a)) e ele reúne todas as possibilidades para o supergrafo equivalente. Se uma configuração radial
+particular é representada, o DC torna-se um grafo
+direcionado que pode corresponder a uma configuração radial (Figura 5(b)) ou não radial (Figura 5(c)).
+
+(a)
+
+(b)
+
+3012
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+(c)
+Figura 5. (a) Diagrama de ciclos. (b) Exemplo de configuração
+factível derivada do DC cujos genes são 1,2,5. (c) Exemplo de
+configuração infactível derivada do DC cujos genes são 2,3,5.
+
+A autorreferência mostrada na Figura 5(b) indica que
+uma superaresta não-compartilhada entre ciclos, ou
+dita exclusiva, foi uma dentre as escolhidas neste
+caso, a superaresta 1. Portanto, para se criar uma
+configuração, uma superaresta em cada ciclo deve ser
+escolhida, seja ela exclusiva ou compartilhada. Se
+uma superaresta compartilhada é escolhida, então
+será definida no DC uma aresta orientada entre os
+ciclos envolvidos cujo sentido reflete a dependência
+entre os mesmos. Após nc arestas terem sido determinadas (em que nc denota o número de ciclos fundamentais detectados no supergrafo), a configuração
+resultante será radial caso não se tenha gerado um
+ciclo de dependências no DC. Já as autorreferências,
+simbolizadas por laços, podem existir e não significam necessariamente uma infactibilidade topológica.
+Nesse sentido, a Figura 5(b) retrata uma configuração
+radial, uma vez que não foi formado ciclo. Em termos
+computacionais, a detecção é facilitada pelo direcionamento existente no grafo. Por outro lado, uma configuração não radial é ilustrada na Figura 5(c), onde
+se percebe a existência de um ciclo ao seguir o sentido indicado pelas setas.
+4 Aspectos da Implementação
+Ao realizar a análise comparativa pretendida, foi
+necessário determinar a extensão do espaço viável. O
+Teorema da Matriz-árvore (Tutte, 2001), provado por
+Kirchhoff em 1847, foi empregado para se determinar a quantidade de configurações radiais (árvores)
+para o sistema_de_distribuição avaliado. Esse teorema
+é bastante útil, visto que não há necessidade de se
+efetuar a busca exaustiva por todo o espaço de busca.
+A implementação da representação binária seguiu as
+descrições presentes em (Zhu, 2002) e (Huang,
+2002). Já a implementação da representação inteira
+foi orientada pelos trabalhos de Mendoza (Mendoza,
+et al., 2006) e Swarnkar (Swarnkar, et al., 2011).
+Visto que as representações são utilizadas no contexto de algoritmos evolucionários, é importante determinar a qualidade (localidade, diversidade, etc) das
+soluções geradas a partir de operadores estocásticos
+associados a cada uma dessas codificações.
+Com o intuito de se garantir uma população formada
+apenas por indivíduos factíveis na codificação binária, um algoritmo de detecção dinâmica de ciclos foi
+empregado enquanto as soluções eram construídas.
+Procedimentos de reconstrução da solução foram
+empregados para emular os operadores genéticos. No
+ISBN 978-85-8001-069-5
+
+cruzamento, um par de indivíduos trocam uma quantidade de genes que pode variar de 1 a n2, onde n
+corresponde ao comprimento do cromossomo. Na
+codificação inteira, a radialidade da prole é verificada com o DC. Na codificação binária, uma heurística
+de detecção de laço baseada no algoritmo Prim
+(Prim, 1957) foi empregada. Desse modo, descarta-se
+o filho não radial e admite-se que o cruzamento ainda
+foi bem sucedido. Se ambos são infactíveis, o cruzamento é repetido. Para o caso da mutação, é feita a
+escolha aleatória de um gene. Na codificação inteira,
+o gene que representa uma aresta de um ciclo está
+naturalmente associado ao grupo de arestas que fazem parte do mesmo. Portanto, a substituição por
+outro alelo é imediata. Já na codificação binária, a
+escolha do gene implica em se detectar o novo ciclo
+formado para se identificar os alelos substituíveis.
+5 Resultados Experimentais
+Para realizar a comparação entre as codificações
+inteira e binária, um sistema de 16 barramentos com
+três fontes e outro de 33 barramentos com fonte única, ambos descritos em (Zhu, 2002), foram utilizados. O primeiro teste realizado para a validação da
+metodologia proposta foi o desenvolvimento de um
+algoritmo de busca exaustiva com o objetivo de encontrar todas as soluções factíveis de ambos os sistemas. Aplicando o Teorema da Matriz-árvore, verificou-se que no primeiro sistema 190 soluções viáveis são encontradas, e 50.751 no segundo.
+Após ter sido validada a capacidade de geração de
+indivíduos factíveis em ambas as codificações, quatro
+índices foram utilizados para avaliar a qualidade das
+soluções obtidas. São eles cobertura, polarização,
+dispersão e repetibilidade. Cada índice foi avaliado
+em relação a uma população gerada de tamanho igual
+ao número de indivíduos factíveis existentes no espaço viável de ambos os sistemas testados. Os testes
+foram repetidos 20 vezes para assegurar maior significância estatística. Assim, os valores indicados ao
+final dessa seção correspondem s médias das 20
+tentativas. Os mesmos testes foram executados para a
+representação binária, discutida na Seção 3.3, para
+corroborar a comparação entre as duas codificações.
+A seguir, os quatro índices escolhidos para o teste
+comparativo são apresentados. O primeiro é o índice
+de cobertura C, que mede o alcance da codificação
+no espaço amostral, ou seja, a fração desse espaço
+ocupada pelas soluções, tendo em vista o número de
+indivíduos gerados. Tal índice pode ser calculado
+pela seguinte expressão
+
+em que nsd representa o número de configurações
+diferentes e EB o total de soluções factíveis no
+espaço de busca. Quanto mais próximo da unidade
+estiver esse índice, maior será a diversidade de soluções. O próximo indicador Polrel avalia a polarização
+3013
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+relativa associada  geração de um conjunto de N
+configurações. De modo complementar ao índice
+anterior, esse índice (Polrel) reflete o grau de repetição das soluções no conjunto N
+
+Nesse caso, o denominador Q50 representa a quantidade de soluções cuja soma de ocorrências das mesmas atinge o limiar de 50 do número de indivíduos
+gerados (N). O numerador k denota o percentual do
+número de indivíduos factíveis, correspondente ao
+adotado como limiar. Nesse caso, foi usado k igual a
+N2. O objetivo desse índice é conhecer, através da
+contagem das configurações mais frequentes, o grau
+de polarização (concentração) das soluções geradas,
+avaliando-se o espalhamento no espaço viável. Quanto mais próximo da unidade estiver, menor será a
+polarização e, portanto, melhor será o desempenho
+do gerador de soluções. O domínio de Polrel está
+compreendido no intervalo 1,. De modo complementar, define-se a polarização absoluta Polabs em
+relação a todo o espaço de busca
+
+O terceiro índice D empregado mede a dispersão das
+soluções através da média das distâncias entre as
+configurações geradas e a configuração de referência.
+Essa distância equivale  distância de Hamming e,
+para o problema proposto, ela está associada ao número de chaveamentos ou manobras necessários para
+transformar a configuração proposta na configuração
+de referência
+
+em que N corresponde ao número de soluções geradas, Ti é a distância em número de chaveamentos da
+i-ésima configuração em relação  configuração média equivalente . Por último, é sabido que ao se gerar uma quantidade arbitrária de soluções, é possível
+que haja repetições. É desejável que o intervalo entre
+ocorrências de uma mesma configuração seja o maior
+possível. Conhecido também como gap test, o índice
+de repetibilidade também é tomado como uma média
+para 20 tentativas. Os resultados obtidos para as codificações são mostrados nas Tabelas 1 e 2.
+Tabela 1. Índices obtidos para o sistema de 16 barramentos.
+
+Índice
+C
+Polabs
+D
+Gap Test
+
+Codif. Inteira
+63.1679
+5.1351
+1.2859
+7
+
+Codif. Binária
+36.8421
+13.5714
+1.4926
+6
+
+Nota-se que a vantagem da codificação inteira em
+relação  binária mostra-se mais acentuada quando o
+
+ISBN 978-85-8001-069-5
+
+segundo sistema é avaliado, uma vez que seu espaço
+de busca é pelo menos 260 vezes maior.
+Tabela 2. Índices obtidos para o sistema de 33 barramentos.
+
+Índice
+C
+Polabs
+D
+Gap Test
+
+Codif. Inteira
+60.5801
+5.4506
+1.5255
+160
+
+Codif. Binária
+10.0195
+136.4274
+1.5425
+17
+
+Os índices que medem o desempenho da codificação
+inteira mantiveram-se próximos ao compará-los para
+os dois sistemas quando a proporção entre a quantidade das soluções geradas N e o tamanho do espaço
+viável foi mantida.
+6 Conclusão
+Com base nos resultados obtidos, pode-se concluir que a representação inteira supera a binária em
+termos de cobertura do espaço viável e pode assegurar maior diversidade de soluções quando uma dada
+quantidade de configurações precisa ser gerada. Nesse sentido, a codificação inteira pareceu viabilizar
+uma exploração mais eficiente do espaço de busca.
+Apesar de mais elaborada, a representação inteira
+torna a análise grafológica um processo direto, podendo trazer simplificações aos operadores estocásticos que são empregados nos algoritmos evolucionários. Por outro lado, a codificação binária é simples
+de ser interpretada, mas sobrecarrega os procedimentos, exaustivamente repetidos, que garantem a conectividade dos nós e a ausência de ciclos (viabilidade
+topológica da solução).
+A heurística de detecção de ciclos precisa ser realizada uma única vez e o diagrama de ciclos passa a retratar a factibilidade da solução de modo direto sem
+que haja a necessidade de execução constante de heurísticas com maior custo_computacional associado.
+Na representação binária, as heurísticas construtiva e
+destrutiva, apesar de mais simples, são executadas
+para cada configuração, o que a torna em média de 3
+a 5 vezes mais lenta em relação  codificação inteira.
+Agradecimentos
+Agradecemos as orientações técnicas dadas pelo centro de operação_da_distribuição da CEMIG S.A. e o
+seu suporte financeiro. Registramos os nossos agradecimentos s agências de fomento CNPq e CAPES.
+Referências Bibliográficas
+Baran, M. E.  Wu, F. F., 1989. Network
+Reconfiguration in Distribution Systems for Loss
+Reduction and Load Balancing. IEEE
+Transactions on Power Delivery, April, 4(2), pp.
+1401-1407.
+3014
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Braz, H. M.  Souza, B. A., 2011. Distribution
+Network Reconfiguration Using Genetic
+Algorithms
+With
+Sequential
+Encoding
+Subtractive and Additive Approaches. IEEE
+Transactions on Power Systems, May, 26(2), pp.
+582-593.
+Carreno, E. M., Romero, R.  Padilha-Feltrin, A.,
+2008. An Efficient Codification to Solve
+Distribution Network Reconfiguration for Loss
+Reduction Problem. IEEE Transactions on
+Power Systems, November, 23(4), pp. 15421551.
+Civanlar, S., Grainger, J. J., Yin, H.  Lee, S. S. H.,
+1988. Distribution Feeder Reconfiguration for
+Loss Reduction. IEEE Transactions on Power
+Delivery, July, 3(3), pp. 1217-1223.
+Delbem, A. C. B., Carvalho, A. C. F.  Bretas, N.
+G., 2005. Main Chain Representation for
+Evolutionary Algorithms Applied to Distribution
+System Reconfiguration. IEEE Transactions on
+Power Systems, February, 20(1), pp. 425-436.
+Enacheanu, B. et al., 2008. Radial Network
+Reconfiguration Using Genetic Algorithm Based
+on the Matroid Theory. IEEE Transactions on
+Power Systems, February, 23(1), pp. 186-195.
+Glamocanin, V., 1990. Optimal loss reduction of
+distribution networks. IEEE Transactions on
+Power Systems, 5(3), pp. 774-782.
+Gomes, F. V. et al., 2005. A new heuristic
+reconfiguration algorithm for large distribution
+system. IEEE Transactions on Power Systems,
+August, 20(3), pp. 1373-1378.
+Hong, Y. Y.  Ho, S. Y., 2005. Determination of
+Network
+Configuration
+Considering
+Multiobjective in Distribution Systems Using
+Genetic Algorithms. IEEE Transactions on
+Power Systems, May, 20(2), pp. 1062-1069.
+Hsiao, Y. T., 2004. Multiobjective Evolution
+Programming
+Method
+for
+Feeder
+Reconfiguration. IEEE Transactions on Power
+Systems, February, 19(1), pp. 594-599.
+Huang, Y. C., 2002. Enhanced genetic algorithmbased fuzzy multi-objective approach to
+distribution network reconfiguration. IEE
+Proceedings on Generation, Transmission and
+Distribution, September, 149(5), pp. 615-620.
+Kumar, Y., Das, B.  Sharma, J., 2006. Service
+Restoration in Distribution System using Nondominated Sorting Genetic Algorithm. Electric
+Power Systems Research, December, Volume
+76, pp. 768-777.
+Lin, W. M., Cheng, F. S.  Tsay, M. T., 2000.
+Distribution feeder reconfiguration with refined
+genetic algorithm. IEE Proceedings on
+Generation, Transmission, and Distribution,
+November, 147(6), pp. 349-354.
+McDermott, T. E., Drezga, I.  Broadwater, R. P.,
+1999. A Heuristic nonlinear constructive method
+for distribution system reconfjiguration. IEEE
+Transactions on Power System, May, 14(2), pp.
+478-483.
+ISBN 978-85-8001-069-5
+
+Mendoza, J. et al., 2006. Minimal Loss
+Reconfiguration Using Genetic Algorithms With
+Restricted Population and Addressed Operators
+Real Application. IEEE Transactions on
+PowerSystems, May, 21(2), pp. 948-954.
+Merlin, A.  Back, H., 1975. Search for a minimal
+loss operating spanning tree configuration for an
+urban power distribution system. Cambridge, s.n.
+Morelato, A. L.  Monticelli, A., 1989. Heuristic
+Search Approach to Distribution System
+Restoration. IEEE Transactions on Power
+Delivery, October, 4(4), pp. 2235-2241.
+Nahman, J.  Strbac, G., 1994. A new algorithm for
+service restoration in large-scale urban
+distribution systems. Electric Power Systems
+Research, Volume 29, pp. 181-192.
+Nara, K., Shiose, A., Kitagawa, M.  Ishihara, T.,
+1992. Implementation of genetic algorithm for
+distribution systems loss minimum reconfiguration. IEEE Transactions on Power
+Systems, August, 7(3), pp. 1044-1051.
+Prim, R., 1957. Shortest Connection Networks and
+Some Generalisations. Bell Syst. Technical
+Journal, Volume 36, pp. 1389-1401.
+Queiroz, L. M.  Lyra, C., 2009. Adaptive Hybrid
+Genetic Algorithm for Technical Loss Reduction
+in Distribution Networks Under Variable
+Demands. IEEE Transactions on Power Systems,
+February, 24(1), pp. 445-453.
+Raidl, G. R.  Julstrom, B. A., 2003. Edge Sets An
+Effective Evolutionary Coding of Spanning
+Trees. IEEE Transactions on Evolutionary
+Computation, June, 7(3), pp. 225-239.
+Ramos, E. R., Expósito, A. G., Santos, J. R.  Iborra,
+F. L., 2005. Path-Based Distribution Network
+Modeling Application to Reconfiguration for
+Loss Reduction. IEEE Transactions on Power
+Systems, May, 20(2), pp. 556-564.
+Rothlauf, F., 2009. On the Bias and Performance of
+the Edge-Set Encoding. IEEE Transactions on
+Evolutionary Computation, June, 13(3), pp. 486499.
+Shin, D. J. et al., 2004. Optimal Service Restoration
+and Reconfiguration of Network using GeneticTabu Algorithm. Electric Power Systems
+Research, January, Volume 71, pp. 145-152.
+Shirmohammadi, D.  Hong, H. W., 1989.
+Reconfiguration of electric distribution networks
+for resistive line losses reduction. IEEE
+Transactions on Power Delivery, April, 4(2), pp.
+1492-1498.
+Swarnkar, A., Gupta, N.  Niazi, K. R., 2011. A
+Novel
+Codification
+for
+Meta-heuristic
+Techniques used in Distribution Network.
+Electric Power Systems Research, April, Volume
+81, p. 16191626.
+Tutte, W. T., 2001. Graph Theory. 1st edition ed.
+s.l.Cambridge University Press.
+Zhu, J. Z., 2002. Optimal Reconfiguration of
+Electrical Distribution Network using the
+Refined Genetic Algorithm. Electric Power
+3015
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Systems Research, January, Volume 62, pp. 3742.
+
+ISBN 978-85-8001-069-5
+
+3016

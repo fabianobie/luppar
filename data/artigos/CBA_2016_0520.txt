@@ -1,0 +1,673 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+IMPLEMENTACAO DO CONTROLE ADRC (ACTIVE DISTURBANCE REJECTION
+CONTROL) NO ACIONAMENTO DE MAQUINAS DE TRACAO DE ELEVADORES
+Marcos B. Nardi, Aurelio T. Salton, Jeferson V. Flores
+Emails mnardi1@gmail.com, aurelio.salton@pucrs.br, jeferson.flores@pucrs.br
+Abstract This paper deals with the design and implementation of a discrete controller for reference tracking
+of elevators with subject to permanent magnet synchronous motors. The proposed controller uses a technique
+called ADRC - Active Disturbance Rejection Control, implementing a linear extended state observer that estimates a generalized disturbance of the plant, which is then actively rejected. The controller was implemented in
+an inverter control board and the application was validated through an experimental setup based on an elevator
+traction machine with no load. Experimental results are presented to validate the proposed control strategy,
+showing that the proposed method simplifies the tuning of the control parameters by field technicians. As a
+result, an improved performance is expected while reducing the setup time.
+Keywords
+
+ADRC, elevator control, disturbance observer, linear extended state observer.
+
+Resumo Este artigo aborda o projeto e a implementacao de um controlador em tempo_discreto para seguimento da trajetoria em elevadores eletricos com motor sncrono de imas permanentes. O controle proposto
+utiliza a tecnica ADRC - Active Disturbance Rejection Control, implementando um observador_de_estados linear
+esten que estima a perturbacao total da planta, a qual e ativamente rejeitada pelo controlador. O controle
+foi implementado em um modulo de controle de acionamento de inversor de frequencia e a aplicacao foi validada
+atraves de uma bancada_experimental baseada em uma maquina de tracao de elevador a vazio. Resultados
+experimentais sao apresentados para validar a estrategia_de_controle proposta, comprovando que esta implementacao simplifica o ajuste do elevador em campo pelo tecnico, evitando elevadores com problemas de ajuste e
+aumentando, assim, a qualidade e performance do produto percebida pelos passageiros.
+Palavras-chave
+.
+
+1
+
+ADRC, controle_de_elevador, observador_de_disturbios, observador_de_estados linear esten-
+
+Introducao
+
+O objetivo principal do controle do movimento do
+elevador e iniciar o movimento da cabina a partir do repouso, acelerar ate a velocidade nominal,
+subir ou descer a cabina na caixa de corrida, desacelerar e repousar precisamente no nvel do pavimento do andar designado (Andrew and Kaczmarczyk, 2011). O sistema_de_controle do elevador
+deve atingir diversos objetivos (Andrew and Kaczmarczyk, 2011), como posicionamento preciso da
+cabina no nvel do pavimento, medicao e controle
+da velocidade da cabina, controle preciso do torque do motor da maquina de tracao, controle da
+taxa de variacao da aceleracao, normalmente referida como jerk.
+Ha diferentes tipos de motores que podem ser
+aplicados em maquinas de tracao de elevadores.
+De acordo com (CIBSE, 2005), no passado motores DC proviam a melhor qualidade de viagem
+pois a velocidade do motor pode ser facilmente
+controlada utilizando um gerador DC com sada
+variavel. Nos anos 80, conversores estaticos foram
+substituindo geradores DC, de modo que motores AC de inducao passaram a ser utilizados em
+maquinas com engrenagem (com caixa de reducao). Melhorias nas tecnicas de controle por tensao e frequencia introduziram no mercado motores
+AC de inducao aplicados em maquinas compactas
+sem engrenagem. Atualmente, os inversores mais
+utilizados sao do tipo VVVF (tensao variavel e
+frequencia variavel) aplicados em maquinas compactas sem engrenagem utilizando motores sncro-
+
+ISSN 2525-8311
+
+nos de imas permanentes (CIBSE, 2005).
+Mais de 90 do controle aplicado atualmente
+na industria e do simples tipo PID (ProporcionalIntegral-Derivativo) (Gao, 2006). Ha diversos metodos de ajuste de controladores PID, por exemplo, Ziegler-Nichols (Jaganathan et al., 2010)
+(Wu et al., 2014), logica_fuzzy (Xiaoping and
+Jidong, 2010) (Kumar et al., 2006), rede_neural (Kumar et al., 2006), algoritmo_genetico
+(Kumar et al., 2006), controladores adaptativos
+(Jung et al., 2015), alocacao_de_polos (Cominos
+and Munro, 2002), alocacao_de_polos dominantes
+(Olsson, 2008), Haalman (Wu et al., 2014), entre outros. O calculo destes ganhos atraves dos
+diversos metodos e complexo, na pratica os tecnicos de campo realizam o ajuste destes parametros de modo subjetivo, podendo haver elevadores
+apresentando ma performance em diversas situacoes. Este cenario e muito prejudicial a industria
+de elevadores, visto que a performance do elevador
+e extremamente afetada caso o ajuste nao esteja
+satisfatorio.
+A tecnica de ADRC (Gao, 2006) propoe uma
+mudanca de paradigma na teoria atual de controle ao inves de modelar uma planta, aproximando matematicamente fenomenos fsicos, a tecnica de ADRC considera a planta como uma perturbacao generalizada, a qual deve ser rejeitada
+para atingir o seguimento desejado da curva de
+referencia. Assim, a descricao do comportamento
+da planta atraves de uma expressao analtica nao
+e necessaria para que esta seja controlada, basta
+que o valor desta expressao seja mensuravel em
+
+1817
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+tempo_real.
+A ideia central da tecnica de ADRC e o controle de um processo complexo nao-linear, variante no tempo e incerto e reduzido a um problema simples, do tipo y  u0 , atraves de estimacao e rejeicao diretas da perturbacao generalizada, i.e., a dinamica desconhecida da planta e
+perturbacoes externas ao sistema. A tecnica ja
+e utilizada em diversas aplicacoes, como estabilizacao de plataforma fotoeletrica, servo controle
+para simulador de voo (Man-Lin et al., 2010), controle de profundidade para submarino (Kun and
+Changbo, 2011), controle para interceptacao de
+alvos moveis (Chunzhe and Yi, 2010), controle_lateral de robo_movel (Song and Li, 2007).
+Este artigo propoe a aplicacao da tecnica de
+controle ADRC no laco de realimentacao de velocidade no controle de motores sncronos aplicados
+em maquinas de tracao de elevadores, ao inves do
+controle PID utilizado atualmente. O controle foi
+implementado em um modulo de controle de acionamento de inversor de frequencia e a aplicacao
+foi validada em laboratorio, utilizando uma maquina de tracao de elevador a vazio baseada em
+um motor sncrono de imas permanentes. Esta
+implementacao simplifica o ajuste do elevador em
+campo pelo tecnico, evitando elevadores com problemas de ajuste e aumentando, assim, a qualidade e performance do produto percebida pelos
+passageiros.
+2
+2.1
+
+Modelagem Matematica
+
+Motores Sncronos de Imas Permanentes
+
+Motores sncronos de imas permanentes (tambem
+chamados PMSM - Permanent Magnet Synchronous Motor) sao utilizados em situacoes que requerem estabilidade de velocidade, possuindo eficiencia e fator de potencia maiores do que motores
+assncronos (Krishna and Rao, 2011). Alem disso,
+a combinacao de um rotor interno de imas permanentes e enrolamentos externos oferece a vantagem
+de baixa inercia rotorica, dissipacao termica eficiente e reducao do tamanho do motor. O fato de
+nao utilizar escovas reduz rudo, geracao de interferencia eletromagnetica e elimina a necessidade
+de manutencao das mesmas (Simon et al., 1999).
+Por estas e outras razoes, este tipo de motor e utilizado na maior parte das maquinas de tracao de
+elevadores (CIBSE, 2005).
+O torque de PMSM e controlado atraves da
+corrente de armadura (corrente no estator), visto
+que o torque eletromagnetico e proporcional a esta
+corrente (Krishna and Rao, 2011). Para realizar
+este controle, as equacoes eletricas sao projetadas de um eixo trifasico estacionario em um eixo
+bidimensional rotativo. Esta projecao matematica, obtida atraves da aplicacao das transformadas de Clarke e Park simplifica substancialmente
+
+ISSN 2525-8311
+
+a expressao das equacoes eletricas, eliminando a
+dependencia dos parametros de tempo e posicao
+(Instruments, 1996). A Fig. 1 representa o novo
+sistema de coordenadas, indicando o vetor da corrente no estator posicionado no eixo dq.
+
+Figura 1 Vetor corrente no eixo dq
+(Instruments, 1996)
+As equacoes referentes a PMSM, referenciadas
+ao eixo dq, estao representadas abaixo
+vqs
+vds
+q
+d
+
+
+
+
+
+
+riqs + r d +
+rids + r q +
+Lq iqs
+Ld ids + m
+
+d
+dt q
+d
+dt d
+
+(1)
+
+onde, vqs e vds , d e q , Lq e Ld , e iqs e ids sao
+respectivamente as tensoes no estator, os fluxos
+magneticos, as indutancias e correntes referenciados ao eixo dq. Alem disto, r e a resistencia dos
+enrolamentos do estator, r e a velocidade de rotacao eletrica do rotor e m e uma constante que
+representa o pico do fluxo magnetico concatenado
+devido aos imas (Yaou et al., 2010).
+Na maioria das aplicacoes de PMSM, a indutancia do estator e independente da posicao do
+rotor, portanto Lq  Ld .
+Assim, o torque eletromagnetico tem funcao
+do numero de par de polos P do motor, e dado
+por
+(2)
+TE  23 P2 m iqs
+Da equacao (2) podem-se tirar duas conclusoes o
+torque do motor PMSM e diretamente proporcional a corrente do estator e somente a parcela da
+corrente do eixo q gera torque. Portanto, para otimizar o torque gerado para uma dada corrente no
+estator, a estrategia apropriada e zerar a corrente
+no eixo d. A acao dos reguladores de corrente,
+entao, e aplicar o vetor de corrente diretamente
+sobre o eixo q (Simon et al., 1999).
+2.2
+
+Modelagem de Elevadores
+
+Elevadores sao sistemas eletromecanicos utilizados
+para realizar transporte vertical. O tipo de elevador considerado neste projeto sera de tracao com
+motor eletrico (PMSM), com sistema de tracao 21
+(CIBSE, 2005).
+O eixo do motor da maquina de tracao e acoplado a polia de tracao, a qual e responsavel por
+tracionar todo o sistema mecanico (o qual pode
+
+1818
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+de acordo com rotinas padroes, uma curva S de
+velocidade. Esta curva e enviada para o controlador do inversor, portanto sera a referencia para o
+novo controle desenvolvido.
+O diagrama_de_blocos do elevador, contemplando o controle de motor utilizado neste projeto,
+esta demonstrado na Fig. 3.
+
+Figura 3 Diagrama de blocos do elevador
+
+Figura 2 Modelo de elevador
+(Ford, 2012)
+ser considerado como a carga do sistema). Os cabos de tracao passam pela polia e interligam a
+cabina, de um lado, ao contrapeso, de outro (Fig.
+2). A massa do contrapeso e definida de modo
+que o sistema fique equilibrado quando a cabina
+estiver com 50 de sua capacidade ocupada.
+A equacao do sistema completo, visto a partir
+do motor, e
+TE  JEq (p) ddtm + F (p)m + TL (p)
+
+(3)
+
+onde TE e o torque a ser aplicado pelo motor,
+JEq (p) e o momento de inercia equivalente do elevador, m e a velocidade_angular do rotor, F (p)
+e o coeficiente de atrito e TL (p) e o torque que
+a carga exerce no eixo da maquina. Todas estas
+variaveis possuem relacoes nao lineares com a posicao p do elevador na caixa de corrida. Estas nao
+linearidades sao advindas principalmente do peso
+dos cabos de tracao e das irregularidades das guias
+de cabina e contrapeso.
+Ignorando as dependencias nao lineares em p,
+o sistema pode ser escrito na forma linear em espaco_de_estados,
+
+
+
+
+
+
+0
+1
+0
+0
+x 
+x+ 1 u+
+TL (4)
+1
+ JEq
+0  JFEq
+JEq
+onde u  TE e a entrada do sistema, e x1 e a
+posicao_angular e x2 a velocidade de rotacao do
+motor.
+2.3
+
+Acionamento de Motores Aplicados a Elevadores
+
+Quando e realizada uma chamada no elevador, o
+modulo de controle principal analisa a distancia
+que sera percorrida entre os pavimentos e define,
+
+ISSN 2525-8311
+
+O bloco da unidade de conversao de potencia
+contempla a geracao dos pulsos de PWM (Pulse
+Width Modulation), bem como os componentes de
+potencia (IGBTs, drivers, etc). Este bloco e responsavel por transformar o sinal de controle que
+vem do controlador (tensao a ser aplicada no motor) em sinal de potencia.
+O bloco do controlador possui como entradas
+curva S de referencia, angulo do rotor do motor
+(atraves da leitura do encoder absoluto posicionado no eixo do motor) e corrente do motor. A
+sada deste bloco e o nvel de tensao (sinal de controle) que deve ser aplicado nos enrolamentos trifasicos do motor. Detalhes de funcionamento do
+controlador podem ser observados na Fig. 4.
+
+Figura 4 Diagrama de blocos do controlador
+O primeiro controlador PI e referente ao laco
+de controle_de_velocidade. O sinal de erro e gerado
+a partir da diferenca entre a velocidade desejada
+(proveniente da curva S gerada pelo controlador
+principal do elevador) e a velocidade real, medida
+atraves do encoder acoplado ao eixo do motor (o
+encoder informa a posicao, portanto a velocidade
+e obtida atraves da derivada deste sinal). A sada
+deste controlador e a corrente iqs (corrente em
+quadratura do estator).
+Os outros dois controladores PI sao referentes ao laco de realimentacao de corrente. A sada
+destes dois controladores PI e o sinal de controle
+referente a tensao que deve ser aplicada no motor
+(tensao no eixo dq). Este trabalho propoe a subs-
+
+1819
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+tituicao do controlador PI do laco de realimentacao de posicao e velocidade por um controlador
+ADRC.
+3
+
+seja, a variacao da aceleracao. O observador de
+estados
+z
+y
+
+Controle por ADRC
+
+Um sistema eletromecanico pode ser representado
+por
+y  f (y, y, d, t) + bu
+
+(5)
+
+onde y e a posicao, b e uma constante, u e o parametro de entrada, gerado tipicamente por um
+motor, d e um parametro desconhecido (e a perturbacao externa) e f (y, y, d, t) representa o efeito
+combinado de dinamicas internas e perturbacoes
+externas na aceleracao.
+Na tecnica de ADRC (Gao, 2006), o sistema
+eletromecanico representado em (5) pode ser visto
+como um integrador duplo multiplicado pela constante b e perturbado por f (y, y, d, t). Ou seja,
+f (y, y, d, t) e a perturbacao generalizada do sistema e seu conhecimento nao e necessario para o
+projeto e implementacao do controlador. Ao inves
+disso, a unica informacao necessaria e seu valor estimado em tempo_real.
+Seja f a estimativa de f (y, y, d, t) em um
+tempo t, entao o metodo ADRC propoe a seguinte
+lei de controle
+f + u0
+b
+simplificando a implementacao do controlador,
+que quando aplicada a equacao (5) torna o sistema em malha_fechada igual a y  u0 .
+A ideia central da tecnica ADRC e o controle
+de um processo complexo nao-linear, variante no
+tempo e incerto sendo simplificado atraves de estimativa e rejeicao diretas e ativas da perturbacao
+generalizada f (y, y, d, t). A opcao escolhida para
+estimativa do valor em tempo_real de f (y, y, d, t) e
+a utilizacao de um observador_de_estados linear esten. A aplicacao e feita atraves do uso de um
+modelo em espaco_de_estados aumentado de (5)
+que inclua f (y, y, d, t) como um estado adicional.
+Por exemplo, seja x1  y, x2  y e x3  f (considerando que f seja f (y, y, d, t)), entao o espaco
+de estados aumentado de (5) fica
+u
+
+x
+y
+
+ Ax + Bu + Eh
+ Cx
+
+(6)
+
+ Az + Bu + L(y  y)
+ Cz
+
+(8)
+
+
+T
+com o ganho do observador L  1 2 3
+selecionado apropriadamente, fornece uma estimativa do estado de (6), zi  xi , i  1, 2, 3. Em
+particular, o terceiro estado do observador, z3 , fornece uma estimativa de f . E importante apontar que h e ignorado no modelo do observador,
+visto que e um parametro desconhecido e sera estimado pelo termo de correcao L. Para simplificar
+o ajuste, os ganhos do observador sao parametrizados como
+
+L  30
+
+30 2
+
+30 3
+
+T
+
+ou seja, a banda de passagem do observador, 0 ,
+e o unico parametro de ajuste (Gao, 2006).
+Com um observador bem ajustado, o estado
+z3 ira estimar x3  f (y, y, d, t). A lei de controle
+u
+
+z3 + u0
+b
+
+faz com que
+y  (f  z3 ) + u0  u0
+A lei de controle utilizada para calcular u0
+e a lei de controle proporcional-derivativa, comumente utilizada
+u0  kp (rp  z1 ) + kd (rv  z2 )
+onde rp e a referencia de posicao e rv e a referencia
+de velocidade. O ajuste do controlador pode ser
+simplificado, fazendo-se com que kd  2c e kp 
+c 2 , onde c e a largura de banda desejada em
+malha_fechada.
+4
+
+Aplicacao ao Controle de Motor
+Trifasico para Elevadores
+
+A aplicacao da tecnica de ADRC e realizada no
+laco de realimentacao de velocidade, ou seja, ao
+inves de utilizar o controlador PI atual, se utiliza
+um controle ADRC.
+4.1
+
+Observador de Estados Linear Esten
+
+O modelo apresentado em (6) e discretizado atraves do metodo de Euler.
+
+sendo que
+
+0
+A  0
+0
+
+1
+0
+0
+
+
+ 
+0
+0
+1 , B   b 
+0
+0
+
+(7)
+
+
+
+
+T
+C 1 0 0 eE 0 0 1
+.
+O termo inserido x3  f e o espaco aumentado, enquanto que h  f e referente ao jerk, ou
+
+ISSN 2525-8311
+
+x(k + 1)  Ad x(k) + Bd u(k)
+y(k)  H x(k) + Ju(k)
+A partir do modelo discretizado, um observador_de_estados discreto e criado.
+
+1820
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+x(k + 1)  Ad x(k) + Bd u(k) + Ld (y(k)  y(k))
+y(k)  H x(k) + Ju(k)
+O vetor de ganho do observador Ld e determinado alocando-se os polos da equacao caracterstica discreta em um mesmo lugar do plano complexo, ou seja,
+
+A Fig. 5 mostra o controle atuando na pratica. E possvel visualizar a curva da corrente iqs
+(amplificada 20 vezes), bem como as curvas de
+velocidade. E importante ressaltar a boa performance obtida no seguimento a referencia da curva
+de velocidade, visto que a curva de referencia de
+velocidade e a curva de velocidade real sao identicas na maior parte do tempo.
+180
+Vel padrão
+Iqs x 20
+Vel real
+
+160
+
+(z)  zI  (Ad  Ad Ld H)  (z  )3
+A relacao entre os polos do observador discreto e os polos do observador contnuo e dada
+por
+  e0 T
+
+140
+
+120
+
+100
+
+80
+
+60
+
+40
+
+Apos a aplicacao do metodo de Euler, obtem20
+
+se
+
+0
+
+
+
+ 
+1 T 0
+0
+Ad  0 1 T  , Bd  bT  ,
+0 0 1
+0
+
+
+3
+1
+
+
+Ld  (2  3 +  3 ) T1  , H  1 0 0 ,
+(1  )3 T12
+ 
+J 0
+onde T e o perodo de amostragem.
+4.2
+
+Parametros de Ajuste do Controlador
+
+Os ganhos kp e kd sao calculados atraves da largura de banda desejada em malha_fechada c ,
+onde kp  c2 e kd  2c . Uma vez que a
+curva padrao de velocidade de um elevador contempla uma frequencia fundamental de 0, 5rads,
+um c  10rads foi projetado para que o seguimento nao fosse comprometido. A frequencia
+0 escolhida para o ajuste do observador foi de
+0  50rads, ou seja, tal que o mesmo possua
+uma dinamica cinco vezes mais rapida que o sistema em malha_fechada. Com esta escolha de
+frequencia a resposta do observador foi rapida o
+suficiente, sem amplificar de forma demasiada os
+nveis de rudo.
+
+20
+
+0
+
+2000
+
+4000
+
+6000
+
+8000
+
+10000
+
+12000
+
+14000
+
+Figura 5 Velocidade padrao, velocidade real e
+corrente iqs
+A fim de testar a robustez do sistema, inumeros testes foram realizados para diferentes valores
+do parametro b. Observou-se que a performance
+do controlador foi satisfatoria para valores variando de b  1.000 ate b  4.000, evidenciando a
+robustez no ajuste dos ganhos do controlador. A
+Fig. 6 mostra as curvas de velocidade real para
+b  1.000 e para b  4.000.
+180
+b  1.000
+b  4.000
+160
+
+140
+
+120
+
+100
+
+80
+
+60
+
+40
+
+20
+
+0
+
+5
+
+Resultados Experimentais
+
+20
+0
+
+5000
+
+10000
+
+15000
+
+ms
+
+Para validacao do resultado, o controlador foi implementado e testado acionando uma maquina de
+tracao com motor de imas permanentes a vazio,
+seguindo uma curva de velocidade de referencia
+padrao. A curva de velocidade acelera por aproximadamente 3 segundos (mesmo tempo para desaceleracao) e mantem a velocidade nominal de 159
+rpm por 6 segundos. Um breve ensaio de aceleracao resultou na estimacao por mnimos_quadrados
+do parametro b  980.
+
+ISSN 2525-8311
+
+Figura 6 Velocidade para b  1.000 e para b 
+4.000
+
+6
+
+Conclusao
+
+Este artigo demonstra o desenvolvimetno de uma
+estrategia_de_controle baseada na observacao e rejeicao ativa de perturbacao, aplicado ao controle
+
+1821
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+de motores sncronos de imas permanentes aplicados em maquinas de tracao de elevadores. Para
+auxiliar o sistema na rejeicao de perturbacoes, o
+controlador utiliza um observador_de_estados linear esten, estimando a perturbacao total do
+sistema. O metodo proposto foi avaliado em um
+sistema real, demonstrando resultados plenamente
+satisfatorios em comparacao com o metodo utilizado atualmente.
+Agradecimentos
+Os autores agradecem a Thyssenkrupp Elevadores SA pelo apoio recebido durante a realizacao
+deste trabalho. O presente artigo foi alcancado em
+cooperacao com a Hewlett-Packard Brasil Ltda.
+com recursos provenientes da Lei de Informatica
+(Lei numero 8.248, de 1991), e parcialmente apoiado pelo CNPq 3058862015-0 (J.V. Flores) and
+3092722015-7 (A.T. Salton).
+Referencias
+Andrew, J. and Kaczmarczyk, S. (2011). Systems
+Engineering of Elevators, Elevator World.
+Chunzhe, Z. and Yi, H. (2010). Adrc based integrated guidance and control scheme for the
+interception of maneuvering targets with desired los angle, Control Conference (CCC),
+2010 29th Chinese, IEEE, pp. 61926196.
+CIBSE, C. G. D. (2005). Transportation systems in buildings, The Chartered Institution
+of Building Services Engineers, London .
+Cominos, P. and Munro, N. (2002). Pid controllers recent tuning methods and design to
+specification, Control Theory and Applications, IEE Proceedings-, Vol. 149, IET, pp. 46
+53.
+Ford, P. J. (2012). Electric Elevator Drive with
+Position Control, PhD thesis, Faculty of the
+Louisiana State University and Agricultural
+and Mechanical College in partial fulfillment
+of the requirements for the degree of Master
+of Science in Electrical Engineering by Peter
+James Ford BS, Louisiana State University.
+Gao, Z. (2006). Active disturbance rejection control a paradigm shift in feedback control system design, American Control Conference,
+2006, IEEE, pp. 7pp.
+Instruments, T. (1996). Clarke  park transforms
+on the tms320c2xx, Application Report Literature Number BPRA048 .
+Jaganathan, B., Sharanya, R., Devi, S. K. and
+Sah, S. K. (2010). Ziegler-nichols method of
+online tuning of pmsm for improved transient response, Power, Control and Embedded
+
+ISSN 2525-8311
+
+Systems (ICPCES), 2010 International Conference on, IEEE, pp. 14.
+Jung, J.-W., Leu, V. Q., Do, T. D., Kim, E.-K.
+and Choi, H. H. (2015). Adaptive pid speed
+control design for permanent magnet synchronous motor drives, Power Electronics,
+IEEE Transactions on 30(2) 900908.
+Krishna, D. S. and Rao, C. S. (2011). Speed control of permanent magnet synchronous motor
+based on direct torque control method, International Journal of Advances in Science and
+Technology 3(2).
+Kumar, R., Gupta, R. and Singh, B. (2006). Intelligent tuned pid controllers for pmsm drive-a
+critical analysis, Industrial Technology, 2006.
+ICIT 2006. IEEE International Conference
+on, IEEE, pp. 20552060.
+Kun, H. and Changbo, L. (2011). Submarine
+depth adrc controller based on pso near surface, Control Conference (CCC), 2011 30th
+Chinese, IEEE, pp. 35803584.
+Man-Lin, L., Yong-Ling, F., Shuang-Qiao, C. and
+Dong, G. (2010). Flight simulator table servo
+control based on adrc strategy, Control Conference (CCC), 2010 29th Chinese, IEEE,
+pp. 34973501.
+Olsson, M. (2008). Simulation comparison of autotuning methods for pid control.
+Simon, E. et al. (1999). Implementation of a speed
+field oriented control of a 3-phase pms motor
+using tm320f240, Texas Instruments-Didital
+Control Systems, spra588, Citeseer.
+Song, R. and Li, Y. (2007). Study on adrc-based
+mobile robot lateral control, Robotics and
+Biomimetics, 2007. ROBIO 2007. IEEE International Conference on, IEEE, pp. 1190
+1193.
+Wu, H., Su, W. and Liu, Z. (2014). Pid controllers Design and tuning methods, Industrial
+Electronics and Applications (ICIEA), 2014
+IEEE 9th Conference on, IEEE, pp. 808813.
+Xiaoping, S. and Jidong, W. (2010). A vectorcontrol system based on fuzzy self-tuning
+pid controller for pmsm, E-Product E-Service
+and E-Entertainment (ICEEE), 2010 International Conference on, IEEE, pp. 14.
+Yaou, Z., Wansheng, Z. and Xiaoming, K. (2010).
+Control of the permanent magnet synchronous motor using model reference dynamic
+inversion, WSEAS transaction on systems
+and control 5.
+
+1822

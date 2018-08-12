@@ -1,0 +1,953 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+TECNICAS DE DECONVOLUCAO APLICADAS A ESTIMACAO DE ENERGIA
+ONLINE EM CALORIMETRIA DE ALTAS ENERGIAS EM CONDICOES DE ALTA
+TAXA DE EVENTOS
+Joao Paulo B. S. Duarte, Luciano M. de Andrade Filho, Eduardo F. de Simas Filho,
+Jose M. de Seixas
+
+Universidade Federal de Juiz de Fora
+Juiz de Fora, MG, Brasil
+
+
+
+
+Universidade Federal da Bahia
+Salvador, BA, Brasil
+
+Universidade Federal do Rio de Janeiro
+Rio de Janeiro, RJ, Brasil
+
+joao.duarte@engenharia.ufjf.br, luciano.ma.filho@gmail.com, eduardosimas@gmail.com,
+seixas@lps.ufrj.br
+Abstract This work presents a study of deconvolution techniques that can be used in the online energy
+reconstruction for the ATLAS hadronic calorimeter (TileCal) first level trigger system. The high rate events environment, foreseen for the next years of operation of the LHC particle collider,increases the probability of observe
+adjacent collisions, promoting the signal superposition effect. The current algorithm for energy reconstruction is
+not robust against this pile-up effect. Thus, deconvolution methods have been proposed, two direct that result in
+FIR filters and three iteratives techniques based on the Descendant gradient that allow you to insert an expert
+knowledge. As expected, the iterative methods present smaller errors than the direct FIR methods. However,
+with respect to implementation, iterative techniques are more complex and use more features of hardware.
+Keywords
+
+Deconvolution, Calorimetry, Energy Reconstruction, Online Processing
+
+Resumo Este trabalho apresenta um estudo sobre tecnicas de deconvolucao de sinais que podem ser aplicadas
+a reconstrucao online de energia no primeiro nvel de trigger do calormetro hadronico do ATLAS. O ambiente
+de alta taxa de eventos, previsto para ocorrer nos proximos anos no colisionador de partculas LHC, aumenta a
+probabilidade de ocorrencia de colisoes adjacentes, produzindo o efeito de empilhamento_de_sinais. O algoritmo
+atualmente utilizado para a reconstrucao nao e robusto a este efeito. Assim, foram propostos metodos de
+deconvolucao, dois diretos que resultam em filtros FIR e outros tres iterativos baseados no Gradiente Descendente
+que permitem inserir um conhecimento especialista. Como esperado, os metodos_iterativos reconstroem a energia
+com menor erro quando comparados as tecnicas baseadas em filtros FIR. Porem, com relacao a implementacao,
+as tecnicas iterativas sao de maior complexidade e utilizam mais recursos de hardware.
+Palavras-chave
+
+
+
+Introducao
+
+Na instrumentacao, especificamente, em experimentos de fsica de altas energias, onde sao feitas colisoes de partculas em altas velocidades, a
+partir de colisionadores de partculas, ha a tendencia de aumentar suas taxas de colisao e numero de partculas por colisao, objetivando aumentar a probabilidade de observacao de eventos fsicos cada vez mais raros (Andrade Filho
+et al., 2015). Um ambiente com estas caractersticas e o CERN (Organizacao Europeia para Pesquisa Nuclear) que faz o uso de aceleradores de
+partculas. O principal deles e o LHC (do ingles,
+Large Hadron Collider ) que contem cerca de 27
+km de extensao e alguns pontos estrategicos para a
+colisao. Nestes pontos de colisao, sao posicionados
+detectores de partculas. Ao todo, no seu entorno,
+existem quatro detectores principais o CMS , o
+LHCb, o ALICE e o ATLAS (Taylor, 2000).
+O ATLAS, e um experimento de proposito geral na investigacao das colisoes proton-proton e e
+dividido em subdetectores em camadas cilndricas em torno do ponto de colisao, como pode ser
+
+ISSN 2525-8311
+
+visto na Figura 1. Cada subdetector e responsavel por medir propriedades especificas da partcula. Destas, uma das mais importantes e a energia das partculas, que e medida pelos calormetros
+do ATLAS(Evans and Bryant, 2008).
+
+Figura 1 O Detector ATLAS e seus subdetectores (Pequenao, 2008).
+Tipicamente, os detectores possuem dois calormetros, como no ATLAS, um mais interno, chamado de calormetro eletromagnetico que absorve
+a energia de partculas leves e carregadas, como os
+eletrons, e uma camada mais externa que e o ca-
+
+2612
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+lormetro hadronico (TileCal) que absorve as partculas hadronicas. Para localizar as regioes por
+onde as partculas passaram, o sistema de calorimetria e segmentado em celulas gerando cerca de
+duzentos mil canais de leitura. Cada celula produz
+um sinal eletrico cuja amplitude e proporcional a
+energia depositada. Assim, por serem muitos canais em paralelo e alta taxa de colisoes, requisitase um sistema de filtragem (ou selecao de eventos) para armazenar somente informacoes de eventos de interesse raros (Peralva et al., 2013). Para
+isto, o ATLAS, por exemplo, utiliza um sistema de
+trigger. Este sistema e dividido em dois nveis que
+tem como objetivo principal descartar eventos que
+nao sao de interesse. O nvel 1 (LVL1), o qual e o
+foco deste trabalho, precisa analisar 40 milhoes de
+eventos por segundo demandando uma implementacao em hardware. O sinal eletrico proveniente
+das celulas do TileCal e digitalizado a 40 MHz
+e sincronizado com as colisoes no LHC. Vale ressaltar que o pulso conformado tem a duracao de
+aproximadamente 150 ns enquanto a taxa de colisao do LHC e de 25 ns. Assim, pode-se observar
+que a resposta do calormetro e mais lenta que
+a taxa de colisao do LHC e, consequentemente,
+podera ocorrer a sobreposicao entre amostras de
+eventos subsequentes (efeito de empilhamento de
+sinais).
+Atualmente, o LHC esta em um processo de
+upgrade com o objetivo de aumentar a probabilidade de colisoes entre protons e de se estudar
+eventos mais raros. Deste modo, a chance de se
+observar eventos mais proximos, no tempo, tende
+a ser maior, aumentando-se a probabilidade de
+ocorrer o efeito de empilhamento_de_sinais nos canais do detector. Como exemplificado na Figura 2,
+para um sinal generico unipolar, usualmente encontrado neste tipo de detector, ocorreu uma colisao que gerou um sinal s1 numa determinada celula e 50 ns depois, ou seja, 2 colisoes posteriores a
+mesma celula foi sensibilizada gerando s2 , a sobreposicao destes eventos assume o formato do sinal
+s3 .
+1.2
+Ilustração do efeito
+de empilhamento_de_sinais
+
+Unidade arbitrária
+
+1
+
+0.8
+
+0.6
+
+s1
+
+sinais. Neste sentido, este trabalho propoe tecnicas baseadas na deconvolucao de sinais.
+2
+
+Tecnicas utilizadas atualmente para
+estimacao_de_energia no Tilecal
+
+A selecao de eventos no primeiro nvel, no Tilecal,
+atualmente resume-se em uma sequencia de dois
+algoritmos a aplicacao de um Filtro Casado, que
+detecta a presenca de sinal em uma dada celula, e
+um circuito detector de picos, que extrai a informacao da colisao em que ocorreu a deposicao de
+energia.
+2.1
+
+O filtro Casado
+
+A partir de uma hipotese H0 considerando o sinal
+sendo somente rudo rn  wn e outra hipotese
+considerando o sinal recebido como sendo composto de rudo mais sinal rn  sn + wn, onde
+n  1, 2...N., chega-se a razao de verossimilhanca
+dada pela Equacao 1 (Peralva et al., 2013)
+fRH (rH1 )
+1
+RH0 (rH0 )
+
+L(r) f
+
+(1)
+
+onde fRH1 (rH1 ) e fRH0 (rH0 ), sao as funcoes de
+densidade de probabilidade da sequencia recebida
+dado que H0 ou H1 ocorreram, respectivamente.
+Assim, o efeito produzido pelo Filtro Casado e o
+de maximizar a relacao sinal rudo (Trees, 2001).
+Ao considerar a situacao onde as densidades
+de probabilidade das amostras do rudo sao gaussianas e descorrelacionadas, e sendo o sinal sn
+determinstico, a razao da Equacao 1 pode ser reescrita como a Equacao 2 apos algumas manipulacoes algebricas (Trees, 2001).
+PN
+
+i1
+
+H1
+
+ri si  
+
+0
+
+(2)
+
+H0
+
+onde  0 engloba todas as constantes desta equacao. Assim, a equacao indica que a decisao entre
+as hipoteses H0 e H1 e otimizada pelo produto
+interno entre o sinal recebido rn e o sinal determinstico desejado sn. Portanto, o Filtro Casado
+e um filtro FIR (Finite Impulse Response), onde
+seus coeficientes sao compostos pelas amostras do
+pulso caracterstico que e igual a sn + N .
+
+s2
+s3
+
+2.2
+
+O detector de picos
+
+0.4
+
+0.2
+
+0
+-80
+
+-60
+
+-40
+
+-20
+
+0
+20
+Tempo ns
+
+40
+
+60
+
+80
+
+Figura 2 Exemplo do efeito do empilhamento de
+sinais.
+Uma tecnica recentemente proposta para estimacao_de_energia e baseada no Filtro Casado
+(Peralva et al., 2013), mas nao funciona satisfatoriamente em um ambiente com empilhamento de
+
+ISSN 2525-8311
+
+A identificacao da colisao onde ocorreu evento de
+interesse, e a estimacao final da energia no primeiro nvel de trigger sao concretizadas com a
+utilizacao de um detector de picos, apos a utilizacao do Filtro Casado. No LVL1, o detector de
+picos funciona com a analise de 3 amostras consecutivas do sinal, obedecendo a seguinte logica se
+a amostra central for maior que as duas amostras
+laterais, significa que ocorreu uma interacao naquela colisao referente a amostra central (Garvey
+and Rees, 1996). Alem disso, o valor da amostra
+
+2613
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+central sera proporcional a energia da colisao em
+questao, de acordo com uma tabela de calibracao. Esta tecnica funciona adequadamente para
+cenarios de baixa taxa de eventos, onde nao ha
+empilhamento_de_sinais.
+3
+
+Tecnicas propostas
+
+O empilhamento_de_sinais modifica a forma original do pulso caracterstico do canal. Assim, o sinal
+resultante observado a cada colisao nao e bem definido. A mudanca das caractersticas do sinal compromete a eficiencia da tecnica atualmente empregada, uma vez que, o sinal sn, nao possui mais
+seu formato determinstico. Para uma abordagem
+praticamente robusta ao efeito do empilhamento
+de sinais, e proposta uma modelagem baseada na
+deconvolucao (Oppenheim, 2010).
+O sinal nos canais de leitura do TileCal pode
+ser interpretado, como o resultado da convolucao
+entre uma funcao delta de Dirac, representando a
+energia a ser estimada xn em uma determinada
+colisao, com o pulso caracterstico do canal do Tilecal sn, como pode ser visto na Figura 3, sendo
+wn um rudo gaussiano branco aditivo proveniente da eletronica do TileCal e rn o sinal tpico
+de um dos canais do calormetro. Com base neste
+modelo do calormetro, serao propostas algumas
+tecnicas que realizam o processo inverso, com o
+intuito de estimar a energia xn em cada colisao.
+
+Neste caso, G0 (z) pode ser classificado como
+um filtro IIR. Entretanto, a proposta deste metodo e obter uma aproximacao deste sistema por
+meio de um filtro FIR. Para atingir este objetivo,
+verifica-se o seu mapa de polos e zeros. Caso ocorram polos fora do crculo unitario, considerando o
+sistema causal, este sistema nao levara a um filtro estavel, entao devem ser seguidos os seguintes
+passos
+1. Separar G0 (z) em duas partes, uma parte estavel G01 (z) e outra instavel G02 (z), tal que
+seja valido G0 (z)  G01 (z)G02 (z).
+2. Inverte-se a regiao de convergencia de G02 (z),
+resultando em um sistema nao causal G002 (z),
+porem com sua regiao de convergencia incluindo o crculo unitario.
+3. Por G01 (z) e G002 (z) serem filtros IIR, suas
+respostas devem ser truncadas com o intuito
+de se produzir filtros FIR de resposta aproximada G0001 (z) e G0002 (z).
+4. Como G0002 (z) ainda e nao causal, permite-se
+um atraso a sua resposta para que se torne
+um sistema causal G000
+02 (z).
+5. Obtendo a resposta ao impulso de G000
+02 (z) e
+G0001 (z), adicionalmente, realizando a convolucao entre suas respostas, chega-se ao filtro
+FIR f n que realiza a deconvolucao aproximada, pois f n e uma aproximacao do sistema inverso G0 (z).
+3.1.2
+
+xn
+
+yn
+
+wn
+
+sn
+
+Figura 3 Modelagem do calormetro como sistema linear.
+3.1
+
+Tecnicas baseadas em filtros FIR
+
+A princpio foram estudadas tecnicas baseadas em
+filtros de resposta ao impulso finita (ou finite impulse response - FIR), por serem de simples implementacao e, portanto, adequadas ao primeiro
+nvel de trigger. Neste trabalho foram utilizados
+dois metodos, um que realiza uma abordagem determinstica e outro adaptativa.
+3.1.1
+
+Metodo Determinstico
+
+Este metodo consiste em obter um filtro a partir
+do conhecimento previo da resposta impulsiva do
+canal sn, que ao se aplicar a transformada_z leva
+a S(z) . Um sistema inverso G0 (z), definido pela
+relacao no domnio z, conforme a Equacao 3
+1
+(3)
+G0 (z)
+S(z)
+
+ISSN 2525-8311
+
+Modelo Inverso
+
+rn
+
+Esta e uma modelagem onde filtros_adaptativos
+sao aplicados, de modo a produzir um modelo inverso de um sistema desconhecido. Nesta tecnica,
+o calormetro e modelado como um sistema desconhecido e, baseado em simulacoes de Monte Carlo
+que levam em conta toda as estatsticas da fsica, a
+partir de xn, consegue-se chegar no rn sem precisar conhecer hn, o que e importante, haja vista
+a complexidade da fsica envolvida. O Diagrama
+em blocos da Figura 4 ilustra esta modelagem.
+Neste diagrama, permitindo-se um atraso de xn
+na realimentacao e medindo o erro entre o valor
+de sada do filtro_adaptativo e o valor desejado,
+com a minimizacao deste erro e possvel estimar
+os coeficientes de um filtro FIR correspondente ao
+sistema inverso de hn.
+Utilizando o criterio do erro medio quadratico, a funcao custo do sistema e dada por
+M
+1
+P
+
+J(g)
+
+(xnvn)2
+
+(4)
+
+n0
+
+onde M e o numero de amostras coletadas, x representa amostras consecutivas do sinal desejado e
+v depende linearmente de r e g, atraves de um modelo adequado para o sistema desconhecido. Esta
+
+2614
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ou
+
+wn
+hn
+xn
+
+n
+
+
+
+
+yn
+
+rn
+
+rHx
+
+vn
+
+
+
+
+No artigo (Teixeira et al., 2014), o metodo do
+Gradiente descendente (GD), parte da minimizacao do erro medio quadratico que resulta na estimacao atraves da pseudo inversa da matriz H,
+entretanto o artigo propoe uma metodologia para
+realizacao do GD de maneira iterativa que resulta
+na Equacao 9
+
+e
+
+
+
+Figura 4 Modelo inverso.
+funcao pode ser representada na forma matricial
+em termos de g
+(5)
+
+J(g)(xRg)T (xRg)
+
+onde a matriz R e a matriz de observacao dos
+dados, sendo formada por amostras deslocadas de
+r. A minimizacao da funcao custo J passa pelo
+processo de obtencao da sua derivada em funcao
+dos parametros de g (Kay, 1998), o qual pode ser
+estimado utilizando a pseudo inversa da matriz R
+(6)
+
+g(RT R)1 RT x
+
+o vetor de parametros g estimado, corresponde a
+propria resposta ao impulso de um sistema inverso
+ao sistema desconhecido. Sendo assim, este vetor
+de coeficientes pode ser interpretado como um filtro FIR que deconvolui o sistema desconhecido.
+3.2
+
+Metodos Iterativos
+
+Estruturas de filtros FIR, em geral, recebem coeficientes projetados com valores positivos e negativos. Deste modo, dependendo do sinal de entrada xn, esses filtros podem produzir resultados
+tambem negativos. Entretanto, a energia depositada numa celula e sempre positiva. Portanto, a
+energia a ser estimada tambem devera ser sempre
+positiva. Este conhecimento especialista pode melhorar a estimacao, pois mitiga erros provocados
+pelo surgimento de estimacoes de energias negativas. Uma abordagem que permite a insercao deste
+conhecimento especialista sao os metodos de deconvolucao iterativos.
+3.2.1
+
+O Gradiente Descendente (GD)
+
+A convolucao pode ser expressa como uma multiplicacao de matrizes. Para elucidar este contexto, considere um sinal composto de tres amostras h0 , h1 , h2  que e convoludo com um sinal
+contendo tambem tres amostras x0 , x1 , x2 , resultando em um sinal r0 , r1 , r2 , r3 , r4 . Quando e utilizado um operador matricial ao sinal h0 , h1 , h2 , a
+convolucao pode ser expressa conforme o sistema
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+r0
+r1
+r2
+r3
+r4
+
+ISSN 2525-8311
+
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+ 
+ 
+ 
+
+h0
+h1
+h2
+0
+0
+
+0
+h0
+h1
+h2
+0
+
+0
+0
+h0
+h1
+h2
+
+xiter+1 xiter +HT (rHxiter )
+
+x0
+x1
+x2
+
+(9)
+
+Existe na literatura um  adaptativo que otimiza a taxa de convergencia (Haykin, 1996). Derivando a Equacao 9 em termos de  e igualando
+a zero, chega-se a um  iterativo que prioriza a
+taxa de convergencia
+
+
+T 
+T (HT H)
+
+(10)
+
+onde  e conhecido como resduo e e dado por
+  (r  Hxiter ).
+3.2.2
+
+O Algoritmo Gold
+
+O Algoritmo Gold (Morhac and Matousek, 2009)
+e um metodo que, a partir da escolha de um fator de relaxamento  adequado, prioriza a estimacao de amplitudes positivas. Assim, este metodo atualiza o valor de  a cada iteracao de modo
+que e priorizada a estimacao de xn que contenha
+apenas valores positivos. Escolhendo-se, portanto
+xiter i
+, e substituindo na Equacao 9,
+iter
+
+ii
+HT Hxiter i
+obtem-se a Equacao 11.
+xiter+1 i 
+
+HT riter i iter
+x
+i
+HT Hxiter i
+
+(11)
+
+Apesar de o Algoritmo Gold priorizar resultados positivos, o que o torna adequado para o
+problema em questao, a sua taxa de convergencia e nao otimizada. Entretanto, para implementacoes online a taxa de convergencia e um fator
+que deve ser considerado. Neste sentido, o GD
+com  adaptativo e um metodo mais adequado
+pois sua taxa de convergencia e otimizada. Contudo, ele nao prioriza o conhecimento especialista
+tal como o Gold. Por isso, dois outros novos metodos sao propostos o Gradiente Descendente Positivo(GDP) e Gradiente Descendente que Exclui
+Zeros (GDEZ).
+3.2.3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(8)
+
+O Gradiente Descendente Positivo
+(GDP)
+
+
+
+
+
+
+
+
+
+(7)
+
+O metodo do GDP, tem o funcionamento similar
+ao do metodo do GD. Entretanto, as componentes
+de amostras existentes com valores abaixo de certo
+
+2615
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+O Gradiente Descendente que Exclui Zeros (GDEZ)
+
+Outro metodo proposto, com o objetivo de buscar uma taxa de convergencia ainda mais rapida
+e com utilizacao de menos recursos computacionais do que o metodo do GDP, e o metodo do
+GDEZ. Neste metodo, ao inves de se colocar um
+valor nulo nas componentes negativas de x a cada
+iteracao, tal componente e excluda da proxima
+iteracao. Entao, a posicao da componente e armazenada e no final das iteracoes, zeros sao includos
+nas posicoes armazenadas. Com isto, ocorre uma
+reducao da dimensao do problema de estimacao
+a cada iteracao em que surgir, pelo menos, uma
+componente negativa estimada, resultando, assim,
+em uma convergencia mais rapida.
+
+Sinal Estimado
+
+120
+
+Energia estimada
+100
+
+80
+
+80
+Amplitude
+
+Amplitude
+
+rn
+100
+
+60
+40
+20
+
+60
+40
+20
+
+0
+-20
+
+0
+0
+
+500
+1000
+Tempo em ns
+
+-20
+
+1500
+
+0
+
+(a) Sinal tpico de um calormetro.
+
+1500
+
+Comparação, sinal recebido, estimação e sinal verdadeiro
+120
+rn
+100
+Energia estimada
+xn
+80
+
+xn
+100
+
+Amplitude
+
+80
+60
+40
+
+60
+40
+20
+
+20
+0
+
+500
+1000
+Tempo em ns
+
+(b) Sinal estimado.
+
+Sinal Verdadeiro
+
+120
+
+0
+0
+
+500
+1000
+Tempo em ns
+
+-20
+
+1500
+
+(c) Energia verdadeira.
+
+0
+
+500
+1000
+Tempo em ns
+
+1500
+
+(d) Comparacao entre os sinais estimado, recebido do
+calormetro e verdadeiro
+
+Figura 5 Exemplo de Recuperacao de sinal.
+energia e o numero de amostras total. Foi adotado, como medida de erro, o valor RMS do erro
+entre o valor verdadeiro e o estimado para cada
+colisao. Pela analise do grafico da Figura 6, notase que a partir de um valor de ordem 25 o erro nao
+diminui de forma consideravel. Assim, esta ordem
+foi fixada para as demais comparacoes.
+Variação da Ordem e Ocupância vs Erro
+7
+6
+
+8
+
+RMS do Erro
+
+3.2.4
+
+Sinal Recebido do TileCal
+
+120
+
+Amplitude
+
+limiar positivo sao postas em zero, antes da proxima iteracao. Assim nao sao permitidas amostras
+estimadas negativas ou proximas de zero.
+Este metodo tende para uma solucao esparsa
+do vetor xiter+1 . Nesta aplicacao, a representacao
+esparsa tende a concentrar a energia em poucas
+componentes positivas, ao inves de espalhar esta
+informacao erroneamente em colisoes adjacentes
+estimando valores positivos e negativos de energia.
+Portanto, metodos que tendem para uma solucao
+esparsa positiva tendem a reconstituir as energias
+originais de cada colisao com menor erro.
+Apesar de sua simplicidade, o algoritmo do
+GDP, como descrito aqui, e parte central de um algoritmo moderno de representacao esparsa conhecido como IRLS (Iterated Reweighed Least Square)
+de uma famlia conhecida como algoritmos de Shrinkage, proposto recentemente em (Elad, 2009).
+
+5
+
+6
+
+4
+4
+3
+2
+2
+100
+1
+
+0
+0
+
+4
+
+Resultados
+
+10
+
+As tecnicas propostas foram simuladas utilizando
+dados de simulacao que, neste caso, simulam sinais com caractersticas de empilhamento_de_sinais similares aos que podem ser encontradas em
+Monte Carlo para um pulso unipolar e simetrico,
+tpico de um calormetro . Como e mostrado na
+Figura 5(a), para um trecho do sinal do banco de
+dados, e possvel simular rudos gaussiano branco
+(rudo de fundo da eletronica), rudos de desvio de
+fase(provenientes da digitalizacao) e empilhamentos de sinais. As Figura 5(a), 5(b), 5(c) e 5(d)
+demonstram um exemplo de como e realizada a
+estimacao_de_energia, neste caso, utilizou-se o filtro FIR de ordem 30 projetado pelo metodo da
+modelagem inversa. Exemplos com os demais metodos sao semelhantes a este.
+Dentre as tecnicas baseadas em filtro FIR,
+com a finalidade de definir a ordem do filtro, foi
+avaliado o erro em funcao da ordem e da ocupancia que e a porcentagem da relacao entre o numero
+de amostras do sinal em que houve a deposicao de
+
+ISSN 2525-8311
+
+50
+
+20
+30
+Ordem do Filtro
+
+40
+
+0
+
+Ocupância (em )
+
+Figura 6 RMS do erro em funcao da ocupancia e
+da Ordem do filtro.
+De modo a investigar o numero de iteracoes
+que cada algoritmo iterativo requisita para que o
+erro se estabilize. A Figura 7 exibe o RMS do erro
+de acordo com o numero de iteracoes.
+Ao comparar as tecnicas revisadas, utilizou-se
+janelas para os metodos_iterativos de tamanho 25
+equivalente a ordem dos filtros FIR. A Figura 8
+mostra a comparacao entre os metodos aqui citados com relacao ao aumento dos nveis de ocupancia. Pela Figura 8 verifica-se que para baixas ocupancias, a escolha do filtro_casado e razoavel, uma
+vez que, a baixa probabilidade de sobreposicao de
+sinais nao interfere consideravelmente no processo
+de deteccao de pico utilizado por este metodo. Porem, para nveis de ocupancia previstos para operacoes futuras (entre 20 a 30) o Filtro Casado
+se mostra proibitivo. Assim, os metodos baseados
+
+2616
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+de ordem superior.
+
+Erro para cada iteração
+
+14
+
+Gradiente Descendente
+Algoritmo Gold
+Gradiente Descendente Positivo
+Grad. Desc. que exclui zeros
+
+12
+
+Agradecimentos
+RMS do Erro
+
+10
+
+Os autores agradecem a FAPEMIG, FAPERJ,
+FAPESB, CAPES e CNPq pelo apoio financeiro e
+a colaboracao ATLAS pelas contribuicoes para o
+desenvolvimento deste trabalho.
+
+8
+
+6
+
+4
+
+2
+0
+
+50
+
+100
+
+150
+
+200
+
+250
+300
+Iterações
+
+350
+
+400
+
+450
+
+500
+
+Referencias
+Figura 7 Evolucao do valor RMS do erro em funcao do numero de iteracoes.
+Variação da Ocupância vs Erro
+20
+18
+16
+FIR Adaptativo
+FIR Determinístico
+Algoritmo Gold
+Gradiente Descendente
+Gradiente Descendente Positivo
+Gradiente Descendente que exclui zeros
+Filtro Casado
+
+RMS do Erro
+
+14
+12
+10
+8
+
+4
+2
+10
+
+20
+30
+40
+50
+Aumento da Ocupância em ()
+
+60
+
+70
+
+Figura 8 Comparacao entre os metodos de acordo
+com o aumento da ocupancia.
+em filtro FIR apresentam uma grande superioridade quando comparados com o Filtro Casado.
+Ainda neste patamar de ocupancia ou superiores
+ate (50), os metodos_iterativos se destacam pois
+utilizam um conhecimento adicional.
+5
+
+Conclusao
+
+Em um cenario de alta taxa de eventos, previsto
+para ocorrer nos proximos anos no LHC, verificouse que o metodo atualmente proposto e ineficiente
+comprometendo toda a instrumentacao envolvida
+no detector. Atraves da comparacao entre os metodos estudados, as tecnicas propostas obtiveram
+um desempenho consideravel, as que apresentaram os melhores resultados foram as iterativas,
+tendo em vista que utilizavam um conhecimento
+especialista. Dentre estes metodos vale destacar
+o GDP e o GDEZ pois necessitam de um numero
+menor de iteracoes para atingir um nvel de erro
+menor devido ao  otimizado. As tecnicas baseadas em filtros FIR por sua vez tiveram resultados
+satisfatorios porem com nveis de erro em um patamar mais elevado. Entretanto, as tecnicas baseadas em filtros FIR nao devem ser descartadas
+pois sao de simples implementacao em hardware e
+possuem menor custo_computacional.
+Para trabalhos futuros, o objetivo e desenvolver formas de implementacoes eficientes dos metodos aqui propostos, uma outra linha a ser seguida
+e o estudo de outras tecnicas de deconvolucao tais
+como as homomorficas e que envolvem estatsticas
+
+ISSN 2525-8311
+
+Elad, M. (2009). Sparse and Redundant Representations, Springer.
+Evans, L. and Bryant, P. (2008). LHC machine,
+Journal of Instrumentation 3(08) S08001.
+
+6
+
+0
+
+Andrade Filho, L. M., Peralva, B. S., M de Seixas,
+J. and Cerqueira, A. S. (2015). Calorimeter
+response deconvolution for energy estimation
+in high-luminosity conditions, IEEE Nuclear
+and Plasma Sciences Society pp. 32653273.
+
+Garvey, J. and Rees, D. (1996). Bunch crossing
+identification for the ATLAS level-1 calorimeter trigger, Technical report, CERN-ATLDAQ-96-051.
+Haykin, S. (1996). Adaptive Filter Theory (3rd
+Ed.), Prentice-Hall, Inc., Upper Saddle River, NJ, USA.
+Kay, S. M. (1998). Fundamentals of statistical
+signal processing Detection theory, vol. 1,
+Prentice Hall Upper Saddle River, NJ, USA.
+Morhac, M. and Matousek, V. (2009). Complete
+positive deconvolution of spectrometric data,
+Digital Signal Processing 19(3) 372392.
+Oppenheim, A. S. W. A. V. (2010). Sinais e sistemas, Pearson Prentice Hall.
+Pequenao, J. (2008). Computer generated image
+of the whole ATLAS detector.
+URL cds.cern.chrecord1095924
+Peralva, B. S. et al. (2013). The tilecal energy reconstruction for collision data using the matched filter, Nuclear Science Symposium and
+Medical Imaging Conference (NSSMIC),
+2013 IEEE, IEEE, pp. 16.
+Taylor, T. (2000). The magnets for the lhc experiments, Applied Superconductivity, IEEE
+Transactions on 10(1) 342346.
+Teixeira, M. V. et al. (2014). Reconstrucao online
+para calormetros operando em condicoes de
+altas luminosidades, Anais do XX Congresso
+Brasileiro de Automatica pp. 18.
+Trees, H. L. V. (2001). Detection, Estimation and
+Modulation Theory, Part I,, Wiley.
+
+2617

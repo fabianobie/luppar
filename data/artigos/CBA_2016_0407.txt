@@ -1,0 +1,997 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+O PROBLEMA DIRETO DA TIE PARALELIZAVEL EM GPU UTILIZANDO O
+FORMATO MATRICIAL PJDS COLORIDO PARA MATRIZES ESPARSAS
+Renato Seiji Tavares, Thiago de Castro Martins, Edson Kenji Ueda,
+Andre Kubagawa Sato, Rogerio Yugo Takimoto, Raul Gonzalez Lima,
+Marcos de Sales Guerra Tsuzuki
+
+
+Laboratorio de Geometria Computacional
+Departamento de Engenharia Mecatronica e de Sistemas Mecanicos
+Escola Politecnica da Universidade de Sao Paulo
+Avenida Prof. Mello Morais, 2231, CEP 05508-030 - Sao Paulo, SP, Brasil
+Emails reseta@uol.com.br, thiago@usp.br, ueda.edson@gmail.com,
+andre.kubagawa@gmail.com, takimotoyugo@gmail.com, lima.raul@gmail.com, mtsuzuki@usp.br
+Abstract Electrical Impedance Tomography (EIT) is an imaging technique that attempts to reconstruct
+the conductivity distribution inside an object from electrical currents and potentials applied and measured at its
+surface. This work uses the preconditioned conjugated gradients and it has two main modules sparse matrixvector multiplication and triangular solver. The main problem is the solution of a linear system with symmetric
+positive definite sparse matrix. Several approaches use the compressed sparse row (CSR) format. However, the
+triangular solver with the CSR format has thread divergence. In this work, it is proposed a new representation
+for sparse matrix which eliminates the thread divergence. The new representation is colored jagged diagonals
+storage. The proposed GPU accelerated forward solver reduces the expected computational time.
+Keywords
+
+GPGPU, CUDA, Paralell Processing, Graph Coloring, Electrical Impedance Tomography.
+
+Resumo A Tomografia por Impedan (TIE) e uma tecnica de imageamento que reconstroi a
+distribuicao da condutividade interna a um objeto a partir da injecao de corrente e medicao de potencial eletrico
+na superficie do objeto. Este trabalho utiliza o gradiente_conjugado_precondicionado para solucionar o problema
+direto, e possui dois principais modulos multiplicacao matriz esparsa por vetor e solucionador triangular. O
+problema principal e a solucao de sistema linear com matriz esparsa definida positiva simetrica. Varias abordagens
+utilizam a formato CSR que apresenta divergencia de threads quando o solucionador triangular e executado.
+Neste trabalho, e proposta uma nova representacao para matrizes esparsas que elimina a divergencia de threads
+e realiza acesso a memoria exclusivamente sequencial e alinhados. A nova representacao foi denominada como
+colored jagged diagonals storage. Os resultados demonstram o elevado desempenho da nova representacao.
+Palavras-chave
+.
+
+1
+
+GPGPU, CUDA, Processamento Paralelo, Coloracao de Grafos, Tomografia por Impedan-
+
+Introducao
+
+A tomografia por impedan (TIE) e
+uma modalidade de imageamento nao invasiva
+que estima a distribuicao da condutividade dentro do corpo quando um padrao de corrente de
+baixa amplitude e aplicado sobre a superfcie, e
+o potencial e medido utilizando eletrodos (Trigo
+et al., 2004 Martins, Camargo, Lima, Amato and
+Tsuzuki, 2012). O problema direto da TIE supoe conhecida a distribuicao da condutividade interna ao corpo e o padrao de corrente injetado.
+Uma abordagem muito utilizada para resolver o
+problema direto e o metodo dos elementos_finitos
+(MEF). O MEF utiliza uma malha para discretizar o domnio. Tavares et al. (2014) mostraram
+que malhas com nveis de refinamento adequados
+na regiao interior e exterior pode efetivamente reduzir o numero de nos necessarios para adquirir
+o nvel de qualidade desejavel, e ao reduzir o numero total de nos o custo_computacional tambem
+diminui.
+Este trabalho possui como objetivo acelerar o
+solucionador de sistemas_lineares, que neste caso
+e o gradientes conjugados (GC). O recente apa-
+
+ISSN 2525-8311
+
+recimento de arquitetura com multiplos nucleos,
+como GPUs, motivaram sua utilizacao em aplicacoes cientificas. Martins, Kian, Sato and Tsuzuki
+(2012) implementaram em GPU o GC precondicionado com formato CSR (Compressed Sparse
+Row) para armazenar matrizes esparsas. Sabe-se
+que implementacoes que utilizam o CSR possuem
+divergencia de threads (algumas threads nao executam processamento) quando o solucionador triangular (ST) e executado. Este trabalho propoe
+uma nova representacao para matrizes esparsas
+que permite acelerar ainda mais o ST executado
+em GPU, e, consequentemente, o GC.
+Este trabalho e estruturado da seguinte
+forma. A secao 2 explica o problema direto. A
+secao 3 explica a arquitetura CUDA e o armazenamento em matriz esparsa proposto. A secao 4
+mostra os resultados, e as conclusoes estao na secao 5.
+2
+
+O Problema Direto
+
+O problema direto da TIE e, dada a distribuicao
+de condutividades  e a corrente J injetada pelos eletrodos do contorno, e necessario encontrar
+
+1361
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+a distribuicao de potencial  dentro de  e, em
+particular, o potencial resultante medidos nos eletrodos m . As frequencias utilizadas no TIE sao
+baixas o suficiente, desta forma os efeitos capacitivos e indutivos podem ser desprezados. Assim,
+e necessario resolver a equacao de Laplace
+  ()  0.
+
+(1)
+
+Nos contornos, correntes sao injetadas utilizando
+dois eletrodos entao, a densidade de corrente J
+na superfcie dos eletrodo e dada por
+
+
+
+J
+b
+n
+
+(2)
+
+onde n
+b e o versor normal, e a densidade de corrente
+e nula nos demais eletrodos.
+2.1
+
+MEF Aplicado ao Problema Direto
+
+A solucao analtica para equacoes para um domnio irregular e meios isotropicos com condicao
+de contorno sao desconhecidas, entao, as equacoes
+diferenciais parciais sao aproximadas pelo MEF.
+Uma formulacao variacional das equacoes anteriores e realizada e a funcao  e expressa como uma
+combinacao linear de uma base de funcoes elementares, transformando o problema variacional em
+um problema de otimizacao quadratica. Uma solucao aproximada de  pode ser obtido pelo MEF.
+O domnio e discretizado com elementos triangulares lineares com condutividade constante, e, ambos os problemas, direto e inverso, sao resolvidos
+numericamente. O princpio potencial virtual associado com a equacao de Laplace fornece os elementos locais da matriz. Quando os elementos
+locais da matriz sao iniciados em termos de coordenadas globais da malha, a matriz de condutividade global (Trigo et al., 2004 Martins and Tsuzuki, 2011), que incluem efeitos de impedancia do
+eletrodo de contato, e obtido entao e valido
+K C
+
+(3)
+
+onde K()  Rss e a matriz de condutividade
+calculada em um distribuicao particular p ,  e a
+matriz que contem potencial nos nos, e C representa a corrente.
+3
+
+CUDA GPU
+
+GPUs sao unidades de processamento especializado com enorme capacidade computacional, e altamente paralelizavel. CPUs atuais possuem dezenas de nucleos disponveis, contra milhares de
+nucleos em GPUs. A NVIDIA introduziu uma
+API CUDA que implementa a SIMT (Single Instruction Multiple Thread) onde as instrucoes sao
+executadas ao mesmo momento em todos os processadores. O SIMT permite acomodar dados nao
+estruturados e e possvel lidar com divergencia
+
+ISSN 2525-8311
+
+de threads (threads sendo executada simultaneamente com codigos diferentes). Em ambos os casos ocorrem uma drastica queda de rendimento.
+A unidade basica de trabalho em uma GPU
+e a thread, que e executada em um ambiente de
+memoria compartilhada. O numero maximo de
+threads que pode ser executado concorrentemente
+e determinado pelo hardware, e o escalonador de
+threads decide quando um grupo de threads pode
+ser executado. Um kernel, e uma sub-rotina que
+pode ser chamada pelo host para ser executada
+no dispositivo CUDA, deve utilizar muitas threads para realizar a tarefa designada. As threads
+sao divididas em blocos, e cada bloco possui um
+conjunto interno de memoria local utilizado para
+compartilhar dados entre as threads. Dados podem ser compartilhados entre blocos pela memoria
+global, que, por ser externa, e limitada pela banda
+e esta sujeita a regras de coalescencia. A latencia
+em acessar a memoria global pode ser alta, ate
+600 vezes mais devagar que acessar uma variavel
+de registro.
+O dispositivo aglutina o carregamento e armazenamento da memoria global que e requerida
+pelas threads de um warp em poucas transacoes,
+para minimizar a banda da DRAM. Blocos que
+carregam enderecos contnuos de memoria sequencialmente sao muito mais rapidos que aqueles que
+realizam acessos dispersos. Uma warp possui 32
+threads para todos os dispositivos CUDA com capacidade de computacao 2.0 ou maior.
+3.1
+
+Armazenamento de Matriz
+
+As matrizes de rigidez produzidas pelo MEF na
+TIE sao esparsas. Existem varios metodos para
+armazenar efetivamente matrizes esparsas CSR,
+BCSR (Block CSR), JDS (Jagged Diagonals Storage) e ELLPACK. O CSR utiliza tres vetores
+para armazenar todos os elementos nao nulos de
+uma matriz, um para dado, um para o ndice de
+coluna correspondente ao valor, e o ultimo para
+cada local de incio de linha nos dois primeiros
+arrays. Considere a seguinte matriz
+
+
+3 0 0 0 4
+ 0 8 7 8 0 
+
+
+
+A
+(4)
+ 0 7 1 0 8 
+ 0 8 0 2 0 
+4 0 8 0 4
+sua representacao CSR e
+data
+
+
+
+
+
+3
+
+4
+
+8
+
+7
+
+8
+
+7
+
+1
+
+8
+
+8
+
+2
+
+4
+
+8
+
+4
+
+
+
+idx
+
+
+
+
+
+0
+
+4
+
+1
+
+2
+
+3
+
+1
+
+2
+
+4
+
+1
+
+3
+
+0
+
+2
+
+4
+
+
+
+ptr
+
+
+
+
+
+0
+
+2
+
+5
+
+8
+
+10
+
+13
+
+.
+
+Este formato armazena o mnimo de dados necessario, mas nao e otimizado para acessos
+aglutinados e, isto pode criar desvios condicionais (Vazquez et al., 2011). O CSR ja foi
+
+1362
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+implementado em GPU por alguns pesquisadores (Martins, Kian and Yabuki, 2012).
+ELLPACK-R, um variante do ELLPACK original, e o padrao utilizado para implementar
+a multiplicacao entre matriz esparsa e vetor
+(MMExV) em GPUs (Vazquez et al., 2011). A
+ideia e comprimir as linhas ao compactar os elementos nao nulos a esquerda, resultando na matriz N  Nmax(nz) , onde N e o numero de linhas
+e Nmax(nz) e o numero maximo de elementos nao
+nulos em uma linha. Em contraste com o formato
+CSR, o ELLPACK-R armazena entradas nulas. A
+matriz mostrada em (4) e representada no formato
+ELLPACK-R como
+
+3
+
+
+
+
+
+
+
+data
+
+
+
+
+
+
+
+4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+idx
+
+
+
+
+
+
+
+0
+
+8
+
+7
+
+8
+
+7
+
+1
+
+8
+
+8
+
+2
+
+0
+
+4
+
+8
+
+4
+
+0
+
+4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+rl
+
+
+
+
+
+
+
+0
+
+1
+
+2
+
+3
+
+1
+
+2
+
+4
+
+1
+
+3
+
+0
+
+0
+
+2
+
+4
+
+
+2
+3
+3
+2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+,
+
+3
+
+onde data contem a matriz comprimida, idx contem a coluna de cada elemento em data e rl
+contem o comprimento. Segundo Vazquez et al.
+(2011), a utilizacao de rl reduz o numero de desvios condicionais dentro do codigo em GPU.
+O formato pJDS (padded Jagged Diagonals
+Storage) foi proposto como um aprimoramento ao
+ELLPACK-R, com o objetivo de reduzir o armazenamento de entradas desnecessarias de zero e
+aprimorar a utilizacao dos recursos computacionais (Kreutzer et al., 2012). As linhas no formato
+ELLPACK-R sao classificadas de acordo com o
+seu comprimento. Entao, as linhas sao divididas em blocos de tamanho do warp e todas as
+linhas em um bloco sao adicionados a linha mais
+longa no bloco. O acesso a memoria e mantida
+enquanto que o armazenamento necessario e reduzido. A Fig. 1 ilustra a diferenca entre o formato
+ELLPACK-R e o formato pJDS. E considerado
+uma matriz de 12 linhas, e um tamanho de warp
+de 2 threads. Ambas as imagens mostram o comprimento de cada linha, em elementos nao nulos.
+A cor vermelha mais clara com setas representa
+elementos zero que foram adicionados.
+3.2
+
+Colored Padded Jagged Diagonals Storage
+
+Martins, Kian and Yabuki (2012) mostraram que
+modelos do MEF da TIE podem ser coloridos para
+melhorar a paralelizacao de ST. Foi mostrado que
+um grafo planar pode ser colorido utilizando no
+maximo 4 cores. Assim, apos a ordenacao da matriz pela cor, o ST e paralelizavel. Porem, como
+ja foi mencionado, o formato pJDS necessita que
+a matriz seja ordenada de acordo com o comprimento da linha.
+Para obedecer a ambas as condicoes (ordenacao pela cor e pelo comprimento de linha), e
+proposto que a matriz seja ordenada duas vezes.
+Primeiro, ela e ordenada de acordo com a cor, dividindo suas linhas em blocos coloridos. Dentro
+
+ISSN 2525-8311
+
+(a)
+
+(b)
+
+(c)
+
+Figura 1 (a) Matriz original. (b) Matriz representada segundo o formato ELLPACK-R. (c) Matriz
+representada segundo o formato pJDS.
+
+de cada bloco colorido, e feito uma ordenacao de
+acordo a cada comprimento de linha. Em seguida,
+linhas sao novamente divididas em blocos em tamanhos do warp, para preenchimento como e no
+pJDS. E importante manter linhas de diferentes
+blocos coloridos separados, que implicara linhas
+vazias a serem adicionadas, a diagonal principal
+e preenchidas com 1, que e crucial para manter
+a matriz de rigidez positiva definida. A matriz
+resultante deve cumprir as seguintes regras
+1. Linhas sao divididas em cores e ordenadas de
+acordo com as cores
+2. Linhas em todas as cores sao ordenadas de
+acordo com o comprimento, e subdivididas
+em blocos de tamanho do warp e preenchidas
+3. Pode ocorrer a adicao de linhas na matriz
+para que a matriz possua um numero de linhas multiplo de tamanho do warp.
+A Fig. 2 ilustra este processo. A estrutura matricial inicial e a mesma que a mostrada na Fig. 1,
+consistindo 12 linhas. Na Fig. 2(b), cores foram
+identificadas, e linhas sao ordenadas por cor na
+Fig. 2(c). Na Fig. 2(d), as cores claras com setas mostram elementos zeros que sao adicionados
+para se obter tamanho de warp - incluindo novas
+linhas. Considerou-se que o tamanho de warp e
+composto por 2 threads.
+
+1363
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+como
+
+
+
+csA  
+
+
+
+(b)
+
+
+
+A
+
+
+
+
+
+L
+
+
+
+3.16
+0.95
+0
+0.63
+0
+
+0
+2.26
+1.77
+0
+1.33
+
+3
+4
+3
+0
+6
+
+
+
+
+.
+
+
+
+(c)
+
+Este formato utiliza vantagem de todas as qualidades do ELLPACK-RpJDS, como acesso de memoria aglutinada, sem desvios condicionais, computacao homogenea dentro de kernels e desbalanceamento reduzido de kernel, e necessidade de armazenamento mnimo. Algoritmos simples para
+MMExV (ver Algoritmo 5) e o ST com substituicao para frente (ver Algoritmo 2) sao apresentados. Como algumas linhas foram preenchidos
+com zeros, podem ocorrer operacoes vazias. Mas,
+se todas as threads sao sincronizadas, uma operacao vazia nao adiciona mais tempo de computacao
+que desvios condicionais e acesso de memoria aleatoria.
+
+(d)
+
+3 0
+6 4
+4 11
+0 1
+3 0
+
+2
+0
+1
+8
+3
+
+0
+3
+0
+3
+5
+
+
+
+
+.
+
+
+
+Sua decomposicao triangular inferior incompleta
+de Choleski e
+
+
+2
+1
+3
+8
+0
+
+(a)
+
+Considere o exemplo numerico de uma matriz
+A de dimensao 5  5
+10
+3
+0
+2
+0
+
+0
+0
+5
+3
+3
+
+Agora, sao necessarios somente 2 passos computacionais, e 1 passo de propagacao. A matriz resultante, e preenchida (considerado um tamanho de
+warp de 2 threads) e resulta
+
+
+10 0 0 0 2 3
+ 0 11 0 0 1 4 
+
+
+ 0
+0 5 0 3 3 
+.
+pcsA  
+ 0
+0 0 1 0 0 
+
+
+ 2
+1 3 0 8 0 
+3
+4 3 0 0 6
+
+Figura 2 (a) Matriz exibida em Fig. 1(a) colorida.
+(b) Matriz no formato ELLPACK-R. (c) Matriz
+ordenada segundo a cor. (d) Matriz segundo o
+formato proposto.
+
+
+
+10 0
+0 11
+0
+0
+2
+1
+3
+4
+
+0
+0
+2.80
+0.52
+0
+
+0
+0
+0
+2.69
+1.41
+
+0
+0
+0
+0
+0.74
+
+
+
+
+.
+
+
+
+Algorithm 1 MMExV.
+for i  0 to rows - 1 do
+for idx  0 to rli do
+yi  yi + vindicesidx * dataidx
+end for
+end for
+
+Algorithm 2 Solucionador triangular.
+for k  0 to colors - 1 do
+for i  colorsk to colorsk + 1 - 1 do
+sum  0
+for idx  0 to rli - 1 do
+sum  sum + Lindicesidx * xidx
+end for
+xi  (bi - sum)  Lindicesi
+end for
+end for
+
+Um ST utilizando L nao pode ser facilmente paralelizavel, e sao necessarios 5 passos de calculo e
+4 passos de propagacao.
+
+3.3
+
+Mas, se A for colorida e entao ordenada de
+acordo com suas cores, primeiro os elementos cuja
+cor estiver com maior numero de linhas, a matriz
+resultante ordenada por cor pode ser paralelizada,
+
+O GC precondicionado e apresentado no Algoritmo 3. Cada iteracao do GC precondicionado
+consiste em (1) 4 produtos internos, (2) 3
+multiplicacao escalar-vetor, (3) 2 somatoria de
+
+ISSN 2525-8311
+
+Gradiente Conjugado em CUDA
+
+1364
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Algorithm 3 GC precondicionado.
+r0  b  A  x0
+z0  M 1  r0
+pz
+for k  0 tot N - 1 do
+rk zk
+k  pt Ap
+k
+k
+xk+1  xk + k pk
+rk+1  rk  k A  pk
+zk+1  M 1  rk+1
+rk+1
+k  zk+1
+zk rk
+pk+1  zk+1 + k pk
+end for
+
+vetor, (4) 2 ST, (5) 1 subtracao de vetor, (6)
+1 MMExV.
+Todas estas operacoes sao paralelizaveis de
+modo que o tempo de processamento nao varie
+com a tamanho da malha. Todos os kernels podem ter uma thread manipulando uma linha. O
+ST e o unico kernel com um laco adicional, um
+para cada cor. Assim, independentemente do tamanho da malha, o numero de passos, que considera todas as linhas sendo processadas ao mesmo
+tempo, nao varia, em oposicao a implementacao
+serial.
+4
+
+Resultados
+
+Para a avaliacao do formato de armazenamento de
+matriz proposto, os kernels desenvolvidos foram
+testados em uma placa NVIDIA GeForce GTX670
+com 1344 CUDA nucleos e 2GB DRAM, com compute capability 3.0 e CUDA 6.5. A CPU e Intel
+Xeon ES645 2.4GHz com 32GB RAM, com Windows 7 Ultimate. Todos os kernels utilizam precisao simples para os dados, e sao lancado em blocos
+de 512 threads. O algoritmo apresentado e comparado com uma aplicacao serial padrao em Eigen2. Todos os tempos sao medidos considerando
+cinco malhas semelhantes com tamanhos similares
+e os tamanhos indicados representam uma media
+de tais malhas. Um algoritmo de coloracao de
+grafos divide todas as malhas em 5 cores. Como
+precondicionador, foi utilizado a decomposicao incompleta de Choleski.
+A Tabela 1 compara o Eigen2 e o algoritmo
+proposto para tres principais operacoes produto
+interno de dois vetores, MMExV e ST. As dimensoes dos vetores e matrizes sao exbidos, a operacao e repetida 1.000 vezes. Pode ser observado
+que a implementacao serial em Eigen e significativamente afetada pelas dimensoes da matriz e do
+vetor, enquanto os algoritmos paralelos nao sao
+afetados. O produto interno em media leva 4 ms
+para todos as dimensoes consideradas, mas com o
+aumento da dimensao do vetor a o formato proposto se torna cada vez mais vantajoso. O mesmo
+pode ser observado quando se analisa a MMExV,
+exceto que o formato proposto e no mnimo duas
+
+ISSN 2525-8311
+
+Tabela 1 Tempo medio para 3 operacoes principais - para 1.000 iteracoes. TM  Tamanho da
+malha, PI  Produto Interno
+Operacao
+PI
+
+MMExV
+
+ST
+
+TM
+
+Eigen2 (ms)
+
+CUDA (ms)
+
+456
+1.046
+4.500
+9.050
+456
+1.046
+4.500
+9.050
+456
+1.046
+4.500
+9.050
+
+0,4
+1,2
+4,2
+8,8
+9,8
+23,4
+100,3
+217,0
+7,0
+47,5
+71,5
+164,0
+
+4,0
+4,4
+4,0
+4,2
+4,6
+4,8
+4,8
+5,0
+36,7
+30,5
+26,0
+26,0
+
+Tabela 2 Comparacao dos GC Precondicionado tempo medio para 100 iteracoes.
+TM (nos)
+
+Eigen2 (ms)
+
+CUDA (ms)
+
+456
+1.046
+2.130
+4.500
+6.900
+9.050
+
+3
+5
+11
+22
+34
+47
+
+12
+12
+12
+12
+12
+12
+
+vezes mais rapido mesmo para pequenas dimensoes. Finalmente, o ST proposto e mais rapido
+para todas as dimensoes, exceto para matrizes de
+pequenas dimensoes.
+A Tabela 2 mostra como um aumento no numero de nos da malha nao afeta o tempo de processamento na implementacao em GPU. Pode ser
+observado que, para malhas de ate aproximadamente 2.500 nos, a implementacao em Eigen e executada mais rapidamente que a proposta em GPU.
+Para malhas com mais nos, existe uma clara vantagem ao se utilizar o formato proposto.
+O metodo proposto inclui uma etapa de preprocessamento que constroi a matriz de rigidez
+
+Tabela 3 Pre-processamento ordenacao por cor tempo medio para 100 iteracoes.
+TM (nos)
+
+CUDA (ms)
+
+456
+1.046
+2.130
+4.500
+6.900
+9.050
+
+3
+25
+138
+708
+1.748
+3.152
+
+1365
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+C. Martins possuem suporte parcial do CNPq
+(respectivamente, processos 310.66320130 e
+306.41520127). R. Y. Takimoto e E. K. Ueda
+sao suportados pelo CNPq (respectivamente, processos 15050820158 e 14051820150). A. K.
+Sato e suportado pela CAPESPNPD.
+Referencias
+Kreutzer, M., Hager, G., Wellein, G., Fehske,
+H., Basermann, A. and Bishop, A. R.
+(2012). Sparse matrix-vector multiplication
+on GPGPU clusters A new storage format and a scalable implementation., IPDPS
+Workshops, pp. 16961702.
+
+Figura 3 Malha e distribuicao dos potenciais eletricos para uma malha de 1046 nos.
+
+segundo o formato tambem proposto. A Tabela 3 exibe o tempo necessario para executar esta
+etapa de pre-processamento. Esta etapa de preprocessamento e afetada pelo numero de nos da
+malha, mas ela e executada apenas uma vez para
+cada malha.
+A Fig. 3 mostra uma malha com 1.046 nos e as
+cores indicam a distribuicao de potenciais eletricos
+resultante do problema direto da TIE. Existem
+32 eletrodos no contorno, e o eletrodo na posicao
+mais alta foi utilizada como terra. Os eletrodos
+com o potencial mais elevados indicam o no onde
+ocorre a injecao de corrente, e o eletrodo com o
+menor potencial, o no onde ocorre a extracao de
+corrente.
+5
+
+Conclusoes e Trabalho Futuro
+
+Foi proposto um metodo para pre-processar e armazenar matrizes esparsas de modo a aumentar
+o nvel de paralelizacao utilizando o framework
+CUDA. O metodo proposto nao apresenta divergencia de threads e os acessos a memoria sao sequenciais e alinhados. Dos testes realizados, e possvel concluir que a proposta e muito vantajosa
+para malhas razoavel numero de nos e, especialmente, para elevado numero de nos. Para malhas
+com baixo numero de nos e mais adequado utilizar
+a implementacao serial.
+Como trabalho futuro, o formato para representacao de matrizes esparsas e o GC implementado serao utilizados para implementar um algoritmo para resolver o problema inverso.
+Agradecimentos
+R. S. Tavares foi suportado pela FAPESP (processo 201018658-4). M. S. G. Tsuzuki e T.
+
+ISSN 2525-8311
+
+Martins, T. C., Camargo, E. D. L. B., Lima,
+R. G., Amato, M. B. P. and Tsuzuki, M. S. G.
+(2012). Image reconstruction using interval
+simulated_annealing in electrical impedance
+tomography, IEEE T Biomed Eng 59 1861
+1870.
+Martins, T. C., Kian, J. M., Sato, A. K. and Tsuzuki, M. S. G. (2012). Matrix-vector multiplication and triangular linear solver using
+GPGPU for symmetric positive definite matrices derived from elliptic equations., Proc
+6th Int Conf Soft Computing and Intelligent
+Systems, Kobe, Japan, pp. 12861291.
+Martins, T. C., Kian, J. M. and Yabuki, D. K.
+(2012). GPU accelerated reconstruction of
+electrical impedance tomography images through simulated_annealing, Proc 10th World
+Congress on Computational Mechanics, Sao
+Paulo, Brazil.
+Martins, T. C. and Tsuzuki, M. S. G. (2011). Simulated annealing with partial evaluation of
+objective function applied to electrical impedance tomography, Proc 18th IFAC WC, Milan, Italy, pp. 49894994.
+Tavares, R. S., Nakadaira-Filho, F. A., Tsuzuki, M. S. G., Martins, T. C. and Lima,
+R. G. (2014).
+Discretization error and
+the EIT forward problem., Proc 19th IFAC
+World Congress, Cape Town, South Africa,
+pp. 75357540.
+Trigo, F. C., Lima, R. G. and Amato, M. B. P.
+(2004). Electrical impedance tomography
+using the extended Kalman filter, IEEE T
+Biomed Eng 51 7281.
+Vazquez, F., Fernandez, J. and Garzon, E. M.
+(2011). A new approach for sparse matrix
+vector product on NVIDIA GPUs, Concurrency and Computation Practice and Experience 23(8) 815826.
+
+1366

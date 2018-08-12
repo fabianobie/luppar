@@ -1,0 +1,608 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+INFORMATION WINDOW  UMA NOVA ABORDAGEM PARA EXPLORACAO DE
+FRONTEIRAS
+Rafael Goncalves Colares, Luiz Chaimowicz
+
+
+Departamento de Ciencia da Computacao
+PPGCC - UFMG
+Belo Horizonte - MG - Brasil
+
+Emails rcolares@dcc.ufmg.br, chaimo@dcc.ufmg.br
+Abstract This paper presents a novel approach to the problem of frontier exploration. Instead of focusing
+on exploration speed, the novel approach focus on increasing the systems information. Using a sliding window to
+analyze the region around a map cell, it will be proposed a new map evaluation method using an utility function.
+Several simulation tests were executed to compare the proposed approach with a tradicional frontier explorer
+approach. Both approaches were tested in relation to exploration time, map quality and information gain, and
+the results shows that the proposed approach achieves the proposed goal.
+Keywords
+
+Frontier Explorer, SLAM, Planning.
+
+Resumo Este trabalho apresenta uma nova abordagem para o problema de exploracao_de_fronteiras. Ao
+inves de priorizar a velocidade de exploracao, a nova abordagem prioriza a aquisicao informacao do sistema.
+Usando uma janela deslizante para analisar a regiao em torno de uma celula do mapa, sera proposto um novo
+metodo de avaliacao do mapa atraves de uma funcao de utilidade. Foram executados testes em simulacao para
+realizar uma comparacao com uma abordagem de exploracao_de_fronteiras tradicional. As abordagens foram
+avaliadas em relacao ao tempo de exploracao, qualidade do mapa e o ganho de informacao, e os resultados
+mostram que a nova abordagem atinge o objetivo proposto.
+Palavras-chave
+
+.
+
+plora regioes desconhecidas. A Figura 1 demonstra as fronteiras demarcadas em um mapa.
+
+Introducao
+
+Explorar um ambiente desconhecido e um prerequisito fundamental para um robo_autonomo.
+Em situacoes em que um mapa do ambiente nao
+esta disponvel, o robo precisa explorar este ambiente, enquanto aplica uma tecnica de Simultaneous Localization and Mapping (SLAM) de forma
+a construir o mapa do mesmo. Para tornar a exploracao mais eficiente e preciso acrescentar uma
+etapa de planejamento no processo do SLAM,
+transformando assim o SLAM em Active SLAM
+(ASLAM) (Stachniss et al., 2004).
+O componente de planejamento do ASLAM
+deve ser capaz de analisar diversas informacoes,
+como o mapa construdo ate o momento, as informacoes sensoriais atuais, o estado do robo e, baseado nelas, decidir qual acao o robo deve tomar.
+Essas acoes a serem tomadas pelo robo podem procurar melhorar a qualidade do mapa, explorar o
+ambiente ou reduzir erros de localizacao.
+O objetivo principal da exploracao e obter o
+maximo de informacao do ambiente para construir
+um mapa confiavel. Neste cenario, informacao significa descobrir novas areas do ambiente e mapealas com boa qualidade. Para atingir esse objetivo,
+a tecnica mais comum utilizada na literatura e a
+exploracao_de_fronteiras (Yamauchi, 1997).
+A exploracao_de_fronteiras consiste em encontrar regioes onde existe o limite entre espacos livres e espacos nao explorados do mapa e exploralas. A tecnica se baseia na ideia de que o maior
+ganho de informacao acontece quando o robo ex-
+
+Figura 1 Mapa de um ambiente com as fronteiras
+marcadas em vermelho.
+Apos encontrar as fronteiras e preciso decidir
+um metodo de explora-las. Uma forma de realizar
+essa exploracao e simplesmente levar em consideracao a distancia do robo para cada fronteira e
+explorar aquela que for mais proxima.
+Neste trabalho sera proposta uma nova abordagem para detectar e explorar fronteiras baseada na informacao do mapa e nao na distancia
+das fronteiras, chamada de Information Window
+(IW). O objetivo deste metodo e obter o maior
+ganho de informacao do mapa para cada planejamento feito. Para realizar isto, uma janela e deslizada pelo mapa obtendo informacoes sobre fronteiras e sobre as incertezas do mapa, gerando um
+mapa de informacao. A partir deste mapa, a nossa
+
+663
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+abordagem decide para onde o robo deve navegar
+na proxima acao para aumentar a quantidade de
+informacao do sistema.
+Este trabalho esta assim organizado. A Secao
+2 apresenta uma definicao de exploracao_de_fronteiras, bem como uma breve revisao de trabalhos
+sobre exploracao_de_fronteiras. A Secao 3 explica
+a abordagem proposta. Os resultados obtidos sao
+discutidos na Secao 4 e a Secao 5 apresenta conclusoes e melhorias para a abordagem.
+2
+
+algumas fronteiras que foram detectadas separadamente, podem acabar sendo exploradas conjuntamente quando o robo navega na direcao delas.
+Por esse motivo, pode ser interessante a clusterizacao dessas fronteiras.
+Keidar and Kaminka (2012) acreditam que os
+metodos tradicionais de deteccao de fronteiras, baseados em algoritmos de visao_computacional, sao
+um gargalo para o sistema se o ambiente a ser
+explorado e muito grande. Para resolver esse problema, eles propuseram duas novas abordagens,
+uma que trata os pontos do mapa como um grande
+grafo conectado e um algoritmo de busca em largura e usado para encontrar a fronteira mais proxima, e outra que analisa apenas as novas leituras
+dos sensores.
+A exploracao_de_fronteiras tambem pode ser
+aplicada para o caso de multiplos robos. Kasperski et al. (2013) propuseram uma nova abordagem onde todos os robos executam um algoritmo de wavefront simultaneamente, delimitando
+regioes no mapa. Dessa forma, um robo so podera visitar uma fronteira que esteja dentro da
+sua regiao. Bautin et al. (2012) aplica uma nova
+abordagem aonde o wavefront e iniciado de cada
+fronteira, ao inves dos robos. Ja para Burgard
+et al. (2005), todos os robos possuem uma funcao
+de utilidade baseada na distancia do mesmo e na
+proximidade de outros robos aquela fronteira.
+
+Exploracao de fronteiras
+
+A exploracao_de_fronteiras consiste em detectar
+regioes de fronteiras do mapa estimado ate o momento e escolher uma fronteira para explorar. O
+trabalho que fundamentou a exploracao_de_fronteiras foi Yamauchi (1997). Neste trabalho, o autor
+formaliza o que e uma fronteira, caracterizando
+as celulas do grid de ocupacao do mapa estimado
+como
+ celulas desconhecidas sao celulas que nao
+foram exploradas pelo robo
+ celulas ocupadas sao celulas que possuem
+obstaculos
+ celulas livres sao celulas que nao possuem
+obstaculos.
+
+3
+Com estas definicoes e possvel determinar o
+que e uma fronteira. Fronteira, entao, e um conjunto de celulas desconhecidas que possuem pelos menos uma celula livre como vizinha. Assim, um algoritmo de deteccao de fronteiras precisa apenas percorrer o grid de ocupacao procurando por celulas de fronteira. Geralmente, um
+algoritmo de deteccao de bordas e utilizado.
+Yamauchi (1997) ainda propos um metodo de
+exploracao conhecido por near-frontier explorer
+(NFE), onde, apos detectar todas as fronteiras do
+mapa, o robo explora aquela que e mais proxima.
+O NFE preocupa-se apenas com a distancia das
+fronteiras, nao levando em consideracao o ganho
+de informacao possvel por visitar a fronteira.
+Ao navegar para uma fronteira, o robo continuamente executa um algoritmo de SLAM. Dessa
+forma, o robo pode ter mapeado completamente
+uma regiao antes de chegar na fronteira planejada. Para resolver esta questao, Holz et al. (2010)
+propuseram uma abordagem que checa constantemente se a fronteira planejada ainda existe, e,
+caso ja tenha sido explorada, escolhe uma nova
+fronteira para explorar. Holz et al. (2010) ainda
+definiram que, segmentar o mapa em regioes e dar
+preferencia para regioes proximas ao robo, favorece a exploracao.
+Faigl et al. (2012) notaram que, dado o alcance do sensor do robo, e interessante notar que
+
+Information Window (IW)
+
+Como dito na Secao 1, o objetivo deste trabalho e
+desenvolver uma nova abordagem para a deteccao
+e exploracao_de_fronteiras baseado na informacao
+do mapa. Essa abordagem foi chamada de Information Window. Para atingir este objetivo, o IW
+executa uma analise do mapa explorado a partir
+de uma janela que desliza sobre o mapa obtendo
+informacoes sobre fronteiras e incertezas do mapa.
+Estas informacoes sao utilizadas por uma funcao
+de utilidade que destaca regioes interessantes de
+serem exploradas.
+O objetivo do IW e aumentar o ganho de informacao apos o termino de cada planejamento.
+Ao analisar o mapa retornado pelo algoritmo de
+SLAM, o robo e capaz de perceber regioes do
+mapa onde as fronteiras se encontram e regioes
+onde existe incertezas sobre o mapeamento. Dessa
+forma, pode-se afirmar que o robo possui dois objetivos distintos quanto ao ganho de informacao
+ Exploracao ocorre quando o robo navega
+para regioes desconhecidas do ambiente, aumentando assim o tamanho do mapa e, por
+consequencia, a quantidade de informacao do
+sistema
+ Qualidade da informacao ocorre quando
+uma regiao ja foi visitada, mas existem incertezas no mapa de ocupacao em pontos da-
+
+664
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+quela regiao. Neste caso nenhuma nova informacao e adicionada ao sistema, mas aquelas
+que ja existiam sao melhoradas.
+
+que a celula central da janela fica sobreposta, um
+valor de informacao, F u, e calculado gerando um
+novo mapa chamado de mapa de informacao.
+A Figura 2 ilustra uma janela, em vermelho, com
+n  5, sobre um mapa de ocupacao. Na figura e
+possvel ver os valores do mapa de ocupacao, e a
+celula central da janela, onde ficara o valor de F u
+no mapa de informacao.
+
+Dessa forma, o IW considera que fronteiras
+que nao foram bem mapeadas, ou seja, possuem
+grandes incertezas, sao as melhores regioes para se
+explorar. Isto se deve ao fato de que tais fronteiras, ao serem exploradas, alem de acrescentarem
+informacoes ao sistema, ainda reforcam informacoes existentes.
+3.1
+
+Definicoes
+
+Antes de explicar maiores detalhes do IW, e preciso formalizar alguns conceitos e redefinir outros
+referentes ao SLAM e a exploracao_de_fronteiras.
+E pratica comum nos algoritmos de SLAM, determinar um threshold que delimite quando uma
+celula e livre ou ocupada. Dessa forma e possvel
+definir um valor binario, 0 ou 1, que diferencie as
+duas celulas no grid de ocupacao. Para a nossa
+abordagem esse valor de threshold nao sera utilizado, fazendo com que o grid de ocupacao possua
+valores que variam de 0 a 1. Assim, o IW possui
+dois mapas diferentes
+
+Figura 2 Exemplo de um mapa de ocupacao com
+uma janela deslizante, em vermelho. A celula
+verde representa o valor de informacao daquela
+janela.
+
+ Mapa real que e o grid de ocupacao tradicional, com um threshold definido. Serve para
+poder gerar a visualizacao do mapa estimado.
+
+Como os valores de F u sao normalizados ao
+final do processo, pode-se dizer que eles representam o quao melhor e explorar uma celula do
+mapa em relacao as outras. Em outras palavras,
+a quantidade de informacao que sera acrescentada
+ao sistema, ao visitar uma determinada celula, em
+relacao as outras. O calculo de F u leva em consideracao todas as celulas da janela. Assim, o valor
+de F u e resultado de uma analise da regiao que
+compoe a janela. Pode-se escrever a equacao de
+F u como
+XX
+F u(i,j) 
+f (x, y)
+(1)
+
+ Mapa de ocupacao que e o grid de ocupacao sem o threshold. Serve para poder analisar as incertezas do mapa estimado.
+O mapa real e utilizado apenas por questoes de visualizacao, ja que todo o processamento
+do IW e feito sobre o mapa de ocupacao. No
+IW, o algoritmo de SLAM utilizado foi o GridSLAM (Hahnel et al., 2003). O GridSLAM retorna
+um mapa de ocupacao onde valores proximos de
+0 representam celulas livres, valores proximos de
+1 representam celulas ocupadas e valores iguais a
+1 representam celulas desconhecidas.
+Com o uso do mapa de ocupacao, um novo
+tipo de celula foi definido, a celula incerta. Esta
+e uma celula que nao recebeu um valor 0 ou 1,
+mas que esta entre estes dois valores, portanto nao
+pode ser considerada nem livre, nem ocupada.
+3.2
+
+xn yn
+
+onde, i e j sao os ndices da celula do mapa de
+ocupacao, n e o tamanho da janela, e f (x, y) e
+uma funcao que determina o valor daquela celula
+para a janela.
+O calculo de f (k) consiste em comparar a
+celula k com todos os seus vizinhos, individualmente, e definir valores para cada interacao. A
+Figura 3 ilustra o calculo de f (x, y). O valor final
+de F u e entao a soma de todos os valores de f (k)
+presentes na janela.
+Ao se comparar uma celula com seus vizinhos,
+podem ocorrer 7 interacoescelulas iguais, celula ocupada com celula livre, celula desconhecida com celula livre, celula desconhecida com celula ocupada, celula desconhecida com celula incerta, celula ocupada com
+celula incerta e celula livre com celula incerta. Quando duas celulas sao iguais, a intera-
+
+Algoritmo
+
+O algoritmo do IW pode ser explicado da seguinte
+forma. Inicialmente, um algoritmo de SLAM, no
+caso deste trabalho, o GridSLAM, entrega para
+o IW o mapa de ocupacao obtido ate o momento.
+Este mapa de ocupacao pode ser representado por
+uma matriz mapa(width, height), onde width e a
+largura maxima do mapa e height a altura maxima do mapa. Esta matriz e entao percorrida por
+uma janela deslizante de tamanho n  n, sendo n
+mpar. Para cada celula do mapa de ocupacao em
+
+665
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+mas que nenhuma informacao foi obtida sobre a
+mesma, entao ela deve ter prioridade para ser explorada em comparacao com as outras. Assim,
+toda celula com valor 0, 5 recebe o valor maximo
+da funcao f n, este valor e reduzido gradualmente
+conforme o valor da celula sendo analisada se aproxima de 0 ou 1, valores onde a celula deixa de ser
+considerada incerta e passa a ser considerada livre
+ou ocupada.
+f n(x, y)  e
+
+(mapa(k)0,5)2
+2 2
+
+(3)
+
+Figura 3 O calculo de f da celula em azul. As setas verdes representam as interacoes dos vizinhos
+com a celula sendo calculada.
+
+cao entre as duas nao fornece informacao nenhuma
+ao sistema, do mesmo modo que uma celula livre
+e uma ocupada, pois estas ja nao podem ter seus
+valores reforcados na exploracao.
+O encontro de uma celula ocupada com uma
+desconhecida ou incerta pode possuir alguma informacao para o sistema, mas, pensando na tarefa
+de exploracao, pode ser perigoso considerar estas
+regioes. Quando, por exemplo, uma parede no limite externo do ambiente e encontrada, toda a
+sua extensao do lado de fora do ambiente possui
+a interacao entre celulas ocupadas e celulas desconhecida, mas estas regioes nao fazem parte do
+espaco alcancavel do robo. Por este motivo, todas as janelas que possuem estas interacoes sao
+consideradas nulas e nao sao avaliadas pelo IW.
+As tres interacoes que restaram sao as mais
+importantes para o IW. Quando uma celula livre e uma celula desconhecida sao vizinhas temos
+uma fronteira como descrita por Yamauchi (1997).
+Quando uma celula desconhecida e uma celula incerta ou uma celula livre e uma celula incerta sao
+vizinhas ocorre uma nova interacao, pois nao e
+possvel saber se ali e uma celula ocupada ou livre. Assim, o IW valoriza mais explorar as duas
+ultimas interacoes do que a primeira. O valor de
+f (k) pode entao ser calculado pela Equacao 2
+
+f (k) 
+
+ix+1,jy+1
+X
+
+mapa(k) + f n(i, j)
+
+Figura 4 Grafico demonstrando os possveis valores da funcao f n.
+Todo esse processo do IW pode ser explicado
+pelo algoritmo a seguir. O algoritmo precisa apenas do mapa de ocupacao e de um valor n para o
+tamanho da janela. As duas primeiras linhas fazem o loop para janela deslizar por todas as celulas
+do mapa de ocupacao. As linhas 4 e 5 definem o
+loop para percorrer todas as celulas da janela, enquanto que as linhas 7 e 8 fazem o loop de uma celula da janela com seus vizinhos. A linha 9 calcula
+a interacao entre as celulas vizinhas, enquanto que
+a linha 12, calcula o valor total da janela. Por fim,
+na linha 15 o valor de F u e colocado no mapa de
+informacao.
+Require mapa ocupacao
+Require n
+1 for i  1 to mapa ocupacao.size() do
+2
+for j  1 to mapa ocupacao.size() do
+3
+F u  0
+4
+for k  i  n2 to i + n2 do
+5
+for l  j  n2 to j + n2 do
+6
+f  0
+7
+for x  k  1 to k + 1 do
+8
+for y  l  1 to l + 1 do
+9
+f  f + (mapa(k, l) +
+f n(x, y))
+10
+end for
+11
+end for
+12
+Fu  Fu + f
+13
+end for
+14
+end for
+15
+mapa inf ormacao(i, j)  F u
+16
+end for
+17 end for
+Na Figura 5 um mapa de informacao e ilustrado em conjunto com o mapa real que o gerou.
+
+(2)
+
+ix1,jy1
+
+onde k e a coordenada (x, y) da celula sendo
+analisada no momento, mapa(k) e o valor contido
+na celula k da janela e f n(i, j) e uma funcao com
+forma normal que, dado o valor do mapa de ocupacao na celula (i, j), retorna um valor variando
+de 0 a 1, conforme a figura 4. A equacao 3 descreve a funcao f n. A ideia por tras da funcao f n
+consiste no fato de que uma celula que possua um
+valor dde 0, 5 e uma celula que ja foi mapeada,
+
+666
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Como ilustrado na Figura 5b, o mapa de informacao e um grid de ocupacao onde os valores de cada
+celula podem variar de 0 (celulas pretas) a 1 (celulas brancas). E possvel notar que regioes com
+celulas brancas sao regioes de fronteira. Assim, celulas em tons mais proximos de branco sao aquelas
+que possuem maior probabilidade de acrescentarem mais informacao ao sistema, entao basta ao
+robo navegar para a regiao que possui o maior valor no mapa de informacao.
+
+(a)
+
+(b)
+(a)
+
+(b)
+
+Figura 6 Em (a) o Gazebo com o ambiente utilizado e em (b) um teste sendo simulado no ROS.
+
+Figura 5 Em (a) o mapa real e em (b) o mapa de
+informacao relativo.
+
+4
+
+cio da exploracao e no fim. O fim da exploracao
+para o IW acontece quando o mapa de informacao nao possui mais regioes de interesse, enquanto
+que para o NFE acontece quando o algoritmo nao
+encontrar mais fronteiras. A Figura 7 apresenta o
+grafico com o tempo medio das 10 execucoes para
+cada metodo.
+
+Experimentos e Resultados
+
+Para avaliar o desempenho do IW, ele foi comparado com o near-frontier exploration (NFE)
+(Yamauchi, 1997) com a tecnica de clusterizacao de fronteiras proposto por (Keidar and Kaminka, 2012). Para comparar os dois algoritmos,
+foram definidas 3 metricas
+ Tempo de exploracao
+ Qualidade do mapa
+ Informacao x Planejamento
+Para os realizar os testes, foi utilizado o ambiente_de_desenvolvimento robotico ROS (Quigley
+et al., 2009) em conjunto com o ambiente de simulacao Gazebo (Koenig and Howard, 2004), simulando um Pioneer3AT com um sensor_laser Hokuyo em um ambiente de 20, 5  19, 7m. A Figura
+6 apresenta o ambiente de simulacao utilizado. Na
+Figura 6a temos o Gazebo com o ambiente utilizado nos testes e na Figura 6b temos o ambiente
+de simulacao e visualizacao do ROS. Todos os testes foram executados em um computador Pentium
+I5, com 6 Gb de memoria, rodando Ubuntu 12.04.
+Para comparar o IW e o NFE, foram executados 10 testes com cada metodo, todos com condicoes iniciais iguais.
+4.1
+
+Figura 7 Media do tempo de exploracao para os
+dois metodos.
+Como esperado, o NFE possui um tempo medio de exploracao menor que IW, pois o NFE prioriza a velocidade de exploracao.
+4.2
+
+Qualidade do Mapa
+
+Para avaliar a qualidade do mapa, foi utilizada a
+metrica descrita por Julia et al. (2012). Nesta metrica, o mapa estimado pelo algoritmo de SLAM
+e sobreposto sobre um mapa perfeito, sem erros,
+do ambiente para calcular um valor de qualidade.
+Esse valor e o numero de celulas livresocupadas
+
+Tempo de Exploracao
+
+O tempo de exploracao dos dois metodos foi analisando verificando o clock interno do ROS no ini-
+
+667
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+no mapa perfeito que possuem um valor diferente
+no mapa estimado mais o numero de celulas livresocupadas no mapa estimado que possuem um
+valor diferente no mapa perfeito. Este valor e entao normalizado pelo numero total de celulas do
+mapa. Assim, este valor pode ser calculado subtraindo um mapa de outro e contando o numero
+de celulas diferentes obtidas. Para a metrica funcionar, e preciso que os mapas estejam alinhados
+A Figura 8 mostra o mapa perfeito do ambiente
+(a), juntamente com um mapa com um valor de
+qualidade bom (b) e um mapa com valor de qualidade ruim (c).
+
+Figura 9 Media da qualidade do mapa para os
+dois metodos.
+de exploracao do mapa pelo numero de planejamentos.
+
+(a)
+
+(b)
+
+(c)
+
+Figura 10 Porcentagem explorada do mapa pelo
+numero de planejamentos.
+
+Figura 8 Em (a) o mapa perfeito. Em (b) um
+exemplo de mapa bom e em (c) um exemplo de
+mapa ruim.
+
+Observando a Figura 10 pode-se concluir duas
+coisas. A primeira diz respeito a velocidade de
+exploracao do ambiente. Explorando, aproximadamente, 14 fronteiras, mais de 99 do ambiente
+e mapeado com o IW, enquanto que o NFE necessita explorar, aproximadamente, 18 fronteiras.
+Este e um fato que contradiz a primeira metrica
+de tempo de exploracao.
+Para explicar este fato, e preciso entender o
+funcionamento pratico dos dois metodos. O IW,
+ao escolher uma nova fronteira, nao leva em consideracao a distancia da mesma. Assim, o IW pode
+navegar pelo ambiente, explorando fronteiras distantes, mas mais interessantes. Por este motivo,
+fronteiras proximas ao robo, mas que nao sao interessantes ao IW podem ficar para tras, fazendo
+com que o robo, ao chegar em 99 de exploracao,
+tenha que voltar para mapea-las posteriormente.
+Ja o NFE, sempre explora a fronteira mais proxima. Dessa forma, ao chegar em 99 do ambiente explorado, nao existem fronteiras por explorar longe do robo, fazendo com que o mapeamento
+termine mais rapido.
+Outra observacao a ser feita sobre a Figura
+10 tem relacao com a quantidade de informacao
+obtida por cada planejamento. E possvel notar no
+grafico que para cada planejamento, o IW adiciona
+
+A Figura 9 apresenta o grafico obtido para
+a qualidade do mapa. E possvel notar no grafico que nao existe uma diferenca significativa entre os dois metodos na metrica de qualidade do
+mapa. Isto pode ser explicado pelo fato de que o
+algoritmo de SLAM utilizado, o GridSLAM, e um
+algoritmo muito eficiente e possui um bom loop
+closure, ou seja, o GridSLAM consegue corrigir a
+maior parte dos erros que ocorrem durante a navegacao do robo.
+4.3
+
+Informacao x Planejamento
+
+A metrica de Informacao x Planejamento procura
+avaliar a quantidade de informacao adicionada ao
+sistema para cada vez que o robo planeja explorar uma fronteira. Os dois algoritmos foram implementados de forma a somente re-planejar um
+novo objetivo quando chegar no objetivo anterior.
+Assim, toda informacao adicionada ao sistema durante a exploracao de uma determinada fronteira
+e avaliada. Dessa forma, esta metrica pode ser
+calculada verificando-se a porcentagem do mapa
+explorado ao fim de um planejamento. A Figura
+10 apresenta o grafico com a porcentagem media
+
+668
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+mais informacao ao sistema que o NFE, sendo esta
+a proposta do metodo.
+5
+
+Faigl, J., Kulich, M. and Preucil, L. (2012). Goal
+assignment using distance cost in multi-robot
+exploration, Intelligent Robots and Systems
+(IROS), 2012 IEEERSJ International Conference on, pp. 37413746.
+
+Conclusoes
+
+Uma nova abordagem de exploracao_de_fronteiras
+foi apresentada neste trabalho. Ao avaliar nao o
+mapa estimado do ambiente, mas o grid de ocupacao estimado pelo algoritmo de SLAM, a nova
+abordagem procura, ao escolher uma fronteira, aumentar a quantidade de informacao do sistema.
+Utilizando uma janela deslizante sobre o grid
+de ocupacao, foi proposto um metodo de avaliacao
+do grid de ocupacao, atraves de uma funcao de
+utilidade que leva em conta todas as celulas da
+janela. Este metodo possui a vantagem de analisar
+as interacoes entre as celulas do grid e nao apenas
+cada celula individualmente.
+Ao comparar a abordagem proposta com uma
+abordagem muito utilizada na literatura, o NFE,
+melhorado com o uso da tecnica de clusterizacao
+de fronteiras, foi mostrado que o IW, para explorar quase todo o ambiente, precisa visitar menos
+fronteiras que o NFE, sem interferir na qualidade
+do mapa apresentado.
+Mesmo precisando explorar menos fronteiras,
+o IW utiliza mais tempo de exploracao que o NFE.
+Isto ocorre porque o NFE e mais objetivo na escolha de fronteiras para explorar, enquanto que o
+IW navega mais pelo ambiente, podendo percorrer
+grandes percursos sempre que escolhe uma nova
+fronteira para explorar. Este problema pode ser
+resolvido adicionando-se a abordagem uma analise
+de distancia das fronteiras.
+Como trabalho futuros, pretende-se aplicar a
+funcao de utilidade um novo termo que relaciona a
+distancia do robo para cada fronteira, para que o
+tempo de exploracao do IW possa ser melhorado.
+Pretende-se tambem, aplicar o IW de forma a coordenar multiplos robos na tarefa de mapeamento
+cooperativo.
+
+Hahnel, D., Burgard, W., Fox, D. and Thrun,
+S. (2003). An efficient fastslam algorithm
+for generating maps of large-scale cyclic
+maps of large-scale environments from raw
+laser range measurements, IN PROC. OF
+THE IEEERSJ INT. CONF. ON INTELLIGENT ROBOTS AND SYSTEMS (IROS,
+pp. 206211.
+Holz, D., Basilico, N., Amigoni, F. and
+Behnke, S. (2010). Evaluating the efficiency of frontier-based exploration strategies.,
+ISRROBOTIK, pp. 18.
+Julia, M., Gil, A. and Reinoso, O. (2012).
+A comparison of path planning strategies
+for autonomous exploration and mapping of
+unknown environments, Autonomous Robots
+33(4) 427444.
+Kasperski, S., Eich, M. and Wollenberg, J. (2013).
+Evaluation of cooperative exploration strategies using full system simulation, ICAR 13.
+Keidar, M. and Kaminka, G. A. (2012). Robot exploration with fast frontier detection
+Theory and experiments, Proceedings of the
+11th International Conference on Autonomous Agents and Multiagent Systems - Volume 1, AAMAS 12, pp. 113120.
+Koenig, N. and Howard, A. (2004). Design and use
+paradigms for gazebo, an open-source multirobot simulator, In IEEERSJ International Conference on Intelligent Robots and Systems, pp. 21492154.
+Quigley, M., Conley, K., Gerkey, B., Faust, J., Foote, T., Leibs, J., Wheeler, R. and Ng, A. Y.
+(2009). Ros an open-source robot operating
+system, ICRA workshop on open source software 3(3.2).
+
+Agradecimentos
+Os autores gostariam de agradecer o apoio da Fapemig, CNPq e CAPES no desenvolvimento desse
+trabalho.
+
+Stachniss, C., Hahnel, D. and Burgard, W. (2004).
+Exploration with active loop-closing for fastslam, Proceedings of the IEEERSJ International Conference on Intelligent Robots and
+Systems (IROS), Vol. 2, pp. 1505  1510.
+
+Referencias
+Bautin, A., Simonin, O. and Charpillet, F. (2012).
+Minpos  A novel frontier allocation algorithm for multi-robot exploration, Intelligent
+Robotics and Applications, Vol. 7507 of Lecture Notes in Computer Science, pp. 496508.
+
+Yamauchi, B. (1997). A frontier-based approach for autonomous exploration, Computational Intelligence in Robotics and Automation, 1997. CIRA97., Proceedings., 1997
+IEEE International Symposium on, pp. 146
+151.
+
+Burgard, W., Moors, M., Stachniss, C. and Schneider, F. (2005). Coordinated multi-robot
+exploration, Robotics, IEEE Transactions on
+21(3) 376386.
+
+669

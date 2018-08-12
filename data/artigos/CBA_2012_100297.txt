@@ -1,0 +1,656 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+APRENDIZADO DE UM AMBIENTE 3D POR MEIO DE CONTROLADOR
+NAO-LINEAR DE SEGUIMENTO DE PESSOAS
+Milton Cesar Paes Santos, Flavio Garcia Pereira, Rafael Nicchio Valverde, Raquel
+Frizera Vassallo, Flavio Roberti, Juan Marcos Toibero
+
+
+
+
+Departamento de Engenharia Eletrica, Universidade Federal do Esprito Santo
+Av. Fernando Ferrari, 514, Goiabeiras,CEP 29075-910
+Vitoria - Brasil
+
+Instituto de Automatica - Universidad Nacional de San Juan, Av. San martn Oeste 1109 - J5400ARI
+San Juan - Argentina
+Emails milton.santos@ele.ufes.br, flaviogarcia@ceunes.ufes.br, rafael@ele.ufes.br,
+raquel@ele.ufes.br, froberti@inaut.unsj.edu.ar, mtoibero@inaut.unsj.edu.ar
+Abstract Mapping and location play an important role for autonomous mobile robots. Knowing the environment it is possible to realize a safe navigation avoiding collisions and, thus, ensure a secure route. In this
+context, this paper proposes a 3D environment for mapping mobile robots through a learning leader-follower in
+which a person demonstrates an environment for the robot via a safe path. This route is determined by the
+person (leader), since humans can easily select paths without obstacles. Therefore, it is used a new depth sensor,
+robots odometry information and a non-linear controller for following people designed by the input-output linearization method. Experiments were performed using a Pioneer 3AT robot with a Kinect sensor that records the
+environments points and the leaders information. Despite the results are preliminary, the article demonstrates
+that it is possible to use a person as leader to show the robots the environment.
+Keywords
+
+Human-Robot Interaction, Non-Linear Controller, Mapping and Localization
+
+Resumo Mapeamento e localizacao desempenham papeis importantes para robos_moveis autonomos. Por
+reconhecimento do ambiente e possvel realizar uma navegacao segura evitando colisoes e, assim, garantir um
+percurso seguro. Nesse contexto, este artigo propoe uma construcao 3D do ambiente para robos_moveis por meio
+de um aprendizado lder-seguidor em que uma pessoa demonstra um ambiente para o robo por meio de uma
+rota segura. Essa rota e determinada pela pessoa (lder), ja que os humanos podem selecionar com facilidade
+caminhos livres de obstaculos. Para isso, e utilizado um novo sensor de profundidade, informacoes da odometria
+do robo e um controlador nao-linear de seguimento de pessoas desenhado pelo metodo de linearizacao de entrada
+e sada. Foram realizados experimentos utilizando um robo Pioneer 3AT dotado de um sensor Kinect para a
+aquisicao dos pontos do ambiente e das informacoes do lder. Apesar dos resultados serem preliminares, o artigo
+demonstra que e possvel utilizar uma pessoa como lder para o ensinamento de ambientes a robos_moveis.
+Palavras-chave
+
+.
+
+Introducao
+
+Em robotica_movel a localizacao e mapeamento
+sao fundamentais para a navegacao_autonoma
+de robos.
+Para executar tarefas cooperativas entre humano e robos, (Sakamoto et al.,
+2003), (Ramirez-Hernandez et al., 2009), (Pereira
+et al., 2009), (Pereira, de Sa, Ferreira and Vassallo, 2010), e essencial que o robo seja capaz de
+se localizar, buscar por rotas seguras (Lambert
+and Gruyer, 2003) e, com isso, evitar colisoes durante a execucao da mesma. Como essas tarefas
+podem ser executadas em diferentes ambientes, e
+interessante que o robo mapeie a regiao onde esta
+inserido e com isso possa adaptar-se as situacoes
+de perigo que podem surgir durante a navegacao.
+Neste contexto, observam-se estudos sobre
+localizacao em ambientes desconhecidos (Saeedi
+et al., 2003),(Wang et al., 2006), (Zhou and Angelov, 2007). Como solucao para este problema
+utiliza-se um metodo bem conhecido na literatura
+chamado SLAM 1 o qual e bem explorado na robotica (Fu et al., 2007), (Misono et al., 2007),
+1 Do
+
+ingles, Simultaneous localization and mapping
+
+ISBN 978-85-8001-069-5
+
+(Cheein et al., 2010) e (Hashikawa and Morioka, 2011). Durante a navegacao costuma-se construir mapas do ambiente que podem ser realizados por sensores de alcance (Wang et al., 2009),
+(Woo and Kubota, 2011) ou por sistemas de visao (Tungadi et al., 2010), (Andreas Geiger and
+Stiller, 2011), (Xu et al., 2011).
+
+Neste artigo, apresenta-se uma tecnica para
+realizar um mapeamento 3D do ambiente por metodo de aprendizado lder-seguidor. Dessa forma,
+explora-se a capacidade do ser humano (lder) em
+determinar zonas seguras de navegacao para o percurso do robo. Este metodo necessita de informacoes de odometria do robo, um sensor de profundidade e um controle de seguimento de pessoas para
+realizar a navegacao por um caminho seguro, caminho este percorrido pelo humano. A vantagem
+de utilizar este sensor de profundidade esta na facilidade em que o mesmo realiza a deteccao de
+pessoas, necessaria para realizar o seguimento, e a
+riqueza de informacoes que o mesmo oferece sobre
+o ambiente.
+
+3081
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+1.1
+
+Objetivo
+
+O principal objetivo deste trabalho e aproveitar
+as informacoes obtidas durante a tarefa de seguimento de pessoas para a construcao de um mapa
+3D.
+Com este mapa construdo e possvel extrair
+informacoes de zonas seguras para navegacao. Assim, pode-se planejar outros trajetos de locomocao para o robo a outros pontos de interesse.
+O restante deste artigo esta organizado como
+segue. A Secao 2 apresenta um resumo sobre deteccao de pessoas utilizando sensores de alcance,
+assim como sistemas de visao. A Secao 3 apresenta
+o controlador_nao_linear proposto para o aprendizado por seguimento de pessoas. A Secao 5 apresenta os experimentos e resultados obtidos com o
+metodo proposto e, por fim, as conclusoes e trabalhos futuros sao discutidos na Secao 6.
+2
+
+Deteccao de Pessoas
+
+Uma das caractersticas fundamentais dos robos
+que interagem com humanos e a deteccao de pessoas. Em (Pereira, Vassallo and Salles, 2010),
+(Carballo et al., 2010) e (Chou et al., 2011) sao
+apresentados algoritmos e metodos baseados em
+informacoes do laser para estimar a localizacao de
+humanos no ambiente. Ja em (Ishii et al., 2004),
+(Spinello and Arras, 2011) sao utilizadas cameras
+para estimar posicoes de pessoas. Em todos os casos observam-se dificuldades em detectar pessoas
+em ambientes com muitos objetos ou com pouca
+iluminacao. Para este projeto em questao, sera
+utilizado um novo sensor de profundidade capaz
+de extrair informacoes 3D do ambiente e detectar
+pessoas.
+2.1
+
+Sensor Kinect
+
+O Kinect Microsoft, representado pela Figura 1, e
+um sensor de baixo_custo, lancado em Novembro
+de 2010 para utilizacao em jogos com a plataforma
+de jogos da Microsoft, o XBOX360. Este dispositivo obtem imagens em 30 Hz, de 640 x 480 pixels
+monocromaticos com um mapa de profundidade
+associada.
+
+Figura 1 Sensor Kinect lancado pela Microsoft.
+Devido ao baixo_custo e ao mapa de profundidade que o dispositivo fornece, muitos pesquisadores o adotam para realizar projetos que envolvem humanos e metodos que estimam as distancias de objetos. A utilizacao de informacoes visuais e uma area muito explorada em robotica tanto
+
+ISBN 978-85-8001-069-5
+
+na navegacao_autonoma, mapa de edifcios, evitar
+obstaculos como na deteccao e interacao com seres humanos. O que o kinect oferece e a uniao de
+informacoes tanto visuais como de profundidades.
+As Figuras 2 (a) e (b) demonstram os resultados obtidos durante a deteccao de pessoas no
+campo de visao do robo.
+
+(a)
+
+(b)
+
+Figura 2 Pessoas detectadas pelo Sensor Kinect.
+
+3
+
+Desenho do Controlador de
+Seguimento de Pessoas
+
+Esta secao propoe um controle_de_formacao descentralizada entre um robo e uma pessoa, no qual
+sao necessarias a distancia e orientacao da pessoa
+em relacao ao robo para executar a tarefa de seguimento. Ou seja, o robo tem por objetivo seguir
+os passos de um lder (pessoa).
+A estrategia_de_controle pode ser realizada de
+forma centralizada ou descentralizada (Cruz and
+Carelli, 2006). Para o caso de um controle_centralizado, o lder da formacao e responsavel por todas as informacoes referentes ao grupo, tais como
+posicoes relativas dos demais robos e envio de sinais de controle para estabelecimento da formacao (Brandao, 2008) (Bailong Liu and Shi, 2006).
+Por outro lado, entende-se por controle descentralizado de formacao aquele desprovido de tal
+unidade centralizadora de informacao. Neste sentido, os agentes (robospessoas) que constituem
+a formacao possuem seus proprios metodos destinados a informar a posicao atual no ambiente,
+a posicao corrente dos demais agentes e, por si
+so constituir a formacao (Cruz and Carelli, 2006)
+(A.S. Brandao and Bastos-Filho, 2009). Entretanto, alguns pesquisadores denominam de formacao descentralizada aquela na qual existe uma comunicacao estruturada entre os agentes, isto e, a
+troca de informacoes referente a formacao se propaga segundo um grafo pre-definido (Zheng Wang
+Dalong Tan Goldsmith, 2005).
+O controlador desenvolvido neste trabalho
+tem como objetivo manter o robo a uma distancia
+e orientacao desejadas da pessoa que guia-lo por
+um ambiente. A Figura 3 demonstra o sistema
+enunciado, ou seja, um robo_movel e uma pessoa
+em frente ao robo, alem das variaveis necessarias
+para o controle descentralizado de seguimento.
+Apos determinar d, , os erros de distancia e
+
+3082
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+seguinte matriz
+"  
+ 
+ "
+e
+cos() 0 vr
+vp cos()
++ sin()
+vp sin()
+ 
+
+1 r
+d
+d
+
+(6)
+
+ 
+ 
+ 
+e
+e
+vr
+, u 
+e y 
+r
+
+
+representam respectivamente os estados, as entradasacoes de controle e sadas do sistema.
+Para seguir a referencia do lder, define-se
+As variaveis x 
+
+Figura 3 Posicao relativa entre o robo e uma pessoa.
+
+y1
+
+
+
+Oh1 f + Oh1 gu
+
+(7)
+
+y2
+
+
+
+Oh2 f + Oh2 gu
+
+(8)
+
+Dessa forma, tem-se
+orientacao (e, ) sao calculados como
+
+e  dd  d
+  d  ,
+
+y1
+
+lim e 
+
+lim 
+
+t
+
+
+
+lim dd  d  0
+
+(2)
+
+lim d    0
+
+(3)
+
+t
+t
+
+Para este caso, as equacoes que descrevem o
+movimento do conjunto sao dadas por
+(
+e  vp cos() + vr cos()
+(4)
+v sin()
+
+)
++ vr sin(
+,
+  r + p d
+d
+onde vr e r sao respectivamente, as velocidades
+linear e angular do robo, vp e  e a velocidade
+linear da pessoa e sua orientacao, d e a distancia
+entre a pessoa e o robo, enquanto  representa o
+angulo que o vetor que liga a posicao da pessoa
+ao centro do robo faz com a orientacao do mesmo
+e  e o erro angular. Para este sistema descentralizado, os valores de d,  e vp sao obtidos por
+analises das informacoes do sensor Kinect.
+Para esse sistema e proposto um controlador
+nao linear, com base em controle_coordenado de
+robos_moveis (lder e seguidor) (Brandao, 2008)
+(Pereira, Vassallo and Salles, 2010), a fim de realizar o objetivo de controle, isto e, fazer com que
+o robo siga o ser humano com distancia e orientacao especificadas. Para determinar as acoes de
+controle vr e r utilizou-se uma linearizacao de
+entrada-sada, uma vez que podemos considerar o
+sistema enunciado na Equacao 5.
+
+x  f (x) + g(x)u
+(5)
+y  h(x)
+O problema enunciado e que a sada siga a referencia do lder. Conforme o objetivo do controle,
+vide Equacao 3, e modelo (Equacao 4). Tem-se a
+
+ISBN 978-85-8001-069-5
+
+
+
+
+ vp cos()
+0
++ 1
+vp sin()
+
+
+0
+
+
+
+
+ vp cos()
+1
++ 0
+vp sin()
+
+d
+
+(1)
+
+onde dd e d sao, respectivamente, a distancia e
+orientacao desejadas que o robo mantera em relacao ao ser humano. Para isso, deve-se projetar
+um controlador tal que
+t
+
+
+
+
+1
+
+y2
+
+
+
+d
+
+"
+ cos()
+0 sin()
+
+ 
+0 vr
+1 r
+d
+ 
+"
+ cos() 0 vr
+1 sin()
+1 r
+d
+
+logo
+ 
+  
+ "
+cos() 0 vr
+vp cos()
+y1
+(9)
++ sin()
+y 
+
+y2
+vp sin()
+1 r
+d
+d
+Na primeira derivada da sada ja se obtem uma
+relacao com a entrada u, y  f (x)+g(x)u. Assim,
+o grau relativo do sistema equivale a 2 e, logo,
+nao ha dinamica interna. Pela lei de controle de
+linearizacao (Jean-Jacques E. Slotine, 1991), para
+encontrar as acoes de controle u basta resolver a
+Equacao 10.
+"
+
+1
+0
+
+
+
+cos()
+1
+Ky  f (x)
+u  g (x)   f (x) 
+sen()
+ dcos() 1
+(10)
+Substituindo os valores u, y e f (x) na Equak
+cao 10 e considerando K  1 matriz de ganhos,
+k2
+tem-se as seguintes velocidades angular e linear do
+robo como
+
+ vr
+r
+
+
+
+
+sen()
+
+dcos()
+
+1
+(vp cos()  k1 e)
+cos()
+
+
+k1 e + vp cos()  k2 () 
+
+vp sin()
+d
+
+Desenvolvendo a Equacao 11 e possvel encon)
+trar r  vr sin(
+ k2   vp sen()
+e com esd
+d
+colhas adequadas para k1 , k2 tem-se uma solucao
+limitada e assintoticamente convergente (JeanJacques E. Slotine, 1991). Entao pode-se assegurar que se cumpre o objetivo de controle de seguimento.
+4
+
+Mapeamento
+
+Durante a navegacao do robo, coletam-se os dados
+da posicao (xr , yr , r ) do robo e todos os 921600
+pontos de profundidade fornecidos pelo kinect com
+a resolucao da camera configurada em 640x480
+
+3083
+
+(11)
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+pixels. Ou seja, em cada instante que deseja-se
+salvar os dados do mapa cria-se uma matriz com
+307200 linhas e 3 colunas (Xk , Yk , Zk ). Porem, esses dados estao com referenciais diferentes, sendo
+necessario uma transformacao dos pontos do kinect para o referencial do robo. Logo, adotou-se
+a matriz representada na Equacao 12 para utilizar informacoes da odometria do robo (r , Xr , Yr )
+e localizar no mundo real os pontos do kinect
+(Xk , Yk , Zk )
+
+
+
+p 2
+xk + zk2 p 0
+0
+Xkr
+ Ykr   
+0
+x2k + zk2 0
+Zkr
+0
+0
+1
+
+
+
+1 xk
+sin(tan
+zk  + r )
+cos(tan1 xk + r )
+zk
+yk
+ 
+Xr
++  Yr 
+(12)
+0
+Sabe-se, ainda, que a odometria possui erros
+acumulativos e que ha tecnicas para minimiza-los.
+Entretanto, para a execucao deste trabalho nao foram considerados tais erros e consideram-se como
+ideais os dados obtidos pelo robo_movel.
+5
+
+(b)
+
+Figura 4 Caminho realizado pela Pessoa e o Robo
+(a) e a reconstrucao do ambiente durante a tarefa
+de seguimento (b).
+
+Experimento
+
+Com o intuito de validar a ideia proposta neste artigo, foi realizado um experimento em que o robo
+iniciara a tarefa de seguimento com o humano e,
+ao mesmo tempo, montara um mapa do ambiente
+em que esta inserido. Na Figura 4 (a) e apresentado o caminho descrito pela pessoa e pelo robo e
+as Figuras 4 (b) e 5 os mapas 2D e 3D criados.
+As Figuras 6 (a) e (b) apresentam, respectivamente, as velocidades linear, angular durante o
+experimento. Os erros de posicao entre a pessoa
+e o robo podem ser visualizados na Figura 6 (c).
+E na Figura 6 (d) a evolucao temporal do erro de
+orientacao do robo.
+6
+
+(a)
+
+(a)
+
+(b)
+
+Conclusoes e Trabalhos Futuros
+
+Neste artigo e proposta uma estrategia de construcao 3D do ambiente por meio de aprendizado lderseguidor. O resultado obtido na criacao 3D do
+mapa e apresentado na Figura 4 (c), esses mapas
+fornecem muito mais informacoes que um mapeamento 2D, vide Figura 5 (b), do ambiente (Wang
+et al., 2009), (Woo and Kubota, 2011). O controlador_nao_linear desenhado por linearizacao de
+entrada-sada trabalha bem, sua estabilidade e observada nos resultados experimentais, ja que os erros tendem para valores proximos a 0, conforme o
+objetivo proposto na Equacao 3.
+Os resultados apresentados neste artigo sao
+preliminares, os experimentos foram realizados em
+um corredor e seguindo uma pessoa andando em
+
+ISBN 978-85-8001-069-5
+
+(c)
+
+(d)
+
+Figura 6 Evolucao temporal das velocidades linear (a), angular (b), do erro de posicao (c) e orientacao dos agentes da tarefa (d).
+
+3084
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 5 Caminho realizado pela Pessoa e o Robo (a) e a reconstrucao do ambiente durante a tarefa de
+seguimento (b).
+linha reta com pequenas variacoes no eixo y, conforme os mapas criados demonstram. Para trabalhos futuros evidenciam-se experimentos mais
+longos, alem de utilizar o mapa para localizacao
+e, assim, retornar ao ponto de partida para validacao do mapa criado. Outros projetos poderao ser
+executados como utilizacao das informacoes das
+cores (RGB) fornecidas pelo Kinect para melhorar
+a reconstrucao 3D (Huang et al., 2011).
+Agradecimentos
+Os autores gostariam de agradecer a FAPES e CAPESMinCyt pelo suporte financeiro.
+Referencias
+Andreas Geiger, J. Z. and Stiller, C. (2011). Stereoscan Dense 3d reconstruction in real-time,
+2011 IEEE Intelligent Vehicles Symposium
+(IV) Baden-Baden, Germany.
+A.S. Brandao, M Sarcinelli-Filho, R. C. and
+Bastos-Filho, T. (2009). Decentralized control of leader-follower formations of mobile
+robots with obstacle avoidance, Mechatronics, 2009. ICM 2009. IEEE International
+Conference on pp. 1  6.
+Bailong Liu, R. Z. and Shi, C. (2006). Formation control of multiple behavior-based
+robots, Computational Intelligence and Security, 2006 International Conference on
+pp. 544  547.
+Brandao, A. S. (2008). Controle descentralizado
+com desvio_de_obstaculos para uma formacao
+
+ISBN 978-85-8001-069-5
+
+lider-seguidor de robos_moveis, Masters thesis, Universidade Federaldo Espirto Santo.
+Carballo, A., Ohya, A. and Yuta, S. (2010). People
+detection using range and intensity data from
+multi-layered laser range finders, The 2010
+IEEERSJ International Conference on Intelligent Robots and Systems October 18-22,
+2010, Taipei, Taiwan.
+Cheein, F., Toibero, J., di Sciascio, F., Carelli, R.
+and Pereira, F. (2010). Monte carlo uncertainty maps-based for mobile robot autonomous slam navigation, Industrial Technology
+(ICIT), 2010 IEEE International.
+Chou, C. T., Li, J.-Y., Chang, M.-F. and Fu,
+L. C. (2011). Multi-robot cooperation based human tracking system using laser range
+finder, 2011 IEEE International Conference
+on Robotics and Automation Shanghai International Conference Center May 9-13, 2011,
+Shanghai, China.
+Cruz, C. D. L. and Carelli, R. (2006). Dynamic
+modeling and centralized formation control of
+mobile robots, IEEE Industrial Electronics,
+IECON 2006 - 32nd Annual Conference on .
+Fu, S., ying Liu, H., fang Gao, L. and xian Gai,
+Y. (2007). Slam for mobile robots using laser
+range finder and monocular vision, Mechatronics and Machine Vision in Practice, 2007.
+M2VIP 2007. 14th International Conference.
+Hashikawa, F. and Morioka, K. (2011). Mobile
+robot navigation based on interactive slam
+with an intelligent space, The 8th International Conference on Ubiquitous Robots and
+Ambient Intelligence (URAI).
+
+3085
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Huang, A. S., Bachrach, A., Henry, P., Krainin, M., Maturana, D., Fox, D. and Roy,
+N. (2011). Visual odometry and mapping
+for autonomous flight using an rgb-d camera, Int. Symposium on Robotics Research
+(ISRR), Flagstaff, Arizona, USA.
+Ishii, Y., Hongo, H., Yamamoto, K. and Niwa, Y.
+(2004). Real-time face and head detection
+using four directional features, Proceedings
+of the Sixth IEEE International Conference
+on Automatic Face and Gesture Recognition
+(FGR 04).
+Jean-Jacques E. Slotine, W. L. (1991). Applied
+Nonlinear Control, Prentice Hall, chapter 6,
+pp. 246  261.
+Lambert, A. and Gruyer, D. (2003). Safe path
+planning in an uncertain-configuration space,
+Proceedings of the 2003 IEEE International
+Conference on Robotics Automation Taipei,
+Taiwan, September 14-19, 2003.
+Misono, Y., Goto, Y., Tarutoko, Y., Kobayashi,
+K. and Watanabe, K. (2007). Development
+of laser rangefinder-based slam algorithm for
+mobile robot navigation, SICE, 2007 Annual
+Conference.
+Pereira, F. G., de Sa, F. B., Ferreira, D. B. and
+Vassallo, R. F. (2010). Cooperacao entre homem e um robo_movel para transporte_de_cargas, XVIII Congresso Brasileiro de Automatica - CBA 2010.
+Pereira, F. G., Schmitz, N., Vassallo, R. F. and
+Berns, K. (2009). Cooperacao entre homens e
+robos baseada em reconhecimento_de_gestos,
+IX Simposio Brasileiro de Automacao Inteligente - SBAI 2009.
+Pereira, F. G., Vassallo, R. F. and Salles, E. O. T.
+(2010). Deteccao de pernas e seguimento de
+pessoas usando um sensor_de_varredura_laser,
+XVIII Congresso Brasileiro de Automatica CBA 2010.
+Ramirez-Hernandez, A. C., Rivera-Bautista,
+J. A., Marin-Hernandez, A. and Garcia-Vega,
+V. A. (2009). Detection and interpretation of
+human walking gestures for human-robot interaction, 2009 Eighth Mexican International
+Conference on Artificial Intelligence.
+
+Sakamoto, T. T. S., Yokogawa, R. and Hara, K.
+(2003). Switching control of positiontorque
+control for human-robot cooperative task human-robot cooperative carrying and pegin-hole task, Proceedings of the 2003 IEEE
+International Conference on Robotics Automation Taipei, Taiwan, September 14-19,
+2003.
+Spinello, L. and Arras, K. O. (2011). People detection in rgb-d data, 2011 IEEERSJ International Conference on Intelligent Robots and
+Systems September 25-30, 2011. San Francisco, CA, USA.
+Tungadi, F., Lui, W. L. D., Kleeman, L. and Jarvis, R. (2010). Robust online map merging
+system using laser scan matching and omnidirectional vision, The 2010 IEEERSJ International Conference on Intelligent Robots
+and Systems October 18-22, Taipei, Taiwan.
+Wang, L., Li, Y. and Cai, Z. (2006). Topological localization based on salient regions
+in unknown environments, The 18th International Conference on Pattern Recognition
+(ICPR 06).
+Wang, Z. M., Miao, D. H. and Du, Z. J. (2009). Simultaneous localization and mapping for mobile robot based on an improved particle filter
+algorithm, Proceedings of the 2009 IEEE International Conference on Mechatronics and
+Automation, Changchun, China.
+Woo, J. and Kubota, N. (2011). Simultaneous localization and mapping using a robot partner
+in dynamic environment, SICE Annual Conference 2011.
+Xu, K., Qin, L. and Yang, L. (2011). Rgb-d
+fusion toward accurate 3d mapping, Proceedings of the 2011 IEEE International Conference on Robotics and Biomimetics December
+7-11, Phuket, Thailand.
+Zheng Wang Dalong Tan Goldsmith, P. (2005).
+Formation control of robotic vehicles, Robotics and Biomimetics (ROBIO). 2005 IEEE
+International Conference on pp. 57  60.
+Zhou, X. and Angelov, P. (2007). Autonomous visual self-localization in completely unknown
+environment using evolving fuzzy rule-based
+classifier, The 18th International Conference
+on Pattern Recognition (ICPR 06).
+
+Saeedi, P., Lowe, D. G. and Lawrence, P. D.
+(2003). 3d localization and tracking in unknown environments, Proceedings of the 2003
+IEEE International Conference on Robotics
+Automation Taipei, Taiwan, September 1419, 2003.
+
+ISBN 978-85-8001-069-5
+
+3086

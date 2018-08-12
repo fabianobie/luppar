@@ -1,0 +1,1363 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+RASTREAMENTO UTILIZANDO FILTRO DE PARTICULAS COM PERTURBACAO
+GAUSSIANA NA ESTIMATIVA E MEDIDAS DE VELOCIDADE RADIAL
+Victor Baptista Frencl, Joao Bosco Ribeiro do Val
+
+
+Departamento de Telematica
+Faculdade de Engenharia Eletrica e de Computacao
+Universidade Estadual de Campinas
+13081-970, Campinas, Sao Paulo, Brasil
+Emails frencl@dt.fee.unicamp.br, jbosco@dt.fee.unicamp.br
+Abstract In target tracking problems, it is recommended that dynamic models like constant velocity (CV)
+and constant turn (CT) models must be combined to obtain suitable state estimations. For the CT model it is
+necessary to estimate the turn rate. In order to obtain that estimation, it is proposed some upgrades related to
+an algorithm that uses the range rate measurement, which is generally very accurate and available in surveillance
+and tracking radars. This estimation is given by a verification regarding the compatibility between the estimated
+velocity projection on the range direction and the range rate measurement a disagreement indicates a change
+in the turn rate, which is treated by appropriated draws in a particle filter combined with a BLUE filter.
+The upgrade introduced in this algorithm is the inclusion of an additive gaussian perturbation on the particle
+estimation, resulted from the BLUE filter application. The objective is to avoid draws for the turn rate, whose
+probability distribution is unknown. Simulations and performance tests were made by analyzing the estimated
+trajectories and RMS position and velocity error graphics.
+Keywords Turn Rate, Range Rate, Gaussian Perturbation, Target Tracking, BLUE Filter, Particle Filter,
+Mathematical Models.
+Resumo Em problemas de rastreamento_de_alvos, e recomendado que modelos_dinamicos como o de velocidade constante (CV) e de giro constante (CT) sejam utilizados de forma combinada para obtermos estimativas
+de estados adequadas. No caso do modelo CT, e necessario estimarmos a velocidade_angular. Para realizar tal
+estimativa, sao propostas melhorias em relacao a um algoritmo que utiliza a medida de velocidade_radial, cuja
+precisao e bastante elevada e esta disponvel em radares de vigilancia e de rastreamento. Esta estimativa se
+da atraves da verificacao de compatibilidades entre projecoes do vetor velocidade estimado na direcao do vetor
+alcance e a medida de velocidade_radial uma divergencia entre estes vetores indica uma mudanca na velocidade
+angular, a qual e tratada por sorteios adequados do filtro de partculas combinado com o filtro BLUE. A melhoria introduzida nesse algoritmo e a inclusao de uma perturbacao_gaussiana aditiva sobre as estimativas das
+partculas, resultantes da aplicacao do filtro BLUE. O objetivo e evitar sorteios para a velocidade_angular, cuja
+distribuicao de probabilidade e desconhecida. Simulacoes e testes de desempenho foram realizados, atraves da
+analise das trajetorias estimadas e de graficos de erro RMS de posicao e velocidade.
+Palavras-chave .
+
+1
+
+Introducao
+
+Em problemas de rastreamento_de_alvos manobrantes no espaco, uma das etapas a ser realizada e a definicao dos modelos_dinamicos que descrevem adequadamente os movimentos realizados
+pelo alvo. Os modelos mais utilizados nestes problemas sao os modelos de velocidade constante
+(Constant Velocity  CV) e os de giro constante
+(Constant Turn  CT) (Rong-Li e Jilkov, 2003).
+O primeiro modelo e o mais simples, pois trata-se
+de um modelo invariante no tempo e linear. No
+caso do modelo CT, e necessario a determinacao
+da velocidade_angular  k , calculada no instante
+de tempo k, de forma a obtermos um modelo CT
+preciso.
+Na literatura, existem alguns estudos feitos
+para realizar a estimativa da velocidade_angular
+da melhor forma possvel. Em (Yuan et al., 2006),
+e proposto um metodo em que a medida de velocidade_radial vr k , cuja precisao e elevada, e utilizada de tal forma a auxiliar na estimativa da
+velocidade_angular atraves de um numero finito
+
+ISBN 978-85-8001-069-5
+
+de possveis variacoes de direcao que o alvo pode
+se submeter ao realizar uma curva.
+Pelo fato deste metodo em (Yuan et al., 2006)
+tratar somente de casos bidimensionais, foi proposto em (Frencl e do Val, 2012) algo semelhante
+ao que foi estudado em (Frencl e do Val, 2010), em
+que um metodo foi elaborado para estimar a velocidade_angular  k utilizando-se da medida de velocidade_radial para trajetorias tridimensionais. A
+estimativa da velocidade_angular neste metodo se
+da atraves de projecoes vetoriais de vetores velocidade, cujos resultados levavam a uma estimativa
+da velocidade_angular mais precisa e, consequentemente, a uma trajetoria estimada precisa do que
+aquelas apresentadas em (Yuan et al., 2006).
+A proposta deste artigo esta em mostrar melhorias realizadas a partir dos algoritmos propostos e resultados obtidos em (Frencl e do Val, 2010),
+com um destaque maior sobre a perturbacao_gaussiana aplicada sobre o vetor_de_estados estimado,
+pois foi esta uma das ideias utilizadas em (Frencl e
+do Val, 2012) que fizeram com que o metodo proposto obtivesse um desempenho melhor do que o
+
+4435
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+apresentado em (Yuan et al., 2006). A introducao desta perturbacao tem como objetivo auxiliar
+na obtencao da estimativa da velocidade_angular,
+pois esta nao pode ser obtida diretamente ja que
+sua distribuicao de probabilidade e desconhecida
+e difcil de ser obtida.
+Algumas simulacoes baseadas em trajetorias
+elaboradas em (Yuan et al., 2006) foram realizadas e uma analise de desempenho atraves do erro
+RMS ao longo do tempo foi feita. Tais resultados
+mostram a eficiencia e o desempenho adequado
+que o algoritmo proposto possui.
+2
+
+Modelos Matematicos
+
+Para que possamos tratar de forma adequada o
+problema de rastreamento a ser estudado, primeiramente, iremos descrever os modelos_matematicos, levando em conta as equacoes, variaveis
+e parametros pertinentes. Vamos considerar que
+o alvo realiza manobras em um espaco tridimensional e tais manobras podem ser descritas por
+dois modelos_dinamicos o de velocidade constante
+(CV) e o de giro constante (CT), estudados em
+(Rong-Li e Jilkov, 2003).
+A equacao dinamica para o vetor_de_estados
+xk  R6 e dada por
+xk+1  A( k )xk + F k
+
+(1)
+
+em que o vetor_de_estados e dado por
+xk 
+
+
+
+x
+
+vx
+
+y
+
+vy
+
+z
+
+vz
+
+T
+
+(2)
+
+k
+
+e A( k )  R66 e a matriz dinamica, que depende
+do tipo de modelo_dinamico  CV ou CT. De um
+modo geral, podemos definir que A( k ) e dada
+pela seguinte expressao
+A()  e(M () dT )
+
+(3)
+
+em que dT > 0 e o tempo de amostragem do radar, M ()  R66 e a matriz dinamica contnua,
+referente ao sistema_dinamico contnuo x(t) 
+M () x(t), dada por
+
+
+
+
+
+M ()  
+
+
+
+
+0
+1
+0
+0
+0
+0
+0 z
+0
+0
+0 y
+
+0
+0
+0 z
+0
+1
+0
+0
+0
+0
+0 x
+
+0
+0
+0 y
+0
+0
+0 x
+0
+1
+0
+0
+
+
+
+
+
+
+ (4)
+
+
+
+
+e j , j  x,y,z sao as componentes da velocidade
+angular  nas direcoes x, y e z para o caso do modelo CT. No caso em que o modelo for do tipo CV,
+ e considerado nulo. A discretizacao da matriz
+M () esta descrita com mais detalhes em (Frencl
+e do Val, 2010), em que foi utilizada uma aproximacao via serie de Taylor de terceira ordem.
+
+ISBN 978-85-8001-069-5
+
+Alem da matriz A( k ),
+R63 , dada por
+
+0 0
+ 1 0
+
+ 0 0
+F 
+ 0 1
+
+ 0 0
+0 0
+
+devemos definir F 
+0
+0
+0
+0
+0
+1
+
+
+
+
+
+
+
+
+
+
+(5)
+
+e k  N (0,Q)  R3 e o rudo gaussiano referente
+a dinamica com media nula e matriz de covariancia Q  R33 .
+Agora, iremos definir a equacao para o modelo
+de medida, suas variaveis e parametros. Para o
+problema de rastreamento a ser estudado, utilizaremos o modelo de medidas mais comum, que lida
+com medidas em coordenadas esfericas. Sendo o
+vetor de medidas zk  R4 dado por
+
+T
+zk  r m  m m vrm k
+(6)
+m
+em que rkm , km , m
+k e vr k sao as medidas de alcance, angulo de azimute, angulo de elevacao e
+velocidade_radial, respectivamente, podemos definir a equacao para o modelo de medidas, dada
+por
+zk  g(xk ) +  k
+(7)
+
+em que g(xk )  R4 e descrita por
+
+p
+x2k + yk2 + 
+zk2
+
+xk
+
+arctan
+
+yk
+
+!
+
+zk
+g(xk )  
+ arctan p 2
+
+xk + yk2
+
+ xk vx k + yk vy k + zk vz k
+p
+x2k + yk2 + zk2
+
+
+
+
+
+
+
+
+
+
+
+
+
+(8)
+
+e  k  N (0,R)  R4 e o rudo gaussiano referente
+as imprecisoes nas medidas fornecidas pelo radar,
+cuja media e nula e matriz de covariancia R 
+R44 .
+3
+
+Filtro de Partculas com Filtro BLUE
+
+Conhecidas as equacoes dinamica e de medidas
+para o problema em questao, podemos definir o
+processo de filtragem_estocastica a ser utilizada.
+Com o intuito de realizar a estimativa do vetor
+de estados xk , descrito em (2), utilizamos o filtro de partculas (FP) aplicado as estimativas das
+proprias partculas, sendo que tais estimativas sao
+resultantes do filtro BLUE, cujas equacoes de filtragem encontram-se em (Zhao et al., 2004), assim
+como feito em (Frencl e do Val, 2010).
+Este metodo e apresentado em (Ristic et al.,
+2004, p. 128), porem aplicando o filtro de Kalman estendido (EKF), ao inves do filtro BLUE. A
+ideia principal esta em aplicar o algoritmo do FP
+nao ao vetor de estado, mas a sua respectiva estimativa. Alem disso, existem diversas vantagens
+
+4436
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+BLUE
+
+xik1k1
+
+BLUE
+
+xN
+k1k1
+
+BLUE
+
+x1kk
+
+xikk
+
+xN
+kk
+
+
+
+xikk ,wki
+
+i  1, . . . ,N
+
+Reamostragem
+
+x1k1k1
+
+Amostragem Sequencial por Importancia
+
+zk
+
+
+
+i
+xi
+,w
+k
+kk
+
+Figura 1 Diagrama esquematico  PF e BLUE.
+
+em se utilizar o filtro BLUE para as estimativas
+das partculas. Uma delas e o fato do filtro BLUE
+lidar adequadamente com medidas em coordenadas esfericas e com o problema de polarizacao das
+medidas, alem do fato de ter inclusa a medida de
+velocidade_radial em suas equacoes de filtragem,
+cuja precisao e muito boa e, consequentemente,
+uma variancia v2r baixa.
+De agora em diante, lidaremos com os vetores
+de estado como sendo partculas, portanto algumas modificacoes nas notacoes iniciais, apresentadas na Secao 2, serao feitas agora. As equacoes
+dinamica e de medidas passam a ser da seguinte
+forma
+xik+1
+zk
+
+
+
+A( ik )xik + F ik
+
+
+
+g(xik )
+
++ k
+
+(9)
+(10)
+
+para a i-esima partcula, com i  1, . . . ,N , em
+que N e o numero de partculas. A respectiva
+estimativa do vetor_de_estados e dada por
+xkk 
+
+N
+X
+
+wki xikk
+
+(11)
+
+i1
+
+em que wki e o peso por importancia da i-esima
+partcula, cuja equacao recursiva e descrita pela
+expressao a seguir
+i
+wk+1
+ (zk+1 xk+1 )wki
+
+(12)
+
+sendo () a funcao de verossimilhanca resultante do filtro BLUE e xikk e a estimativa da iesima partcula, tambem resultante das equacoes
+de filtragem do filtro BLUE.
+Na Figura 1, temos o diagrama esquematico
+da interacao entre os filtros BLUE com o PF.
+
+ISBN 978-85-8001-069-5
+
+4
+
+Estimativa da Velocidade Angular
+
+Na literatura especializada em rastreamento_de_alvos manobrantes, mais especificamente em estudos baseados em problemas de estimativas da velocidade_angular, existem algumas propostas que
+tentam solucionar tal problema.
+Um dos mais recentes encontra-se em (Yuan
+et al., 2006), em que e proposta uma melhoria
+em um metodo denominado cmin , proposto inicialmente por (Bizup e Brown, 2004). Este cmin aperfeicoado estima a velocidade_angular com auxlio
+da medida de velocidade_radial, e as estimativas
+do vetor de estado sao feitas atraves do algoritmo
+de multiplos_modelos interagentes (IMM) formado
+por um banco de filtros de Kalman lineares.
+Este metodo possui algumas desvantagens
+uma delas esta no fato do metodo nao ser aplicavel em cenarios em que haja trajetorias em tres
+dimensoes, pela propria construcao do algoritmo
+se tal metodo fosse aplicado em situacoes de trajetorias tridimensionais, existiriam infinitas possibilidades de curvas que o alvo poderia realizar,
+inviabilizando a determinacao de  k .
+O objetivo deste artigo tem como principal
+foco descrever as etapas para a estimativa da velocidade_angular para os modelos CT utilizando
+o filtro de partculas descrito na Secao 3, com as
+melhorias e aperfeicoamentos em relacao aos resultados obtidos em (Frencl e do Val, 2010).
+As secoes a seguir, alem de levar em conta
+o metodo para a i-esima partcula, consideramos
+que a partcula xik1k1 ja passou pelo processo
+de filtragem do filtro BLUE, obtendo como resultado a partcula estimada xikk .
+
+4437
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+4.1
+
+Perturbacao Gaussiana sobre Estimativas
+
+Um dos principais aperfeicoamentos realizados
+em relacao aos algoritmos criados em (Frencl e
+do Val, 2010) se da ao fato de nao termos o
+conhecimento de uma distribuicao de probabilidade adequada para a velocidade_angular de tal
+forma a estimarmos esta grandeza. Em (Frencl e
+do Val, 2010), considera-se uma hipotese de que a
+velocidade_angular possui uma distribuicao gaussiana, porem nao podemos afirmar de forma veemente que tal distribuicao e gaussiana.
+Para enfraquecermos tal hipotese, assim como
+feito em (Frencl e do Val, 2012), e estimar indiretamente a velocidade_angular  k , introduzimos
+uma perturbacao_gaussiana aditiva pi no vetor de
+estados estimado, resultando no que denominamos
+i
+de realizacao xkk
+. Esta realizacao e descrita pelas
+seguintes equacoes
+q
+i i
+pi  c Pkk
+(13)
+
+xikk
+
+
+
+
+i
+
+pi + xikk
+
+x vx
+
+y
+
+vy
+
+z
+
+(14)
+
+
+T i
+vz k (15)
+
+em que  e uma variavel aleatoria gaussiana com
+i
+media nula e variancia unitaria, Pkk
+ R66 e a
+matriz de covariancia de xikk , e c  1 e uma constante positiva, definida pelo usuario, cuja funcao
+e aumentar o espalhamento na realizacao.
+Este procedimento descrito pela equacao (15)
+e um meio de lidar com o desconhecimento da distribuicao de  ik e com a dificuldade em se calcular e determinar uma expressao fechada para tal
+distribuicao. A alternativa foi incluir, para cada
+partcula, um sorteio atraves de  i e perturbar a
+estimativa do filtro BLUE, ja que, em tese, a distribuicao do erro estimado e gaussiano para cada
+uma das partculas.
+4.2
+
+2, que ilustra o deslocamento do vetor velocidade
+i
+i 
+estimado de vkk
+para vkk
+pela diferenca angular
+descrita.
+i 
+vkk
+
+1
+vri kk
+
+rikk
+
+ISBN 978-85-8001-069-5
+
+vrmk
+
+Figura 2 Possvel curva a ser realizada pelo alvo.
+Para sabermos quando e necessario realizar
+esta correcao, e preciso calcular a diferenca relativa entre vri k e vrmk , dada por
+
+
+vrmk   vri k 
+
+max vrmk ,vri k 
+
+(16)
+
+O calculo em (16) e mais complexo em relacao aquele obtido em (Frencl e do Val, 2010), em
+que era feita apenas a diferenca simples entre vri k
+e vrmk . Agora, temos uma diferenca relativa mais
+precisa entre tais grandezas.
+Com  definido, podemos impor a seguinte
+condicao caso  < min  0,1, entao o vetor
+velocidade_angular e dado por
+ ik   ik1
+
+Ajuste do Vetor Velocidade
+
+O ajuste do vetor velocidade e realizado da seguinte forma. Primeiramente, a velocidade_radial
+estimada vri k e determinada a partir da expressao
+da quarta componente do vetor de medidas zk em
+(8), calculada com os componentes do vetor em
+(15).
+No exato momento em que o alvo inicia uma
+curva a partir de uma trajetoria em velocidade
+constante, ou simplesmente sua velocidade_angular se modifica, percebemos que a diferenca entre
+a velocidade_radial estimada vri k e a velocidade
+radial medida vrmk aumenta. Neste instante, o vei
+deve ser ajustado de
+tor velocidade estimado vkk
+tal forma a ter como projecao a velocidade_radial
+medida vrmk , devido a sua alta precisao, como ja
+foi dito anteriormente.
+Isso acaba gerando uma diferenca angular
+  2  1 , que pode ser observada na Figura
+
+2
+
+i
+vkk
+
+(17)
+
+em que   0,1 e um fator de esquecimento, como
+utilizado em um dos modelos propostos em (RongLi e Jilkov, 2003). No caso em que   min , ou
+seja, as velocidades radiais estimada e medida sao
+bastantes distintas e, portanto, devemos calcular
+ ik1 , descrito na secao a seguir.
+4.3
+
+Calculo de  ik1
+
+Para calcularmos a variacao de  ik1 , necessitamos determinar 1 e 2 , obtidos atraves das seguintes relacoes trigonometricas
+!
+vri k 
+1  arccos
+(18)
+i k
+kvkk
+!
+vrmk 
+2  arccos
+(19)
+i k
+kvkk
+
+4438
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Agora, a diferenca entre 1 e 2 () pode ser
+obtida. O proximo passo e calcular  ik1  assumindo que temos conhecimento do vetor normal
+unitario ao plano da trajetoria ni , cujo calculo
+sera descrito na Secao 4.4, a variacao da velocidade_angular e dada por
+ 
+
+ ik1 
+ni
+(20)
+dT
+e, consequentemente, podemos obter  ik a partir
+da seguinte equacao
+ ik
+
+
+
+ ik1
+
++
+
+ ik1
+
+(21)
+
+Veja que  ik1 em (20) e calculado de uma
+forma diferente daquela apresentada em (Frencl
+e do Val, 2010), em que utilizava-se a funcao
+sinal() para definir o sentido do vetor  ik1 .
+Agora quem define o sinal e, consequentemente, o
+sentido de  ik1 e o proprio vetor ni . Note que
+o valor de  ik e obtido atraves de uma recursao
+simples, diferentemente do realizado em (Frencl e
+do Val, 2010), em que assumamos uma distribuicao gaussiana para  ik e realizavamos um sorteio
+de uma variavel aleatoria gaussiana.
+Este valor de  ik e utilizado para a determinacao da matriz dinamica adequada, de acordo com
+os valores obtidos. A escolha da matriz dinamica
+correta e dada por
+(
+Acv ,
+se k ik k  0,
+i
+A( k ) 
+(22)
+Act ( ik ), caso contrario.
+4.4
+
+O vetor normal unitario citado na secao anterior
+e perpendicular ao plano onde a trajetoria e realizada pelo alvo. O motivo da obtencao este vetor
+se da pelo fato deste possuir a mesma direcao e
+sentido de  ik . Sua expressao e dada por
+i
+vrmk  vkk
+i k
+kvrmk  vkk
+
+(23)
+
+em que  e a operacao de produto vetorial, k  k e
+o operador norma de um vetor, vrmk e a medida de
+i
+velocidade_radial na forma vetorial e vkk
+e o vetor
+velocidade estimado a partir dos componentes de
+
+xikk
+.
+4.5
+
+Algoritmo do Filtro de Partculas
+
+Apos todos os calculos obtidos nas Secoes 4.14.4,
+os pesos por importancia wki sao obtidos e o passo
+de reamostragem e aplicado, caso se fizer necessario, para as N partculas.
+Para obter o vetor_de_estados estimado, basta
+aplicar a formula em (11). No Algoritmo 1, as
+etapas descritas nas secoes acima estao resumidas
+em um pseudo-codigo.
+
+ISBN 978-85-8001-069-5
+
+Dados
+de entrada
+
+
+i
+i
+xik1k1 , Pk1k1
+, wk1
+,  ik1 , zk
+h
+i
+i
+xikk ,Pkk
+,(zk xik )
+
+
+i
+BLUE xik1k1 ,Pk1k1
+,zk
+
+
+
+
+Calculo de xikk
+de (15)
+Estimativa da vel. radial vri k
+Calcular ni de (23)
+Calcular  de (16)
+Se  < min Entao
+Calcular  ik de (17)
+Caso contrario
+Calcular 1 de (18)
+Calcular 2 de (19)
+Calcular  ik1 de (20)
+Calcular  ik de (21)
+Escolher A( ik )
+Fim Se
+Aplicar o algoritmo de FP.
+
+Algoritmo 1 Pseudo-codigo para um ciclo de PF
+com estimativa de  ik .
+
+Calculo do Vetor Normal
+
+ni 
+
+Note que, sob o ponto de vista de cada uma
+das partculas, as velocidades angulares obtidas
+sao todas conhecidas e, portanto, a dinamica
+passa a ser um sistema linear variante no tempo,
+cujo vetor de estado passa a ter a sua estimativa
+bem calculada pelo filtro BLUE. Desta forma, o
+sorteio necessario para a i-esima partcula e introduzida como uma perturbacao_gaussiana no vetor
+de estado estimado, como descrito na Secao 4.1.
+
+5
+
+Simulacoes e Resultados
+
+Com a finalidade de testar1 o desempenho do algoritmo apresentado na Secao 4, foram criados tres
+cenarios baseados naqueles propostos em (Yuan
+et al., 2006), porem as trajetorias aqui apresentadas estao a uma certa altitude, diferentemente
+das trajetorias em (Yuan et al., 2006), em que tais
+trajetorias sao bidimensionais. As trajetorias destes tres cenarios encontram-se nas Figuras 35.
+O primeiro cenario (Figura 3) tem como condicoes iniciais x0  35000 24000 100 m e v0 
+217 125 0 ms e a curva realizada possui uma
+aceleracao centrpeta de 3g, em que g  9,8 ms2
+e a aceleracao da gravidade. O segundo cenario (Figura 4) tem como condicoes iniciais x0 
+15000 15000 100 m e v0  172 246 0 ms, e
+e formado por quatro curvas com aceleracoes centrpetas indo de 1g a 4g. E finalmente, o terceiro
+cenario (Figura 5) tem como condicoes iniciais
+x0  35000 24000 100 m e v0  217 125 0
+1 As
+
+simulacoes foram realizadas no software MATLAB.
+
+4439
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+4
+
+4
+
+2.5
+
+x 10
+
+x 10
+
+2.5
+2
+
+2
+
+1.5
+
+1.5
+
+Incio
+
+Estimativas
+Observacoes
+Velocidade
+
+1
+
+1
+
+0.5
+
+0.5
+
+0
+0
+0.5
+0.5
+1
+1
+
+1
+
+1.5
+
+2
+
+2.5
+
+3
+
+3.5
+
+0.5
+
+1
+
+1.5
+
+2
+
+2.5
+
+3
+
+3.5
+
+4
+
+4
+
+x 10
+
+x 10
+
+Figura 6 Trajetoria Estimada  Cenario 1.
+
+Figura 3 Cenario 1.
+4
+
+3.5
+
+x 10
+
+4
+
+3.5
+
+3
+
+3
+
+2.5
+
+2.5
+
+x 10
+
+2
+
+2
+
+1.5
+
+1.5
+
+Estimativas
+Observacoes
+Velocidade
+
+1
+
+1
+0.5
+
+Incio
+
+0.5
+
+0
+
+0
+3.5
+
+3
+
+2.5
+
+2
+
+1.5
+
+1
+
+0.5
+
+0
+
+0.5
+
+1
+
+1.5
+4
+
+x 10
+
+0.5
+4
+
+3
+
+2
+
+1
+
+0
+
+1
+
+2
+4
+
+x 10
+
+Figura 4 Cenario 2.
+
+Figura 7 Trajetoria Estimada  Cenario 2.
+
+4
+
+3.5
+
+x 10
+
+3
+2.5
+2
+1.5
+1
+
+Incio
+
+0.5
+0
+0.5
+1
+1.5
+4
+
+3
+
+2
+
+1
+
+0
+
+1
+
+2
+
+3
+
+4
+4
+
+x 10
+
+Figura 5 Cenario 3.
+
+ms, e a curva realizada nesta trajetoria possui
+uma aceleracao centrpeta de 3g.
+Para realizar as simulacoes, os seguintes parametros forma definidos N  200 partculas, dT  1 s, Q  diag
+ (112,112,56), R 
+diag 302 ,0.01752 ,0.01752 ,12 , c  5,   0.75 e
+min  0.05. Desta forma, foram obtidas as Figuras 68, referentes as trajetorias estimadas e, para
+cada instante de tempo, temos o vetor velocidade
+estimado.
+Observando as trajetorias estimadas, podemos verificar otima precisao de tais estimativas
+de posicao, inclusive dos vetores velocidade esti-
+
+ISBN 978-85-8001-069-5
+
+Figura 8 Trajetoria Estimada  Cenario 3.
+
+mados, que possuem direcao e sentido corretos.
+Para confirmar tais precisoes de posicao e velocidade estimados, foram feitas aproximacoes visuais
+nas curvas de 3g de cada um dos tres cenarios em
+estudo. As Figuras 911 mostram estas aproximacoes visuais, confirmando mais uma vez a precisao
+de posicao e velocidade estimados e a eficiencia
+do algoritmo proposto, principalmente nas curvas,
+onde o rastreamento e mais complexo.
+Para testar a performance do algoritmo, propusemos um teste de desempenho relacionado a
+evolucao do erro medio quadratico (RMS) em re-
+
+4440
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+4
+
+Erro RMS - Pos.
+
+x 10
+
+Estimativas
+Observacoes
+Velocidade
+
+1.8
+1.7
+1.6
+1.5
+
+800
+
+RMS
+
+400
+200
+0
+
+1.4
+
+Erro RMS - Vel.
+
+1.3
+1.2
+1.1
+1
+0.9
+0.8
+
+1
+
+1.2
+
+1.4
+
+1.6
+
+RMS medio  375.9136
+
+600
+
+0
+
+50
+
+100
+
+tempo
+
+150
+
+200
+
+250
+
+150
+
+RMS
+RMS medio  57.6798
+100
+
+50
+
+0
+
+0
+
+50
+
+100
+
+4
+
+x 10
+
+tempo
+
+150
+
+200
+
+250
+
+Figura 12 RMS  tempo  Cenario 1.
+
+Figura 9 Zoom da Curva de 3g  Cenario 1.
+4
+
+Erro RMS - Pos.
+
+x 10
+
+Estimativas
+Observacoes
+Velocidade
+
+1.8
+
+1.6
+
+800
+
+RMS
+RMS medio  318.5904
+600
+
+400
+
+200
+
+Erro RMS - Vel.
+
+1.4
+
+1.2
+
+1
+
+0.8
+2.8
+
+2.6
+
+2.4
+
+2.2
+
+2
+
+1.8
+
+1.6
+
+0
+
+50
+
+100
+
+150
+
+200
+
+250
+
+tempo
+
+300
+
+350
+
+400
+
+450
+
+400
+
+RMS
+RMS medio  86.5709
+
+300
+200
+100
+0
+
+1.4
+
+0
+
+50
+
+100
+
+150
+
+200
+
+250
+
+tempo
+
+4
+
+x 10
+
+300
+
+350
+
+400
+
+450
+
+Figura 13 RMS  tempo  Cenario 2.
+
+Figura 10 Zoom da Curva de 3g  Cenario 2.
+4
+
+Erro RMS - Pos.
+
+x 10
+0.7
+
+Estimativas
+Observacoes
+Velocidade
+
+0.8
+0.9
+1
+1.1
+
+1000
+
+RMS
+RMS medio  331.8044
+
+800
+600
+400
+200
+
+0
+
+100
+
+200
+
+1.2
+
+Erro RMS - Vel.
+
+1.3
+1.4
+1.5
+1.6
+1.7
+3.6
+
+3.4
+
+3.2
+
+3
+
+2.8
+
+2.6
+
+2.4
+
+tempo
+
+300
+
+400
+
+500
+
+150
+
+RMS
+RMS medio  47.164
+100
+
+50
+
+0
+
+0
+
+100
+
+200
+
+4
+
+x 10
+
+tempo
+
+300
+
+400
+
+500
+
+Figura 11 Zoom da Curva de 3g  Cenario 3.
+
+Figura 14 RMS  tempo  Cenario 3.
+
+lacao ao tempo, tanto para posicao quanto para
+velocidade. Observando as Figuras 1214, podemos verificar algumas pequenas perturbacoes durante as curvas de RMS de posicao, mas todas as
+curvas possuem uma estabilizacao rapida e com
+um valor final de erro baixo. O mesmo ocorre
+para as curvas de velocidade.
+Podemos verificar tambem que os valores de
+RMS medio de posicao e velocidade sao baixos,
+mostrando novamente a eficiencia das melhorias
+no algoritmo apresentado na Secao 4.
+De um modo geral, os resultados dos tes-
+
+tes de desempenho, representado pelos graficos
+acima, mostraram de forma consistente a boa performance do metodo proposto, atraves de boas estimativas de posicao e velocidade e de valores de
+RMS baixos.
+
+ISBN 978-85-8001-069-5
+
+6
+
+Conclusoes
+
+Neste artigo, foram propostas melhorias ao algoritmo de parametrizacao de modelos_dinamicos
+CV e CT em conjunto com filtragem_estocastica
+aplicado ao problema de rastreamento_de_alvos,
+
+4441
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+apresentado em (Frencl e do Val, 2010) e (Frencl
+e do Val, 2012). Uma das principais melhorias teve
+como base a inclusao de uma perturbacao_gaussiana aditiva nas estimativas das partculas, resultantes da aplicacao do filtro BLUE em cada uma
+delas. A inclusao desta perturbacao teve como
+principal motivo o nao conhecimento e a dificuldade em se obter uma distribuicao de probabilidade para a velocidade_angular. Desta forma, os
+calculos pertinentes a estimacao_da_velocidade_angular, em que e utilizada uma especie de ajuste estocastico e que tambem inclui a utilizacao da medida de velocidade_radial (que e bastante precisa),
+acabam gerando estimativas de  k mais precisas.
+Tal melhoria resultou em um desempenho melhor do algoritmo em (Frencl e do Val, 2010), comprovado pelos resultados de estimativas e desempenhos via analise de erros RMS nos graficos da
+Secao 5.
+
+Zhao, Z., Rong-Li, X. e Jilkov, V. P. (2004).
+Best Linear Unbiased Filtering with Nonlinear Measurements for Target Tracking,
+IEEE Transactions on Aerospace and Electronic Systems 40(4) 13241336.
+
+Agradecimentos
+Ao apoio recebido da FAPESP (Fundacao de Amparo a Pesquisa do Estado de Sao Paulo), atraves
+do processo no 201000055-1 e do CNPq, atraves
+do processo no 3032922010-5.
+Referencias
+Bizup, D. F. e Brown, D. E. (2004). Maneuver detection using the radar range rate measurement, IEEE Transactions on Aerospace and
+Electronic Systems 40(1) 330336.
+Frencl, V. B. e do Val, J. B. R. (2010). Filtro
+de Partculas Aplicado ao Rastreamento de
+Alvos Manobrantes Utilizando a Velocidade
+Radial, XVIII Congresso Brasileiro de Automatica  CBA 2010, Bonito, MS, pp. 1763
+1770.
+Frencl, V. B. e do Val, J. B. R. (2012). Tracking
+with range rate measurements Turn rate estimation and particle filtering, IEEEAESS
+RadarCon 2012, Atlanta, GA, pp. 287292.
+Ristic, B., Arulampalam, S. e Gordon, N. (2004).
+Beyond the Kalman Filter - Particle Filters
+for Tracking Applications, Artech House.
+Rong-Li, X. e Jilkov, V. P. (2003). Survey of
+Maneuvering Target Tracking. Part I Dynamic Models, IEEE Transactions on Aerospace and Electronic Systems 39(4) 1333
+1364.
+Yuan, X., Han, C., Duan, Z. e Lei, M.
+(2006). Adaptive turn rate estimation using
+range rate measurements, IEEE Transactions on Aerospace and Electronic Systems
+42(4) 15321541.
+
+ISBN 978-85-8001-069-5
+
+4442

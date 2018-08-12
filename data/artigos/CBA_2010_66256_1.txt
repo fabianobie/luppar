@@ -1,0 +1,697 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+UMA PROPOSTA DE METODOLOGIA PARA IMPLEMENTAÇÃO DA ESTRUTURA DE
+CONTROLE SUPERVISÓRIO EM CONTROLADORES LÓGICOS PROGRAMÁVEIS
+ALEXANDRE J. PINOTTI*, ANDRÉ B. LEAL+, DÊNIS S. OLIVEIRA
+Grupo de Pesquisa em Automação de Sistemas e Robótica - GARS
+Departamento de Engenharia Elétrica, Universidade do Estado de Santa Catarina
+Campus Universitário Prof. Avelino Marcante sn, Bom Retiro, 89223-100, Joinville, SC, Brasil
+E-mails ajpinotti@gmail.com, leal,dee6dso@joinville.udesc.br
+Abstract This paper introduces a methodology for the implementation of the supervisory control structure in programmable
+logic controllers. The implementations strategy includes a solution for the choice problem between several controllable events
+and uses the concept of control cells, furthermore makes possible the treatment of many events in the same PLC scan cycle. A
+hypothetical industrial transfer line is used as an example to illustrate the application of the proposed methodology and control
+logic in ladder language.
+Keywords Discrete event systems, Supervisory control, Programmable logic controllers.
+Resumo Este artigo apresenta uma metodologia para a implementação da estrutura de controle_supervisório em controladores
+lógicos programáveis. A estratégia de implementação contempla uma solução para o problema da escolha entre diversos eventos
+controláveis e utiliza o conceito de células de controle, além disso, possibilita o tratamento de diversos eventos num mesmo ciclo de scan do CLP. Uma linha de transferência industrial hipotética é proposta como exemplo para ilustrar a aplicação da metodologia e da lógica de controle em linguagem ladder.
+Palavras-chave .
+
+tenção dos supervisores a serem implementados garantindo que estes serão minimamente restritivos e
+que atenderão s especificações de projeto.
+Este artigo apresenta uma proposta de metodologia de implementação da estrutura de controle_supervisório, baseado no trabalho de Leal et al. (2009),
+que possibilita o tratamento de diversos eventos num
+mesmo ciclo de scan do CLP. Esta característica leva
+a programas com ações de resposta mais rápida do
+CLP para planta e mais próximos daqueles desenvolvidos por programadores experientes que não utilizam a TCS para auxiliar na solução do problema de
+controle, com a vantagem de que a utilização do formalismo da TCS garante o atendimento s especificações de controle.
+Tendo essa estrutura de implementação como
+base, as contribuições de maior destaque deste trabalho são a extensão da solução (Leal et al., 2009) do
+problema da escolha (Fabian e Hellgren, 1998) para
+múltiplos eventos, o uso de células de controle para
+coordenação da geração de eventos controláveis e
+uma forma de utilização das sequências operacionais
+(Queiroz et al., 2001) para compensar abstrações nos
+modelos das plantas, explicados em maiores detalhes
+na Seção 3.
+Outro motivador para a realização deste trabalho
+é a vantagem que o procedimento tem para se atingir
+um padrão de código, sobre a programação livre, por
+conta apenas do programador. O que facilita, além da
+padronização muito importante e visada pelas indústrias atualmente, a elaboração de um software para
+geração automática do código.
+O artigo está organizado de forma que na Seção
+
+1 Introdução
+Nos dias de hoje, as indústrias estão cada vez mais se
+valendo da automação_da_manufatura como forma de
+obtenção de ganhos de produtividade, qualidade,
+confiabilidade e competitividade.
+Na automação, o principal dispositivo utilizado
+para o controle de células de manufatura consiste no
+controlador_lógico_programável (CLP). Assim, a solução de um problema de automação_da_manufatura
+passa pela obtenção de uma lógica de controle a ser
+implementada no CLP que garanta o atendimento das
+especificações de controle. Sabe-se, entretanto, que
+na grande parte das aplicações industriais a obtenção
+desta lógica de controle é feita sem um procedimento
+formal e não se tem a garantia do atendimento das
+especificações.
+Assim, alguns pesquisadores voltaram seus esforços para o estudo da aplicação da Teoria de Controle Supervisório  TCS (Ramadge e Wonham,
+1989) para a solução de problemas de automação da
+manufatura, e, em especial, alguns trabalhos foram
+desenvolvidos sobre a implementação em CLP da
+solução obtida por intermédio da TCS. Nos trabalhos
+de Leduc (1996), Hellgren et al. (2002) e Queiroz et
+al. (2001), por exemplo, são apresentadas metodologias de implementação da estrutura de controle_supervisório em linguagem ladder. Entretanto, nestes
+trabalhos considera-se que apenas um evento pode
+ser tratado em cada ciclo de scan do CLP.
+A TCS apresenta uma forma sistemática para ob-
+
+Tutor, bolsista e *egresso do Grupo PET Engenharia Elétrica da UDESC
+
++
+
+2830
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+a1
+
+a2
+
+M1
+M2
+
+a3
+
+M3
+
+b1
+b2
+
+B1
+
+a4
+
+M4
+
+b4
+
+B2
+
+a52
+
+b3
+
+M5
+
+b5
+
+B3
+
+tInit
+
+tOk
+
+TU
+tNok
+
+a54
+
+B4
+Figura 1. Linha industrial com retrabalho
+
+2 apresenta-se um problema motivador utilizado para
+testar a metodologia proposta. Na Seção 3 descrevem-se as características desse novo procedimento de
+aplicação e na Seção 4 têm-se as conclusões.
+
+software IDES (2008) são obtidos três supervisores
+locais, conforme mostrado na Tabela 1.
+Tabela 1. Projeto dos Supervisores Locais
+Especificações
+Ea  E1
+Eb  E2
+Ec  E3E4
+
+2 Problema Motivador
+No intuito de testar a aplicabilidade da metodologia
+proposta neste trabalho, propõe-se o problema de
+uma linha de transferência industrial com uma etapa
+de teste e retrabalho. A linha é constituída por cinco
+máquinas, uma unidade de testes e buffers com capacidade para uma peça (ver Figura 1). O problema
+proposto é baseado nos exemplos da linha de transferência com retrabalho, encontrados em (Wonham,
+2008 Cury, 2001) e no problema da linha de transferência industrial de Queiroz e Cury (2000).
+O funcionamento dessa linha prevê uma alimentação ilimitada de peças brutas para as máquinas de
+entrada M1, M2 e M3, que compartilham o mesmo
+buffer de saída, dois processos intermediários executados pelas máquinas M4 e M5 e uma unidade de teste
+(TU) que transfere a peça para um buffer de retrabalho (B4) caso haja uma não conformidade. A máquina
+M5 é capaz de processar peças novas provenientes de
+M4 ou peças que necessitem de retrabalho.
+A modelagem da planta na mais refinada Representação por Sistema Produto (RSP) (Ramadge e
+Wonham, 1989) é definida pelos autômatos da Figura
+2.
+
+Plantas
+Ga  Mi1...4
+Gb  M4M5
+Gc  M5TU
+
+Supervisores Locais
+SLa  SupCon(Ga,GaEa)
+SLb  SupCon(Gb,GbEb)
+SLc  SupCon(Gc,GcEc)
+
+Os autômatos dos supervisores contêm os seguintes números de estados e transições, respectivamente SLa(10,18), SLb(6,11) e SLc(5,6). A composição síncrona dos três supervisores resulta em um
+autômato de 75 estados e 200 transições, que é
+TRIM, portanto a ação conjunta dos supervisores
+locais é não conflitante. Através do algoritmo de redução do software XPTCT (2009) obtém-se os supervisores reduzidos da Figura 4.
+
+SLared
+
+SLbred
+
+SLcred
+Figura 4. Autômatos dos Supervisores Locais Reduzidos (XPTCT)
+Mi1...4
+
+M5
+Figura 2. Autômatos da Planta.
+
+TU
+
+3 Proposta de Implementação
+Muitas metodologias de implementação da TCS em
+CLPs encontradas na literatura, tais como Leduc
+(1996), Hellgren et al. (2002) e Queiroz et al. (2001),
+lidam com o tratamento de um único evento, controlável ou não, por ciclo de scan. Dessa maneira tem-se
+o intuito de garantir o controle sobre o sistema físico,
+mas perde-se em desempenho, pois serão necessários
+n ciclos de scan para tratamento dos n eventos
+não controláveis ocorridos entre dois ciclos e outros
+m ciclos para os eventos controláveis.
+Uma forma de implementação que possibilita o
+tratamento de diversos eventos em um mesmo ciclo
+de scan do CLP é apresentada por Leal et al. (2009)
+e baseia-se na separação dos eventos do sistema de
+acordo com a controlabilidade. Esta mesma aborda-
+
+As especificações de controle dessa linha resumem-se a evitar o underflow e overflow nos buffers.
+Dessa forma são modeladas como mostra a Figura 3,
+onde ci é o conjunto de eventos controláveis de
+retirada de peça do buffer i e ui é o conjunto de
+eventos não controláveis que resultam do armazenamento de uma peça no buffer i, sendo que i é um
+número inteiro de 1 a 4.
+
+Figura 3. Autômatos das Especificações Ei1...4
+
+Utilizando a abordagem_modular local introduzida por Queiroz e Cury (2000) e com auxílio do
+
+2831
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+gem é usada neste trabalho, mas na proposta aqui
+apresentada, em um ciclo de scan podem ser tratados
+além de todos os eventos não controláveis ocorridos
+na planta, até p eventos controláveis, sendo p o
+número de supervisores locais (células de controle).
+De modo geral, mantém-se a estrutura básica do
+sistema_de_controle de Queiroz et al. (2001), mas
+com a divisão de controlabilidade dos eventos, como
+mostra a Figura 5.
+
+Supervisores
+Modulares
+
+Unidade de Controle (UC)
+
+Eventos
+Controláveis
+
+c
+
+Eventos Não
+Controláveis
+u
+
+Sistema
+Produto
+
+Desabilitações
+
+
+Eventos
+cUu
+
+Eventos Não
+Controláveis
+
+Eventos
+Controláveis
+
+Sequências
+Operacionais
+
+Comandos
+
+Respostas
+
+Sequências
+
+UC Saídas
+
+UC Entradas
+
+Sistema Físico
+Figura 5 - Estrutura do sistema_de_controle
+
+Na camada de implementação dos supervisores
+modulares apenas tem-se a observação de eventos
+gerados pelo nível do sistema produto e geração de
+sinais de desabilitação (), tendo-se a interação entre
+supervisor e planta assim como é descrito na TCS
+(Ramadge e Wonham, 1989). A implementação dos
+supervisores é separada em dois blocos, um para tratamento de eventos controláveis (C) e outro para
+eventos não controláveis (U).
+Da mesma forma são utilizados dois blocos para
+implementar o sistema produto, um gerando eventos
+controláveis, associados a sinais de comandos, e outro gerando eventos não controláveis, associados s
+respostas.
+Caso um maior nível de abstração seja usado nos
+modelos do sistema produto, podem ser implementadas na própria Unidade de Controle (UC) o detalhamento das sequências de operações referente a cada
+evento. Essa interface entre o sistema produto e o
+sistema físico é chamada de Sequências Operacionais
+(Queiroz et al., 2001).
+Quando tais sequências não são utilizadas, os
+comandos dados pelo sistema produto são enviados
+diretamente ao sistema físico através das saídas da
+UC, assim como os sinais adquiridos pelas entradas
+geram as respostas para o sistema produto. Na camada das Sequências Operacionais da Figura 5 a chave
+comutadora representa a opção que o programador
+ou projetista tem em utilizar sequências operacionais
+ou conectar os sinais de comando diretamente s saídas da UC e gerar respostas diretamente a partir dos
+sinais de entrada da unidade de controle.
+
+Figura 6. Sequência do bloco organizacional.
+
+De forma semelhante ao proposto por Leal et al.
+(2009), a proposta deste trabalho consiste ainda em
+dividir o programa de forma mais estruturada através
+do uso dos blocos de organização e de funções (subrotinas), distribuindo a implementação nos blocos
+apresentados na
+Figura 6.
+O bloco de inicialização é responsável por habilitar os estados iniciais das plantas e supervisores.
+A cada ciclo de scan é observada a ocorrência de
+eventos não controláveis no sistema produto, através
+da verificação das entradas que indicam a ocorrência
+de tais eventos.
+A Figura 7 apresenta a implementação da transição da máquina M1 quando é detectado o evento não
+controlável de fim de operação. A leitura da entrada
+I.b1 habilita a troca de estados (de M1E1 para
+M1E0) e acusa a ocorrência do evento b1, cuja
+informação é usada para transição nos supervisores.
+Também é feito o reset da saída utilizada para comandar a máquina. Para simplificação da apresentação da metodologia, as modificações no bloco do
+sistema produto quando utilizadas sequências operacionais (Queiroz et al., 2001) são apresentadas posteriormente.
+
+2832
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+TU não possuem restrição quanto  geração de eventos controláveis.
+
+SLared
+M1
+M2
+
+M3
+
+SLbred
+M4
+
+SLcred
+M5
+
+TU
+
+Figura 9. Células de controle
+
+Mello (2006) apresenta a implementação dos
+módulos (plantas) do sistema produto envolvendo
+duas variáveis de intertravamento (flags) para cada
+planta. Na proposta deste trabalho utiliza-se uma flag
+de evolução para cada planta, chamada de evplti,
+onde i é um inteiro de 1 a 6 e índice de uma planta
+pertencente ao sistema produto, e uma variável para
+cada supervisor (célula de controle) presente no sistema, denominada evcelx, sendo x igual a A, B ou C
+(Figura 10). Dessa forma, consegue-se reduzir o número de variáveis utilizadas no código do programa e
+ainda com que seja gerado mais do que um evento
+controlável em um mesmo ciclo de scan, sem prejuízo do controle sobre o processo e a planta.
+O bloco de atualização das células de controle é
+formado observando-se as plantas que fazem parte de
+cada célula. Por exemplo, observando-se a Figura 9,
+tem-se que a célula do supervisor SLbred contém M4 e
+M5, resultando no Network 2 da Figura 10. Quando
+há existência de plantas que pertencem a mais do que
+uma célula de controle, as variáveis de evolução de
+células são combinadas e armazenadas em flags específicas, como o caso da flag evcelAB, que indica evolução na célula A ou B, e é utilizada para permissão da geração do evento controlável da máquina
+M4.
+
+Figura 7. Tratamento do evento não controlável da máquina M 1
+
+O bloco dos supervisores identifica os eventos
+ocorridos e executa a atualização de estados. Para o
+estado 1 do supervisor SLared (SLaE1), por exemplo,
+na ocorrência dos eventos b1, b2 ou b3 ocorre a transição para o estado SLaE2, conforme mostrado na
+Figura 8.
+
+Figura 8. Transição no supervisor para evento não controlável
+
+O bloco das desabilitações é responsável pela
+desabilitação dos eventos controláveis. A cada ciclo
+de scan do CLP, o conjunto de eventos controláveis
+desabilitados é definido pela união dos eventos desabilitados por cada supervisor, de acordo com seu
+estado atual. Na metodologia proposta as informações sobre as desabilitações são obtidas mediante o
+resultado do comando Condat do software XPTCT
+(2009). Dessa forma, normalmente consegue-se reduzir o tamanho do programa, por não se incluir desabilitações de eventos que fisicamente não podem ocorrer em um determinado estado do supervisor.
+3.1 As células de controle
+O conceito de células de controle (Vieira, 2007) é
+proveniente da abordagem_modular local, na qual a
+síntese dos supervisores é obtida a partir de plantas
+locais e não a partir do modelo global da planta. Como um supervisor controla apenas uma parte da planta (Figura 9), este tem capacidade de desabilitar apenas os eventos que fazem parte de seu alfabeto. Se,
+por exemplo, o subsistema M1 realiza uma evolução
+através de um evento controlável, M2, M3 e M4 devem ser impedidos de evoluir com eventos controláveis até a atualização das desabilitações, mas M5 e
+
+Figura 10. Bloco das células de controle.
+
+3.2 O problema da escolha
+Um dos problemas decorrentes da implementação da
+TCS é a escolha entre eventos controláveis (Fabian e
+Hellgren, 1998). Pode haver condições em que o
+estado de um supervisor não desabilite um conjunto
+de eventos controláveis, que também não são desabilitados por outros supervisores, tornando-os habilita-
+
+2833
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+estado SLaE0, uma vez que M4 e M5 estão presentes
+em outras células, e há necessidade de encontrar uma
+combinação de estados ativos que resultem nessa
+escolha. Ainda vale ressaltar que a geração de a4
+não implica a desativação de a54, e vice-versa,
+sendo assim o não tratamento dessa escolha não levaria a maiores problemas.
+Entretanto, no intuito de padronizar a metodologia de implementação e, desta forma, facilitar a criação de uma ferramenta de geração automática de
+código para CLP, a solução para a escolha é chamada
+no ciclo de scan em que a4 e a54 não estão
+desabilitados e um dos eventos será desabilitado.
+Assim, haverá uma evolução na célula de controle de
+SLbred e no próximo scan o segundo evento poderá
+ser gerado.
+A solução proposta neste artigo para os problemas de escolha, parte do princípio que, em cada célula de controle, apenas um dos eventos controláveis
+não desabilitados poderá ocorrer. O tratamento é um
+complemento s desabilitações dadas pelos estados
+dos supervisores realizando a desabilitação de alguns
+eventos e, por consequência, a liberação de apenas
+um por célula de controle. Isso é feito através do uso
+de elementos básicos da programação em ladder como contadores e comparadores, conforme apresentado a seguir.
+
+dos para serem gerados pelo nível do sistema produto.
+De acordo com Fabian e Hellgren (1998) se o
+problema não é tratado, a ordem de implementação
+das linhas de código é que determina a geração de um
+dos eventos. Este tipo de implementação, segundo
+Dietrich et al. (2001) e Malik (2002), pode levar a
+problemas como a não execução de parte do supervisor e até mesmo a uma situação de bloqueio, mesmo
+que o supervisor (ou a ação conjunta de supervisores)
+seja não bloqueante.
+A implementação da solução ao problema da escolha proposta neste trabalho apresenta uma aleatoriedade que possibilita a seleção de qualquer um dos
+eventos controláveis envolvidos na escolha. Dessa
+forma, todos os percursos existentes no supervisor
+são possíveis e a implementação é garantidamente
+não bloqueante.
+A planta apresentada na Seção 2 foi especialmente concebida para apresentar o problema da escolha em sua implementação. Por exemplo, no estado 0
+do supervisor SLared (SLaE0) da Figura 4, não há
+desabilitação dos eventos a1, a2 e a3, possibilitando
+o início de operação das três máquinas de entrada da
+linha (M1, M2 e M3). Embora qualquer uma das três
+máquinas possa iniciar a operação, a ação conjunta
+dos supervisores impede que mais de uma máquina
+inicie o processo, evitando o overflow no buffer, o
+que pode ser confirmado pela desabilitação de tais
+eventos no estado SLaE1. A solução para o tratamento da escolha, nessa metodologia, não prioriza o início de operação de nenhuma das máquinas envolvidas.
+Nota-se, com o auxílio da Figura 9, que as máquinas envolvidas nesta situação pertencem a uma, e
+apenas a uma, célula de controle, não existindo outro
+supervisor que possa desabilitar tais eventos, o que
+deixa claro o problema de escolha e que deve ser
+resolvido na implementação em CLP.
+Salienta-se que caso o problema da escolha não
+seja tratado no estado SLaE0, a atuação da célula de
+controle, não permite que as três máquinas entrem em
+operação, mas dessa forma, a ordem de implementação das máquinas no código do programa é que determinaria qual executaria o trabalho, deixando outras duas obsoletas. Essa abordagem é utilizada por
+Vieira et al. (2006) e neste caso alguns estados do
+supervisor nunca seriam alcançados o que em alguns
+casos (Dietrich et al., 2001 Malik, 2002), pode acarretar em um bloqueio.
+Tem-se uma segunda condição a ser analisada,
+quando a planta da Figura 1 encontra-se com M4 e M5
+em repouso e há peças nos buffers B1 e B4. Os supervisores estão com os estados SLaE2, SLbE0 e
+SlcE2 (Figura 4) ativos. Os eventos a4 e a54
+não estão desabilitados e uma nova situação de escolha emerge. Em especial, observando-se a célula de
+controle B (SLbred), e mais especificamente SLbE0,
+tem-se os dois eventos em um self-loop. Neste caso a
+detecção da escolha não é tão obvia quanto para o
+
+Após as desabilitações, o bloco organizacional (
+
+Figura 6) realiza a chamada do bloco contadores, nesse bloco são implementados contadores que
+são incrementados em todo ciclo e cujo valor máximo de contagem é igual ao número de eventos controláveis do problema de escolha a ser resolvido.
+Para a planta deste estudo de caso, ocorre o problema
+de escolha entre três (SLaE0) e dois (SLbE0) eventos
+controláveis.
+A implementação dos contadores deve ser feita
+de forma que o contador seja incrementado a cada
+ciclo e tenha um valor válido em qualquer ciclo de
+scan que for necessário o tratamento da escolha.
+Os blocos de tratamento são chamados apenas se
+os eventos envolvidos em uma determinada escolha
+não estiverem desabilitados pela ação conjunta dos
+supervisores.
+A Figura 11 apresenta o bloco de tratamento da
+escolha existente no estado SLaE0. MW200 é a
+variável que contém o valor atual do contador. Cada
+comparador verifica se IN1 é igual  IN2, ou
+seja, o valor do contador é comparado com os valores 0, 1 e 2.
+Conforme o valor do contador no ciclo de scan
+que o bloco de tratamento é chamado, apenas um
+comparador terá saída verdadeira, a qual é negada
+pela função NOT, resultando na não desabilitação
+de um dos eventos. Os demais eventos são, portanto,
+desabilitados.
+
+2834
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+dessa forma é possível implementar no mesmo controlador o código necessário para o completo funcionamento da planta.
+Para introduzi-las nessa metodologia basta implementar as sequências operacionais em um bloco
+específico e modificar o sistema produto para que ao
+invés de saídas e entradas físicas sejam acionadas e
+lidas memórias internas que representam o início e
+término das sequências operacionais.
+Supondo-se que para o processo da máquina M4
+sejam necessários passos intermediários, mais do que
+simplesmente o comando de início de operação, pode-se programar a sequência operacional necessária
+em um bloco de função específico. O formato da
+programação desse bloco fica a critério do projetista
+ou programador, bastando que a sequência aguarde o
+comando de início proveniente do sistema produto e
+também retorne um sinal quando o término ocorrer.
+A Figura 13 apresenta uma programação em forma
+de máquina de estados para a sequência operacional
+de M4, como a usada nos trabalhos referenciados.
+
+Figura 11. Bloco de tratamento da escolha entre a1, a2 e a3.
+
+3.3 Geração de eventos controláveis
+Os eventos controláveis são gerados pelo sistema
+produto que também ativa um sinal de comando e
+sinaliza a evolução da planta. Um evento é gerado
+uma vez que não esteja desabilitado, seja pela ação
+conjunta dos supervisores modulares ou pelo tratamento de uma escolha, e caso as células de controle
+as quais a planta pertença não tenham tido evoluções,
+conforme a Figura 12.
+
+Figura 13. Sequências operacionais para M4.
+
+Neste exemplo, a implementação do sistema
+produto de M4, tem como sinal de comando a variável SO.a4 e o sinal de resposta é dado por
+SO.b4.
+
+Figura 12. Geração do evento controlável da máquina M1
+
+Antes de cada network de geração de um evento
+controlável o bloco Células é chamado para realizar a atualização nas memórias de indicação de evolução de plantas e células.
+
+4 Conclusão
+Neste artigo apresentou-se uma metodologia para
+implementação da abordagem_modular local da teoria
+de controle_supervisório em controladores lógicos
+programáveis.
+Através do simulador S7-PLCSIM (Siemens,
+2005) foram realizados testes para comprovar a geração de diversos eventos em um mesmo ciclo, utilizando o recurso de simulação passo a passo de cada
+ciclo de scan. Na situação onde há uma peça no buffer B3 e M4 está em operação, ocorre no mesmo ciclo
+de scan o término de operação da máquina M4 (b4),
+um dos eventos da escolha entre a1, a2 e a3 e o início
+de operação da unidade de testes (tInit). Em outras
+
+O último bloco de função chamado pelo bloco organizacional (
+organizacional (
+
+Figura 6) limpa o conteúdo de todas as variáveis
+de evolução, permitindo a detecção de evoluções no
+próximo ciclo de scan.
+3.4 Sequências operacionais
+Nos trabalhos de Queiroz et al. (2001) e Vieira
+(2003) são utilizados modelos abstratos para as subplantas constituintes de um sistema. Portanto, foram
+introduzidas as sequências operacionais, que podem
+ser programas em forma de máquinas de estado, e
+
+2835
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Supervisory Control. In Proceedings of
+SCODES01. Paris, France.
+Fabian, M. Hellgren, A., 1998. PLC-based
+Implementation of Supervisory Control for
+Discrete Event Systems. In Proceedings of the
+37th Conference on Decision and Control.
+Tampa, USA.
+Hellgren, A. Lennartson, B. and Fabian, M., 2002.
+Modelling and PLC-based implementation of
+modular supervisory control. In Proceedings of
+the 6th International Workshop on Discrete
+Event Systems (WODES), pp 1-6. Zaragoza,
+Spain
+IDES (Integrated Discrete-Event Systems), 2008.
+Disponível em httpsqshare.queensu.caUsers
+01rudiewwwsoftware.html Último Acesso 23
+Fevereiro 2010.
+Leal, A. B. da Cruz, D. L. L. and Hounsell, M. S.,
+2009. Supervisory Control Implementation into
+Programmable
+Logic
+Controllers.
+In
+Proceedings of the 14th IEEE International
+Conference on Emerging Technologies and
+Factory Automation. Mallorca, Spain.
+Leduc, R.J., 1996. PLC Implementation of a DES
+supervisor for a manufacturing testbeb An
+implementations perspective. M.A.Sc. Thesis.
+University of Toronto.
+Malik, P., 2002. Generating controllers from
+discrete-event models. In F. Cassez, C. Jard, F.
+Laroussinie, M. D. Ryan Eds., Proceedings of
+the Summer school in MOdelling and
+VErification of Parallel processes (MOVEP),
+pp 1-6.
+Mello, F. T. A., 2006. Implementação distribuída de
+Controle supervisório para Sistemas a eventos
+discretos.
+Dissertação
+de
+Mestrado.
+Florianópolis Universidade Federal de Santa
+Catarina.
+Queiroz, M. H. and Cury, J. E. R., 2000. Modular
+supervisory control of large scale discrete-event
+systems. In Discrete Event Systems Analysis
+and Control. Proceedings of the WODES 2000.
+Ghent, Belgium. Kluwer Academic Publishers.
+Queiroz, M. H. Santos, E. A. P. and Cury, J. E. R.,
+2001. Síntese Modular do Controle Supervisório
+em Diagrama Escada para uma Célula de
+Manufatura. In Anais do V Simpósio Brasileiro
+de Automação Inteligente. Canela, RS.
+Ramadge, P. J. and Wonham, W. M., 1989. The control of discrete event systems. In Proceedings
+IEEE, Special Issue on Discrete Event Dynamic
+Systems, 77(1)81-98.
+Siemens, 2005. Manual do Usuário Simatic S7PLCSIM v5.3 incl. SP1.
+Vieira, A. D., 2003. Notas sobre Implementação de
+estrutura de controle de sistema a eventos
+discretos em controlador_lógico_programável
+utilizando a teoria Controle Supervisório
+Modular Local. Pontifícia Universidade
+Católica do Paraná e Universidade Federal de
+Santa Catarina.
+
+situações dois eventos não controláveis e um controlável são tratados.
+Nas implementações que utilizam o travamento
+do sistema produto a cada geração de evento, seriam
+necessários três ciclos para tratar o mesmo número de
+eventos. Para este estudo de caso, o impacto de metodologia proposta não seria visível em termos de
+ganhos de velocidade de produção, mas em plantas
+industriais reais, onde o número de elementos da
+planta é muito maior, a metodologia demonstraria um
+ganho efetivo nos tempos da linha, uma vez que vários eventos seriam tratados no mesmo ciclo de scan.
+A divisão dos blocos do sistema produto e dos
+supervisores entre os eventos não controláveis e controláveis permite que vários eventos não controláveis
+sejam tratados num mesmo ciclo de scan do CLP,
+havendo um sincronismo entre o que acontece na
+planta física e o elemento de controle. Também o
+projeto pela abordagem_modular local e a visualização dos supervisores como células de controle permite que nesta metodologia de implementação sejam
+gerados mais de um evento controlável no mesmo
+ciclo do CLP, sem que haja perda de sincronismo e
+consequente perda do controle sobre a planta.
+Para cada célula de controle é solucionado o
+problema da escolha entre eventos controláveis, capaz de lidar com qualquer quantidade de eventos.
+As características da metodologia também permitem que um software de geração automática de
+código para o CLP seja programado, pois existe padronização nos blocos de função e na solução dos
+problemas de implementação da TCS. O uso de tais
+blocos de função, que não deixam de ser sub-rotinas
+de um programa principal (bloco organizacional),
+traz uma melhor divisão, possibilitando melhor compreensão do código do CLP e tornam as possíveis
+alterações no software mais fáceis de serem realizadas.
+Agradecimentos
+Os autores agradecem ao Programa de PósGraduação em Engenharia Elétrica (PPGEEL), ao
+Programa de Bolsas de Monitoria de Pós-Graduação
+(PROMOP) da Universidade do Estado de Santa
+Catarina (UDESC) e ao Programa de Educação Tutorial (PETDIFESSESuMEC). O segundo autor agradece ainda  FAPESCCNPq (contrato
+CON045042008-7) pelo apoio a realização desta
+pesquisa.
+Referências Bibliográficas
+Cury, J. E. R, 2001. Teoria de Controle Supervisório
+de Sistemas a Eventos Discretos. V Simpósio
+Brasileiro de Automação Inteligente. Canela,
+RS.
+Dietrich, P. Malik, R. Wonham, W. M. and Brandin,
+B. A., 2001. Implementation Considerations in
+
+2836
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Vieira, A. D. Cury, J. E. R and Queiroz, M. H., 2006.
+A Model for PLC Implementation of
+Supervisory Control of Discrete Event Systems.
+In Proceedings of the 11th IEEE International
+Conference on Emerging Technologies and
+Factory Automation. Prague, Czech Republic.
+Vieira, A. D., 2007. Método de Implementação do
+Controle de Sistemas a Eventos Discretos com
+Aplicação da Teoria de Controle Supervisório.
+Tese de Doutorado. Florianópolis Universidade
+Federal de Santa Catarina.
+XPTCT Software for Control Synthesis, 2009.
+Disponível em httpwww.control.toronto.edu
+peopleprofswonhamwonham.html
+Último
+Acesso 23 Fevereiro 2010.
+Wonham, W. M., 2008. Notes on Supervisory
+Control of Discrete-Event Systems. 2008.07.01.
+Dept. of Electrical  Computer Engineering.
+University of Toronto.
+
+2837

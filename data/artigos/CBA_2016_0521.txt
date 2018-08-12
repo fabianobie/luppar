@@ -1,0 +1,977 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+AVALIACAO DE TECNICAS PARA A PREDICAO DE CURTO PRAZO DE
+PRODUCAO DE ENERGIA SOLAR
+Carlos Alberto Severiano Junior, Frederico Gadelha Guimaraes
+
+
+Instituto Federal de Minas Gerais - Campus Sabara
+Av. Serra da Piedade 299,
+34515-640 Sabara, MG, Brazil
+
+
+Department of Electrical Engineering
+Universidade Federal de Minas Gerais
+Av. Antonio Carlos 6627,
+31270-901 Belo Horizonte, MG, Brazil
+Emails carlos.junior@ifmg.edu.br, fredericoguimaraes@ufmg.br
+Resumo Este trabalho avalia a utilizacao de diversas tecnicas para resolver o problema de predicao de curto
+prazo de energia_solar a ser produzida em uma estacao fotovoltaica. Dentre os metodos escolhidos para o trabalho
+estao o modelo de Persistencia, o modelo Autorregressivo Integrado de Medias Moveis (ARIMA), o metodo de k
+vizinhos mais proximos (kNN) e modelo de Maquinas de Aprendizado Extremo (ELM). A base de dados utilizada
+no trabalho foi um conjunto de medicoes intervaladas em 30 minutos de irradiacao solar, registradas em uma
+estacao fotovoltaica. Os metodos foram comparados em termos de rapidez e acuracia.
+Palavras-chave
+
+
+Abstract This work evaluates the application of several techniques to solve very short-term solar forecasting
+problems. The methods chosen are Persistence, Autoregressive Integrated Moving Average (ARIMA),k-Nearest
+Neighbors (kNN) and Extreme Learning Machines (ELM). The database used in the study was a set of discontinuous measurements in 30 minutes solar irradiation observed in a photovoltaic station. The methods were
+compared in terms of speed and accuracy.
+Keywords
+
+Solar Energy, Time Series, Forecasting, kNN, ARIMA, Extreme Learning Machines
+
+1
+
+Introducao
+
+Nas ultimas duas decadas, energias renovaveis
+como fotovoltaica, eolica, dentre outras, tem se
+posicionado como relevantes fontes de geracao de
+eletricidade em redes de energia no mundo todo.
+Especificamente a energia_fotovoltaica, cuja capacidade instalada mundial era de meros 1 GWp no
+ano 2000, atingiu ao fim de 2014 um patamar de
+178 GWp (IEA, 2014). Em alguns pases da Europa, a producao de energia_solar ja integra percentuais significativos durante dias de intensa exposicao solar, mais comuns no verao. Por exemplo, a Italia com cerca de 8 de sua demanda
+sendo provida por fotovoltaicas, a Alemanha com
+um valor superior a 6 e a Grecia, proxima de 6
+(IEA, 2014). Tal cenario incentiva a incorporacao
+de energia_solar a redes energeticas que operam
+com outras fontes de energia, como as fosseis.
+Um dos maiores desafios desta incorporacao e
+operacao de sistemas de energia_solar e lidar com o
+aspecto variavel dessa fonte de energia, cuja disponibilidade esta sujeita a condicoes climaticas como
+movimento de nuvens e pressao atmosferica, dentre outros. Alem disso, e necessario considerar que
+sua producao e suspensa durante o perodo noturno. Tudo isso evidencia a importancia da utilizacao de um metodo de predicao que possa descrever com boa precisao a variabilidade associada a
+esse sistema (Nobre, 2015). Para trabalhos desta
+
+ISSN 2525-8311
+
+natureza, o termo predicao de muito curto prazo
+se aplica a predicoes de horizontes na escala de minutos a horas, enquanto o termo predicao de curto
+prazo ja se refere a horizontes um pouco maiores,
+na escala de horas a dias. Como abordado por
+(Taylor, 2008) e (Charytoniuk and Chen, 2000), a
+predicao de muito curto prazo tem importancia no
+auxlio a operacoes de gerenciamento de plantas
+energeticas cujo contexto possa demandar maior
+rapidez na resposta, como escalonamento e comercializacao. Este trabalho e focado na predicao de
+energia_solar de muito curto prazo, mais especificamente horizontes de 30 minutos, por se tratar de
+uma faixa de intervalo muito representativa dessa
+modalidade de predicao. Os dados utilizados foram registrados em um sistema de energia_solar localizado em uma regiao tropical, especificamente
+em Cingapura.
+Para predicoes de muito curto prazo ha ainda
+um aspecto adicional, que e a necessidade de um
+retorno rapido por parte do modelo, de modo que
+haja um tempo habil para a tomada_de_decisao
+dentro de um intervalo de tempo tao reduzido.
+Portanto, junto de uma boa acuracia, os modelos de predicao de curto prazo requerem um bom
+desempenho em termos de velocidade de retorno.
+Em geral, modelos de predicao de carga de
+energia possuem necessidades similares de tecnicas
+com boa capacidade de lidar com relacoes comple-
+
+1823
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+xas entre entrada e sada, o que incentiva a adocao de modelos de Inteligencia Artificial (Raza and
+Khosravi, 2015). No caso especfico de energia_solar, os trabalhos de Mellit and Pavan (2010) e Pedro and Coimbra (2012) utilizam para a solucao
+do problema Redes Neurais Artificiais.
+Este trabalho propoe resolucao do problema
+de predicao de energia_solar a curto prazo a partir da utilizacao de diversas tecnicas. O aspecto
+variavel das curvas de irradiacao solar ao longo
+do ano incentiva uma avaliacao ampla de diferentes abordagens para o problema, no sentido de se
+identificar qual o caminho mais promissor a ser
+seguido.
+O artigo e organizado da seguinte maneira
+Secao 2 descreve os dados usados para a predicao
+Secao 3 discute a etapa de pre-processamento dos
+dados Secao 4 descreve os metodos avaliados no
+estudo Secao 5 demonstra os experimentos realizados Secao 6 conclui o artigo com discussoes
+sobre os resultados e propostas de trabalhos futuros.
+
+3
+
+Fonte de Dados
+I1
+I2
+I3
+I4
+..
+.
+
+I(t)
+
+Figura 1 Mapa de Estacoes do SERIS em Cingapura.
+A observacao foi feita a partir de registros de
+irradiacao solar, minuto a minuto, com uma taxa
+de amostragem de 1 Hz. Desse modo, os valores
+de 30 minutos usados no trabalho correspondem
+a medias calculadas a partir dos registros minuto
+a minuto. As especificacoes da aparelhagem utilizada no trabalho, bem como a analise das me-
+
+ I1
+ (I1 + I2 + I3 )3
+ (I1 + I2 + I3 + I4 + I5 )5
+ (I2 + I3 + I4 + I5 + I6 )5
+
+
+
+(1)
+
+(It2 + It1 + It + It+1 + It+2 )5
+
+Solar Irradiance observations
+
+Solar Irradiance (Wm2)
+
+Os dados usados neste trabalho foram obtidos em
+uma estacao de energia_solar localizada em Cingapura. A estacao e componente de uma rede
+instalada ao longo da ilha pelo SERIS - Solar
+Energy Research Institute of Singapore (Instituto
+de Pesquisas em Energia Solar de Cingapura) como parte de um projeto de pesquisa da entidade. Com o objetivo de obter leituras com uma
+boa resolucao espacial, 25 estacoes do projeto foram distribudas pela regiao usando uma malha
+de 5x5 km como referencia. A Figura 1 exibe essa
+distribuicao.
+
+ISSN 2525-8311
+
+Pre-processamento
+
+Como discutido anteriormente, os valores observados para irradiacao solar podem ser interpretados como series_temporais com componentes de
+tendencia e sazonalidade. E nesse caso, melhores resultados de predicao passam pela mitigacao ou eliminacao desses componentes (Zhang and
+Qi, 2005).
+Neste trabalho, o processo de extracao de tendencias foi realizado a partir deteccao de sua versao suavizada, calculada com a aplicacao de um
+filtro de medias moveis. Isso significa que, dada
+uma serie y, seus valores suavizados sao representados por y, calculados conforme descrito a seguir
+em 1.
+
+Solar Irradiance (Wm2)
+
+2
+
+dicoes avaliadas, indicam um erro na ordem de
+0.2.
+Dado que o foco deste trabalho e somente nos
+aspectos de predicao do modelo, apenas uma estacao central foi escolhida para a analise. Ela esta
+indicada na Figura 1 pelo numero 402.
+
+1000
+800
+600
+400
+200
+0
+
+0
+
+50
+
+100
+150
+30min observations
+Smoothed time series
+
+200
+
+250
+
+0
+
+50
+
+100
+150
+30min observations
+
+200
+
+250
+
+1000
+800
+600
+400
+200
+0
+
+Figura 2 Observacoes de irradiacao solar de 1o
+de Abril de 2013 a 05 de Abril de 2013 e seus
+valores suavizados.
+A Figura 2 demonstra um exemplo de valores
+suavizados para um perodo de observacoes. A
+suavizacao foi feita a partir de um filtro de medias
+moveis com um intervalo de 5 observacoes.
+No caso dos dados utilizados para este trabalho, o processo de extracao de tendencia consiste
+
+1824
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+exatamente na remocao da componente It , representada pelos dados suavizados, de dentro das observacoes de irradiacao solar, representadas por I.
+Desse modo, os valores restantes, que contem os
+dados sem a tendencia, Idt , passam a constituir a
+serie_temporal utilizada no estudo. Esta componente Idt tambem pode ser interpretada como a
+parte estocastica da serie_temporal. Um processo
+de extracao da componente estocastica para analise da serie_temporal baseado na suavizacao dos
+dados e tambem observado no trabalho de (Pedro
+and Coimbra, 2012). No entanto, e adotado um
+metodo diferente para a suavizacao dos dados.
+I  Idt + It
+
+(2)
+
+Em resultados preliminares deste trabalho,
+foi observado que melhores valores foram obtidos
+quando o processo de extracao de tendencias descrito acima foi realizado. Portanto, todos os metodos de predicao avaliados neste trabalho utilizaram como dados a serie_temporal descrita por
+Idt .
+Outro aspecto citado no incio desta secao
+se refere a sazonalidade. No entanto, seu tratamento neste contexto se constitui em uma tarefa mais complexa, visto que condicoes climaticas sao afetadas por diferentes fatores ao longo
+do ano. Portanto, neste trabalho o ajuste de sazonalidade nao e realizado durante esta etapa de
+pre-processamento, mas deixado a cargo de cada
+metodo de predicao, caso este o realize.
+4
+
+Metodos
+
+Nesta secao sao descritos os metodos de predicao
+utilizados neste trabalho.
+4.1
+
+Persistencia
+
+O modelo de Ceu Limpo representa os valores para
+irradiacao solar em que as demais variaveis climaticas sao ignoradas. Com esse modelo, a predicao de irradiacao solar poderia ser calculada com
+boa precisao atraves de um modelo determinstico.
+Porem, nas situacoes reais as condicoes climaticas
+sao tambem influenciadas por uma componente
+estocastica que afeta fortemente o resultado final
+de uma predicao.
+O modelo de Persistencia e um metodo de
+predicao bem comum, que geralmente e utilizado
+como uma referencia na comparacao com outros
+metodos propostos. Ele assume que a predicao e
+realizada em cima de condicoes climaticas iguais
+as observadas no tempo corrente. Ou seja, o horizonte de predicao seria calculado a partir do valor
+atualmente observado. Para tanto ele combina o
+valor corrente observado com valores extrados do
+modelo de Ceu Limpo, conforme descrito na equacao abaixo
+
+ISSN 2525-8311
+
+It+1 
+
+(
+Ics,t+1
+Ics,t+1
+Ics,t
+
+ It
+
+se Ics,t  0
+senao
+
+(3)
+
+Onde Ics,t representa o valor de irradiacao solar para ceu limpo no tempo t. Ainda que seja
+considerado um metodo mais simples, o modelo
+de Persistencia pode apresentar bons resultados
+em algumas ocasioes. Por exemplo, em regioes
+onde os padroes climaticos mudam muito pouco
+ou de maneira mais lenta. Portanto, sob algumas condicoes bem especficas, este metodo pode
+apresentar desempenhos proximos aos de outros
+metodos mais avancados.
+4.2
+
+ARIMA
+
+O metodo ARIMA - Autoregressive Integrated Moving Average, ou modelo Autorregressivo Integrado de Medias Moveis e um dos mais populares modelos de predicao de series_temporais (Box
+et al., 2008). Ele combina um componente autorregressivo com um componente de medias moveis.
+Sua representacao usual, ARIM A(p, d, q), se refere, respectivamente, aos graus de autorregressao,
+integracao e medias moveis, ou seja, p indica a ordem autoregressiva, d e o grau de diferenciacao e
+q representa a ordem do componente de medias
+moveis.
+Um modelo ARIMA para uma serie_temporal
+representada por It pode ser escrito da seguinte
+maneira
+It  (1  L)d It
+(L)It  (L)t
+
+(4)
+(5)
+
+onde It e o resultado da predicao t, It sao os valores da serie_temporal, i e uma componente autorregressiva, j e uma componente de medias moveis, L e a componente de defasagem,  e um erro
+irredutvel associado.
+!
+p
+X
+i
+(L)  1 
+i L
+(6)
+i1
+
+
+(L)  1 
+
+q
+X
+
+
+j Lj 
+
+(7)
+
+j1
+
+Os parametros i e j estao associados com as
+componentes autorregressiva e de medias moveis,
+respectivamente, enquanto t representa o erro irredutvel associado. Li representa a componente
+de defasagem, onde dado xt , temos Lk xt  xtk
+A avaliacao da correlacao entre os valores da
+serie_temporal podem auxiliar na elaboracao de
+um modelo ARIMA mais adequado em termos de
+seus parametros. O grafico de autocorrelacao para
+a componente estocastica de observacoes em intervalos de 30 minutos e exibido na Figura 3. No
+
+1825
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+cia (os k-vizinhos mais proximos) sao utilizados
+para definir qual a classe ou valor do elemento em
+avaliacao. No caso do problema em questao, o objetivo e definir um valor de predicao com base na
+observacao das series_temporais presentes na base
+de treinamento. Isso ocorre a partir da comparacao entre a serie_temporal utilizada para a predicao e as demais presentes na base de treinamento.
+Por exemplo, dada uma serie_temporal extrada da
+base de treinamento representada por < Pt , Ot >,
+onde
+
+Sample Autocorrelation Function
+
+Sample Autocorrelation
+
+1
+
+0.5
+
+0
+
+0.5
+
+0
+
+5
+
+10
+Lag
+
+15
+
+20
+
+Figura 3 Grafico de autocorrelacao para a componente estocastica.
+Sample Partial Autocorrelation Function
+
+Sample Partial Autocorrelations
+
+0.8
+
+0.6
+
+0.4
+
+Pt
+Ot
+
+ (Ist,t , Ist,t1 , Ist,t2 , . . . , Ist,tn ) (8)
+ Ist,t+1
+
+E dada uma serie de entrada usada para teste
+Qt , de mesmo tamanho de Pt , esta e comparada
+com todas as series_temporais presentes na base
+de treinamento. Essa comparacao consiste no calculo da distancia, que e feito a partir da seguinte
+equacao
+v
+u n
+uX
+(9)
+Dist(s)  t (Ps,i  Qt,i )2
+i1
+
+0.2
+
+0
+
+0.2
+
+0
+
+5
+
+10
+Lag
+
+15
+
+20
+
+Figura 4 Grafico de correlacao parcial para a
+componente estocastica.
+grafico e possvel observar valores positivos para
+um alto numero perodos (lags), o que sugere um
+modelo ARIMA com algum grau de diferenciacao.
+O grafico de autocorrelacao parcial, descrito na
+Figura 4, apresenta um corte logo nos primeiros
+lags, o que indica a utilizacao de componentes de
+autorregressao e medias moveis em graus menores.
+Como os dados avaliados neste trabalho se
+constituem em medicoes separadas por intervalos
+de 30 minutos, cada entrada do modelo utilizou
+48 medicoes, representando um componente sazonal completa. Para os demais parametros citados
+anteriormente, os valores escolhidos foram p  1,
+d  1 e q  1.
+
+Onde s e uma serie_temporal pertencente a
+base de treinamento. Calculadas as distancias, as
+k series_temporais da base de treinamento com
+os menores valores sao usadas no resultados da
+predicao. Esse valor e calculado pela media dos
+valores Ot dos k vizinhos mais proximos.
+O valor mais adequado para k foi obtido de
+maneira emprica. Diversas faixas de valores foram avaliadas em termos de acuracia sendo escolhido para este trabalho k  12.
+4.4
+
+Maquinas de Aprendizado Extremo
+
+Maquinas de Aprendizado Extremo (Extreme Learning Machines - ELM) (Huang et al., 2006) possuem uma arquitetura similar a uma rede_neural
+artificial de camada unica. Elas diferem, no entanto, quanto ao processo de aprendizado. Seu
+algoritmo e baseado na teoria de minimizacao do
+risco emprico e requer somente uma iteracao.
+Considerando n amostras no formato (xi , yi ) 
+X  Y , i  1, . . . , N , onde
+xi  xi1 , xi2 , ..., xin  com X  Rn e yi 
+yi1 , yi2 , ..., yim  com Y  Rm . O processo de treinamento consiste basicamente em duas etapas
+1. Encontrar um mapeamento intermediario
+
+4.3
+
+k-Nearest-Neighbors
+
+O modelo kNN - k-Nearest-Neighbors, ou kvizinhos mais proximos, e uma tecnica amplamente usada em reconhecimento_de_padroes e classificacao. Basicamente, ele consiste na medicao
+das distancias entre o elemento em avaliacao e os
+demais elementos do espaco amostral, de modo
+que os k elementos considerados de menor distan-
+
+ISSN 2525-8311
+
+H  f (XZ)
+
+(10)
+
+O mapeamento intermediario H e um resultado de uma funcao de ativacao f aplicada
+a uma projecao feita com a entrada X e um
+conjunto de pesos Z, onde um peso z,j conecta um nodo de entrada i a um nodo j pertencente a camada escondida. Os valores de
+
+1826
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Z sao escolhidos aleatoriamente. O objetivo e
+converter a entrada original em um problema
+solucionavel linearmente.
+
+onde Y e a solucao e W e uma matriz de pesos
+que conecta a camada escondida com a camada de
+sada. Para resolver este problema, os valores de
+W sao obtidos a partir da base de treinamento
+Y e a pseudoinversa de Moore-Penrose do mapeamento H, como descrito abaixo
+W  Y H
+
+(12)
+
+Obtida a matriz W , o modelo e treinado e
+pode ser aplicado a amostras de teste seguindo
+passos similares. Dado um conjunto de dados de
+entrada Xtest 
+
+Medições
+Persistência
+
+1000
+
+Irradiação (Wm2 )
+
+2. Encontrar uma solucao para o problema linear
+Y  HW
+(11)
+
+1200
+
+800
+
+600
+
+400
+
+200
+
+0
+0
+
+6
+
+12
+
+18
+
+24
+
+Tempo (Horas)
+
+Figura 5 Valores observados nas medicoes de irradiacao e valores retornados pelo metodo Persistencia.
+1000
+Medições
+ELM
+
+900
+800
+
+ h(Xtest Z)
+ Htest W
+
+(13)
+(14)
+
+Neste trabalho, o modelo usa como entrada
+um trecho da serie_temporal de irradiacao solar referente a observacoes passada. Por exemplo, dado
+um instante corrente t e um conjunto de n observacoes anteriores, o modelo usa como dados de
+entrada as observacoes registradas nos instantes
+de t  n a t com o objetivo de predizer o valor y a
+ser observado no instante t + 1.
+5
+
+600
+500
+400
+300
+200
+100
+0
+0
+
+6
+
+12
+
+18
+
+24
+
+Tempo (Horas)
+
+Figura 6 Valores observados nas medicoes de irradiacao e valores retornados pelo metodo ELM.
+
+Experimentos
+
+Alguns experimentos foram realizados com o objetivo de avaliar o desempenho dos metodos de
+predicao descritos anteriormente, em termos de
+velocidade de processamento e exatidao. Como
+mencionado anteriormente, os dados de entrada
+utilizados foram a componente estocastica das observacoes de irradiacao solar. No entanto, a comparacao final de exatidao dos resultados foi feita
+com os dados reais registrados, obtidos a partir
+da equacao I  Idt + Ist , conforme discutido na
+Secao 3.
+A base de dados usada para treinamento e testes e composta de observacoes de irradiacao registradas em intervalos de 30 minutos. Tanto a base
+de treinamento quanto a base de testes possuem
+cerca de uma ano de observacoes, cada uma.
+1. Dados de Treinamento
+de Abril - 2013 a Marco - 2014
+2. Dados de Teste
+de Abril - 2014 a Marco - 2015
+
+ISSN 2525-8311
+
+700
+
+Irradiação (Wm2 )
+
+Htest
+Ytest
+
+Essa divisao resultou em 17.513 amostras de
+treinamento e 17.280 amostras para teste. A proposta de se utilizar um ano inteiro para testes foi
+avaliar o desempenho de predicao sob diferentes
+condicoes climaticas.
+Os dados de entrada para todos os metodos
+(exceto ARIMA, cujo formato de entrada foi discutido na secao que descreve o metodo) foram formatados em 6 observacoes sequenciais de irradiacao solar. Em outras palavras, dada uma observacao corrente t, os dados de entrada foram constitudos das observacoes registradas no intervalo
+de t  5 a t, com o objetivo de predizer o valor
+futuro t + 1. No caso do modelo ELM, outro parametro adotado foi o valor de 12 neuronios para
+a camada escondida da rede. As Figuras 5, 6, 7 e
+8 ilustram os valores calculados pelos metodos de
+predicao avaliados neste trabalho em comparacao
+com os dados medidos em um dia de observacoes
+de irradiacao. O dia utilizado foi 02 de abril de
+2014, que faz parte da base utilizada para testes.
+O modelo ELM possui em seu algoritmo de
+treinamento uma componente aleatoria. Uma vez
+
+1827
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+1000
+Medições
+kNN
+
+900
+800
+
+Irradiação (Wm2 )
+
+700
+600
+500
+400
+300
+200
+100
+0
+0
+
+6
+
+12
+
+18
+
+24
+
+Tempo (Horas)
+
+Figura 7 Valores observados nas medicoes de irradiacao e valores retornados pelo metodo kNN.
+1000
+Medições
+ARIMA
+
+Irradiação (Wm2 )
+
+800
+
+kNN e ELM, sendo este ultimo ligeiramente superior em alguns meses avaliados. Outro aspecto
+a se destacar foi o bom desempenho do modelo
+de Persistencia, que a princpio foi usado como
+referencia para os demais modelos. Tal situacao
+pode ser explicada por cenarios em que ha pouca
+alteracao climatica. O modelo ARIMA teve pior
+desempenho dentre os avaliados, o que sugere que,
+para que este consiga contemplar melhor as series
+temporais em analise, possa ser necessaria a incorporacao de uma componente que consiga modelar
+mais adequadamente a sazonalidade associada ao
+problema. O kNN, por sua vez, teve um desempenho acima do modelo de referencia, mas ainda
+inferior ao ELM. Um ponto a ser destacado neste
+modelo e a ausencia de uma etapa de treinamento,
+o que em um primeiro momento pode ser observado como uma vantagem. A longo prazo, no entanto, em um contexto de alteracoes nos padroes
+climaticos vigentes, o modelo pode encontrar problemas para realizar uma eventual readaptacao.
+
+600
+
+Tabela 1 Erro de Predicao - RMSE.
+400
+
+200
+
+0
+
+-200
+0
+
+6
+
+12
+
+18
+
+24
+
+Tempo (Horas)
+
+Figura 8 Valores observados nas medicoes
+de irradiacao e valores retornados pelo metodo
+ARIMA.
+que essa caracterstica pode influenciar no resultado final, o modelo foi executado 30 vezes e o resultado final registrado a seguir foi gerado a partir
+de uma media de todas as execucoes. Alem disso o
+desvio padrao para os resultados tambem foi apresentado.
+As metricas escolhidas para avaliar a exatidao dos metodos foram a Raiz Quadrada do Erro
+Medio Quadratico (Root Mean Square Error RMSE ) e sua versao normalizada (nRMSE ). Ambas sao descritas nas equacoes abaixo
+v
+u n
+u1 X
+(It  It )2
+RM SE  t
+n t1
+
+(15)
+
+sP
+nRM SE 
+
+n
+ 2
+t1 (It  It )
+Pn 2
+t1 It
+
+(16)
+
+As Tabelas 1 e 2 demonstram os resultados
+agrupados por mes da predicao em termos de acuracia para os metodos analisados. Nos resultados,
+dois modelos obtiveram os melhores resultados
+
+ISSN 2525-8311
+
+Mes
+2014-04
+2014-05
+2014-06
+2014-07
+2014-08
+2014-09
+2014-10
+2014-11
+2014-12
+2015-01
+2015-02
+2015-03
+
+Persistence
+84.7667
+80.1549
+66.0692
+74.7301
+81.9827
+64.5804
+73.1025
+88.9649
+78.2640
+80.3508
+71.8613
+82.9459
+
+Tabela 2
+nRMSE.
+Mes
+2014-04
+2014-05
+2014-06
+2014-07
+2014-08
+2014-09
+2014-10
+2014-11
+2014-12
+2015-01
+2015-02
+2015-03
+
+RMSE
+ARIMA
+92.2204
+93.6016
+70.4749
+78.2315
+83.0472
+81.2112
+85.8366
+86.4535
+88.9237
+78.6993
+74.4020
+83.0699
+
+kNN
+80.6711
+79.1877
+64.2329
+72.4574
+78.5713
+67.1694
+70.2621
+78.1195
+76.4641
+76.0221
+69.3758
+80.4487
+
+ELM
+79.7529  0.2564
+76.4931  0.6512
+60.6537  0.2723
+69.3097  0.2850
+75.6961  0.2094
+62.4151  0.3093
+68.8848  0.3145
+76.1150  0.2844
+74.9684  0.3761
+76.2232  0.3073
+68.3714  0.2315
+78.1325  0.3205
+
+Erro de Predicao Normalizado -
+
+Persistence
+26.0970
+25.2920
+20.4130
+24.2044
+28.0606
+17.9420
+22.2266
+31.2467
+28.2985
+23.9825
+20.2438
+24.5532
+
+nRMSE ()
+ARIMA kNN
+28.3981
+24.8361
+29.5008
+24.9868
+21.9464
+19.8457
+25.6209
+23.4683
+28.5605
+26.8930
+22.8274
+18.6613
+26.0694
+21.3630
+30.0230
+27.4375
+31.9184
+27.6477
+23.2046
+22.6905
+21.1003
+19.5436
+24.7428
+23.8140
+
+ELM
+24.5534  0.0789
+24.1365  0.2055
+18.7398  0.0841
+22.4488  0.0923
+25.9088  0.0717
+17.3404  0.0859
+20.9442  0.0956
+26.7335  0.0999
+27.1069  0.1360
+22.7506  0.0917
+19.2607  0.0652
+23.1283  0.0949
+
+Durante os experimentos, outro aspecto tambem avaliado foi o tempo de processamento dos
+metodos durante treinamento e testes. As Tabelas 3 e 4 apresentam os resultados. Para o metodo ARIMA, a etapa de treinamento corresponde
+a etapa de estimativa dos parametros, realizada
+atraves do metodo de Maxima Verossimilhanca.
+Nao ha etapa de treinamento para o metodo kNN.
+Sobre os resultados das Tabelas 3 e 4, ha de se destacar a boa velocidade de processamento do ELM
+nas fases de treinamento e teste, o que sugere uma
+
+1828
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+viabilidade de se incorporar a ele uma etapa de
+treinamento posterior (durante as execucoes) sem
+um prejuzo ao desempenho do sistema como um
+todo.
+
+IEA (2014). Trends 2014 in photovoltaic applications - survey report of selected iea countries
+between 1992 and 2013, Technical report, International Energy Agency.
+
+Tabela 3 Tempo de Treinamento em segundos.
+Tempo de Treinamento
+ARIMA kNN ELM
+38.6510
+8.2736
+
+Mellit, A. and Pavan, A. M. (2010). A 24-h forecast of solar irradiance using artificial neural
+network Application for performance prediction of a grid-connected PV plant at Trieste, Italy, Solar Energy 84(5) 807821.
+
+Tabela 4 Tempo medio de teste em segundos.
+Tempo de Teste
+ARIMA kNN
+ELM
+0.2410
+0.1652 0.0113
+
+6
+
+Conclusao e Trabalhos Futuros
+
+Os resultados avaliados reforcam a expectativa inicial de um melhor desempenho para o modelo de
+Maquinas de Aprendizado Extremo, por este possuir uma maior capacidade de adequacao a padroes mais complexos. No entanto, ha ainda pontos de melhoria que podem ser avaliados. Um
+ponto seria a observacao de outras variaveis climaticas, seguido de um estudo da relacao entre
+elas e os valores de irradiacao solar. Alem disso,
+outra questao a ser estudada seria a relacao entre
+os valores de irradiacao solar observados em diferentes estacoes de um mesmo sistema, se analisados em funcao do tempo e localizacao geografica.
+Nesse contexto, alteracoes mais agudas em determinadas estacoes poderiam indicar um prenuncio
+de variacoes de porte similar em outras estacoes
+vizinhas. A expectativa e de que essa avaliacao de
+novas variaveis possa trazer uma maior robustez
+para o modelo em analise.
+
+Nobre, A. M. (2015). Short-term solar irradiance
+forecasting and photovoltaic systems performance in a tropical climate in Singapore,
+PhD thesis, Federal University of Santa Catarina, Brazil.
+Pedro, H. T. C. and Coimbra, C. F. M. (2012).
+Assessment of forecasting techniques for solar
+power production with no exogenous inputs,
+Solar Energy 86(7) 20172028.
+Raza, M. Q. and Khosravi, A. (2015). A review on
+artificial intelligence based load demand forecasting techniques for smart_grid and buildings, Renewable and Sustainable Energy Reviews 50 13521372.
+Taylor, J. W. (2008). An evaluation of methods
+for very short-term load forecasting using
+minute-by-minute british data, International Journal of Forecasting 24(4) 645  658.
+Energy Forecasting.
+Zhang, P. G. and Qi, M. (2005). Neural network
+forecasting for seasonal and trend time series, European Journal of Operational Research 160 501514.
+
+Agradecimentos
+O presente trabalho foi realizado com o apoio do
+Instituto Federal de Minas Gerais - campus Sabara.
+Referencias
+Box, G., Jenkins, G. and Reinsel, G. (2008).
+Time Series Analysis Forecasting and Control, fourth ed., Wiley.
+Charytoniuk, W. and Chen, M.-S. (2000). Very
+short-term load forecasting using artificial neural networks, IEEE transactions on
+Power Systems 15(1) 263268.
+Huang, G. B., Zhu, Q. Y. and Siew, C. K. (2006).
+Extreme learning machine theory and applications, Neurocomputing 70(1-3) 489501.
+
+ISSN 2525-8311
+
+1829

@@ -1,0 +1,562 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+UMA NOVA ABORDAGEM BASEADA EM CAMPOS POTENCIAIS PARA DESVIO
+DE OBSTACULOS COM ROBOS MOVEIS
+Tadeu Abreu Cerqueira, Tito L. M. Santos, Andre G. S. Conceicao
+
+
+Departamento de Engenharia Eletrica
+Universidade Federal da Bahia - UFBA
+Salvador, BA, Brasil
+Emails tcerqueiraufba@gmail.com, tlsantos@ufba.br, andre.gustavo@ufba.br
+Abstract This article proposes a new approach for the method of path planning with obstacles avoidance
+based on potential fields, also known as APF method. This new approach consists on a way to overcome the
+problem of local minima, present in the APF method, assuring a more effective path planning. It is used a
+mobile robot with differential drive as a base for testing, which is applied a kinematic control, allowing the robot
+drives a previously planned path to reach the goal point and avoid automatically the obstacles arranged on the
+environment.
+Keywords
+
+Path Planning, Potential Fields, Obstacles Avoidance, Mobile Robots, Kinematic Control.
+
+Resumo Este artigo apresenta uma abordagem para o metodo de planejamento_de_trajetorias com desvio de
+obstaculos baseado em campos_potenciais, conhecido tambem como Metodo APF (Artificial Potencial Fields).
+Essa nova abordagem consiste em uma forma de superar o problema dos mnimos locais, inerente ao Metodo
+APF, de modo a garantir maior eficacia no planejamento da trajetoria. Usa-se como base de testes um robo
+movel com tracao diferencial, em que e aplicado um controle_cinematico para permitir que o robo percorra um
+caminho previamente planejado, visando atingir o ponto de referencia e desviar automaticamente dos obstaculos
+dispostos no ambiente.
+Palavras-chave .
+
+1
+
+Introducao
+
+O ramo da robotica_movel vem realizando uma serie de melhorias em sistemas e metodos, fazendo
+com que robos_moveis executem tarefas cada vez
+mais complexas e que exigem maior habilidade de
+se adaptar a situacoes inesperadas do ambiente
+(Siegwart and Nourbakhsh, 2011). Pode-se listar basicamente tres etapas necessarias para que
+o robo execute uma tarefa com eficacia
+ Etapa de mapeamento, atraves da coleta de
+dados do ambiente pelos sensores do robo
+ Etapa do planejamento_de_trajetoria, considerando o ponto final desejado e os obstaculos
+presentes no meio e
+ Etapa do controle, com acionamento dos atuadores de forma que o robo percorra com precisao o caminho planejado.
+Trabalhos foram desenvolvidos para o mapeamento do ambiente, atraves do uso de tecnicas para reconstrucao tridimensional do meio,
+como visto em (Pinto et al., 2014). No controle, foi observado em (Spong et al., 2008 Borges et al., 2003 Vieira, 2006) o uso de tecnicas
+consagradas, como o controle_nao_linear invariante no tempo e a linearizacao_por_realimentacao dinamica. Com relacao a etapa de planejamento, a literatura indica o uso de um metodo para evitar colisoes com obstaculos, baseado em campos_potenciais, conhecido tambem
+como Metodo APF (Artificial Potencial Fields),
+
+ISSN 2525-8311
+
+visto em (Mezencio, 2002 Santos et al., 2006 Ribeiro, 2015). De acordo com (Koren and Borenstein, 1991), o APF e um metodo de simples implementacao e que planeja trajetorias mais
+otimizadas que as de outros metodos, como o
+Mapa de Estradas (Road Map) e a Decomposicao por Celulas (Cell Decomposition), observado
+em (Latombe, 2012 Choset et al., 2005).
+Neste trabalho, propoe-se uma nova abordagem relativa a etapa do planejamento da trajetoria, atraves de alteracoes no algoritmo do metodo
+de campos_potenciais. Essa nova abordagem visa,
+principalmente, superar a principal limitacao do
+metodo, conhecida como problema dos mnimos
+locais, melhorando a etapa de planejamento.
+Para a realizacao de testes, usa-se o modelo
+de um robo_movel com tracao diferencial. Nele e
+aplicado o controle_cinematico, atraves de um controlador_nao_linear invariante no tempo, de modo
+a percorrer as trajetorias planejadas previamente
+pelos metodos.
+Este artigo esta estruturado da seguinte maneira Na Secao 2 encontra-se o modelo do robo
+movel usado como base de testes. Na Secao 3
+discute-se como e realizado o controle_cinematico
+do robo. Na Secao 4 explica-se o planejamento da
+trajetoria usando o Metodo APF e na Secao 5 e
+apresentada a nova abordagem proposta. Na Secao 6 e realizado um estudo de caso em que sao observados os resultados dos dois metodos de planejamento, bem como os resultados para o controle
+cinematico. Por fim, na Secao 7 sao apresentadas
+as conclusoes do trabalho.
+
+738
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+2
+
+Modelo do Robo
+
+tado, de acordo com a seguinte equacao (Siegwart
+and Nourbakhsh, 2011 Corke, 2011)
+
+O robo utilizado como base de testes, mostrado na
+Figura 1, e um robo_movel com acionamento diferencial, construdo a partir do Kit didatico Lego
+EV3, cujo raio r das rodas e igual a 2.8cm e a
+distancia L entre as rodas e 12cm.
+
+
+ 
+
+
+
+x(k + 1)
+x(k)
+y(k + 1)  y(k) + R. v(k) .ts
+w(k)
+(k + 1)
+(k)
+
+(2)
+
+Sendo R a matriz de rotacao, dada por
+
+
+cos((k)) 0
+R  sen((k)) 0
+(3)
+0
+1
+A partir desse modelo para o movimento do
+robo, pode-se implementar o controle_cinematico
+para percorrer uma dada trajetoria, como sera discutido a seguir.
+3
+
+Figura 1 Robo diferencial com o Kit Lego EV3.
+O perodo de amostragem ts adotado e de
+100ms. Nos ensaios em laboratorio verificou-se
+que a motorizacao do robo apresentou uma dinamica de primeira ordem que foi usada posteriormente nas simulacoes deste trabalho. Nessa dinamica, obteve-se velocidade linear maxima igual a
+0.5ms e aceleracao maxima de 3.0ms2 .
+A seguir apresenta-se o modelo_cinematico
+para o movimento do robo no ambiente. A partir
+das velocidades angulares medidas nas rodas direita e esquerda, pode-se determinar a velocidade
+linear v e a velocidade_angular w do robo, atraves
+da seguinte equacao (Corke, 2011)
+  
+ 
+
+v
+r2
+r2
+rD
+
+.
+(1)
+w
+rL rL
+rE
+Sendo rD e rE as velocidades angulares nas
+rodas direita e esquerda, respectivamente.
+Supoe-se que em um dado instante k de
+tempo_discreto o robo encontra-se na posicao
+(x(k), y(k)), com angulo de rotacao (k), em relacao ao sistema de coordenadas global, como evidenciado na Figura 2.
+
+Controle Cinematico
+
+Na literatura sao encontradas algumas tecnicas
+ja consagradas que realizam o controle_cinematico para percorrer uma dada trajetoria, verificado em (Spong et al., 2008 Vieira, 2006 Borges
+et al., 2003).
+O objetivo e fazer com que o robo passe nas
+posicoes (xd , yd ) relativas a uma trajetoria planejada. No entanto, as variaveis_de_controle sao as
+velocidades linear vs e angular ws aplicadas na dinamica do robo. Portanto, controla-se a posicao
+atraves das velocidades, de modo que para o robo
+percorrer todo o caminho, as velocidades linear vd
+e angular wd de referencia ao longo da trajetoria
+devem ser (Spong et al., 2008)
+p
+vd  (xd )2 + (yd )2
+2 yd .xd  2 xd .yd
+(4)
+wd 
+2
+2
+(xd ) + (yd )
+Sendo os operadores  e 2 definidos por
+(k)  (k  1)
+ts
+(k)  (k  1)
+(5)
+2
+ (k) 
+ts
+  xd , yd 
+Neste trabalho, sera utilizado o controle nao
+linear invariante no tempo, tambem conhecido
+como NTI (nonlinear time-invariant control ). A
+lei de controle definida para o NTI e dada pelas
+seguintes equacoes (Vieira, 2006)
+(k) 
+
+
+
+vs  vd .cos(d  ) + k1 .M1
+ws  wd  k2 .vd .S .M2 + k3 .(d  )
+
+(6)
+
+Sendo
+
+Figura 2 O robo no sistema de coordenadas global.
+Apos serem aplicados os sinais de controle nos
+motores das rodas, o robo passa para o proximo es-
+
+ISSN 2525-8311
+
+d  tan1 (yd xd )
+  tan1 (yx)
+M1  (xd  x).cos() + (yd  y).sen()
+M2  (yd  y).cos()  (xd  x).sen()
+sen(d  )
+S 
+d  
+
+(7)
+
+739
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+A partir da simulacao para o movimento do
+robo ao longo da trajetoria, sao escolhidos os parametros de controle k1 , k2 e k3 sendo
+p
+k1  k3  2. d2 + k2 .vd2
+(8)
+k2  40
+Portanto, os sinais de controle da Equacao (6)
+sao aplicados para que o robo percorra a trajetoria definida pelos pontos (xd , yd ). Esta trajetoria
+devera ser planejada de modo que o robo desvie
+dos obstaculos dispostos no ambiente, como sera
+discutido a seguir.
+4
+
+Planejamento com o Metodo APF
+
+Na etapa de planejamento sao determinados os
+pontos (xd , yd ) para que o robo atinja uma dada
+referencia e desvie dos obstaculos. Para isso,
+utiliza-se o Metodo APF, que entende o robo,
+analogamente, como uma partcula de carga positiva que se desloca para o ponto de referencia,
+representado como uma partcula fixa com carga
+negativa, mas se afasta dos obstaculos que tem
+carga positiva (Siegwart and Nourbakhsh, 2011),
+seguindo um princpio basico da eletricidade cargas iguais se repelem e as opostas se atraem. A
+Figura 3 ilustra o planejamento pelo Metodo APF
+seguindo essa analogia fsica.
+
+Nao existe uma unica escolha para as funcoes
+potenciais, no entanto e necessario que o potencial
+Uatt (xd , yd ) seja uma funcao que garanta mnimo
+global no ponto de referencia (xref , yref ) e que
+Urep (xd , yd ) seja monotonicamente crescente em
+relacao ao inverso da distancia entre robo e obstaculo. Alem disso, o potencial repulsivo nao tem
+alcance infinito, ou seja, para distancias maiores
+que 3.L o valor Urep (xd , yd ) e considerado nulo.
+Com essas condicoes pode-se escolher as seguintes
+funcoes potenciais de atracao e repulsao (Siegwart
+and Nourbakhsh, 2011 Ribeiro, 2015)
+
+Uatt (xd , yd ) 
+
+( 
+Urepi (xd , yd ) 
+
+O potencial U (xd , yd ) e a soma do potencial
+Uatt (xd , yd ) de atracao para o ponto de referencia
+com o potencial Urep (xd , yd ) de repulsao, referente
+aos obstaculos do meio. Logo
+U (xd , yd )  Uatt (xd , yd ) + Urep (xd , yd )
+
+ISSN 2525-8311
+
+(10)
+
+1
+dbi
+
+2
+1
+, dbi < 3L (12)
+ 3.L
+0, dbi > 3L
+
+j
+X
+
+Urepi (xd , yd )
+
+(13)
+
+i1
+
+Sendo  e  as escalas de gradiente atrativo
+e repulsivo, respectivamente, j o numero total de
+objetos detectados no meio e (xbi , ybi ) o ponto do
+obstaculo i com a menor distancia dbi para o robo,
+portanto
+p
+(xd  xbi )2 + (yd  ybi )2
+
+(14)
+
+Desse modo, pode-se encontrar os pontos
+(xd , yd ) a cada nova iteracao e assim planejar
+a trajetoria que levara o robo ao mnimo local
+da funcao potencial, visando atingir a referencia e desviar dos obstaculos (Siegwart and Nourbakhsh, 2011).
+Adicionalmente, utiliza-se um metodo de interpolacao cubica, denominado spline, para adaptar melhor o caminho, gerando uma trajetoria
+mais suave, como visto em (Pedrosa et al., 2003).
+5
+
+De acordo com (Siegwart and Nourbakhsh,
+2011 Latombe, 2012), o APF e um metodo de
+simples implementacao, cuja modelagem matematica consiste em um campo potencial, descrito como sendo uma funcao real e diferenciavel
+U (xd , yd ), em que
+
+
+xd yd
+ U (xd , yd )
+,
+ O
+(9)
+ts
+ts
+
+
+2
+
+Urep (xd , yd ) 
+
+dbi 
+
+Figura 3 Trajetoria obtida atraves do metodo de
+campos_potenciais.
+Fonte Adaptado de (Ribeiro, 2015).
+
+
+.((xref xd )2 +(yref yd )2 ) (11)
+2
+
+Nova Abordagem para o Metodo APF
+
+Como visto na Secao 4, a trajetoria planejada
+pelo metodo baseado em campos_potenciais sempre levara o robo para um mnimo local da funcao
+potencial, mas nao necessariamente ao mnimo
+global. Desta forma, tem-se uma limitacao inerente ao Metodo APF o problema dos mnimos
+locais, que consiste basicamente no fato de que,
+dependendo das configuracoes iniciais do robo e
+da disposicao de obstaculos no meio, a trajetoria planejada pode nao conseguir chegar a referencia, mesmo que exista algum caminho factvel (Latombe, 2012 Choset et al., 2005). A nova
+abordagem proposta visa, entao, superar esse problema, garantindo que o planejamento leve o robo
+ate a referencia, se houver trajetoria factvel.
+
+740
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+A partir dos dados obtidos na deteccao dos
+obstaculos, sao calculados todos os n pontos
+(xc , yc ) pertencentes a uma circunferencia Ck de
+raio dr , cujo centro esta na posicao atual da trajetoria. O proximo ponto da trajetoria planejada
+sera um desses pontos calculados pertencentes a
+Ck , portanto o planejamento sempre projeta o proximo passo a uma distancia equivalente ao raio dr .
+Usa-se como base os campos_potenciais, sendo
+calculadas as contribuicoes associadas a atracao e
+repulsao em cada ponto p pertencente a Ck 
+Catp 
+
+Crep 
+
+(xcp  xref
+
+j 
+X
+i1
+
+(xcp
+
+qref
++ (ycp  yref )2
+
+(15)
+
+)2
+
+qbi
+2
+ xbi ) + (ybi  ybi )2
+
+
+(16)
+
+Essas contribuicoes Catp e Crep sao analogas
+as forcas eletricas que a carga do robo estaria submetida se estivesse no ponto p  Ck . Ve-se, entao,
+que qref seria a carga do ponto de referencia e qbi
+a carga associada ao obstaculo i.
+Assim, o proximo ponto da trajetoria devera
+ser aquele em que o custo p que relaciona a contribuicao de repulsao com a de atracao seja o menor entre todos os pontos de Ck , sendo
+p  Crep  Catp
+
+(17)
+
+Atribui-se valores de qb e qref iguais a 1, para
+ser realizada uma primeira tentativa de encontrar
+a trajetoria que consiga convergir para o ponto
+de referencia. A cada novo ponto da trajetoria
+calculado dentro da mesma tentativa, ocorre uma
+variacao no valor qbi da carga de cada objeto i, que
+aumenta na medida em que o robo se aproxima
+do ponto de referencia, para que as contribuicoes
+de repulsao tenham valores na mesma grandeza
+que as de atracao, visto que a atracao aumenta
+muito com a aproximacao do robo para o ponto
+de referencia.
+Apos obter uma primeira trajetoria, e caso
+esta nao leve o robo ao ponto de referencia, significa que a atracao nao foi suficiente. Portanto,
+aumenta-se o valor de qref para ser realizada uma
+nova tentativa de obtencao da trajetoria que consiga chegar ate o ponto de referencia. Assim, nessa
+nova abordagem para o Metodo APF as cargas
+qref e qb se ajustam no decorrer da execucao do
+algoritmo, de modo a encontrar uma trajetoria
+factvel que atinja o ponto de referencia. A Figura 4 ilustra o fluxograma simplificado para o
+algoritmo proposto relativo a nova abordagem de
+planejamento baseada em campos_potenciais.
+O algoritmo proposto garante que a trajetoria planejada sempre atinja o ponto de referencia.
+No entanto, quando nao ha trajetorias factveis, a
+atracao fica muito forte, a ponto do metodo planejar trajetorias que atravessem os obstaculos para
+
+ISSN 2525-8311
+
+Figura 4 Fluxograma simplificado da nova abordagem baseada em campos_potenciais.
+chegar no ponto de referencia. Neste caso, usase um algoritmo auxiliar para verificar se a trajetoria planejada atravessa ou colide com algum
+obstaculo, e caso isso ocorra o algoritmo nao gera
+nenhuma trajetoria como sada.
+Da mesma forma como foi feito no Metodo
+APF, utilizou-se a interpolacao cubica do tipo
+spline, gerando trajetorias suavizadas para o robo
+percorrer.
+Destacam-se tambem outros metodos heursticos de planejamento, que nao apresentam o problema dos mnimos locais, como observado em
+(Latombe, 2012 Choset et al., 2005 Siegwart and
+Nourbakhsh, 2011). No entanto o Metodo APF e
+o que possui a caracterstica de planejar trajetorias que mais se aproximam do caminho otimo que
+leva o robo ate a referencia com o desvio_de_obstaculos (Koren and Borenstein, 1991). Levando-se
+em conta essa vantagem do APF, a abordagem
+proposta, alem de contornar o problema dos mnimos locais, visa planejar trajetorias similares ao
+APF quando nao ocorre o problema dos mnimos
+locais, como sera observado no estudo de caso a
+seguir.
+6
+
+Estudo de Caso
+
+Nesta Secao e realizado um estudo de caso em
+que sao apresentados os resultados para o sistema
+de planejamento usando o Metodo APF e a nova
+abordagem proposta, bem como os resultados relativos ao controle_cinematico para percorrer os
+caminhos planejados.
+Para os resultados relativos a etapa de pla-
+
+741
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+nejamento, comparam-se as trajetorias planejadas
+pelos dois metodos. O ambiente usado para realizar os testes possui dimensoes 2, 5m X 2, 5m, dispondo de cinco obstaculos. Considera-se o ponto
+de referencia em (1.5, 1.5), sendo planejadas as
+trajetorias para tres configuracoes iniciais distintas, como evidenciado na Figura 5, sendo que as
+denominacoes APF 1 e APF 2 correspondem,
+respectivamente, aos planejamentos com o Metodo APF e com a nova abordagem proposta.
+Com relacao ao controle para percorrer a trajetoria planejada, aplica-se o controlador NTI nos
+modelos dinamico e cinematico do robo, para
+obter os resultados de simulacao e em seguida
+realizam-se testes reais em laboratorio. Na Figura 6 pode-se observar a trajetoria percorrida
+pelo robo na simulacao e no teste em laboratorio.
+Na Figura 7 e observado o comportamento das velocidades v e w ao longo do percurso da Figura 6,
+tanto em simulacao quanto no experimento.
+A partir da analise dos resultados, verifica-se
+que a nova abordagem proposta para o Metodo
+APF obteve exito ao superar o problema dos mnimos locais, vide Figura 5-c. Ja para situacoes
+em que nao ocorre o problema de mnimos locais,
+os resultados de planejamento com ambos os metodos mostraram-se similares, vide Figuras 5-a e
+5-b. Por esse motivo, como discutido na Secao 5,
+o metodo proposto consegue planejar trajetorias
+proximas a otima, diferente de outros metodos
+heursticos ja existentes. No entanto, observouse que foi exigido maior esforco computacional na
+execucao do novo algoritmo, consistindo em uma
+desvantagem associada ao metodo proposto.
+Com relacao ao resultado para o controle_cinematico, visto na Figura 6, nota-se que tanto na
+simulacao quanto no experimento o robo conseguiu percorrer a trajetoria planejada. Analisando
+as velocidades linear e angular do robo, vide Figura 7, verifica-se que para percorrer a trajetoria
+planejada nao foi exigido muito esforco por parte
+dos atuadores. Dessa forma, o uso do controle
+NTI mostrou-se eficaz nesse tipo de sistema.
+7
+
+Conclusoes
+
+Neste artigo foi proposta uma nova abordagem
+baseada em campos_potenciais artificiais para o
+desvio_de_obstaculos com robos_moveis. A tecnica
+apresentada permite superar o problema dos mnimos locais a partir de um procedimento que realiza
+a variacao incremental dos campos atrativo e repulsivo. A nova abordagem e simples e permite se
+aproximar do comportamento original dos campos
+potenciais, pois sao feitas variacoes incrementais
+nos parametros de configuracao inicial do Metodo
+APF. Um estudo de caso com resultados de simulacao e validacao_experimental foi apresentado na
+Secao 6 com vistas a ilustrar o bom desempenho
+da abordagem proposta.
+
+ISSN 2525-8311
+
+Referencias
+Borges, G. A., Deep, G. S. and Lima, A. M. N.
+(2003). Controladores cinematicos de trajetoria para robos_moveis com tracao diferencial, VI Simposio Brasileiro de Automacao
+Inteligente .
+Choset, H., Lynch, K., Hutchinson, S., Kantor,
+G., Burgard, W., Kavraki, L. and Thrun, S.
+(2005). Principles of Robot Motion Theory,
+Algorithms, and Implementation, MIT press.
+Corke, P. (2011). Robotics, Vision and Control Fundamental Algorithms in MATLAB,
+Springer.
+Koren, Y. and Borenstein, J. (1991). Potential field methods and their inherent limitations for
+mobile robot navigation, International Conference on Robotics and Automation .
+Latombe, J.-C. (2012). Robot Motion Planning,
+Springer Science  Business Media.
+Mezencio, R. (2002). Implementacao do metodo de campos_potenciais para navegacao de
+robos_moveis baseada em computacao reconfiguravel. Tese de Doutorado, USP.
+Pedrosa, D. P. F., Alsina, P. J. and Medeiros, A.
+A. D. (2003). Um metodo de geracao de trajetoria para robos nao-holononmicos com acionamento diferencial, VI Simposio Brasileiro
+de Automacao Inteligente .
+Pinto, R. F., Conceicao, A. G. S., Farias, P. C.
+M. A. and Santos, E. T. F. (2014). A cost effective open-source three-dimensional reconstruction system and trajectory analysis for
+mobile robots, 5th ISSNIP-IEEE Biosignals
+and Biorobotics Conference .
+Ribeiro, R. C. (2015). Estrategia de desvio de
+obstaculos e planejamento_de_trajetoria para
+uma cadeira_de_rodas autonoma. Projeto de
+Graduacao, UFRJ.
+Santos, R. R. D., de Fatima Pereira Saramango,
+S. and Jr., V. S. (2006). Planejamento de
+trajetoria de robo_autonomo atraves do conceito de campo potencial, 16o Simposio de
+Pos-Graduacao em Engenharia Mecanica .
+Siegwart, R. and Nourbakhsh, I. R. (2011). Introduction to Autonomous Mobile Robots, MIT
+press.
+Spong, M. W., Hutchinson, S. and Vidyasagar, M.
+(2008). Robot Dynamics and Control, John
+Wiley  Sons.
+Vieira, F. C. (2006). Controle dinamico de robos
+moveis com acionamento diferencial. Dissertacao de Mestrado, UFRN.
+
+742
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+(a) ponto inicial em (0.25, 0.25).
+Figura 6 Trajetoria percorrida pelo robo.
+
+(b) ponto inicial em (0.25, 1.75).
+
+Figura 7 Velocidades linear e angular do robo.
+(c) ponto inicial em (1.75, 0.25).
+Figura 5 Planejamento para configuracoes iniciais distintas.
+
+ISSN 2525-8311
+
+743

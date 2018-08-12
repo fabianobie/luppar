@@ -1,0 +1,545 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+ALGORITMO DIRETO DE CALIBRAÇÃO DE MAGNETÔMETROS TRIAXIAIS POR AJUSTE
+DE ELIPSOIDE UTILIZANDO DISTÂNCIA ALGÉBRICA
+SÉRGIO MUCCIACCIA, ANSELMO FRIZERA, EVANDRO SALLES
+Programa de Pós-Graduação em Engenharia Elétrica (PPGEE), Universidade Federal do Espírito Santo
+Av. Fernando Ferrari, 514, Goiabeiras, CEP 29075-910, Vitória - ES
+E-mails smucciaccia@gmail.com, anselmo@ele.ufes.br, evandro@ele.ufes.br
+Abstract The measurements from magnetometers are sensitive to disturbances and errors, requiring a calibration method
+than can considerable improve accuracy. The ellipsoid fitting is one of the most used methods for magnetometer calibration, but
+the majority of the algorithms uses iterative methods, causing stability and time execution problems. As an alternative, a direct
+algorithm based on minimum squares and algebraic distance is proposed. Computer simulations and tests with real data show that
+the algorithm eliminates almost all the linear errors while performing much faster than traditional algorithms.
+Keywords magnetometer, calibration, ellipsoid fitting, algebraic distance.
+Resumo As medidas obtidas de sensores de campo magnético são sensíveis a perturbações e erros, sendo necessário um
+método de calibração que pode melhorar consideravelmente sua precisão. O ajuste_de_elipsoides é um dos métodos mais utilizados
+para calibração de magnetômetros, porém a maioria dos algoritmos utiliza métodos iterativos, causando problemas de tempo de
+execução e convergência. Como alternativa, propõe-se um algoritmo direto de cálculo dos parâmetros de calibração utilizando o
+método dos mínimos_quadrados com a métrica de distância_algébrica. As simulações computacionais e testes com dados reais
+mostram que o algoritmo elimina quase a totalidade dos erros lineares, enquanto executa muito mais rápido que os algoritmos
+tradicionais.
+Palavras-chave .
+
+1
+
+Introdução
+
+Os magnetômetros são largamente utilizados em
+sistemas para determinação de atitude. Por medirem o
+campo magnético da Terra, eles fornecem uma informação de direção que não deriva com o tempo. Essa
+informação é útil para diversos sistemas, como navios,
+aeronaves e veículos em geral que necessitem de uma
+referência de orientação.
+Historicamente, o campo magnético da terra vem
+sendo utilizado para prover a direção do norte magnético e contribuir para os métodos de navegação (Hemerly, 2008). Essa utilização cresceu até a atualidade,
+onde um grande número de dispositivos embarcados
+possui magnetômetros triaxiais, como celulares, tablets e controladores de jogos.
+Entretanto, medições com sensores magnéticos
+de baixo_custo são corrompidas por vários erros, incluindo problemas na fabricação e desvios magnéticos
+induzidos na plataforma do sensor (Renaudin, 2010).
+Uma parte substancial desses erros é linear e invariante no tempo, permitindo que seja filtrada por um algoritmo, melhorando as medições do sensor.
+Os algoritmos de calibração de sensores_inerciais
+têm recebido grande atenção na comunidade científica
+(Renaudin, 2010). Assim sendo, este artigo apresenta
+um método novo para calibração de magnetômetros,
+de solução direta, utilizando mínimos_quadrados e distância_algébrica.
+Diferentes métricas e métodos de otimização são
+utilizados na literatura. Vasconcelos (2011) propõe
+um estimador de máxima verossimilhança utilizando
+o método de Newton para encontrar o ponto ótimo.
+Em (Camps, 2009) uma métrica simples que usa o módulo de todas as medições é aplicada com uma versão
+
+ISSN 2525-8311
+
+modificada do método de Levenberg-Marquardt para
+encontrar os parâmetros de calibração.
+Por utilizar a métrica de distância_algébrica, o algoritmo proposto neste trabalho é mais rápido que os
+empregados atualmente e pode executar com uma
+quantidade maior de pontos de entrada. Cada ponto
+consiste nas coordenadas de um espaço de 3 dimensões representando uma medição feita pelo magnetômetro de três eixos. Esses pontos são utilizados no
+processo de calibração por ajuste_de_elipsoide e podem
+ser obtidos em uma etapa separada de calibração ou
+mesmo durante a utilização do sensor.
+O método aqui proposto, por ser um algoritmo direto, tem a vantagem de ser executado sempre no
+mesmo tempo, dependendo apenas do número de pontos de medição. A maioria dos algoritmos na literatura
+atual são baseados em métodos iterativos que, em geral, dependem de um critério de parada e tem tempo
+de execução variável. O objetivo deste trabalho é propor um algoritmo com maior desempenho que os atuais e que sua complexidade cresce linearmente com a
+quantidade de pontos.
+Este artigo está organizado da seguinte maneira
+após a breve introdução apresentada nesta seção, a seção 2 apresenta uma descrição dos erros que afetam os
+magnetômetros e sua formulação, a seção 3 expõe a
+base teórica utilizada para este trabalho, as seções 4 e
+5 explicam a implementação do algoritmo, a seção 6
+mostra os resultados das simulações e testes e a seção
+7 apresenta as conclusões.
+2
+
+Erros nas medidas com magnetômetros
+
+Se um magnetômetro ideal, sem nenhum erro interno ou perturbação externa, for girado em diversas
+
+2884
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+orientações, o que se espera é que suas medições formem uma esfera centrada na origem. No entanto, esses sensores estão sujeitos a fatores que distorcem esta
+forma esférica, fazendo com que a superfície obtida
+em condições reais seja um elipsoide deslocado da origem.
+Nesta seção, alguns erros presentes nas medidas
+efetuadas com magnetômetros são apresentados na
+perspectiva do método do elipsoide. Os principais erros são o offset, o erro de sensibilidade, as distorções
+soft-iron e hard-iron e a não ortogonalidade (Vasconcelos, 2011).
+O offset é um desvio constate em todos os valores
+do magnetômetro, que se caracteriza por transladar os
+pontos das medições que deveriam formar uma esfera
+centrada na origem, deslocando a posição de seu centro.
+O erro de sensibilidade ocorre devido s diferenças de sensibilidade de cada eixo do magnetômetro.
+Esse erro tende a escalar uma das coordenadas das medidas e transformar a esfera em um elipsoide.
+A distorção hard-iron ocorre quando algum objeto na mesma plataforma que o sensor, ou seja, que
+sempre gira junto com ele, gera um campo magnético
+constante que se soma s suas leituras. Com esse erro
+a esfera das medições aparece transladada, com o centro fora da origem.
+A distorção soft-iron acontece com a interação de
+materiais ferromagnéticos na plataforma do sensor
+com campos externos. Ela adiciona valores que variam com a orientação do sensor escalando e girando
+a esfera em um elipsoide inclinado.
+Um magnetômetro triaxial é composto por três
+sensores unidirecionais alinhados em eixos perpendiculares entre si. Assim, a não ortogonalidade se dá devido ao desalinhamento desses eixos, que não ficam
+perfeitamente perpendiculares. Alternativamente erros na estrutura do material transdutor o fazem ter uma
+sensibilidade a campos de outros eixos gerando o
+mesmo efeito nas medições. Como na distorção softiron este efeito transforma a esfera em um elipsoide
+inclinado.
+Também é importante mencionar que as medições estão sujeitas a ruído aleatório. Este pode ser provocado por diversos fatores, dentre eles ondas eletromagnéticas que se propagam no ar, as variações de
+temperatura que ocorrem no material (ruído térmico),
+vibrações mecânicas que influenciam a medição, entre
+outros (Fraden, 2010). O ruído aleatório não é tratado
+no algoritmo aqui proposto.
+Todos os erros mencionados têm o efeito de escalar, girar ou transladar os vetores de medições. Portanto a expressão do campo magnético medido  pode
+ser dada em relação ao campo magnético real  segundo
+   +  + ,
+
+(1)
+
+onde  é uma matriz que aplica uma rotação e escala no vetor ,  translada o vetor resultante e  é um
+
+ISSN 2525-8311
+
+ruído aleatório. Logo para cancelar os erros, as matrizes A e b devem ser calculadas. Essa formulação é utilizada em diversos métodos de calibração de magnetômetro propostos na literatura (Hermerly, 2014 Renaudin, 2010 Vasconcelos, 2011).
+3
+
+Método do elipsoide e distância_algébrica
+
+No sistema de coordenadas cartesianas 3D a
+equação geral de uma superfície quádrica é descrita
+por
+ 2 +  2 +  2 +  +  + 
++ +  +  +   0.
+
+(2)
+
+Com um conjunto de pontos representando as medições com o sensor_em várias orientações é possível
+estimar os coeficientes da equação quádrica formada
+pela nuvem de pontos. A equação 2 contém todas as
+informações necessárias para se inferir os parâmetros
+da calibração, portanto o processo de calibração pode
+ser feito estimando-se os coeficientes da equação do
+elipsoide (Harker, 2008).
+Diversos métodos são usados para se determinar
+o elipsoide em questão (Camps, 2009 Vasconcelos,
+2011 Fang, 2011). Como os pontos contém ruído, em
+geral tenta-se minimizar alguma função de custo, para
+obter o elipsoide mais próximo possível da nuvem de
+pontos.
+A distância_algébrica possui algumas propriedades interessantes. Ela é invariante a rotação, ou seja,
+se um elipsoide e um ponto sofrerem uma rotação
+qualquer, a distância_algébrica entre eles continua a
+mesma.
+Também é invariante a translação, o mesmo resultado é obtido para qualquer translação envolvendo
+o ponto e o elipsoide ao mesmo tempo. Portanto as
+propriedades básicas da distância_algébrica podem ser
+analisadas com o caso mais simples um elipsoide centrado na origem e alinhado com os eixos. A equação
+da distância_algébrica  para um elipsoide nessas condições é dada por
+
+
+2
+2
+
++
+
+2
+2
+
++
+
+2
+2
+
+ 1,
+
+(3)
+
+onde  ,  e  são os raios do elipsoide nos respectivos eixos. Desta forma, o conjunto dos pontos
+com uma distância_algébrica  do elipsoide formam
+outro elipsoide como mostrado na equação 4.
+2
+2
+2
++
++
+1
+( + 1)2 ( + 1)2 ( + 1)2
+
+(4)
+
+Na Figura 1 é possível observar os pontos de
+mesma distância_algébrica de uma seção do elipsoide,
+mostrada em 2 dimensões para facilitar a visualização.
+
+2885
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+a zero) se faz necessário. A normalização indicada na
+equação (5) pode ser usada
+++ 1
+
+(5)
+
+Essa normalização tem a vantagem de ser invariante a rotação e translação do elipsoide, evita a solução trivial e elimina o parâmetro livre. Utilizando o
+método dos mínimos_quadrados a expressão do erro a
+ser minimizado com a distância_algébrica normalizada
+é dada pela equação 6.
+
+Figura 1. Curvas de mesma distância_algébrica
+
+Os pontos P1 e P2 possuem a mesma distância_algébrica, mas o ponto P2 possui duas vezes a distância
+euclidiana do ponto P1 até a elipse. Isso ilustra uma
+propriedade da distância_algébrica a componente do
+ponto que está na direção do eixo maior tende a contribuir com proporcionalmente menos valor na distância.
+Um eixo maior do elipsoide representa uma direção em que as medidas estão escaladas e, portanto, os
+erros também terão valores maiores nessa direção.
+Uma parte do erro não é aumentada de acordo com a
+direção, como por exemplo o erro de quantificação do
+campo magnético, mas em geral os pontos tendem a
+apresentar uma maior variância na direção onde o elipsoide é maior.
+Assim sendo, a distância_algébrica é menos afetada pelos pontos com maior erro em um fator bem
+próximo a proporcionalidade do erro. Além disso,
+quando as dimensões do elipsoide são muito grandes
+em relação  distância dos pontos, a distância_algébrica se torna aproximadamente proporcional  distância_euclidiana (considerando o aumento nos eixos).
+Quando a distância dos pontos é muito maior que
+as dimensões do elipsoide a distância_algébrica tende
+a ser proporcional ao quadrado da distância_euclidiana.
+Na prática os ruídos tendem a ser pequenos em
+relação ao campo magnético medido, o que faz com
+que a distância_algébrica se aproxime muito da distância_euclidiana escalada nos eixos de acordo com a proporção do elipsoide.
+Essas características e a formulação mais simples
+fazem da distância_algébrica uma métrica adequada
+para obtenção dos coeficientes elipsoide.
+4
+
+Método matemático
+
+A equação geral de uma quádrica dada em (2)
+possui um parâmetro livre, pois se todos os coeficientes forem escalados pelo mesmo fator, a superfície
+continua a mesma. Logo, um método de normalização
+que evite a solução trivial (todos os parâmetros iguais
+
+ISSN 2525-8311
+
+(6)
+
+Sendo  ,  e  as coordenadas do ponto . Como
+o elipsoide desejado deve ter menor erro possível, algum método é necessário para encontrar os parâmetros que resultem no erro mínimo. Se o quadrado da
+expressão dentro do somatório for calculado percebese que todas as derivadas parciais geram equações lineares. Como exemplo calculando a derivada parcial
+do erro na variável , a equação 7 é obtida.
+
+(7)
+
+Os coeficientes dessa derivada parcial e de todas
+as outras podem ser obtidos realizando os somatórios
+em cima das coordenadas dos pontos. Calculando as 9
+derivadas parciais e igualando todas a zero um sistema
+linear 9x9 é obtido e a solução desse sistema, se for
+única, descreve a quádrica com menor erro quadrático
+de distância_algébrica.
+O problema desse método é que a equação geral
+das quádricas não descreve apenas elipsoides, mas sim
+várias superfícies dentro de 17 formas básicas, como
+por exemplo o cone, o cilindro, o elipsoide, o cone
+elíptico, o cilindro elíptico, o hiperboloide parabólico,
+o hiperboloide elíptico, o cilindro hiperbólico e o paraboloide (Ying, 2012). Alguns autores tentam adicionar restrições para garantir que os parâmetros obtidos
+serão relativos a um elipsoide (Fang, 2011 Hermerly,
+2014 Renaudin, 2010). Não obstante, por serem não
+lineares, a resolução analítica de um sistema contendo
+essas equações se torna muito difícil e métodos iterativos se fazem necessários, prejudicando o desempenho do algoritmo (Fitzgibbon, 1999).
+Entretanto, o fato da equação representar outras
+superfícies não é uma limitação do método. Se o sistema linear possuir uma solução única, então esse
+ponto será o mínimo global e local no espaço considerado. Supondo um elipsoide de raios definidos, não
+nulos e finitos. Dada a equação desse elipsoide é possível mostrar que um aumento infinitesimal em qual-
+
+2886
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+quer um dos coeficientes dessa equação resulta em outro elipsoide que pode ser representado como uma
+transformação de escala, rotação e transação do primeiro. Essa demonstração é possível considerando os
+coeficientes da equação das quádricas como coordenadas de um espaço topológico (Gallier, 2016).
+Qualquer rotação aplicada em um elipsoide de
+raios definidos gera outro elipsoide e o mesmo ocorre
+com a translação. Logo, se o método citado resultar na
+equação de um paraboloide, dado um elipsoide qualquer que se encaixa nos pontos dados, existe um caminho entre esse elipsoide e o paraboloide dito, em
+que o erro sempre diminui, pois nenhum ponto tem todas as derivadas parciais nulas, além do que representa
+o paraboloide.
+Se a rotação e a translação não conseguem fazer
+um elipsoide passar para um paraboloide, então no caminho um dos raios do elipsoide vai crescer até infinito ou diminuir até zero para que ele se transforme
+em um paraboloide.
+Na Figura 2 um conjunto de pontos em que o melhor encaixe é uma parábola foi montado e uma elipse
+que se encaixa bem nos dados é mostrada em vermelho. Com o método de descida de gradiente são geradas sucessivas elipses com erro menor até chegar em
+uma parábola. O raio da elipse aumenta até o infinito
+até que ela se quebra em uma parábola.
+
+Figura 2. Caminho entre elipse e parábola
+
+O raio da elipse no maior eixo é um valor muito
+importante na calibração, uma vez que se ele for muito
+grande o algoritmo vai retornar resultados sem sentido. Se existem infinitas elipses com menor erro é impossível determinar qual é a correta para calibração. O
+mesmo pode ser estendido para elipsoides, porém a
+demonstração é muito trabalhosa e envolve uma variedade grande de superfícies.
+Portanto, se a solução do sistema linear for uma
+superfície qualquer diferente de um elipsoide, qualquer algoritmo baseado em distância_algébrica irá chegar a resultados inconsistentes, seja direto ou iterativo.
+Isso também ocorre com a distância_euclidiana, porém
+pela complexidade da fórmula de distância entre um
+ponto e um elipsoide é difícil demonstrar em que ocasiões isso ocorre.
+
+ISSN 2525-8311
+
+Para esse tipo de problema não é possível que o
+sistema seja sem solução e se tiverem infinitas soluções os mesmos problemas acontecem.
+5
+
+Tratamento dos dados
+
+Se a solução do sistema linear não representa um
+elipsoide e o algoritmo não consegue melhorar os resultados isso ocorre devido ao fato de que problema
+não está no algoritmo em si, mas nos dados de calibração, a nuvem de pontos obtida girando o sensor_em
+várias direções.
+O principal fator que leva a resultados ruins é a
+distribuição dos pontos. Se os pontos colhidos durante
+a calibração estiverem com uma distribuição uniforme
+em toda a superfície do elipsoide os resultados obtidos
+são excelentes.
+Além disso, os algoritmos baseados em mínimos
+quadrados são muito sensíveis a outliers (Bektas,
+2015). Por isso, um tratamento adequado dos dados
+pode melhorar consideravelmente os resultados do
+sistema como um todo.
+Em (Camps, 2009) o autor propõe projetar os
+pontos em 2 dimensões para calcular sua distribuição
+e verificar se o algoritmo precisa de mais pontos ou
+não.
+Considerando um processo onde o usuário pode
+colocar o dispositivo em modo de calibração e girá-lo,
+o sistema pode avisar se a quantidade e distribuição
+dos pontos é adequada acendendo um LED para o usuário quando não necessitar de mais dados.
+Yu et. al. propõe um algoritmo de duas fases no
+estilo RANSAC modificado que elimina os outliers do
+elipsoide, gerando respostas melhores sobre condições intensas de ruído (Yu, 2009).
+Para este trabalho foi feito um algoritmo que recebe os dados do magnetômetro e guarda até reunir
+200 pontos. Depois disso o algoritmo verifica se a distribuição da densidade dos pontos está adequada. Caso
+não esteja, substitui-se os pontos em área de alta densidade por novos pontos adquiridos, até chegar na distribuição necessária para executar o algoritmo.
+O sistema linear é então resolvido, e se a equação
+não formar um elipsoide ele continua na fase de obter
+mais pontos, apesar disto acontecer raramente, pois
+apenas a distribuição aproximadamente uniforme já é
+uma garantia grande que a resposta será um elipsoide.
+6
+
+Resultados
+
+Foi realizado um teste baseado em simulação
+computacional. Um elipsoide foi gerado, com o centro, os raios e os ângulos de orientação gerados aleatoriamente. Uma nuvem de 200 pontos pertencentes
+ao elipsoide foi gerada onde cada unidade de área da
+superfície tem a mesma probabilidade de conter qualquer quantidade de pontos.
+
+2887
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Ruído gaussiano branco, com média zero e um
+valor de variância específico foi adicionado nas coordenadas dos pontos e o algoritmo de calibração proposto foi executado, retornando os parâmetros do elipsoide. O teste foi repetido para diferentes valores de
+variância. Quanto maior a variância do ruído gaussiano maior a diferença entre o elipsoide original e o obtido pelo ajuste, resultando em uma menor compensação dos erros lineares pelo processo de calibração.
+A Tabela 1 mostra o erro em porcentagem, a distância entre o centro do elipsoide calculado ao centro
+do elipsoide original dividida pela distância do elipsoide original até a origem. Portanto um valor de 1
+de erro significa que o algoritmo conseguir filtrar 99
+dos erros de translação (offset e hard-iron juntos) das
+medições do magnetômetro simuladas.
+Tabela 1. Erro por variância do ruído gaussiano
+
+Variância do Ruído
+0,01
+0,1
+1
+10
+
+Erro no centro
+0,37
+5,66
+22,9
+68,6
+
+Para gerar a Tabela 1, os elipsoides foram gerados
+com a média dos três raios igual a um. Percebe-se que
+mesmo com uma variância muito grande de 10 vezes
+as dimensões do raio do elipsoide o processo de calibração consegue reduzir os erros de translação em
+41,4 se comparado as medições sem calibração.
+Para uma variância típica de ruído de 0.01, ou
+seja, 10 da dimensão do raio do elipsoide de desviopadrão, o algoritmo retira 99,63 deste tipo de erro.
+A precisão do cálculo das dimensões dos raios e dos
+ângulos têm resultados semelhantes.
+Com distribuição uniforme dos pontos na superfície do elipsoide e ruído gaussiano, executando-se o
+algoritmo 1 milhão de vezes, em todas elas a forma
+obtida foi um elipsoide. Outras formas só tendem a ser
+produzidas quando os dados estão em formas muito
+específicas, como todos os pontos em uma mesma linha ou formando um hiperboloide.
+A Figura 3 mostra o algoritmo sendo aplicado
+com o elipsoide sendo cortado pelo plano z0 (os pontos foram gerados com z  0).
+
+Além da simulação_computacional, o algoritmo
+descrito, foi testado com dados reais obtidos pelo
+magnetômetro MAG 3110 de 3 eixos, presente no kit
+de desenvolvimento FRDM-FXS-MULTI-B (Freescale, Estados Unidos). Esta expansão foi utilizada com
+a placa FRDM-K64F, e os dados do magnetômetro foram obtidos com o usuário fazendo movimentos aleatórios para calibração.
+O teste foi realizado 5 vezes, e em todas elas o
+algoritmo retornou um elipsoide bem definido. O processo de calibração foi capaz de deixar a nuvem de
+pontos mais esférica e centrada na origem.
+A própria Freescale disponibiliza uma biblioteca
+de código aberto para fusão_de_sensores (FSFLK). Ela
+contém um algoritmo para calibração do magnetômetro e também utiliza o método do elipsoide. Existe
+uma versão compilada especificamente para a placa
+FRDM-K64F e o datasheet da biblioteca define métodos de teste para o algoritmo assim como algumas medidas de erro e eficiência especificamente para esta
+placa.
+Como o algoritmo da Freescale é um dos mais utilizados em sistemas_embarcados, ele é uma boa referência de comparação para avaliar a performance do
+algoritmo aqui proposto. Além disso sua documentação clara e detalhada oferece um melhor suporte as
+comparações.
+Os dois algoritmos foram executados na placa
+FRDM-64F que possui um processador ARM CortexM4F dentro do mesmo teste descrito anteriormente.
+Ele tem um conjunto de instruções específicas para
+processamento_digital_de_sinais e realiza multiplicações e adições em ponto_flutuante de 32-bits em um
+único ciclo de clock. Já que as medições do magnetômetro tem apenas 10 bits de precisão, operações com
+ponto_flutuante de 32-bits são mais do que suficientes
+para que o erro acumulado não interfira nos resultados.
+O algoritmo aqui proposto utiliza 113 multiplicações e 55 somas para cada ponto de entrada e mais um
+custo fixo de um pouco menos do que 2600 instruções
+para resolver o sistema linear 9x9 pelo método da Eliminação Gauss e calcular os parâmetros finais de calibração. Portanto sua implementação com um conjunto de instruções do processador ARM Cortex-M4F
+executa 158*N + 2600 operações, todas elas gastando
+um único ciclo de clock.
+De acordo com o datasheet (Freescale, 2015), o
+algoritmo de calibração da biblioteca FSFLK gasta
+2860 ciclos de clock por iteração, sendo que para cada
+ponto de medição ele executa uma iteração nova. Esses dados foram confirmados no teste, utilizando a
+maneira de medir o número de ciclos de clock especificada no datasheet.
+Portanto para 100 pontos de entrada, o algoritmo
+gasta 19400 ciclos de clock o que é suficiente para
+apenas 7 iterações do algoritmo da biblioteca FSFLK.
+Com esse número de iterações este algoritmo apresenta um erro aproximadamente 40 vezes maior do
+que se executado com todos os 100 pontos.
+
+Figura 3. Ajuste de uma elipse aos pontos, utilizando o algoritmo
+proposto
+
+ISSN 2525-8311
+
+2888
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Além disso, executando o mesmo procedimento
+de medição de erro especificado no datasheet (Freescale, 2015), que consiste em colocar a placa em diversas posições com ângulos conhecidos e realizar as medições, os dois algoritmos apresentaram um erro menor do que 2 graus. O erro sem nenhum algoritmo de
+calibração chegou a 8 graus. Os testes indicaram um
+erro menor do que o erro de 5 graus descrito na especificação da biblioteca FSFLK.
+Conclusão
+Os métodos de ajuste de quádricas com restrições
+adicionais para que a superfície obtida só possa ser um
+elipsoide têm sido estudados por diversos pesquisadores da área da matemática e têm grande importância
+para diferentes áreas.
+No entanto, para a calibração de magnetômetros
+essas restrições adicionais são prejudiciais, pois por
+serem não_lineares trazem complicações para os algoritmos.
+Um método simples, que encontra o elipsoide
+com menor erro quadrático resolvendo um sistema linear das derivadas parciais iguais a zero foi proposto.
+Foi mostrado que se esse método retorna um elipsoide
+as restrições não fazem diferença e se o método não
+retorna um elipsoide então nenhum outro método baseado em distância_algébrica consegue encontrar um
+elipsoide adequado para a calibração.
+Para resolver este problema foi desenvolvido um
+algoritmo de tratamento dos dados, para retirar dados
+inadequados, e como resultado nos casos práticos é
+muito raro da resolução do sistema linear sobre o conjunto de pontos não representar um elipsoide. Além
+disso o algoritmo geral fica muito mais rápido do que
+vários outros propostos para o mesmo problema de calibração e com erros muito pequenos.
+Este trabalho mostra que a distância_algébrica é
+uma métrica adequada para projetar algoritmos muito
+rápidos e com pequeno erro. Embora existam algoritmos com melhores condições de erro, o erro já é muito
+pequeno e mais do que suficiente para a maioria das
+aplicações, enquanto a diminuição no tempo de execução pode se mostrar importante em várias aplicações.
+Agradecimentos
+Esta pesquisa é financiada pela Comissão de
+Aperfeiçoamento de Pessoal do Nível Superior
+(CAPES - 8887.0956262015-01), pela Fundação de
+Amparo  Pesquisa e Inovação do Espírito Santo
+(FAPES - 67566480) e pelo Conselho Nacional de
+Desenvolvimento Científico e Tecnológico (CNPq)
+mediante bolsa de Mestrado e Projeto de Pesquisa
+(3085292013-8).
+
+ISSN 2525-8311
+
+Referências Bibliográficas
+Bektas, S. (2015). Least Squares Fitting of Ellipsoid
+Using Orthogonal Distances. Boletim de Ciências
+Geodésicas, Vol. 21, No. 2, pp. 329-339.
+Camps, F Harasse, S. e Monin, A., (2009). Numerical
+calibration for 3-axis accelerometers and magnetometers. IEEE International Conference on ElectroInformation Technology, pp. 217-221.
+Fang, J Sun, H Cao, J Zhang, X. e Tao, Y. (2011).
+A Novel Calibration Method of Magnetic Compass Based on Ellipsoide Fitting. IEEE Transactions on Instrumentation and Measurement, Vol.
+60, No. 6, pp. 2053-2061.
+Fraden, J. (2010). Handbook of Modern Sensors
+Physics Designs and Applications. 4th ed. New
+York Springer, pp. 223-242.
+Fitzgibbon, A Pilu, M Fisher, R. B. (1999). Direct
+Least Square Fitting of Ellipses. IEEE Transactions on Pattern Analysis and Machine Inteligence, Vol. 21, No. 5, pp. 476-480.
+Freescale Semiconductor (2015). Freescale Fusion Library for Kinetis MCUs. Austin, Texas, United
+States, pp. 12-28.
+Gallier, J. (2016). Basics of Algebra, Topology, and
+Differencial Calculus. Department of Computer
+and Information Science, University of Pennsylvania, Cap 27, Sec. 4.
+Harker, M OLeary, P Zsombor-Murray, P. (2008).
+Direct type-specific conic fitting and eigenvalue
+bias correction. Image and Vision Computing,
+Vol. 26, No. 3, pp. 372-381.
+Hemerly, E. M Coelho, F. A. A. (2014). Explicit Solution for Magnetometer Calibration. IEEE
+Transactions on Instrumentation and Measurement, Vol. 63, No. 8, pp. 2093-2095.
+Renaudin, V Afzal, M. H Lachapelle, G. (2010).
+Complete Triaxis Magnetometer Calibration in
+the Magnetic Domain. Journal of Sensors, Vol.
+2010, pp. 1-10.
+Vasconcelos, J. F Elkaim, G Silvestre, C Oliveira,
+P Cardeira, B. (2011). Geometric Approach to
+Strapdown Magnetometer Calibration in Sensor
+Frame. IEEE Transactions on Aerospace and
+Electronic Systems, Vol. 47, No. 2, pp. 12931306.
+Ying, X Yang, L Kong, J Hou, Y Guan, S Zha, H.
+(2012). Direct Least Square Fitting of Ellipsoids.
+21st International Conference on Pattern Recognition, pp. 3228-3231.
+Yu, J Zheng, H Kulkarni, S. R Poor, H. V. (2009).
+Two-Stage Outlier Elimination for Robust Curve
+and Surface Fitting. Journal on Advances in Signal Processing. Vol. 2010, No. 1.
+
+2889

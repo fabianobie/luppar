@@ -1,0 +1,1665 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ALGORITMO DE CONTROLE ADAPTATIVO FUZZY PARA APLICAÇÕES EM CONTROLE DE
+POSIÇÃO DE MOTORES ELÉTRICOS
+JÚLIA S. PAIS, JOSÉ L. S. NETO, CESAR COSENZA, MARCELO M. WERNECK
+
+Laboratório de Instrumentação e Fotônica (LIF), Programa de Engenharia Elétrica COPPE, Universidade
+Federal do Rio de Janeiro (UFRJ)
+Caixa Postal 68564, CEP 21941-598, Rio de Janeiro - RJ
+E-mails juliasakamoto@lif.coppe.ufrj.br,luizneto@lif.coppe.ufrj.br
+Abstract This paper proposes an improved fuzzy adaptation method applied to position control of electrical motors. Through
+the adaptation mechanism, the controller parameters are updated locally, so that the controllers response has a local impact on
+the system dynamics. It is essentially different from the classical controllers adaptation method where the goal is to adjust the
+controller parameters with a global impact. The purpose of this paper is to evaluate the efficiency of the fuzzy adaptation method
+through tracking problems. For purposes of demonstrating, several tests were performed using a DC motor with a linked load
+which torque is a nonlinear function of the angular position. The control was implemented through the blockset "Real-Time
+Windows Target" SimulinkMatlab. The algorithm proposed in this paper presents very efficient tracking characteristics, even in
+the presence of nonlinearities as the load torque and dead zone observed in the motor.
+Keywords Position Control of DC Motors, Fuzzy Adaptive Control
+Resumo Neste artigo propõe-se um novo método de adaptação para controlador Fuzzy aplicado a controle_de_posição de
+motores_elétricos. O mecanismo de adaptação atualiza os parâmetros do controlador localmente, de forma que sua resposta tenha
+um impacto local na dinâmica do sistema. Deste modo, o método proposto é essencialmente diferente dos mecanismos de
+adaptação de controladores clássicos, onde o objetivo é ajustar os parâmetros do controlador com impacto global. O objetivo
+deste trabalho é avaliar a eficiência da adaptação sugerida através de problemas de rastreamento. Para fins de comprovação,
+foram realizados ensaios com um motor_de_corrente_contínua, onde, acoplado ao seu eixo, tem-se uma carga que exerce um
+torque não_linear em função da posição_angular. O controle foi implementado através do blockset Real-Time Windows Target
+do SimulinkMatlab. O algoritmo proposto neste trabalho apresenta características de rastreamento muito eficiente, mesmo sob
+presenças de não-linearidades como o torque da carga e zona_morta presente no motor.
+Palavras-chave 
+
+1 Introdução
+O interesse em aplicar técnicas de aprendizagem
+baseadas na lógica_fuzzy e redes_neurais para o
+desenvolvimento
+de
+acionamentos
+elétricos
+"inteligentes" vem crescendo nos últimos anos, e
+seus resultados têm sido bem promissores. Além
+disso, a evolução dos processadores digitais de sinal
+e integração de circuitos viabilizam a implementação
+de técnicas de controle complexas com baixo_custo e
+alta confiabilidade.
+Embora não haja nenhuma aplicação comercial
+dessas metodologias em acionamentos elétricos,
+muitos trabalhos têm proposto a utilização de
+tecnologias fuzzy 1,2,3 ou rede_neural para
+controle de motores_elétricos. Tais motores
+apresentam um comportamento bastante não-linear e,
+em geral, necessitam de controladores mais robustos
+que dependem dos seus pontos de operação.
+Alguns estudos têm sugerido mecanismos de
+adaptação de controladores clássicos de posição que
+compensam a forte presença de não_linearidades dos
+motores_elétricos 4,5. Porém estas estratégias
+resultam em ajustes dos ganhos do controlador de
+forma que sua resposta tenha um impacto global na
+dinâmica do sistema. Caso não seja feita uma lei de
+adaptação baseada na estabilidade de Lyapunov, um
+ajuste com impacto global pode ocasionalmente
+desestabilizar o sistema.
+Este trabalho propõe uma técnica de controle de
+posição de motores_elétricos com o desenvolvimento
+ISBN 978-85-8001-069-5
+
+de um algoritmo de adaptação para o controlador
+Fuzzy. O mecanismo de adaptação atualiza os
+parâmetros do controlador de forma que sua resposta
+tenha um impacto local na dinâmica do sistema,
+assim como na adaptação sugerida em 6. Deste
+modo, o método proposto é essencialmente diferente
+das estratégias dos modelos de referência
+convencionais, cujo objetivo é ajustar os parâmetros
+do controlador com impacto global.
+Esta técnica de controle com aprendizagem é
+baseada em modelo_de_referência e modelo inverso
+fuzzy, e apresenta características de rastreamento
+muito eficientes, mesmo sob serveras variações dos
+parâmetros do sistema e alta presença de nãolinearidades.
+O método proposto de fuzzy adaptativo constroi
+eou modifica a base de conhecimento do controlador
+lógico fuzzy (FLC). O objetivo do mecanismo de
+adaptação da lógica_fuzzy (FLAM) consiste em
+alterar em tempo_real os parâmetros da tabela base de
+regra do controlador Fuzzy de acordo com a
+comparação entre o sinal de saída do modelo de
+referência e a saída do sistema (posição_angular), de
+forma a construir uma superfície de controle capaz de
+garantir que a saída do sistema seja igual ao sinal de
+referência de entrada.
+A eficiência deste método será mostrada no
+controle_de_posição de um link de um braço robótico,
+onde o torque de carga é função não-linear da
+posição_angular. O controle_digital foi implementado
+no Simulink com o blockset Real-Time Windows
+
+4383
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Target, que envia uma referência de corrente para
+um motor CC através de um conversor
+digitalanalógico.
+2 Algoritmo de adaptação de Controladores
+Lógico Fuzzy para controle_de_posição
+O FLAM, baseado em modelo_de_referência, é
+composto por um modelo fuzzy inverso e um
+modificador de base de conhecimento. As formas
+tradicionais de adaptação aplicadas a controladores
+fuzzy consistem na utilização de funções de custo
+que penalizam o erro entre a saída do modelo de
+referência e a saída do sistema e a variação deste
+erro. Porém, diferente das formas tradicionais, a
+função de custo do algoritmo de aprendizado
+proposto neste trabalho utiliza também um fator de
+ponderação para cada regra ativa e penaliza ainda a
+saída do FLC. Ou seja, o mecanismo considera o
+quanto a produção real de cada regra influencia o
+controle, de forma a garantir que os parâmetros do
+FLC tenham valores sempre dentro dos limites de
+operação e a evitar os problemas de oscilações
+devido a variações bruscas nos parâmetros do
+controlador.
+Logo após o controlador de posição Fuzzy,
+adicionou-se um controlador Proporcional-Integral
+(PI) com objetivo de compensar a presença de zona
+morta no motor. Deste modo, o sinal de controle
+resultante do FLC é a referência de velocidade para
+o PI, que tem como saída a referência de corrente
+i(k) na armadura.
+
+(em) são aplicados ao FLAM. O sinal de saída do
+FLAM é usado para modificar a base de
+conhecimento do FLC para produzir a mudança
+desejada no sinal de controle. O erro de rastreamento
+em e sua variação em podem ser definidos
+respectivamente por
+
+1
+
+
+
+(1)
+(2)
+
+onde kh é o instante de amostragem.
+
+Figura 1. Diagrama da adaptação baseada em modelo_de_referência
+
+2.2 O modelo do Motor de Corrente Contínua
+O diagrama do motor_de_corrente_contínua com
+controle PI de velocidade é ilustrado na Figura 2.
+
+2.1 Modelo de Referência
+Os controladores de posição fuzzy admitem uma
+sintonização mais versátil que um controlador linear
+Proporcional-Derivativo (PD), uma vez que o
+projetista pode definir diferentes superfícies de
+controle alterando os ganhos da tabela Base de
+Regras do controlador. Entretanto, um mecanismo de
+adaptação o torna ainda mais robusto 7, visto que a
+adaptação constrói uma superfície de controle
+adequada para rastrear o sinal de referência e, em
+geral, o controlador_adaptativo é capaz de compensar
+alterações nos parâmetros e nas condições de
+operação do sistema e até mesmo não_linearidades da
+carga.
+Alguns algoritmos de aprendizagem baseados
+em modelo_de_referência têm sido propostos nos
+últimos anos 6-12 e, diferente dos controladores
+fuzzy auto-organizados (SOCs), não necessitam de
+uma tabela de índice de desempenho. Em vez disso,
+um modelo_de_referência define a dinâmica desejada
+do sistema.
+O diagrama do algoritmo de adaptação baseado
+em modelo_de_referência é mostrado na Figura 1.
+Neste algoritmo, o sinal de referência (r) do
+FLC é enviado para o modelo_de_referência. A saída
+do sistema real é comparada com a saída do modelo
+de referência. O erro resultante (em) e sua variação
+
+ISBN 978-85-8001-069-5
+
+Figura 2. Diagrama do do motor CC com controle PI de
+velocidade
+
+Sua modelagem pode ser descrita no tempo
+discreto através de seu equivalente ZOH (zero-order
+hold) pelas seguintes equações
+(3)
+
+
+
+,
+
+(4)
+(5)
+
+onde K, JT e f são respectivamente a constante de
+torque, o atrito viscoso e a inércia do motor e Kp e Ki
+são os ganhos do controlador PI.
+Tal modelo seria insuficiente para a maioria das
+estratégias
+adaptativas
+convencionais.
+A
+implementação do controle_de_posição adaptativo no
+sistema real poderia falhar, uma vez que a
+modelagem não considera alguns aspectos lineares e
+não_lineares como constante de tempo do driver,
+banda de histerese, efeitos de quantização, entre
+outros. No entanto, em uma estratégia Fuzzy, o
+modelo (3) contém informações suficientes para
+ajustar o controlador e tirar conclusões sobre a
+4384
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+estratégia de aprendizagem, já que a sintonização de
+controladores_fuzzy não depende de uma modelagem
+precisa do sistema. Seu projeto, em geral, é baseado
+em conhecimentos de especialistas, em um modelo
+aproximado do sistema eou na análise dos dados de
+entrada-saída da planta.
+Os fatores não modelados listados acima foram
+considerados durante os ensaios experimentais. O
+driver do motor_de_corrente_contínua utilizado
+durante os experimentos apresenta uma constante de
+tempo e banda de histerese não modeladas em (3). O
+efeito do atrito seco do motor também não foi
+incluído na modelagem, mas tem influência na
+dinâmica do sistema real.
+2.3 O Controlador Lógico Fuzzy
+Os controladores Fuzzy são baseados em regras
+lingísticas que conectam, de modo impreciso, dois
+ou mais sinais de entrada com as ações a serem
+tomadas. Eles basicamente mapeiam as entradas
+numéricas em termos lingísticos, ativando
+determinadas regras de acordo com os valores
+mapeados. Suas ações são baseadas no conjunto de
+regras ativas. No FLC, cada termo linguístico
+representa uma função de pertinência do tipo
+triangular, distribuídas em um intervalo fuzzy de -1 a
+1, conforme mostrado na Figura 3.
+
+Os controladores, em geral, consistem de três
+estágios entrada (fuzzyficação), inferência e saída
+(defuzzificação).
+Durante a fuzzyficação, os valores das variáveis
+de entrada são associados com seus respectivos
+valores no intervalo fuzzy. No estágio de inferência,
+as regras ativas são verificadas e um grau de
+pertinência é atribuído para cada uma delas. Por fim,
+as regras ativas são combinadas gerando um
+resultado que, na defuzzificação, é convertido para
+um valor correspondente no intervalo de saída do
+controlador.
+Neste trabalho, o FCL utilizado para o controle
+de posição é um controlador PD do tipo fuzzy. As
+suas entradas são o erro de posição e(k) e sua
+variação e(k), definidos por
+
+ISBN 978-85-8001-069-5
+
+1
+
+Tabela 1. Tabela base de Regras do FLC
+
+e
+e
+NG
+NM
+NP
+ZE
+GP
+GM
+GG
+
+NG
+
+NM
+
+
+
+NP
+
+
+
+
+ZE
+
+
+
+(6)
+(7)
+
+GP
+
+
+
+
+
+
+
+GM
+
+GG
+
+(8)
+
+onde ei, ej e cij são respectivamente o grau de
+pertinência do erro, o grau de pertinência da variação
+do erro e o centro da variável de saída para a inésima regra ativa no instante kh. A Equação (8)
+representa a fórmula típica do sistema_fuzzy
+Mamdanis com um Centro Médio de Defuzzificação
+13.
+O sinal de controle r resultante do FLC é a
+referência de velocidade para o PI. Com o
+integrador, a corrente enviada para o motor é dada
+pela equação
+1
+
+Figura 3. Funções de pertinência do FLC
+
+
+
+A tabela base de regras do FLC é representada
+na Tabela 1.
+As regras NG, NM, NP, ZE, GP, GM e GG da
+tabela acima correspondem aos valores das variáveis
+de entrada negativo grande, negativo médio,
+negativo pequeno, zero, positivo pequeno, positivo
+médio e positivo grande, respectivamente.
+A saída do FLC é a variação do sinal de
+referência de velocidade, 
+  , com
+
+
+
+(9)
+
+2.4 O Mecanismo de Adaptação do Controlador
+Lógico Fuzzy
+O método proposto de aprendizagem para
+sintonizar o FLC consiste em ajustar o centro dos
+conjuntos_fuzzy, ou seja, o valor cij da variável de
+saída para cada regra ativa. O número de conjuntos
+de saída fuzzy é suposto ser o mesmo que o número
+de regras.
+Podemos classificar as abordagens de
+aprendizagem existentes em dois grupos i)
+utilizando o método de gradiente 9-11, ii) usando o
+modelo inverso fuzzy 6-812. As estratégias
+baseadas em modelo inverso fuzzy são
+potencialmente mais robustas que aquelas do método
+de gradiente, uma vez que não usam explicitamente
+os parâmetros do sistema no algoritmo, e permitem
+um mapeamento não_linear a partir das entradas para
+a saída.
+
+4385
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+O mecanismo de aprendizagem baseado em
+modelo inverso impõe uma modificação da forma
+
+
+(10)
+
+onde cij representa a saida do modelo inverso fuzzy
+no instante kh, m é a saída da etapa de
+desfuzzyficação do modelo inverso e
+é um fator
+de escala.
+A etapa de desfuzzyficação do modelo
+inverso fuzzy também apresenta fórmula típica do
+sistema Mamdanis com Centro Médio de
+Deffuzificação. A tabela base de regras utilizada na
+etapa de inferência é definida conforme Tabela 2.
+Tabela 2. Tabela base de regras do Modelo Inverso
+
+e
+e
+NG
+NM
+NP
+ZE
+GP
+GM
+GG
+
+oscilação, saída u(k) da FLC também deve ser
+penalizada. Definimos então J(k+n) como
+
+
+
+
+
+
+
+
+(12)
+
+ondee,e e u> 0.
+De (3), pode-se observar que o polinômio
+característico da equação é de ordem 3, ou seja, o
+sinal de controle afeta a posição da máquina e,
+consequentemente, a saída de erro, três passos a
+frente da amostra do tempo. Isso significa que o sinal
+de controle u é submetido a um atraso de
+aprendizagem de três períodos de amostragem.
+Considerando a equação (11), os incrementos de
+cada centro cij de saída são calculados por
+
+
+NG
+
+NM
+
+NP
+
+ZE
+
+GP
+
+GM
+
+GG
+
+1,0
+
+1,0
+
+0,75
+
+0,65
+
+0,55
+
+0,1
+
+0,0
+
+1,0
+
+1,0
+
+0,7
+
+0,55
+
+0,45
+
+0,0
+
+0,1
+
+0,75
+
+0,7
+
+0,45
+
+0,3
+
+0,0
+
+0,45
+
+0,55
+
+0,65
+
+0,55
+
+0,3
+
+0,0
+
+0,3
+
+0,55
+
+0,65
+
+0,55
+
+0,45
+
+0,0
+
+0,3
+
+0,45
+
+0,7
+
+0,75
+
+0,1
+
+0,0
+
+0,45
+
+0,55
+
+0,7
+
+1,0
+
+1,0
+
+0,0
+
+0,1
+
+0,55
+
+0,65
+
+0,75
+
+1,0
+
+1,0
+
+No entanto, a maneira como esta estratégia está
+representada pode resultar em alguns efeitos de
+chaveamento com oscilações, devido  tendência dos
+parâmetros de aprendizagem adquirir valores muito
+grandes ou saturar em níveis prédeterminados.
+Embora as alterações impostas pelo mecanismo de
+aprendizagem são restritas s regras ativas, todo
+valor de cij é submetido a uma mudança no mesmo
+sentido de sua direção e, por isso, atribue valor para
+além dos níveis locais. Isso conduz o FLC para um
+modo indesejável de chaveamento descontínuo, onde
+se esperava uma resposta suave como aparente nos
+resultados apresentados em 9. O algoritmo proposto
+neste trabalho combina as duas abordagens de
+aprendizagem existentes, garantindo que cada cij
+tenha valor sempre dentro dos limites de operação.
+No método de gradiente o objetivo é minimizar
+uma função de custo J(k+n). Cada cij é então alterado
+na direção do gradiente negativo de J para algum
+passo futuro n, ou seja
+
+
+
+
+
+(11)
+
+O objetivo principal deste método é minimizar a
+função de custo J(k+n) que consequentemente
+minimizará o erro de rastreamento do sistema. É
+desejável também que a resposta do sistema possua
+um overshoot reduzido, o que convém um
+mecanismo de adaptação amortecido. Portanto, a
+função de custo deve penalizar o erro de
+rastreamento e sua variação 7.
+Uma vez que queremos impedir valores de cij
+além dos limites de operação e evitar o problema de
+ISBN 978-85-8001-069-5
+
+3
+
+
+
+3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(13)
+
+3
+3  é
+O termo
+ 
+influenciado pelos parâmetros do sistema. O
+mecanismo proposto preservará essencialmente a
+mesma forma indicada acima com este termo
+substituido pela saída da etapa de desfuzzyficaçao
+(m). Além disso, vamos supor que o atraso não
+influencia o processo de aprendizagem. Por
+conseguinte, a lei de ajuste para cada cij(k) é agora
+dada por
+
+,
+
+Na
+
+
+
+
+
+
+
+
+
+
+equação
+
+
+
+1
+
+1
+
+
+
+
+
+
+
+
+
+
+
+
+
+(14)
+
+acima,
+o
+termo
+pode ser visto como a saída
+
+equivalente da i-nésima regra ativa, ou como uma
+projeção da saída do controlador sobre a dimensão
+do cij consequente. É importante notar que esta
+abordagem tem um efeito local.
+A Figura 4 mostra o digrama de blocos do
+controle com algoritmo de aprendizagem fuzzy. O
+mecanismo de adaptação atualiza os parâmetros do
+controlador de forma que sua resposta tenha um
+impacto local na dinâmica do sistema (apenas os
+termos referentes as regras ativas são modificados).
+Deste modo, o método proposto é essencialmente
+diferente das estratégias dos modelos de referência
+convencionais onde o objetivo é ajustar os
+parâmetros do controlador com impacto global.
+3 Resultados experimentais
+O controle_digital foi implementado no Simulink
+com o blockset Real-Time Windows Target. O
+ensaio foi realizado com um motor de corrente
+contínua que possuia acoplado ao seu eixo um link
+de braço robótico, onde o torque exercido pela carga
+era função não-linear da posição_angular.
+
+4386
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Tabela 3. Tabela base do FLC após 10s
+e
+
+e
+
+NG
+NM
+NP
+ZE
+GP
+GM
+GG
+
+NG
+
+NM
+
+NP
+
+ZE
+
+GP
+
+0,000
+
+0,081
+
+0,000
+
+0,089
+
+0,000
+0,000
+
+GM
+
+GG
+
+1,975
+
+0,022
+
+1,730
+
+2,000
+
+2,000
+
+0,581
+
+0,013
+
+0,172
+
+0,000
+
+0,929
+
+0,152
+
+0,915
+
+0,065
+
+0,331
+
+0,000
+
+0,531
+
+0,178
+
+0,967
+
+0,072
+
+0,407
+
+0,000
+
+1,336
+
+0,000
+
+0,336
+
+1,652
+
+0,104
+
+0,251
+
+0,000
+
+1,030
+
+0,000
+
+0,299
+
+1,738
+
+0,254
+
+0,119
+
+0,000
+
+0,412
+
+0,000
+
+0,111
+
+1,830
+
+0,008
+
+0,092
+
+0,000
+
+1,920
+
+Tabela 4. Tabela base do FLC após 100s
+Figura 4. Digrama de blocos do Mecanismo de adaptação da
+Lógica Fuzzy
+
+Durante o ensaio
+
+
+
+
+Um ganho unitário foi utilizado como
+modelo_de_referência para o problema de
+rastreamento adaptativo. Esta escolha é
+razoável quando se supõe que a tragetória
+do sinal de referência é diferenciável para
+todo instante t
+O valor 0 foi atribuido como estado inicial
+da tabela base de regra do FLC para todo
+centro de saída.
+
+e
+
+e
+
+NG
+
+NM
+
+NP
+
+ZE
+
+GP
+
+GM
+
+GG
+
+NG
+
+0,000
+
+0,081
+
+1,989
+
+0,015
+
+1,763
+
+2,000
+
+2,000
+
+NM
+
+0,000
+
+0,089
+
+1,457
+
+0,007
+
+0,796
+
+0,000
+
+0,929
+
+NP
+
+0,000
+
+0,152
+
+1,753
+
+0,078
+
+1,325
+
+0,000
+
+0,531
+
+ZE
+
+0,000
+
+0,178
+
+1,765
+
+0,014
+
+1,366
+
+0,000
+
+1,336
+
+GP
+
+0,000
+
+0,336
+
+2,000
+
+0,128
+
+1,118
+
+0,000
+
+1,030
+
+GM
+
+0,000
+
+0,299
+
+2,000
+
+0,172
+
+0,599
+
+0,000
+
+0,412
+
+GG
+
+0,000
+
+0,111
+
+1,961
+
+0,096
+
+0,237
+
+0,000
+
+1,920
+
+O controle_adaptativo proposto neste trabalho
+consegue impor um rastreamento do sinal r
+especificado em (10) com módulo do erro máximo
+de aproximadamente
+emax < 2,78
+
+(16)
+
+3.1 Ensaio com referência senoidal
+O primeiro ensaio foi realizado com sinal de
+referência igual a soma de duas senóides, tal que
+r
+
+100 sin 0.17
+
+10 sin 1.4
+
+120
+
+(15)
+
+O resultado obtido para o problema de
+rastreamento de r é mostrado na Figura 5. As
+Tabelas 3 e 4 mostram a evolução da tabela base de
+regra do FLC, indicando os valores de cada centro
+de saída nos instantes 10s e 100s, respectivamente.
+
+3.2 Ensaio com referência de onda quadrada
+atenuada
+Com os mesmos valores dos parâmetros do
+modelo inverso fuzzy e FLC utilizados no
+experimento anterior, um novo ensaio foi executado,
+porém com referência de onda quadrada (amplitude
+50 e período de 30s) e filtro passa-baixa para
+atenuar o sinal.
+A Figura 6 ilustra o resultado obtido durante o
+novo ensaio. A Tabela 5 representa os valores da
+tabela base do FLC após 100s.
+
+Figura 5. Resultados experimentais 1
+
+ISBN 978-85-8001-069-5
+
+4387
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 6. Resultados experimentais 2
+Tabela 5. Tabela base do FLC após 100s
+e
+
+e
+
+NG
+
+NM
+
+NP
+
+ZE
+
+GP
+
+GM
+
+GG
+
+NG
+
+0,100
+
+0,000
+
+1,514
+
+0,014
+
+1,843
+
+2,000
+
+1,324
+
+NM
+
+0,000
+
+0,000
+
+1,376
+
+0,008
+
+1,240
+
+1,518
+
+1,324
+
+NP
+
+0,000
+
+0,000
+
+1,391
+
+0,009
+
+1,614
+
+0,976
+
+1,136
+
+ZE
+
+0,000
+
+0,000
+
+1,463
+
+0,007
+
+1,715
+
+1,335
+
+1,578
+
+GP
+
+0,000
+
+0,000
+
+1,357
+
+0,021
+
+1,119
+
+1,451
+
+1,603
+
+GM
+
+0,000
+
+0,000
+
+1,442
+
+0,043
+
+0,945
+
+0,562
+
+0,621
+
+GG
+
+2,000
+
+1,887
+
+1,646
+
+0,010
+
+1,804
+
+2,000
+
+0,695
+
+Neste ensaio, o módulo do sinal do erro durante
+o rastreamento de uma onda quadrada atenuada com
+amplitude de 50 apresentou valores no intervalo de
+aproximadamente
+emax < 4,2
+
+(17)
+
+3.3 Ensaio com referência modificada durante o
+rastreamento
+Para fins de comprovação, um novo ensaio foi
+realizado com os mesmos parâmetros utilizados nos
+testes anteriores, porém agora com uma referência
+inicial igual a 100sin(0.17t).
+Durante o rastreamento, alterou-se a frequência
+da senóide para 3.0rads. Por fim, o sinal de
+referência foi modificado para uma onda quadrada
+atenuada semelhante aquela utilizada no Tópico 3.2.
+O resultado experimental é apresentado na
+Figura 7 e as Tabelas 6, 7 e 8 representam os valores
+dos termos da tabela FLC nos instantes 30s, 100s e
+140s, respectivamente.
+
+ISBN 978-85-8001-069-5
+
+Neste ensaio, o controlador de posição impõe
+um rastreamento das referências senoidal com baixa
+freqência, senoidal com alta freqência e onda
+quadrada atenuada, com módulo dos erros máximos
+(emax1, emax2 e emax3, das três referências,
+respectivamente) de aproximadamente
+emax < 1,57
+emax < 2,33
+emax < 4,74
+
+(18)
+(19)
+(20)
+
+Tabela 6. Tabela base do FLC após 30s (Referência
+senoidal com 0.17rads)
+e
+
+e
+
+NG
+
+NM
+
+NP
+
+ZE
+
+GP
+
+GM
+
+GG
+
+NG
+
+0,100
+
+0,000
+
+1,441
+
+0,048
+
+2,000
+
+2,000
+
+2,000
+
+NM
+
+0,000
+
+0,000
+
+0,516
+
+0,098
+
+0,328
+
+0,000
+
+0,584
+
+NP
+
+0,000
+
+0,000
+
+0,838
+
+0,149
+
+0,826
+
+0,000
+
+1,601
+
+ZE
+
+0,000
+
+0,000
+
+0,897
+
+0,152
+
+0,628
+
+0,000
+
+0,545
+
+GP
+
+0,000
+
+0,000
+
+1,171
+
+0,245
+
+0,454
+
+0,000
+
+0,521
+
+GM
+
+0,000
+
+0,000
+
+1,170
+
+0,010
+
+0,300
+
+0,000
+
+0,471
+
+GG
+
+0,992
+
+0,114
+
+1,697
+
+0,006
+
+0,855
+
+0,201
+
+1,711
+
+Tabela 7. Tabela base do FLC após 100s (Referência senoidal com
+0.3rads)
+e
+
+NG
+
+NM
+
+NP
+
+ZE
+
+GP
+
+GM
+
+GG
+
+NG
+
+0,100
+
+0,000
+
+1,500
+
+0,023
+
+1,998
+
+2,000
+
+2,000
+
+NM
+
+0,000
+
+0,000
+
+0,882
+
+0,252
+
+0,852
+
+0,000
+
+0,584
+
+NP
+
+0,000
+
+0,000
+
+1,235
+
+0,129
+
+1,384
+
+0,000
+
+1,601
+
+ZE
+
+0,000
+
+0,000
+
+1,361
+
+0,143
+
+1,320
+
+0,000
+
+0,545
+
+GP
+
+0,000
+
+0,000
+
+1,485
+
+0,255
+
+1,017
+
+0,000
+
+0,521
+
+GM
+
+0,000
+
+0,000
+
+1,485
+
+0,393
+
+0,756
+
+0,000
+
+0,471
+
+GG
+
+0,992
+
+0,114
+
+1,798
+
+0,076
+
+0,897
+
+0,201
+
+1,711
+
+e
+
+4388
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Tabela 8. Tabela base do FLC após 140s (Referência de onda
+quadrada)
+e
+
+e
+
+NG
+
+NM
+
+NP
+
+ZE
+
+GP
+
+GM
+
+GG
+
+NG
+
+0,100
+
+0,001
+
+1,820
+
+0,015
+
+1,886
+
+1,768
+
+1,983
+
+NM
+
+0,000
+
+0,007
+
+1,384
+
+0,059
+
+1,227
+
+0,000
+
+0,584
+
+NP
+
+0,000
+
+0,010
+
+1,696
+
+0,014
+
+1,738
+
+0,000
+
+1,601
+
+ZE
+
+0,000
+
+0,013
+
+1,849
+
+0,000
+
+1,624
+
+0,000
+
+0,545
+
+GP
+
+0,000
+
+0,004
+
+1,786
+
+0,005
+
+1,366
+
+0,000
+
+0,521
+
+GM
+
+0,000
+
+0,001
+
+1,703
+
+0,015
+
+1,107
+
+0,000
+
+0,471
+
+GG
+
+0,992
+
+0,113
+
+1,939
+
+0,007
+
+1,562
+
+0,268
+
+1,727
+
+É interessante analisar a superfície de
+controle correspondente s tabelas base do FLC. A
+Figura 8 ilustra a superfície gerada a partir da Tabela
+6. Esta curva é resultante do processo de
+aprendizagem necessário para rastrear o sinal de
+referência utilizado neste ensaio.
+
+não_lineares da carga sem a necessidade de sua
+modelagem completa.
+Além disso, o controle_adaptativo com o
+algoritmo de adaptação proposto pode ser estendido
+para outros tipos de motores e variáveis de controle,
+exigindo algumas modificações nos parâmetros do
+modelo inverso fuzzy.
+Pode-se notar também que esta estratégia possui
+propriedades de aprendizagem semelhantes s de um
+sistema_de_controle neuro-fuzzy.
+Referências Bibliográficas
+1 Karimipour, H. Toosian Shandiz, H. , "A new
+adaptive fuzzy controller for DC motor position
+control," Soft Computing, Computing with Words
+and Perceptions in System Analysis, Decision and
+Control, 2009. ICSCCW 2009. Fifth International
+Conference on , vol., no., pp.1-4, 2-4 Sept. 2009
+doi 10.1109ICSCCW.2009.5379475
+2 Yansheng Yang Changjiu Zhou , "Robust Adaptive Control of Uncertain Nonlinear Systems Using
+Fuzzy Logic Systems," Intelligent Control, 2005.
+Proceedings of the 2005 IEEE International Symposium on, Mediterrean Conference on Control and
+Automation , vol., no., pp.47-52, 27-29 June 2005
+doi 10.1109.2005.1466990
+
+Figura 8. Diagrama da adaptação baseada em modelo_de_referência
+
+Não é possível garantir que esta superfície de
+controle seja capaz de rastrear outros tipos de sinais
+de referência. Porém a adaptação do controlador
+modificará os valores da tabela FLC de modo a
+formar outras superfícies de acordo com o sinal de
+referência utilizado.
+
+3 J.L. Silva Neto, H. Le-Huy, An Improved Fuzzy
+Learning Algorithm for Motion Control Applications, Proceedings of the 24th Annual Conference of
+the IEEE Industrial Electronics Society, 1998 IECON 98, vol. I, pp. 1-5, Aachen, Germany, September 1998.
+4 Seung-Min Baek Tae-Yong Kuc , "An adaptive
+PID learning control of DC motors," Systems, Man,
+and Cybernetics, 1997. Computational Cybernetics
+and Simulation., 1997 IEEE International Conference on , vol.3, no., pp.2877-2882 vol.3, 12-15 Oct
+1997
+
+4 Conclusão
+A estratégia de adaptação do controlador_fuzzy
+apresentada neste trabalho, quando aplicada a
+controle_de_posição de um motor CC, tem
+caracteristicas de rápida aprendizagem e ajuste local
+nos parâmetros do controlador. A superfície de
+controle resultante do processo de aprendizagem
+sofre adaptação rápida garantindo o rastreamento de
+diversas referências logo após uma alteração do sinal
+de entrada, devido ao fato do algoritmo ajustar
+localmente os parâmetros do FLC. Deste modo, a
+cada instante de amostragem, apenas os parâmetros
+necessários para o rastramento do sinal instantâneo
+serão modificados (tendo em conta o seu peso no
+sinal de controle) enquanto os parâmetros referentes
+as regras linguísticas não-ativas permanecerão com o
+mesmo valor. Outra característica importante deste
+controle_de_posição é a compensação de variações
+ISBN 978-85-8001-069-5
+
+5 Huifang Wang Shiqiang Zhu Songguo Liu ,
+"Adaptive PID control of robot manipulators with
+H tracking performance," Advanced Intelligent
+Mechatronics, 2009. AIM 2009. IEEEASME International Conference on , vol., no., pp.1515-1520, 1417 July 2009
+6 Layne J.R., Passino K.M., "Fuzzy Model Reference Learning Control," Journal of Intelligent and
+Fuzzy Systems, Vol. 4, No. 1, pp. 33-47, 1996.
+7 Moudgal V.G., Kwong W.A., Passino K.M., and
+Yurkovich S., "Fuzzy Learning Control for a Flexible-Link Robot", IEEE Transactions on Fuzzy Systems, Vol. 3, No. 2, pp. 199-210, May 1995.
+
+4389
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+8 J.R. Laynel  K.M.Passino, Fuzzy Model Reference Learning Control for Cargo Ship Steering,
+IEEE Control Systems Magazine , December 1993,
+pp. 23-34.
+9 B.-M. Chung, Tunning Effect of Fuzzy Membership Functions, Proc.VI IFSA World Congress
+vol. I, July 1995.
+10 B.-M. Chung  J.-H. Oh, Control of dynamic
+systems using fuzzy learning algorithm, Fuzzy sets
+and systems, vol. 59, no. 1, pp. 1-14, 1993.
+11 B.-M. Chung  J.-H. Oh, Autotuning Method
+of Membership Fuction in a Fuzzy Learning Controller , Journal of Intelligent and Fuzzy Systems, vol.
+1, pp. 335-349, 1994.
+12 L. Zhen  L. Xu, A Comparison Study of
+Three Fuzzy Schemes for Indirect Vector Control of
+Induction Machine Drives , Proc. IEEE IAS Annual
+Meeting, pp. 1725-1731, 1996.
+13 L.-X. Wang, A Course in Fuzzy Systems and
+Control, PTR Prentice Hall  Upper Saddle River,
+NJ, 1997.
+
+ISBN 978-85-8001-069-5
+
+4390

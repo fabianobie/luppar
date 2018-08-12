@@ -1,0 +1,504 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+O USO DE GIROSCÓPIOS E ACELERÔMETROS PARA A MODELAGEM MATEMÁTICA DE
+UMA PLATAFORMA COM DOIS GRAUS DE LIBERDADE
+
+VINÍCIUS NUNES LAGE, ALAN KARDEK RÊGO SEGUNDO
+Departamento de Engenharia de Controle e Automação e de Técnicas Fundamentais-DECAT
+Escola de Minas, Universidade Federal de Ouro Preto-UFOP
+Ouro Preto, Minas Gerais, Brasil
+E-mails viniciusop@gmail.com, alankardek2@gmail.com
+
+Abstract This paper shows the assembly of a servo-controlled platform, with two degrees of freedom, in order to identify empirically the mathematical model of the system. For that, the step response has been parsed, and were found first and secondorder models. The MATLAB software was used to provide the step response of the model obtained empirically and so, compare
+it with the experimental data. The measurement of the angular position of the platform was performed by means of accelerometers and gyroscopes from MPU-6050 sensor. To obtain more accurate measuring results and eliminate the noise effect, we implemented the Complementary filter to the firmware of the system, which uses the Arduino platform for controlling servomotors
+and perform data acquisition.
+Keywords balanced platform, MPU6050 sensor, Complementary filter, Kalman filter, Arduino.
+Resumo Neste trabalho foi realizado a montagem de uma plataforma servo-controlada, com dois_graus_de_liberdade, com o objetivo de identificar de forma empírica o modelo_matemático do sistema. Para isso, a resposta ao degrau foi analisada, e foram
+encontrados modelos de primeira e segunda ordem. O software MATLAB foi utilizado para fornecer a resposta ao degrau do
+modelo obtido empiricamente e, assim, compará-la com os dados experimentais. A medição da posição_angular da plataforma foi
+realizada por meio de acelerômetros e giroscópios do sensor MPU-6050. Para se obter resultados de medição mais precisos e
+eliminar o efeito de ruídos, foi implementado o filtro Complementar ao firmware do sistema, que utiliza a plataforma Arduino
+para controlar os servomotores e realizar a aquisição_de_dados.
+Palavras-chave .
+
+1
+
+Introdução
+
+Sistemas de controle_de_posição e estabilidade
+são vastamente encontrados nos dias de hoje. Existem desde veículos modernos, que utilizam suspensões inteligentes para manter os passageiros sempre
+em posição horizontal, como também aeronaves não
+tripuladas (drones), que possuem câmeras instaladas
+em sistemas_inteligentes em suas bases (conhecidos
+como gimbals), para manter a câmera sempre estabilizada, o que torna a filmagem estável e muito mais
+atraente para os telespectadores.
+O Google, recentemente, adquiriu a startup Levante Lab, que criou o Liftware - colher que usa uma
+série de algoritmos e conta com tecnologia que estabiliza o acessório quando a mão da pessoa está tremendo. Essa ferramenta é muito útil para pessoas
+com Parkinson. Segundo o Google, o uso do dispositivo reduziu em 76 a queda de alimentos em testes
+próprios (EXAME, 2015).
+Para que tais sistemas_de_controle sejam desenvolvidos de forma eficaz, é essencial que se identifique o modelo_matemático do mecanismo. O cálculo
+desses modelos podem se tornar muito complexos
+quando o sistema é composto por diferentes partes e
+peças, cada uma com diversas propriedades distintas
+e difíceis de se medir, como por exemplo momento
+de inércia, atrito, peso, volume, entre outras.
+ISSN 2525-8311
+
+Existem métodos práticos para o cálculo do modelo_matemático de sistemas_dinâmicos complexos
+sem a necessidade de se estudar cada parte separadamente, pois se estuda o sistema como um todo.
+Esses métodos calculam modelos teóricos que representam muito bem a dinâmica real dos sistemas, e se
+tornam excelentes técnicas práticas e aplicáveis
+(NISE, 2011).
+Este trabalho tem como objetivo o desenvolvimento do modelo_matemático de uma plataforma de
+dois_graus_de_liberdade por meio de experimentos
+práticos e da avaliação das respostas do sistema.
+2
+
+Teoria
+
+2.1 Acelerômetros e Giroscópios
+O circuito integrado MPU-6050 é um sensor fabricado pela empresa IvenSense Inc., que reúne três
+sensores giroscópio (1 para cada eixo X, Y e Z), três
+sensores acelerômetros (também um para cada eixo)
+e um Processador Digital de Movimentos (Digital
+Motion Processor ou DMP) em um único chip
+(DATASHEET MPU-6050, 2015). Ele utiliza a comunicação I2C para a transmissão dos dados, possui
+internamente três conversores analógicodigital de 16
+bits para a discretização dos valores dos acelerômetros e dos giroscópios internos. O sensor possui boa
+2539
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+precisão para movimentos rápidos ou lentos. O giroscópio possui escalas de 250, 500, 1000 ou
+2000 graus por segundo (muitas vezes chamados de
+dps - degrees per second). Já os acelerômetros possuem faixas de medição de 2g, 4g, 8g ou 16g,
+sendo 1g a aceleração da gravidade, que corresponde
+a aproximadamente 9,81 ms2.
+Os acelerômetros são equipamentos que medem
+a aceleração própria de um corpo (TEXAS
+INSTRUMENTS, 2015). Eles são utilizados principalmente em sistemas de posicionamento, sensores
+de inclinação, bem como sensores de vibração. Um
+exemplo prático e bastante conhecido de acelerômetros são as telas dos aparelhos celulares elas se ajustam de acordo com o ângulo que fazem em relação 
+aceleração da gravidade.
+Quando o acelerômetro é colocado em posição
+horizontal, em uma mesa, por exemplo, ele irá medir
+uma força de 1g em um dos seus eixos. Porém,
+quando o sensor está inclinado, a força g é distribuída em dois eixos. Logo, é possível medir os ângulos
+por meio da trigonometria.
+A Figura 1 mostra algumas disposições possíveis
+para o sensor e, as Equações 1, 2 e 3 são utilizadas
+para calcular os ângulos, sendo Ax, Ay e Az os valores
+fornecidos pelos acelerômetros para os eixos X, Y e
+Z.
+
+Para a plataforma serão utilizados apenas os eixos X e Y, algumas vezes chamados de roll () e
+pitch ().
+O MPU-6050 fornece valores adimensionais,
+chamados raw values, que devem ser convertidos
+para ms2 ou em múltiplos de forças g (9,81ms2).
+O datasheet informa que deve-se dividir o valor
+medido por 16,384 para uma faixa de medição de
+2g de leitura. Logo, se o sensor retorna um valor de
+16,384 no eixo X, significa que existe 1g naquele
+eixo. Essa divisão pode ser feita antes ou depois de
+se calcular os ângulos.
+O valor obtido não é real quando se tem um movimento acelerado, por exemplo horizontalmente,
+mesmo sem modificar a orientação angular, pois o
+movimento gera novas forças além da gravitacional
+nos acelerômetros. Utilizam-se os giroscópios como
+auxílio para minimizar esse efeito.
+Os giroscópios são utilizados para manter ou para medir orientação. Um giroscópio mecânico consiste de um disco rotativo no qual os eixos ligados a ele
+são capazes de se deslocar livremente em qualquer
+direção (PAULA, F. O, 2015).
+Um giroscópio microeletrônico mede a velocidade_angular (graus por segundo), a partir da qual se
+pode calcular o deslocamento angular.
+Para processar a orientação, é preciso inicializar
+o sensor com uma posição conhecida (utilizando o
+acelerômetro) e, então, medir a velocidade_angular
+nos eixos X, Y e Z por meio dos giroscópios, dentro
+de um intervalo de tempo conhecido.
+O valor do deslocamento angular Gy, calculado
+por meio do giroscópio, é fornecido pela Equação 4.
+    
+
+Figura 1. Ângulos através dos acelerômetros para 3 eixos
+Fonte PAULA, F. O, 2015
+
+
+
+  
+(
+
+ 2 +  2
+
+(1)
+)
+
+
+
+  
+
+(2)
+
+2
+ 2
+(  +  )
+
+(4)
+
+O MPU-6050 disponibiliza valores adimensionais para os giroscópios. Para se chegar a medições
+expressas em graus por segundo, o datasheet informa
+que deve-se dividir os valores obtidos por 131, considerando uma faixa de medição de 250 graus por
+segundo.
+O giroscópio sofre um efeito de desvio do valor
+real, que deveria ser medido ao longo do tempo.
+Quando ele está em posição estável, sem movimentação, seu valor cresce ou decresce devido aos erros
+inerentes  integração. Essa taxa de desvio é conhecida como bias, que deve ser levada em consideração
+nos cálculos.
+A solução para reduzir os desvios, obter valores
+mais precisos e diminuir a propagação dos erros de
+cálculos, é utilizar o acelerômetro e o giroscópio em
+conjunto. Para isso, utiliza-se o filtro Complementar.
+2.2 Filtro Complementar
+
+ 2 +  2
+  
+(
+
+ISSN 2525-8311
+
+(3)
+
+
+)
+
+O Filtro Complementar ou Complementary Filter é uma combinação_linear matemática simples, na
+qual se define um peso para cada variável de entrada,
+neste caso uma para o acelerômetro e outra para o
+giroscópio, em que a soma desses pesos deve ser
+
+2540
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+igual a 1. As Equações 5, 6 e 7 expressam as relações
+matemáticas utilizadas por esse filtro.
+    + (1  )
+
+
+
+
+ + 
+
+   +  dt
+
+(5)
+
+(7)
+
+Um sistema pode ser modelado empiricamente
+por meio da análise da resposta a um degrau. Se o
+sistema apresentar comportamento de primeira ordem, ele pode ser descrito pela Equação 8 (OGATA,
+2003).
+(8)
+
+Sendo s a variável de Laplace e  a constante de
+tempo.
+A constante de tempo  de um sistema de primeira ordem corresponde a 63,2 do tempo de subida.
+Se o sistema apresentar comportamento de segunda ordem, ele pode ser descrito pela Equação 10
+(OGATA, 2003).
+() 
+
+ 2
+ 2 + 2    +  2
+
+(10)
+
+Sendo  a frequência natural e  o fator de amortecimento.
+Para calcular os parâmetros do modelo de segunda ordem é necessário determinar o tempo de
+acomodação Ts, a porcentagem de sobressinal Os
+(overshoot) e o tempo de pico Tp, de acordo com as
+Equações 11, 12, e 13, respectivamente. O fator de
+amortecimento  é calculado por meio da Equação
+14 (OGATA, 2003).
+ 
+
+ISSN 2525-8311
+
+4
+ 
+
+ 
+)
+12
+
+(12)
+
+
+ 1  2
+
+(13)
+
+
+)
+100
+
+2
+ 2 + ln ()
+100
+ln (
+
+2.3 Modelagem Matemática
+
+1
+ + 1
+
+ 
+
+(
+
+(6)
+
+Sendo dt o tempo de amostragem, em segundos  a
+constante de tempo, em segundos  a velocidade
+angular medida pelo giroscópio, em graus por segundo e Acc o ângulo medido pelo acelerômetro, em
+graus.
+Para se obter resultados satisfatórios, a constante
+de tempo  deve ser maior do que a escala de tempo
+típica do ruído do acelerômetro. Neste trabalho, foi
+utilizado tempo de amostragem dt  0,04s e constante de tempo   1s, obtendo-se um valor de   0.96.
+
+() 
+
+  100 
+
+(11)
+
+3
+
+(14)
+
+Materiais e Métodos
+
+A montagem mecânica da plataforma foi feita
+com materiais de baixo_custo e facilmente encontrados no mercado nacional, sendo realizada de forma
+rápida e com baixa complexidade. Para isso, foram
+utilizados uma placa de carbonato alveolar, com
+dimensões 20cm x 10cm um tubo de PVC de 5cm
+de diâmetro e 1m de comprimento uma cantoneira
+de alumínio, com 70cm de comprimento uma barra
+de alumínio com 70cm de comprimento de 1cm de
+largura dois servomotores de 3kgcm de torque, um
+sensor MPU-6050 e um Arduino Nano versão 3.0.
+Para a medição dos ângulos da plataforma, em
+tempo_real, foi utilizado o sensor MPU-6050. A
+comunicação com o sensor é feita por meio do protocolo de comunicação I2C para a aquisição dos valores dos acelerômetros e dos giroscópios. Após esse
+processo é possível fazer o cálculo do ângulo. Para
+melhorar a precisão das medições e para a rejeição de
+ruídos e distúrbios, foi utilizado o filtro Complementar.
+A posição_angular da plataforma é controlada
+por meio de dois servomotores - um para cada grau
+de liberdade. Eles são acionados utilizando sinais
+PWM, que são gerados pelo Arduino Nano.
+A modelagem_matemática da plataforma foi realizada com o auxílio do software MATLAB. A aquisição dos dados do sensor foi feita por meio da comunicação USB entre o Arduino e um microcomputador.
+Com objetivo de estudo e de comparação dos resultados, foram realizados dois ajustes de modelos
+um de primeira ordem (desconsiderando-se o overshoot) e outro de segunda ordem.
+Para a modelagem da plataforma, foi aplicado
+um degrau de +45 graus, partindo de 0 grau (plataforma na horizontal). Verificou-se a resposta para
+ambos os eixos, X e Y, de modo independente. Dessa
+forma, foi possível avaliar se o processo seria melhor
+representado por um modelo de primeira ou segunda
+ordem.
+A resposta ao degrau no eixo X e Y foram similares. Então, tomou-se como referência para este
+trabalho apenas a curva obtida para o eixo Y.
+
+2541
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+4
+
+Resultados e Discussão
+
+A Figura 2 mostra a plataforma após sua montagem, sendo possível visualizar o sensor na parte
+inferior, os servomotores, bem como um pequeno
+contra peso na parte lateral esquerda.
+
+A Figura 4 mostra a resposta real do sistema obtida ao se aplicar um degrau de +45 graus no eixo Y
+da plataforma.
+
+Figura 4. Resposta real ao degrau de +45 graus no eixo Y
+
+Figura 2. Plataforma após a montagem
+
+A Figura 3 mostra que a aplicação do filtro
+Complementar melhorou os resultados de medição,
+visto que os dados do acelerômetro e do giroscópio
+são ruidosos e fornecem valores do ângulo do eixo Y
+da plataforma com muita variação. Observou-se que
+o filtro Complementar rejeita muito bem os ruídos e
+as variações ocorridas. Além disso, também foi implementado e analisado o filtro de Kalman, que é um
+método matemático criado por Rudolf Kalman, e
+apareceu na literatura em 1960 (GREWAL, M. S.,
+ANDREWS, A. P., 2008). Trata-se de um conjunto
+de equações matemáticas em forma de um algoritmo
+computacional iterativo, com a finalidade de realizar
+previsões futuras e estimar variâncias de modelos
+para séries_temporais, que podem ser escritas em
+formas de espaços de estados (HARVEY, A. C.,
+2001). O filtro de Kalman também se mostrou muito
+eficiente. Porém, ele não foi adotado durante as medições e ensaios realizados neste trabalho. Embora
+seu comportamento tenha sido muito próximo ao do
+filtro Complementar, ele apresenta implementação
+mais complexa e possui custo_computacional maior.
+
+Figura 3. Implementação do filtro_complementar
+
+ISSN 2525-8311
+
+Analisando a resposta do sistema a partir da Figura 4, pode-se aproximar o comportamento da plataforma a um modelo de primeira ordem, desconsiderando o overshoot. Porém, espera-se que um modelo
+de segunda ordem represente melhor o sistema.
+Para a aproximação de primeira ordem, a curva
+fornece constante de tempo   0.167 segundos.
+Obtém-se, então, o modelo_matemático para a plataforma, como mostra a Equação 9
+() 
+
+1
+0,167 + 1
+
+(9)
+
+Então, utilizando o MATLAB, obteve-se a respostado modelo da Equação 9 a um degrau de +45
+graus e com atraso de 7 segundos, com a finalidade
+de comparar com a resposta obtida no experimento.
+Vale ressaltar que, na prática, o degrau também foi
+aplicado com atraso de 7 segundos. A Figura 5 mostra o resultado teórico encontrado.
+
+Figura 5. Modelo teórico de primeira ordem
+
+2542
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Ao se analisar a Figura 5, percebe-se que o resultado teórico ficou bastante próximo da resposta
+real, ao se desconsiderar o overshoot observado na
+prática.
+Quando a resposta da plataforma ao degrau foi
+considerada de segunda ordem, foram obtidos os
+seguintes parâmetros
+
+
+
+
+Tempo de acomodação Ts  1,61s
+Overshoot Os  4,43 graus, ou 10,7
+Tempo de pico Tp  0,35s
+
+Logo, os valores do fator de amortecimento  e
+da frequência natural do sistema n, chega-se aos
+seguintes resultados
+
+
+
+  0,59
+n  4,20
+
+6
+
+Portanto, o modelo de segunda ordem é dado pela Equação 15
+() 
+
+s2
+
+mo momento de inércia, peso, entre outros, que são
+variáveis, muitas vezes, difíceis de mensurar com
+precisão. Essas medidas ficam ainda mais difíceis de
+serem aferidas quando um sistema é composto por
+diversos mecanismos e elementos distintos.
+O modelo_matemático encontrado neste trabalho
+mostrou-se muito próximo da dinâmica real do sistema da plataforma, mesmo sem informações precisas dos parâmetros que seriam necessários para se
+calcular matematicamente o modelo.
+Os dois modelos encontrados, principalmente o
+de segunda ordem, podem ser considerados para
+descrever o comportamento da plataforma, visto a
+proximidade de ambos em relação  dinâmica real do
+sistema.
+
+17,66
++ 4,97s + 17,66
+
+Referências Bibliográficas
+
+EXAME. Google inventa colher para ajudar pessoas
+com
+Parkinson.
+Disponível
+em
+<HTTPexame.abril.com.brtecnologianoticias
+google-inventa-colher-para-ajudar-pessoascom-parkinson>. Acesso em 27 de Dez. 2015.
+
+(15)
+
+A resposta ao degrau de +45 graus, com atraso
+de 7 segundos, foi obtido por meio do MATLAB, de
+acordo com a Figura 6.
+
+GREWAL, M. S., ANDREWS, A. P. Kalman
+Filtering theory and practice using matlab. 3.
+Ed.John Wiley  Sons, 2008. 575 p.
+HARVEY, A. C. Forecast, structural time series
+models and Kalman filter. Cambridge
+UniversityPress. 2001, 554 p.
+INVENSENSE INC, DATASHEET MPU6050,
+Revision
+3.4,
+2013.
+Disponível
+em
+<HTTPstore.invensense.comdatasheetsinven
+senseMPU-6050DataSheetV3204.pdf>.
+Acesso em 22 Dez. 2015.
+NISE, N. S. Control Systems Engineering. 6 Ed.
+California State Polytechnic University,
+Pomona, 2011.
+OGATA, K. Engenharia de Controle Moderno. 5
+Ed. São Paulo Prentice Hall, 2003.
+
+Figura 6. Modelo teórico de segunda ordem
+
+O resultado foi muito satisfatório, visto que o
+comportamento do modelo teórico de segunda ordem
+ficou ainda melhor do que o de primeira ordem, já
+que aquele representa o overshoot, assim como verificado na dinâmica real da plataforma.
+5
+
+Conclusões
+
+PAULA, F. O. Sensores IMU  Uma Abordagem
+Completa.
+Disponível
+em
+<HTTPwww.decom.ufop.brimobilissensores
+-imu-uma-abordagem-completa-parte-1>.
+Acesso em 23 Dez. 2015.
+TEXAS INSTRUMENTS. Accelerometers and How
+They
+Works.
+Disponível
+em
+<HTTPwww2.usfirst.org2005compManuals
+Acceler1.pdf>. Acesso em 30 Dez. 2015.
+
+A modelagem_matemática a partir de experimentos e análises práticas mostrou-se um método muito
+eficaz e aplicável em processos reais. Normalmente,
+os modelos matemáticos de sistemas_dinâmicos são
+calculados a partir de parâmetros nominais, tais co-
+
+ISSN 2525-8311
+
+2543

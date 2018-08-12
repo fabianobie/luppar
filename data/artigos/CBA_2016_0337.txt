@@ -1,0 +1,518 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+REDUCAO DE DIMENSIONALIDADE DE DADOS PARA DETECCAO DE
+FECHAMENTO DE LOOP ATRAVES DE METODO ESPECTRAL
+IMPLEMENTACAO EXPERIMENTAL
+Leandro A. S. Moreira, Claudia M. Justel, Paulo F. F. Rosa
+
+
+Instituto Militar de Engenharia
+Praca Gen. Tiburcio, 80
+Rio de Janeiro, RJ, Brasil
+
+Emails leandromoreira75@gmail.com, cjustel@ime.eb.br, rpaulo@ime.eb.br
+Abstract This paper presents results of loop closure detection in mobile robotics through spectral description
+of images sets and data dimensionality reduction. Both spectral description as the representation in low dimension
+depend heavily on the concept of dominant eigenvector. Integration between Matlab and ROS interface was
+exploited to perform experiments, which were made both in computationally simulated environment as in real
+environment. Experimental results have shown that the method is capable of performing correct loop closure
+detection at a significantly lower computational cost compared to the use of  library for visual analysis.
+Keywords
+
+SLAM, loop closure, dimensionality reduction, MatlabROS integration, 
+
+Resumo Este artigo apresenta resultados de deteccao de fechamento_de_loop em robotica_movel por meio
+de descricao espectral de conjuntos de imagens e reducao_de_dimensionalidade de dados. Tanto a descricao
+espectral quanto a representacao em baixa dimensao dependem fortemente do conceito de autovetor dominante.
+A integracao entre Matlab e a interface ROS foi explorada para a realizacao dos experimentos, que foram feitos
+tanto em ambiente simulado computacionalmente quanto em ambiente real. Os resultados experimentais obtidos
+mostraram que o metodo e capaz de realizar deteccoes corretas de fechamento_de_loop a um custo_computacional
+significativamente menor se comparado a utilizacao da biblioteca  para analise visual.
+Palavras-chave
+
+
+1
+
+SLAM, fechamento_de_loop, reducao_de_dimensionalidade, integracao MatlabROS,
+
+Introducao
+
+Nas tecnicas de localizacao_e_mapeamento_simultaneos (SLAM), sensores embarcados no robo extraem marcos de um ambiente nao-estruturado, e
+algoritmos de associacao de dados constroem modelos probabilsticos para a estimativa da pose do
+robo e tambem da localizacao dos marcos. Entretanto, incertezas em relacao tanto a pose do
+robo quanto a localizacao dos marcos sao inerentes
+as tecnicas de SLAM, e tais incertezas aumentam
+ate que o resultado da associacao de dados assegure que o robo esta revisitando uma area previamente mapeada  Thrun et al. (2005). Quando
+isso acontece, diz-se que foi resolvido um problema
+conhecido como fechamento_de_loop (ver Figura
+1). Em anos recentes, muitas tecnicas de localizacao_e_mapeamento_simultaneos baseados em
+visao_computacional tem sido desenvolvidas para
+tornar mais robusta a associacao de dados mencionada anteriormente. Tais tecnicas, chamadas
+genericamente de SLAM visual, utilizam predominantemente analises de imagens coletadas pelo
+robo durante o processo de navegacao para o reconhecimento de marcos. A analise visual pode
+contribuir para a resolucao do problema de fechamento_de_loop, na medida em que e possvel
+associar conjuntos de marcos de imagens entre si,
+determinando o quanto tais imagens sao similares.
+Isso pode ser alcancado, por exemplo, por meio
+de tecnicas de extracao de pontos caractersticos
+
+ISSN 2525-8311
+
+Figura 1
+
+Representacao esquematica do problema de
+
+fechamento_de_loop.
+
+das imagens e formacao de descritores locais, tais
+como SIFT e SURF.
+Este artigo emprega o metodo de deteccao
+de fechamento_de_loop baseado em descricao espectral e reducao_de_dimensionalidade de dados
+desenvolvido por Moreira et al. (2015a) e Moreira et al. (2015b) e apresenta resultados de experimentos simulados computacionalmente assim
+como de experimentos utilizando-se um robo real.
+O restante desse artigo esta organizado do seguinte modo a Secao 2 descreve alguns trabalhos relacionados com a deteccao de fechamento
+
+1102
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+de loop a Secao 3 recapitula as ideias principais
+descritas pelos dois artigos mencionados anteriormente a Secao 4 descreve os recursos computacionais utilizados para a realizacao dos experimentos
+e mostra os resultados obtidos e a Secao 5 apresenta as conclusoes.
+
+2
+
+3
+
+Fechamento de Loop por Metodo
+Espectral
+
+Esta secao descreve sucintamente a abordagem espectral adotada por Moreira et al. (2015a) e Moreira et al. (2015b) para deteccao de fechamento
+de loop. Basicamente, a metodologia empregada
+por aqueles autores divide-se em tres partes
+
+Trabalhos relacionados
+
+Para a deteccao de fechamento_de_loop, Newman
+et al. (2006) apresentaram uma tecnica de analise
+de similaridade que utiliza descritores SIFT  Lowe
+(2004) e aproximacao matricial de menor posto
+para filtrar informacoes visuais comuns. Cummins and Newman (2008) construram vocabularios visuais a partir de descritores SURF  Bay and
+Gool (2006) por meio do FAB-Map, um metodo
+probabilstico baseado em aparencia. Hartmann
+et al. (2013) fizeram uma analise comparativa entre SIFT e SURF, entre outros descritores, para
+SLAM visual. No presente trabalho, um unico vetor de informacoes associado a esses descritores
+locais e usado, sem a construcao de qualquer vocabulario visual.
+Cameras stereo foram empregadas por Cadena et al. (2010) em um processo que considera
+tanto cenas proximas e distantes para melhorar o
+processo de reconhecimento de locais. Por outro
+lado, o processo descrito neste artigo pode utilizar
+cameras tanto stereo quanto monoculares.
+Fechamentos de loop bidirecionais em imagens
+panoramicas foram identificados por Arroyo et al.
+(2014) por meio de correlacao entre subpanoramas
+e a partir de descritores binarios globais. Descritores binarios tambem foram utilizados por GarciaFidalgo and Ortiz (2014) para computar um vocabulario visual de maneira online e evitar a fase de
+treinamento. Este trabalho tambem nao depende
+de nenhuma etapa de treinamento, mas apenas fechamentos de loop unidirecionais sao detectados.
+O conceito de autovetor dominante como descritor visual acoplado a reducao_de_dimensionalidade de dados por Mapeamentos por Difusao
+ Coifman and Lafon (2006) foi empregado por
+Moreira et al. (2015a) e Moreira et al. (2015b)
+para identificar fechamentos de loop em conjuntos
+de imagens indoor e outdoor, atraves de uma abordagem espectral. Este artigo aplica as ideias desenvolvidas nesses dois ultimos trabalhos a realizacao de experimentos simulados e reais utilizandose a integracao computacional entre Matlab e a
+interface ROS (Robot Operating System), e compara os tempos de processamento obtidos por este
+metodo com os tempos obtidos atraves da utilizacao da biblioteca .
+
+ISSN 2525-8311
+
+Figura 2
+
+Estrutura geral do metodo de deteccao de fe-
+
+chamento de loop proposto por Moreira et al. (2015a) e
+Moreira et al. (2015b).
+
+3.1
+
+Pre-processamento
+
+A fase de pre-processamento consiste em determinar o autovetor dominante v1 da decomposicao
+espectral de uma matriz simetrica obtida por (i)
+Mnn  I T I, onde Imn e a matriz de pixels correspondente a uma imagem ou (ii) Mrr  DT D,
+onde Dkr e a matriz de k descritores locais de
+r componentes obtida de uma imagem I. Neste
+ultimo caso, foram analisados resultados provenientes dos descritores SIFT  Lowe (2004) e SURF
+ Bay and Gool (2006), com r  128 e r  64 repectivamente. O autovetor dominante v1i sera empregado como unico vetor representativo de uma
+dada imagem Ii .
+3.2
+
+Reducao de dimensionalidade de dados
+
+Coifman and Lafon (2006) desenvolveram o metodo espectral Mapeamentos por Difusao (Diffusion Maps), o qual permite realizar reducao de
+dimensionalidade de dados por meio da construcao de um sistema de coordenadas em baixa dimensao formado por autovalores_e_autovetores de
+uma matriz de transicao de probabilidades. Nas
+aplicacoes de Moreira et al. (2015a) e Moreira
+et al. (2015b), o que se faz e reduzir a dimensao dos autovetores dominantes v1i obtidos na fase
+de pre-processamento. Assim, os elementos v1i
+de um conjunto finito de imagens X sao relacionados entre si por meio do kernel gaussiano
+j 2
+i
+k(v1i , v1j )  ekv1 v1 k  . Essas avaliacoes sao armazenadas em uma matriz K, que pode ser normalizada dando origem a uma matriz de transicao
+P  D1
+PK, onde D e a matriz diagonal tal que
+Dii 
+j kij . O metodo de Mapeamentos por
+Difusao define por meio dos autovalores_e_autovetores de P um sistema de coordenadas no espaco
+
+1103
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+euclidiano de baixa dimensao Rs no qual os autovetores dominantes v1i sao mapeados. Assim, e
+construda uma aplicacao t  X  Rs que produz, para um determinado instante t, uma imersao
+de X em Rs com a norma euclidiana usual. Entao, dado um elemento v1i  X, sua representacao
+no espaco Rs sera dada por
+
+
+t (xi )  t1 1 (v1i ) t2 2 (v1i ) . . .  ts s (v1i )
+onde q (v1i ) significa a i-esima componente do qesimo autovetor de P .
+3.3
+
+Fechamento de loop em baixa dimensao
+
+Apos o processo de reducao_de_dimensionalidade
+de dados, cada autovetor dominante v1 e representado por um ponto em um espaco de baixa
+dimensao. Calculando-se a distancia_euclidiana
+ponto a ponto, sao procurados indcios de fechamento_de_loop de acordo com o seguinte raciocnio se duas imagens sao semelhantes, entao seus
+autovetores dominantes tambem sao semelhantes,
+o que faz com que, em dimensao reduzida, sejam
+representados por pontos cujas coordenadas sao
+proximas. A estrutura geral do metodo proposto
+e ilustrada pela Figura 2. Um exemplo de deteccao de multiplos fechamentos de loop usando-se o
+pre-processamento (i) da Secao 3.1 e apresentado
+na Secao 3.4.
+3.4
+
+Exemplo de aplicacao do metodo
+
+Considere a base de dados New College  Cummins
+and Newman (2008), amplamente utilizada como
+benchmark por pesquisadores das areas de reconhecimento e mapeamento visuais. Consiste de
+um conjunto de 992 pares de imagens (esquerda e
+direita) de 640  480 pixels capturadas por uma
+camera montada sobre um suporte pan-tilt, instalado em um robo teleoperado que percorreu uma
+trajetoria pre-definida no New College, na Universidade de Oxford. A Figura 3 mostra o mapa do
+local com o desenho do percurso realizado, onde
+o mapa de cores  azul para o incio do percurso,
+vermelho para o fim  indica a sequencia de captura das imagens. Este conjunto de dados sofreu
+o pre-processamento (i) da Secao 3.1, onde cada
+matriz de pixels I e o resultado da concatenacao
+das imagens a esquerda e a direita de cada par.
+
+Figura 4
+
+Representacao em baixa dimensao dos autove-
+
+tores dominantes das matrizes M  I T I correspondentes
+aos 992 pares de imagens do conjunto de dados New College.
+
+Como cada imagem tem 640  480 pixels, a matriz
+correspondente a um par concatenado sera representada por I4801280 , e o autovetor dominante v1
+de M  I T I e calculado. Assim, cada v1i usado
+como entrada para o metodo de Mapeamentos por
+Difusao tem dimensao 1280. A representacao em
+baixa dimensao (dimensao 3) obtida apos a aplicacao do metodo de Mapeamentos por Difusao ao
+conjunto de dados New College e mostrada na Figura 4.
+Calculando-se a distancia_euclidiana entre
+todos os pares de pontos em baixa dimensao,
+obtem-se uma representacao matricial que revela
+multiplos fechamentos de loop detectados no
+percurso considerado.
+Tais fechamentos sao
+revelados pelas sequencias de pontos paralelas a
+diagonal principal da matriz. Nesta representacao
+matricial, preferiu-se mostrar, para cada ponto p,
+apenas os 20 pontos mais proximos a p. A Figura
+5 mostra a correspondencia entre os fechamentos
+de loop detectados e os fechamentos de loop
+presentes de fato no percurso considerado. Os
+tempos de execucao para o processamento deste
+conjunto de dados sao apresentados na Tabela 1,
+e foram obtidos usando-se um computador com
+processador Intel Core i7 de 2.4 GHz, memoria
+RAM de 8GB e sistema operacional Windows 8
+de 64 bits.
+
+Figura 3
+
+Mapa referente a base de dados New College e
+o percurso realizado por um robo teleoperado que capturou
+as imagens.
+
+ISSN 2525-8311
+
+Figura 5 Fechamentos de loop corretamente detectados
+em relacao ao percurso considerado.
+
+1104
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Uso de aut. dom.
+Pre-processamento
+Medio por imagem
+Kernel Map. Dif.
+Coordenadas dim 3
+Tabela 1
+
+Tempos
+91,6871 s
+0,0924 s
+0,0987 s
+0,2475 s
+
+Tempos de execucao para o conjunto de dados
+
+New College, pre-processado usando-se apenas autovetores
+dominantes.
+
+4
+
+Organizacao experimental e resultados
+
+Esta secao faz uma breve descricao dos recursos
+computacionais utilizados para a realizacao dos
+experimentos e apresenta resultados de deteccao
+de fechamento_de_loop a partir de imagens capturadas tanto em ambiente simulado computacionalmente quanto em ambiente real indoor. ROS (Robot Operating System) e uma estrutura de codigo
+aberto e multiplataforma de desenvolvimento para
+robotica, que permite a abstracao do hardware
+e consiste de ferramentas, bibliotecas e pacotes
+que simplificam e padronizam a criacao de rotinas
+para robos. O funcionamento do ROS baseia-se na
+construcao de uma rede de nos especializados em
+controlar tarefas especficas, que trocam mensagens entre si de acordo com um modelo publicadorassinante. Corke (2015) mostra como estabelecer
+a comunicacao entre uma rede ROS inicializada a
+partir da biblioteca Robotics do Matlab 2015.a 
+rodando em Windows  e outra rede ROS inicializada em uma maquina virtual (MV) Linux. Esta
+integracao e particularmente interessante para o
+presente trabalho, dado que todos os passos descritos na Secao 3 se encontravam implementados
+em Matlab, enquanto os nos de controle do robo
+e de captura de imagens da camera nele embarcada estavam em Linux. Ainda assim, foi necessario testar diferentes MVs, com diferentes distribuicoes ROS instaladas, de modo a se obter estabilidade e eficiencia em tempo de resposta compatvel com o hardware ja descrito na Secao 3. Para
+os propositos deste trabalho, os melhores resultados foram obtidos com uma MV Linux Ubuntu
+64 bits, com a distribuicao ROS Hydro, rodando
+via VMWare player. Outro recurso computacional
+utilizado foi o simulador Gazebo, uma ferramenta
+gratuita que permite facilmente criar ambientes
+complexos indoor e outdoor e emular de forma robusta o comportamento de varios tipos de robos
+reais. Por fim, e apenas para efeito de comparacao
+entre tempos de execucao, utilizou-se o ,
+uma biblioteca gratuita, de codigo aberto, multiplataforma, com interfaces para C++, C, Python
+e Java, e que contem centenas de algoritmos de
+visao_computacional. E possvel utilizar 
+para extrair pontos caractersticos de uma imagem e formar um conjunto de descritores locais,
+tais como os descritores SIFT e SURF, que sao
+
+ISSN 2525-8311
+
+Figura 6
+
+Amostra das 731 imagens capturadas em um
+
+ambiente criado no simulador Gazebo.
+
+usados para comparar imagens por meio de
+processos de associacao implementados em algoritmos de pesquisa por descritores vizinhos
+mais proximos. Em geral, esses algoritmos sao
+otimizados por estruturas de busca do tipo
+KD-tree.
+
+4.1
+
+Conjunto de dados 1 imagens de um ambiente simulado em Gazebo
+
+O primeiro conjunto de dados consiste de uma
+sequencia de 731 imagens de 640  480 pixels
+capturadas de um ambiente criado no simulador Gazebo.
+O experimento foi realizado
+empregando-se um Turtlebot com uma camera
+RGB-D embarcada. Neste primeiro experimento,
+o robo realizou uma trajetoria retangular e as
+imagens foram capturadas ao longo de uma volta
+e meia de percurso, o que gerou uma sequencia
+de imagens correspondente a um fechamento de
+loop. Algumas das imagens deste conjunto sao
+mostradas na Figura 6. As 731 imagens deste
+conjunto de dados foram submetidas ao preprocessamento (ii) da Secao 3.1, com a utilizacao
+de descritores SIFT e SURF. Foram analisados
+resultados de deteccao de fechamento_de_loop
+apos a reducao_de_dimensionalidade de dados
+(Secao 3.2) e calculo de distancias euclidianas
+em baixa dimensao (Secao 3.3). A Figura 7
+mostra a representacao em baixa dimensao para o
+conjunto de autovetores dominantes relacionados
+as matrizes de descritores SIFT Figura 7(a) e
+SURF Figura 7(c), respectivamente, assim como
+as correspondentes representacoes matriciais
+das distancias euclidianas ponto a ponto em
+baixa dimensao Figura 7(b) e Figura 7(d). Nas
+representacoes matriciais, e possvel observar as
+sequencias de fechamentos de loop detectadas e
+identificadas pelas diagonais secundarias.
+
+4.2
+
+Conjunto de dados 2 imagens de um ambiente real
+
+O segundo conjunto de dados consiste de uma
+sequencia de 565 imagens de 640  480 pixels que
+
+1105
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Figura 7
+
+Mapeamentos em baixa dimensao (a) e (c) e
+
+Figura 9
+
+Mapeamentos em baixa dimensao (a) e (c) e
+
+matrizes de distancias euclidianas (b) e (d) corresponden-
+
+matrizes de distancias euclidianas (b) e (d) corresponden-
+
+tes ao conjunto de dados 1.
+
+tes ao conjunto de dados 2.
+
+foram obtidas de um ambiente indoor por meio do
+robo Pioneer 3DX com uma camera RGB-D embarcada Figura 8. Neste segundo experimento, o
+robo tambem realizou uma trajetoria retangular.
+As imagens foram capturadas durante uma volta
+e meia do robo nessa trajetoria, o que gerou uma
+sequencia de imagens de um fechamento_de_loop.
+As imagens deste conjunto de dados tambem foram submetidas ao pre-processamento (ii) da Secao 3.1, com a utilizacao tanto de descritores SIFT
+quanto de descritores SURF. Novamente, o fechamento_de_loop foi detectado apos a reducao_de_dimensionalidade de dados (Secao 3.2) e calculo de
+distancias euclidianas em baixa dimensao (Secao
+3.3). A Figura 8 mostra o robo utilizado no experimento e algumas das imagens capturadas. A Figura 9 mostra a representacao em baixa dimensao
+para o conjunto de autovetores dominantes relacionados as matrizes de descritores SIFT Figura
+9(a) e SURF Figura 9(c), respectivamente, assim como as correspondentes representacoes matriciais das distancias euclidianas ponto a ponto
+em baixa dimensao Figura 9(b) e Figura 9(d).
+
+4.3
+
+Analise dos resultados
+
+O processo de associacao de descritores locais para
+comparacao de imagens realizado via 
+pode ser utilizado para deteccao de fechamentos
+de loop, e isso e o que se faz em geral. Mas tal processo nao tem um custo trivial, mesmo quando se
+utilizam estruturas otimizadas de busca, principalmente se e grande o numero de descritores por
+imagem. Por outro lado, deve-se lembrar que a
+deteccao de fechamento_de_loop por reducao de
+
+Figura 10
+
+Figura 8 Robo Pioneer 3DX com camera RGB-D embarcada e amostra das 565 imagens capturadas em um ambiente indoor.
+
+ISSN 2525-8311
+
+Tempos totais de processamento (em segundos) efetuados pelo  e pelo metodo espectral utilizado neste trabalho. Os eixos verticais estao representados
+em escala logartmica.
+
+1106
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+dimensionalidade de dados baseia-se em um kernel de similaridade que nao depende do processo
+de associacao entre multiplos descritores em cada
+imagem, por isso o custo_computacional e significativamente menor. A Figura 10 mostra, para
+os mesmos conjuntos de imagens, a comparacao
+entre os tempos totais de processamento entre o
+ e o metodo espectral utilizado neste trabalho. O primeiro grafico ilustra os tempos relacionados a utilizacao dos descritores SIFT, enquanto os tempos relacionados a utilizacao dos
+descritores SURF encontram-se representados no
+segundo grafico.
+5
+
+Conclusoes
+
+Intelligent Vehicles Symposium Proceedings,
+pp. 13781383.
+Bay, H. and Gool, L. V. (2006). Surf Speeded up
+robust features, Proceedings of 9th European
+Conference on Computer Vision, pp. 404 
+417.
+Cadena, C., Galvez-Lopez, D., Ramos, F. and
+Tardos, J. D. (2010). Robust place recognition with stereo cameras, IEEE International Conference on Intelligent Robots and
+Systems (IROS), pp. 5182  5189.
+Coifman, R. R. and Lafon, S. (2006). Diffusion
+maps, Applied and Computational Harmonic
+Analysis 21(1) 5  30.
+
+Este artigo apresentou resultados experimentais
+de deteccao de fechamento_de_loop a partir de descricao espectral de conjuntos de imagens e construcao de representacoes em baixa dimensao. Os
+experimentos foram realizados em ambiente simulado computacionalmente, utilizando-se Gazebo, e
+tambem em ambiente real indoor com um robo Pioneer 3DX. Em ambos os casos, utilizou-se a integracao entre as ferramentas computacionais Matlab e ROS  este rodando em maquina virtual.
+Os tempos de execucao mostram que a estrutura espectral utilizada  onde sao empregados
+autovetores dominantes associados a matrizes de
+descritores locais  e significativamente mais eficiente em comparacao com a associacao de descritores realizada pelo .
+Um trabalho futuro interessante sera adaptar a estrutura espectral do metodo utilizado para
+processamento_online, de modo que a representacao em coordenadas em baixa dimensao seja atualizada em tempo_real, com baixo_custo_computacional, a medida que o robo coletar informacao
+do ambiente. Outro ponto a ser tratado e analisar a robustez do metodo em relacao a deteccao
+de falsos positivos e falsos negativos. Para isso,
+as medidas de precisao e revocacao deverao ser
+empregadas nessa analise.
+
+Corke, P. (2015). Integrating ros and matlab,
+IEEE Robotics and Automation Magazine
+22(2) 18  20.
+
+Agradecimentos
+
+Moreira, L. A. S., Justel, C. M. and Rosa, P.
+F. F. (2015b). Visual similarity analysis in
+loop closure through data dimensionality reduction via diffusion maps, Proceedings of
+the 30th Annual ACM Symposium on Applied
+Computing, SAC 15, pp. 289294.
+
+Os autores agradecem o suporte financeiro da
+Coordenacao de Aperfeicoamento de Pessoal de
+Nvel Superior (CAPES)  Edital 21-2011 ProEstrategia, CAPES-DS, Financiadora de Estudos e Projetos (FINEP) Chamada Publica CTAERO Vant 2009 e CNPq (edital Universal 4847672011-9).
+Referencias
+Arroyo, R., Alcantarilla, P. F., Bergasa, L. M.,
+Torres, J. J. Y. and Gamez, S. (2014).
+Bidirectional loop closure detection on panoramas for visual navigation, 2014 IEEE
+
+ISSN 2525-8311
+
+Cummins, M. and Newman, P. (2008). Fab-map
+Probabilistic localization and mapping in the
+space of appearance, The International Journal of Robotics Research 27(6) 647665.
+Garcia-Fidalgo, E. and Ortiz, A. (2014). On the
+use of binary feature descriptors for loop closure detection, 2014 IEEE Emerging Technology and Factory Automation, pp. 18.
+Hartmann, J., Klussendorff, J. and Maehle, E.
+(2013). A comparison of feature descriptors
+for visual slam, IEEE European Conference
+on Mobile Robots (ECMR), pp. 5661.
+Lowe, D. G. (2004). Distinctive image features
+from scale-invariant keypoints, International
+Journal of Computer Vision 60(2) 91110.
+Moreira, L. A. S., Justel, C. M. and Rosa, P.
+F. F. (2015a). Deteccao de fechamento de
+loop via mapeamentos por difusao - uma aplicacao para robos_moveis, Anais on-line do
+SBAIDINCON 2015, SBAI 15, pp. 1071
+1076.
+
+Newman, P. M., Cole, D. M. and Ho, K. L.
+(2006). Outdoor slam using visual appearance and laser ranging, IEEE International Conference on Robotics and Automation
+(ICRA), pp. 11801187.
+Thrun, S., Burgard, W. and Fox, D. (2005). Probabilistic Robotics (Intelligent Robotics and
+Autonomous Agents), The MIT Press.
+
+1107

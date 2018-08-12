@@ -1,0 +1,809 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+PSEUDO CONTROLADOR PID PROJETO E SINTONIA AUTOMÁTICA
+ANNELISE G. LEMES, ANTONIO S. SILVEIRA, ANTONIO A. R. COELHO
+Grupo de Pesquisa em Tecnologias de Controle Aplicado
+Departamento de Automação e Sistemas - Universidade Federal de Santa Catarina
+Caixa Postal 476, 88040-900 Florianópolis, SC, Brasil
+E-mails annelise@das.ufsc.br, toninho@das.ufsc.br, aarc@das.ufsc.br
+Abstract In this paper, a pseudo PID controller (PPID), including only one gain, is designed and assessed. The idea is to
+connect the I+PD control design with the Fertik and Ziegler-Nichols tuning rules in order to obtain not only a simple and efficient
+control algorithm but also to decrease the operator intervention time with respect to the calibration task and to obtain desired
+closed-loop dynamics. Three advanced approaches for automatic tuning, self-tuning, fuzzy and IMC, are used for adjusting the
+controller parameter based on inputoutput data of the controlled plant. The effectiveness and performance of the proposed PPID
+controller is investigated through essays with numerical and experimental plants.
+Keywords PID control, automatic tuning, fuzzy control, nonlinear_systems, stability, self-tuning control.
+Resumo Neste artigo, um pseudo controlador PID (PPID), incluindo somente um ganho, é projetado e avaliado. A idéia é
+hibridizar o esquema do controle I+PD com as sintonias de Fertik e Ziegler-Nichols visando a obtenção, não somente de um
+simples e eficiente algoritmo de controle, mas também diminuir o tempo de ajuste pelo operador na tarefa de calibração e
+estabilizar dinâmicas de malha_fechada. Três abordagens avançadas para sintonia_automática, self-tuning, fuzzy e IMC, são
+implementadas para ajustar o parâmetro do controlador com base nas medidas de entrada_e_saída da planta controlada. A
+eficiência e desempenho do controlador PPID proposto é investigada através de ensaios em plantas numéricas e experimentais.
+Palavras-chave .
+
+ganhos do controlador (tarefa não-trivial) iii) A
+indústria de controle_de_processos tem mostrado
+interesse nas sintonias auto-tuning, self-tuning e
+fuzzy. A primeira tem menor complexidade
+computacional e entendimento, enquanto que na
+segunda existe uma barreira de mercado pela maior
+complexidade e factibilidade em dispositivos
+digitais
+como
+os
+controladores
+lógicos
+programáveis. Isto decorre normalmente do uso de
+topologias de controle com um número excessivo
+de parâmetros de projeto (Kirecci et al., 2003,
+Bobál et al., 2005). A terceira emprega a
+representação_do_conhecimento e capacidade de
+aprendizado que pode ser utilizada para tratar
+sistemas_dinâmicos variantes no tempo (Passino e
+Yurkovich, 1998).
+Este artigo descreve o projeto de um pseudo
+controlador PID caracterizado pela presença de
+somente um parâmetro de sintonia e, estudos de
+casos numéricos e experimentais são apresentados.
+A idéia é mostrar a flexibilidade de utilização do
+controlador proposto para redução do tempo de
+comissionamento e obtenção de um desempenho
+consistente para sistemas_dinâmicos no intervalo de
+operação. A calibração automática do pseudo
+controlador PID está associada aos aspectos de
+estabilidade e desempenho de malha, e apoiado nas
+seguintes metodologias avançadas i) abordagem
+self-tuning estima-se via mínimos_quadrados
+recursivo diretamente o ganho do controlador em
+qualquer ponto de operação da planta e com um
+reduzido ciclo de máquina para aplicações em
+microprocessadores ii) abordagem inteligente sob
+outra forma de controle_adaptativo, aplica-se um
+escalomento fuzzy de ganhos baseado na dinâmica
+
+1 Introdução
+O controlador_proporcional-integral-derivativo
+(PID) é ainda o mais popular na indústria de
+controle_de_processos apesar dos avanços
+tecnológicos e da teoria em sistemas_de_controle. O
+sucesso continuado do controlador PID deve-se a
+estrutura simples, desempenho eficiente e
+aplicabilidade em uma ampla classe de sistemas de
+controle práticos. Como os processos_industriais
+reais exibem características como ordem elevada,
+atraso_de_transporte e não-linearidades, é
+necessário uma resintonização ou algoritmos mais
+elaborados no projeto do controlador PID para
+proporcionar respostas servo e regulatório
+adequadas em malha_fechada nos diferentes pontos
+de operação (Gude et al., 2006 Li et al., 2009).
+Para tornar o controlador PID efetivo no
+tratamento de plantas complexas e facilitar o
+projeto_de_controle, muitas regras de calibração têm
+sido desenvolvidas desde o aparecimento da
+primeira proposta de Ziegler-Nichols. Em geral, os
+projetos do controlador PID baseiam-se em
+métodos
+heurísticos,
+analíticos
+(modelos
+paramétricos e não-paramétricos), inteligentes, de
+otimização e avançados (variância mínima e
+preditivo) (Ang et al., 2005 Visioli, 2006).
+Algumas características destes métodos_de_sintonia
+PID são i) as técnicas avançadas e de otimização
+consomem tempo de processamento e podem falhar
+em plantas com mudanças na dinâmica ou grandes
+atrasos de transporte ii) a técnica de controle
+adaptativa, denominada escalonamento_de_ganhos
+(gain_scheduling), necessita do conhecimento
+prévio das condições de operação da planta para,
+em cada faixa de operação, ajustar localmente os
+770
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+do processo em tempo_real iii) abordagem controle
+por modelo interno (IMC - Internal Model
+Control) visa-se garantir uma sintonia padrão de
+sucesso na academia e indústria para evitar a busca
+do ganho pelo procedimento tentativa e erro (no
+projeto IMC necessita-se do conhecimento a priori
+do modelo_matemático da planta controlada e
+especifica-se a dinâmica de malha_fechada).
+
+que representa a estrutura de controle denominada
+I+PD proposta por Y. Takahashi (Ang et al., 2005
+Bobál et al., 2005 Moudgalya, 2007).
+A seleção dos ganhos do controlador PID
+interfere na dinâmica de malha_fechada da planta
+controlada (PiMira et al., 2000 Gude et al., 2006).
+Adicionalmente, a necessidade de elaboração de
+algoritmos de controle simples e eficientes visando
+a programação em plataformas do tipo CLP, DSP,
+FPGA ou em aplicativos microcontrolados (que
+são destaques na indústria que empregam o
+controle PID) é evidente nos dias atuais (Visioli,
+2006).
+De modo a ter-se uma calibração no mundo
+prático real que não somente garanta as
+especificações de estabilidade e desempenho de
+malha_fechada, mas também facilite a sintonia por
+parte do operador, propõe-se um pseudo
+controlador PID (PPID) com um único parâmetro
+ajustável. Com base nas relações estabelecidas em
+H. A. Fertik (Seborg et al., 1989) e J. G. Ziegler e
+N. B. Nichols (Visioli, 2006) têm-se
+
+2 Síntese do Pseudo Controlador PID
+A maioria dos controladores utilizados na indústria
+é do tipo PID por questões de eficiência
+operacional em malha_fechada, simplicidade de
+programação e de instalação como um dispositivo
+de controle de campo. O controlador PID se
+apresenta
+sob
+diferentes
+estruturas
+de
+implementação que varia entre fabricantes em
+termos da sintonia, equação recursiva, filtragem e
+escalonamento. O controlador PID discreto do tipo
+ideal tem a forma
+
+T
+u(t)  K c e(t) + s
+Ti
+
+
+d
+
+
+
+s
+
+
+
+T
+ e(i) + T e(t)  e(t  1)
+t
+
+i 1
+
+(1)
+
+Ts
+1
+>
+Ti 100
+
+onde e(t)  yr(t)  y(t) é o erro do sistema, Kc é o
+ganho proporcional, Ti o tempo integral, Td o
+tempo derivativo e Ts é o período de amostragem.
+A forma de implementação do controle PID
+incremental é
+u(t)  u(t  1) + K c e(t)  e(t  1) +
+
+Ts
+e(t) +
+Ti
+
+Td
+e(t)  2e(t  1) + e(t  2)
+Ts
+
+Ts
+e(t) +
+Ti
+
+Td
+ 2y(t  1)  y(t)  y(t  2)
+Ts
+
+Ti  2 ... 5Td
+
+(4)
+
+É possível selecionar as seguintes realizações
+normalizadas da equação (4) para a equação (3)
+Ts
+Ts
+Ti
+ 0.4 
+ 0.1
+4 
+Td
+Ti
+Td
+
+(5)
+
+A expressão de implementação do controlador
+PPID então assume a forma da equação (6), isto é,
+
+(2)
+
+u(t)  u(t  1) + K c 0.1y r (t)  3.6y(t) +
+6y(t  1)  2.5y(t  2)
+
+A equação (2), que é adequada para aplicação
+em microcontroladores, está presente em singleloops e é compreensível para implementação
+digital do ponto de vista de operadores e
+engenheiros de chão de fábrica (Visioli, 2006).
+No projeto do controlador PID as bandas
+proporcional e derivativa aparecem multiplicadas
+pelo erro do sistema. Isto tem uma implicação no
+desempenho do controlador uma vez que variações
+bruscas na referência, também no erro, variam
+instantaneamente, produzindo ações de controle
+com magnitudes excessivas. Esta condição de
+implementação pode comprometer a operação do
+atuador e do processo. Para evitar problemas
+práticos como a saturação de malha deve-se optar
+pela seguinte implementação i) manter o termo
+integral com e(t)  yr(t)  y(t) ii) substituir os
+termos proporcional e derivativo por e(t)  y(t).
+Assim, a equação do controlador PID digital ideal,
+equação (2), pode ser reescrita através de
+u(t)  u(t  1) + K c  y(t) + y(t  1) +
+
+
+
+(6)
+
+Algumas características inerentes no projeto do
+pseudo controlador PID são i) existe somente um
+parâmetro, Kc, para ser sintonizado e, neste caso,
+técnicas clássicas (Jury, lugar das raízes), ótima e
+avançada (adaptativo, robusto, fuzzy, neural)
+podem ser aplicadas ii) este tipo de lei de controle
+pode ter desempenho adequado no tratamento de
+plantas simples e complexas (não-lineares) iii) a
+estrutura da equação PPID é adequada do ponto de
+vista tanto da implementação em tecnologias
+digitais (hardware e software) como do
+entendimento por operadores de planta.
+2.1 Resultados Numéricos com Modelos de Planta
+A seguir, o controlador PPID é avaliado e o
+parâmetro Kc da equação (6) é ajustado por
+tentativa e erro em diferentes classes de plantas
+benchmark propostas na literatura de controle de
+processos (strm e Hgglund, 2000). Estes
+modelos de plantas representam dinâmicas com
+comportamentos simples e complexos encontrados
+na indústria. O ganho Kc, com o respectivo modelo
+matemático de cada planta, está representado na
+tabela 1.
+
+(3)
+
+771
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+dinâmico é um bom desafio para avaliação do
+desempenho e da eficiência da estratégia de
+controle PPID proposta.
+Para análise do comportamento servo o sinal de
+referência é alterado como yr(t)  1 (amostra 1 a
+166), yr(t)  3 (amostra 167 a 333) e yr(t)  6
+(amostra 334 a 500). A figura 2 ilustra a dinâmica
+da saída e controle do sistema CSTR com o
+controlador PPID, e sendo a calibração Kc  3.5
+(ajuste por tentativa e erro).
+
+Tabela 1. Ganhos do PPID em diferente família de plantas.
+
+Em PiMira et al. (2000) os processos
+benchmark da tabela 1 também foram avaliados
+num controlador PID proposto com propriedades
+auto-tuning e fuzzy. De forma diferente dos
+resultados apresentados para o controlador PID
+proposto por PiMira et al. (2000), que não
+controlou e testou nas plantas instável e de
+temperatura, respectivamente, o controlador PPID
+estabilizou todos os modelos de plantas da tabela 1
+(resultados de simulação não apresentados).
+
+Figura 1. Plano de fase do CSTR.
+
+2.2 Resultado Numérico com um Reator
+Outro estudo de caso de simulação numérica num
+sistema não-linear, para ilustrar a factibilidade de
+implementação do controlador PPID, é realizado
+em um reator de agitamento contínuo (CSTR). As
+seguintes equações dinâmicas discretas descrevem
+a dinâmica do reator (Chen e Peng, 1997)
+
+Figura 2. Desempenho do PPID aplicado no CSTR.
+
+A resposta em malha_fechada mostra que o
+sistema apresenta um bom comportamento
+dinâmico servo nas três diferentes faixas de
+operação com pequena variância de controle para
+yr(t)  1. Entretanto, para yr(t)  3 tem
+convergência assintótica oscilatória e isto se deve a
+complexidade do CSTR na região x2 > 3. Para yr(t)
+ 6 é necessária mais energia no controle para
+eliminar o erro em regime_permanente.
+
+x1 (t + 1)  x1 (t) +
+
+
+
+x2 ( t )
+
++ Ts   x1 (t) + D a (1  x1 (t))e
+
+
+
+1+ x 2 ( t )  
+
+
+
+
+
+x 2 (t + 1)  x 2 (t)  Ts x 2 (t)(1 + ) +
+x (t)
+
+
+1+ x ( t )  
++ Ts  BD a (1  x 1 (t))e
++ u(t) 
+
+
+2
+
+2
+
+onde x1(t) e x2(t) representam a concentração dos
+reagentes (adimensional) e a temperatura do reator,
+respectivamente. A entrada de controle u(t) é a
+temperatura da camisa de resfriamento. Os
+parâmetros físicos do reator são Da  0.072
+(número de Damkhler),   0.072 (energia de
+ativação), B  8 (calor da reação),   0.3
+(coeficiente de transferência_de_calor), Ts  0.2 seg
+(período de amostragem). A figura 1 apresenta o
+plano de fase do CSTR, onde se observa dois
+pontos de estado estacionário estáveis e um central
+instável. Desta forma, este tipo de comportamento
+
+3 Sintonia Automática do Controlador PPID
+Para evitar o procedimento tentativa e erro na
+sintonia de Kc e tornar o projeto PPID flexível e
+automático do ponto de vista da calibração,
+intervenção do operador e desempenho_dinâmico, a
+seguir, apresenta-se três abordagens eficientes e em
+evidência em produtos de controle já
+manufaturados industrialmente.
+3.1 Ajuste de Kc com Sintonia Self-Tuning
+Nesta proposta projeta-se o controlador PPID
+utilizando um algoritmo de controle_adaptativo
+772
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+sistema_fuzzy de Mamdani com a defuzzificação
+por média dos centros (Mamdani e Assilian, 1975
+Passino e Yurkovich, 1998 Li et al., 2009).
+O universo de discurso dos sinais e(t) e e(t) é
+avaliado por meio de funções de pertinência na
+forma trapezoidal-triangular-trapezoidal, nomeadas
+como Negativo (N), Zero (Z) e Positivo (P),
+posicionadas da seguinte forma
+
+direto, denominado self-tuning. Para adaptação do
+ganho Kc emprega-se o método dos mínimos
+quadrados recursivo (Kirecci et al., 2003). Neste
+sentido, a equação (2) deve ser reescrita na forma
+matricial, ou seja,
+u(t)  T (t)(t)
+
+T (t)   e(t) e(t)  2 e(t) 
+
+T (t)   K c
+
+K c Ts  Ti
+
+K c Td  Ts 
+
+
+
+e(t)  e(t)  e(t  1)   e(t)  e(t)  e(t  1)
+2
+
+
+
+que representa a sintonia recursiva. Os vetores de
+medidas e parâmetros modificados para o caso
+escalar são dados pelas seguintes equações
+
+Sinal e(t) N-inf -0.1 0, Z-0.1 0
+0.1, P0 0.1 +inf
+Sinal e(t) N-inf -0.05 0, Z-0.05 0
+0.05, P0 0.05 +inf.
+
+Para a saída do valor de K c , quatro funções de
+pertinência triangulares são utilizadas que
+caracterizam o valor do ganho como Muito Baixo
+(MB), Baixo (B), Alto (A) e Muito Alto (MA),
+tendo seus centros respectivamente posicionados
+em 0.2 0.5 1 2. A tabela 2 apresenta a base de
+regras empregada. O ganho Kc fuzzy deve ser
+ponderado por um valor heuristicamente
+determinado ou, alternativamente, com o ajuste de
+Kc padrão obtido através da sintonia IMC
+apresentada na seção 3.3.
+
+(t)  0.1y r (t)  3.6y(t) + 6y(t  1)  2.5y(t  2)
+(t)  K c
+
+O algoritmo dos mínimos_quadrados recursivo
+com fator de esquecimento pode ser diretamente
+utilizado quando as medidas u(t) e (t) estão
+disponíveis no instante de tempo t. Assim, a
+atualização de (t), que corresponde a estimativa de
+Kc, pode ser expressa como
+
+Tabela 2. Base de regras do ajuste de Kc fuzzy.
+
+(t)  (t  1) + K(t) u r (t)  (t)(t  1)
+
+e(t)
+
+u r (t)  sign ( e(t) )  e e (t) +  u u (t  1)
+2
+
+K(t) 
+
+P(t  1)(t)
+ + P(t  1)2 (t)
+
+P(t) 
+
+P(t  1)
+ + P(t  1)2 (t)
+
+N
+
+Z
+
+P
+
+N
+
+MB
+
+MA
+
+A
+
+Z
+
+B
+
+MB
+
+B
+
+P
+
+MB
+
+MA
+
+A
+
+2
+
+e(t )
+
+3.3 Ajuste de Kc com Sintonia IMC
+
+A constante  é denominada fator de
+esquecimento (0 <  < 1) e existem duas
+inicializações no algoritmo recursivo, P(0) e (0).
+É usual considerar, na inexistência de informações
+a priori sobre a dinâmica da planta, P(0)  , com
+ de grande magnitude 10 ... 106, e (0)
+calibrado com 0.1 ... 0.001 (Kirecci et al., 2003
+Bobál et al., 2005). O fator e pondera o
+comportamento dinâmico do sistema em malha
+fechada em termos do rastreamento da referência e
+o fator u regula a energia de controle.
+
+Para avaliar a calibração do controlador PPID, que
+reflete no desempenho de malha_fechada da planta,
+uma sintonia padrão (fixa) e de interesse da
+indústria é utilizada para derivar os ganhos fixos do
+controlador PID da equação (2). Em Morari e
+Zafirou (1989) a metodologia de projeto de
+controle por modelo interno, IMC, tem os ganhos
+PID baseado em modelos típicos de plantas
+industriais da forma FOPDT (First-Order Plus
+Dead-Time), SOPDT (Second-Order Plus DeadTime) e IPDT (Integral Plus Dead-Time),
+conforme ilustra a seguinte tabela 3. O parâmetro
+de projeto MF regula a velocidade da resposta do
+sistema de malha_fechada (Ravichandran e Karray,
+2001 Li et al. 2009). Estes modelos simples
+podem ser utilizados para representar uma
+variedade de situações encontradas na indústria.
+Com as equações da tabela 3 obtém-se a respectiva
+sintonia IMC do PPID, sendo o ganho do
+controlador PPID ajustado pela tabela 4.
+Desta forma evita-se uma calibração para Kc em
+aplicações práticas pelo procedimento tentativa e
+erro. Adicionalmente, a sintonia da tabela (4) pode
+servir de pré-tuning nas implementações selftuning e fuzzy ou no start-up em comissionamento
+de outras malhas industriais.
+
+3.2 Ajuste de Kc com Sintonia Fuzzy
+
+A proposta desta sintonia é escalonar o ganho do
+controlador PPID e melhorar o desempenho da
+malha. Neste sentido, o ajuste de K c é
+implementado on-line de modo a empregar mais
+energia de controle durante mudanças de referência
+e menos energia conforme a variável de saída se
+aproxima do valor desejado. Assim, emula-se um
+operador humano suficientemente rápido e
+dedicado que verifica a cada período de
+amostragem o erro e(t) e a variação do erro e(t) e,
+aumenta o valor de K c se e(t) é grande ou diminui
+se e(t) é pequeno. Para emular este tipo de
+raciocínio em uma malha_de_controle utiliza-se um
+
+773
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Tabela 3. Sintonia IMC para o PID.
+
+Modelo
+
+Sintonia
+Kc 
+
+FOPDT
+Kpe
+
+Ki 
+
+s
+
+s + 1
+
+SOPDT
+
+K c 2Ts
+(2 + )
+
+Kd 
+
+K c 
+Ts 2( + MF )
+
+Kc 
+
+2
+K p ( + MF )
+
+Figura 3. Planta experimental de posição PAM.
+
+A figura 4 ilustra os resultados do controlador
+PPID na abordagem self-tuning aplicado no PAM.
+Na estrutura de sintonia_automática é empregado
+valor inicial conservativo para o ganho do PPID,
+que varia suavemente, garantindo estabilidade e
+resposta de malha conservativa. A convergência do
+ganho do PPID pode ser observada e o controle
+tem baixa variabilidade.
+
+K c Ts
+2
+K c
+Kd 
+2Ts
+Ki 
+
+K p e s
+2 s 2 + 2s + 1
+
+IPDT
+
+(2 + )
+2K p ( + MF )
+
+Kc 
+
+ + 2MF
+K p ( + MF ) 2
+
+Ki 
+
+K p e s
+s
+
+K c Ts
+( + 2MF )
+
+Kd 
+
+K c2
+4K i Ts
+
+Tabela 4. Sintonia IMC para o PPID.
+
+Modelo
+
+Sintonia
+
+FOPDT
+
+Kc 
+
+(2 + )
+10K p ( + MF ) 2 Ts
+
+SOPDT
+
+Kc 
+
+(2 + 2Ts + Ts2 )
+3.6K p ( + MF )Ts
+
+IPDT
+
+Figura 4. Resposta do PAM com o controlador PPID.
+
+4.2 Controle
+TacoGerador
+
+da
+
+Velocidade
+
+do
+
+Motor-
+
+O segundo ensaio prático é realizado numa planta
+não-linear sobre-amortecida, denominada MotorTacoGerador (MTG). Consiste de dois motores DC
+acoplados por uma pequena correia, com um deles
+gerando a tensão tacométrica (medição da
+velocidade), conforme ilustra a figura 5.
+
+( + 2MF + Ts )
+Kc 
+3.6K p ( + MF ) 2
+
+4 Resultados Experimentais
+4.1 Controle da Posição do Pêndulo Amortecido
+
+O primeiro experimento prático é conduzido em
+uma planta não-linear sub-amortecida, denominada
+pêndulo amortecido (PAM), conforme ilustra a
+figura 3. O processo contém uma barra vertical
+onde no ponto de pivô existe um potenciômetro
+para medição da posição_angular. No ponto
+extremo da barra existe um sistema propulsor
+composto por um motor DC e uma hélice. Quando
+uma voltagem é aplicada ao propulsor, a posição
+angular da barra é modificada. O objetivo é
+posicionar a barra para um ângulo especificado
+com uma dinâmica desejada.
+
+Figura 5. Planta experimental de velocidade MTG.
+
+A figura 6 ilustra os resultados do controle
+PPID na abordagem fuzzy sobre o MTG. Neste
+processo também é possível experimentar o PPID
+quando uma perturbação de carga é aplicada pelo
+acionamento manual de uma chave em torno de 30
+seg decorridos da experiência.
+
+774
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Este artigo apresentou o projeto de um pseudo
+controlador PID que pode ser interessante sob
+vários pontos de vista como um dispositivo de
+propósito geral, proporciona bom desempenho
+dinâmico de malha, apresenta um parâmetro de
+calibração, simples de implementar, fácil de utilizar
+e manter, aplicável em uma grande classe de
+plantas industriais (plug-and-play). Trabalhos
+futuros incluem a hibridização das técnicas selftuning e fuzzy em plantas multivariáveis acopladas.
+Figura 6. Resposta do MTG com o controlador PPID.
+
+Agradecimentos
+
+Os resultados indicam no PPID uma atividade
+do sinal de controle adequada que se reflete nos
+movimentos e tempo_de_vida útil do atuador e
+segurança na dinâmica da saída.
+
+Agradecemos a UFSC, DAS, GPqTCA e CNPq
+(PIBIC) pelo apoio na realização deste trabalho.
+Referências Bibliográficas
+
+4.3 Controle do Fluxo de Ar do Túnel de Vento
+
+Ang, K. H. Chong, G. Li, Y. (2005). PID Control
+System Analysis, Design and Technology,
+IEEE Trans. on C., Systems Tech., pp. 559-576.
+strm, K. J. Hgglund, T. (2000). Benchmark
+Systems for PID Control, Proc. IFAC Digital
+Control Past, Present and Future of PID
+Control, pp. 165-166.
+Bobál, V. Bhm, J. Fessl, J. Machácek, J. (2005).
+Digital Self-Tuning Controllers, Springer.
+Chen, C. T. Peng, S. T. (1997) A Nonlinear
+Control Strategy based on using a ShapeTunable Neural Controller, Journal of
+Chemical Engineering of Japan, pp. 637646.
+Gude, J. J. Hahoraho, E. Etxaniz, J. (2006).
+Practical Aspects of PID Controllers An
+Industrial Experience, 11th IEEE Int. Conf. on
+Emer. Tech. and Fac. Automation, pp. 870-878.
+Kirecci, A. Eker, I. Dulger, L. C. (2003). SelfTuning as Conventional Method, Electrical
+Engineering, pp. 101-107.
+Li, D. Zeng, F. Jin, Q. Pan, L. (2009).
+Applications of an IMC based PID Controller
+Tuning Strategy in Atmospheric and Vacuum
+Distillation Units, Nonlinear Analysis Real
+World Applications, pp. 2729-2739.
+Mamdani, E. H. Assilian, S. (1975). An
+Experiment in Linguistic Synthesis with a
+Fuzzy Logic Controller, Int. Journal of ManMachine Studies, pp. 1-13.
+Morari, M. Zafiriou, E. (1989). Robust Process
+Control, Prentice-Hall, Englewood Cliffs, NJ.
+Passino, K. M. Yurkovich, S. (1998). Fuzzy
+Control, Addison-Wesley, pp. 65-73.
+PiMira, J. Mateo, E. Estruch, R. S. Casin, Q. J.
+(2000). LS-3000 Digital PID Controller, Proc.
+IFAC Digital Control Past, Present and
+Future of PID Control, pp. 409-416.
+Seborg, D. E. Edgar, T. F. Mellichamp, D. A.
+(1989). Process Dynamics and Control, John
+Wiley  Sons.
+Visioli, A. (2006). Practical PID Control,
+Springer.
+
+A terceira experimentação está apoiada em um
+processo com comportamento sobre-amortecido e
+com ganho de malha variante, denominado túnel de
+vento (TV), conforme ilustra a figura 7.
+
+Figura 7. Planta experimental de fluxo de ar TV.
+
+A figura 8 mostra a evolução das variáveis de
+saída e entrada quando a planta é submetida a duas
+mudanças de referência e uma perturbação de carga
+em 60 seg. Com a sintonia IMC da tabela 4, onde
+Kp  1.21,   1.07,   1.006,   0, ts  0.1 seg,
+MF  3.5 seg, o ganho do PPID é Kc  0.9 (o
+modelo SOPDT da tabela 3 foi obtido pela curva
+de reação no ponto nominal de 3 volts). Os
+resultados adequados com mudança nos níveis de
+referência e frente a uma perturbação demonstram
+que o sistema_de_controle PPID pode atuar em
+diferentes condições de malha não-linear.
+
+Figura 8. Resposta do TV com o controlador PPID.
+
+5 Conclusão
+
+A sintonia e estrutura de implementação
+controlador PID é um desafio aos engenheiros
+controle_de_processos, pois depende
+complexidade da planta e dos objetivos
+controle.
+
+do
+de
+da
+de
+
+775

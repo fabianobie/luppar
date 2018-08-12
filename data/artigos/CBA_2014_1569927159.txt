@@ -1,0 +1,654 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+GERACAO DE MAPAS PARA LOCALIZACAO E NAVEGACAO DE UM
+MANIPULADOR MOVEL USANDO MULTIPLOS SENSORES
+Diana S. Alban-Penafiel, Guilherme A. S. Pereira
+
+
+Programa de Pos-Graduacao em Engenharia Eletrica - Universidade Federal de Minas Gerais
+Av. Antonio Carlos 6627, Pampulha, 31270-901
+Belo horizonte, Minas Gerais, Brasil
+Emails diana.albanp@yahoo.es, gpereira@ufmg.br
+
+Abstract This paper presents a methodology for map generation using the multiple sensors of a mobile
+manipulator. The generated maps will be used for localization and navigation of the robot in indoor environments.
+The methodology exploit the idea that the most efficient way to work with mobile manipulators is to localize
+and navigate the mobile base using two dimensional (2D) maps while three dimensional (3D) maps are used
+only when the robots arm needs to perform a specific task. Thus, a set of four maps synchronized in space is
+generated i) a 2D map obtained using a laser range finder for localization of the base ii) a colored 3D map
+for object recognition and manipulation obtained using a RGB-D sensor (e.g. Kinect) iii) a 3D binary map for
+navigation of the robots arm obtained from the previous one and iv) a 2D map obtained by the projection of
+the 3D map for the navigation of the base. The main difference between the 2D maps is that the first one does
+not consider the robot height, while the second mark the objects where the robot cannot move underneath as
+obstacles. To evaluate the methodology, in this paper a mobile manipulator is used to map two distinct real life
+scenarios. As results, the obtained maps are presented along an initial experiment that validates the use of a 2D
+map for the robot localization.
+Mobile Manipulator Robot, 3D Mapping, 2D Mapping, Localization, Navigation
+
+Keywords
+
+Resumo Este trabalho apresenta uma metodologia para a geracao de mapas utilizando os varios sensores
+de um manipulador movel. Os mapas gerados serao usados para localizacao e navegacao do robo em ambientes
+internos. A metodologia explora a ideia de que a forma mais eficiente de se trabalhar com manipuladores moveis
+e localizar e navegar a base movel usando mapas bidimensionais (2D), enquanto mapas tridimensionais (3D)
+sao usadas apenas quando o braco do robo precisa realizar uma tarefa especfica. Assim, um conjunto de quatro
+mapas espacialmente sincronizados e gerado i) um mapa 2D obtido usando um sensor a laser 2D para localizacao
+da base ii) um mapa 3D colorido para o reconhecimento e manipulacao de objetos obtido utilizando um sensor
+RGB-D (Kinect) iii) um mapa binario 3D para navegacao do braco do robo obtido a partir do anterior e iv) um
+mapa 2D obtido pela projecao do mapa 3D para a navegacao da base. A principal diferenca entre os mapas 2D
+e que o primeiro nao leva em consideracao a altura do robo, enquanto que o segundo marca os objetos onde o
+robo nao pode se mover por baixo como obstaculos. Para avaliar a metodologia, neste trabalho um manipulador
+movel e usado para mapear dois cenarios reais distintos. Como resultados, os mapas obtidos sao apresentados
+ao longo de um experimento inicial que valida a utilizacao de um dos mapa 2D para a localizacao do robo.
+Palavras-chave
+
+. Essa navegacao deve ser orientada pela componente de
+localizacao dada a partir da posicao atual do robo
+em relacao ao ambiente.
+
+Introducao
+
+Nos ultimos anos, tem-se observado um grande
+avanco nas pesquisas envolvendo robotica_movel
+(Mohamed and Capi, 2012 Gockley R, 2006). Entretanto, diversos desafios ainda nao dispoem de
+solucoes otimas, e tem sido objeto de estudos em
+diversos trabalhos publicados na literatura. Os esforcos estao concentrados em propor solucoes que
+fornecam aos robos capacidades de mobilidade e
+autonomia, possibilitando sua atuacao adequada
+em qualquer ambiente ou cenario real.
+Nesse contexto, alguns robos_moveis autonomos tem seu foco concentrado na execucao de tarefas cotidianas em ambientes internos (KwangHyun et al., 2008). Em algumas dessas aplicacoes, as plataformas devem ser capazes de navegar
+e evitar obstaculos, bem como executar tarefas de
+deteccao e manipulacao de objetos, configurandose portanto em um manipulador movel (Hornung
+et al., 2012).
+De maneira geral, pode-se inferir que um sistema robotico requer um mapa, obtido atraves da
+
+Diversas solucoes com robos_moveis tem sido
+propostas, na sua maioria envolvendo a utilizacao
+de sensores planares (laser) para deteccao_de_obstaculos e mapeamento horizontal do espaco de trabalho do robo (Marder-Eppstein et al., 2010 Thrun et al., 2005). Essas solucoes compoem alguns robos reportados na literatura, como e o caso
+do robo RHINO que e usado como guia de museu (Burgard et al., 1998) e, do robo MINERVA
+(Thrun et al., 1999). Este ultimo, tem o objetivo de entreter pessoas em locais publicos. Os
+trabalhos supracitados apresentam uma abordagem, na qual os cenarios nao sofrem modificacoes
+no decorrer do tempo, o que os caracterizam como
+permanentes, o que facilitava na definicao do comportamento do robo. Entretanto, nao contemplavam uma implementacao eficiente de localizacao,
+
+1
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+quando as pessoas frequentemente obstruam seus
+sensores.
+A partir dessas abordagens, novas solucoes foram propostas, nas quais os ambientes eram mais
+propensos a obstaculos ou mesmo com uma grande
+circulacao de pessoas. Isso pode ser observado
+com o Robox (Siegwart et al., 2003), que e um
+robo_movel feito para apresentacao em eventos
+com grande quantidade de pessoas, e tambem com
+o robo Jinny que apresenta as mesmas caractersticas (Kim et al., 2004). Essas solucoes apresentam a implementacao de tecnicas de mapeamento
+e aprendizado, alem de mecanismos envolvendo a
+utilizacao de tecnologias para captura e comunicacao dos dados, permitindo uma localizacao mais
+eficiente e em tempo_real dos robos (Arcos, 2009).
+Algumas propostas que fazem uso de laser planar trazem um modelo de deteccao baseado em
+tres dimensoes. Esses lasers usualmente sao acoplados a um motor que permite a realizacao de
+movimentos de varreduras de cima para baixo ou
+vice-versa, de forma a obter maiores informacoes
+do ambiente, como e o caso de (Marder-Eppstein
+et al., 2010). Alem desses, outros trabalhos compreendem a utilizacao de tecnicas que lidam com
+obstaculos em 3D (Thrun et al., 1999 Surmann
+et al., 2003 Hornung et al., 2012), ou ainda abordagens que fazem uso de grade_de_ocupacao multivolume para representacao do ambiente tridimensional (Dryanovski and Morris, 2010).
+Por fim, ha ainda trabalhos que se concentram em modelos hbridos, a partir da utilizacao
+de sensores laser, cameras stereo e sensores Kinect (Ortiz, 2013), que permite a navegacao em
+ambientes internos, realizando tarefas de monitoramento e vigilancia. Souza (2012) apresenta um
+novo metodo de mapeamento para robo, que utiliza um mapa 2.5D com representacao em grade
+de ocupacao-elevacao, o que possibilita ao robo
+um previo conhecimento sobre a ocupacao de um
+determinado local.
+O presente trabalho concentra-se na geracao
+dos mapas necessarios para auxiliar na localizacao
+e navegacao de um manipulador movel de grande
+altura em um ambiente domestico. O principal
+problema encontrado com robos deste porte esta
+relacionada com o fato de que lasers 2D nao percebem os lugares no ambiente onde o robo pode
+passar, ja que a altura dos obstaculos nao pode
+ser detectada por esses sensores. Por outro lado,
+localizacao e navegacao em 2D possuem solucoes
+bem conhecidas e muito mais eficientes que aquelas que trabalham em 3D. Estes fatos nos levaram a buscar solucoes hibridas que, simultaneamente consideram mapas 2D e 3D. De maneira
+geral, foram criados mapas independentes obtidos
+pelo sensor Kinect (mapa 3D) e por um laser SICKLMS (mapa 2D) aliado a um conjunto de algoritmos que provem os mecanismos necessarios para
+uma obtencao correta dos mapas.
+
+O restante do trabalho esta divido da seguinte
+forma na Secao 2 e apresentada a definicao do
+problema abordado na Secao 3 tem-se a descricao dos passos que foram seguidos para a solucao
+do problema, e na Secao 4 sao descritas as ferramentas utilizadas, os experimentos realizados e a
+descricao dos cenarios de testes. A Secao 5 apresenta os resultados obtidos, e por fim tem-se as
+conclusoes, alem das perspectivas de continuacao
+do trabalho na Secao 6.
+2
+
+Definicao do Problema
+
+Robos tem sido aplicados na execucao de tarefas
+cotidianas nos ultimos anos. Inicialmente os esforcos dos pesquisadores se concentravam na criacao
+de um mapa bidimensional, na qual possibilitava
+a base movel realizar a localizacao e navegacao.
+Entretanto, este mapa nao considerava a dimensao (altura e tamanho) dos objetos que compunham o espaco de trabalho do robo. Mas recentemente, buscou-se solucoes onde manipuladores_roboticos pudessem considerar a altura dos objetos
+e assim localizar-se dentro do ambiente, fazendo
+uso de mapas 3D. Contudo, com o surgimento dos
+manipuladores moveis, que basicamente sao manipuladores tradicionais acoplados a bases moveis,
+surgiu a necessidade de agregacao entre as duas
+tecnicas apresentadas, ou seja, fez-se necessario
+a obtencao de mapas que permitissem a navegacao conjunta entre a base movel e o manipulador
+robotico, onde a principal restricao de navegacao
+baseia-se no tamanho do robo.
+Este artigo e parte integrante de uma pesquisa
+que envolve a geracao de mapas, para auxiliar na
+localizacao e navegacao de um manipulador movel de grande altura em um ambiente domestico.
+Nesse contexto, tem-se neste trabalho o objetivo
+de gerar um conjunto de 4 mapas espacialmente
+sincronizados, utilizando um sensor Kinect e um
+sensor_laser. A motivacao em utiliza-los de forma
+conjunta, deu-se entre outros pelo fato do Kinect
+permitir a geracao de imagens com profundidade,
+mesmo dispondo de limitacoes no alcance e no
+campo de visao horizontal, enquanto que o laser
+consegue construir um mapa bidimensional com
+um alcance maior, que pode chegar ate 80 metros,
+o que acaba contornando as dificuldades que o Kinect apresenta para ambientes longos, como corredores e etc. Os mapas gerados serao usados para
+localizacao e navegacao do robo em ambientes internos, explorando a ideia de que a forma mais eficiente de se trabalhar com manipuladores moveis
+e localizar e navegar a base movel usando mapas
+bidimensionais (2D), enquanto mapas tridimensionais (3D) sao usadas apenas quando o braco do
+robo precisa realizar uma tarefa de deteccao e manipulacao de objetos.
+Os mapas gerados sao i) um mapa 2D obtido usando um sensor a laser 2D para localizacao
+
+2
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+da base ii) um mapa 3D colorido para a deteccao
+dos obstaculos ate o tamanho do robo e para reconhecimento e manipulacao de objetos, obtido utilizando um sensor RGB-D (Kinect) iii) um mapa
+binario 3D para navegacao do braco do robo gerado a partir do anterior e iv) um mapa 2D obtido
+pela projecao do mapa 3D binario, que considera
+os obstaculos detectados, sendo usado para o planejamento da rota e navegacao da base do robo. A
+principal diferenca entre os mapas 2D e que o primeiro nao leva em consideracao a altura do robo,
+enquanto que o segundo marca os objetos onde o
+robo nao pode se mover por baixo como obstaculos. Os mapas 3D se diferenciam em virtude principalmente do mapa binario possibilitar a implementacao de melhorias enquanto o outro so permite o reconhecimento e manipulacao de objetos.
+O processo de obtencao dos mapas utilizou uma
+nova metodologia baseada em tecnicas ja reportadas na literatura. A Figura 1 ilustra o contexto
+do trabalho apresentado neste artigo, bem como
+as tarefas que serao realizadas na continuidade do
+trabalho. A ideia basica da metodologia apresentada na Figura 1 e a utilizacao de mapas 2D na
+maior parte tempo. Alem de serem disponveis na
+literatura diversas ferramentas de navegacao e localizacao em mapas 2D, o uso de tal mapas reduz
+de forma significativa o tempo de processamento
+e o consumo de memoria das aplicacoes.
+
+nect, um manipulador_robotico JACO de 6 graus
+de liberdade, um tablet como interface grafica do
+robo, alem de um conjunto de audio. A MARIA
+possui uma altura de 1,68 metros. Convem salientar, que alguns destes modulos nao foram utilizados neste trabalho, no entanto, constituem parte
+do desenvolvimento de outras pesquisas em andamento. Uma representacao da plataforma, pode
+ser visualizada na Figura 2.
+
+Figura 2 Visao Geral Plataforma Robotica MARIA.
+
+Trabalho realizado
+
+O sensor a laser acoplado ao sistema robotico,
+utilizou as seguintes configuracoes campo de visao do escaner de 180 graus resolucao angular de
+1 grau distancia maxima de deteccao de 8 metros
+e taxa de transferencia de 38400 bps (bits por segundo).
+No desenvolvimento do sistema de mapeamento, utilizou-se o ROS (Robot Operating System)1 , que e um meta sistema operacional para o
+desenvolvimento de aplicacoes roboticas. A geracao dos mapas deu-se a partir da construcao incremental e simultanea de um mapa bidimensional e outro tridimensional do espaco de trabalho.
+Para a obtencao do mapa 3D colorido utilizouse o sensor Kinect e a aplicacao RGBDSLAM2
+apresentada por Endres et al. (2012). Tal pacote
+permite, entre outras funcionalidades, a percepcao
+tridimensional do ambiente a partir da utilizacao
+da tecnica de nuvem de pontos 4D, denominada
+RGB-D (Red, Green, Blue e Depth). A escolha do
+RGBDSLAM para a obtencao do mapa colorido,
+foi feita em virtude da facilidade de filtragem dos
+erros inerentes ao ambiente, como tremores, rudo
+na imagem, mudancas no ponto de vista e iluminacao. O mesmo utiliza o algoritmo RANSAC (do
+ingles Random Sample Consensus) (Fischler and
+Bolles, 1981), que permite contornar os possveis
+disturbios no campo de visao do robo.
+
+Mapa 2D
+Sensor Kinect
+
+Mapeamento
+
+Sensor Laser
+
+Mapa 3D colorido
+
+Mapa 3D binário
+Mapa 2D a
+partir do 3D
+
+Trabalho futuro
+Navegação da
+base
+Navegação do
+manipulador
+Detecção de
+objetos
+Localização
+da base movél
+
+Figura 1 Visao geral do problema.
+
+3
+
+Metodologia
+
+Nesta secao sao apresentadas as tecnicas utilizadas para realizar o mapeamento, a descricao dos
+algoritmos usados e uma descricao da plataforma
+movel. Para a geracao dos mapas, utilizou-se um
+sistema robotico com multiplos sensores. A plataforma robotica denominada MARIA (Manipulator
+Robot for Interaction and Assistance), utilizada
+nos experimentos, que serao descritos na proxima
+secao, encontra-se equipada com uma base movel nao holonomica Pioneer3-AT, com sensores de
+contato (bumpers), um sensor_laser bidimensional SICK-LMS 291S05, um sensor Microsoft Ki-
+
+1 Disponvel
+2 Disponvel
+
+3
+
+em httpwww.ros.org
+em httpwiki.ros.orgrgbdslam
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+4.1
+
+Em relacao a criacao do mapa 2D, fez-se uso
+da aplicacao gmapping 3 , que permite gerar uma
+grade_de_ocupacao em 2D que armazena as coordenadas de posicao dos obstaculos.
+Apos a obtencao dos mapas 2D e 3D, utiliza-se
+o mapa colorido 3D e cria-se uma grade_de_ocupacao tridimensional, ou seja, uma representacao
+baseada em Octrees (Hornung et al., 2013), que
+por sua vez faz uso da biblioteca OctoMap4 . E
+importante mencionar que, durante a obtencao do
+mapa, a biblioteca OctoMap utiliza muito processamento para criar e armazenar na memoria e no
+disco o mapa que esta sendo criado, o que torna
+o sistema muito lento, prejudicando a execucao
+de outros programas necessarios para o funcionamento do robo. Por este motivo, esse mapa so e
+obtido a partir do mapa 3D previamente adquirido
+com RGBDSLAM e Kinect. Dessa forma, e possvel tambem a implementacao de melhorias tais
+como ajustes de resolucao, alteracoes de redimensionamento, representacao das projecoes, dentre
+outros.
+A partir do mapa 3D binario processado, criase a projecao em 2D do ambiente mapeado. Posteriormente, processa-se as imagens dos mapas bidimensionais, fazendo uso da biblioteca OpenCV5 ,
+para aferir maior suavidade e eliminar rudos atraves da implementacao de alguns filtros. Do ponto
+de vista de melhoramento da projecao 3D para
+2D, foi implementado um segundo algoritmo em
+OpenCV, que otimiza a imagem atraves de erosao, dilatacao, suavidade e remocao de fundo, de
+maneira a fornecer subsdios ao processo de planejamento das trajetorias.
+4
+
+Experimento 1
+
+Este experimento fora realizado na sala de convivencia, dos alunos de Mestrado do programa de
+Pos-Graduacao em Engenharia Eletrica da Universidade Federal de Minas Gerais. Objetivouse apresentar o mapeamento de um ambiente interno tipicamente estruturado, com mesas, cadeiras, sofa, e etc, tal qual uma casa. A Figura 3
+mostra o cenario envolvido, enquanto que a Figura 4 permite a visualizacao da planta baixa do
+ambiente. Convem salientar que no cenario em
+questao, foram considerados obstaculos de varias
+dimensoes, de forma a aferir um maior nvel de
+complexidade, bem como tornar o ambiente mais
+proximo de um cenario domestico real.
+
+(a)
+
+(b)
+
+(c)
+
+(d)
+
+Figura 3 Cenario do experimento 1 observado de quatro pontos de vista diferentes.
+
+Experimentos Realizados
+
+Apos a definicao da metodologia para obtencao
+dos mapas e das ferramentas descritas na secao
+anterior, partiu-se para a realizacao dos experimentos que serao detalhados a seguir. Nesse contexto, serao apresentados tres conjuntos de experimentos, englobando dois cenarios distintos, ambos
+consistindo em ambientes internos.
+Para estes experimentos a central de processamento de dados da plataforma MARIA foi desempenhada por um notebook HP, com processador Intel Core 2 Duo T5900, 2,20Ghz x 2, 4GB
+de memoria RAM, com sistema operacional Linux
+Ubuntu 12.04 LTS. De maneira a permitir o controle do robo pelo cenario desejado, implementouse um software para realizar a captura de dados
+do teclado a partir dos comandos fornecidos pelo
+usuario. Definiu-se uma velocidade de 0,08 rads
+para o giro direito e esquerdo e, uma velocidade
+de deslocamento de 0,002 ms.
+
+m
+
+mesa de trabalho
+
+inicio
+
+Figura 4 Planta baixa e representacao da trajetoria
+realizada no cenario 1.
+
+No processo de mapeamento, a plataforma robotica posiciona-se em um zero absoluto definido
+no cenario (inicio), e rotaciona-se em torno de seu
+proprio eixo de maneira a capturar a primeira visao do mapa a ser criado. O robo entao deslocase seguindo as setas mostradas na Figura 4 e em
+cada circulo colorido, gira novamente em torno de
+
+3 Disponvel
+
+em httpwiki.ros.orggmapping
+em httpwiki.ros.orgoctomap
+5 Disponvel em httpopencv.org
+4 Disponvel
+
+4
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+seu eixo. Este processo e repetido ate que seja
+concluda a trajetoria. Em seguida, obtem-se um
+mapa 3D colorido e um 2D que sao coerentes com
+o ambiente e espacialmente sincronizados.
+E importante frisar que o tempo de captura
+dos dados, esta intimamente relacionado ao tempo
+que o usuario leva para navegar com o robo pelo
+ambiente. Apos o mapeamento, o tempo gasto
+para salvar os mapas obtidos, foi em media 3 segundos para salvar o mapa 2D do laser 13 minutos para salvar o mapa colorido em 3D 5 segundos
+para salvar o mapa binario. Para enviar a nuvem
+de pontos ao OctoMap o tempo foi de 1 minuto.
+Por fim, o tempo de processamento da imagem 3D
+e a projecao para 2D e de aproximadamente 1,5
+minutos. Os mapas obtidos serao mostrados na
+Secao 5.
+4.2
+
+Figura 6 Planta baixa e representacao da trajetoria
+realizada no cenario 2.
+
+4.3
+
+Experimento 3
+
+Experimento 2
+A partir dos dados obtidos no experimento 2 e,
+fazendo uso dos dados fornecidos pelo sensor_laser
+e pela odometria do robo, obtem-se a pose estimada do robo dentro do ambiente. Para a estimacao do posicionamento do robo, fez-se uso
+do sistema de localizacao probabilstica AMCL
+(Adaptive Monte Carlo Localization) (Hiemustra
+and Nederveen, 2007) implementado no ROS. A
+figura 7 mostra tres passos desse algoritmo que
+inicialmente espalha partculas pelo ambiente e,
+por meio da comparacao das observacoes do laser
+com o mapa encontrado anteriormente, converge
+as partculas para a posicao real do robo.
+
+Este experimento foi realizado nas dependencias
+do Laboratorio de Sistemas de Computacao e Robotica (CORO) da Universidade Federal de Minas Gerais. Assim como no experimento anterior,
+desejava-se obter o mapeamento de um ambiente
+interno tipicamente estruturado com mesas, cadeiras, cadeira_de_rodas, e etc. Esse cenario apresentava alguns obstaculos diferentes dos considerados
+no experimento 1, o qual fazem dele um ambiente
+propcio de testes.
+A Figura 5 ilustra uma visao geral do espaco
+mapeado, e a Figura 6 mostra a planta baixa do
+ambiente.
+
+(a)
+
+(b)
+(a)
+
+(b)
+
+(c)
+
+Figura 7 (a) Espalhamento de partculas para localizacao global (b) Convergencia para a regiao de localizacao do robo (c) Posicao inicial estimada.
+
+(c)
+
+(d)
+
+Para validar o sistema de localizacao baseado
+no mapa estimado, utilizou-se 3 cameras localizadas no teto do laboratorio (Figura 8), para
+estimar a posicao de um marcador localizado no
+robo.
+
+Figura 5 Cenario do experimento 2 observado de quatro pontos de vista diferentes.
+
+Nesse experimento, assim como no anterior, o
+robo desloca-se na trajetoria definida pelas setas,
+girando no seu proprio eixo em cada crculo marcado, conforme ilustrado na Figura 6 ate terminar
+a trajetoria estabelecida.
+
+5
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+(a)
+
+(b)
+
+Figura 10 Mapas 3D gerados do Cenario 1. (a) Mapa
+3D colorido obtido com RGBDSLAM (b) Mapa 3D
+Binario usado para projecao em 2D.
+Figura 8 Posicionamento das cameras no laboratorio.
+
+5
+
+nas Figuras 11 e 12, onde evidencia-se assim como
+no cenario anterior, que a projecao criada a partir
+do mapa 3D considera os obstaculos nao detectados no mapa gerado pelo laser.
+
+Resultados
+
+Apos a realizacao dos experimentos descritos na
+secao anterior, obteve-se os mapas dos cenarios
+avaliados.
+Do experimento 1 obteve-se os mapas correspondentes como pode ser verificado nas figuras
+9 e 10. Considerando que o principal problema
+neste trabalho consiste em avaliar a representacao do ambiente considerando a altura do robo,
+percebe-se que o mapa 2D obtido pelo sensor_laser conforme ilustrado na Figura 9(a), nao detecta
+os obstaculos cuja altura encontra-se acima do seu
+campo de visao. Esse problema e contornado pelo
+uso do sensor Kinect, conforme pode ser visto pelo
+mapa 2D projetado criado a partir da projecao do
+mapa 3D na Figura 9(b).
+No mapa 2D projetado e possvel observar que
+a altura da plataforma MARIA foi considerada.
+A partir dessa representacao, tem-se uma melhor
+estimativa dos espacos livres e ocupados, o que
+permitira um planejamento_de_caminhos seguro
+para o robo. Conforme ilustrado na Figura 9(b),
+pode-se identificar que a regiao mais escura representa os obstaculos encontrados, como por exemplo no setor esquerdo pode observar-se uma mesa,
+enquanto que na Figura 9(a) so consegue-se perceber as pernas da mesa e das cadeiras que estavam
+ao seu redor.
+
+(a)
+
+(a)
+
+(b)
+
+Figura 11 Mapas 2D encontrado para Cenario 02. (a)
+Obtido pelo Laser (b) Projecao a partir do mapa 3D.
+
+(a)
+
+(b)
+
+Figura 12 Mapas 3D obtidos do Cenario 2. (a) Mapa
+3D colorido obtido com RGBDSLAM (b) Mapa 3D
+Binario usado para projecao em 2D.
+
+Nota-se, pelas caractersticas visuais dos mapas, que os mesmos podem ser considerados satisfatorios, visto que compreendem de fato a representacao dos obstaculos encontrados no ambiente.
+Dessa forma, possibilitam a navegacao, alem de
+manter uma representacao coesa do cenario.
+Em relacao ao experimento 3, a Figura 13 ilustrada abaixo, mostra um conjunto de pontos azuis
+(linha contnua) que formam a trajetoria obtida
+a partir da estimacao da posicao do robo com
+AMCL, assim como os pontos vermelhos (linha
+tracejada) obtidos da estimacao a partir da posicao das cameras, permitindo a comparacao entre
+eles.
+
+(b)
+
+Figura 9 Mapas 2D encontrado para Cenario 1. (a)
+Obtido pelo Laser (b) Projecao a partir do mapa 3D.
+
+Em relacao ao cenario do experimento 2,
+obteve-se os mapas correspondentes mostrados
+
+6
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+rentes com os respectivos ambientes e cenarios de
+testes. De maneira geral, este trabalho entrega
+uma nova metodologia de mapeamento para robos
+de grande altura, sendo parte integrante de uma
+pesquisa que visa o desenvolvimento de um robo
+pessoal para ajuda em tarefas domesticas.
+Um aspecto interessante que pode ser observado no desenvolvimento do trabalho, refere-se ao
+baixo_custo_computacional demandado para a geracao dos mapas, o que tornou o processo bastante
+viavel. Percebe-se ainda que a representacao obtida pelos mapas, fora muito proxima da visao humana. Convem salientar que, devido ao angulo
+limitado de visao do sensor Kinect, existe uma dificuldade de detectar o entorno a uma distancia de
+abertura horizontal de 1,15 metros para direita e
+1,15 metros para esquerda. Assim, em ambientes
+com grandes dimensoes o robo poderia ter inconvenientes para realizar o mapeamento. Contudo,
+com o uso do laser esse problema e minimizado,
+visto que consegue-se construir um mapa bidimensional com um alcance maior. De igual forma, o
+campo de visao horizontal e mais amplo, o que
+acaba contornando as dificuldades que o Kinect
+apresenta para ambientes longos.
+O principal objetivo da obtencao dos mapas
+e permitir que o robo consiga alcancar autonomia
+no seu ambiente de trabalho. Partindo destes mapas, consegue-se definir a localizacao e estrutura
+dos obstaculos, possibilitando programar o robo
+de forma que o mesmo possa localizar-se no cenario em questao, planejar sua trajetoria, navegar e
+explorar o ambiente como um todo. Esses procedimentos, de maneira geral possibilitam que o robo
+possa realizar tarefas domesticas, como limpeza,
+manutencao e etc.
+
+Figura 13 Comparacao do Posicionamento do robo.
+
+Observa-se na Figura 14 que o erro obtido
+e consideravelmente pequeno, visto que os dados
+obtidos com o sistema de localizacao AMCL sao
+aproximadamente iguais aos obtidos com a camera. O erro medio obtido para o caminho seguido foi de 0,0145 m. Isso demonstra que os
+procedimentos realizados e os algoritmos implementados alcancaram os objetivos estabelecidos,
+ou seja, permitiram uma correta localizacao dentro do ambiente avaliado.
+
+(a)
+
+Agradecimentos
+O presente trabalho e financiado pela Fapemig.
+Diana Alban e bolsista da Secretaria de Educacion Superior, Ciencia y Tecnologia SENESCYTEquador, e Guilherme Pereira e bolsista do Conselho Nacional de Desenvolvimento Cientfico e Tecnologico CNPq-Brasil.
+
+(b)
+
+Figura 14 Comparacao entre as estimativas de posicao baseadas no mapa obtido (AMCL) e aquelas obtidas pelo sistema visual externo ao robo (a) na posicao
+x (b) na posicao y.
+
+6
+
+Referencias
+Arcos, A. (2009). Sistema de navegacion y modelado del entorno para un robot movil, PhD
+thesis, Universidad Politecnica de Madrid.
+
+Conclusoes
+
+Burgard, W., Cremers, A. and Fox, D. (1998). The
+interactive museum tour-guide robot, Proceedings of the fifteenth nationaltenth conference on Artificial intelligenceInnovative
+applications of artificial AAAI 98IAAI 98
+intelligence pp. 1118.
+
+Neste trabalho, objetivou-se a geracao de mapas
+para auxiliar na localizacao e navegacao de um
+manipulador movel de grande altura em um ambiente domestico. Usou-se um sensor bidimensional a laser e um sensor Kinect. A metodologia
+deste artigo foi validada a partir dos experimentos realizados com a plataforma robotica MARIA,
+que mostraram que os mapas obtidos foram coe-
+
+Dryanovski, I. and Morris, W. (2010). Multivolume occupancy grids An efficient pro-
+
+7
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+babilistic 3D mapping model for micro aerial vehicles, 2010 IEEERSJ International
+Conference on Intelligent Robots and Systems (1) 15531559.
+
+Mohamed, Z. and Capi, G. (2012). Development of a New Mobile Humanoid Robot for
+Assisting Elderly People, International Symposium on Robotics and Intelligent Sensors
+2012 (IRIS 2012), Vol. 41, pp. 345351.
+
+Endres, F., Hess, J., Cremers, D. and Engelhard, N. (2012). An Evaluation of the
+RGB-D SLAM System, 2012 IEEE International Conference Robotics and Automation
+(ICRA) 3(c) 1691  1696.
+
+Ortiz, D. (2013). Navegacao autonoma de robos
+moveis e deteccao de intrusos em ambientes
+internos utilizando sensores 2D e 3D, PhD
+thesis, Universidade de Sao Paulo.
+Siegwart, R., Arras, K. O., Bouabdallah, S., Burnier, D., Froidevaux, G., Greppin, X., Jensen, B., Lorotte, A., Mayor, L., Meisser, M.,
+Philippsen, R., Piguet, R., Ramel, G., Terrien, G. and Tomatis, N. (2003). Robox at
+Expo.02 A large-scale installation of personal robots, Robotics and Autonomous Systems 42(3-4) 203222.
+
+Fischler, M. A. and Bolles, R. C. (1981). Random
+sample consensus. A paradigm for model fitting with apphcahons to image analysm and
+automated cartography, Graphics and Image
+Processing 24(6) 381395.
+Gockley R, M. M. J. (2006). Encouraging physical
+therapy compliance with a hands-off mobile
+robot., ACMIEEE International Conference
+on Human-Robot Interaction, ACM, pp. 150
+155.
+
+Souza, A. d. S. (2012). Mapeamento robotico 2, 5D com representacao em grade_de_ocupacaoelevacao, PhD thesis, Universidade Federal
+do Rio Grande do Norte.
+
+Hiemustra, P. and Nederveen, A. (2007).
+Monte Carlo localization, Ad Hoc Networks
+6(5) 718733.
+
+Surmann, H., Nuchter, A. and Hertzberg, J.
+(2003). An autonomous mobile robot with a
+3D laser range finder for 3D exploration and
+digitalization of indoor environments, Robotics and Autonomous Systems 45(3-4) 181
+198.
+
+Hornung, A., Phillips, M., Gil Jones, E., Bennewitz, M., Likhachev, M. and Chitta, S.
+(2012). Navigation in three-dimensional cluttered environments for mobile manipulation,
+2012 IEEE International Conference on Robotics and Automation pp. 423429.
+
+Thrun, S., Bennewitz, M., Burgard, W., Cremers,
+A., Dellaert, F., Fox, D., Hahnel, D., Rosenberg, C., Roy, N., Schulte, J. and Schulz,
+D. (1999). MINERVA a second-generation
+museum tour-guide robot, Proceedings 1999
+IEEE International Conference on Robotics
+and Automation 3 19992005.
+
+Hornung, A., Wurm, K. M., Bennewitz, M., Stachniss, C. and Burgard, W. (2013). OctoMap an efficient probabilistic 3D mapping framework based on octrees, Autonomous Robots 34(3) 189206.
+
+Thrun, S., Burgard, W. and Fox, D. (2005). Probabilistic Robotics., Vol. 45, MIT Press, Cambridge, MA.
+
+Kim, G. K. G., Chung, W. C. W., Kim, K.-R.
+K. K.-R., Kim, M. K. M., Han, S. H. S.
+and Shinn, R. (2004). The autonomous tourguide robot Jinny, IEEERSJ International
+Conference on Intelligent Robots and Systems (IROS) 4 34503455.
+Kwang-Hyun, P. K.-H. P., Hyong-Euk, L. H.E. L., Youngmin, K. Y. K. and Bien, Z.
+(2008).
+A Steward Robot for HumanFriendly Human-Machine Interaction in a
+Smart House Environment, IEEE Transactions on Automation Science and Engineering
+5(1) 2125.
+Marder-Eppstein, E., Berger, E., Foote, T., Gerkey, B. and Konolige, K. (2010). The Office Marathon Robust navigation in an indoor office environment, 2010 IEEE International Conference on Robotics and Automation (ICRA), pp. 300307.
+
+8

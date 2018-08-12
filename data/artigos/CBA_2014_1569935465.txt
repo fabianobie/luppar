@@ -1,0 +1,1237 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+CONTROLE PREDITIVO APLICADO A UM ROBÔ OMNIDIRECIONAL UTILIZANDO O PREDITOR DE SMITH
+FILTRADO
+PEDRO X. ALCANTARA , HUMBERTO X. ARAÚJO, TITO L. M. SANTOS
+Programa de Pós Graduação em Engenharia Elétrica, Universidade Federal da Bahia
+Rua Aristides Novis, n. 02  Federação, Salvador, Bahia
+E-mails pxalcantara@gmail.com, humberto.araujo@ufba.br, tlsantos@ufba.br
+Abstract
+ This paper deals with the application of a synthesis methodology based on Model Predictive Control (MPC), associated to Smith Predictor, applied to a three-wheeled omnidirectional mobile robot for trajectory tracking. The approach makes use
+of an objective function for finite horizon and is based on Linear Matrix Inequality (LMI) framework. The actuator constraints
+can also be taken in account by this controller. The stability of the closed loop system is performed by means of restrictions associated with non-increasing monotonicity of the objective function. The Filtered Smith predictor approach is used in order to
+compensate time delay and to attenuate high frequency measurement noise. A simulation study is presented in order to evaluate
+the proposed strategy with respect to the advantages associated to high frequency noise attenuation.
+Keywords
+ Smith Predictor, Model Predictive Control (MPC), Omnidirectional Robot, Trajectory Control, Closed-loop Stability, Actuator Constraints, Linear Matrix Inequalities (LMIs).
+Resumo
+ Este trabalho apresenta uma aplicação da estratégia de Controle Preditivo baseado em Modelo (MPC) juntamente
+com o Preditor de Smith no controle_de_trajetória de um robô_móvel omnidirecional de três rodas. O MPC com horizonte de previsão finito é desenvolvido no contexto das desigualdades_matriciais_lineares (LMIs), e pode tratar de restrições associadas ao sinal de controle e sua variação. A garantia de estabilidade do sistema em malha_fechada é realizada por meio de restrições relacionadas com a monotonicidade não crescente da função objetivo. O Preditor de Smith filtrado é utilizado no tratamento do tempo
+de atraso do sistema e na atenuação de ruídos de alta_frequência. São realizadas simulações para avaliar as vantagens associadas 
+técnica proposta no que diz respeito  atenuação de ruído de altas frequências.
+Palavras-chave
+ .
+
+1 Introdução
+A robótica vem se tornado uma alternativa cada
+vez mais viável para as mais diversas utilizações e
+aplicações. Os robôs omnidirecionais (Conceição et
+al., 2011) têm se destacado entre os robôs_móveis,
+pelo fato de poderem se mover em qualquer direção,
+sem a necessidade de reorientação. Essa classe de
+robôs possui grande poder de manobra e são muito
+difundidos para aplicações em ambientes dinâmicos.
+Essas características os colocam em vantagem, por
+exemplo, em relação aos robôs nas configurações
+Ackerman e diferencial (Li e Zell, 2007).
+As técnicas MPC têm comprovado bom desempenho em aplicações práticas, uma vez que são capazes de lidar com não_linearidades, restrições do sinal
+de controle e sistemas_multivariáveis, características
+presentes na robótica_móvel. Exemplos de MPC em
+robótica_móvel são (Maurovic et al., 2011), (Oliveira
+e Carvalho, 2003), dentre outros.
+A abordagem MPC utilizando-se as desigualdades
+matriciais_lineares (LMIs) foi primeiramente apresentada em (Kothare et al., 1996), para horizonte de previsão infinito. Desde então, trabalhos utilizando LMIs
+vêm aumentando em número e relevância (Casavola
+et al., 2003), (Mao, 2003). Uma das vantagens do uso
+das LMIs é que os problemas_de_otimização baseados
+nessas desigualdades podem ser resolvidos em tempo
+polinomial, com convergência global garantida, permitindo assim seu uso em tempo_real. Outras vantagens das LMIs podem ser encontradas em (Kothare et
+al., 1996 ) e (Boyd et al.,1994).
+
+Sabe-se que estratégias de controle_preditivo podem lidar com o problema do atraso de maneira natural. No entanto, a predição ótima, inerente s estratégias MPC convencionais, tem algumas limitações no
+que diz respeito  especificação de requisitos de malhas a exemplo da robustez (Normey-Rico e Camacho, 2007). No contexto da robótica_móvel, esta limitação já foi demonstrada formalmente e experimentalmente para o caso sem restrições (Normey-Rico et
+al., 1999), ao se comparar a predição ótima com o
+preditor de Smith filtrado (Normey-Rico e Camacho,
+2007). Além do exposto, demonstrou-se num trabalho
+recente, que as vantagens associadas  utilização do
+preditor de Smith filtrado (PSF) são diretamente extensíveis a estratégias MPC com restrições (Santos e
+Normey-Rico, 2012).
+A despeito das vantagens do PSF no que diz respeito  melhoria do comportamento robusto, esta
+estratégia de compensação de atraso pode ser utilizada
+para atenuar ruídos de altas frequências, o que tem
+sido pouco utilizado em trabalhos recentes. A depender dos sensores utilizados para obtenção da velocidade e da posição, pode-se observar uma degradação
+significativa na relação sinalruído em robótica_móvel.
+Neste artigo, a estratégia de controle MPC associada ao preditor de Smith filtrado é proposta como
+solução do problema de atraso de tempo e ruídos de
+medição em um robô_omnidirecional. Esta técnica
+MPC é formulada com as desigualdades matriciais
+lineares (LMIs), e tem estabilidade garantida via monotonicidade não crescente da função objetivo (Scokaert e Clarke, 1994), (Zheng e Morari, 1993) e (Oliveira et al., 2000). A lei de controle utilizada é desen-
+
+1792
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+volvida no espaço_de_estados e minimiza uma função
+objetivo de horizonte finito, sujeita a restrições nos
+sinais de entrada. Diferentemente do que foi apresentado em (Normey-Rico et al., 1999), que utilizou o
+preditor de Smith para melhorar a robustez, utilizando
+um algoritmo MPC sem restrições, pretende-se discutir a respeito das potencialidades do PSF num algoritmo MPC com restrições com vistas a reduzir o
+efeito indesejado do ruído de medição.
+Na Seção 2, é desenvolvida a modelagem do robô. Na Seção 3, é feita uma introdução sobre a técnica
+MPC em forma de LMIs. O Preditor de Smith filtrado
+é analisado na Seção 4. Na Seção 5, são analisados os
+resultados obtidos nos experimentos. Na Seção 6, são
+apresentadas as conclusões desse trabalho.
+2 Modelagem do robô
+
+"
+!  0
+0
+
+0
+0 e
+"
+
+
+ 0
+0
+
+0
+
+0
+
+0
+0 .
+
+
+(4)
+
+2.2 Modelo Dinâmico
+As equações que descrevem o comportamento dinâmico do robô da Figura 1 são apresentadas em (Conceição et al., 2009). Neste trabalho, considera-se um
+modelo simplificado, levando-se em conta os efeitos
+dos atritos de Coulomb e viscoso e desprezando-se
+aqueles do atrito estático. Assim, tendo-se como referencial o robô, o modelo_dinâmico é descrito por
+3*(
+(5)
+(  ) *(  + ,-.0*(1  2
+,
+3*
+3 *(
+,
+3*
+3*(
+  )6 *(  +6 ,-.0*(1  7
+,
+3*
+
+4(  )4  *(  +4 ,-.0 *(1  2
+
+com
+
+O robô estudado é composto de duas peças de fibra de
+vidro que se encaixam, onde ficam alocados os motores de modelo A-max 22 R179, da Maxon Motors,
+conforme Figura 1. Os motores são fixados s rodas
+holonômicas do tipo Vex Omni Wheels. Os parâmetros
+foram levantados através de ensaios práticos (Ribeiro
+et al., 2011). Nesta seção, o modelo_matemático do
+robô_móvel omnidirecional é apresentado.
+
+0
+"
+0
+
+(6)
+
+(7)
+
+1, 8  0,
+,-.8(  9 0, 8  0, <
+1, 8  0,
+
+(8)
+
+e    4 ? representa o vetor força no corpo do
+robô e o momento de torque no seu centro de gravidade. Considera-se que o centro de gravidade é igual ao
+centro geométrico. 7 é o momento de inércia e 2, a
+massa do robô. A partir da Figura 2, obtêm-se as seguintes relações entre as forças no robô e nas rodas,
+na forma matricial
+
+0 cos 
+4   1 sen 
+
+
+A
+ cos  A
+sen   @A B  C @A B.
+A
+A
+
+(9)
+
+O comportamento de cada motor pode ser descrito pelas seguintes equações
+Figura 1. Robô móvel
+
+Figura 2. Sistema de coordenadas
+
+2.1 Modelo Cinemático
+Conforme a Figura 2, os vetores de velocidade das
+rodas e as velocidades do centro de massa do robô
+satisfazem as seguintes equações (Conceição et al.,
+2009)
+     ,
+
+   cos    sen    ,
+
+   cos    sen    .
+
+(1)
+
+As equações (1) podem ser reescritas como
+
+0
+    cos 
+
+ cos 
+
+ 
+
+1
+sen 
+sen 
+
+
+
+
+
+
+
+
+
+
+     ,
+
+
+
+ , com i1, 2 e 3.
+
+D *( 
+
+com
+
+
+
+3-E *(
+ !E -E *(  F  *(,
+3*
+G *(   F -E *(,
+
+(10)
+
+(11)
+sendo E a indutância da armadura do motor, !E , a
+resistência de armadura e F , a constante da força
+eletromotriz. Com valor pouco significativo, a indutância de armadura E é desprezada neste trabalho.
+
+A força de tração em cada roda, i1,2,3, é dada
+
+por
+
+A *( 
+
+G *(
+,
+"
+
+(12)
+
+sendo que G *( é o torque de rotação. A Tabela 1
+mostra os parâmetros geométricos e dinâmicos do
+motor estimados em (Conceição et al., 2011).
+
+(2)
+(3)
+
+O valor de  é 6 rad. As velocidades do robô
+podem ser escritas em função das velocidades angulares dos motores  , considerando-se as equações (3),
+sendo ri, o raio da roda i, e li, a relação de redução do
+motor i. Assim, obtém-se o seguinte modelo
+
+   !
+
+
+E
+
+
+  ,
+
+
+1793
+
+Símbolo
+r1 r2 r3 (m)
+l1, l2, l3
+In (Kg.m2)
+M (Kg)
+Bv (N.sm)
+Bvn (N.sm)
+B (N.sm)
+Cv (N)
+Cvn (N)
+C (N)
+Ra1, Ra2, Ra3
+()
+Kt1, Kt2, Kt3
+(V.srad)
+L (m)
+
+Tabela 1 Parâmetros do modelo
+Descrição
+raio das rodas
+relação de redução do motor
+momento de inércia do robô
+Massa do robô
+atrito viscoso relativo a v
+atrito viscoso relativo a vn
+atrito viscoso relativo a 
+atrito de Coulomb relativo a v
+atrito de Coulomb relativo a vn
+atrito de Coulomb relativo a 
+
+Valor
+0,035
+19
+0,025
+1,258
+2
+1,5
+0,024
+1,2
+0,8
+0,0035
+
+resistência de armadura
+
+1,66
+
+constante emf
+
+0,0059
+
+distância das rodas ao centro de massa
+
+0,1
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+3 Controlador MPC
+
+2.3 Representação em espaço_de_estados
+O modelo do robô no espaço_de_estados apresenta um
+termo não_linear devido ao atrito de Coulomb, ou seja
+(13)
+HI *(  JK H*(  )K D*(  FK ,-.0H*(1,
+L*(  +K H*(,
+(14)
+com
+JK  MF !  N  F ,
+)K  M,
+(15)
+R STR
+
+QUVWRR
+P
+MP 0
+P
+O 0
+
+0
+
+X STX
+
+UVWX X
+
+)
+
+Q
+P2
+F  P 0
+P
+P
+O0
+
+0
+
+0
+
+)
+2
+0
+
+0 
+FR
+
+0 , F  @ 0
+0
+Y STY 
+UVWY Y Z
+0
+
+
+0 ,
+
+) 
+7 Z
+
+1
++K  0
+0
+
+0
+FX
+0
+
+0
+0 B
+FY
+
+(16)
+
+0
+1
+0
+
+0
+0.
+1
+
+(17)
+
+3.1 Função Objetivo
+
+Assumindo-se a presença de um segurador de ordem zero, obtém-se o seguinte modelo discreto, no
+espaço_de_estados
+H  1(  JH(  )D(  F,-.H((,
+(18)
+L(  +H(.
+(19)
+Definindo-se
+H(  H(  H  1(,
+(20)
+D(  D(  D  1(,
+(21)
+obtém-se o seguinte modelo
+H  1(  JH(  )D(  F,-.0H(1
+ ,-.0H  1(1?,
+L  1(  + H  1(  L(.
+
+(22)
+
+(23)
+A não_linearidade devido ao atrito de Coulomb
+em (22) não é levada em consideração no cálculo da
+lei de controle, mas nas simulações em malha_fechada.
+Sistemas de controle em tempo_discreto estão sujeitos a atrasos de tempo devido ao processamento da
+lei de controle e ao tempo para comunicação de dados. A literatura especializada (strom e Wittenmark,
+1996) recomenda que esses atrasos sejam inferiores a
+10 do período de amostragem a fim de que sua
+influência no desempenho do sistema em malha_fechada possa ser desprezada. Para o sistema_de_controle do robô da Figura 1, o tempo de processamento e
+de comunicação pode variar entre 40 e 60 ms, o que é
+significativo face ao período de amostragem aqui
+utilizado, que é de 50ms.
+Assim sendo, se o atraso for inserido na modelagem, o modelo do robô resultante será mais fidedigno
+na descrição do seu comportamento dinâmico, resultando em uma melhoria de desempenho do sistema de
+controle. Para obter um modelo no espaço_de_estados
+que considere o atraso de um período de amostragem,
+pode-se realizar a seguinte modificação
+H  1(
+J
+
+a
+D(
+0
+
+H(
+)
+0
+b
+  a b D(,
+0 D  1(
+7
+H  1(
+L  1(  + 0? 
+  L(.
+D(
+
+O algoritmo MPC utilizado neste trabalho foi proposto em (Araújo et al., 2011). Uma condição suficiente
+para a estabilidade em malha_fechada é imposta ao
+controlador. Esta condição é definida pela imposição
+de uma monotonicidade não crescente da função objetivo a cada iteração. Essa lei de controle também leva
+em consideração restrições no sinal de controle e em
+sua variação.
+
+A função objetivo utilizada pela lei de controle, com
+horizonte finito, é dada por
+kl
+
+kq
+
+c(  de<Lf  g(  "  g(eij  de<oD  g  1(eVjpR , (26)
+mn
+
+mn
+
+sendo rs , o horizonte de previsão, rt , o horizonte de
+controle, Mm >0 e !m >0, as matrizes de ponderação,
+<Lf  g( e <oD  g  1(, as saídas previstas no
+instante   g e os valores ótimos dos incrementos
+dos sinais de controle no instante   g  1, respectivamente, computados no instante , e "  g(, a
+referência no instante   g. A lei de controle é obtida
+por
+u-
+c(.
+(27)
+<vtww(<vtwyk w(
+q
+
+O sinal de controle é considerado constante nos
+instantes posteriores a   rt  1, ou seja,
+oD  g(  0 para g z rt . Em cada iteração, o
+vetor u, contendo a sequência ótima dos incrementos
+do sinal de controle, é calculado, obedecendo ao princípio do horizonte_móvel.
+Na síntese do controlador, considera-se que o
+modelo do sistema a ser controlado é definido pelas
+equações no espaço_de_estados
+oH  1(  JoH(  )oD(,
+(28)
+L  1(  +oH  1(  L(,
+(29)
+sendo que L( e oH( são as saídas medidas e as
+variações dos estados do sistema, respectivamente.
+Deste modo, definindo-se os vetores
+Lf  1 <(
+Q
+
+Lf  2 <( 
+yf  P
+
+P
+
+OLf  rs  <(Z
+
+e
+
+oD <(
+oD  1 <(
+u  
+,
+
+<
+oD  rt  1 (
+
+(30)
+
+as saídas previstas podem ser calculadas no horizonte
+de previsão finito através da seguinte equação (Araújo
+et al., 2011)
+yf  Hu  Foxk(  yk(,
+(31)
+com
+CS B
+Q CS B
+
+P
+H  P CS B
+
+P
+OCSN B
+
+(24)
+(25)
+
+0
+CSB
+CSB
+
+CSN  B
+
+0
+
+0
+0
+
+0
+CS B
+
+0
+
+
+
+CSN B  CSN N B
+
++ J
+7
++ J
+7B
+
+
+,
+
+
+@
+
+
++kl J
+7
+
+
+
+,
+
+Z
+
+e m  mn J .
+
+(32)
+
+(33)
+
+Assim, a função objetivo apresentada na equação
+(26) é equivalente a
+Jk(  f  (T Q f  (  uT Ru,
+(34)
+1794
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+D  G(   D   1(  7q 0 0  0?( 
+ DE  G(   D   1(,
+D  G(   D   1(  7 7 0  0?( 
+
+com
+
+Ms  3-. M , M  Mkl  , !  3-.0! , !  !kq 1,
+
+e
+
+"  1(
+"  2(
+
+.
+
+"  rs (
+
+(35)
+
+O vetor r contém os sinais de referência. Assumese que os estados do sistema estão disponíveis a cada
+período de amostragem. Neste trabalho, os estados do
+sistema são as próprias saídas.
+
+Dj  D   g(  DEj ,
+
+-  1, 2,  , t   z 0 0  g  rt  1,
+
+(37)
+sendo que t é igual ao número de entradas da planta,
+Dj e DEj , os limites inferior e superior do sinal
+de controle, na entrada -, no instante de previsão  
+g, respectivamente, e j e Ej , os limites inferior e superior da variação do sinal de controle, na
+entrada i, no instante de previsão   g, respectivamente.
+Como
+D(  D(  D  1(
+9D  1(  D  1(  D(  D  1(<
+
+
+(38)
+
+as restrições no sinal de controle podem ser manipuladas utilizando o complemento de Schur, resultando
+nas seguintes desigualdades
+
+D  D   1(  7q 0 0  0?(   DE  D   1(,
+DR  D   1(  7q 7q 0  0?(   DER  D   1(,
+
+DqpR(  D   1(  7q 7q 7q  7q ?( 
+ DEqpR(  D   1(,
+i  1, 2,  , n  k z 0.
+(39)
+
+A notação (M)i significa que apenas a linha i da
+matriz M é considerada. As restrições nas variações
+do sinal de controle em (37) podem ser reescritas de
+forma similar
+  IN (y.( u   ,
+
+i  1, 2,  , n  k z 0 0  j  N  1.
+
+(40)
+Para a definição da condição de estabilidade, que
+será apresentada na sequência, exige-se o cálculo do
+, ou seja, os valores ótimos dos
+valor ótimo de u
+incrementos do sinal de controle calculados na iteração posterior, ou seja, computados no instante   1.
+uk  1k  1(
+   uk  2k  1( .
+u
+
+uk  N k  1(
+
+(43)
+
+  E ,
+j  7q kq (ym.q ( 
+j
+
+-  1, 2,  , t   z 0 1  g  rt  1.
+
+(44)
+
+3.3 Lei de Controle
+A minimização da função objetivo é realizada
+com o auxílio de um limitante superior   0
+Jk(  .
+(45)
+Considerando-se a equação (34), pode-se reescrever (45) da seguinte forma
+H  Foxk(  yk(  ?T Q  H  Foxk(  yk
+ ?   T R  .
+
+(46)
+
+Utilizando-se o complemento de Schur, é possível
+reescrever a inequação (50) como
+
+@
+
+
+H  Foxk(  yk(  ?T Q 
+I
+
+
+
+
+
+
+T
+
+0
+I
+
+R
+
+
+
+B z 0.
+
+(47)
+
+O símbolo * é utilizado para indicar uma estrutura
+simétrica. Para determinar a condição de estabilidade,
+é necessário definir as matrizes
++ J
++ J
+    ,
++kl J
+
++ )
+Q
++ )
+P
+  + )
+
+P
+P 
+O+kl )
+
++ )
++ )
++ )
+
++kl )
+
+"  2(
+"  3(
+  
+,
+
+"  rs  1(
+
+0
++ )
++ )
+
++kl )
+
+
+0
+
+0
+
+0
+
+
+ +klkq )
+
+(48)
+
+
+.
+
+Z
+
+(49)
+
+ pode ser particionada da seguinte
+A matriz 
+forma
+   .
+(50)
+
+A seguir é apresentado o problema MPC com garantia de estabilidade (Pitanga et al., 2012).
+Teorema 1 A lei de controle, com garantia de estabilidade, considerando-se as restrições no sinal de
+controle e em seus incrementos, pode ser calculada a
+partir do seguinte problema de otimização
+u-
+
+,Á,Â Á Ã
+ ,
+
+sujeito a
+
+@
+
+
+(41)
+
+As restrições no sinal de controle também são levadas em consideração no instante   1. Definindose a matriz T
+T   I 0 0  0 ?  R    N  ,
+(42)
+de forma análoga s desigualdades apresentadas em
+(39) e (40), calculadas no instante , podem ser determinadas no instante   1
+
+q
+
+i  1, 2,  , n  k z 0.
+
+3.2 Restrições na Entrada
+
+j  D   g(  Ej ,
+
+q
+
+
+
+DqpR(  G(   D   1(  7q 7q 7q  7q ?( 
+ DEqpR(  G(   D   1(,
+
+(36)
+
+Neste artigo, as restrições nos atuadores destinam-se a
+estabelecer os limites inferior e superior do sinal de
+controle D  g( e de seus incrementos oD  g(
+
+ DER  G(   D   1(,
+
+R
+
+com
+
+1795
+
+H  Foxk(  yk(  ?T Q 
+I
+
+QÃ
+P
+P
+O
+
+V 
+7
+
+
+
+N
+
+G N !
+0
+7
+
+
+
+N !
+
+0
+0
+7
+
+ z ,
+ z Ã ,
+
+
+
+(51)
+
+
+
+ z 0,
+
+Z
+
+
+
+T
+
+0
+I
+
+R
+
+
+
+B z 0,
+
+(52)
+
+(53)
+(54)
+(55)
+
+   oH(  L(  N Ms X,
+  G  
+R
+
+(56)
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Figura 3. Estratégia de controle com compensação de atraso.
+
+sinal de controle, a partir da saída prevista, é descrita
+como segue
+
+acrescido das restrições (39), (40), (43) e (44).
+ é o valor ótimo de  calculado no instante
+
+  1. A cada iteração, duas sequências de variações
+dos sinais de controle são calculadas,  , iniciando
+do instante , e , a partir do instante   1. Apenas
+o primeiro elemento do vetor  é aplicado no instante . Na primeira iteração, a LMI (54) não é usada
+pelo fato de ainda não existir um valor para  . A LMI
+(53) é obtida de forma similar  desigualdade (52),
+porém calculada no instante k+1, e Ã é o limitante
+superior associado.
+Essa lei de controle que considera os valores ótimos de , calculados no instante anterior, presente e
+futuro, garante que o limite superior da função objetivo seja monotonicamente não crescente, conduzindo 
+BIBO estabilidade em malha_fechada.
+A LMI (52) relaciona-se com o limitante superior
+da função objetivo. A LMI (53) é similar  LMI (52),
+ , acrescida do termo  N G N ! G ,
+porém relativa a D
+sendo ! uma nova matriz de ponderação, e com ela o
+esforço de controle associado aos elementos de G
+também é otimizado. A agressividade do controlador
+pode então ser ajustada, dependendo dos valores das
+matrizes de ponderação Ms , ! e ! . As LMIs (54) e
+(55) garantem estabilidade em malha_fechada, através
+da imposição da monotonicidade não crescente do
+limitante superior da função objetivo
+(57)
+ z  ( z Ã ( , Ç z 0,
+e a notação (*) significa o valor ótimo solução do
+problema (51).
+4 Preditor de Smith Filtrado
+A compensação de atraso explícita (NormeyRico e Camacho, 2007) pode ser utilizada como uma
+ferramenta para aumentar a robustez, atenuar ruído ou
+alterar a rejeição de perturbação em estratégias de
+controle_preditivo voltadas para sistemas_com_atraso.
+Neste tipo de estratégia, o compensador de
+atraso tem o papel de determinar a predição da saída,
+antecipando o comportamento futuro devido ao efeito
+do atraso. Assim, a relação entre o controle atual,
+D(, e a saída prevista, H  3(, não apresenta
+atraso, sendo 3 o atraso nominal em tempo_discreto,
+conforme indicado na Figura 3. A lei que define o
+
+D(  0H  3(1.
+
+(58)
+
+H  1(  JH(  )D  3(  É(,
+
+(59)
+
+Desta maneira, lei de controle (58) pode ser determinada a partir de um modelo sem atraso. Conforme
+discutido em (Santos e Normey-Rico, 2012), dado um
+sistema com atraso definido por
+
+a descrição para o sistema composto pelo conjunto
+processo-preditor, pode ser realizada por
+HÊ  1(  JHÊ(  )D(  É
+(,
+
+(60)
+
+sendo É( e É
+( incertezas aditivas não mensuráveis e HÊ(  H  3(.
+Em sistemas reais, o preditor cumpre uma
+função importante, na medida em que o efeito das
+incertezas do modelo, do ruído e o comportamento da
+rejeição de perturbação dependem da estratégia de
+compensação de atraso escolhida (Normey-Rico e
+Camacho, 2007). Neste contexto, o preditor de Smith
+filtrado tem sido utilizado com sucesso em diversas
+aplicações práticas, incluindo robótica_móvel (Normey-Rico et al., 1999). Para o caso em que todos os
+estado são mensuráveis, a estrutura de implementação
+do preditor de Smith pode ser representada conforme
+Figura 4, sendo Í(  Í(  Í(Í Î  Í(,
+Í(  Í7  J( ) e  Í( um filtro estável de
+ganho estático unitário e Í a variável complexa associada  Transformada- .
+
+Figura 4. Estrutura unificada do Preditor de Smith Filtrado.
+
+A grande vantagem desta estrutura de compensação de atraso está no fato de que o filtro de robustez,  Í(, permite alterar o desempenho da malha
+sem modificar o comportamento nominal. Da Figura
+
+1796
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+4, observa-se que os estados medidos passam diretamente pelo filtro. Há de se enfatizar que a incerteza
+aditiva, É(, pode representar qualquer diferença
+entre o valor esperado para H  1(, dado o modelo
+nominal, e o valor efetivamente medido. Essa diferença contempla erros_de_modelagem, ruído e perturbações externas. Adicionalmente, foi demonstrado em
+(Santos e Normey-Rico, 2012) que a incerteza aditiva,
+que afeta a malha_de_controle no caso do preditor de
+Smith filtrado, está relacionada com a incerteza do
+sistema original, ou seja
+ Í(   Í(Í(.
+
+
+(61)
+
+Assim, o efeito do ruído sob H  3  1( pode ser
+atenuado, reduzindo o impacto negativo que o mesmo
+imporia  malha_de_controle. Portanto, o filtro de
+robustez representa um grau de liberdade adicional
+para atender os requisitos de malha, o que não está
+disponível no caso em que se utiliza a compensação
+de atraso intrínseca  estratégia MPC.
+Desta maneira verifica-se que o filtro de
+robustez pode ser utilizado para atenuar ruídos de
+medição, pois o comportamento de altas frequências,
+observado em É(, pode ser atenuado por meio de
+um filtro  Í( passa-baixas. Considerando um filtro
+de robustez de segunda ordem descrito por
+ z(  Ó
+
+z1  a(
+Õ ,
+za
+
+(62)
+
+observa-se, para diferentes valores da constante , as
+respostas em frequência indicadas na Figura 5.
+
+5 Resultados
+O robô utilizado nesse trabalho apresenta um significativo atraso_de_transporte provocado pelo tempo de
+processamento e de comunicação, como já mencionado. Em (Pitanga et al., 2012), o atraso provocado pelo
+processamento foi tão crítico, que os forçou a utilizar
+N  1 e N  1, para não comprometer de forma
+considerável o desempenho do controlador. Além
+disto, ruídos de medição significativos podem ser
+observados nos experimentos com o robô.
+Com o objetivo de tratar estes problemas, o
+atraso de tempo e o ruído de medição, melhorando a
+robustez do sistema, o controlador MPC com garantia
+de estabilidade foi utilizado em conjunto com o Preditor de Smith Filtrado. Simulações foram realizadas
+considerando-se um ruído de medição com amplitude
+aleatória variando de -0,3 a 0,3, e o atraso de um período de amostragem no modelo do robô.
+As matrizes de ponderação utilizadas foram
+10 0
+0
+1 0
+Ms   0 10 0   !   0 1
+m
+0
+0 10
+0 0
+g  1, 2,  , rs  -  1,2,  , rt ,
+
+0
+0,
+1
+
+(63)
+e o valor de  foi escolhido 0,01, com N  5 e
+N  3. A velocidade de navegação do robô é 0,6
+ms. O parâmetro  do filtro dos preditores foi ajustado, com simulações, em 0,9. Os sinais de controle
+podem assumir valores no intervalo -6V,6V, com
+variações limitadas em 1V.
+
+5.1 Rastreamento de trajetória
+Para analisar o desempenho do controlador MPC com
+Preditor de Smith, simulações foram feitas para o
+rastreamento de uma trajetória quadricular, com lados
+de um metro de comprimento. As simulações foram
+realizadas com três configurações distintas. O MPC
+em conjunto com o Preditor de Smith, o Preditor de
+Smith Filtrado com filtro de primeira ordem, e o Preditor de Smith Filtrado com filtro de segunda ordem.
+Todas elas na presença e na ausência de ruído.
+Para simular o ruído, foi gerado um sinal
+através do comando rand do MATLAB, e somado 
+saída realimentada do processo.
+
+Figura 5. Resposta em frequência do filtro de 2 ordem, para diferentes valores de .
+
+Para um filtro de primeira ordem, o comportamento é
+similar, porém o corte é menos acentuado.
+Deve-se ressaltar que há um compromisso natural entre a velocidade da resposta de rejeição  perturbação e a robustezatenuação de ruído mesmo na
+presença de restrições (Santos e Normey-Rico, 2012).
+Ao se elevar o valor de a, aproximando-o de 1, reduzse o efeito das incertezas e do ruído de alta_frequência
+na malha_de_controle, contudo, perde-se em desempenho em termos da resposta de rejeição  perturbação 
+problema regulador.
+
+1797
+
+Figura 6. Comparação de trajetórias com o Preditor de Smith sem
+filtro.
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Figura 10. Sinais de controle com o Preditor de Smith.
+
+Figura 7. Comparação de trajetórias com o Preditor de Smith com
+filtro de primeira ordem.
+
+Figura 11. Sinais de controle com o Preditor de Smith com filtro de
+primeira ordem.
+
+Figura 8. Comparação de trajetórias com o Preditor de Smith com
+filtro de segunda ordem.
+Figura 12. Sinais de controle com o Preditor de Smith com
+filtro de segunda ordem.
+
+6 Conclusão
+
+Figura 9. Comparação das três trajetórias, com ruído.
+
+A partir das 6 a 9, pode-se observar que, na presença
+de ruído, o Preditor de Smith Filtrado, com filtro de
+segunda ordem apresenta um melhor desempenho,
+sobretudo em relação ao Preditor de Smith. Elas mostram ainda que o sistema_de_controle apresenta um
+bom desempenho, apesar dos desvios em relação 
+trajetória desejada.
+Nas Figuras 10 a 12, pode-se ver os sinais de
+controle para as três simulações. Nota-se que as restrições nos sinais de controle e em suas variações são
+respeitadas.
+
+Neste trabalho, foram apresentados resultados de
+simulação para avaliar a influência do Preditor de
+Smith e do Preditor de Smith Filtrado no desempenho
+do controlador MPC com garantia de estabilidade e
+com restrições. Foram considerados os problemas
+levantados na implementação e que comprometeram o
+desempenho do sistema_de_controle, problemas como
+atraso de comunicação e processamento e ruídos de
+medição.
+Foram realizadas simulações para atestar a
+efeito da presença de ruído para o bom desempenho
+do controlador, considerando-se um atraso de período
+de amostragem no modele do robô. Além disso, foram
+levadas em consideração restrições nos sinais de controle, satisfazendo-se as limitações de tensão e corrente dos atuadores. Observou-se que a utilização do
+Preditor de Smith apresenta um desempenho bastante
+comprometido pela presença do ruído, problema esse
+solucionado com a implementação do Preditor de
+Smith Filtrado. O uso de um filtro passa-baixa de
+segunda ordem apresentou melhoras significativas e
+um desempenho bastante satisfatório.
+Para trabalhos futuros, sugere-se aplicação da
+lei de controle proposta no robô estudado, em tempo
+real.
+
+1798
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Agradecimentos
+Os autores agradecem o apoio do CNPq.
+Referências Bibliográficas
+Araújo, H., Conceição, G., Oliveira, G. e Pitanga, J.
+(2011). Model Predictive Control based on LMIs
+Applied to an Omni-directional Mobile Robot.
+Proc. of the 18th IFAC World Congress.
+strm, K. e Wittenmark, B. (1996). ComputerControlled Systems Theory and Design. 3rd Ed.
+Prentice-Hall.
+Boyd, S., El Ghaoui, L., Feron E. e Balakrishnam, V.
+(1994). Linear Matrix Inequalities in System and
+Control Theory. Vol. 15 of Studies in Applied
+Mathematics, Society for Industrial and Applied
+Mathematics.
+Casavola, A., Famularo, D. e Franze, G. (2004). Robust Constrained Predictive Control of Uncertain
+Norm-bounded Linear Systems. Automatica, 40,
+p. 18651876.
+Conceição, A. S., Moreira, A. P. e Costa, P. J. (2009).
+Practical Approach of Modeling and Parameters
+Estimation for Omnidirectional Mobile Robots.
+IEEEASME Transactions on Mechatronics,
+14(3), p. 377-381.
+Conceição, A., Correia, M., Santos, J. e Ribeiro, T.
+(2011). Modelagem de um Robô Móvel Omnidirecional de Três Rodas incluindo Compensação
+de Atrito. X Simpósio Brasileiro de Automação
+Inteligente, p. 1031-1036.
+Kothare, M., Balakrishnan, V. e Morari, M. (1996).
+Robust constrained model predictive control using linear matrix inequalities. Automatica,
+32(10)13611379.
+Li, X. e Zell, A. (2007). Motion Control of an Omnidirectional Mobile Robot. ICINCO-RA, pp. 125132.
+Mao, W. (2003). Robust Stabilization of Uncertain
+Timevarying Discrete Systems and Comments on
+"An Improved Approach for Constrained Robust
+Model Predictive Control". Automatica, 39(6), p.
+11091112.
+Maurovic, I., Baotic, M. e Petrovic, I. (2011). Explicit
+Model Predictive Control for trajectory tracking
+with mobile robots. IEEEASME International
+Conference on Advanced Intelligent Mechatronics (AIM), p. 712  717, Budapeste, Hungria.
+Normey-Rico e Camacho, E. (2007). Control of
+Dead-time Processes. London Springer-Verlag.
+Normey-Rico, J. e Gómez-Ortega, J. e Camacho, E.
+(1999) A Smith-predictor-based generalized predictive controller for mobile robot path-tracking.
+Control Engineering Practice, 7(6)729-740.
+Oliveira, G., Amaral, W., Favier, G. e Dumont, G.
+(2000). Constrained Robust Predictive Controller
+for Uncertain Processes Modeled by Orthonormal
+Series Functions. Automatica, 36(4), p. 563572.
+Oliveira, G. e Carvalho, J. (2003). A non-linear predictive control scheme for nonholonomic mobile
+
+robots. IFAC Symposium on Robot Control
+(SYROCO), Proc. of the 7th IFAC on Symposium
+on Robot Control.
+Pitanga, J. R., Araújo, H. X., Conceição, A. G. S. e
+Oliveira, G. H. C. (2012). Controle Preditivo Aplicado a um Robô Móvel Omnidirecional. XIX
+Congresso Brasileiro de Automática, Campina
+Grande, Brasil.
+Ribeiro, T., Santos, J., Santos Jr., J., Costa, A. e
+Conceição,
+A.
+S.
+(2011).
+Sistema
+Microprocessado para Controle em Tempo Real
+de Robôs Móveis Omnidirecionais. X Simpósio
+Brasileiro de Automação Inteligente.
+Santos, T. e Normey-Rico, J. (2012). Sobre o efeito
+do atraso nominal na robustez de estratégias com
+compensação de atraso. XIX Congresso Brasileiro de Automática.
+Scokaert, O. e Clarke, D. (1994). Stabilising Properties of Constrained Predictive Control. IEE Proceeding Control Theory, 141(5), p. 295304.
+Zheng, Z. e Morari, M. (1993). Robust Stability of
+Constrained Model Predictive Control. Proc. of
+American Control Conference, p. 379383.
+
+1799

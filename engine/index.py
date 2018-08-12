@@ -111,6 +111,11 @@ class InvertedIndex:
     def get_doc_item(self,num):
         return self.documents[num]
 
+    def get_doc_item_by_id(self, id):
+        for idx, d in self.documents.items():
+            if d.id == id:
+                return idx
+
     def get_feature_id(self,term):
         try:
             return self.index[term][0].tid #self.feature_names.keys()[self.feature_names.values().index(term)]
@@ -184,7 +189,7 @@ class InvertedIndex:
                     idf = self.idf(N, ni, unary=not do_idf, smooth=smooth, proba=proba, base=base)
                     matrix[i][j] = tf * idf
 
-            if norm:
+            if norm and len(matrix)>0:
                 matrix = normalize(matrix, norm=norm, copy=False)
 
             self.matrix = csr_matrix(matrix)
@@ -210,20 +215,24 @@ class InvertedIndex:
             do_idf = True
             type_tf = 1
         else:
-            do_idf = False
-            type_tf = 3
+            #do_idf = True
+            #type_tf = 1
             terms = dict(zip(query.query_vector, query.query_score))
-            norm='l2'
+            #norm = None
 
         print(dict(terms))
         for (term, tf) in terms.items():
 
             j = self.get_feature_id(term)
             if(j):
-                ni = len(self.index[term])
-                tf = self.tf(tf, base=base, type=type_tf)
-                idf = self.idf(N, ni, unary=not do_idf, smooth=smooth, proba=proba, base=base)
-                matrix[0][j] = tf * idf
+                if do_idf:
+                    ni = len(self.index[term])
+                    tf = self.tf(tf, base=base, type=type_tf)
+                    idf = self.idf(N, ni, unary=not do_idf, smooth=smooth, proba=proba, base=base)
+                    matrix[0][j] = tf * idf
+                else:
+                    matrix[0][j] = tf
+
             # else:
             #     print(term)
             #     matrix[0][j] = 0
@@ -236,7 +245,7 @@ class InvertedIndex:
 
     @property
     def comatrix(self):
-        assert(self.matrix,"Need to calculate matrix")
+        #assert(self.matrix,"Need to calculate matrix")
         if self.__comatrix == None:
             self.__comatrix = self.matrix.T*self.matrix
         return self.__comatrix

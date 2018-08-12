@@ -1,0 +1,820 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+FILTRO DE KALMAN ESTENDIDO BASEADO EM QUATERNIONS PARA A
+FUSAO DE SENSORES INERCIAIS E IMAGEM
+Rafael S. Castro, Paulo Vancin, Victor M. S. Peixoto, Thiago T. Cavalheiro,
+Aurelio Tergolina Salton
+
+
+PUCRS - Grupo de Automacao e Controle de Sistemas
+Av. Ipiranga, 6681, 90619-900
+Porto Alegre (RS), Brasil
+
+Emails rafael.castro@pucrs.br, paulo.vancin, victor.peixoto,
+thiago.cavalheiro@acad.pucrs.br, aurelio.salton@pucrs.br
+Abstract In this paper, a technique based on computer_vision to determine position and orientation (pose)
+of an object is presented. A sensor fusion algorithm based on the Extended Kalman filter is proposed in order to
+treat the data collected from the visual sensor and the inertial sensor. This fusion produces a precise and robust
+estimate pose estimate. To facilitate the construction of the Kalman filter, a quaternion representation is used in
+the framework of the filter. The system is tested on a rig and the results produced show a satisfactory behavior
+of the project.
+Estimation, Conputer vision, Quaternions.
+
+Keywords
+
+Resumo Neste artigo, uma forma de estimacao de posicao e orientacao (pose) de um objeto utilizando
+visao_computacional e apresentada. O algoritmo de fusao se baseia no filtro de Kalman Estendido para tratar
+os dados provenientes de sensores visuais e inerciais, produzindo, assim, uma estimacao precisa e robusta da
+pose do sistema. Para facilitar a implementacao do filtro de Kalman, a represntacao por quaternios e utilizada
+para descrever o sistema. O algoritmo proposto e validado em uma bancada de testes apresentando resultados
+satisfatorios.
+Palavras-chave
+
+.
+
+Introducao
+
+A visao_computacional possui uma grande gama
+de aplicacoes em sistemas_dinamicos, podendo variar de tarefas triviais, como o sensoriamento de
+bracos roboticos (Raush et al., 2013), ate a exploracao espacial por veculos_autonomos (Goldberg
+et al., 2002). De fato, a estimacao de orientacao e localizacao de veculos_autonomos e tema
+corrente no uso da visao_computacional (Kornuta
+and Zielinski, 2013 Palomeras et al., 2013 Yang
+et al., 2013). A aplicacao de odometria visual para
+a estimacao de pose de quadcopteros e em encontrada em Altug et al. (2003), a tarefa de localizacao_e_mapeamento_simultaneos e realizada em
+Silveira et al. (2008) e o uso do Filtro de Kalman
+e debatido em Janabi-Sharifi and Marey (2010).
+Uma alternativa a necessidade de utilizacao de
+multiplas cameras ou sensores visuais de alta qualidade e a utilizacao de sensores complementares
+na implementacao de visao_computacional. Esta
+e a abordagem a ser explorada neste trabalho.
+Para a estimacao da pose (localizacao e orientacao) de sistemas autonomos geralmente sao
+utilizados sensores_inerciais do tipo acelerometros
+e giroscopios. Em Rehbinder and Ghosh (2003),
+Chai et al. (2002), Nutzi et al. (2011) e Engel
+et al. (2012) a fusao de dados provenientes de cameras e sensores_inerciais e realizada para estimar
+a localizacao e orientacao dos sistemas. O trabalho de Steder et al. (2008) utiliza ainda outros
+sensores auxiliares como sonares e lasers. Ja em
+
+ISSN 2525-8311
+
+Martnez et al. (2011) alem de sensores_inerciais,
+sensores como GPS (Global Positioning System)
+e Magnetometros sao utilizados como estimadores
+de estado enquanto a camera funciona como um
+controlador low-level.
+Neste trabalho sera proposto um estimador de
+estados capaz de realizar a fusao das informacoes
+coletadas por um sistema de visao_computacional com as informacoes provenientes de sensores
+inerciais. Atraves da utilizacao do Filtro de Kalman Estendido, do ingles Extended Kalman Filter (EKF), baseado em quaternions, a posicao e
+orientacao de uma camera sera obtida de maneira
+precisa a partir de marcadores (landmarks) conhecidos. O uso de Quaternions para a descricao das
+equacoes dinamicas simplifica o equacionamento
+do filtro e elimina as funcoes trigonometricas de
+seno e cosseno, que possuem alto custo_computacional (Xu and Mandic, 2015). Resultados experimentais comparando o deslocamento de um eixo
+linear medido por um encoder com a estimativa
+fornecida pelo filtro serao apresentados a fim de
+validar o desempenho do algoritmo proposto.
+O artigo esta organizado da seguinte forma
+na Secao 2 serao expostos os conhecimentos preliminares para a realizacao do trabalho e a definicao do problema. Na Secao 3 o modelo do sistema
+sera derivado. O algoritmo responsavel pela fusao
+dos sensores esta exposto na Secao 4. O experimento realizado para validar o sistema proposto,
+as ferramentas utilizadas para a coleta de dados
+visuais e inercias e os resultados destes testes serao
+
+1650
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+expostos e analisados na Secao 5. As conclusoes
+derivadas deste trabalho serao discutidas na Secao
+6.
+2
+2.1
+
+Preliminares
+
+Representacao por Quaternios
+
+No que diz respeito a modelagem_de_sistemas_dinamicos, quaternions sao interessantes por representarem matrizes de rotacao em tres dimensoes.
+Como descrito em (Kristiansen et al., 2005), uma
+rotacao de  radianos sobre um vetor unitario arbitrario k  R3 pode ser parametrizada como1
+R(q)  I3 + 2S() + 2S()2 , R(q)  R33 (2)
+sendo I3 a matriz identidade de ordem tres,  
+cos(2),   k  sen(2)  R3 , e q  R4 definido
+como,
+ 
+
+q 
+.
+(3)
+
+Desta forma o vetor q passa a representar a
+orientacao de um corpo em relacao ao sistema de
+coordenadas globais. Alem de serem computacionalmente mais eficientes do que os angulos de
+Euler, quaternions tambem evitam singularidades
+cinematicas e descontinuidades (Szeliski, 2010).
+Derivado a matriz de rotacao R(q) encontrase as equacoes dinamicas que descrevem a rotacao do sistema em funcao de quaternions (Xu and
+Mandic, 2015),
+
+ 
+
+1
+   T ,
+2
+
+(4)
+
+1
+I3 + S(),
+2
+
+(5)
+
+sendo   R3 o vetor de velocidades angulares
+em coordenadas locais. Este vetor e diretamente
+medido por um sensor do tipo giroscopio acoplado
+ao corpo.
+2.2
+
+Modelo de Perspectiva da Camera
+
+O modelo de perspectiva de uma camera ideal (pinhole) descreve a relacao entre um ponto tridimensional i  R3 e sua projecao mi  R2 no
+plano da imagem (medida em pixels). De acordo
+com Mariottini and Prattichizzo (2005), uma camera de orientacao q e posicao p  R3 , percebe a
+projecao do ponto  i de acordo com a equacao2
+
+ mi  K R(q)  i + p
+(6)
+1O
+
+operador S() e o produto vetorial dado por,
+
+
+0
+3
+2
+
+0
+1   S()  0.
+S()  3
+2
+1
+0
+
+2 Considera-se
+
+ISSN 2525-8311
+
+a notacao mi 
+
+ 
+mi
+.
+1
+
+(1)
+
+sendo o parametro  um escalar desconhecido. A
+matriz K  R33  denominada matriz de parametros intrnsecos da camera  descreve os parametros de distancia focal, coeficientes de distorcao
+e resolucao (numero de pixels por imagem).
+E possvel eliminar a dependencia do parametro desconhecido  no modelo da camera ao multiplicar ambos os lados da equacao (6) por S(mi ).
+Desta forma, obtem-se a equacao
+0  S(mi )K R(q)  i + p
+
+
+
+(7)
+
+dado que S(mi ) mi  0.
+2.3
+
+Definicao do Problema
+
+O problema sendo abordado no presente artigo
+consiste em estimar a posicao p e a orientacao
+q de uma camera a partir de suas imagens e de
+sensores_inerciais acoplados a mesma. Em particular, busca-se um algoritmo capaz de fundir medicoes provenientes de um acelerometro aacc  R3
+e um giroscopio  gyr , com projecoes  i de landmarks conhecidos, a fim de encontrar a estimativa
+da posicao e orientacao da camera. Vale ressaltar
+que o processamento da imagem responsavel pela
+aquisicao das projecoes i dos landmarks esta fora
+do escopo do presente trabalho.
+3
+
+Modelagem Matematica
+
+Para o desenvolvimento do algoritmo de estimacao, apenas as relacoes entre os sensores e os graus
+de liberdade de um corpo rgido sao descritos.
+Desta forma, desenvolve-se um modelo de sistemas autonomos com ampla aplicacao, podendo ser
+utilizado na descricao de diversos veculos_autonomos.
+3.1
+
+Descricao do Processo
+
+O modelo_matematico do sistema parte da suposicao que as derivadas das aceleracoes lineares
+a  R3 e angulares   R3 sao desconhecidas.
+Explorando a forma como o Filtro de Kalman Estendido parametriza incertezas no modelo, consideramos que estes sinais sao passeios aleatorios
+descritos por a   a e     , sendo  i  R3
+uma variavel aleatoria Gaussiana de media zero e
+covariancia Qi  R33 , isto e,  i  N (0, Qi ).
+O restante do modelo e equacionado de forma
+determinstica,
+q
+
+p
+v
+
+
+
+
+
+
+G(q)  F ()q
+
+v
+a
+
+(8)
+
+sendo que G(q), F ()  R43 sao derivados de
+
+1651
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+(4) e (5)
+F () 
+
+3.2
+
+
+1 0
+2 
+
+
+
+
+1
+T
+T
+, G(q) 
+.
+S()
+2 I3 + S()
+(9)
+
+Alem disso, deve estabelecer as matrizes de covariancia Qxk e Qzk das entradas estocasticas do
+sistema. Com base nestas informacoes, pode-se
+implementar o algoritmo descrito na Tabela 1.3
+Tabela 1 Algoritmo do Filtro de Kalman Estendido
+
+Descricao dos Sensores Inerciais
+
+As medidas inerciais provenientes do giroscopio
+ gyr  R3 e do acelerometro agyr  R3 sao corrompidas por sinais de rudo branco  i e por um
+erro de escorregamento bi (bias) desconhecido.
+Assim, o giroscopio e descrito por,
+gyr   + bgyr +  gyr ,
+
+Etapa de predicao
+
+1. xk  fk xk1
+
+2. Pk  Ak (xk1 ) Pk1 ATk (xk1 ) + Qxk1
+Etapa de Correcao
+1. Sk  Ck (xk ) Pk CkT (xk ) + Qzk
+
+(10)
+
+2. Lk  Pk CkT (xk ) Sk1
+
+e, de forma similar, o equacionamento do acelerometro e dado por,
+aacc  RT (q)(a  g) + bacc +  acc .
+
+Aplicacao ao Filtro de Kalman
+Estendido
+
+Para utilizar o filtro de Kalman e necessario colocar as equacoes do processo (8) na forma de espaco
+de estados no domnio discreto,
+xk+1
+zk
+
+
+
+
+fk (xk ) +  xk
+hk (xk ) +  zk .
+
+(12)
+
+sendo xk o vetor_de_estados do processo e zk e vetor de sensores ou medidas de correcoes na k-esima
+amostra. Os modelos fk (xk ) e hk (xk ) descrevem
+a porcao determinstica da dinamica do processo e
+da leitura dos sensores, enquanto que as entradas
+ xk e  zk representam a porcao estocastica.
+O Filtro de Kalman permite obter a estimativa de uma densidade de probabilidade gaussiana
+para o vetor_de_estados xk , ou seja
+xk  N (xk , Pk )
+
+fk (xk )
+,
+xk
+
+ISSN 2525-8311
+
+Ck (xk ) 
+
+5. Pk  Wk Pk
+
+4.1
+
+hk (xk )
+. (14)
+xk
+
+
+
+Modelo do processo
+
+Os estados do sistema sao definidos a partir de (8)
+e dos bias dos sensores. Desta forma, xk  R25 ,
+
+T
+xk  qTk  Tk Tk pTk vkT aTk bgyr Tk bacc Tk ,
+(15)
+e o vetor_de_estados estimados. O modelo f (xk )
+pode ser obtido a partir da discretizacao Euler
+Forward das equacoes em (8)
+
+
+F ( k ) qk
+ k 
+
+
+ 031 
+,
+
+(16)
+f (xk )  xk + Ts 
+
+
+ vk
+
+
+ak
+091
+onde Ts representa o perodo de amostragem do
+processamento do filtro. Desta forma, a linearizacao de f (xk ) e dada por,
+A(xk )  I25 + Ts diag(xk ) ,  , 066 ,
+
+
+F ( k ) G(qk ) 043
+033
+I3  ,
+(xk )   034
+034
+033 033
+
+
+033
+I3
+033
+I3  .
+  033 033
+033 033 033
+
+(13)
+
+onde xk representa a media estimada do estados
+e Pk representa matriz de a covariancia desta estimativa.
+Para realizar a implementacao do filtro de
+Kalman Estendido e necessario definir as funcoes
+fk (xk ) e hk (xk ), bem como suas respectivas linearizacoes
+Ak (xk ) 
+
+4. xk  xk + Lk zk  hk (xk )
+
+(11)
+
+onde g  R3 e o vetor de aceleracao da gravidade
+(por exemplo g  0 0  9.81T ms2 ).
+Uma vez que os valores dos bias sao desconhecidos e variantes no tempo, eles serao considerados estados do EKF e estimados online. Uma
+vez que sao desconhecidos, considera-se que estes sinais tambem sao gerados por processos estocasticos do tipo passeio aleatorio descritos por
+bacc   bacc e bgyr   bgyr .
+4
+
+3. Wk  I  Lk Ck (xk )
+
+4.2
+
+(17)
+
+(18)
+
+(19)
+
+Modelo dos sensores
+
+Considera-se que o sistema realiza leituras gyr k
+e agyr k de um sensor inercial conforme os respectivos modelos (10) e (11). Alem disto, tambem
+3 As variaveis x e P  denotam as estimativas a priori
+k
+k
+(antes da correcao) da medias e covariancia dos estados.
+
+1652
+
+Deslo cam ento m m 
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Sensores
+Inerciais
+Camera
+
+Marcadores
+
+500
+
+450
+
+400
+Filtro
+Encoder
+350
+
+Figura 1 Ambiente para validacao do algoritmo.
+supoe-se que o sistema possui n landmarks de referencia  1 ,  2 , . . .,  n e as suas respectivas medicoes na imagem m1,k , m2,k , . . .,mn,k , com base na
+equacao da camera (7). Entao pode-se organizar
+zk e hk (xk ) conforme
+
+
+gyr k
+(20)
+zk   agyr k 
+03n1
+
+
+k + bgyr k
+RT (qk )(ak  g) + bacck 
+
+ 
+
+
+(21)
+hk (xk )   1,k R(qk )  1 + pk 
+
+
+..
+
+
+.
+
+n,k R(qk )  n + pk
+onde matriz auxilar i,k e definida conforme
+
+i,k  S(mi,k ) K R(qk )  i + pk .
+(22)
+
+A respectiva linearizacao da funcao nao-linear
+hk (xk ) e obtida por
+
+
+Ck (xk )  k (xk ) k (xk ) 
+(23)
+utilizando as seguintes matrizes auxilares
+
+
+034
+I3
+033
+ J  (qk , ak  g) 033 033 
+
+
+
+
+k (xk )   i,k J(qk ,  1 ) 033 033  , (24)
+
+..
+.. 
+..
+
+. 
+.
+.
+n,k J(qk ,  n ) 033 033
+
+
+033 033
+033
+ 033 033 RT (qk )
+
+
+
+033 
+k (xk )   i,k 033
+ ,
+ ..
+..
+.. 
+ .
+.
+. 
+n,k 033
+033
+
+
+I3
+033
+I3  .
+   033
+03n3 03n3
+
+(25)
+
+(26)
+
+As seguintes identidades de derivacao parcial
+foram aqui utilizadas
+J(q, u) 
+
+R(q)u
+
+q
+
+
+2 S() u
+
+
+S(u)  + W (, u) ,
+
+ISSN 2525-8311
+
+(27)
+
+10
+
+0
+
+20
+Tem po s
+
+30
+
+40
+
+Figura 2 Comparacao entre valor estimado e valor medido pelo Encoder.
+
+J  (q, u) 
+
+2 S() u
+
+RT (q)u
+
+q
+
+(28)
+
+
+S(u)  + W (, u) ,
+
+S 2 () u
+ uT  2 uT + T u I3 .
+
+(29)
+Estas relacoes sao validas para qualquer quaternion unitario q e qualquer vetor u  R3 .
+W (, u) 
+
+5
+
+Resultados Experimentais
+
+Para realizar a validacao do filtro proposto foi
+montado um experimento que consiste na fusao
+dos dados provenientes de uma camera Logitech
+C270 HD 720p e de um sensor MPU-6050 contendo tres acelerometros e tres giroscopios. A leitura do sensor inercial e realizada por uma placa
+de desenvolvimento contemplando um microcontrolador ATmega328P, de 16 MHz. Estes dados
+sao enviados via porta_serial para o computador
+responsavel pela implementacao do filtro de Kalman Estendido e pelo processamento da imagem,
+que e realizado com o auxlio de uma biblioteca de
+visao_computacional. Em particular, a deteccao
+dos marcadores de posicoes  i , e a informacao de
+sua posicao no plano da imagem mi (medida em
+pixels) e realizada por algoritmos disponveis na
+Open Source Computer Vision Library (OpenCV)
+(Bradski, 2002).
+Primeiramente o sistema foi testado sobre
+uma base movel limitando seu deslocamento ao
+eixo y, como pode ser visto na Fig. 1. Desta forma
+e possvel obter dados precisos sobre o deslocamento real do sistema, a fim de validar a estimacao
+obtida pelo filtro proposto. Os resultados deste
+teste podem ser vistos nas Figuras 2 e 3, que apresentam respectivamente uma comparacao entre os
+dados provenientes do encoder e do estimador, e
+o erro resultante desta comparacao. Neste teste
+a camera comecou na posicao p0  103 500 200
+
+1653
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+0.5
+
+5
+
+Orientacao q
+
+Erro m m 
+
+10
+
+0
+-5
+
+
+1
+2
+3
+
+0
+
+-0.5
+Erro
+
+10
+
+10
+
+0
+
+20
+Tem po s
+
+30
+
+40
+
+Figura 3 O erro maximo na trajetoria estimada
+fica abaixo de 10 mm.
+
+Deslocamento mm
+
+4
+6
+Tempo s
+
+2
+
+1000
+
+px
+py
+pz
+
+800
+600
+400
+200
+0
+
+5
+
+10
+15
+Tempo s
+
+20
+
+25
+
+Figura 4 Evolucao da posicao estimada da camera p  px py pz T para condicoes iniciais desconhecidas.
+
+mm, se deslocou ate p  103 360 200 mm e retornou a p0 . Como pode ser observado na Fig.
+3, durante toda a trajetoria da camera o erro de
+estimacao se manteve abaixo de 1 cm.
+O segundo teste consistiu em alterar os parametros da posicao inicial do sistema para determinar a capacidade do filtro de convergir o erro de
+estimacao a zero. Neste teste a camera se manteve fixa na posicao p  103 500 200 mm com
+orientacao q  0.5  0.5  0.5 0.5. Ja o filtro foi
+inicializado na posicao p0  500 250 100 mm e
+orientacao q0  0.5773 0.4083 0.4083 0.5773.
+Os resultados obtidos de convergencia do filtro sao
+mostrados nos graficos das Figuras 4 e 5, respectivamente para a estimacao da posicao e orientacao
+do sistema. Estas figuras demonstram claramente
+que o filtro e capaz de convergir a estimacao correta dos estados, apesar de ser inicializado em condicoes iniciais consideravelmente diferentes das do
+sistema.
+
+ISSN 2525-8311
+
+8
+
+10
+
+Figura 5 Evolucao da estimacao dos quaternions
+da camera q para condicoes iniciais desconhecidas.
+6
+
+1200
+
+0
+
+0
+
+Conclusao
+
+O presente artigo propos um algoritmo para a fusao_de_sensores_inerciais e visao_computacional na
+tarefa de estimacao da posicao e orientacao (pose)
+de um corpo rgido. Um modelo baseado na orientacao por quaternions foi utilizado, facilitando
+o desenvolvimento das matrizes Jacobianas utilizadas pelo Filtro de Kalman Estendido. A modelagem da projecao dos landmarks no plano da
+camera gerou um conjunto de sensores_virtuais
+prontamente integrados ao algoritmo de fusao de
+sensores. Os resultados experimentais permitem a
+conclusao de que o algoritmo proposto e capaz de
+estimar a pose de um corpo rgido de forma precisa, apesar de lidar com sensores de baixo_custo.
+Trabalhos futuros investigarao a perda de informacao proveniente da camera devido a oclusoes
+e instabilidade dos algoritmos de tratamento de
+imagens. Imagina-se que a estimacao da pose do
+sistema se mantenha adequada nestas situacoes,
+desde que a estimacao nao fique exclusivamente
+dependente dos sensores_inerciais por um tempo
+muito alto.
+Agradecimentos
+Este trabalho foi parcialmente apoiado pela Capes
+e CNPq (3092722015-7) e em cooperacao com a
+Hewlett-Packard Brasil Ltda. e com recursos provenientes da Lei de Informatica (Lei numero 8.248,
+de 1991).
+Referencias
+Altug, E., Ostrowski, J. P. and Taylor, C. J.
+(2003). Quadrotor control using dual camera
+visual feedback, Robotics and Automation,
+2003. Proceedings. ICRA03. IEEE International Conference on, Vol. 3, IEEE, pp. 4294
+4299.
+
+1654
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Bradski, G. (2002). Opencv Examples of use and
+new applications in stereo, recognition and
+tracking, Proc. Intern. Conf. on Vision Interface (VI?2002), p. 347.
+Chai, L., Hoff, W. A. and Vincent, T. (2002).
+Three-dimensional motion and structure estimation using inertial sensors and computer_vision for augmented reality, Presence Teleoperators and Virtual Environments 11(5) 474492.
+Engel, J., Sturm, J. and Cremers, D. (2012).
+Accurate figure flying with a quadrocopter
+using onboard visual and inertial sensing,
+IMU 320 240.
+Goldberg, S. B., Maimone, M. W. and Matthies,
+L. (2002). Stereo vision and rover navigation
+software for planetary exploration, Aerospace
+Conference Proceedings, 2002. IEEE, Vol. 5,
+IEEE, pp. 52025.
+Janabi-Sharifi, F. and Marey, M. (2010). A
+kalman-filter-based method for pose estimation in visual servoing, Robotics, IEEE Transactions on 26(5) 939947.
+Kornuta, T. and Zielinski, C. (2013). Robot
+control system design exemplified by multicamera visual servoing, Journal of Intelligent
+ Robotic Systems 77(3) 499523.
+Kristiansen, R., Nicklasson, P. J. and Gravdahl,
+J. T. (2005). Satellite attitude tracking by
+quaternion-based backstepping, Proceedings
+of the 16 th IFAC World Congress, Citeseer.
+
+Raush, G., Freire, F., Khamashta, M., Codina,
+E., Seto, J. and Cangas, J. (2013). Precision agriculture 13, Wageningen Academic Publishers, Wageningen, chapter Hydraulic robot arm controlled by visual servoing, pp. 365371.
+Rehbinder, H. and Ghosh, B. K. (2003). Pose estimation using line-based dynamic vision and
+inertial sensors, Automatic Control, IEEE
+Transactions on 48(2) 186199.
+Silveira, G., Malis, E. and Rives, P. (2008). An
+efficient direct approach to visual slam, Robotics, IEEE Transactions on 24(5) 969979.
+Steder, B., Grisetti, G., Stachniss, C. and Burgard, W. (2008). Visual slam for flying
+vehicles, Robotics, IEEE Transactions on
+24(5) 10881093.
+Szeliski, R. (2010). Computer vision algorithms
+and applications, Springer Science  Business Media.
+Xu, D. and Mandic, D. P. (2015). The theory
+of quaternion matrix derivatives, Signal Processing, IEEE Transactions on 63(6) 1543
+1556.
+Yang, J., Chung, S.-J., Hutchinson, S., Johnson, D. and Kise, M. (2013). Vision-based
+localization and mapping for an autonomous mower, Intelligent Robots and Systems
+(IROS), 2013 IEEERSJ International Conference on, IEEE, pp. 36553662.
+
+Mariottini, G. L. and Prattichizzo, D. (2005). Egt
+for multiple view geometry and visual servoing robotics vision with pinhole and panoramic cameras, Robotics  Automation Magazine, IEEE 12(4) 2639.
+Martnez, C., Mondragon, I. F., Olivares-Mendez,
+M. A. and Campoy, P. (2011). On-board and
+ground visual pose estimation techniques for
+uav control, Journal of Intelligent  Robotic
+Systems 61(1-4) 301320.
+Nutzi, G., Weiss, S., Scaramuzza, D. and Siegwart, R. (2011). Fusion of imu and vision for absolute scale estimation in monocular slam, Journal of intelligent  robotic
+systems 61(1-4) 287299.
+Palomeras, N., Nagappa, S., Ribas, D., Gracias, N. and Carreras, M. (2013). Visionbased localization and mapping system for
+auv intervention, OCEANS-Bergen, 2013
+MTSIEEE, IEEE, pp. 17.
+
+ISSN 2525-8311
+
+1655

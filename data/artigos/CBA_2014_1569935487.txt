@@ -1,0 +1,940 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+CLASSIFICACAO DE CONTATOS BASEADA EM CURVAS PRINCIPAIS
+UTILIZANDO O PROCESSADOR NIOS II
+Geancarlo G. M. da Rocha, Joao B. de O. e Souza Filho
+
+
+Centro Federal de Educacao Tecnologica Celso Suckow da Fonseca, Unidade Maracana
+Av. Maracana 229, Maracana
+Rio de Janeiro, RJ, Brasil
+Emails geancarlo.rocha@gmail.com, jsouza@cefet-rj.br
+
+Abstract Principal curves, a nonlinear generalization of principal componentes, can be used as a powerful
+feature extractor for machine learning applications. In particular, their efficacy in the development of automatic
+contacts classification systems has been studied and well proven. We present here the whole development, starting
+from the training of such classifier, which achieves a mean classification efficiency of 94,98 in the test partition
+of our dataset, up to its implementation in hardware using Nios II processors in a FPGA. We show that this
+embedded system presents small numeric error and sufficient performance, being suited for usage in real systems.
+Keywords
+
+Principal Curves, Machine Learning, Passive Sonar, Embedded System.
+
+Resumo Curvas principais, uma generalizacao nao-linear de componentes_principais, podem ser utilizadas
+como um poderoso extrator de caractersticas para aplicacoes de aprendizagem_de_maquina. Em particular, sua
+eficacia no desenvolvimento de sistemas de classificacao automatica de contatos ja foi estudada e bem comprovada. Aqui, e apresentado todo o desenvolvimento, desde o treino de um classificador, que obtem eficiencia
+media de classificacao de 94,98 em teste na base de dados utilizada, ate sua implementacao em hardware utilizando processadores Nios II em um FPGA. Verifica-se que este sistema_embarcado apresenta erro numerico e
+performance apropriados para utilizacao em sistemas reais.
+Palavras-chave
+
+
+
+Introducao
+
+que realizam processamento_de_sinais. Com o objetivo de atingir os requerimentos de performance
+do problema, sao utilizados dois processadores em
+paralelo que realizam operacoes em numeros com
+representacao de ponto-fixo.
+A Secao 2 trata da base de dados utilizada
+para testes. Na Secao 3 e apresentada a tecnica de
+Curvas Principais. Seu conceito, o algoritmo utilizado e a sua aplicacao sao discutidos. Na Secao 4
+sao abordados o processador NIOS II, o hardware
+e os softwares utilizados, assim como a implementacao propriamente dita do sistema. Por fim, a
+Secao 5 apresenta os experimentos realizados, seguida das Conclusoes.
+
+Tradicionalmente, operadores de sonar sao treinados para reconhecer diferentes caractersticas
+quanto a sonoridade e aos espectrogramas dos sinais de sonar, porem esta e uma tarefa que exige
+grande experiencia. Por conta da importancia
+e dificuldade apresentadas por esta tarefa, sao
+desenvolvidos sistemas de classificacao automatica de contatos(SCAC) de sonar_passivo empregando tecnicas de processamento_de_sinais(Knight
+et al., 1981), estatstica(Bohme, 1995) e aprendizagem_de_maquina(Souza Filho, 2007).
+Em (Fernandez, 2005), foi averiguada a alta
+eficiencia de SCACs baseados na tecnica de Curvas Principais(Hastie and Stuetzle, 1989). O classificador desenvolvido modelou cada classe de navio por uma curva principal extrado utilizando
+o modulo das janelas espectrais do rudo que ela
+emana. Utilizando uma metrica de distancia entre
+um dado e uma curva como criterio de dissimilaridade, classifica-se o dado como pertencente aquela
+classe de menor dissimilaridade.
+Este trabalho trata da implementacao de
+um SCAC deste tipo utilizando soft processors Nios II(Altera, 2011a) em um FPGA(FieldProgrammable Gate Array) e tem como objetivo verificar a viabilidade de sua operacao em
+tempo_real. Dispositivos de logica programavel, tais como os FPGAs, apresentam alta escalabilidade, boa flexibilidade e baixo consumo de
+energia(Fowers et al., 2012), sendo adequados para
+o desenvolvimento de produtos em baixo volume
+
+2
+
+Base de Dados
+
+Com o objetivo de intensificar a pesquisa neste
+contexto, a Marinha do Brasil criou uma base de
+dados constituda pelo rudo irradiado por 25 navios, pertencentes a 8 diferentes classes, durante
+263 corridas realizadas em sua raia acustica, localizada em Arraial do Cabo. Em cada corrida, um
+navio percorre a raia, mantendo constantes suas
+condicoes de maquinaria e operacao, enquanto um
+hidrofone junto ao fundo da raia captura o rudo
+emanado por ele. Diferentes condicoes operativas sao experimentadas, de forma a caracterizar
+os navios e seus diferentes estados de operacao.
+Foi utilizada uma versao pre-processada desta
+base de dados baseada no estudo realizado em
+(Soares-Filho, 2001). Nesta cadeia de processamento, inicialmente, o sinal do hidrofone e
+
+1042
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Tabela 1 Resumo da divisao dos dados
+Classe Treino Validacao Teste
+A
+1459
+486
+487
+B
+2059
+686
+687
+C
+2878
+959
+960
+D
+1843
+614
+615
+E
+4245
+1415
+1415
+F
+1760
+586
+588
+G
+1285
+428
+430
+H
+2035
+678
+679
+
+Figura 1 Ilustracao de uma curva segmentada.
+
+amostrado e quantizado com um conversor analogicodigital de 16 bits de precisao a uma frequencia de 22,05kHz. Sem superposicao das amostras,
+o sinal amostrado e filtrado por uma janela de
+Hann com comprimento 4096, visando minimizar
+os efeitos de recorte do sinal. Contabilizandose a frequencia da amostragem, e trivial verificar
+que cada janela corresponde a, aproximadamente,
+186ms de duracao. Em seguida, e calculada a
+transformada de Fourier da janela utilizando-se
+um algoritmo FFT. Em cada janela, tomam-se os
+modulos dos 557 pontos do espectro de correspondentes a uma faixa de frequencia que se estende
+de 0 Hz ate, aproximadamente, 3 kHz. Esta faixa
+foi escolhida pois concentra informacoes relacionadas a maquinaria dos navios. A proxima etapa da
+cadeia consiste na utilizacao do algoritmo Twopass Split-Window (TPSW)(Esquef et al., 2002)
+para a estimacao do rudo de fundo, mantendo-se
+os picos espectrais, fundamentais a classificacao.
+Como passo final no pre-processamento, o espectro resultante e normalizado para energia unitaria.
+A Tabela 1 apresenta a divisao nos conjuntos de treino, validacao e teste, correspondendo a
+60, 20 e 20 do total de cada classe, utilizada
+para o desenvolvimento. A fim de facilitar a implementacao, apenas as primeiras 512 do total de
+557 dimensoes contendo o modulo do espectro de
+frequencia filtrado e normalizado foram utilizados.
+3
+
+Figura 2 Mapeamento do ponto de vista vetorial.
+
+na insercao e conexao de segmentos, definidos por
+componentes_principais locais, em agrupamentos
+identificados nos dados. O Algoritmo 1 descreve
+seu funcionamento de forma resumida.
+Em cada curva, seus vertices e a matriz de
+interconexao definem uma sequencia finita de segmentos. A projecao, ou mapeamento, de um dado
+x  Rn a um segmento definido pelos vertices v1 e
+v2 e ilustrado na Figura 2 e definido pelas Equacoes 1 a 7. De forma simplificada, consiste em
+achar o ponto sobre o segmento no qual o dado
+e projetado ortogonalmente. Caso, isto nao seja
+possvel, a projecao e o vertice do segmento mais
+proximo ao dado. Ao mapear x no k-esimo segmento da curva representativa de uma classe j,
+obtemos informacoes uteis ao desenvolvimento de
+um sistema de classificacao
+
+Curvas Principais
+
+ O comprimento de arco tjk  R  distancia a
+partir do incio de um segmento, ate o ponto
+pjk  Rn onde x e projetado. Estas informacoes podem ser utilizadas como um indicador
+da distribuicao espacial dos dados ao longo
+da curva representativa da classe j.
+
+A tecnica de curvas_principais e uma poderosa ferramenta para a modelagem de conjuntos de dados multidimensionais. Consideradas como uma
+generalizacao nao-linear da analise_de_componentes_principais, tratam-se de curvas unidimensionais que passam pelo meio da nuvem formada pelos dados, promovendo um resumo nao-linear do
+conjunto(Hastie and Stuetzle, 1989). Usualmente,
+as curvas_principais sao aproximadas por um conjunto de segmentos conectados, tal como ilustrado
+na Figura 1, que mantem as mesmas propriedades
+que uma curva principal contnua.
+Entre os variados metodos de extracao de
+curvas_principais, destaca-se o algoritmo de ksegmentos (Verbeek et al., 2002), que e baseado
+
+ A distancia djk de x a pjk .
+De posse dos valores djk para todos os k segmentos da curva j, toma-se o mnimo em k como
+a distancia dj do dado x a esta curva.
+Classificacao por Curvas Principais
+O desenvolvimento de um SCAC baseado em curvas_principais consiste em diferentes etapas o pro-
+
+1043
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Algoritmo 1 Algoritmo de k-segmentos
+Entrada O conjunto de treino X  Rmn , o parametro de controle da suavidade da curva  e o
+numero de insercoes de segmentos K
+Sada Um conjunto de no maximo K curvas_principais, definidas por vertices ddimensionais e
+matrizes de interconexao dos vertices
+1
+2
+3
+4
+
+5
+6
+7
+8
+9
+10
+
+11
+
+Inserir segmento na direcao da componente principal e centro de X 
+k  1 
+enquanto k < K faca
+Identificar novo agrupamento com potencial de reduzir as distancias quadraticas dos dados a
+curva 
+se Tamanho do agrupamento < 3 entao
+Parar loop 
+Inserir segmento na direcao da componente principal e centro do agrupamento 
+k  k + 1 
+Reajustar segmentos pela redefinicao dos agrupamentos(minimizar distancias quadraticas) 
+Interconectar segmentos atraves de busca gananciosa utilizando  para controle de suavidade
+com base em uma funcao objetivo que minimiza o comprimento da curva 
+Otimizar conexoes utilizando uma adaptacao do metodo 2-opt(Croes, 1958) 
+
+v
+u d
+uX
+b  kv1  v2 k  t (xi  pi )2
+
+(1)
+
+C(x)  arg min dj
+
+v2  v1
+b
+ x  v1
+ wu
+
+0
+
+0, se t  0
+
+b, se t0  b
+
+0
+t , caso contrario
+
+u 
+
+(2)
+
+w
+t0
+
+(3)
+(4)
+
+t
+
+p  v1 + t  u
+d  L1 (x, p) 
+
+Devido a construcao incremental da curva
+principal pelo algoritmo utilizado, ao fim de sua
+execucao temos varias curvas de diferentes complexidades(diferentes numeros de segmentos) correspondentes a cada passo da construcao. Portanto e necessario selecionar uma unica curva para
+representar a classe que se deseja modelar. O conjunto de curvas selecionadas para as 8 classes e
+denotada por uma tupla S  N8 , onde o n-esimo
+elemento indica o total de segmentos da curva da
+classe A, B, . . . , H, respectivamente. Adicionalmente, Smax denota a tupla contendo os maiores
+valores possveis para cada elemento, isto e, o total
+de segmentos das maiores curvas obtidas durante
+o treinamento.
+
+(5)
+(6)
+
+d
+X
+
+xi  pi 
+
+(8)
+
+j
+
+i1
+
+(7)
+
+i1
+
+jeto off-line e a operacao on-line. Na primeira,
+e produzida uma base de assinaturas acusticas,
+atraves do pre-processamento e extracao de uma
+curva principal para cada classe de contato, que
+e realizada pelo algoritmo de k-segmentos. Em
+fase de operacao on-line, e feita a aquisicao pelo
+sistema de sonar_passivo dos sinais que sao preprocessados e mapeados nas curvas, obtendo-se
+um vetor de distancias d. A classificacao e realizada de acordo com a Equacao 8, ou seja, um
+sinal e classificado como pertencente aquela classe
+cuja distancia a respectiva curva e mnima. Tratase de uma classificacao baseada em uma simples
+metrica de distancia mnima1 .
+
+A selecao de um subconjunto de curvas_principais representativas de cada classe caracteriza o
+problema de otimizacao_combinatoria dado pela
+Equacao 9, onde (S)  0, 1 e o erro de classificacao para determinado S e o parametro   0, 1
+controla o compromisso entre a eficiencia de classificacao e a complexidade de curva. Um aumento
+de  pune mais fortemente erros de classificacao,
+enquanto que pune menos severamente complexidades elevadas, pois (1  ), o peso da complexidade normalizada, diminui. Obtemos uma solucao
+aproximadamente otima para este problema atraves de algoritmos_geneticos(Rocha et al., 2011).
+
+1 Este e o mesmo sistema de classificacao empregado em
+(Fernandez, 2005), porem com a modificacao para uso da
+norma L1 no calculo de d em funcao da perda da significancia da norma L2 em altas dimensoes(Aggarwal et al., 2001).
+
+P
+S
+arg min (S) + (1  ) P
+Smax
+S
+
+1044
+
+(9)
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+4
+
+Implementacao do Sistema
+t0
+
+Este trabalho se concentrou, exclusivamente, na
+implantacao do classificador on-line, pressupondo
+portanto que os espectros pre-processados sao
+disponibilizados por outro hardware especfico.
+Utilizou-se um kit de desenvolvimento de FPGA,
+modelo DE2-115 da Alterar . Este kit e equipado
+com um FPGA Cyclone EP4CE115F29, que contem 114,480 elementos logicos(LEs), ate 3.9 Mbits
+de RAM e 266 multiplicadores de 18  18 bits.
+Alem do FPGA, utilizaram-se outros perifericos do kit. A memoria SRAM(Stactic Random Access Memory), com capacidade maxima de armazenamento de 2 MB, foi utilizada como base de dados para os parametros dos segmentos das curvas
+utilizados no mapeamento. Para realizar a comunicacao do FPGA com computadores, emprega-se
+a porta RS-232 devido a simplicidade de sua utilizacao.
+Foi
+utilizada
+uma
+combinacao
+de
+VHDL(Ashenden, 2007) e software, executado
+em processadores Nios II, para a implementacao
+do sistema. O processador Nios II e um soft
+processor RISC(reduced instruction set computer )
+de 32 bits da Alterar . Uma analise de fatores
+que afetam sua performance e apresentada em
+(Xiao-hong et al., 2012). Sistemas que utilizam
+o processador Nios II e outros componentes
+de IP(intellectual property) da Alterar podem
+ser criados no software Qsys, parte da sute
+Quartusr (Altera, 2011b).
+4.1
+
+512
+X
+
+wi xi
+
+(10)
+
+i1
+
+
+
+256
+X
+
+wi xi +
+
+i1
+
+512
+X
+
+wj xj
+
+(11)
+
+j257
+
+d  L1 (x, p)  x  p
+ x  v1  tu
+ w  tu 
+
+512
+X
+
+(12)
+(13)
+
+wi  tui 
+
+(14)
+
+i1
+
+
+
+256
+X
+i1
+
+wi  tui  +
+
+512
+X
+
+wj  tuj  (15)
+
+j257
+
+Figura 3 Diagrama de blocos representando o sistema implementado.
+
+O software_de_controle simula o sonar e a cadeia de pre-processamento, envia parametros de
+operacao do sistema, consistindo no numero de
+elementos nos vetores, no total de classes e de
+segmentos em cada curva, e nos parametros dos
+segmentos que sao armazenados na SRAM. Ele
+tambem recebe o resultado dos mapeamentos dos
+espectros em cada segmento  djk e tjk  e medicoes de performance.
+O subsistema de IO(inputoutput) e responsavel pela comunicacao com o software_de_controle, recebendo dele os segmentos e os espectros,
+e enviando-lhe os resultados e medicoes de performance. Tambem realiza a parametrizacao das
+transferencia dos segmentos da memoria SRAM
+aos subsistemas de trabalho, que executam o mapeamento de forma paralela.
+Entre os subsistemas, foram implementados
+em VHDL o somador, utilizado para combinar as
+parcelas de resultados e produzir a acumulacao final(Equacoes 11 e 15), e a logica de interrupcoes,
+apresentada no diagrama da Figura 4. Nela os sinais de mesmo tipo provenientes dos subsistemas
+de trabalho sao conectados via portas AND ao
+subsistema de IO com o objetivo que interrupcoes ocorram somente quando todos os trabalhadores atingirem o mesmo estado, mantendo assim
+a sincronia entre o software dos subsistemas.
+O software Qsys foi utilizado para criar
+
+Detalhamento da Implementacao
+
+E possvel implementar o sistema empregando-se
+mais de um processador para realizar as operacoes
+vetoriais do mapeamento, que sao facilmente paralelizaveis. Para o caso de dois processadores realizando estas operacoes, as Equacoes 1 a 7 sao modificadas como dado pelas Equacoes 10 a 15. Cada
+processador e responsavel por 256 dimensoes do
+espaco R512 . Atraves da analise destas equacoes,
+verifica-se que o calculo de d depende somente de
+v1 , u e b como parametros dos segmentos, os quais
+podem ser calculados off-line, contribuindo para a
+reducao do tempo de processamento.
+Uma tecnica implementada em software numa
+tentativa de melhorar a performance do sistema
+e o uso de double-buffering(Oshana, 2006) para
+os buffers que armazenam estes parametros dos
+segmentos e os espectros(dados de entrada). Isto
+permite que dados sejam transferidos para buffers
+de memoria, enquanto o seu respectivo par esta
+sendo utilizado em algum mapeamento.
+4.2
+
+ wu
+
+Hardware
+
+A Figura 3 apresenta o diagrama_de_blocos do sistema criado para implementar e testar as operacoes de mapeamento do classificador.
+
+1045
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+ O uso ou nao de double-buffering para espectros
+ O uso ou nao de double-buffering para segmentos
+ O envio dos resultados dos mapeamentos em
+cada segmento
+ A medicao da performance atraves da contagem de tempo percorrido em determinadas
+secoes do codigo e envio apos o mapeamento
+de determinado numero de espectros.
+
+Figura 4 Logica de Interrupcoes implementada.
+
+5
+
+os subsistemas com os seguintes componentes e
+interconecta-los da seguinte forma
+
+5.1
+
+Subsistema de IO processador Nios IIs memoria RAM UART GPIO para LEDs
+ponte de memoria controladores de SRAM
+e SGDMA memoria RAM para parametros
+das transferencias de DMA contador de performance sinais e registrados conectados ao
+somador e sinais de entrada e sada para comunicacao de estados com subsistemas de
+trabalho.
+
+Desenvolvimento off-line
+
+Primeiramente, para cada uma das classes de
+navio(A, B, . . . , H), extraram-se curvas_principais de seus dados de treino utilizando o algoritmo de k-segmentos com parametros K  30
+e   1, resultando em parada apos a insercao
+de k  12, 30, 30, 6, 30, 25, 10, 19, ou em termos
+de total de segmentos, tal como na Equacao 9,
+Smax  (23, 59, 59, 11, 59, 49, 19, 37).
+Em seguida, realizou-se a selecao do grupo
+de curvas representativas atraves do algoritmo
+genetico. Apos multiplas execucoes do algoritmo, variando-se  em 30 passos no intervalo
+0.5, 13 , obteve-se a frente de Pareto da Figura
+5 nos dados de validacao, da qual selecionouse um classificador com 122 segmentos, ou S 
+(15, 23, 33, 11, 11, 11, 9, 9), e eficiencia media de
+95,02. Esta escolha e fundamentada no bom
+compromisso entre acuracia de classificacao e velocidade de operacao. Quando aplicado aos dados
+do conjunto de teste, este classificador apresenta
+eficiencia media de 94,98.
+
+Subsistema de Trabalho processador
+Nios
+IIf 2x memoria RAM de rapido acesso(para
+codigo do mapeamento e variaveis temporarias do mapeamento) memoria RAM
+para codigo comum memoria RAM de
+porta dupla(DPRAM) compartilhada com
+subsistema de IO sinais e registradores
+conectados ao somador e sinais de entrada
+e sada para comunicacao de estados com
+subsistema de IO.
+Interconexao PLL(phase-locked_loop) conectado aos subsistemas, fornecendo um clock de
+100MHz o subsistema de IO e conectado a
+memoria compartilhada dos subsistemas de
+trabalho.
+
+4.3
+
+Experimentos
+
+5.2
+
+Conversao para representacao em ponto-fixo
+
+Para se definir a representacao em ponto-fixo
+a ser utilizada, foram realizadas simulacoes de
+mapeamento dos dados nas curvas selecionadas
+utilizando-se o Fixed-Point ToolboxTM no software MATLABr , obtendo-se os resultados listados na Tabela 2.
+Segundo as simulacoes, a maioria das variaveis apresentam valor absoluto inferior a 2 e, portanto, sao representaveis utilizando o formato comum de 3.294 . O valor m  3 foi escolhido
+para dar uma folga maior e assim evitar possveis overunderflows nas operacoes com sinais
+
+Software
+
+Os algoritmos executados pelos subsistemas de
+trabalho e IO estao descritos em Algoritmo 2 e 3,
+respectivamente. Um aspecto importante da operacao de mapeamento e que ela foi implementada
+utilizando representacao de ponto-fixo em complemento de dois(Ashenden, 2007), portanto e necessario realizar uma analise da faixa dinamica das
+variaveis utilizadas no algoritmo para determinar
+quantos bits devem ser destinados para as partes
+inteira e decimal dos numeros. O codigo em C
+que implementa os softwares embarcados em ambos subsistemas verifica a definicao de macros em
+seus cabecalhos config.h para decidir quais recursos incluir durante a compilacao. Estes possveis recursos sao
+
+2 Estes parametros de operacao consistem no total de
+segmentos a mapear cada espectro recebido, no numero
+de elementos do vetor tratado por este subsistema e nos
+enderecos dos buffers na memoria compartilhada a partir
+dos quais serao buscados os espectros e os segmentos.
+3 Valores mais baixos de  nao foram considerados pois
+e essencial que o algoritmo otimize a eficiencia.
+4 m  3 bits para a parte inteira, incluindo o sinal, e
+f  29 para a parte fracionaria.
+
+1046
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Algoritmo 2 Algoritmo dos subsistemas de trabalho
+1
+2
+3
+
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+
+Inicializar registradores de sada 
+Inicializar o controle de interrupcoes 
+Aguardar ate que o subsistema de IO notifique-o atraves de uma interrupcao que ele acabou de
+escrever na memoria compartilhada os parametros2 para a sua operacao
+Notificar o subsistema de IO da conclusao da leitura 
+Selecionar os buffers frontais 
+Notificar o subsistema de IO que todos os buffers estao disponveis 
+para Sempre faca
+Aguardar a escrita de um espectro no buffer de espectros selecionado 
+Notificar que este buffer nao esta mais disponvel 
+contador  0 
+enquanto contador < Total de Segmentos faca
+Aguardar a escrita de um segmento no buffer de segmentos selecionado
+Notificar que este buffer nao esta mais disponvel 
+Projetar o espectro neste segmento 
+Notificar que o buffer de segmento esta disponvel novamente 
+Selecionar o outro buffer do par caso este exista 
+contador  contador + 1 
+
+18
+19
+
+Notificar que o buffer de espectro esta disponvel novamente 
+Selecionar o outro buffer do par caso este exista 
+
+1
+
+Tabela 2 Resultados da simulacao com o
+MATLABr
+Variavel
+Mnimo
+Maximo
+b
+0.1595325148
+1.3988014712
+d
+0 17.4906253048
+d accu
+0 17.4906253048
+d diff
+-0.7774370078
+0.8794007101
+d update
+6.33E-012
+0.8794007101
+diff x v1 -0.8075781607
+1.0775649654
+nx
+29277
+29277
+p part
+-0.7765619992
+0.6291106693
+t
+0
+1.0814419054
+t accu
+-0.4781461902
+1.1204160562
+t update -0.3232395691
+0.5799058718
+u
+-0.7525584365
+0.7066341243
+v1
+-0.1968711737
+0.8075804399
+x
+4.65E-007
+0.8806937918
+xi
+4.65E-007
+0.8806937918
+
+Eficiencia Media
+
+0.95
+
+0.9
+
+S(15, 23, 33, 11, 11, 11, 9, 9)
+
+0.85
+
+0.8
+
+0.75
+0
+
+50
+
+100
+
+150
+
+200
+
+250
+
+Complexidade Total
+Figura 5 Frente de Pareto das solucoes encontradas pelo algoritmo_genetico.
+
+reais. Ja as variaveis d e d accu, excedem 1610 ,
+necessitando ser representadas em 6.26 para evitar overflows. A conversao do formato 3.29 para
+6.26 e realizada facilmente truncando os 3 bits menos significantes, porem isto resulta em perda de
+precisao.
+5.3
+
+lho e os valores de d e t resultantes foram convertidos para as respectivas precisoes utilizadas em
+ponto-fixo. A Tabela 3 apresenta o erro medio
+absoluto(MAE), o erro medio quadratico(RMSE)
+e o erro absoluto maximo(MAXE). As Figuras 6 e
+7 apresentam as distribuicoes dos erros absolutos.
+Em seguida, testou-se a performance do
+sistema em 3 configuracoes (i) com doublebuffering, (ii) sem double-buffering para segmentos e (iii) sem double-buffering para espectros. A
+Tabela 4 apresenta 4 medidas para cada uma das
+configuracoes (a) o tempo medio para mapear-se
+um espectro em todos os segmentos em ms, (b) o
+tempo medio para mapear em cada segmento em
+
+Analise do Sistema on-line
+
+Deseja-se averiguar, primeiramente, o nvel de erro
+numerico em d e t. Para tanto, realizou-se o mapeamento de cada um dos 5861 espectros de teste
+em todos os 122 segmentos, resultando em um
+total de 715042 mapeamentos. Como base para
+comparacao, foram feitos os mesmos mapeamentos em ponto-flutuante em uma estacao de traba-
+
+1047
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Algoritmo 3 Algoritmo do subsistema de IO
+1
+2
+
+3
+
+4
+5
+6
+
+7
+8
+9
+
+10
+11
+12
+
+13
+
+14
+15
+
+Testar o funcionamento da memoria SRAM 
+Inicializar o sistema resetar a maquina de estados VHDL, ajustar a baud rate da UART, resetar
+registradores de sada, inicializar o controle de interrupcoes e o dispositivo de DMA 
+Preparar a base de dados de segmentos e parametros de operacao. Nesta implementacao, isto
+envolve um protocolo de comunicacao via UART com o computador. A cada segmento transferido
+para a SRAM, e conferido um checksum para evitar-se erros na comunicacao ou no
+funcionamento do controlador da SRAM 
+Inicializar parametros para as transferencias de DMA
+Selecionar os buffers frontais 
+O layout da memoria compartilhada e comunicado aos respectivos subsistemas e se aguarda a
+notificacao que e possvel seguir adiante 
+para Sempre faca
+Aguardar a disponibilidade dos buffers de espectros selecionados
+Ler um espectro atraves da UART e direcionar seus elementos aos respectivos
+subsistemasbuffers responsaveis 
+Notifica-los que foi escrito um novo dado nestes buffers quando finalizada a leitura 
+para todo segmento na base de dados faca
+Aguardar a disponibilidade dos buffers de segmentos selecionados nas memorias
+compartilhadas
+Transferir o segmento atual para os buffers de segmentos selecionados via DMA. Notificar
+que foi escrito um novo segmento nos buffers quando finalizada a transferencia 
+Selecionar o outro buffer do par caso este exista 
+Selecionar os outros buffers de espectro dos pares caso estes existam 
+
+Tabela 3 Diferentes tipos de erro verificados.
+Tipo de Erro
+RMSE
+MAE
+MAXE
+
+t
+4.48847e-07
+4.18289e-07
+1.28523e-06
+
+d
+2.56091e-06
+2.10079e-06
+1.26138e-05
+
+s, (c) o tempo medio de atraso causados pela espera da liberacao de buffers de espectros em s e
+(d) a percentagem de tempo, em comparacao com
+o mais lento, para a realizacao do mapeamento
+completo de um espectro.
+Figura 6 Histograma dos erros absolutos de t.
+
+Tabela 4 Medidas de performance do sistema.
+Medida
+(a)
+(b)
+(c)
+(d)
+
+(i)
+113, 1
+926, 8
+625, 0  103
+90.8
+
+6
+
+(ii)
+124, 6
+939, 4
+625, 0  103
+100
+
+(iii)
+113, 1
+926, 8
+1614, 5
+90.8
+
+os erros de t apresentam distribuicao normal, os
+erros absolutos de d distribuem-se de forma assimetrica com uma cauda mais longa a direita.
+Ambos histogramas apresentam picos de valores
+aparentemente iguais. Este fenomeno e atribudo
+ao processo de saturacao que faz parte do mapeamento(Equacao 5).
+Na analise de performance, verifica-se que no
+pior caso, o sistema demora 124,6 ms para realizar
+o mapeamento completo de um espectro, um resultado positivo face ao fato que cada janela de espectro tem duracao de 186 ms, como mencionado
+na Secao 2, porem problematico caso forem implementadas outras etapas do pre-processamento
+nesta arquitetura. E possvel contornar este pro-
+
+Conclusoes
+
+Investigamos a viabilidade da operacao em tempo
+real de um sistema de classificacao automatica de
+contatos baseado em curvas_principais. A observacao dos resultados do teste de erro numerico indica
+desempenho satisfatorio do sistema neste requisito, pois ele apresenta distribuicoes de erros absolutos concentradas em valores baixos. Enquanto
+
+1048
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+on Optical Science, Engineering, and Instrumentation, International Society for Optics
+and Photonics, pp. 220.
+Croes, G. (1958).
+A method for solving
+traveling-salesman problems, Operations Research 6(6) 791812.
+Esquef, P. A., Biscainho, L. W. P., Valimaki,
+V. and Karjalainen, M. (2002). Removal of
+long pulses from audio signals using two-pass
+split-window filtering, Audio Engineering Society Convention 112, Audio Engineering Society.
+Fernandez, H. L. (2005). Classificacao de navios
+baseada em curvas_principais, Masters thesis, COPPEUFRJ.
+
+Figura 7 Histograma dos erros absolutos de d.
+
+Fowers, J., Brown, G., Cooke, P. and Stitt, G.
+(2012). A performance and energy comparison of fpgas, gpus, and multicores for
+sliding-window applications, Proceedings of
+the ACMSIGDA international symposium
+on Field Programmable Gate Arrays, ACM,
+pp. 4756.
+
+blema de diversas formas. Primeiramente, podese acelerar o sistema empregando-se mais subsistemas de trabalho, metodologia que esta atualmente sendo investigada pelos autores. Outra opcao e empregar um pipeline paralelo para a cadeia
+de pre-processamento, evitando assim que o classificador se torne o gargalo hipotetico do sistema.
+Tambem e notavel como o uso de double-buffering,
+ocasiona numa reducao de tempo de processamento de aproximadamente 10, enquanto que a
+omissao de um buffer secundario para os espectros
+nao impacta na performance do sistema.
+
+Hastie, T. and Stuetzle, W. (1989). Principal curves, Journal of the American Statistical Association 84(406) 502516.
+Knight, W. C., Pridham, R. G. and Kay, S. M.
+(1981). Digital signal processing for sonar,
+Proceedings of the IEEE 69(11) 14511506.
+
+Agradecimentos
+
+Oshana, R. (2006). DSP software development techniques for embedded and real-time systems,
+Newnes.
+
+Os autores agradecem ao CNPq pelo apoio financeiro e ao IPqM pela cessao da base de dados e
+cooperacao tecnica.
+
+Rocha, G. G. M., Souza Filho, J. B. O., Gesualdi,
+A. R. and Seixas, J. M. (2011). Otimizacao
+genetica de curvas_principais para a classficacao de contatos, Anais do X Congresso Brasileiro de Inteligencia Computacional, Sociedade Brasileira de Inteligencia Computacional.
+
+Referencias
+Aggarwal, C. C., Hinneburg, A. and Keim, D. A.
+(2001). On the surprising behavior of distance
+metrics in high dimensional space, Springer.
+Altera (2011a). Nios II Altera Corporation Reference Handbook, Altera Corporation, San
+Jose, California.
+
+Soares-Filho, W. (2001). Classificacao do Rudo
+Irradiado por Navios Usando Redes Neurais,
+PhD thesis, Tese de D. Sc., COPPEUFRJ,
+Rio de Janeiro, RJ, Brasil.
+
+Altera (2011b). Quartus II Handbook Version
+13.0, Altera Corporation, San Jose, California.
+
+Souza Filho, J. B. O. (2007). Classificacao Neural de Sinais de Sonar Passivo, PhD thesis,
+COPPEUFRJ.
+
+Ashenden, P. J. (2007). Digital design (VHDL)
+an embedded_systems approach using VHDL,
+Access Online via Elsevier.
+
+Verbeek, J. J., Vlassis, N. and Krose, B. (2002).
+A k-segments algorithm for finding principal curves, Pattern Recognition Letters
+23(8) 10091017.
+
+Bohme, J. F. (1995). Statistical array signal
+processing of measured sonar and seismic
+data, SPIEs 1995 International Symposium
+do
+
+O
+codigo
+responsavel
+pela
+sistema
+sera
+disponibilizado
+
+implementacao
+no
+repositorio
+
+httpsbitbucket.orgGeancarloRochacurvas_principais cba14.
+
+1049
+
+Xiao-hong, P., Meng-ya, M., Li-gang, H., Jin-hui,
+W. and Wu-chen, W. (2012). Exploration on
+affecting performance results of nios_ii., International Proceedings of Computer Science
+ Information Technology 51.

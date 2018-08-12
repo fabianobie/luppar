@@ -33,6 +33,16 @@ class AbstractSearch(object):
     def __str__(self):
         return self.info
 
+    def rocchio_method(self, wq, related_docs):
+        alpha = 1
+        beta = 2
+        Nr = len(related_docs)
+        list_docs = np.array([self.matrix[self.index.get_doc_item_by_id(did),:] for did in related_docs][0].toarray())
+
+        qm = alpha * wq + (beta / Nr)*np.sum(list_docs, axis=0)
+        return qm
+
+
 
 class BooleanSearch(AbstractSearch):
 
@@ -44,7 +54,7 @@ class BooleanSearch(AbstractSearch):
             self.params['mode'] = 'or'
 
 
-    def retrieval(self, query):
+    def retrieval(self, query, related_docs = None):
         self.validate(query)
 
         mode = self.params['mode']
@@ -90,35 +100,29 @@ class VectorSearch(BooleanSearch):
     def __init__(self, params=None, info='VSM'):
         super(VectorSearch, self).__init__(params=params, info=info)
 
-    def retrieval(self, query):
+    def retrieval(self, query, related_docs = None):
         list_doc,x = super(VectorSearch, self).retrieval(query)
         query_result = dict()
-        query_result_red = []
-        factor = 1
 
         query_result_sorted = []
         if list_doc:
-            wquery = self.index.query_tf_idf(query).toarray()[0]
+            wquery = self.index.query_tf_idf(query,do_idf=False,type_tf=3,norm=None).toarray()[0]
+
+            if(related_docs):
+                wquery = self.rocchio_method(wquery,related_docs)
+
             for docid in list_doc:
                 wdoc = self.matrix[docid,:].toarray()
-                score = KeyedVectors.cosine_similarities(wquery,wdoc) #self.vector_sim(wdoc,wquery)
+                score = self.vector_sim(wdoc,wquery)
                 query_result[docid] = score
 
             query_result_sorted = sorted(query_result.items(), key=operator.itemgetter(1), reverse=True)
-            #query_result_red = [d[0] for d in query_result_sorted]
-            #norm = [float(i) / sum(s) for i in s]
-            #tmp = 0
-            #for i, d in enumerate(query_result_sorted):
-            #    if tmp <= factor:
-            #        tmp += norm[i]
-            #        query_result_red.append(d)
-            #    else:
-            #        break
-        return ([d[0] for d in query_result_sorted],[d[1] for d in query_result_sorted])
-        #return ([d for (d, idx) in query_result_red],[idx for (d, idx) in query_result_red])
 
-    def vector_sim(self,wdoc,wquery):
+        return ([d[0] for d in query_result_sorted],[d[1] for d in query_result_sorted])
+
+    def vector_sim(self, wdoc, wquery):
         return np.dot(wdoc,wquery)/(np.linalg.norm(wdoc)*np.linalg.norm(wquery))
+
 
 
 
@@ -138,15 +142,16 @@ class BM25Search(BooleanSearch):
         if 'b' not in self.params:
             self.params['b'] = 0.75
 
-    def retrieval(self, query):
+    def retrieval(self, query, related_docs = None):
         list_doc,x = super(BM25Search, self).retrieval(query)
         self.query = query
         query_result = dict()
-        query_result_red = []
-        factor = 1
 
         if self.query.query_score:
-            self.wquery = self.index.query_tf_idf(query).toarray()[0]
+            self.wquery = self.index.query_tf_idf(query,do_idf=True,type_tf=1,norm=None).toarray()[0]
+
+            if (related_docs):
+                self.wquery = self.rocchio_method(self.wquery, related_docs)
 
         for docid in list_doc:
             for q in query.query_vector:
@@ -158,19 +163,8 @@ class BM25Search(BooleanSearch):
                         query_result[docid] = query_result[docid] + score
 
         query_result_sorted = sorted(query_result.items(), key=operator.itemgetter(1), reverse=True)
-        # s = [d[1] for d in query_result_sorted]
-        # sum_s = sum(s)
-        # norm = [float(i) / sum_s if sum_s > 0 else 0 for i in s]
-        # tmp = 0
-        # for i, d in enumerate(query_result_sorted):
-        #     if tmp <= factor:
-        #         tmp += norm[i]
-        #         query_result_red.append(d)
-        #     else:
-        #         break
 
         return ([d[0] for d in query_result_sorted], [d[1] for d in query_result_sorted])
-        #return ([d for (d, idx) in query_result_red],[idx for (d, idx) in query_result_red])
 
     def BM25(self, docid, qid):
         df = self.calc_df(qid)
@@ -205,8 +199,7 @@ class BM25Search(BooleanSearch):
 def vsm(wdoc, wquery):
     return np.dot(wdoc, wquery) / (np.linalg.norm(wdoc) * np.linalg.norm(wquery))
 if __name__ == '__main__':
-     v1 = np.array([2,0.5])
-     v2 = np.array([1.5,1.5])
-     q = np.array([1.0,0.])
-     print(vsm(v1,q))
-     print(vsm(v2,q))
+     v1 = np.array([2,0])
+     v2 = np.array([1,2])
+     v3 = np.array([1,5])
+     print(np.sum([v1,v2,v3], axis=0)/2)

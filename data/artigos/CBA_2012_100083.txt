@@ -1,0 +1,540 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+PORTA DE MANUTENÇÃO PARA COMISSIONAMENTO E ANÁLISE LOCAL DE REDES WIRELESSHART
+CAROLINA PUGGINA LIMA, JEAN MICHEL WINTER, IVAN MULLER, CARLOS EDUARDO PEREIRA
+Departamento de Engenharia Elétrica, UFRGS
+Av. Osvaldo Aranha, 103, Porto Alegre  RS - Brasil
+E-mails cplima@inf.ufrgs.br, jean.winter, ivan.muller@ufrgs.br,
+cpereira@ece.ufrgs.br
+JOÃO CESAR NETTO
+Departamento de Informática Aplicada, UFRGS
+Av. Bento Gonçalves, 9500, Campus do Vale, Bloco IV, Porto Alegre, RS, Brasil
+E-mails netto@inf.ufrgs.br
+Abstract
+ This paper describes the development of a maintenance port compatible with the WirelessHART protocol that is a
+must required for qualification as a compatible field device for the standard. The port maintenance, as well as the PC program
+that runs the commissioning of the field device are developed and described in this document. The software can set and retrieve
+data from the field device, without overloading the network, because it acquires directly on it. Not only commissioning is
+possible but also to obtain the device status more quickly than by consulting the network manager through a gateway. Several
+tests are done and prove the usefulness of this work, presented in a case study at the end.
+Keywords
+ HART maintenance port, WirelessHART protocol, Wireless industrial networks, Wireless networks analysis.
+Resumo
+ Este trabalho descreve o desenvolvimento de uma porta de manutenção compatível com o protocolo WirelessHART,
+ítem obrigatório para a qualificação de compatibilidade de um dispositivo de campo com a norma. A porta de manutenção, bem
+como o programa para PC que executa o comissionamento do dispositivo de campo são desenvolvidos e descritos no presente
+documento. O software pode programar e recuperar dados do dispositivo de campo, sem sobrecarregar a rede, pois os adquire
+diretamente no dispositivo. Não só o comissionamento é possivel, mas também a obtenção do status do dispositivo mais
+rapidamente do que através de consultas ao gerenciador da rede através de um gateway. Diversos testes são realizados e
+comprovam a utilidade deste trabalho, os quais são apresentados em um estudo de caso ao final.
+Palavras-chave
+ .
+
+1
+
+Introdução
+
+Os constantes avanços na tecnologia eletrônica
+permitem o maior uso de equipamentos de automação
+para controle_de_processos_industriais. Os equipamentos são agora mais robustos e há muito mais poder computacional disponível. Isso permite o desenvolvimento de dispositivos de campo inteligentes que
+são capazes de fazer parte de redes_industriais de uma
+forma muito mais eficiente e segura. Melhorias nas
+tecnologias de sensoriamento conduziram ao surgimento de uma grande variedade de dispositivos inteligentes, equipados com microprocessadores e diversos outros dispositivos embarcados, que acabam por
+fornecer uma boa visão geral e controle dos processos_industriais. Quando conectados, estes dispositivos
+têm o poder de melhorar o desempenho operacional
+da planta, monitorando e atuando no maquinário
+(Blevins, 2002). Dentre os recentes avanços, deve-se
+citar o uso de transceptores de RF na indústria. Dispositivos de rede_sem_fio industriais reduzem os custos de instalação, permitem a expansão da rede sob
+demanda e fornecem acesso a locais antes inacessíveis para os cabos (Willing, 2005, Caro, 2004). Em
+função destes fatores o setor industrial tende cada vez
+mais a adotar soluções de redes_sem_fio em suas ins-
+
+ISBN 978-85-8001-069-5
+
+talações. Desta forma, a necessidade de desenvolver
+dispositivos que fazem a manutenção e programação
+de equipamentos de rede de forma eficiente e sem
+grandes interferências na operação normal, torna-se
+iminente. Este trabalho descreve o desenvolvimento e
+utilização de uma porta de manutenção para dispositivos WirelessHART (WH), capaz de realizar não
+somente as tarefas básica de comissionamento, mas
+também a inspeção local da rede, diretamente no dispositivo de campo. O sistema desenvolvido programa
+e inspeciona o dispositivo sem sobrecarregar a rede
+com os comandos enviados, obtendo respostas sobre
+o estado do dispositivo mais rapidamente em comparação a solicitações feitas ao sistema de gerenciamento_de_rede via gateway. Permitindo a análise da rede
+localmente, esta ferramenta completa todas as formas
+de inspeção de redes WH, juntamente com a inquisição através do gateway e através do uso de sniffers de
+RF. Os principais parâmetros de uma rede WH, tais
+como o identificador de rede (NetID) e a chave de
+agregação (Joinkey), mínimos necessários para estabelecer uma rede WH, são geridos pelo software de
+manutenção, sendo esta a função básica de uma porta
+de manutenção. A ferramenta descrita neste trabalho
+permite o desenvolvimento de outras análises e aplicações. Na Seção dois é apresentada a motivação
+deste trabalho. Nas Seções três e quatro, são explanados o protocolo WH e a porta de manutenção
+
+4923
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+compatível com este protocolo. Na Seção cinco e seis
+o software desenvolvido é descrito e as conclusões
+deste trabalho são apresentadas respectivamente.
+2 Motivação
+Desde os anos oitenta, grandes esforços têm sido
+feitos no projeto de hardware e protocolos que tornam a comunicação mais segura e confiável para
+controle_de_processos_industriais. Algumas organizações têm promovido o uso de suas próprias tecnologias sem fio para aplicação na indústria, entre elas
+Bluetooth, Wi-Fi, ZigBee e Wina, mas nenhum deles
+conseguiu estabelecer um padrão absoluto para a
+indústria, devido  falta de robustez e segurança
+(Svensson, 2008). O ambiente industrial é extremamente hostil. Os dispositivos podem experimentar
+alta intensidade de ruídos eletromagnéticos como
+aqueles produzidos por unidades inversoras e por
+motores_elétricos. Ainda, os ambientes industriais
+exibem tipicamente altas temperaturas e umidade, os
+quais tendem a ser prejudiciais para os componentes
+utilizados em sistemas_embarcados e de comunicação. Neste contexto, os equipamentos concebidos
+para uso em indústrias são especialmente construídos
+para operar em condições adversas, empregando invólucros de alto índice IP e fontes de alimentação e
+portas de comunicação robustas. No que se referem 
+comunicação, os protocolos adotados também deve
+abordar questões de segurança e confiabilidade para
+operar nas condições das indústrias.  frente dos
+outros, a HCF (Hart Communication Foundation)
+lança em 2007, o padrão HART 7 (IEC, 2010), já
+contendo seções relativas ao WH. Deste modo, o WH
+torna-se o primeiro padrão aberto para comunicação
+sem fio desenvolvido especificamente para uso industrial, seguido posteriormente pelo padrão chinês
+WIA-PA.
+Para que se tenha uma rede WH completa e funcional instalada numa fábrica, o gerente da planta 
+fábrica deverá possuir ferramentas de manutenção
+para o comissionamento dos dispositivos desta rede.
+No padrão WH, todo dispositivo de campo deve possuir uma porta de manutenção, caso contrário, não
+estará adequado  norma. Por esta razão, diversos
+trabalhos têm sido realizados com o intuito de dominar esta tecnologia, de modo que possam ser feitas
+pesquisas diversas e propostas de melhorias. Em função de trabalhos prévios, foi necessário o desenvolvimento de um dispositivo (hardware e software)
+para utilização em uma porta de manutenção HART.
+Em (Muller, 2010), o desenvolvimento de um dispositivo de campo compatível com o protocolo é apresentado e em (Winter, 2010), o dispositivo de campo
+é testado em conjunto com equipamentos comerciais
+para fins de validação. No momento em que o objeto
+de estudo deste trabalho é utilizado na prática, tornase evidente que a porta de manutenção pode ser utilizada para análise da rede como um vértice desta rede,
+ou seja, a partir do próprio dispositivo de campo.
+ISBN 978-85-8001-069-5
+
+Este fato motiva o desenvolvimento de uma porta de
+manutenção para utilização na inspeção do comportamento da rede e não somente como dispositivo de
+comissionamento. Tal funcionalidade não é encontrada em ferramentas comerciais semelhantes, que
+foram concebidas para comissionamento somente.
+Para auxiliar na compreensão deste estudo, na seção
+seguinte é feita uma breve explanação acerca do protocolo e dos dispositivos normalmente encontrados
+em uma rede WH.
+3 Protocolo WirelessHART
+O WH é um protocolo de comunicação_sem_fio
+de baixo consumo_de_energia. O protocolo utiliza a
+camada física do IEEE 802.15.4, sendo o acesso ao
+meio do tipo TDMA (Time Division Multiple Access), com saltos constantes entre 15 canais e emprega criptografia AES-128 (Chen, 2010). Com estas
+características, o protocolo WH apresenta grande
+robustez a fenômenos de propagação de ondas de
+rádio e, com o uso do 802.15.4, seus transceptores
+são de baixo_custo. O TDMA é uma tecnologia de
+transmissão digital que permite que vários dispositivos possam compartilhar o mesmo canal de comunicação através da divisão no tempo de utilização. Cada espaço de tempo (slots) está associado a uma ligação (link) entre dois rádios. Assim, os múltiplos nós
+da rede partilham os mesmos canais de comunicação
+utilizando apenas uma porção de tempo. Isto requer
+uma perfeita sincronia de tempo entre os diversos
+dispositivos da rede, o que é conseguido com o uso
+de RTCs (Real Time Clock). O conjunto de todos os
+espaços de tempo é repetido ciclicamente e forma
+uma estrutura de superquadro (superframe). O número de slots em um superframe determina de quanto
+em quanto tempo ocorre sua repetição. Quando um
+superframe é criado pelo gerenciador da rede WH,
+ele é enviado a todos os dispositivos, diretamente
+para os que estão na faixa de alcance do ponto de
+acesso ou através de saltos múltiplos. Isto é possível
+porque numa rede WH, todos os dispositivos de
+campo são roteadores e capazes de se comunicar numa rede de malha completa. Os links e superframes
+são programados nos dispositivos de campo através
+de rotas chamadas de grafos. De acordo com os grafos, o gerenciador da rede irá associar links dentro
+dos slots (Song, J. 2008).
+Dois tipos de mensagens de processo podem trafegar através de uma rede WH solicitação  resposta
+e mensagens de burst (periódicas). Para o monitoramento geral de dispositivos de campo, tais como
+transmissores de temperatura e pressão, mensagens
+de burst são usualmente mais utilizadas. Neste caso,
+os dados de processo podem ser continuamente publicados (a uma pré-determinada taxa) ou apenas
+quando um determinado nível limiar é ultrapassado.
+Para gerenciar as mensagens, os seguintes tipos de
+operações são definidos o processo de associação
+(join), onde novos dispositivos são adicionados 
+4924
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+rede, as ligações entre dois dispositivos (links), e as
+sessões que são as comunicações de ponta a ponta,
+passando por saltos entre os dispositivos de rede.
+A Figura 1 apresenta uma visão geral de uma típica rede WH. Nela é possível verificar os elementos
+fundamentais de uma rede WH dispositivos de campo, ponto(s) de acesso(s), gateway, gerenciador de
+rede e dispositivo para comissionamento, comumente
+chamado de handheld.
+
+3.1 Dispositivos de rede
+Os dispositivos de rede são todos os dispositivos
+que têm alguma ligação com a camada física da rede.
+Cada dispositivo tem um endereço único para que
+possa se comunicar dentro da rede com uma lista de
+vizinhos. Esses vizinhos são identificados ao longo
+do tempo e sua presença é relatada por outros dispositivos na rede, através de dois mecanismos distintos.
+Os elementos da rede mais comuns são os dispositivos de campo, o(s) ponto(s) de acesso, o gateway e o
+gerenciador de rede. Cada dispositivo da rede deve
+ser capaz de encaminhar pacotes e entregar pacotes
+em nome de outro dispositivo. Uma tabela interna
+nos dispositivos é utilizada para decidir qual dos vizinhos será usado para o encaminhamento de pacotes.
+3.2 Dispositivos de campo
+Dispositivos de campo são os mais comuns em
+uma rede WH. Eles são responsáveis por interagir
+com o maquinário da planta e o ambiente, enviando
+dados e interagindo com o processo. Sensores coletam dados como temperatura, pressão e vibração.
+Atuadores são utilizados para produzir aquecimento,
+movimento de válvulas e acionamento de motores em
+geral.
+3.3 Adaptadores
+
+Figura 1. Típica rede WirelessHART (Chen, 2010).
+
+Os dispositivos de campo WH são normalmente
+alimentados por uma bateria, especialmente quando
+são sensores. Neste caso, a manutenção dos equipamentos pode ser tão limitada que resumida  troca
+periódica das baterias. Aqui residem as principais
+vantagens da utilização de dispositivos sem fio alimentados  bateria (i) os equipamentos podem ser
+adicionados sob demanda, na medida em que planta
+cresce, ou deva ser alterada (ii) o ambiente industrial
+é mais seguro quando os dispositivos não possuem
+fios, pois não há risco de curto_circuitos e rupturas
+em cabos (iii) a utilização de redes_sem_fio naturalmente elimina laços de terra, indução de ruídos e
+diferenças de potencial. Com estas são características
+desejáveis, resta ao protocolo empregado propiciar
+comunicação determinística, segura e robusta, além
+de baixo consumo_de_energia e baixo_custo por equipamentos. O protocolo WH propicia comunicação
+confiável e precisa através do uso de transceptores de
+rádio de espectro espalhado, mecanismo de acesso ao
+meio TDMA, saltos entre canais e topologia de rede
+em malha completa. A sequência de saltos entre os
+canais é conhecida pelos dispositivos através da programação dos links feita pelo gerenciador de rede, de
+modo que os dispositivos conheçam qual canal utilizar a cada transação. Uma explanação mais detalhada
+dos elementos de uma rede WH é feita a seguir.
+
+ISBN 978-85-8001-069-5
+
+Um adaptador de WH é um dispositivo que permite adicionar um dispositivo HART cabeado a uma
+rede WH. Ele atua como um tradutor entre HART e
+WH, permitindo ao dispositivo de campo legado,
+transmitir e receber mensagens através da rede sem
+fio.
+3.4 Gateway
+O gateway é o elemento que oferece acesso  rede como um todo. Pode haver mais do que uma porta
+de entradasaída para a rede e mais de uma saídaentrada, através de uma ou mais portas de entrada
+e uma ou mais portas de saída do gateway. O gateway
+é conectado ao sistema de automação da fábrica, possibilitando a troca de dados entre outras redes e a
+rede_sem_fio WH. Os dados coletados pelo gateway
+são passados para a automação da planta através de
+mensagens que podem ser do tipo (i) mensagens de
+rotina, para recuperar regularmente os dados do processo e eventos (ii) mensagens de status, quando um
+dispositivo de campo relata uma condição ruim ou
+mau funcionamento do processo (iii) mensagens de
+configuração e manutenção de rede. O gateway também fornece o relógio global inicial para dispositivos
+de rede e o gerencia ao longo do tempo. Eventualmente, alguns dispositivos da rede são designados
+como fontes de relógio locais, pois cada dispositivo
+de campo deve possuir um RTC preciso.
+
+4925
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+3.5 Gerenciador de rede
+O gerenciador de rede é o elemento que coordena a rede WH. Para cada rede deve haver um e somente um gerenciador de rede. Ele é responsável pela
+formação da rede, controlando o processo de associação de elementos, configuração dos dispositivos e
+monitoramento das condições gerais da rede. O gerenciador da rede mantém uma lista de todos os dispositivos e garante que cada um tem um apelido único de 16 bits. Esta lista de apelidos é usada para gerar funções de rede, tais como roteamento e agendamento de mensagens entre dispositivos. O gerenciador também gerencia o roteamento das mensagens, as
+tabelas de monitoramento das condições e desempenho da rede, a coleta de dados e diagnóstico geral da
+rede. Todas as informações são analisadas em tempo
+real, permitindo a reconfiguração da rede quando é
+detectado algum problema ou quando um dispositivo
+é associado ou sai da rede. O gerenciador da rede
+deve sempre ter uma rota segura para o gateway da
+rede. Se um problema impede a comunicação entre
+eles, é impraticável manter a rede WH. Em alguns
+dispositivos comerciais, os gerenciadores de rede e
+segurança são integrados com o ponto de acesso e o
+gateway, compondo um único dispositivo.
+3.6 Handheld
+O handheld WH é uma classe de equipamento
+que configura dispositivos de campo WH localmente.
+Isto pode ser feito através de uma porta de manutenção ou pela própria rede_sem_fio. Todos os dispositivos de campo compatíveis WH devem possuir uma
+porta de manutenção local. O handheld (ou dispositivo portátil) é usado para configuração, manutenção e
+comissionamento e pode ser um equipamento independente ou um computador portátil ligado diretamente ao dispositivo de campo através de um modem
+1200 bps FSK ou uma porta RS-485. Ambos os protocolos estão definidos na norma. Este dispositivo é
+necessário para iniciar uma rede WH porque alguns
+parâmetros, tais como ID de rede e a join key devem
+ser configurada localmente, antes de se juntar  rede.
+4 Porta de manutenção WirelessHART
+Neste trabalho, o equipamento desenvolvido para configurar os dispositivos através da porta de manutenção consiste de um computador tipo laptop com
+uma conexão serial (USB) executando um aplicativo
+host. O aplicativo pode configurar os dispositivos de
+campo WH, a fim de torná-los operacionais para aderir  rede. Como não há portas RS-485 em laptops,
+foi utilizado um conversor USB para RS-485. O PC é
+ligado a um dispositivo WH previamente desenvolvido como ilustrado na Figura 2 (Muller, 2010).
+
+ISBN 978-85-8001-069-5
+
+Figura 2. Protótipo do dispositivo de campo WH. Conectado a ele,
+um cabo de comunicação (vermelho) para o sistema de sensoriamento  atuação e outro (preto) conectado a um conversor USBRS485.
+
+A pilha de WH instalada no dispositivo de campo deve ser projetada para suportar comandos via
+porta de manutenção, como indicado pela norma. Se
+implementado, o dispositivo de campo WH responde
+os comandos no formato esperado pelo protocolo, a
+fim de comunicar. Como a pilha WH foi desenvolvida por este grupo de pesquisas, alterações na camada
+de aplicação são possíveis e feitas com o intuito de se
+explorar a possibilidade de inspeção local através da
+porta de manutenção.
+4.1 Quadro WirelessHART
+O quadro (frame) WH define o formato e o conteúdo das mensagens que são trocadas entre o aplicativo host e dispositivos escravos. O formato das mensagens é baseado em comandos HART e pedidos de
+dados e respostas. Para a porta de manutenção, o
+frame é desenvolvido para os comandos que podem
+ter o seu número representado em 8 bits, ou seja,
+comandos para uma rede HART fio (não estendidos).
+Para uma rede_sem_fio, vários outros comandos são
+implementados, aumentando o escopo do aplicativo
+da porta de manutenção. Estes comandos são numerados acima de 255, portanto, a fim de oferecer suporte aos dispositivos com e sem fio HART, a organização criou um sinalizador que indica se o número
+de comando é de 8 ou 16 bits. Este sinalizador é colocado no campo de comando, o que significa que o
+número do comando é estendido e levará mais dois
+bytes. O frame WH é mostrado na Figura 3.
+
+Figura 3. Frame de dados HART.
+
+O número de bytes do campo de dados é variável, enquanto outros campos são compostos por um
+único byte. O campo de contagem de byte indica o
+número de bytes de dados que tem o campo de dados
+na mensagem. Como uma forma de controle de erro,
+se o dispositivo captura qualquer erro no comando,
+ele irá responder ao pedido indicando informações
+incorretas no campo de comando. Assim, o aplicativo
+host terá a indicação de que um erro impediu a execução bem sucedida do comando.
+
+4926
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+4.2 Gerenciamento de comandos
+Para comandos com numeração até o valor 30 ou
+entre 32 e 253, o número do comando aparece no
+campo de comando. Apenas com o número do comando, o dispositivo escravo sabe o que esperar e
+procura os parâmetros no campo de dados. O dispositivo escravo retorna a mensagem com o número do
+comando executado e dois bytes de estado antes do
+primeiro byte da resposta de comando. A mensagem
+de comando estendido exibe o número 31 no campo
+de comando e o número do comando nos dois primeiros bytes do campo de dados. Se um dispositivo recebe uma mensagem com 31 como comando e menos
+de dois bytes no campo de contagem de bytes, ele
+deve responder com a mensagem de erro "número de
+bytes insuficiente. Cada resposta de comando estendido deverá apresentar o número 31 no campo de
+comandos e o número do comando estendido no
+campo de dados, antes dos bytes de resposta.
+5 Software de aplicação
+De posse das informações anteriores sobre o protocolo de comunicação, é possível construir o aplicativo host da porta de manutenção. O software é desenvolvido para o ambiente Windows, em linguagem
+C++. O computador comunica com o dispositivo
+através de uma porta USB por meio de uma API de
+comunicação nativa do Windows. Para montar o pacote adequado para o frame HART, foi utilizado um
+buffer iniciado por um preâmbulo, que é sempre o
+mesmo, independentemente do número de comando.
+Este preâmbulo consiste de 3 bytes de um delimitador de campo e expansão de endereço do frame. Cada byte inserido no pacote deve ser usado no cálculo
+de verificação de byte final. A resposta do dispositivo
+é cronometrada de acordo com o número de bytes
+que serão recebidos, pois dependem do tamanho do
+comando requerido, de modo que o parâmetro de
+temporização é enviado para o módulo de software
+de comunicação USB, no momento da chamada do
+comando. Para cada comando implementado no
+software, é necessário passar parâmetros diferentes,
+tanto para a função que monta o frame quanto para os
+módulos de temporização. A análise da resposta de
+cada comando é diferente para cada situação. A fim
+de manter o software, cada comando é uma função
+exclusiva, descrita em um arquivo fonte separado.
+Isto também garante uma fácil e rápida manutenção
+de software no caso de uma mudança no padrão, como acontece normalmente, além de permitir uma
+portabilidade mais simplificada. A Figura 4 mostra a
+janela do software de aplicação que serve como hospedeiro para a porta de manutenção. Baseia-se em
+forms de Windows onde cada botão executa um ou
+mais comandos e as respostas são exibidas num painel e, em alguns casos em uma tabela.
+
+ISBN 978-85-8001-069-5
+
+Figura 4. Interface gráfica do software de aplicação da porta de
+manutenção.
+
+5.1 Funcionalidades implementadas
+Além da função principal de comissionamento
+da porta de manutenção, outras duas funcionalidades
+estão disponíveis monitoramento de rede e envio de
+comandos específicos localmente. As seguintes funções de comissionamentos são implementadas
+a)
+
+Ler  escrever potência RF (comandos 797 e
+798) o parâmetro potência RF pode ser lido e
+escrito no dispositivo. Os valores mínimos, de
+acordo com a norma, são -10, 0 e +10 dBm. Para
+o dispositivo de campo anteriormente desenvolvido, a potência de saída pode atingir +20 dBm.
+b) Unique ID o identificador único WH de cinco
+bytes, sempre iniciando com 0xF982, pode ser
+lido e escrito no dispositivo de campo. Para isto,
+é utilizado um comando não público, uma vez
+que a escrita do ID é uma tarefa de fábrica.
+c) Desconectar da rede (comando 960) desconecta
+o dispositivo da rede. Para a troca do unique ID
+e alguns outros parâmetros, é necessário que o
+dispositivo não esteja conectado  rede.
+d) Join key (comando 768) a chave de rede, necessária para o ingresso na mesma, somente pode
+ser escrita.
+e) Ler  escrever Network ID (comandos 773 e
+774) o identificador de rede pode ser lido e escrito. O identificador é um número de dois bytes,
+que diferencia diferentes redes WH
+f) Ler tag curto (comando 13).
+g) Ler tag longo (comando 20).
+Para diagnóstico local de rede, são implementados os seguintes comandos
+a)
+
+Ler escrever modo burst (comandos 103, 104,
+105, 109) vários parâmetros de mensagens burst
+podem ser lidos e modificados, entre eles, a periodicidade abaixo do limiar, dentro do limiar,
+como é escolhido o limiar, etc.
+b) Ler lista de vizinhos (comando 780) com este
+comando, é possível saber o número de vizinhos
+ativos, a intensidade dos sinais de RF percebidos
+pelo dispositivo e o número de pacotes trocados
+entre eles.
+
+4927
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+c)
+
+Ler apelido do dispositivo (comando 781) para
+a maioria das transações ocorridas numa rede
+WH, um apelido de dois bytes, atribuído pelo
+gerenciador de rede, é utilizado e não o ID longo. Saber este apelido facilita a análise da rede.
+d) Ler a lista de superframes (comando 783) e lista
+de links (comando 784) com estes comandos, é
+possível saber a lista de superframes ativos no
+dispositivo, os links designado a ele, quais tipos
+de links (transmissão, recepção ou compartilhado), offset e canal, etc.
+6 Estudo de caso
+Com o intuito de validar o software de aplicação
+para a porta de manutenção como uma ferramenta de
+análise de rede WH, o mesmo é modificado para realizar testes de forma autônoma. Vários parâmetros
+são de interesse para avaliar uma instalação de rede
+WH ao longo do tempo. Entre eles, pode-se citar o
+RSSI (Received Signal Strenght Indicator) ou indicador de nível de sinal recebido, número de pacotes
+iniciados e terminados em um determinado dispositivo, número de vizinhos e trajetórias utilizadas.
+Para realizar um estudo de caso, o software é
+modificado com a inclusão de gráficos e temporizadores. Os temporizadores acionam periodicamente as
+funções já implementadas e os dados são coletados e
+filtrados. Na Figura 5, pode-se observar um gráfico
+obtido, onde o RSSI de quatro dispositivos vizinhos,
+percebido pelo dispositivo sob análise é coletado ao
+longo do tempo. O gráfico, aumentado, denota a intensidade do sinal ao longo do tempo (dBm x tempo),
+que é um bom indicador do estado da rede, especialmente do local e das condições de instalação onde os
+dispositivos estão alocados. Através de análises como
+essa, é possível inferir vários parâmetros e detalhes
+comportamentais da rede.
+
+ção. Desta forma, os desenvolvedores de produtos e
+pesquisadores do protocolo devem prover esse acesso
+no equipamento. A porta de manutenção é principalmente usada para configurar um dispositivo de campo, a fim de torná-lo apto a participar de uma rede.
+Essas configurações incluem o ajuste da identificação
+de rede, a join key e a potência de RF, por exemplo.
+Por outro lado, pode-se fazer uso desta porta para
+obter dados com outra finalidade, como análise da
+rede. A porta de manutenção é capaz de comunicarse diretamente com o dispositivo sem sobrecarregar a
+rede, enviando comandos e recebendo respostas sobre o estado da mesma diretamente. Desta forma, os
+dados são obtidos mais rapidamente do que com consultas ao gerenciador da rede através do gateway.
+Esta última característica faz com que a porta de manutenção seja uma ferramenta essencial em qualquer
+laboratório para estudar o protocolo WH. Por exemplo, com a leitura da lista de links para cada dispositivo, é possível determinar quais vizinhos estão se
+comunicando em que intervalo de tempo. Além disso,
+é possível verificar o número de pacotes que o dispositivo troca com cada um dos seus vizinhos, incluindo
+quantos pacotes foram enviados e não receberam
+confirmação de recepção (ACK). Também é possível
+deduzir a topologia de rede estabelecida pelo gerenciador da rede. Como um exemplo em potencial, os
+dados de intensidade de sinal RF obtidos pela porta
+de manutenção, podem ser utilizados para calcular a
+posição dos vizinhos, a partir de algoritmos de trilateração.
+Neste trabalho, apresentamos o estudo sobre uma
+porta de manutenção WH, que trata de sua importância e necessidade e, também, como implementá-la.
+Ao final, um estudo de caso, onde os níveis de intensidade de sinais de RF dos vizinhos são apresentados.
+Com estes dados, é possível verificar o enlace diretamente no dispositivo, como uma forma de inspeção
+de rede_local. Para trabalhos futuros, verificaremos a
+possível implementação do sistema da porta de manutenção em dispositivos_móveis, como smartphones
+ou tablets. Desta forma, a ferramenta desenvolvida
+será de fácil utilização no que se refere  mobilidade.
+Agradecimentos
+Agradecemos ao CNPq e a CAPES pela provisão de
+bolsas de estudo, sem as quais não seria possível a
+realização deste trabalho.
+
+Figura 5. Gráfico aumentado do RSSI de quatro vizinhos obtido
+pelo software da porta de manutenção. A intensidade do sinal, em
+dBm, é coletada ao longo de 15 minutos (legenda do eixo horizontal foi suprimida para facilitar a visualização do gráfico).
+
+7 Conclusões
+Cada dispositivo de campo compatível com o
+WH deve apresentar acesso a uma porta de manuten-
+
+ISBN 978-85-8001-069-5
+
+Referências Bibliográficas
+Blevins T., Mcmillian G., Wojsznis W., Brown M.
+Advanced
+Control
+Unleashed
+Plant
+Performance
+Management
+for Optimum
+Benefit. ISA Press, 2002.
+Caro D. Wireless Networks for Industrial
+Automation. ISA Press, 2004.
+
+4928
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Chen, D. Nixon, M. Mok, A. WirelessHART RealTime Mesh Network for Industrial Automation.
+Springer, 2010.
+IEC 62951, International Electrotechnical Comission
+Ed 1.0 Industrial communication networks Wireless
+communication
+network
+and
+communication profile - WirelessHART. 2010.
+Song, J. (2008). WirelessHART Applying Wireless
+Technology in Real-Time Industrial Process
+Control. Real-Time and Embedded Technology
+and Applications Symposium, 2008. RTAS apos
+08. IEEE Volume 22-24 April 2008, p.377  386
+Svensson, S., Lennvall T., (2008). A Comparison of
+WirelessHART and ZigBee for Industrial
+Applications. ABB Corporate Research.
+Factory Communication Systems, WFCS. IEEE.
+p. 85-88.
+Muller, I. Allgayer, R. Netto, J. C. Fabris, E.
+Pereira, C. E. Development of WirelessHART
+Compatible Field Device. 2010 IEEE
+International Instrumentation and Measurement
+Technology Conference v. 1. p. 1430-1434.
+Willing, A. Matheus, K., Wolisz, A. (2005).
+Wireless Technology in Industrial Networks.
+Proceedings of the IEEE, Vol. 93, No. 6.
+Winter, J. M. Software de Análise de Roteamento de
+Dispositivos WirelessHART. Porto Alegre,
+2010.
+
+ISBN 978-85-8001-069-5
+
+4929

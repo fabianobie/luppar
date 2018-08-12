@@ -1,0 +1,693 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+SISTEMA DE CONTROLE PREDITIVO POR MATRIZ DINÂMICA EMBARCADO EM UM
+CONTROLADOR LÓGICO PROGRAMÁVEL
+S ANDRO J OSÉ G ARANI, J OÃO PAULO C ARVALHO H ENRIQUES, A LEXANDRE BARATELLA L UGLI,
+J EREMIAS BARBOSA M ACHADO, FADUL F ERRARI RODOR
+
+
+Instituto Nacional de Telecomunicações, INATEL, Santa Rita do Sapucai, MG, 37540-000, Brasil
+
+
+Universidade Federal de Itajubá, IESTI-UNIFEI, Itajubá, MG, 37500-903, Brasil
+
+Emails sandroj@inatel.br, joao.paulo@inatel.br, baratella@inatel.br,
+jeremias@unifei.edu.br, fadulrodor@gmail.com
+Abstract This paper presents issues about the control of linear dynamic_systems, which a Dynamic Matrix Control (DMC) is
+embedded in a commercial Programmable Logic Controller. The practical results were obtained using an educational temperature
+plant and the results were compared with a simulation using the Open Source Scilab.
+Keywords Model Predictive Controle, Programable Logic Controller, Scilab.
+Resumo Neste trabalho é abordado o problema de controle_de_sistemas_dinâmicos lineares, no qual um algoritmo de controle
+preditivo por matriz dinâmica (DMC) é embarcado em um Controlador Lógico Programável comercial. Os resultados práticos do
+controlador foram comprovados utilizando uma uma planta_didática de temperatura e os resultados obtidos, utilizando o controlador
+embarcado, foram comparados com resultados simulados utilizando a ferramenta Open Source Scilab.
+Palavras-chave
+
+.
+
+Introdução
+
+A utilização de plantas industriais cada vez mais complexas e a demanda por processos mais precisos exigem a utilização de técnicas de controle mais eficientes. Dentre as técnicas de controle_avançado adequadas  aplicações industriais, o controle_preditivo
+baseado em modelo têm emergido como uma técnica
+e apresentado resultados significativos (Camacho and
+Bordons, 2004).
+O controle_preditivo baseado em modelo MPC1 é
+uma estratégia de controle baseada na otimização do
+sinal de controle com uma função de custo definida a
+partir de uma previsão sobre o comportamento do sistema (Camacho and Bordons, 2004). O conceito de
+controle_preditivo foi introduzido nos trabalho de Richalet et al. (1978) com o IDCOM 2 e de Cutler and
+Ramaker (1980) com o DMC3 . O trabalho de Clarke
+et al. (1987) apresentou o controlador_preditivo generalizado GPC4 , o qual difundiu na literatura a metodologia de controle MBPC5 .
+Nos algoritmos de controle_preditivo, a lei de controle e, consequentemente o desempenho do sistema
+em malha_fechada, estão relacionados com o modelo
+do processo a ser controlado. Desta forma, a modelagem do processo é uma etapa vital para o bom desempenho do sistema_de_controle. Diferentes modelos
+podem ser utilizados para representação do processo
+a ser controlado, destacando-se os sistemas_de_controle_preditivo utilizando modelo CARIMA (Clarke
+and Mohtadi, 1989), modelos obtidos através de base
+de funções ortonormais (BFO)(Oliveira, 1997) e mo1 MPC
+
+- Model predictive control
+- Identification Command
+3 DMC - Dynamic matrix control
+4 GPC - Generalized Predictive Control
+5 MBPC - Model Based Predictive Control
+2 IDCOM
+
+ISSN 2525-8311
+
+delos utilizando resposta ao impulso e resposta ao degrau (Morari et al., 1989 Kwong, 2010), de especial
+interesse neste trabalho.
+A implementação de tais técnicas de controle
+em geral demandam a utilização de dispositivos de
+elevado poder computacional e de alto custo financeiro, o que pode inviabilizar sua aplicação. Desta
+forma, apresenta-se neste trabalho o desenvolvimento
+e a implementação de um controlador_preditivo DMC
+em um Controlador Lógico Programável comercial.
+Pretende-se mostrar a eficiência do sistema_de_controle
+bem como a viabilidade computacional de sua implementação em um CLP padrão. Além disso, procura-se
+com a implementação deste sistema_de_controle possibilitar uma ferramenta didática para o ensino de técnicas de controle_preditivo através da utilização de equipamentos industriais com aplicações reais, tendo em
+vista que este ensino em geral fica restrito  utilização
+de simuladores.
+2
+
+Identificação de Sistemas Dinâmicos
+
+Modelar um sistema dinâmico significa obter uma representação matemática capaz de descrever as principais características de sistemas físicos reais. Existem
+diferentes maneiras de representar sistemas_dinâmicos
+utilizando equações e relações matemáticas, podendo
+haver um modelo que se adapte melhor ao sistema a
+ser estudado (Ljung, 1999).
+Segundo Aguirre (2004), as principais etapas de
+um problema de identificação são
+ Coleta de Dados do Processo - Os dados de EntradaSaída do processo a ser modelado são coletados.
+ Escolha do Modelo Matemático - Conforme as
+
+821
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+características do sistema a ser modelado, a estrutura do modelo (ARX, ARMAX, Box-Jenkin,
+dentre outras) é definida. Além disso, nesta etapa
+é definida a ordem do modelo, o atraso_de_transporte, etc.
+
+ Compensam intrisecamente atrasos de transporte
+
+ Estimação dos Parâmetros - Através de procedimentos numéricos, os coeficientes do modelo são
+obtidos.
+
+ Possui uma metodologia aberta baseada em princípios básicos que possibilitam futuras expansões.
+
+ Validação do Modelo - Tendo obtido o modelo
+original, é necessário verificar se o modelo incorpora todas as características do sistema original.
+Algumas representações discretas são especialmente adequadas  modelagem_de_sistemas utilizandose algoritmos conhecidos para a estimação de parâmetro (Aguirre, 2004). Dentre elas, pode-se destacar modelo geral de um sistema discreto como apresentado
+em (1).
+A(q)y(k) 
+
+C(q)
+B(q)
+u(k) +
+v(k)
+F (q)
+D(q)
+
+(1)
+
+sendo q 1 o operador de atraso, v(k) ruído branco e
+A(q), B(q), C(q), D(q) e F (q) os polinômios definidos em (Aguirre, 2004).
+O modelo geral apresentado em (1) é utilizado
+como base para diversos tipos de modelos como Modelo auto-regressivo com entradas externas (ARX Autoregressive with exogenous inputs) Modelo autoregressivo com médias móvel e entradas exógenas
+(ARMAX - autoregressive moving average with exogenous inputs) Modelo de reposta ao impulso finita
+Modelo Box-Jenkins dentre outros.
+O modelo ARX, de especial interesse neste trabalho, pode ser obtido a partir do modelo geral apresentado em (1), tomando-se C(q)  D(q)  F (q)  1
+sendo A(q) e B(q) polinômios arbitrários, resultando
+na equação apresentada em (2).
+A(q)y(k)  B(q)u(k) + v(k)
+
+(2)
+
+Para a estimação dos parâmetros do modelo ARX
+adotado, utiliza-se o método de mínimos_quadrados
+(Ljung, 1999).
+3
+
+Controle Preditivo DMC
+
+Por incorporar na lei de controle restrições operacionais relacionadas com a entrada_e_saída do sistema e
+possuir fácil sintonia, os algoritmos de controle_preditivo baseados em modelo não estão restritos aos meios
+acadêmicos, e são utilizados com sucesso na indústria
+de processos e no controle de máquinas e equipamentos (Xu et al., 2013a Qin and Badgwell, 2000 Zhao
+et al., 2001 Seki et al., 2001). Quando comparados s outras metodologias de controle, os controladores preditivos apresentam as seguintes características
+(Camacho and Bordons, 2004)
+ São indicados para controlar desde processos
+com dinâmica simples até processos multivariáveis e sistemas de fase_não-mínima
+
+ISSN 2525-8311
+
+ A extensão do seu algoritmo para o tratamento de
+restrições é conceitualmente simples
+
+Em um algoritmo de controle MPC, o comportamento futuro do processo é predito utilizando o modelo_dinâmico do sistema e as medidas disponíveis. A
+ação de controle é calculada de modo a minimizar a
+diferença entre a resposta predita do processo e a resposta desejada. A cada instante de tempo de amostragem, o cálculo da ação futura de controle é realizado
+e as predições são atualizadas com base nas medidas
+atuais (Cutler and Ramaker, 1980). A Figura 1 ilustra
+o comportamento de um algoritmo de controle_preditivo com relação ao horizonte de predição (Camacho
+and Bordons, 2004).
+
+Figura 1 Horizonte de Previsão do Controlador Preditivo.
+O horizonte de predição (Np ) representa o intervalo em que é calculado o comportamento futuro do
+processo. O horizonte de controle Nu corresponde ao
+número de ações de controle consideradas, e a partir
+das quais, a entrada do sistema é dada como constante.
+O desempenho do sistema em malha_fechada durante o horizonte de predição é especificado a partir
+de um critério de custo, definido através da saída prevista do sistema e do esforço de controle. Desta forma,
+a ação de controle é calculada a partir da otimização
+deste critério de custo em relação ao conjunto de sinais
+de controle a serem aplicados no processo durante o
+horizonte de predição.
+Dentre as técnicas de controle_preditivo encontradas na literatura, é de especial interesse neste trabalho
+o Controle Preditivo por Matriz Dinâmica (DMC), no
+qual um modelo de convolução discreto do processo
+(resposta ao degrau) é utilizado para predizer a trajetória de saída do sistema no horizonte de predição.
+Entre as principais características deste tipo de controlador, destacam-se a robustez e o bom desempenho
+no tratamento de interferências (Xu et al., 2013b). A
+estrutura básica de um controlado DMC é apresentada
+na Figura 2.
+
+822
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+
+
+
+
+uk
+uk+1
+..
+.
+
+
+
+
+...
+
+ uk+L2
+uk+L1
+
+
+
+yk + P1
+yk + P2
+..
+.
+
+ 
+ 
+ 
++
+ 
+  yk + PR1
+yk + PR
+
+
+
+
+
+
+
+
+
+(6)
+
+em que ai são os coeficientes da resposta ao degrau
+definidos em (7) e Pi definidos em (8)
+Figura 2 Diagrama em blocos de controlador_preditivo DMC.
+ai 
+
+N
+X
+
+em que uk  uk  uk1 , yk+1 é a saída predita do
+sistema no instante de amostragem k + 1 uk+1i é a
+entrada do sistema no instante de amostragem k+1i.
+Os parâmetros hi são os coeficientes relacionados com
+a resposta do sistema a um degrau unitário.
+O cálculo da ação de controle de um controlador
+DMC é baseado na minimização do erro predito em
+um número finito R de instantes de amostragens futuras. O modelo da convolução variacional pode ser
+estendido para R instantes futuros como definido em
+(4).
+N
+X
+
+hi uk+ji
+
+(4)
+
+i1
+
+A informação realimentada yk permite que a predição seja corrigida recursivamente. Isto equivale a
+admitir que o erro na predição calculado em (4) corresponde ao erro observado no instante atual k, isto é,
+yk  yk . Desta forma, a predição corrigida pode ser
+escrita como apresentado em (5) (Kwong, 2010).
+c
+yk+j
+
+
+
+c
+yk+j1
+
++
+
+N
+X
+
+hi uk+ji
+
+(5)
+
+para j  1, 2, . . . , R e yk  yk .
+Como apresentado em detalhes em Kwong
+(2010), a estratégia do controlador DMC consiste em
+obter um sistema sobredeterminado, reduzindo arbitrariamente a dimensão do vetor u de R para L admitindo que uk+j  0 para j  L. Assim, é possível escrever a forma matricial da equação apresentada
+em (5) para L ações futuras
+c
+yk+1
+c
+yk+2
+..
+.
+
+
+
+
+
+
+ yc
+k+R1
+c
+yk+R
+
+
+
+
+
+a1
+a2
+
+ 
+ 
+ 
+
+ 
+  aR1
+aR
+
+ISSN 2525-8311
+
+Sm i  1, 2, . . . , R
+
+(8)
+
+hi uk+mi i  1, 2, . . . , R
+
+(9)
+
+i
+X
+
+N
+X
+im+1
+
+Desta forma, o vetor contendo os valores dos erros preditos E pode ser calculado pela equação apresentada em (10) (Kwong, 2010)
+E  Au + E 0
+
+(10)
+
+em que A é a matriz dinâmica de dimensão RL definida em 11.
+
+
+a1
+a2
+
+
+
+
+A
+
+ aR1
+aR
+
+0
+a2
+
+...
+...
+..
+.
+
+0
+0
+
+aR2
+aR1
+
+...
+...
+
+aRL
+aRL+1
+
+
+
+
+
+
+
+
+
+0
+a2
+
+...
+...
+..
+.
+
+0
+0
+
+aR2
+aR1
+
+...
+...
+
+aRL
+aRL+1
+
+(11)
+
+O sistema sobredeterminado apresentado na
+equação (10) não possui solução exata. Entretanto, é
+possível obter a melhor solução no sentido dos mínimos_quadrados, minimizando o índice de performance
+como apresentado na equação (12) (Kwong, 2010)
+J(u)  E T QT QE
+
+i1
+
+
+
+(7)
+
+m1
+
+(3)
+
+i1
+
+yk+j  yk+j1 +
+
+Pi 
+
+Sm 
+hi uk+1i
+
+hj
+
+j1
+
+Para processo SISO (Single Input-Single Output),
+o DMC utiliza o modelo de convolução discreta variacional recursiva apresentada em (3), relacionando a
+variável de saída com a variável de entrada ao longo
+do tempo, para predizer a saída no próximo instante
+de amostragem k + 1 (Kwong, 2010)
+yk+1  yk +
+
+i
+X
+
+(12)
+
+em que Q é uma matriz de ponderação definida positiva com dimensão R  R, e permite adicionar uma
+ponderação nos erros preditos. Desta forma, a solução
+ótima para a lei de controle é dada pela equação (13).
+0
+
+u  (AT QT QA)1 AT QT QE  Kc E 0
+
+(13)
+
+no qual Kc é a matriz de ganhos feedback com dimensões L  R, calculada a partir da matriz A como
+apresentado em (14).
+
+
+Kc  (AT A)1 AT
+(14)
+
+
+
+...
+Para sistemas_lineares, de especial interesse neste
+
+
+trabalho, a matriz A é constante e consequentemente a
+matriz Kc precisa ser calculada uma única vez.
+
+823
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+4
+
+Desenvolvimento
+
+Utilizado em grande escala em ambientes industriais,
+o Controlador Lógico Programável (CLP) foi desenvolvido na década de 70 com o objetivo de automatizar
+os processos_industriais substituindo os antigos painéis de relés. Os primeiros modelos de CLPs executavam o controle de pequenos processos discretos e tinham um custo elevado (Moraes and Castrucci, 2007).
+Com o passar dos anos, juntamente com a evolução
+dos sistemas_computacionais, surgiram os primeiros
+CLPs que permitiam a leitura de grandezas analógicas,
+e consequentemente, o controle_de_sistemas_dinâmicos
+através de algoritmos de controle_clássico, como por
+exemplo o algoritmo de controle Proporcional Integral
+Derivativo (PID).
+Com o aumento da complexidades dos processos
+a serem controlados, o desenvolvimento de novos algoritmos de controle se fez necessário. A partir desta
+necessidade de mercado, no início da década de 2000
+surgiram os primeiros CLPs que permitiam ao programador utilizar linguagens de programação de alto
+nível, como por exemplo o ANSI C e o Texto Estruturado. A utilização destas linguagens no ambiente industrial permitiu que novos algoritmos de controle fossem desenvolvidos e embarcados em CLPs
+(Capelli, 2008). Neste contexto, o presente trabalho
+descreve a implementação de um algortimo de controle_preditivo DMC em um controlador_lógico_programável para o controle_de_processo reais.
+Para a implementação do sistema_de_controle proposto neste trabalho, o primeiro passo consiste em
+obter o modelo do processo a ser controlado. Como
+descrito anteriormente, os algoritmos de controle_preditivo DMC utilizam um modelo de convolução discreto a partir da resposta ao degrau da planta em
+malha_aberta. Desta forma, a Figura 3 apresenta
+o fluxograma contendo os passos necessários para
+a obtenção do modelo do processo de maneira offline, neste caso específico utilizando o sofwtare Scilab (ENTERPRISES, 2012).
+
+DMC é embarcado no CLP. A partir da saída prevista
+e da leitura da variável a ser controlada, as ações de
+controle são calculadas seguindo o fluxograma apresentado na Figura 4.
+
+Figura 4 Fluxograma dos passo para ao cálculo das
+ações de controle.
+Os passos apresentados na Figura 4 foram implementados utilizando a linguagem Texto Estruturado
+e embarcados em um bloco de função denominado
+DMCFunctionBLock. O desenvolvimento deste bloco
+de função possibilita a utilização deste algoritmo para
+diferentes processos_industriais, uma vez que os parâmetros do controlador DMC (horizonte de predição,
+horizonte de controle, vetor Kc e vetor A), são tratados como variáveis de entrada do bloco de função. Já
+a ação de controle é definida como uma variável de
+saída com valores compreendidos entre 0 e 100.
+A execução do algoritmo apresentado na Figura
+4 se dá em um único ciclo do CLP. O tempo de execução deste ciclo (Cycle Time) pode ser ajustado de
+acordo com as características dinâmicas do processo.
+Para o sistema_de_controle em questão, o Cycle Time
+foi determinado em função do atraso_de_transporte
+do processo a ser controlado como apresentado em
+(Kwong, 2010).
+5
+
+Figura 3 Fluxograma dos passo para a obtenção do
+modelo para o DMC.
+Obtido o modelo do processo a ser controlado e
+definidos os parâmetros do controlador, o algoritmo
+
+ISSN 2525-8311
+
+Aplicação e Resultados
+
+A fim de comprovar o funcionamento do algoritmo
+de controle DMC embarcado, e analisar a viabilidade
+em relação ao processamento da CPU, utilizou-se uma
+planta_didática de temperatura como apresentado na
+Figura 5. A planta é formada por uma caixa metálica
+onde estão instalados um resistor de potência e um relé
+de estado sólido. A medida de temperatura é feita por
+um sensor LM35 e um circuito de adequação, uma vez
+que a entrada analógica do CLP é de 0 a 10 Vdc. Esta
+planta foi utilizada neste trabalho por estar disponível
+no laboratório da instituição.
+Para a implementação do sistema_de_controle desenvolvido, utilizou-se um CLP comercial fabricado
+
+824
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Figura 5 Montagem da Planta Didática de Temperatura
+pela BR Automação Industrial, com as seguintes características
+ Processador ELAN SC520 100 Mhz
+ Memória Principal 64 MB DRAM
+ Memória de Programa 48 KB SRAM
+
+Obtida a função_de_transferência do sistema a ser
+controlado, definiu-se, a partir do trabalho apresentado em Kwong (2010), os parâmetros do controlador
+DMC Horizonte de Predição R  15, Horizonte de
+controle L  10, Horizonte do Modelo N  30 e
+  0. O tempo de execução do controlador (cycle
+time do CLP), foi determinado em função do atraso
+de transporte da planta, ou seja, para o controlador em
+questão definiu-se Ts  14s.
+Definidos os parâmetros, o vetor A e a matriz Kc
+foram calculadas de maneira offline e embarcados no
+CLP. Esta abordagem permite um ganho significativo
+de processamento dentro do CLP, uma vez que evita
+cálculos complexos como inversão de matriz na rotina
+embarcada no CLP. Com objetivo de verificar o funcionamento do sistema_de_controle desenvolvido, foram
+aplicados três degraus consecutivos em 45 C, 55 C e
+45 C no sinal de referência do controlador (setpoint).
+A resposta do sistema em malha_fechada é apresentada
+na Figura 7.
+
+ Um módulo de entrada analógica com AD de 12
+bits e um módulo de saídas digitais a transistor.
+Como apresentado na Figura 3, a primeira etapa
+para a implementação do controlador proposto é a obtenção do modelo processo a ser controlado. Desta
+forma, aplicou-se um degrau na entrada da planta
+de temperatura, e os dados de entrada_e_saída foram amostrados utilizando o CLP, com um período
+de amostragem igual a 0, 1s. Para a obtenção do modelo_matemático, neste caso a função_de_transferência do processo linearizada em torno de um ponto de
+operação, utilizou-se a representação discreta ARX,
+no qual a estimação dos parâmetros do modelo foram obtidos através do método dos mínimos_quadrados (Aguirre, 2004). A equação (15) apresenta a função_de_transferência discreta do processo a ser controlado e a Figura 6 apresenta a comparação entre o
+sistema real e o modelo_matemático.
+H(z) 
+
+0, 0002783 140
+z
+z  0, 9994
+
+(15)
+
+Figura 6 Comparação entre o sistema real e o modelo
+obtido
+
+ISSN 2525-8311
+
+Figura 7 Resposta do Sistema Real
+Como pode ser observado na Figura 7, o sistema
+de controle_preditivo atuou corretamente na planta, e
+a temperatura do sistema atingiu a referência desejada
+sem nenhum overshoot com um tempo de acomodação de aproximadamente Ta  140s. Para fins de
+validação do sistema_de_controle_embarcado no CLP,
+realizou-se a comparação entre a resposta real do sistema controlado e a resposta do sistema simulado, utilizando as ferramentas Scilab e Xcos. A Figura 8 apresenta o diagrama em blocos implementado no Xcos, e
+na Figura 9 apresenta-se a comparação entre a saída
+do sistema real e a saída do sistema simulado.
+
+Figura 8 Diagrama em Bloco do Sistema Controlado
+utilizando Scilab
+
+825
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+se a implementação de um algoritmo que faça a identificação, sintonia e controle utilizando um algoritmo
+DMC de maneira online, ou seja, todo o processo embarcado no CLP.
+Referências
+
+Figura 9 Resposta do Sistema Simulado
+Os resultados apresentados na Figura 9 demostram que o funcionamento do algoritmo de controle
+preditivo embarcado no CLP se aproxima da resposta
+obtida a partir do sistema simulado. Além de demonstrar um funcionamento adequado para a planta_didática em questão, o controlador DMC não apresentou
+um custo_computacional significativo. A taxa de utilização da CPU presente no laboratório da instituição,
+obtida através de uma ferramenta nativa do CLP denominada Profiler, foi de aproximadamente 1.5, ou
+seja, o algoritmo de controle_preditivo poderia ser embarcado em outro CLP com menor capacidade de processamento.
+6
+
+Conclusões
+
+Neste trabalho apresentou-se o desenvolvimento de
+um controlador_preditivo DMC embarcado em Controlador Lógico Programável. Primeiramente, obtevese o modelo do processo a ser controlado e definiu-se
+os parâmetros do controlador DMC. A partir do modelo e dos parâmetros do controlador, a matriz de realimentação Kc e a matriz dinâmica A foram calculados de maneira offline utilizando o software de cálculo
+numérico Scilab. O algoritmo de controle DMC foi
+implementado em Texto Estruturado e embarcado em
+um bloco de função em um controlador_lógico_programável.
+De maneira a comprovar o desempenho do projeto, o controlador proposto foi aplicado no controle
+de uma planta_didática de temperatura presente no laboratório desta instituição. Os resultados obtidos mostraram a viabilidade de utilização deste tipo de controle_embarcado em hardware industrial com baixa
+capacidade de processamento e baixo_custo. A taxa
+de utilização da CPU na aplicação analisada foi relativamente baixa, com valor de aproximadamente 1.5.
+Com objetivo de validar o desenvolvimento do controlador, os resultados obtidos no controle da planta
+de temperatura real foram comparados com resultados
+obtidos através de simulação.
+Como perspectivas de trabalhos futuros, propõe-
+
+ISSN 2525-8311
+
+Aguirre, L. A. (2004). Introdução  Identificação de Sistemas, 2a edn, Editora UFMG, Av. Antônio Carlos,
+6627. Belo Horizonte, MG, Brasil.
+Camacho, E. F. and Bordons, C. (2004). Model Predictive
+Control, 2nd edn, Springer.
+Capelli, A. (2008). Automação Industrial - Controle do movimento e processos contínuos, Érica.
+Clarke, D. and Mohtadi, C. (1989). Properties of generalized
+predictive control, Automatica 25(6) 859  875.
+Clarke, D., Mohtadi, C. et al. (1987). Generalized Predictive
+Control, Automatica, Vol. 23, pp. 137160. part i. the
+basic algorithm and part ii. extensions and interpretations.
+Cutler, C. and Ramaker, B. (1980). Dynamic Matrix Control
+- A computer control algoritm, Joint Automatic Control Conference.
+ENTERPRISES, S. e. a. (2012). Scilab Free and Open
+Source software for numerical computation., 2nd edn,
+Scilab Enterprises, Orsay, France.
+Kwong, W. H. (2010). Introdução ao controle_preditivo com
+MATLAB, 1st edn, UFSCAR.
+Ljung, L. (1999). System Identification theory for the user,
+theory for the user, 2nd edn, Prentice Hall PTR, Upper
+Saddle River, N.J.
+Moraes, C. C. and Castrucci, P. L. (2007). Engenharia de
+automação_industrial, 2 edn, LTC.
+Morari, M., Garcia, C. and Prett, D. M. (1989). Model predictive control Theory and practice - A survey, Automatica 25(3) 335348.
+Oliveira, G. H. d. C. (1997). Controle Preditivo para Processos com Incertezas Estruturadas baseado em Séries de Funções Ortonormais, PhD thesis, UNICAMP
+- FEEC.
+Qin, S. and Badgwell, T. (2000). An overview of nonlinear
+model predictive control applications, Nonlinear Model Predictive Control, Vol. 26 of Progress in Systems
+and Control Theory, pp. 369392.
+Richalet, J., Rault, A., Testud, J. and Papon, J. (1978). Model predictive heuristic control Applications to industrial processes, Automatica 14(5) 413428.
+Seki, H., Ogawa, M., Ooyama, S., Akamatsu, K., Ohshima,
+M. and Yang, W. (2001). Industrial application of
+a nonlinear model predictive control to polymerization reactors, Control Engineering Practice 9(8) 819
+ 828. Advanced Control of Chemical Processes.
+Xu, Z., Yao, Z., Chen, L. and Du, S. (2013a). Greenhouse air
+temperature predictive control using the dynamic matrix control, Intelligent Control and Information Processing (ICICIP), 2013 Fourth International Conference on, pp. 349353.
+Xu, Z., Yao, Z., Chen, L. and Du, S. (2013b). Greenhouse air
+temperature predictive control using the dynamic matrix control, Intelligent Control and Information Processing (ICICIP), 2013 Fourth International Conference on, pp. 349353.
+
+826
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Zhao, H., Guiver, J., Neelakantan, R. and Biegler, L.
+(2001). A nonlinear industrial model predictive controller using integrated PLS and neural net statespace model, Control Engineering Practice 9(2) 125
+ 133.
+
+ISSN 2525-8311
+
+827

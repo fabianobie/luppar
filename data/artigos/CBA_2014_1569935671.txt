@@ -1,0 +1,763 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+SISTEMA NEURAL PARA SELECAO ONLINE DE EVENTOS COM
+PRE-PROCESSAMENTO ATRAVES DA DWT
+Edmar E. P. de Souza , Eduardo F. S. Filho, P. C. M. A. Farias, Jose M. Seixas
+
+
+Universidade Federal da Bahia
+Laboratorio de Sistemas Digitais - PPGEEUFBA
+Salvador, Bahia, Brasil
+
+
+Universidade Federal do Rio de Janeiro
+Laboratorio de Processamento de Sinais - COPPEUFRJ
+Rio de Janeiro, Rio de Janeiro, Brasil
+Emails edmar.egidio@cern.ch, eduardo.simas@ufba.br, paulo.cezar@ufba.br,
+seixas@lps.ufrj.br
+Abstract The ATLAS is the largest particle detector at the LHC (Large Hadron Collider) . The calorimeter
+is one of its subsystems and consists of over 100,000 sensors , responsible for measuring the energy of the particles
+generated in the collisions of protons . The detection of the electron is very important for the experiment , because
+these particles are directly related to physical processes not yet fully known to man . The identification of electrons
+depends calorimeter information, and background noise comprises hadronic jets can occur with frequencies up to
+105 times greater than the physics of interest , making complicated the process of identification of electromagnetic
+particles . In previous work , we proposed an alternative electron detection algorithm Neural Ringer wherein
+the power profile measured in the calorimeter is formatted in concentric rings and these signals are used as
+input to a neural network which performs the classification of the event . This work proposes the use of signal
+processing techniques added to the chain Neural Ringer for extraction of most discriminant features from the
+information obtained in the calorimeter rings . With the proposed technique it is possible to raise the efficiency
+of Neural Ringer discriminator and reduce the amount of information to be stored. The results were obtained
+using simulated data show the advantages of the proposed method.
+Keywords
+
+electron, Neural Networks, Neural Ringer, DWT,ICA,PCA.
+
+Resumo O ATLAS e o maior detector de partculas do LHC (Large Hadron Collider ). O calormetro e
+um de seus subsistemas e e composto por mais de 100.000 sensores, sendo responsavel pela medicao da energia
+das partculas geradas nas colisoes de protons. A deteccao do eletron e muito importante para o experimento,
+pois essas partculas estao diretamente relacionadas com processos fsicos ainda nao totalmente conhecidos pelo
+homem. A identificacao_de_eletrons depende de informacoes calormetro, e o rudo de fundo composto por jatos
+hadronicos, pode ocorrer com frequencias ate 105 vezes maior do que a fsica de interesse, tornando complicado
+o processo de identificacao de partculas eletromagneticas. Em trabalhos anteriores , foi proposto um algoritmo
+alternativo de deteccao de eletrons (Neural Ringer ) , no qual o perfil de energia medido no calormetro e formatado
+em aneis concentricos e estes sinais sao utilizados como entrada de uma rede_neural artificial, que realiza a
+classificacao do evento. Este trabalho propoe o uso de tecnicas de processamento_de_sinais adicionadas a cadeia
+Neural Ringer, visando a extracao_de_caractersticas mais discriminantes a partir das informacoes dos aneis
+obtidos no calormetro. Atraves da tecnica proposta e possvel elevar a eficiencia do discriminador Neural Ringer
+e reduzir a quantidade de informacao a ser armazenada. Os resultados foram obtidos com o uso de dados
+simulados, para mostrar as vantagens do metodo proposto.
+Palavras-chave
+
+.
+
+Introducao
+
+O ATLAS recebe o produto das colisoes de
+feixes de protons do LHC que ocorrem numa taxa
+de ate 40 MHz. Para esta frequencia de colisoes,
+o detector gera uma taxa de dados de aproximadamente 60 TBs, sendo que a maior parte representa rudo de fundo para a identificacao de
+propriedades fsicas ainda nao observadas experimentalmente. Para reduzir a alta taxa de eventos,
+foi desenvolvido um sistema de filtragem (trigger)
+online, composto por tres nveis sequenciais, com
+complexidade e tempo de processamento crescentes (Koletsou, 2011).
+
+O LHC (Large Hadron Collider) (Evans and
+Bryant, 2008) e o maior acelerador de partculas
+ja construdo. Possui um percurso circular de 27
+km de extensao e conta com a participacao no seu
+desenvolvimento tecnologico, de cientistas de mais
+de 36 pases.
+O ATLAS (ATLAS Collaboration, 2008) e um
+dos detectores de partculas do LHC e seu principal objetivo e identificar as caractersticas fundamentais da materia. O detector, representado
+graficamente na Figura 1, possui um formato cilndrico e e composto por sub-detectores especializados, que sao o detector de traco, que identifica a
+trajetoria das partculas carregadas eletricamente
+os calormetros que medem a energia, e a camara
+de muons, que detecta os muons.
+
+Conforme indicado na Figura 2, o primeiro nvel (L1) usa a informacao dos calormetros e da camara de muons, reduzindo a taxa inicial de eventos para 75 kHz. Este nvel tem altas restricoes
+quanto ao tempo de processamento, com latencia
+
+1072
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+para realizar a deteccao de partculas eletromagneticas (eletrons e fotons) no segundo nvel de
+filtragem_online de eventos do detector ATLAS.
+Com o objetivo de obter, ao mesmo tempo, alta
+eficiencia, rapidez na tomada_de_decisao e reducao
+na quantidade de informacao a ser armazenada
+foi realizada a combinacao de tecnicas de extracao_de_caractersticas como a Tranformada Wavelet Discreta (DWT), a Analise de Componentes Principais (PCA) e a Analise de Componentes
+Independentes (ICA) com classificadores neurais
+(para produzir a decisao propriamente dita).
+
+Figura 1 Representacao grafica do detector
+ATLAS e seus sub-sistemas.
+
+2
+
+maxima de 2,5us (Tilecal Collaboration, 2013). O
+L1 e implementado em hardware e identifica as
+regioes do detector onde possivelmente ocorreram
+eventos relevantes, locais chamados de Regioes de
+Interesse (Regions of Interest - RoIs).
+Os dados provenientes das RoIs sao utilizados
+pelo nvel 2 de filtragem (L2), no qual e utilizada
+toda a granularidade do detector, com o objetivo
+de reduzir a taxa de eventos para 1 kHz. O L2 e
+implementado em software e executado com forte
+processamento distribudo a fim de respeitar as
+limitacoes do tempo de processamento. Neste nvel, o tempo maximo para tomada_de_decisao e 40
+ms, e estao disponveis informacoes do detector
+de trajetorias, das camaras de muons, assim como
+a total resolucao dos calormetros (Wiedenman
+et al., 2012).
+
+Identificacao de Eletrons no ATLAS
+
+Os eletrons estao envolvidos em diversos decaimentos de interesse para o experimento, como por
+exemplo o boson de Higgs. A identificacao_de_eletrons baseia-se no perfil de deposicao de energia
+medido no sistema de calorimetria. Sao considerados aspectos como a distribuicao transversal do
+chuveiro de partculas produzido e o vazamento
+para camadas hadronicas. Os jatos hadronicos sao
+amplamente produzidos nas colisoes (em taxas ate
+105 vezes maiores que os eletrons) e possuem um
+perfil de deposicao de energia que pode ser semelhante ao do eletron, dificultando o processo de
+identificacao.
+A alta taxa de eventos, a raridade da fsica de
+interesse, e a intensa contaminacao por rudo de
+fundo no canal de deteccao reforcam a necessidade
+de implementacao de algoritmos de identificacao
+eficientes. Estas rotinas devem trabalhar dentro
+das janelas de tempo permitidas para a operacao
+no trigger.
+2.1
+
+O Discriminador Neural Ringer
+
+No trabalho (dos Anjos et al., 2006) foi proposto um sistema de identificacao de partculas
+alternativo ao discriminador padrao que opera
+no L2 do detector. O Neural Ringer efetua um
+pre-processamento topologico da informacao de
+cada camada do calormetro, localizando primeiramente a celula de maior deposicao energetica na
+camada e somando o valor das celulas localizadas
+em aneis concentricos a este ponto. Neste procedimento e obtido um total de 100 aneis para
+cada RoI selecionada pelo L1, considerando uma
+RoI de tamanho fixo. Conforme indicado na Figura 3, o processo de selecao dos aneis se ajusta
+as condicoes de granularidade de cada camada do
+calormetro.
+O conjunto de aneis e utilizado para alimentar um classificador baseado numa rede_neural artificial (RNA) feedforward (Haykin, 2002). Utilizando o Neural Ringer, foram obtidos melhores
+ndices de classificacao em relacao ao discriminador padrao do detector (Ciodaro et al., 2012), que
+
+Figura 2 Esquema do trigger online do ATLAS
+em tres nveis de processamento sequenciais.
+O ultimo estagio de filtragem_online, o Filtro
+de Eventos (Event Filter - EF), tambem implementado em software, recebe os eventos aprovados pelo L2 e refina ainda mais a selecao realizada
+pela etapa anterior. O EF tem latencia de ate 4s
+para tomada_de_decisao, assim a taxa de eventos
+e reduzida para ate 300Hz, que serao gravados em
+mdia permanente para futura analise offline.
+Neste trabalho, e proposto um discriminador
+
+1073
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+yLow n 
+
+
+X
+
+x k g 2n  k
+
+(1)
+
+x k h 2n  k
+
+(2)
+
+k
+
+yHigh n 
+
+
+X
+k
+
+Os coeficientes dos filtros gn e hn estao relacionados com as funcoes Wavelet utilizadas na
+decomposicao. Apos a filtragem, o sinal e subamostrado por um fator de 2 (Diniz et al., 2004).
+
+Figura 3 Representacao da formacao dos aneis no
+calormetro.
+realiza cortes lineares em algumas variaveis estimadas a partir do perfil de deposicao de energia.
+3
+
+Pre-Processamento ao Discriminador
+Neural Ringer
+
+Figura 5 Decomposicao de sinais em coeficientes
+de aproximacao e detalhes.
+
+Neste trabalho foi realizado a adicao de uma etapa
+de pre-processamento_de_sinais a cadeia de funcionamento do Neural Ringer. O principal objetivo
+da inclusao desta etapa e evidenciar as caractersticas mais discriminantes do conjunto de sinais
+formatados em aneis, em busca da melhoria dos nveis de classificacao do sistema neural proposto. A
+aplicacao da DWT, em conjunto com a PCA e ICA
+nos dados pre-formatados em aneis podera minimizar o rudo de fundo e removendo elementos
+redundantes no conjunto de dados, melhorando a
+eficiencia de classificacao do sistema.
+
+Computacionalmente a DWT pode ser implementada a partir da construcao da Matriz de Coeficientes do Filtro selecionado, decimado em 2,
+para a realizacao da convolucao com o sinal xn.
+Yl  C  X
+
+
+Yl  yl 1,
+
+yl 3, ...,
+
+
+yl n
+
+(4)
+
+
+
+g1
+0
+0
+...
+0
+g3 g2
+g1
+...
+0 
+
+
+
+...
+...
+...
+... 
+C   ...
+ (5)
+ ...
+... gk  2 gk  1 gk
+...
+...
+...
+...
+gk
+
+Figura 4 Cadeia de Processamento do Neural
+Ringer
+A seguir serao descritas, de modo resumido, as
+tecnicas de pre-processamento_de_sinais utilizadas
+na cadeia do Neural Ringer visando sua otimizacao.
+3.1
+
+yl 2,
+
+(3)
+
+
+X  x1,
+
+x2,
+
+x3, ...,
+
+
+xn
+
+(6)
+
+Sendo Yl a matriz que contem a sada do filtro
+selecionado, C a matriz que contem os coeficientes
+do filtro selecionado e X a matriz do sinal discreto
+de entrada.
+
+Transformada Wavelet Discreta
+
+A Transformada Wavelet Discreta (DWT) e uma
+importante ferramenta para o processamento_digital_de_sinais. As principais aplicacoes da DWT sao
+a extracao_de_caractersticas, remocao de rudo e
+compactacao de sinais (Diniz et al., 2004). Um
+modo eficiente para realizar a DWT e atraves de
+filtragens sucessivas do sinal discreto xn. Considerando dois filtros_digitais espelhados e em quadratura, com sequencias de resposta a impulso
+finitas gn (passa-baixas) e hn (passa-altas), o
+sinal de interesse xn e entao decomposto em
+coeficientes de aproximacao (yLow n) e detalhe
+(yHigh n)
+
+3.2
+
+Analise de Componentes Principais
+
+A Analise de Componentes Principais (Principal Component Analysis - PCA) (Jolliffe, 2008) e
+uma tecnica estatstica, cujo objetivo e encontrar
+uma transformacao linear tal que os sinais projetados sejam nao-correlacionados e grande parcela
+da energia (variancia) esteja concentrada num pequeno numero de componentes. Considerando-se
+um vetor x  x1 , ..., xn T aleatorio com n elementos e assumindo-se que ele tenha media zero), A
+projecao zi de x na direcao de vi e definida por
+
+1074
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+zi  viT x 
+
+N
+X
+
+vki xk
+
+primeiramente a Transformada Wavelet no conjunto de dados de eletrons e jatos simulados por
+tecnicas de Monte Carlo. Neste conjunto, a classe
+de eletrons possui aproximadamente 30.000 assinaturas provenientes do decaimento do boson Z
+(Z  e+ e ).
+A classe de jatos hadronicos possui aproximadamente 80.000 assinaturas. Nesta mesma base
+de dados, foram realizados dois cortes em energia, que selecionaram respectivamente as assinaturas com energia transversa (ET ) acima de 10GeV
+(e10) e assinaturas com ET maior que 22 GeV
+(e22), sendo o conjunto e22 um sub-conjunto dos
+dados e10. As Figuras 6(a) e 6(b) mostram a distribuicao em energia dos conjuntos e10 e e22.
+
+(7)
+
+k1
+
+Na transformacao por PCA, os componentes
+extrados zi (i  1, ..., N ) devem ser ortogonais e
+ordenados de forma decrescente pela variancia das
+projecoes. Deste modo, v1 pode ser encontrado
+pela maximizacao de
+JiP CA (v1 )  Ezi2   E(v1T x)2   v1 Cx v1 (8)
+onde Cx e a matriz de covariancia de x.
+A maximizacao da equacao anterior pode ser
+encontrada a partir da determinacao dos autovetores e1 , e2 , ..., en da matriz Cx . O autovetor com
+o maior autovalor associado, corresponde a componente principal do conjunto de dados usado. O
+primeiro componente e o que apresenta maior variancia e assim por diante. Assim a decomposicao por autovalores da matriz Cx e o seu ordenamento, e equivalente a PCA de x. Em aplicacoes
+de compactacao, a parcela contendo a menor variancia e descartada, mantendo assim os componentes com maior nvel de energia (Jolliffe, 2008).
+3.3
+
+Figura 6 Distribuicao de energia das RoIs das
+simulacoes de Monte Carlo considerando as assinaturas e10 6(a) e e22 6(b).
+
+Analise de Componentes Independentes
+O conjunto de dados e10 simula uma configuracao pouco restritiva para o primeiro nvel de
+filtragem e, para isso, foi realizado um corte mais
+livre em energia, contendo informacoes de partculas com baixa ET . O conjunto e22 simula um
+corte mais severo no primeiro nvel, sendo selecionados eventos com mais alta ET . Deste modo,
+nesta base de dados encontram-se jatos hadronicos com perfil de energia bastante semelhante ao
+perfil de eletrons, dificultando a decisao correta
+dos sistemas de classificacao. Uma normalizacao
+foi aplicada nos conjuntos de dados, realizando a
+divisao da energia de cada anel (Eai ) pela energia
+total do evento.
+Para avaliacao_de_desempenho do discriminador foram utilizadas a area sob a curva ROC
+(TreesS, 2001) e o ndice SP, conforme definido na
+Equacao 8
+
+A analise_de_componentes_independentes (Independent Components Analisys - ICA) (Hyvarinen
+et al., 2001) busca uma transformacao onde os
+componentes na sada sao mutuamente estatisticamente independentes. Na ICA, considerase que um sinal multidimensional x(t) 
+x1 (t), ..., xN (t)T observado (ou medido) e gerado
+a partir da combinacao linear das fontes independentes s(t)  s1 (t), ..., sN (t)T 
+x  As,
+
+(9)
+
+onde A e a matriz de mistura. O objetivo final
+da ICA e encontrar uma aproximacao y das fontes independentes s, utilizando apenas os sinais
+observados x.
+y  Wx,
+(10)
+sendo W a matriz de separacao. Se W  A1 ,
+y  s e o problema foi completamente solucionado. A ICA vem sendo aplicada na solucao de
+diversos problemas na area de processamento de
+sinais, como sistemas sonar (Moura et al., 2009),
+processamento de audio e extracao_de_caractersticas (Simas Filho et al., 2007). Diversos algoritmos
+foram propostos na literatura para a estimacao
+dos componentes independentes. Neste trabalho
+foi utilizado o FastICA, por apresentar boa precisao e rapidez, mesmo em problemas com alta
+dimensionalidade.
+4
+
+r
+SP 
+
+(
+
+p
+(Efe + Efj )
+)  Efe  Efj ,
+2
+
+(11)
+
+onde Efe  P D e Efj  1  P F sao as eficiencias obtidas, respectivamente, para eletrons
+e jatos (sendo P D a probabilidade de deteccao
+de eletrons e P F probabilidade de classificar um
+jato hadronico incorretamente). O treinamento
+da rede_neural foi realizado com os dados preprocessados.
+Em seguida, foi definido um numero de sorteios (neste trabalho foram realizados 10 sorteios)
+e tambem sao selecionados os conjuntos de treino,
+teste e validacao de cada subgrupo. Na sequencia e treinado um discriminador neural para cada
+
+Metodologia
+
+A adicao da etapa de pre-processamento ao discriminador Neural Ringer foi realizada aplicando
+
+1075
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+sorteio, utilizando os subgrupos definidos anteriormente. A rede_neural utilizada possui duas camadas e um unico neuronio na camada de sada.
+O algoritmo de treinamento usado foi o Resilient Backpropagation - (RPROP ) (Riedmiller and
+Braun, 1993), e a funcao de ativacao utilizada em
+todas as redes foi a tangente_hiperbolica.
+Para a determinacao do numero otimo de
+neuronios da camada oculta foi realizado um estudo de avaliacao do ndice SP e das probabilidades de deteccao (PD) e falso alarme (PF) associadas a quantidade de neuronios, para os sinais em
+aneis (sem pre-processameto), indicado pelo grafico da Figura 7. Observa-se que com o uso de 18
+neuronios na camada oculta os melhores resultados foram alcancados.
+
+Tabela 1 Resultados obtidos com as diferentes
+funcoes wavelet utilizadas.
+Discriminadores
+Neural Ringer
+Ringer+dB1
+Ringer+dB2
+Ringer+dB5
+Ringer+Sym2
+Ringer+Sym3
+Ringer+Sym4
+Ringer+Coif1
+Ringer+Coif2
+Ringer+Coif3
+
+Max SP()
+99.69 +-0.4
+99.72 +-0.2
+99.72 +-0.5
+99.69 +-0.3
+99.72+-0.2
+99.72+-0.5
+99.71+-0.3
+99.69 +-0.2
+99.70 +-0.5
+99.70 +-0.3
+
+PD()
+99.75
+99.75
+99.75
+99.75
+99.75
+99.75
+99.75
+99.75
+99.75
+99.75
+
+PF()
+0.38
+0.23
+0.25
+0.49
+0.26
+0.50
+0.26
+0.35
+0.31
+0.31
+
+a funcao Symlet3 obteve desempenho consideravel
+em relacao aos demais classificadores projetados.
+Na analise do uso das funcoes Coiflets, as funcoes
+Coif2 e Coif3 mostraram desempenho semelhante,
+com eficiencia de classifcacao parecidas, contudo
+ambas com melhor desempenho em relacao ao discriminador Neural Ringer.
+
+Figura 7 Curva de variacao do maximo SP ()
+em funcao do numero de neuronios da camada
+oculta.
+Foram utilizadas tres famlias de Wavelets
+Daubechies, Symlets e Coiflets. Em cada uma
+destas famlias, foram usadas tres funcoes Wavelets como pre-processamento aos sinais formatados em aneis. Apos o processamento da DWT,
+foram aplicadas as tecnicas PCA e ICA, com o
+objetivo de realizar a compactacao e extracao de
+caractersticas relevantes do conjunto de dados.
+Na proxima secao serao apresentados os resultados encontrados com a combinacao das tecnicas
+propostas.
+5
+5.1
+
+Figura 8 Curva ROC dos discriminadores utilizando a DWT Daubechies
+
+Resultados
+
+Analise de sinais no Conjunto e10
+
+A Tabela 1 e as Figuras 8, 9 e 10 apresentam os resultados obtidos com o uso das diferentes funcoes
+wavelet. A Figura 8 apresenta as Curvas ROC obtidas com os classificadores projetados, utilizando
+a funcao Daubechies, no processamento da DWT.
+Nesta analise a funcao dB01, apresentou o melhor
+desempenho em relacao aos classificadores projetados com as funcoes dB2 e dB3, alem do classificador Neural Ringer.
+As Figuras 09 e 10 apresentam as curvas ROC
+dos classificadores projetados com as funcoes das
+famlias Symlet e Coiflet respectivamente. Na
+analise do processamento com as funcoes Symlet,
+
+Figura 9 Curva ROC dos discriminadores utilizando a DWT Symlet
+Levando em consideracao a analise sob a area
+da curva ROC e parametros SP PD e PF, os
+discriminadores Ringer+dB1, Ringer+Symlet3 e
+Ringer+Coiflet2 apresentaram os melhores resultados. A Figura 11 apresenta as curvas ROC dos
+melhores classificadores projetados.
+
+1076
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Figura 10 Curva ROC dos discriminadores utilizando a DWT Coiflets
+
+Figura 12 Curva ROC dos discriminadores utilizando a DWT Daubechies - Conjunto e22
+
+Figura 11 Curva ROC dos melhores discriminadores projetados - Conjunto e10
+5.2
+
+Figura 13 Curva ROC dos discriminadores utilizando a DWT Symlets - Conjunto e22
+
+Analise de sinais no Conjunto e22
+
+5.3
+
+Para o conjunto de sinais e22 foi utilizada a mesma
+metodologia das analises realizadas no conjunto
+e10. A Tabela 2 e as Figuras 12, 13 e 14 apresentam os resultados obtidos. Percebe-se que a
+utilizacao da funcao Symlet3 apresentou melhores resultados, encontrando indice SP de 99,80 e
+produzindo a diminuicao da taxa de Falso Alarme
+para 0,09 , resultado consideravelmente melhor
+que o classificador Neural Ringer.
+Observou-se que os discriminadores Ringer+dB2, Ringer+Symlet3 e Ringer+Coiflet2
+apresentaram os melhores resultados (ver Figura
+15).
+
+Tabela 2 Resultados obtidos com as diferentes
+funcoes wavelet - Conjunto e22.
+Discriminadores
+Neural Ringer
+Ringer+dB1
+Ringer+dB2
+Ringer+dB5
+Ringer+Sym2
+Ringer+Sym3
+Ringer+Sym4
+Ringer+Coif1
+Ringer+Coif2
+Ringer+Coif3
+
+Max SP()
+99.67 +-0.4
+99.79 +-0.2
+99.80 +-0.5
+99.79 +-0.3
+99.79 +-0.2
+99.80 +-0.5
+99.80 +-0.3
+99.78 +-0.2
+99.77 +-0.5
+99.78 +-0.3
+
+PD()
+99.73
+99.73
+99.73
+99.73
+99.73
+99.73
+99.73
+99.73
+99.73
+99.73
+
+PF()
+0.41
+0.18
+0.14
+0.13
+0.13
+0.09
+0.11
+0.15
+0.17
+0.20
+
+1077
+
+Aplicacao da PCAICA
+
+O uso da funcao wavelet Symlet3 como preprocessamento, obteve melhores resultados no desempenho de classificacao. A partir desta analise, com o objetivo de verificar os nveis de compactacao possveis para os conjuntos de dados foi
+utilizada a tecnica PCA nos sinais obtidos pela
+transformada e para cada nvel de compactacao
+foi aplicado a ICA para extrair as caractersticas
+mais relevantes dos dados.
+Na Figura 16 sao mostradas as variacoes do
+ndice SP em funcao do numero de componentes retidos, para os conjuntos e10 e e22 respectivamente. Nesta analise e possvel verificar que
+para o conjunto e10, com o uso de 20 componentes
+(equivalendo a 99 da energia) e obtido o maximo
+ndice SP das analises realizadas. Para o conjunto
+e22 o maximo ndice SP e encontrado utilizando
+25 componentes, representando tambem a 99 da
+energia retida.
+A Figura 17 mostra as curvas ROC dos classificadores Neural Ringer e do discriminador neural
+com a adicao do pre-processamento com a combinacao das tecnicas DWT, PCA e ICA (conjunto
+e10). Observa-se que a eficiencia do metodo proposto e suavemente inferior ao Neural Ringer porem o alto nvel de compactacao encontrado contribui para a reducao do volume de dados a ser
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Figura 16 Curva de variacao do Max SP em funcao do numero de componentes retidos na compactacao por PCA nos conjuntos e10 e e22.
+
+Figura 14 Curva ROC dos discriminadores utilizando a DWT Coiflets - Conjunto e22
+
+Figura 15 Curva ROC dos melhores discriminadores projetados - Conjunto e22
+
+Figura 17 Curvas ROC do classificador com
+pre-processamento por DWT+ICAPCA e Neural Ringer - Conjunto e10
+
+armazenado.
+Na analise do conjunto e22, o classificador
+projetado
+com
+pre-processamento
+DWT+ICAPCA, obteve eficiencia de deteccao de eletrons superior ao Neural Ringer, mesmo
+com um elevado nvel de compactacao (retencao
+de somente 25 componentes, ou seja 75 de
+compactacao).
+6
+
+rsticas com a associacao das tecnicas PCAICA
+obteve bons resultados utilizando apenas 20  da
+informacao do conjunto e10 e 25  no caso do e22.
+Agradecimentos
+Os autores agradecem ao apoio financeiro do
+CNPq, FAPESB, CAPES, RENAFAE, CERN e
+Uniao Europeia e tambem a colaboracao do detector ATLAS pelos dados simulados e por sugestoes
+sobre o trabalho.
+
+Conclusoes
+
+A selecao online de eventos em experimentos de
+fsica de altas energias e um problema que requer sistemas de discriminacao que combinem alta
+eficiencia e rapidez na execucao. Considerando
+o segundo nvel de trigger do detector ATLAS,
+foi observado que a adicao de uma etapa de
+pre-processamento utilizando tranformada wavelet discreta eleva a eficiencia de deteccao de eletrons do Neural Ringer. A extracao de caracte-
+
+Referencias
+ATLAS Collaboration (2008). Atlas experiment
+at cern large hadron collider, Journal of Instrumentation 3(S08003) 1407.
+
+Tabela 4 Comparacao dos metodos aplicados no
+conjunto de dados e22.
+
+Tabela 3 Comparacao dos metodos aplicados no
+conjunto de dados e10.
+Discriminadores
+N. Ringer
+Ringer+Sym3
+DWTPCAICA
+
+Max SP()
+99.69 +-0.4
+99.72 +-0.5
+99.65 +-0.2
+
+PD()
+99.75
+99.75
+99.75
+
+PF()
+0.38
+0.50
+0.39
+
+1078
+
+Discriminadores
+N. Ringer
+Ringer+Sym3
+DWTPCAICA
+
+Max SP()
+99.67 +-0.5
+99.80 +-0.5
+99.79 +-0.2
+
+PD()
+99.73
+99.73
+99.73
+
+PF()
+0.41
+0.09
+0.14
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+events rate and segmented information environment, Proceedings of the VIII Brazilian
+Conference on Neural Networks - CBRN .
+Tilecal Collaboration (2013). The atlas tile calorimeter performance at lhc, Nuc. Inst. and
+Methods In Physics Research .
+TreesS, H. L. V. (2001). Detection, Estimation,
+and Modulation Theory, Vol. 1.
+Wiedenman, W., Zhou, N., Negri, A., Hauser, R.
+and Whiteson, D. (2012). The operational
+performance of the atlas trigger and data acquisition system and its possible evolution,
+Proc. of the Int. Conf. on Computing in High
+Energy and Nuclear Physics .
+
+Figura 18 Curvas ROC do classificador com
+pre-processamento por DWT+ICAPCA e Neural Ringer - Conjunto e22
+Ciodaro, T., Deva, D., Damazio, D. and de Seixas,
+J. M. (2012). Online particle detection with
+neural networks based on topological calorimetry information, Journal of Physics Conf.
+Series .
+Diniz, P. S. R., da Silva, E. A. B. and Netto, S. L.
+(2004). Processamento digital de sinais projeto e analise de sistemas, Bookman.
+dos Anjos, A., Torres, R. C. and Seixas, J. M.
+(2006). Neural triggering system operating
+on high resolution calorimetry information,
+Nuc. Inst. and Methods in Physics Research
+A 559(1) 134138.
+Evans, L. and Bryant, P. (2008). Lhc machine,
+Journal of Instrumentation 3(S08001) 1
+158.
+Haykin, S. (2002). Neural Networks and Learning
+Machines, Bookman.
+Hyvarinen, A., Karhunen, J. and Oja, E. (2001).
+Independent Component Analysis.
+Jolliffe, I. T. (2008). Principal Component Analysis, Springer.
+Koletsou, I. (2011). The atlas liquid argon calorimeter at the lhc, Nuc. Inst. and Methods in
+Physics Research 628 351354.
+Moura, N. N., Simas Filho, E. F. and Seixas, J. M.
+(2009). Advances in sonar signal processing,
+Independent Component Analysis for Passive Sonar Signal Processing, In-Tech Viena,
+Austria, pp. 91110.
+Riedmiller, M. and Braun, H. (1993). A direct
+adaptive method for faster backpropagation
+learning, the rprop algorithm, Proc. of Int.
+Conf. on Neural Networks (1) 586591.
+Simas Filho, E. F., Caloba, L. P. and Seixas,
+J. M. (2007). Independent component analysis applied for online filtering on a high
+
+1079

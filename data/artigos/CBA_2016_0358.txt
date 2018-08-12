@@ -1,0 +1,1367 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+PRACTICAL NON-LINEAR MODEL PREDICTIVE CONTROL PNMPC
+ALGORITHM IMPLEMENTATIONS
+Bryant Picon Yang, Agustinho Plucenio
+
+
+Dpto. de Automacao e Sistemas
+Universidade Federal de Santa Catarina
+88040-900
+Florianopolis, SC, Brasil
+
+
+Firenze-Consultoria em Engenharia e Informatica
+Av. Ledio Joao Martins, 201-203 - 88102-000 KOBRASOL Sao Jose, SC, Brasil
+Emails bryant.bruce@posgrad.ufsc.br, brplucenio@firenzeconsult.com,
+Abstract Most dynamic processes exhibit nonlinear relationships between controlled and manipulated variables. Depending on the application, the MPC algorithm is often chosen between a non-linear or a linear type.
+This paper presents different implementations of the PNMPC-Practical Non-linear Model Predictive Control
+algorithm. It is shown that the PNMPC algorithm may be written to handle the non-linearity at different levels.
+For the sake of simplicity, the algorithms are implemented to control the level of a conical tank. The main
+purpose of the controller is to manipulate the position of the outlet valve in order to follow the reference. The
+performance and the computational cost of six different implementations of PNMPC controller are shown. The
+results of the controllers are compared and analyzed by the system response verification, the algorithm runtime
+and driver performance.
+Keywords
+
+Nonlinear predictive control, Computational cost, Conical tank, Level control, SISO system
+
+Resumo A maioria dos processos dinamicos exibem relacoes nao lineares entre variaveis controladas e manipuladas. Dependendo da aplicacao, o algoritmo MPC e muitas vezes escolhido entre um tipo linear ou nao
+linear. Este trabalho apresenta varias maneiras de implementar o algoritmo PNMPC. Mostra-se que o algoritmo
+PNMPC pode ser escrito para lidar com a nao-linearidade em diferentes nveis. Por uma questao de simplicidade, os algoritmos sao implementados para controlar o nvel de um tanque conico. A principal finalidade do
+controlador e manipular a abertura da valvula de sada, a fim de seguir a referencia. O desempenho e o custo
+computacional de seis implementacoes diferentes de controlador PNMPC sao exibidos. Os resultados dos controladores sao comparados e analisados pelo sistema de verificacao de resposta, o tempo de execucao do algoritmo
+e o desempenho do atuador.
+Palavras-chave
+
+
+1
+
+Controle preditivo nao linear, Custo computacional, Tanque conico, Controle de nvel,
+
+Introduction
+
+The Model Predictive Control (MPC) is one of the
+most advanced modern control techniques, being
+probably the one that has been the most successful in industrial applications especially in the oil
+industry (Garca, 1989).
+The history of advanced control begins in the
+early 1960s with the work of Kalman as well as
+co-author Ricatti and others, (Qina and Badgwell, 2003). But it was only after a set of papers
+presented in the late 1970s that MPC controllers
+became interesting for industrial applications
+In 1978, Richalet described the applications
+of Control Models Predictive Heuristic in 1979
+Shell Engineers Cutler and Ramaker as well as
+Pratt and Gillette outlined Dynamic Control Matrix (DMC) and reported applications for a catalytic tab fluid. In both algorithms, an explicit
+dynamic model of the plant has been used to predict the effect of future control actions on the output, hence the name Model Predictive Control.
+The main causes of this success is due to the
+ability of the MPC to control a wide range of processes, from those having a relatively simple dy-
+
+ISSN 2525-8311
+
+namic to others more complex, for example Systems with delay, multivariables, unstable, as well
+non-linear dynamic among others. The MPC also
+allows to obtain solutions, notwithstanding the existence of constraints in the variables (Normey and
+Camacho, 2007).
+The majority of the real systems have nonlinear dynamics, however, when the process operational range is small, the dynamics can be satisfactorily approximated by linear models. This
+approach has motivated many MPC techniques
+using linear models such as Dinamix Matrix
+Control-DMC, (C.R. Cutler and B.L. Ramaker,
+1988) Model Algorithm Control-MAC,(Richalet,
+Rault, Testud and Papon, 1976) Generalized Predictive Control-GPC, (Clarke, Mothadi and Tuffs,
+1987)) (Plucenio et al., 2007).
+The main advantage of linear MPC is the low
+cost to obtain linear models in the development
+of the project compared to non-linear approaches.
+Other advantages are lesser difficulties to solve
+the associated optimization problems. On the
+other hand, when the processes have a very strong
+non-linear dynamic or when the operation range
+is wide, then it might be necessary to consider
+
+1186
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+the non-linear model in the control algorithm, to
+maintain the desired performance for the closedloop system.
+When choosing a predictive control algorithm,
+the initial decision is to choose between two algorithm systems, either the linear or the non-linear
+systems. In many cases we have good non-linear
+process models. Unfortunately it is common practice to get a linear representation of the model in a
+single point of operation and use this representation to obtain the dynamic matrix coefficients and
+the free response. The original PNMPC technique
+uses a real-time linearization of the input-output
+variables. This linearization is performed in a two
+step process and it obtains almost a second-order
+approximation. Depending on the non-linearity
+process to be controlled, there are several ways to
+implement the PNMPC algorithm. The algorithm
+choice will depend on the available processing time
+and quality of response to be obtained. The PNMPC can be implemented as a linear controller.
+Due to the way it treats the prediction error, the
+linear version of PNMPC will be similar to a GPC.
+This paper is organized as follows section
+2 presents the description of the mathematical
+model of the conical tank. The theoretical principles of non-linear control strategy are presented
+in section 3. The description of the six alternative
+versions of the implementation of the PNMPC are
+shown in section 4. And section 5 presents the results of implementations described in section 4.
+
+2
+
+Mathematical Model Description of
+the Conical Tank
+
+To demonstrate the application of the Practical
+MPC algorithm for non-linear systems (PNMPC),
+a process with a non-linear dynamics was considered. Furthermore and in order to simplify
+the demonstration, the level control in a conical
+tank (SISO system) was also used. The process
+is shown in Figure 1, where the manipulated variable is the output valve. The input flow will act
+as a disturbance in the system. The mass balance
+
+inside the tank is given by the equation
+Qin  Qo  A
+
+(1)
+
+where
+Qin
+Qo
+R
+r
+H
+h
+
+input flow
+output flow
+maximum radius of the conical tank
+radius of the conical tank at steady state
+maximum height of the conical tank
+height of the conical tank at steady state.
+
+Whereas the cross-section area of the conical tank
+is given by
+
+ 2
+h
+A   r  (R  r)
+H
+
+(2)
+
+and the output flow is represented by the equation
+
+Qo  Cv Uc h
+
+(3)
+
+where Uc is the control action of the outlet valve
+and Cv is a constant for the valve.
+Substituting equations (2) and (3) in (1),we
+have the following model of the conical tank
+
+Qin  Cv Uc h
+dh
+ 
+2
+h
+dt
+ r  (R  r) H
+
+3
+
+(4)
+
+PNMPC control
+
+The PNMPC technique was developed by
+(Plucenio, 2010) and is based on algorithms that
+use the vector representation of predictions over
+the horizon p, Y, as a vector function with m
+changes in the control action u, according to the
+equation (5). The PNMPC is a technique that offers an alternative to solve the problem of linear
+optimization using conventional optimizers as QP
+quadratic programming or linear programming solution.
+Y  F + Gu
+
+(5)
+
+The PNMPC differs from other MPC techniques
+mainly because it uses linearized models of the
+system trajectory. It is assumed that the pre, past
+dictions Y depend only on past entries 
+u
+
+
+outputs y and the future control increments u.
+
+, u)
+Y  f (
+y ,
+u
+
+Qin
+
+(6)
+
+The vector of predictions is rewritten as
+
+R
+
+r
+h H
+
+where
+
+Y  F + GP N M P C u
+
+(7)
+
+
+)
+F  f (
+y ,
+u
+
+(8)
+
+GP N M P C 
+Qo
+
+Figure 1 conical tank
+
+ISSN 2525-8311
+
+dh
+dt
+
+ Y
+u
+
+(9)
+
+The matrix GP N M P C is the Jacobian of Y relative to the control increments and is obtained
+numerically as the vector of free response F. A
+prediction algorithm computes the vector Y with
+
+1187
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+the p predictions when it provides the values of
+the past inputs and outputs, and the vector with
+the m future input increments u.
+ and the
+If we call the set of past inputs 
+u
+
+
+current and past output y , predictions can be
+rewritten in the following expression.
+
+,u (k))
+y (k + 1)  f (
+y ,
+u
+
+
+
+
+y (k + 2)  f ( y , u ,u (k) , u (k + 1))
+..
+.
+
+,u (k) , . . . , u (k + m  1))
+y (k + p)  f (
+y ,
+u
+(10)
+
+The following compact representation is obtained
+Y  F + GP N M P C u
+
+(11)
+
+Whereas that F is the vector of predictions that
+would be obtained for u  0 and GP N M P C is
+the Jacobian of the predicted outputs with respect
+to the vector of increments of control signal u.
+GP N M P C is a generalized dynamic matrix that
+can be used for linear systems and non-linear systems, provided they are continuous and differentiable. The expression (11) for a SISO system can
+be re-written as
+
+
+
+
+
+f1 (
+y,
+u)
+y(k + 1)
+
+
+f2 (
+y(k + 2)
+y,
+u )
+
+
+
+
+
+
+
+
+.
+.
++
+  
+
+
+
+
+
+.
+.
+
+
+
+
+.
+.
+
+
+fp (
+y,
+u)
+y(k + p)
+  y(k+1)
+0
+
+ u(k)
+  y(k+2)
+ y(k+2)
+
+
+ u(k)
+u(k+1)
+
+
+.
+.
+.
+
+
+.
+.
+.
+
+.
+.
+.
+
+ y(k+p)
+ y(k+p)
+
+u(k)
+u(k+1)
+
+
+(12)
+
+0
+0
+.
+.
+.
+ y(k+p)
+u(k+m1)
+
+
+
+
+
+u(k)
+
+  u(k + 1) 
+
+
+
+
+.
+
+
+
+
+.
+
+
+.
+
+ u(k + m  1)
+
+The lower triangular form of the Jacobian matrix is
+due to the causality of the system and absence of direct coupling between input and output. This means
+ y(k+j)
+ 0 for i  j. The partial derivative
+u(k+i)
+ yk+j
+u(k)
+
+it is defined as
+
+yk+j (uk1 + uk )  yk+j (uk1 )
+ yk+j
+ lim
+uk 0
+u(k)
+uk
+(13)
+For a SISO system, for example, on the first instant
+of sampling, the following procedure for obtaining the
+numerical value of F and GP N M P C is performed
+1. Get the vector Yp0 (dimension p  1) executing
+the prediction model with the past inputs and
+outputs and u  0 0 . . . 0T . F  Yp0 .
+2. Computes the first column of the matrix
+GP N M P C . Obtaining the vector Yp1 (dimension
+p  1) executing the model with the past inputs
+and outputs and considering u   0 . . . 0T ,
+uk1
+where  is a very small value, 1000
+, for example.
+
+For the application of PNMPC technique in multivariable systems it is necessary to concatenate the prediction vectors for each variable Y and the control increments u. Thus, a system with ni entries and no
+outputs have the following vectors
+Y  Y1 Y2 . . . Ypno T
+u  u1 u2 . . . umni T
+
+To obtain F and GP N M P C the procedure is then
+as above. The difference is that now the matrix
+GP N M P C have nino computed blocks as in the SISO
+case for each pair of input and output. Obviously, as
+in linear MPC, weak relationships output-input may
+be disregarded to avoid noise propagation. The control action is obtained by minimizing the cost function
+J. Using equation (7) as a way of expressing the predictions, the quadratic objective function from section
+2.2.2 can be re-written as follows
+min J
+u
+
+subject to
+J  (Y  W)T R(Y  W) + uT Qu,
+Y  F + GP N M P C
+
+Y 2 Y 0
+
+GP N M P C (, 2)  p  p .
+4. Continues with the calculation of the others
+columns of the matrix GP N M P C to the last column, where the vector Ypm is obtained executing the model with the past inputs and outputs
+u  0 0 . . . T .GP N M P C (, m) 
+
+ISSN 2525-8311
+
+m
+0
+Yp
+Yp
+.
+
+
+(15)
+
+where W represents the vector of future reference, R
+the error weighting matrix and Q the control weighting matrix. The minimization of the cost function
+for the case without constraints can be obtained by
+equating to zero the gradient of the cost function and
+in the case with constraints the solutions is obtained
+by solving a QP.
+Thus, in terms of optimization, the PNMPC has a
+complexity similar to the DMC or the GPC algorithm.
+The predictive control techniques applied to linear systems use a mechanism that consists in correct the predictions with the error between the measured value of
+the controlled variable and its predicted value at time
+k. This technique applied to linear systems guaranteed zero error in steady stated, because the increase
+in the control effort required for error correction at the
+instant k will be the same in future instants due to the
+linear relationship between the input and output, so
+the gain is constant. The application of this procedure to the PNMPC technique applied to non-linear
+systems does not guarantee null error in steady state,
+because the gain varies with the operating point of the
+system. The procedure to correct the predictions presented in (Plucenio, 2010), consists in adding to each
+prediction the integral of the filtered prediction error.
+Figure 2 shows how the correction factor for each controlled variable can be obtained. A correction factor
+
+Y 1 Y 0
+
+GP N M P C (, 1)  p  p .
+3. Computes the second column of the matrix
+GP N M P C . Obtain the vector Yp2 (dimension
+p  1) executing the model with the past inputs
+and outputs and considering u  0  . . . 0T .
+
+(14)
+
+ysc  k k  1
+
+
+
+
+1
+DF  q 
+
+n  k 
+
+ki
+
+1  q 
+1
+
+
+
+
+y k 
+ y  k k  1 
+
+
+ek 
+
+q 1
+
+Figure 2 Block diagram of the correction factor
+is added to the prediction so that the error between
+the measured and the corrected value of prediction to
+
+1188
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+zero. The correction factor is obtained filtering and integrating the error as shown in Figure 2. Considering
+the controlled variable y(t), if the level error has a linear approximation, the transfer function that relates
+the error and the difference between the measured and
+the predicted values of the variable without correction
+can be obtained as shown in (16). It must be noted
+that the error e(z) is defined as the difference between
+the measured value and the corrected predicted value,
+whereas (y(k)  ysc (k)) corresponds to the error between the measured variable and the predicted value
+without correction.
+e(z)
+z 2  (1 + fd )z + fd
+ 2
+(y(k)  ysc (k))
+z  (1 + fd  ki )z + fd
+
+(16)
+
+Assuming the closed loop system is stable, we can apply the Final Value Theorem to verify that the presence of (1z 1 ) in the numerator of the transfer function (16) guarantees null error in steady state for an
+input of type step. The values of ki and fd are chosen
+by comparing the denominator of the transfer function
+(16) with the desired polynomial pd (z)  z 2 2az+a2 .
+The value of a has an impact on the speed at which
+the error responds to disturbances. After the value of
+a is determined, fd and ki can be obtained through
+equations (17) and (18).
+
+With the control action calculated, an initial predicted
+output Yp0 is obtained. A control increment  is added
+to the control vector U and a new output prediction
+(Y) is obtained. This value  will scroll through the
+u vector in order to calculate the matrix GP N M P C
+as described in (Plucenio, 2010) and shown in equation
+(20).
+Ypm  Yp0
+GP N M P C (, m) 
+(20)
+
+In fact, the calculation of the derivative of this new
+control signal U, serves to compensate the nonlinearity of the system. Having the matrix G(k) at
+the current time and the matrix G(k  1) calculated
+in the previous instant Gprevious , it is possible calculate in two steps the intermediate matrix GP N M P C
+by the following equation
+GP N M P C  0.5G(k  1) + 0.5G(k)
+
+The algorithm implemented for this version is detailed
+in the flow diagram in Figure 3
+For 1 NumItera-1
+- Calculate the output of the plant
+- Updates the references.
+
+i1
+
+ yz.
+
+No
+
+- Calculate the error er  yz  ymod el
+- Calculate the Adjustment factor FAC
+- Calculate the Yp0
+
+- Calculate the F  Yp0
+- Cálculation of the free corrected
+response F  F  FAC
+
+Yes
+0
+
+fd  a
+
+2
+
+(17)
+2
+
+ki  1 + a  2a
+(18)
+
+- Obtain the vector Yp , executing the
+algorithm that model the process, using
+T
+future null increments u 
+.
+- Calculation the free response without
+correction F  YP0 .
+- Get the predictions vector, executing the
+algorithm that model the process, using y and u
+with a little value of  but not null for calculating
+
+GPNMPC
+
+4
+
+- Calculate
+Ypm  Yp0
+GPNMPC  ,m  
+
+Implementation of PNMPC Alternatives
+
+
+
+Calculate u with Quadpro
+
+The PNMPC presented in the previous section can be
+implemented in different ways. The goal of this paper
+is to study the performance and the computational
+cost of the PNMPC controller, by using the following
+six different versions of the PNMPC implementation,
+as well as simplifications of the complete original technique to reduce the processing time. The way of calculating the predictions can be modified to convert the
+PNMPC into a linear MPC controller. Six versions of
+the PNMPC will be applied to the conical tank. The
+goal is to control the level of the tank through outlet
+valve manipulation.
+4.1
+
+1st version PNMPC complete
+
+Following the PNMPC theory from (Plucenio, 2010),
+the first PNMPC proposed in this paper considers the
+non-linear free response and calculation of the matrix
+G in two steps. The first procedure of the algorithm is
+to calculate at a given iteration the variation of initial
+control (uini ), which is calculated according to the
+existing matrix G, that is, the matrix Gprevious . Obtaining the initial control variation, the future control
+actions are calculated according to the equation
+Um1  Hm1 u (k  1) + TImm uinim1
+where
+
+(19)
+
+ISSN 2525-8311
+
+control horizon
+vector of ones
+previous control action
+integrating Toeplitz matrix
+initial control variation.
+
+Calculate uini depending of
+Gk 1 and F .
+
+Calculate u  k   u  k  1  uini
+
+Calculate the control law
+
+u  k   u  k 1  u
+
+Update of the past outputs
+and the past action control.
+No
+
+For
+
+i>1
+
+Yes
+
+Y  F  GPNMPC u
+- Get the predictions vector, executing the
+algorithm that model the process, using y
+and u with a little value of  but not null
+for calculating GPNMPC
+
+ymodel  yz
+
+- Calculate
+Ypm  Yp0
+GPNMPC  ,m  
+ G(k )
+
+
+
+- Calculate G PNMPC  0.5  G(k  1)  G(k ) 
+- Calculate u with Quadpro
+
+Figure 3 PNMPC complete algorithm flow diagram
+
+4.2
+
+2nd version PNMPC without calculation uini
+
+For processes with a strong non-linear characteristic
+it is recommended to choose the complete PNMPC
+technique (first version), but if the process presents
+a smooth non-linearity it may be possible to reduce
+the computational cost by eliminating the calculation
+of uini . In this version it is proposed the calculation of the GP N M P C matrix in one step. Therefore,
+it is not necessary to calculate uini . In order to
+calculate the control action needed to obtain Yp0 the
+value of the control variation of the previous iteration is used. This Yp0 is then calculating the matrix
+GP N M P C , as shown in section three. Once the calculation of uini is eliminated, the precision with which
+the PNMPC calculates the GP N M P C decreases, this
+can be explained as the uini has a direct influence
+in the calculation of the Yp0 , as it is directly involved
+in the calculation of the matrix GP N M P C .
+4.3
+
+m
+H
+u(k  1)
+TI
+uini
+
+(21)
+
+3rd version PNMPC getting only the first column of G
+
+As already described in the literature, the matrix
+G the one that is responsible to save the values of
+the dynamics process (Camacho and C., 2007) and
+
+1189
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+the GP N M P C is the non-linear version of the dynamic matrix used in the linear predictive control
+(Plucenio, 2010). One of the possibilities to reduce the
+computational cost is to calculate only the first column
+of the matrix G by the normal procedure of PNMPC
+and mount the matrix GP N M P C considering the system time-invariant, this procedure is commonly performed in linear systems (De Keyser, 1998). Thus the
+non-linear optimization problem can be transformed
+into a sequence of linear optimization problems. For
+this it is necessary to check how much the diagonal
+elements of the matrix G vary. In the case where the
+variations are not significant, one can opt for the technique used in linear systems only calculate the first
+column of the matrix G and displaced until a lower
+triangular matrix is obtained, that means treat the
+non-linear process as if it were linear. In the case of
+a non-linear process, it can be seen that the diagonal elements of the matrix G present significant variations between the elements of the diagonal, however,
+in the case of a linear process, the diagonals elements
+of the matrix G do not present significant variations.
+To check the degree of the non-linearity in the study
+case, Figure 4(a) shows the variations in the diagonals
+elements of the matrix G calculated by the Jacobian
+matrix (GP N M P C ). As this matrix is recalculated on
+
+of the process and the non-linearity degree can adjust
+the value of n in each application. In the case study of
+this paper, as shown in the previous version, the nonlinearity degree of the process is not significant, so
+the recalculation of the matrix G does not need to be
+performed at each iteration. For the testes was used
+a recalculation every 25 samples. The choice of this
+time was made taking care not to lose the dynamics
+of the process.
+4.5
+
+5th version PNMPC looking for free response
+time to time, using the Cutler idea (Recursive
+DMC) to the other instants
+
+This version seeks to reduce the computational cost
+in processes where the non-linearity is not significant,
+inserting in the PNMPC technique the calculation of
+free response as is done in the recursive DMC proposed
+by Cutler. To (Cutler and Ramaker 1988), as shown
+in (Plucenio et al., 2014), the open-loop predictions
+for time t + k, having information in t and t  1 are
+shown in the equations (22) and (23) respectively
+y0 (t + k t ) 
+
+
+X
+
+gi u (t + k  i)
+
+(22)
+
+ik+1
+
+y0 (t + k t  1 ) 
+
+
+X
+
+gi u (t + k  i)
+
+(23)
+
+ik+2
+
+The difference between the open-loop prediction
+in t + k having t, and in t + k having t  1, it is
+only the new control action which is not known in
+u(t  1). Subtracting the equations (22) and (23)
+has the equation (24)
+y0 (t + k t )  y0 (t + k t  1 )  gk+1 u (t  1) +
+
+X
+
+(a) Non-linear
+matrix
+
+dynamics (b) Linear dynamics matrix
+
+ik+2
+
+gi u (t + k  i) 
+
+
+X
+
+gi u (t + k  i) (24)
+
+ik+2
+
+which leads to the equation (25)
+
+Figure 4 Dynamic matrix GP N M P C
+
+y0 (t + k t )  gk+1 u (t  1) + y0 (t + k t  1 ) (25)
+
+each iteration, the data shown in Figure 4(a) represent only a particular step, the iteration k  35. As
+shown, the diagonal elements of the matrix GP N M P C
+present variations, but these variations are small, so
+they could be disregarded. Applying the third version of the PNMPC algorithm proposed in this paper,
+where only the first column of the matrix G is calculated, so that the new matrix G for iteration k 
+35 shown in Figure 4(b). In the Figure 4(b) the first
+column of the matrix G is shifted m times, to form a
+lower triangular matrix, where m is the horizon control. With this modification, the computational cost
+for the calculation of G decreases reasonably.
+
+The recursive DMC calculation is executed as follows Keep in memory a vector with N elements
+Yf ree  y0 (t t  1 ) , ..., y0 (t + N  1 t  1)T . Its
+elements are the free responses given the known control actions at the moment t  1. When starting the
+DMC controller at the moment t0 , and as the system
+is in steady state, it is considered that the open-loop
+predictions are constant and equal to a value of y(t0 ).
+When starting the DMC algorithm at the moment t,
+the vector of the free response must be updated because the change of control action u(t  1) it is now
+known. The vector Yf ree of the equation (26) is updated.
+
+
+g1
+ g2 
+
+
+Yf ree  Yf ree +  .  u (t  1)
+(26)
+ .. 
+gN
+
+4.4
+
+4th version PNMPC similar to 3rd version, but
+now the matrix G is recalculated only from time
+to time.
+
+This version is a very interesting and flexible option.
+The process is treated as if it were linear and only the
+first column of G is calculated. However, the matrix
+G is not obtained at each iteration, it is recalculated
+every n sampling times. An operator with knowledge
+
+ISSN 2525-8311
+
+After getting the new control signal u(t), it is necessary to displace the values within the vector Yf ree .
+At time t + 1 the free responses in t + 1 until t + N is
+obtained based on the data until t, where N is called
+
+1190
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+the model horizon. So the first element is discarded
+because it is the prediction concerning to instant t that
+has passed. The problem is that making this displacement, the last element ( y(t+N t)) is unknown. Therefore, in the stable case y0 (t + N t) 
+ y0 (t + N  1t),
+the new vector Yf ree will be given by the equation
+(27)
+
+
+y0 (t + 1 t )
+
+
+y0 (t + 2 t )
+
+
+
+
+.
+..
+(27)
+Yf ree  
+
+
+
+ y0 (t + N  1 t ) 
+y0 (t + N  1 t )
+The condition y0 (t+N t) 
+ y0 (t+N 1t) is shown as
+y0 (t + N  1 t ) 
+
+
+P
+
+gi u (t + N  1  i)
+
+iN
+
+y0 (t + N t )
+
+
+P
+
+
+
+gi u (t + N  i)
+
+
+
+iN +1
+
+P
+
+gi+1 u (t + N  1  i)
+
+iN
+
+y0 (t + N t )
+
+P
+
+
+
+y0 (t + N  1 t )
+
+
+
+Table 1 Tuning parameters for the PNMPC controllers
+Param
+p
+m
+
+
+
+
+a
+
+Definition
+prediction horizon
+control horizon
+control-weighting factor
+reference tracking weighting factor
+reference filter
+value for variation in control
+filter parameter for prediction error
+
+Table 2 Comparative table of the execution times
+for the PNMPC versions
+Execution
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+T ot.times
+Averaget.s
+
+1st version
+40.2191
+39.5854
+38.8933
+38.9484
+39.1778
+39.0862
+39.1187
+39.1515
+39.1868
+38.9841
+392.3513
+39.2351
+
+2nd version
+38.1917
+38.2922
+38.4277
+38.1932
+38.3610
+38.5138
+38.6370
+38.5807
+38.7472
+38.4975
+384.4420
+38.4442
+
+3rt version
+25.7825
+25.6580
+25.6750
+25.6655
+25.8829
+25.6190
+25.7077
+25.7749
+25.6909
+25.7159
+257.1723
+25.7172
+
+4th version
+19.3745
+19.1152
+19.1802
+19.1637
+19.0723
+19.2308
+19.2133
+19.1650
+19.2164
+19.0694
+191.8008
+19.1800
+
+5th version
+29.4440
+29.9883
+29.9960
+29.2337
+29.0735
+29.0478
+29.0250
+29.0478
+29.0875
+29.4870
+293.4296
+29.3429
+
+6th version
+27.5302
+27.6980
+27.6653
+27.5607
+27.4466
+27.6603
+27.4830
+27.7040
+27.6850
+27.7875
+276.2206
+27.6220
+
+(gi+1  gi ) u (t + N  1  i)
+
+iN
+
+
+As gi+1  gi 
+ 0, i > N , it has y0 (t + N t) 
+y0 (t + N  1t), as was able to demonstrate.
+Thus, the calculation of free response considered
+in the DMC Recursive is given by the equation
+
+
+y0 (t + 1 t )
+
+
+..
+f 
+ + 1p1 (y(t)  y0 (t t )) (28)
+.
+y0 (t + p t )
+Where the equation of the model error is
+e  y(t)  y0 (t t )
+
+(29)
+
+As shown in (Plucenio et al., 2014), the representation of predictions considering the calculation of the
+free response to the DMC Recursive is shown in the
+equation (30)
+Y  f + Gu
+(30)
+where
+Y
+f
+G
+u
+
+predicted output with dimension p  1
+free corected response with dimension p  1
+Jacobian matrix of Y with dimension p  m
+vector with dimension m  1 containing the
+increments of the control action.
+
+Using this form of implementation, the necessary calculations to obtain the free response become more
+simple, not requiring the storage of past control increments. This procedure only changes the way to
+calculate the free response, the rest of the control algorithm is not modified.
+4.6
+
+Value
+12
+3
+3
+1
+0.25
+0.01
+0.15
+
+6th version PNMPC reassessing the matrix G
+and free response according to the prediction error
+
+The idea of this version is calculate the absolute value
+of the prediction error, with the objective to fix a range
+tolerable error in which it is considered that the values
+obtained are acceptable, and it is not necessary to
+recalculate the G matrix and the free response for
+each iteration.
+
+ISSN 2525-8311
+
+5
+
+Results
+
+This section presents the results obtained in the different versions implemented with the PNMPC technique.
+As the main objective is to evaluate the computational
+cost involved in the implementation of the PNMPC
+technique, it will be shown the runtime obtained in
+the calculation of the algorithm for each version of
+the PNMPC applied in the case study on the nonlinear process of the level control of the conical tank.
+All simulations were performed in MatLab 2013, on a
+PC with A8 quad-core processor, AMD with 1.9 GHz
+and 6GB of RAM, with Windows 8. To first obtain
+an accurate approximation of the model, the differential equation describing the model was integrated
+using Ode45 function of MatLab. The tuning parameters used for the PNMPC controllers are the same
+for all versions for comparison purposes, these values
+are shown in Table 1. The sample time for all versions
+is 10 second for reference greater than 1 meter and 1
+second for reference less than 1 meter . Table 2 shows
+runtime the values for each version of the PNMPC
+technique algorithm implemented in section 4.
+To estimate the execution time of each algorithm,
+each version was executed 10 times and the final time
+was calculated as the average of 10 executions. The
+time is measured in seconds and the results are shown
+in Table 2.
+Figure 5 shows the results for two cases. The first
+for reference greater than 1 meter (Figure 5(a), 5(c)
+and 5(e)) and the second test for reference less than 1
+meter (Figures 5(b), 5(d) and 5(f)).
+6
+
+Conclusions
+
+This paper presented six different versions of the PNMPC technique. With little modifications of the complete technique, either in the calculation of the free
+response or in assembling the matrix GP N M P C , the
+processing time is reduced. With these modifications
+the PNMPC can be simplified and be converted into
+a linear MPC controller. As shown in the results in
+
+1191
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+yr
+y1
+y2
+y3
+y4
+y5
+y6
+
+L evel m
+
+1.5
+
+1
+
+0.5
+
+0
+
+(a) Outputs for ref>1m
+
+0
+
+(b) Outputs for ref<1m
+
+0.5
+
+1
+
+1.5
+
+T i me mi n
+
+(a) Outputs for
+height variation
+
+significant
+
+1
+U1
+U2
+U3
+U4
+U5
+U6
+
+V al v.Openi ng
+
+0.8
+0.6
+0.4
+
+(c) Signals control for
+ref>1m
+
+(d) Signals control for
+ref<1m
+
+0.2
+0
+0
+
+0.5
+
+1
+
+T i me mi n
+
+1.5
+
+(b) Signals control for significant height variation
+
+(e) Disturbance
+ref>1m
+
+for
+
+(f) Disturbance
+ref<1m
+
+for
+
+Figure 5 Outputs references, control signals, disturbance
+
+Table 3 Performance index of the PNMPC versions
+Performance index
+MSE
+IAE
+
+V1
+0.0031
+2.58
+
+V2
+0.0040
+3.40
+
+V3
+0.0063
+4.56
+
+V4
+0.0085
+4.77
+
+V5
+0.0100
+5.89
+
+V6
+0.0096
+5.07
+
+Figures 5, the six versions implemented can follow reference and reject disturbances in the both tests (reference greater than 1 meter and reference less than 1
+meter), however, the PNMPC can also reach the references and reject disturbances more quickly. As it is
+shown in Table 2 the computational cost is higher due
+to the complexity of calculation the PNMPC requires.
+On the other hand, versions 3, 4, 5 and 6 which where
+were part of the non-linearity process are soft these
+controllers do manage to follow the reference and reject disturbance, however, more slowly as compared
+to the complete PNMPC, which has a lower computational cost.
+Figure 6 shows that, for significant height variations, the six versions have a good reference tracking, where the complete PNMPC reacts faster than
+the linear controllers remembering that the computational cost is greater. Comparing the results, it can be
+observed that the six implemented algorithms have a
+very similar response, although the complete PNMPC
+algorithm provides the best results, where all can react properly to the disturbance, and where, the main
+difference between them being the runtime. This can
+be attributed to the sof t non-linearity of the process. Thus, a study of the behavior process can lead to
+an implementation with gains in terms of processing
+time without a significantly compromise of the performance. Table 3 shows the comparison of the performance index of MSE (mean squared error) and IAE
+(integral of the absolute magnitude of the error) for
+PNMPC versions.
+
+ISSN 2525-8311
+
+Figure 6 Outputs and signal control for significant height variation
+Acknowledgments
+The authors wish to extend his gratitude for the financial support he received from PRH-34 The Agency
+National of Petroleum (ANP), oil, Gas, and Biofuels.
+References
+Camacho and C., B. (2007). Model Predictive Control,
+segunda edn.
+De Keyser, R. (1998). A gentle introduction to model
+based predictive control, PADI2 International
+Conference on Control Engineering and Signal
+Processing .
+Garca, Carlos E. Prett, D. M. (1989). Model predictive control Theory and practice-a survey,
+International Federation of Automation Control
+25(3) 14.
+Normey, J. E. and Camacho, E. F. (2007). Control of
+Dead time processes.
+Plucenio, A. (2010). Desenvolvimento de tecnicas de
+controle_nao_linear para elevacao de fluidos multifasicos, Dissertacao de doutorado-engenharia de
+automacao e sistemas, Centro Tecnologico, Universidade Federal de Santa Catarina, Florianopolis.
+Plucenio, A., Campos, M., Vasconcellos, L. and
+De Gomes, M. (2014). Model predictive control algorithm with stability step, Congresso
+Brasileiro de Automatica .
+Plucenio, A., J., N., D., P. and A., B. (2007). Controle
+preditivo nao linear na industria do petroleo e
+gas, PDPETRO .
+Qina, S. J. and Badgwell, T. A. (2003). A survey
+of industrial model predictive control technology,
+Control Engineering Practice 11 11 733764.
+
+1192

@@ -1,0 +1,656 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+INFERENCES ON CRALC USING THE AC-FOVE ALGORITHM
+Felipe I. Takiyama, Fabio G. Cozman
+
+ Laboratorio de Tomada de Decisao
+
+Escola Politecnica - Universidade de Sao Paulo
+Av. Prof. Mello de Morais, 2231, CEP 05508-900
+Sao Paulo, SP, Brazil
+Emails felipe.takiyama@usp.br, fgcozman@usp.br
+Abstract In the context of the Semantic Web, there is large body of work focusing on mixing probabilities
+to description logics. The combination of probabilistic models and description logics greatly increases the expressiveness of the latter, but it also introduces complications to perform inferences. In this paper we investigate the
+application of a first-order variable elimination algorithm  the ac-fove  to ontologies written in a probabilistic
+description logic  the crALC. We present the necessary theory and apply the algorithm to the logic in an
+experiment.
+Keywords
+
+Probabilistic Description Logic, First-Order Inference Algorithm.
+
+Resumo No contexto da Web Semantica, ha um grande esforco envolvido na incorporacao de probabilidades
+a logicas de descricao. A combinacao de modelos probabilsticos e logicas de descricao aumenta significativamente
+a expressividade desta, mas introduz complicacoes para a realizacao de inferencias. Neste artigo investiga-se a
+aplicacao de um algoritmo de eliminacao de variaveis em primeira ordem  o ac-fove  a ontologias escritas
+em uma logica_de_descricao_probabilstica  o crALC. Apresenta-se a teoria necessaria e aplica-se o algoritmo a
+logica em um experimento.
+Palavras-chave
+
+.
+
+Introduction
+
+In the context of Semantic Web, ontologies are expected to be used by intelligent agents to retrieve
+information, allowing them to interpret relationships between terms in vocabularies in a flexible
+and unambiguous way (Horrocks et al., 2003). Semantic web technologies generally rely on the use
+of description logics, since they offer good flexibility and provide tractable means for reasoning. On
+the other hand, characterizing concepts categorically can lead to problems in real world applications because some terms may have a probabilistic
+nature (Heinsohn, 1994). Thus, there is an ongoing effort to enlarge description logics so they can
+represent and manage uncertainty (Polastro and
+Cozman, 2008).
+In probability theory, Bayesian Networks are
+widely used to represent dependencies between
+random variables. They are, however, propositional representations, which means that the representation of information about multiple individuals requires a number of nodes proportional to
+the number of individuals. Thus, probabilistic
+graphical models are not adequate for describing
+relations between individuals or quantifying over
+sets of individuals. On the other side, first-order
+logics can handle relations and quantification of
+logical variables, but are unable to do that under
+uncertainty. Representations that mix graphical
+models and first-order logic (first-order probabilistic models) were proposed more than twenty years
+ago (Horsch and Poole, 1990). The idea is to fully
+specify a model, that is, its structure and the un-
+
+ISBN 978-85-8001-069-5
+
+derlying probability distributions, before knowing
+the individuals in the modeled domain. In order
+to do that, the specification of the model must be
+independent of the sizes of the populations in the
+model.
+Some models have already been proposed
+(Raedt et al., 2008 Getoor and Taskar, 2007),
+but there are still difficulties to do exact inference,
+since the available algorithms propositionalize the
+model dynamically, which makes the computation
+of inferences infeasible even for small populations.
+In this context, the lifted inference tries to make
+the inference avoiding the propositionalization of
+the model.
+One of the problems that arise in lifted inference is the existence of an extra parameter in
+the parent node in the propositionalization, the
+number of parents of this node will depend on the
+size of the population. (Kisynski and Poole, 2009)
+proposes the creation of a new data structure, the
+aggregation parfactors, that allows this representation without knowing beforehand the size of the
+population, adapting an existing algorithm (Milch
+et al., 2008), the c-fove, to execute inferences on
+the model.
+In this paper we investigate the use of the
+ac-fove algorithm to make inferences over ontologies written in a specific description logic,
+the Credal ALC (crALC) (Cozman and Polastro, 2008). We provide the basic theory and describe an experiment to show that the algorithm
+improves computations speed.
+Section 2 reviews relevant concepts about
+first-order probabilistic models and probabilistic
+
+1857
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+description logic. Section 3 describes the ac-fove
+algorithm and Section 4 describes the probabilistic
+description logic crALC. In Section 5, a problem
+described in crALC is solved using ac-fove. The
+conclusion of this paper is left to Section 6.
+
+2
+2.1
+
+Background
+
+Probabilistic Description Logic
+
+In this section we review some concepts of description logics, in particular those that also apply to
+crALC.
+A vocabulary is a structure containing individuals, concepts and roles (Baader et al., 2003).
+Concepts and roles can be combined through constructors. In ALC, given two concepts C1 and C2
+and a role r, the following constructors are available conjunction (C1 C2 ), disjunction (C1 C2 ),
+negation ( C1 ), existential restriction (Dr.C1 ) and
+value restriction (@r.C1 ). A concept inclusion is
+denoted by C1  C2 and a concept definition is
+represented by C1  C2 . A terminology is a set
+of concept inclusions and definitions. We represent the concept C1  C1 by J and the concept C1  C1 by K. If an inclusion or definition
+contains a concept C1 in its left hand side and a
+concept C2 in its right hand side, we say that C1
+directly uses C2 . We indicate the transitive closure of directly uses by uses. A terminology is
+acyclic if no concept in it uses itself.
+The semantics of ALC is given by a nonempty
+set D, the domain, and a mapping I, the interpretation. It maps individuals to elements of the domain, concept names to subsets of the domain and
+role names to binary relations on the set D  D.
+The interpretation I is extended to other concepts as follows I pC1  C2 q  I pC1 q Y I pC2 q,
+I pC1  C2 q  I pC1 qX I pC2 q, I p C1 q  DzI pC1 q,
+I pDr.C1 q  tx P D Dy  px, y q P I prq  y P I pC1 qu,
+I p@r.C1 q  tx P D  @y  px, y q P I prq  y P
+I pC1 qu. An inclusion C1  C2 is entailed if and
+only if I pC q  I pC2 q and C1  C2 if and only if
+I pC1 q  I pC2 q.
+A probabilistic description logic may adopt
+two types of semantics in the domain-based semantics, probabilities are assigned to subsets of
+the domain D in the interpretation-based semantics, one specifies probabilities over the interpretation themselves. For instance, in a domain-based
+semantics PD pAnimalq   means that a randomly selected individual from D is an Animal
+with probability . On the other hand, the assertion P pAnimalpAntqq  , in a interpretationbased semantics, may be interpreted as assigning
+the value  to the probability of all interpretations
+where Ant is an Animal.
+
+ISBN 978-85-8001-069-5
+
+2.2
+
+CRALC
+
+crALC is a probabilistic description logic proposed by (Cozman and Polastro, 2008). It combines constructs of the well known ALC logic,
+probabilistic assertions and limited use of nominals. It is constructed as follows
+Probabilistic inclusions and inferences.
+Start with a fragment of ALC by discarding
+roles for a moment. Thus, if C and D are
+concepts, then C, C  D and C  D are
+concepts as well. Concept inclusions and
+definitions are allowed, denoted by C  D
+and C  D where D is a concept and C is a
+concept name. Now introduce probabilistic
+inclusions P pC Dq  , where D is a concept
+and C is a concept name. If D is J, then we
+simply write P pC q  .
+Acyclicity. Every terminology T in crALC is
+acyclic, which makes possible its representation as a directed acyclic graph G pT q each
+concept is a node, and if concept C directly
+uses concept D, then D is parent of C in
+G pT q.
+Domaininterpretation semantics. In
+crALC, interpretation-based semantics is
+used. The interpretation-based semantics for
+P pC Dq   is @x P D  P pC pxqDpxqq  ,
+which allows an inference on P pApaqB pbqq
+for concepts A and B and individuals a
+and b. Note that there is no contraction
+between assessment @x  P pC pxqq  
+and assertion C paq  true since we can
+have P pC paqC paqq  true while having
+P pC paqq  .
+Adding roles relational networks.
+Introduce now restrictions Dr.C and @r.C
+into the logic. Assume that C is a concept name (which may have an arbitrarily
+complex definition). Assessments such as
+P pDr.C Dq   are not allowed, since the
+conditioned concept must be a concept
+name. The graphical representation of such
+restrictions is done by creating a node in
+the graph and connecting it to the nodes
+representing the role r and the concept C.
+As these restrictions directly use r and C,
+the directed edge must go from r and C to
+the restriction, as seen in Figure 1.
+r
+
+C
+
+@r.C
+Figure 1 Representation of restriction @r.C
+Independence and Markov condition. For
+every concept C in a given terminology and
+
+1858
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+for each element x P D, C pxq is independent
+of all sentences that do not use C pxq, given
+the sentences that directly use C. For every
+role r and for each pair px, y q P D  D, rpx, y q
+is independent of all sentences that do not
+use rpx, y q, given the sentences that directly
+use r.
+Homogeneity. Suppose that concept C has parents P1 , . . . , Pm . For each conjunction of concepts Pm , where the  sign indicates if Pm
+is negated or not, we have P pC  P1 P2 
+  Pm q   for an arbitrary . This condition allows the representation of the terminology as non-recursive relation Bayesian Network where some probabilities are not fully
+specified.
+Uniqueness. Each individual has a unique name
+in the domain. We also assume that a concept
+C is either specified by a definition or has
+a parent P and probabilistic inclusions with
+respect to P and P  and for each role r there
+is an assessment P prq  , whose semantics
+is @x, y  P prpx, y qq  .
+2.3
+
+First-Order Probabilistic Models
+
+In this section we recall some concepts of firstorder probabilistic models used in the c-fove algorithm (Milch et al., 2008).
+A population is a set of individuals, a parameter is a logical variable typed with a population.
+Given a parameter A, we represent its population by DpAq. A term is a logical variable or a
+constant denoting an individual from a population. A parameterized random variable is of the
+form f pt1 , . . . , tk q, where f is a functor (either a
+function symbol or a predicate symbol) and ti are
+terms. Each functor has a set of values called the
+range of the functor. We denote the range of the
+functor f by rangepf q. The set of parameters of
+the parameterized random variable f pt1 , . . . , tk q is
+denoted by parampf pt1 , . . . , tk qq. A substitution 
+to a set of distinct logical variables tX1 , . . . , Xk u is
+represented in the form tX1 t1 , . . . , Xk tk u where
+each Xi is a parameter and each ti is a parameter typed with a population or a constant. A
+ground substitution is a substitution where each
+ti is a constant. A parameterized random variable f pt1 , . . . , tk q represents a set of random variables, one for each possible ground substitution
+to all of its parameters. We denote this set by
+groundpf pt1 , . . . , tk qq.
+As an example, let P erson be a logical
+variable type to a population of all people in an
+university tp1 , . . . , pn u. Let is studentpP ersonq
+be a parameterized random variable, where
+is student is a functor with range ttrue, f alseu.
+We have rangepis studentq  ttrue, f alseu and
+parampis studentpP ersonqq
+ tP ersonu.
+
+ISBN 978-85-8001-069-5
+
+The
+parameterized
+random
+variable
+represents
+a
+set
+of
+is studentpP ersonq
+n random variables, one for each substitution tP ersonp1 , . . . , P ersonpn u.
+If
+v is an assignment of values such that
+
+f alse
+then
+vpis studentpP ersonqq
+each of the random variables in the set
+groundpis studentpP ersonqq is assigned the
+value false by v.
+A counting formula (Milch et al., 2008) is represented by AC rf p. . . , A, . . . qs where A is a parameter bounded by the  sign, C is a set of inequality constraints involving A and f p. . . , A, . . . q
+is a parameterized random variable. A counting
+formula is a parameterized random variable that
+represents the histogram of possible values of a
+parameterized random variable f p. . . , a, . . . q satisfying a P DpAq  C. Given an assignment of
+values v, the value of AC rf p. . . , A, . . . qs is the
+histogram h such that hpxq  ta P pDpAq  C q 
+vpf p. . . , a, . . . qq  xu
+A factor represents a function from a set
+of random variables to the reals. It is used to
+store the initial conditional probabilities table for
+each random variable and intermediate calculations during inference. A parametric factor or
+parfactor is a triple xC, V, F y where V is a set parameterized
+variables, F is a factor on
+ rangepirandom
+q
+
+R
+and
+C is a set of inequality
+iPV
+constraints. For the purposes of this paper, C will
+be always the empty set, H.
+The c-fove
+ algorithm computes the marginal
+JQ pq  UzQ J pq, where  is a set of parfactors, U and Q are sets of parameterized random
+variables (Q  U) and J pq denotes the product of all factors represented by elements of .
+The calculation is done by summing out variables
+from UzQ in a lifted manner whenever possible,
+applying operations such as substitution, multiplication, splitting and propositionalization. In the
+next section we explain how some of these operations can be used with aggregation parfactors.
+3
+
+AC-FOVE
+
+In this section we present Aggregation Parfactors
+and how they can be used to improve the c-fove
+algorithm.
+An aggregation parfactor is a hex-tuple
+xC, p, c, Fp , b, CA y where
+ p and c are parameterized random variables
+(p is a parent of c)
+ rangeppq  rangepcq
+ A is the only parameter in p that is not in c
+ C is a set of inequality constraints not involving A
+ Fp is a factor on rangeppq  R
+
+1859
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+
+
+b
+
+is a commutative and associative binary
+operator over the range of c
+
+ CA is a set inequality constraints involving A.
+In this paper, C  CA  H.
+An aggregation parfactor can be multiplied
+by a parfactor on certain conditions. Let 
+be a set of parfactors, gA  xC, p, c, Fp , b, CA y
+be an aggregation parfactor from  and g1 
+xC Y CA , p, F1 y be a parfactor from . Let
+gp  xC, p, c, FP d F1 , b, CA y. Then J pq 
+J ppztgA , g1 uqYtgp uq. We denote gp the product
+of gA and g1 .
+The sum out operation is used to eliminate
+random variables from a parfactor in order to compute the marginal. In some cases, it is possible to
+sum out a p random variable directly from an aggregation parfactor xC, p, c, Fp , b, CA y. Let  be
+a set of parfactors and gA  xC, p, c, Fp , b, CA y be
+an aggregation parfactor from . Suppose that
+parampcq  paramppqztAu and that no other element from  represents random variables from
+groundppq. Let m  tlog2 DpAq  CA u and
+bm . . . b0 be the binary representation of DpAq 
+CA . Let F0 , . . . , Fm be a sequence of factors on
+rangepcq  R, defined in a recursive manner
+F0 pxq 
+
+
+
+Fp pxq if x P rangeppq
+0
+otherwise
+
+ 
+
+y,zPrangepcq Fk1 pyqFk1 pzq,
+
+y bz x
+
+
+if bmk  0
+
+F k p xq 
+
+
+
+Fp pwqFk1 py qFk1 pz q,
+
+
+w,y,z Prangepcq
+
+
+ w by bz x
+if bmk  1
+Then we have
+
+
+
+pq
+
+J pq  J ppztgA uq Y txC, tcu, Fm yuq
+
+ground p
+
+The worst case happens when bm . . . b0 
+1 . . . 1. In this case, the elimination of parameterized random variable p will require 2  tlog2 DpAq 
+CA u  prangepcqq3 applications of the b operator, the same amount of multiplications and
+3
+tlog2 D pAq  CA u  pprangepcqq  1q additions.
+4
+
+Example
+
+In this section, we present an example of computation of a simple crALC ontology. We show
+that, in some situations, the use of ac-fove leads
+to significant gains in performance as the population grows, compared to the variable elimination
+algorithm.
+
+ISBN 978-85-8001-069-5
+
+Consider
+an
+adapted
+version
+of
+the example file from the CEL system (a classifier to the logic description
+EL )
+available
+at
+httplat.inf.tudresden.demengontologieskangaroo.cl.
+The terminology is defined as follows
+P pAnimalpxqq  0.9
+
+P pRationalpxqq  0.6
+
+P phasChildpx, yqq  0.3
+
+Humanpxq  Animalpxq  Rationalpxq
+
+Beastpxq  Animalpxq 
+
+Kangaroopxq  Beastpxq
+
+Rationalpxq
+
+P pKangaroopxqBeastpxqq  0.4
+
+Parentpxq  DhasChildpx, yq.Humanpyq
+
+MaternityKangaroopxq  Kangaroopxq
+
+DhasChildpx, yq.Kangaroopyq
+
+Using the theory from section 2.2, we can construct the graph for the ontology, shown in Figure
+2.
+Animal
+
+Rational
+
+Beast
+hasChild
+Kangaroo
+
+Human
+
+DhasChild.Human
+P arent
+
+DhasChild.Kangaroo
+M aternity
+
+Figure 2 The Kangaroo ontology represented as
+a Bayesian network
+Suppose we want to calculate P pP arentpxqq
+and that all concepts and relations have a
+boolean domain. Let x have a finite population D. In the rest of this paper, we abbreviate each node by its first letter and the nodes
+DhasChild.Human and DhasChild.Kangaroo by
+Dh.H and Dh.K, respectively. Since there is
+no evidence to calculate the probability, we
+have H, hH, P KK B, K, hK, MA, R, h, that is, the
+nodes B, K, hK, M do not influence the result on
+P pP arentpxqq. Thus, we can reduce the network
+to the one represented in Figure 3.
+We may now aggregate the nodes Animal,
+Rational and Human into one single node by calculating the joint distribution of them and summing out variables Animal and Rational.
+P pH q 
+
+
+
+P pH A, Rq  P pAq  P pRq  0.54
+
+A,R
+
+Replacing the nodes Animal, Rational and
+Human by the node H, which now has a known
+
+1860
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+Animal
+
+where F7  FH d Fh . This operation involves 8
+multiplications. We sum out variables H py q and
+hpx, y q from parfactor p7q obtaining
+
+Rational
+
+Human
+
+hasChild
+
+xH, tC px, yqu, F8 y
+(8)
+where F8 is F7 with H py q and hpx, y q summed out.
+
+DhasChild.Human
+
+This operation requires 6 additions. We then multiply parfactor p8q with the aggregation parfactor
+p4q, resulting in parfactor p9q
+
+P arent
+
+Figure 3 The d-separated graph
+H
+
+xH, C px, yq, Dh.H pxq, F9 , or, Hy
+(9)
+where F9  F d F8 . The operation requires 4 multiplications. Then, we sum out variable C px, y q
+from aggregation parfactor p9q. This is an oper-
+
+h
+
+Dh.H
+P
+
+Figure 4 Reduced graph to calculate P(Parent)
+probability distribution, we have the graph illustrated at Figure 4.
+In order to use ac-fove, the aggregated node
+must be the only parent of its child node. Thus,
+we introduce an auxiliary node C px, y q  hpx, y q
+H py q. The resulting network is shown in Figure
+5.
+H
+
+h
+
+C
+
+Dh.H
+
+ation that depends on the size of the population.
+If we have 5 individuals in the population, this
+operation requires the application of 20 or operators, 20 multiplications and 8 sums. If we had
+4.294.967.295 individuals (which in binary representation is a sequence of 32 ones), it would be
+necessary 496 or operations, 494 multiplications
+and 217 additions. After summing out C px, y q,
+we multiply the result by parfactor p5q (4 multiplications) and then sum out variable Dh.H pxq (2
+additions).
+As an experiment, we ran a simulation on how
+many operations would be necessary to compute
+the aforementioned result. We considered only
+operations over factors, such as multiplications,
+additions and logical operations, and ignored the
+time that the algorithm would spend to select the
+most appropriate operation to perform. The results are shown in Figure 6.
+
+P
+
+Figure 5 Adapted representation of the reduced
+graph
+Calculating P pPpxqq is equivalent to compute
+J p0 q, where 0 is the set of initial parfactors
+
+ txH, tH pyqu, FH y,
+(1)
+xH, thpx, yqu, Fh y,
+(2)
+xH, tH pyq, hpx, yq, C px, yqu, FC y, (3)
+xH, C px, yq, Dh.H pxq, F, or, Hy, (4)
+xH, tDh.H pxq, P pxqu, FP yu
+(5)
+By multiplying parfactors p1q and p2q, we obtain
+0
+
+the following parfactor
+
+xH, tH pyq, hpx, yqu, F6 y
+(6)
+ FH d Fh . This operation involves
+
+where F6
+4 multiplications. We proceed with the algorithm
+by multiplying parfactors p6q and p3q, thus obtaining the parfactor
+
+xH, tH pyq, hpx, yq, C px, yqu, F7 y
+ISBN 978-85-8001-069-5
+
+(7)
+
+Figure 6 Performance comparison between
+c-fove and ac-fove
+In this experiment, the ac-fove algorithm
+performs better than the c-fove algorithm. Since
+c-fove would make the same operations as
+
+1861
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ac-fove plus extra operations due to the lack of
+aggregation, it is valid to infer that the results give
+us an idea of the performance of the algorithms.
+In a model without aggregation, however, both
+algorithms would perform similarly as ac-fove is
+an extension of c-fove with the inclusion of aggregation.
+5
+
+Conclusion
+
+In this paper we have shown how to use aggregation parfactors in combination with a first-order
+variable elimination algorithm to perform inferences on a probabilistic description logic. A simulation showed that, in some cases, lifted inference using aggregation parfactors can lead to a
+significant increase in performance. The main advantage of aggregation parfactors is that it reduces the need of propositionalization during inference. However, it is important to point out
+that the ac-fove may have a better performance
+only when the model can be represented using aggregation if all nodes are parameterized by the
+same logical variables, for example, the ac-fove
+behaves exactly like c-fove.
+For future work, it would be interesting to
+incorporate the use of constraints of ac-fove to
+perform more flexible queries in ontologies written
+in crALC. Constraints allow models to capture
+properties of particular individuals in a domain
+and would greatly increase the expressiveness of
+the model at the cost of a performance reduction
+in order to process them accordingly. The next
+step of this work is to apply the algorithm to real
+world problems that involve more complex ontologies and larger domains to analyze its scalability.
+
+making of a web ontology language, Journal
+of Web Semantics 1 2003.
+Horsch, M. C. and Poole, D. (1990). A dynamic approach to probabilistic inference using bayesian networks, In Proceedings of the
+Sixth Conference on Uncertainty in Artificial
+Intelligence, pp. 155161.
+Kisynski, J. and Poole, D. (2009). Lifted aggregation in directed first-order probabilistic
+models, Proceedings of the 21st international
+jont conference on Artifical intelligence, IJCAI09, Morgan Kaufmann Publishers Inc.,
+San Francisco, CA, USA, pp. 19221929.
+Milch, B., Zettlemoyer, L. S., Kersting, K.,
+Haimes, M. and Kaelbling, L. P. (2008).
+Lifted probabilistic inference with counting
+formulas, Proceedings of the 23rd national
+conference on Artificial intelligence - Volume
+2, AAAI08, AAAI Press, pp. 10621068.
+Polastro, R. B. and Cozman, F. G. (2008). Inference in probabilistic ontologies with attributive concept descriptions and nominals.,
+URSW, Vol. 423 of CEUR Workshop Proceedings, CEUR-WS.org.
+Raedt, L. D., Frasconi, P., Kersting, K. and Muggleton, S. (eds) (2008). Probabilistic Inductive Logic Programming - Theory and Applications, Vol. 4911 of Lecture Notes in Computer Science, Springer.
+
+References
+Baader, F., Calvanese, D., McGuinness, D. L.,
+Nardi, D. and Patel-Schneider, P. F. (eds)
+(2003). The Description Logic Handbook
+Theory, Implementation, and Applications,
+Cambridge University Press.
+Cozman, F. G. and Polastro, R. B. (2008). Loopy
+propagation in a probabilistic description
+logic, Proceedings of the 2nd international
+conference on Scalable Uncertainty Management, SUM 08, Springer-Verlag, Berlin, Heidelberg, pp. 120133.
+Getoor, L. and Taskar, B. (2007). Introduction
+to Statistical Relational Learning (Adaptive
+Computation and Machine Learning), The
+MIT Press.
+Heinsohn, J. (1994). Probabilistic description logics, UAI, pp. 311318.
+Horrocks, I., Patel-Schneider, P. F. and Harmelen,
+F. V. (2003). From shiq and rdf to owl The
+
+ISBN 978-85-8001-069-5
+
+1862

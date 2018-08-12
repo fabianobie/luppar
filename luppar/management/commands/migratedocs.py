@@ -11,7 +11,7 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         self.stdout.write('Init migrate database\n')
 
-        for s in SourceType.objects.filter(slug='lisa', enable=True):
+        for s in SourceType.objects.filter(slug='artigos', enable=True):
             source = get_class(s.instance)(path=os.path.join(BASE_DIR, s.path))
 
             for d in source.read_docs():
@@ -20,8 +20,10 @@ class Command(BaseCommand):
                 else:
                     dd = DocumentData.objects.filter(idd=d.id,source=s).first()
                 dd.idd = d.id
-                dd.name = 'DOC %s %s' % (s.name,d.id)
+                dd.name = d.name if d.name else 'DOC %s %s' % (s.name,d.id)
                 dd.text = d.text.strip()
+                if d.name:
+                    dd.path = s.path+'/pdf/'+d.name+'.pdf'
                 dd.source = s
                 dd.prev_text = dd.text[:100]
                 dd.save()

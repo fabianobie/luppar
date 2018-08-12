@@ -1,0 +1,590 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+MAPEAMENTO UTILIZANDO ANALISE DE COMPONENTES PRINCIPAIS
+Stephanie Kamarry, Lucas Molina, Jugurta Rosa Montalvao Filho, Eduardo Olveira
+Freire, Elyson Adan Nunes Carvalho
+
+
+Grupo de Pesquisa em Robotica da UFS (GPRUFS)
+Departamento de Engenharia Eletrica da Universidade Federal de Sergipe (DELUFS)
+Av. Marechal Rondon, Sao Cristovao, SE, Brasil
+Emails skamarry@gprufs.org, lmolina@ufs.br, jmontalvao@ufs.br, efreire@ufs.br,
+ecarvalho@ufs.br
+Abstract This paper presents a new approach to mapping using Principal Component Analysis that allows
+the representation of the environment with low computational cost. The proposed method makes no use of
+probability models and is independent of the grid resolution. The developed technique is also applied as a preprocessing step together with other mapping technique, the occupancy grid, improving its results. The results
+for each application of the proposed method are presented and discussed.
+Keywords
+
+Mapping, Principal Component Analysis (PCA), Robotics.
+
+Resumo Neste artigo e apresentada uma nova abordagem para mapeamento utilizando Analise de Componentes Principais que permite a representacao do ambiente com baixo_custo_computacional, independente de
+modelos de probablidade e que, alem disso, tambem independe da resolucao da discretizacao do ambiente. A
+tecnica desenvolvida e tambem aplicada como pre-processamento juntamente com outra tecnica de mapeamento,
+a grade_de_ocupacao, melhorando os resultados da mesma. Os resultados referentes a cada uma das aplicacoes
+do metodo proposto sao apresentados e discutidos.
+Palavras-chave
+
+.
+
+Introducao
+
+Em Robotica, dentre outras coisas, sao desenvolvidos dispositivos capazes de realizar tarefas com
+eciencia e precisao, incluindo tarefas impossveis
+de serem executadas pelo homem sem risco de
+vida, como por exemplo desarmamento de bombas.
+Segundo (Pedrosa et al., 2006) as pesquisas em robotica_movel frequentemente direcionam
+seus esforcos para o desenvolvimento de agentes
+autonomos capazes de interagir com seu ambiente
+de trabalho. Neste sentido, e imprescindvel que
+os robos tenham a capacidade de localizar-se com
+precisao em relacao a um sistema global de referencia espacial.
+Um dos metodos mais utilizados para estimar
+a posicao de um robo_movel e a odometria que,
+normalmente, utiliza a informacao proveniente de
+um encoder otico. Esse metodo baseia-se na integracao incremental das medicoes de velocidade
+do robo ao longo do tempo, gerando um erro de
+posicionamento imperceptvel a curto prazo, a depender da resolucao do sensor utilizado (Carvalho
+et al., 2010). No entanto, para aplicacoes continuadas, o erro acumulado cresce com o tempo,
+prejudicando a estimacao da posicao do robo.
+Em aplicacoes de longa duracao, uma possvel
+solucao para o problema da odometria e a utilizacao de uma medicao de posicao absoluta como,
+por exemplo, o GPS (do ingles, Global Positioning
+System) ou uma camera em terceira pessoa. No
+entanto, nem sempre esses metodos sao aplicaveis
+a quaisquer problemas de localizacao. O GPS, por
+
+ISBN 978-85-8001-069-5
+
+exemplo, tem problemas em locais densos e cobertos e a camera em terceira pessoa restringe muito
+a area de atuacao do robo, alem de ser inadequada
+para ambientes externos.
+Nesses casos, uma alternativa mais viavel e
+a utilizacao de caractersticas do ambiente, como
+landmarks naturais ou articiais, ou mesmo o proprio mapa para corrigir, ou minimizar, os erros de
+odometria, melhorando assim a estimacao da posicao global do robo. No entanto, nem sempre e
+disponibilizado para o robo um mapa a priori do
+ambiente, o que gera uma demanda importante
+pela construcao de uma representacao do ambiente de operacao. A construcao dessa representacao e chamada de mapeamento.
+Na robotica, mapas sao as estruturas de dados que contem informacoes a respeito do ambiente que um robo pode utilizar para se localizar ou
+planejar a execucao de uma tarefa (D.Kortenkamp
+et al., 1998). A natureza destes dados depende do
+tipo de informacao que os sensores disponibilizam.
+Essas informacoes representam uma abstracao das
+caractersticas do ambiente geradas pelos sensores
+que, normalmente, possuem um rudo de medicao
+associado, ou mesmo falhas da medicao. Esses
+problemas podem dicultar, ou mesmo impedir,
+a obtencao de uma boa estimacao da posicao do
+robo no ambiente.
+O campo do mapeamento em robotica esta entre os mais ativos em pesquisas com robos_moveis
+(D.Kortenkamp et al., 1998 Thorpe and Durrantwhyte, 2001). Dadas as medicoes sensoriais a respeito da posicao dos obstaculos no mapa, ha muitas maneiras de integra-las em uma representacao
+
+3095
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+util para a navegacao_autonoma de robos_moveis.
+Essa representacao do ambiente e feita, normalmente, atraves de duas abordagens distintas mapas geometricos e mapas_topologicos.
+Mapas topologicos nao possuem informacoes
+explcitas sobre a geometria do ambiente, sendo
+tipicamente representados por elos conectados a
+nos. Os elos representam as conexoes entre os nos
+que, por sua vez, representam regioes inteiras do
+ambiente, podendo inclusive conter obstaculos, o
+que caracteriza esse tipo de representacao como
+mapas de alto nvel ou qualitativos.
+Mapas geometricos contem informacao da geometria do ambiente, da posicao dos objetos e distancia entre esses. Tecnicas como grade_de_ocupacao (Elfes, 1989) e conexao de polgonos (Heckbert
+and La, 1983) sao exemplos classicos desse tipo de
+representacao tambem chamados de mapas quantitativos.
+Nas ultimas duas decadas a construcao do
+mapa atraves do uso da grade_de_ocupacao tornouse o paradigma dominante para a representacao de ambientes por robos_moveis (Elfes, 1989
+D.Kortenkamp et al., 1998 Konolige and Chou,
+1999). Segundo (Elfes, 1989), a grade_de_ocupacao e um campo multidimensional aleatorio que
+mantem as estimativas estocasticas do estado de
+ocupacao de cada celula em uma trelica espacial.
+No entanto, os metodos baseados em grade
+de ocupacao sofrem com problemas associados a
+resolucao da grade utilizada, uma vez que as medidas de probabilidade somente sao utilizadas no
+espaco depois de feita essa discretizacao. Alem
+disso, as modicacoes propostas ao longo dos anos
+para melhorar o desempenho do metodo original
+(Elfes, 1989) estao, em sua maioria, relacionadas
+com o modelo de probabilidade associado, o que
+evidencia a inuencia desse modelo no resultado
+da grade_de_ocupacao.
+Buscando desenvolver uma tecnicas de mapeamento utilizando grades regulares, que seja independente de modelos de probabilidade e que, alem
+disso, seja independente tambem da resolucao da
+discretizacao do ambiente, e proposto nesse artigo
+uma nova tecnica de mapeamento utilizando Analise de Componentes Principais, a PCA.
+Na tecnica proposta, a PCA e utilizada na
+deteccao dos sensores com falhas ou com valores
+elevados de rudo de medicao, fazendo com que a
+informacao destes nao seja considerada na construcao do mapa. Alem disso, e utilizado ainda um
+pre-processamento da informacao para reconher
+medicoes saturadas, evitando que estas polarizem
+o resultado da PCA.
+A utilizacao da Analise de Componentes Principais para solucionar esse problema baseia-se na
+existencia de uma elevada correlacao entre as leituras dos sensores. Assim sendo, e possvel determinar a ocorrencia de alguma anomalia na medicao dos sensores observando apenas as altera-
+
+ISBN 978-85-8001-069-5
+
+coes na matriz de correlacao dos dados sensoriais.
+Uma vez detectados os sensores com problema, a
+leitura destes e, temporariamente, desconsiderada
+na construcao do mapa, ate que este volte a normalidade.
+E mostrado ainda, que a tecnica desenvolvida pode tambem ser utilizada como preprocessamento em outras tecnicas de mapeamento, como por exemplo, a grade_de_ocupacao
+(Elfes, 1989), diminuindo a sensibilidade desta ultima a grades de alta resolucao.
+Esse trabalho esta organizado da seguinte
+forma Na secao 2 e apresentado o metodo de mapeamento proposto nesse trabalho. Na secao 3 e
+demonstrada a aplicacao da tecnica desenvolvida
+nesse trabalho como preprocessamento, utilizando
+o metodo de grade_de_ocupacao como exemplo.
+Por m, sao apresentadas as conclusoes na secao
+4, seguidas pelos agradecimentos e referencias bilbiogracas.
+2
+
+Mapeamento utilizando PCA
+
+Como explicado na secao 1, a qualidade da informacao proveniente dos sensores inuencia diretamente no resultado nal de um sistema de mapeamento.
+A busca por solucoes para o problema de mapeamento passa, normalmente, por duas etapas,
+quais sejam (i) processamento da informacao
+sensorial para identicar as informacoes conaveis e (ii) escolha de uma forma adequada de
+representacao do mapa, tendo esta ultima grande
+inuencia tambem no problema de deteccao de erros e falhas sensoriais.
+Um caminho comum a muitos autores e a
+busca por solucoes para o problema de mapeamento atraves da identicacao dos sensores que
+apresentam anomalias, como por exemplo em
+(OCallaghan et al., 2009 Elfes, 1989 Pagac
+et al., 1998), onde as medicoes nao conaveis
+sao desconsideras utilizando modelos de probabilidade.
+Neste trabalho, e proposto um novo metodo
+para identicar os sensores com medicoes nao conaveis a partir da Analise de Componentes Principais (PCA) desses dados. Esta tecnica baseia-se
+na ideia de que existe uma elevada correlacao entre
+as leituras dos sensores e que ha uma modicacao
+na correlacao dos dados diante da ocorrencia de
+anomalias.
+A PCA e aplicada em blocos de tempos consecutivos (online), identicando se ha ocorrencia
+de anomalias nos dados adquiridos e indicando
+os sensores com medicoes problematicas. Apos a
+etapa da PCA, sao quanticados os erros de cada
+sensor atraves do metodo MSPE (Mean Square
+Prediction Error ) (Wallach and Gonet, 1989).
+Em seguida, levando em consideracao o MSPE obtido, um limiar e denido com base na mediana
+
+3096
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+do erro (Theodoridis and Koutroumbas, 2006),
+uma das estatsticas de ordenacao (order statistics) mais usadas em controle. Esse limiar e utilizado para separar as medicoes com problemas
+da informacao conavel, permitindo a utilizacao
+apenas dessa ultima para construir o mapa.
+Na secao 2.1 sera detalhado o funcionamento
+da PCA de modo geral e, em seguida, na secao
+2.2, sera explicado como a PCA foi utilizada para
+solucionar o problema de mapeamento.
+
+em que k indica o instante de tempo da medicao, xi representa a coordenada x da medicao do
+sensor i, no sistema de coordenadas do robo, e yi
+representa a coordenada y da medicao do sensor
+i, tambem no sistema de coordenadas do robo.
+Para a aplicacao da Analise de Componenetes
+Principais, e construda uma matriz M, a partir
+das amostras coletadas pelos sensores (equacao 4),
+da seguinte forma
+(
+)
+M  V k V k + 1 . . . V k + t .
+(5)
+
+2.1
+
+Reescrevendo em funcao dos elementos mi,j 
+
+
+m1,1 m1,2 . . . m1,t
+m2,1 m2,2 . . . m2,t 
+
+
+(6)
+M  .
+..
+..  ,
+..
+ ..
+.
+.
+. 
+
+Analise de Componentes Principais
+
+Segundo (Araujo, 2009), a PCA e um modelo fatorial no qual os fatores sao baseados na variancia
+total dos dados considerados. Sendo um dos metodos multivariados mais simples, o objetivo da
+PCA e utilizar p variaveis
+X1 , X2 , . . . , Xp ,
+
+(1)
+
+e encontrar combinacoes destas para produzir p
+ndices
+Z1 , Z2 , . . . , Zp
+(2)
+que sejam nao correlacionados, que descrevam a
+variacao nos dados de entrada, equacao 1, e que
+estejam organizados de acordo com a sua ordem
+de importancia, ou seja
+V ar(Z1 )  V ar(Z2 )  . . .  V ar(Zp ).
+
+(3)
+
+em que V ar(Z1 ) denota a variancia de Z1 .
+Os ndices Zi da equacao 2 sao entao as componentes_principais (Araujo, 2009). A falta de
+correlacao entre os ndices Zi implica que esses
+ndices estao medindo diferentes dimensoes dos
+dados. Quanto maior o valor do ndice, maior e a
+importancia da componente associada a ele.
+De forma resumida, a metodologia da tecnica
+PCA pode ser descrita como a obtencao dos autovetores e autovalores da matriz de covariancia que,
+por sua vez, e obtida a partir dos dados normalizados. Os autovetores, especialmente aqueles com
+maiores autovalores associados, proveem importantes informacoes sobre o padrao de distribuicao
+dos dados (Duda et al., 2001).
+2.2
+
+Descricao do metodo proposto
+
+O procedimento proposto para identicar os sensores com falhas ou com medicoes nao conaveis
+consiste nos seguintes passos detectar se ha alguma medicao nao conavel, localizar o sensor
+responsavel por essa medicao e quanticar o peso
+deste problema.
+Nos experimentos realizados, foram utilizados
+32 sensores de distancia para a aquisicao_de_dados
+referentes a posicao dos obstaculos no ambiente.
+A cada medicao dos sensores, as 32 amostras coletadas sao organizadas na forma de um vetor, como
+mostrado na equacao (4)
+V k  x1 , . . . , xn , y1 , . . . , yn T ,
+
+ISBN 978-85-8001-069-5
+
+(4)
+
+ml,1
+
+ml,2
+
+...
+
+ml,t
+
+cuja dimensao e l t, em que t e o numero de medicoes consideradas (numero de vetores V coletados) e l e o tamanho do vetor de dados V, ou seja,
+2n.
+Para os experimentos conduzidos foram utilizados 3 instantes de tempo, ou seja, t3 na matriz M. Esse valor foi determinado experimentalmente como sendo o menor numero de amostras
+que permitiu detectar a ocorrencia de anomalias
+nas medicoes sensoriais.
+A tecnica da PCA exige que a media dos dados seja zero para que o sistema funcione corretamente. Para tanto, e preciso subtrair a media dos
+dados da matriz M, gerando uma nova matriz de
+dados, G, com media zero e mesma dimensao de
+M.
+O proximo passo e calcular a matriz de covariancia de G (Gubner, 2006) e em seguida extrair
+seus autovetores e autovalores. Estes ultimos, representam a energia dos autovetores associados,
+onde cada autovetor representa cada componente
+que compoe os dados.
+Calculados os autovalores, a componente de
+maior energia e entao utilizada para construir uma
+matriz M . Essa matriz e uma transformacao mais
+representativa e geralmente mais compacta das
+observacoes, ou seja, e uma projecao dos dados na
+direcao de maior relevancia - a componente principal.
+Para quanticar as anomalias detectadas pela
+PCA, e calculado o MSPE da matriz M em relacao a matriz de dados originais M 
+l t
+2
+i1
+j1 (mi,j  mi,j )
+. (7)
+M SP E 
+lt
+Para obter resultados mais robustos, antes
+de utilizar o MSPE para denir as medicoes que
+devem ser descartadas, o procedimento descrito
+acima e repetido para mais dois blocos de dados
+(mais duas matrizez M ), como mostrado na gura
+1. Somente apos esse procedimento e que os sensores sao separados em conaveis e nao conaveis.
+
+3097
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Dessa forma, nos experimentos conduzidos nesse
+trabalho, os sensores sao classicados a cada nove
+amostras de dados (a cada nove vetores V ), uma
+vez que a matriz M e montada com t3 (equacao
+6).
+
+Esse procedimento implica o descarte de observacoes potencialmente boas mas, em contrapartida, garante o descarte de todas as observacoes
+oriundas de sensores ruins.
+Observamos, de forma emprica, que esse descarte sistematico de metade das observacoes fornece um resultado mais robusto que, por exemplo,
+quando sao usados limiares baseados na media e
+no desvio padrao das observacoes.
+Mais especicamente, o limiar obtido, referente aos nove primeiros vetores de dados (V ), e
+utilizado na separacao dos dados originais em dois
+grupos dados conaveis e dados nao conaveis.
+O resultado obtido e apresentado na gura 2
+em tres etapas dados originais (gura 2.a) apenas os dados conaveis (gura 2.b) e o mapa resultante usando uma grade regular com resolucao
+2.52.5 cm (gura 2.c).
+
+Figura 1 Diagrama de representacao do sistema
+utilizado.
+Para determinar o M SP Ek do segundo e
+do terceiro blocos ilustrados na gura 1, e preciso levar em conta o M SP E do bloco atual e o
+M SP Ek1 do bloco anterior, ou seja
+M SP Ek  (1  )  M SP Ek1 +   Erro, (8)
+em que a variavel Erro e o M SP E calculado utilizando apenas os dados do bloco atual, ou seja
+l t
+2
+i1
+j1 (mi,j  mi,j )
+Erro 
+.
+(9)
+lt
+Alem disso, o ndice  e utilizado para regular a
+importancia do instante anterior na medicao de
+erro atual, onde   1 signica mnima inuencia
+e   0 maxima inuencia da medida anterior.
+Terminado o terceiro bloco (gura 1), o
+M SP E resultante e entao utilizado para determinar quais medicoes devem ser descartadas, por
+apresentarem algum tipo de desvio anormal, e
+quais devem ser mantidas na construcao do mapa.
+Essa separacao e feita utilizando uma limiarizacao
+com base no valor mediano (Theodoridis and Koutroumbas, 2006). A mediana e uma das estatsticas de ordenacao (order statistics) mais usadas
+em controle, tendo como caracterstica notavel a
+robustez a outliers.
+Na adaptacao dessa estatstica de ordem ao
+nosso problema, assumimos que o numero de observacoes oriundas de sensores defeituosos e sempre menor que a metade do total de observacoes.
+Assim, adaptamos o limiar, a cada iteracao, de
+forma que ele seja igual a mediana dos M SP E, e
+descartamos todos os valores acima desse limiar.
+
+ISBN 978-85-8001-069-5
+
+(a)
+
+(b)
+
+(c)
+
+Figura 2 Representacao dos primeiros 9 instantes
+de medicao (a) com os dados originais e (b) apos
+a aplicacao do metodo proposto (c) Representacao do mapa como uma grade regular de resolucao
+de 2.52.5 cm.
+
+O procedimento descrito e repetido a cada
+grupo de nove vetores de dados, sempre excluindo
+as medicoes consideradas pelo metodo como nao
+conaveis. Uma vez que o metodo recomeca a
+cada nove instantes, o mapeamento proposto e capaz de reconhecer falhas de medicao intermitentes
+como as geradas por sensores ultrassonicos ao medir quinas ou obstaculos estreitos.
+Na gura 3 sao apresentados os dados originais obtidos pelos sensores em um experimento
+por simulacao, considerando medicoes boas e
+ruins. O metodo proposto e entao aplicado nesse
+experimento e o resultado obtido e apresentado
+na gura 4.a, utilizando para representar o mapa
+uma grade regular de resolucao 2.52.5 cm.
+
+3098
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 3 Representacao direta dos dados sensoriais originais como representacao do ambiente.
+
+(a)
+
+(b)
+
+Figura 4 Mapa resultante da aplicacao do metodo
+proposto com (a) resolucao de 2.52.5 cm e (b)
+resolucao de 1010 cm.
+Para demosntrar a independencia do metodo
+proposto com relacao a resolucao da grade regular,
+o metodo desenvolvido e novamente aplicado aos
+dados originais (gura 3) usando como representacao do mapa uma grade regular com resolucao
+1010 cm (gura 4.b).
+Como pode ser visto comparando as guras 3
+e 4, os sensores cujas medicoes apresentaram falhas ou algum tipo de anomalia foram detectados
+e suas medicoes descartados para aquele bloco de
+dados, nao inuenciando no processo de mapeamento.
+3
+
+Utilizacao do metodo proposto como
+pre-processamento
+
+O metodo de mapeamento apresentado na secao 2.2 mostrou-se bastante eciente, conseguindo
+descartar as medicoes que poderiam criar distorcoes no mapa resultante. Apesar de ter sido utilizada a grade regular para representar o mapa,
+a tecnica desenvolvida com base na PCA nao faz
+qualquer restricao quanto a forma de representacao do mapa.
+Considerando a independencia da tecnica de
+mapeamento desenvolvida nesse trabalho em relacao a representacao, e proposto ainda a utilizacao da tecnica apresentada na secao 2.2 como
+pre-processamento para outras tecnicas de mapeamento, melhorando assim o desempenho de metodos classicos como, por exemplo, a grade_de_ocupacao (Elfes, 1989).
+
+ISBN 978-85-8001-069-5
+
+A ideia de utilizar o metodo proposto como
+uma etapa de pre-processamento dos dados,
+baseia-se na identicacao dos sensores que apresentam anomalia para que a informacao desses
+sensores nao inuencie no processo de mapeamento, possibilitando assim, melhorar o desempenho de outros metodos.
+Para exemplicar a aplicacao em questao, o
+metodo aqui proposto sera utilizado como preprocessamento para a grade_de_ocupacao, uma das
+tecnicas de mapeamento mais utilizadas em robotica.
+Segundo (Elfes, 1989) a grade_de_ocupacao e
+um modelo multidmensional de campos aleatorios
+que mantem estimativas de probabilidade do estado de ocupacao de cada celula em uma estrutura
+espacial.
+O algoritmo de grade_de_ocupacao e tido como
+um metodo de representacao do ambiente estremamente robusto e de facil implementacao, o que
+contribui para a sua popularidade. A sua principal
+limitacao e a inuencia da granularidade (ou resolucao) utilizada sobre resultado obtido. Em aplicacoes que necessitem de um mapa mais detalhado
+(maior resolucao da grade), a tecnica de grade de
+ocupacao perde sua robustes, cando mais sensvel
+a problemas nos sensores, resultando em mapas de
+menor qualidade (Thrun, 2002).
+Na grade_de_ocupacao cada celula guarda uma
+probabilidade de estar ocupada, a qual e utilizada
+para classicar a regiao como livre ou nao. O
+padrao de ocupacao da celula geralmente utilizado
+e uma versao do ltro de Bayes (Moravec, 1988
+Elfes, 1989). Em particular, os ltros de Bayes
+sao utilizados para calcular o estado a posteriori
+de ocupacao de cada celula da grade.
+Neste trabalho e utilizado como limiar do estado de ocupacao da celula a mesma tecnica utilizada na secao 2.2 (com base na mediana). Alem
+disso sera utilizada uma medida de probabilidade
+cumulativa (Gubner, 2006) para modelar os dados
+obtidos pelos sensores.
+Para evidenciar a melhoria nos resultados obtidos com a aplicacao da tecnica em questao, foram conduzidos experimentos por simulacao utilizando tres diferentes resolucoes para a grade de
+ocupacao 2.52.5 cm, 55 cm e 1010 cm. A
+construcao do mapa nesses experimentos foi realizada de duas formas utilizando apenas a grade
+de ocupacao e utilizando a tecnica proposta nesse
+trabalho como pre-processamento para a grade
+de ocupacao. Nas guras 5, 6 e 7 sao mostrados os resultados para as resolucoes de 2.5, 5 e
+10 cm, respectivamente. Nessas guras, os gracos da direita representam os resultados obtidos
+apenas pela grade_de_ocupacao e os gracos da
+esquerda representam os resultados utilizando a
+grade_de_ocupacao e o metodo proposto nesse trabalho como pre-processamento.
+
+3099
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+(a)
+
+(b)
+
+Figura 5 Mapa com resolucao de 2.52.5 cm
+usando (a) a grade_de_ocupacao com o preprocessamento proposto e (b) apenas a grade de
+ocupacao.
+
+O sistema proposto possui baixo_custo_computacional, e de facil implementacao, e otimo em
+relacao ao erro medio quadratico de predicao e
+nao necessita de qualquer conhecimento a priori
+da funcao de densidade de probabilidade (pdf ) dos
+sensores.
+Foi apresentada ainda a utilizacao do metodo desenvolvido como uma etapa de preprocessamento para outros metodos de mapeamento, possibilitando a obtencao de melhores resultados nesses metodos e garantindo a eles uma
+menor sensibilidade a resolucao da grade utilizada
+para representar o mapa resultante.
+Como trabalhos futuros propoe-se a implementacao de novas tecnicas de limiarizacao como
+tambem a analise da inuencia dos intervalos de
+tempo em que a PCA e aplicada. Outra proposta
+de trabalho consiste em utilizar a tecnica desenvolvida juntamente com representacoes contnuas
+do mapa como, por exemplo, utilizando segmentos
+de retas.
+Agradecimentos
+
+(a)
+
+(b)
+
+Figura 6 Mapa com resolucao de 55 cm usando
+(a) a grade_de_ocupacao com o pre-processamento
+proposto e (b) apenas a grade_de_ocupacao.
+
+4
+
+Os autores gostariam de agradecer ao CNPq pelo
+apoio nanceiro que tornou possvel a realizacao
+desse trabalho.
+Referencias
+Araujo, W. O. D. (2009). Analise de componente
+principais (pca), Masters thesis, Mestrado
+Sociedade, Tecnologia e Meio Ambiente.
+
+Conclusao
+
+Neste artigo foi apresentado um novo metodo de
+mapeamento baseado no uso da PCA e em uma
+representacao do mapa por grade regular.
+Os resultados obtidos mostraram que o metodo proposto foi capaz de reconhecer as informacoes sensoriais nao conaveis e descarta-las, garantindo uma boa representacao do mapa na grade
+regular. Alem disso, a aplicacao do metodo em
+grades de diferentes resolucoes mostra a sua insensibilidade a essa caracterstica.
+
+Carvalho, E. A., de Carvalho Filho, J. G., Molina,
+L., Freire, E. O., Freire, R. C. S. and Luciano,
+B. A. (2010). Medicao de velocidade_angular
+com alta resolucao usando encoders de baixa
+resolucao e pll, 21 616  625.
+D.Kortenkamp, Bonaso, R. and Murphy, R.
+(1998). AI-based Mobile Robots Case studies of successful robot systems, MIT Press,
+Cambridge, MA.
+Duda, R., Hart, P. and Stork, D. (2001). Pattern classification, Pattern Classication and
+Scene Analysis Pattern Classication, Wiley.
+Elfes, A. (1989). Occupancy grids a probabilistic framework for robot perception and navigation, PhD thesis, Pittsburgh, PA, USA.
+AAI9006205.
+
+(a)
+
+(b)
+
+Figura 7 Mapa com resolucao de 1010 cm
+usando (a) a grade_de_ocupacao com o preprocessamento proposto e (b) apenas a grade de
+ocupacao.
+
+ISBN 978-85-8001-069-5
+
+Gubner, J. (2006). Probability And Random Processes for Electrical And Computer Engineers, Cambridge University Press.
+Heckbert, P. and La, C. G. (1983). Texture mapping polygons in perspective.
+
+3100
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Konolige, K. and Chou, K. (1999). Markov Localization using Correlation, IJCAI 99 Proceedings of the Sixteenth International Joint
+Conference on Artificial Intelligence, Morgan
+Kaufmann Publishers Inc., San Francisco,
+CA, USA, pp. 11541159.
+Moravec, H. (1988). Sensor fusion in certainty
+grids for mobile robots, AI Mag. 9(2) 6174.
+OCallaghan, S., Ramos, F. T. and DurrantWhyte, H. (2009). Contextual occupancy
+maps using gaussian processes, Proceedings
+of the 2009 IEEE international conference
+on Robotics and Automation, ICRA09, IEEE
+Press, Piscataway, NJ, USA, pp. 36303636.
+Pagac, D., Nebot, E. and Durrant-Whyte,
+H. (1998).
+An Evidential Approach to
+Map-Building for Autonomous Vehicles,
+14(4) 623+.
+Pedrosa, D. P., de Medeiros, A. A. D. and Alsina, P. J. (2006). Uma proposta de slam com
+determinacao de informacoes geometricas do
+ambiente, Congresso Brasileiro de Automatica 1(16) 17041709.
+Theodoridis, S. and Koutroumbas, K. (2006). Pattern Recognition, ElsevierAcademic Press.
+Thorpe, C. and Durrant-whyte, H. (2001). Field
+robots, International Journal of Pattern Recognition and Artificial Intelligence, pp. 39
+7.
+Thrun, S. (2002). Robotic mapping A survey,
+Exploring Artificial Intelligence in the New
+Millenium, Morgan Kaufmann.
+Wallach, D. and Gonet, B. (1989). Mean squared error of prediction as a criterion for evaluating and comparing system models, 44 299
+ 306.
+
+ISBN 978-85-8001-069-5
+
+3101

@@ -1,0 +1,1141 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ANALISE PROBABILISTICA DOS TEMPOS DE RESPOSTA DE UMA REDE CAN
+UTILIZANDO A TECNICA DE VERIFICACAO DE MODELOS ESTATISTICOS
+Jadsonlee da Silva Sa, Antonio Marcus Nogueira Lima, Angelo Perkusic, Jose Sergio
+da Rocha Neto
+
+
+Doutorando do Programa de Pos-Graduacao em Engenharia Eletrica da UFCG - COPELE
+
+
+Departamento de Engenharia Eletrica da UFCG
+Laboratorio de Instrumentacao Eletronica e Controle
+Av. Aprgio Veloso, 882 - Bodocongo - 58109-970
+Campina Grande  PB  Brasil
+Emails jadsonlee@ee.ufcg.edu.br, amnlima, perkusic, zesergio@dee.ufcg.edu.br
+Abstract This paper presents the response time probabilistic analysis of CAN messages under transmission
+errors due the eletromagnetic interference. The analysis is based on the statistical model-checking approach
+using priced timed automata and UPPAAL SMC tool. A case study for a CAN network is presented considering
+dierent transmission rate, error rate in the commnication bus and message retransmission.
+Keywords
+
+CAN, Response Time Analysis, Model-Checking Statistical
+
+Resumo Neste trabalho apresenta-se uma analise probabilstica dos tempos de resposta de mensagens CAN
+considerando erros de transmissao devido a interferencias eletromagneticas. A analise e baseada na tecnica de
+vericacao_de_modelos_estatsticos usando automatos temporizados e a ferramenta UPPAAL SMC. Um estudo
+de caso para uma rede CAN foi realizado considerando diferentes taxas de transmissao, taxas de erro no meio de
+comunicacao e retransmissao de mensagens.
+Palavras-chave
+
+
+
+Introducao
+
+Controller Area Network (CAN) (Etschberger,
+2001) e uma rede de comunicacao originalmente
+projetada para aplicacoes automotivas. Devido
+as suas caractersticas, a disponibilidade de hardware e software no mercado e ao seu sucesso na
+industria automotiva1 , CAN vem sendo adotada
+como rede padrao em outras areas de aplicacao
+tais como robotica, controle_de_processos_industriais entre outros.
+Basicamente, uma rede CAN e constituda
+por nos que trocam mensagens via um meio de comunicacao compartilhado (barramento) com largura de banda limitada. As mensagens possuem
+nveis de prioridade de acesso ao meio de comunicacao. O acesso ao meio e realizado de modo
+aleatorio. Entao, e possvel que mais de um no
+tente transmitir uma mensagem no mesmo instante. Para resolver as possveis colisoes, CAN
+utiliza um mecanismo com resolucao de colisao
+determinstico baseado em um processo de arbitragem. Este processo garante que a mensagem
+de maior prioridade sempre sera transmitida primeiro.
+O mecanismo de resolucao de colisao garante
+um comportamento temporal prevsivel sob condicoes ideais. Portanto, e possvel determinar li1 Atualmente,
+
+e possvel encontrar em carros modernos
+cerca de 70 nos CAN realizando diversas atividades. Nos
+Estados Unidos, a agencia de protecao ambiental exigiu o
+uso do CAN, para diagnostico on-board, em todos os carros
+e caminhoes vendidos no pas a partir do modeloano 2008
+(Davis et al., 2007).
+
+ISBN 978-85-8001-069-5
+
+mites superiores e inferiores dos tempos de resposta de cada mensagem na rede. No entanto,
+na pratica, e possvel ocorrer algum erro na mensagem durante a transmissao devido, principalmente, a interferencias eletromagneticas (EMI) no
+barramento, provindas de fontes internas e externas ao ambiente operacional tais como, dispositivos eletricos, iluminacao, equipamentos de radio entre outros. Para garantir a integridade das
+mensagens, CAN implementa eficientes mecanismos para deteccao, sinalizacao e recuperacao de
+erros2 . Entretanto, o mecanismo de recuperacao
+de erros envolve a retransmissao da mensagem corrompida (respeitando o processo de arbitragem) e
+isto causara um acrescimo no tempo de resposta
+das mensagens do sistema. Entao, visto que a
+ocorrencia de erros devido EMI sao normalmente
+eventos de natureza estocastica, o comportamento
+temporal sob condicoes reais torna-se a princpio
+imprevsivel.
+Em aplicacoes de tempo_real, as mensagens
+CAN possuem restricoes de tempo (deadlines)
+para chegarem aos seus destinos. O nao cumprimento destes deadlines podera causar problemas
+graves no sistema. Deste modo, e fundamental
+durante a fase de projeto do sistema realizar uma
+analise_de_tempos_de_resposta das mensagens e ve2 De acordo com a especicacao CAN (Bosch, 1991), em
+uma rede operando 8 horas por dia durante 365 dias por
+ano, e uma taxa de erro de 0,7 s, um erro nao detectado
+ocorrera a cada 100 anos (media estatstica). Unruh et al.
+(1989) estimaram que o numero esperado de erros de transmissao nao-detectados durante o tempo_de_vida de um veculo e menor do que 10 12 .
+
+2539
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+rificar se todas as restricoes de tempo serao cumpridas.
+Ao longo dos anos, varios trabalhos foram desenvolvidos com o objetivo de determinar uma
+analise_de_tempos_de_resposta para mensagens
+em uma rede CAN. Considerando apenas mensagens periodicas e esporadicas, Tindell and Burns
+(1994b) propuseram uma solucao analtica para
+calcular o tempo de resposta no pior caso sob condicoes ideais no meio de comunicacao. Tindell and
+Burns (1994a) estenderam o seu trabalho anterior
+para considerar erros de transmissao utilizando
+um modelo de erros determinstico. Neste modelo,
+considera-se que o numero de erros de transmissao pode ser limitado superiormente durante um
+determinado intervalo de tempo. Deste modo, e
+possvel determinar um limite superior do tempo
+de resposta de cada mensagem sob condicoes de
+erro de transmissao e verificar se os deadlines serao satisfeitos.
+Punnekkat et al. (2000) estenderam o modelo
+de erros de Tindell and Burns (1994a) para um
+modelo mais geral, que considera a existencia de
+varias fontes de interferencia no modelo.
+Navet et al. (2000) afirmaram que o modelo
+de erros de Tindell and Burns (1994a) nao e uma
+consideracao geral, visto que erros de transmissao sao um fenomeno aleatorio e tendem a seguir
+melhor a leis probabilsticas, ao inves de leis determinsticas. Entao, Navet et al. (2000) utilizando a
+analise de Tindell and Burns (1994a) propuseram
+o conceito de probabilidade de defeito do deadline
+no pior caso (WCDFP  Worst-Case Deadline
+Failure Probability) e um modelo de erros flexvel fazendo suposicoes na frequencia e gravidade
+(simples e burst) de erro, onde a ocorrencia de
+erros segue um processo de Poisson generalizado.
+Esta analise fornece um metodo para calcular a
+probabilidade de uma mensagem nao satisfazer o
+seu deadline.
+Broster et al. (2002) identificaram duas imprecisoes na analise desenvolvida por Navet et al.
+(2000), que aumentam o grau de pessimismo na estimacao do WCDFP, e propoem uma analise que
+fornece um WCDFP preciso e sem excesso de pessimismo. Esta analise considera que falhas sao
+aleatoriamente distribudas seguindo uma distribuicao de Poisson.
+Davis et al. (2007) provaram que a analise de
+tempos de resposta de mensagens em uma rede
+CAN desenvolvida por Tindell and Burns (1994b)
+e incompleta e resulta em tempos de resposta otimistas. Neste mesmo trabalho, Davis et al. (2007)
+apresentam uma analise correta e descrevem como
+a nova analise pode ser estendida para considerar
+apropriadamente modelos de erro de transmissao.
+Deste modo, todos os trabalhos que consideram
+erros de transmissao e utilizam a analise incorreta
+de Tindell and Burns (1994b), fornecem resultados incorretos.
+
+ISBN 978-85-8001-069-5
+
+Waszniowsky et al. (2009) desenvolveram um
+modelo em automatos temporizados determinsticos de uma rede CAN e utilizaram a tecnica de
+verificacao de modelos (Larsen et al., 1995) para
+determinar os tempos de resposta das mensagens
+em uma rede CAN sob condicoes ideais. A abordagem utilizada por Waszniowsky et al. (2009)
+fornece resultados identicos aos obtidos por meio
+da abordagem analtica de Davis et al. (2007).
+Por outro lado, a tecnica de verificacao de modelos fornece resultados mais precisos para aplicacoes especficas, tais como sistemas_de_controle
+via rede (Sa et al., 2010). Alem disto, esta tecnica
+permite verificar propriedades funcionais e caracterizar comportamentos internos do sistema tais
+como, desvios dentro de codigos dependentes de
+dados e loops, ao contrario das tecnicas analticas.
+Neste trabalho, utilizamos a tecnica de verificacao de modelos estatsticos (Sen et al., 2004)
+para desenvolver uma analise probabilstica dos
+tempos de resposta de mensagens em uma rede
+CAN. Utilizamos a ferramenta UPPAAL SMC
+(Berhmann et al., 2004), (David et al., 2011) para
+modelarmos a rede sob condicoes de erro de transmissao devido a interferencias eletromagneticas no
+barramento. O modelo para ocorrencia de erros
+segue uma distribuicao exponencial. Realizamos
+um estudo de caso utilizando um conjunto de mensagens com atributos semelhantes ao estudo realizado por Davis et al. (2007). Para este estudo,
+consideramos tres diferentes taxas de transmissao
+e duas diferentes taxas de erro.
+Na Secao 2, apresentam-se as principais caractersticas da rede CAN, uma notacao e um modelo
+das mensagens CAN. Na Secao 3, apresenta-se a
+tecnica de verificacao de modelos estatstica e a
+ferramenta UPPAAL SMC utilizada neste trabalho. Na Secao 4, descreve-se o modelo em automatos temporizados da rede CAN com erros de
+transmissao. Na Secao 5, apresenta-se um estudo
+de caso e uma analise dos resultados obtidos, e na
+Secao 6 as conclusoes.
+2
+
+Rede CAN
+
+CAN e uma rede de comunicacao event-triggered
+constituda por nos conectados a um barramento
+serial que trocam mensagens a uma taxa de transmissao de ate 1 Mbitss (Etschberger, 2001).
+Um no CAN e constitudo por uma Unidade
+de Processamento (UP) e pelos dispositivos de
+rede (controlador e transceiver CAN). Para transmitir uma mensagem, uma tarefa de aplicacao executada na UP prepara os dados a serem transmitidos, armazena-os no buer de transmissao e
+envia uma requisicao de transmissao ao controlador CAN. Assim que o barramento estiver livre, o
+controlador tentara transmitir a mensagem.
+Os bits das mensagens sao representados fisicamente pela codificacao NRZ (Non-Return to
+
+2540
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Zero). Nesta codificacao, o nvel do sinal permanece constante durante o tempo de transmissao
+de um bit, chamado de tempo de bit. Os transceivers tratam esses bits de acordo com o mecanismo
+wired-AND, onde o nvel logico 0 e dominante e o
+nvel logico 1 e recessivo. Para evitar a ausencia
+de bordas de transicao na sequencia de bits de uma
+mensagem, as quais sao utilizadas no processo de
+sincronizacao durante a recepcao das mensagens,
+CAN utiliza um mecanismo de insercao de bits
+que insere automaticamente apos uma sequencia
+de cinco bits com mesma polaridade, um bit com
+polaridade oposta. Apos a recepcao da mensagem,
+os bits inseridos sao retirados automaticamente.
+Existem quatro diferentes tipos de mensagens
+mensagem de dados, erro, requisicao de dados e
+sobrecarga. Apenas mensagens de dados no formato padrao e mensagens de erro serao tratadas
+neste trabalho. Uma mensagem de dados e formada por cinco campos (arbitragem, controle, dados, CRC - Cyclic Redundancy Code e ACK - Acknowledgement) delimitados por um bit dominante
+(SOF - Start Of Frame) no incio da mensagem e
+por sete bits recessivos (EOF - End Of Frame) no
+fim da mensagem. Os campos de SOF ate CRC
+sao submetidos ao mecanismo de insercao de bits.
+As informacoes sao transmitidas no campo de dados e podem variar entre 0 e 8 bytes. No campo
+de arbitragem, os 11 bits mais significativos constituem o identificador da mensagem, que e unico
+para cada mensagem e possui duas funcoes caracterizar o conteudo da mensagem de forma que
+sejam filtradasidentificadas nos nos receptores, e
+determinar o nvel de prioridade quanto o acesso
+ao barramento. Mensagens de dados sao separadas de mensagens precedentes por tres tempos de
+bit para nos ativos3 . Este espaco de tempo e chamado de intervalo entre mensagens.
+Devido a comunicacao event-triggered, e possvel que mais de um no tente transmitir uma mensagem simultaneamente. Para controlar as possveis colisoes durante o acesso ao barramento, CAN
+utiliza o mecanismo CSMADCR (Carrier-Sense
+Multiple AccessDeterministic Collision Resolution). Neste mecanismo, os nos tentam transmitir
+uma mensagem somente se o barramento estiver
+livre. Assim que o barramento estiver livre, todos
+os nos com mensagens prontas para serem transmitidas enviam o bit dominante SOF e entram em
+processo de arbitragem. O resultado da arbitragem e determinada pela comparacao dos bits dos
+identificadores (campo de arbitragem) das mensagens baseado no mecanismo wired-AND. Portanto, a mensagem que tiver o identificador com
+menor valor numerico (maior prioridade) vencera
+o processo de arbitragem e transmitira a mensagem completamente. Os nos que perderam a disputa e outros possveis nos, tentarao transmitir
+3 Consideraremos que todos os nos sao sempre ativos.
+Para mais detalhes, veja a referencia (Bosch, 1991).
+
+ISBN 978-85-8001-069-5
+
+suas mensagens assim que o barramento estiver
+livre novamente.
+As mensagens sao escalonadas de forma semelhante ao escalonamento nao-preemptivo de tarefas em um processador (George et al., 1996). Isto
+significa que as mensagens de maior prioridade poderao sofrer bloqueio de mensagens com menor
+prioridade.
+O tempo gasto para um no transmitir fisicamente uma mensagem i, denotado por Cim , e derivado pela Equacao 1. Cim e determinado em
+funcao do comprimento da mensagem (em bits) e
+do tempo de bit (bit ). O comprimento da mensagem depende do numero de bytes de dados (bi )
+e da quantidade de bits inseridos pelo mecanismo
+de insercao de bits. O operador xy retorna o
+maior inteiro menor que o valor xy. Este termo
+equivale aos bits inseridos pelo mecanismo de insercao de bits considerando o pior caso. Os tres
+tempos de bit equivalentes ao intervalo entre mensagens estao inclusos na Equacao 1.
+(
+
+)
+34 + (8bi )  1
+m
+Ci  47 + (8bi ) +
+bit (1)
+4
+Durante a transmissao de uma mensagem e possvel que ocorra um erro. CAN implementa na sua
+camada de enlace de dados cinco eficientes mecanismos para deteccao de erros. A deteccao de
+algum erro em qualquer um dos quatro tipos de
+mensagens e sinalizada por meio da mensagem de
+erro, que e constituda pelos campos ag de erro
+e delimitador de erro. Entao, quando um ou mais
+nos detectam erro em uma mensagem, um ag de
+erro (6 bits dominantes consecutivos) e imediatamente enviado por este(s) no(s), que sobrescrevem
+a mensagem com erro. Deste modo, a mensagem
+com erro e descartada pelos nos e tentara ser retransmitida assim que um novo processo de arbitragem for iniciado. O tempo de recuperacao de
+erro (instante a partir da deteccao do erro ate o
+incio do proximo processo de arbitragem) varia
+de 17 a 23 tempos de bit para nos ativos.
+2.1
+
+Notacao e Modelo das Mensagens CAN
+
+Considere uma rede CAN com um unico barramento e um conjunto com q mensagens periodicas m1 , m2 ,..., mq . Uma mensagem mi , onde i
+assume valores de 1 a q, consiste de um numero
+infinito de instancias k  Z contendo informacoes
+especficas. Assume-se que o controlador de cada
+no garante que a sua mensagem com maior prioridade armazenada no buer de transmissao, entrara no processo de arbitragem assim que o barramento estiver livre. Esta suposicao e compatvel
+com o funcionamento da maioria dos controladores CAN.
+Cada mensagem possui uma tarefa periodica
+relacionada i com perodo Ti , que armazena a
+mensagem no buer de transmissao do controlador CAN do seu respectivo no. A primeira ins-
+
+2541
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+tancia desta tarefa e iniciada em um instante chamado de oset (Oi ), que varia entre 0 e Ti . Entao, uma instancia k de uma mensagem e ativada
+a cada instante ai  Oi + kTi e liberada (pronta
+para transmissao) assim que a tarefa relacionada
+armazena-la no buer de transmissao. Esta tarefa gasta uma quantidade de tempo igual a Ci ,
+chamado de atraso de armazenamento. Por simplicidade consideraremos que Ci  0.
+Toda mensagem possui um tempo de transmissao constante Cim calculado por meio da Eq.
+1, um deadline Di , onde Di  Ti , e um nvel de
+prioridade pi . Assume-se que o nvel de prioridade decresce de acordo com o aumento do numero da mensagem, ou seja, a mensagem m1 possui a maior prioridade (nvel 1) e a mensagem mq a
+menor prioridade (nvel q). Para a atribuicao de
+prioridades, utilizaremos a poltica deadline monotonico (Leung and Whitehead, 1982).
+Assume-se que o barramento nunca ficara ocioso, exceto se nao existir mensagens prontas para
+serem transmitidas (liberadas) no buer de transmissao dos nos da rede.
+3
+
+Verificacao de Modelos Estatsticos
+
+A verificacao de modelos (model-checking) e uma
+tecnica que permite a verificacao de propriedades
+de um sistema de forma automatica por meio de
+ferramentas computacionais (Larsen et al., 1995).
+Por meio desta tecnica, o projetista utiliza
+como dados de entrada para a ferramenta, a descricao do modelo do sistema seguindo algum metodo formal (e.g. automatos temporizados) e uma
+descricao da especificacao dos requisitos. Entao,
+a ferramenta verifica se as propriedades requisitadas sao satisfeitas para um determinado estado
+inicial do modelo, e fornece tais resultados para o
+projetista.
+A maioria dos algoritmos de verificacao de
+modelos, por exemplo, verificacao de modelos
+temporizados, sao baseadas na pesquisa exaustiva
+do espaco_de_estados do modelo. Deste modo, um
+modelo de estados finito e requisitado e o sistema
+pode ser verificado apenas para um conjunto fixado de parametros. O problema desta tecnica e
+a explosao do espaco_de_estados, a qual pode resultar na necessidade de alocar uma quantidade
+de memoria superior a disponvel pelo computador que executa a ferramenta.
+A verificacao de modelos estatsticos (SMC
+- Statistical Model-Checking) e uma tecnica que
+consiste em monitorar algumas execucoes de um
+modelo com semantica estocastica e, a partir dessas execucoes, utilizar um algoritmo estatstico
+para obter uma estimativa para o sistema (Sen
+et al., 2004). Esta tecnica e semelhante a simulacao classica de Monte Carlo, mas e necessario ter
+um modelo formal do sistema, que permite verificar propriedades de alta complexidade do comportamento do sistema. Ao contrario das tecnicas que
+
+ISBN 978-85-8001-069-5
+
+utilizam uma abordagem exaustiva do espaco de
+estado, SMC nao garante um resultado com 100
+de confidencia. No entanto, e possvel limitar a
+probabilidade de causar um erro.
+Esta tecnica tem sido implementada com sucesso em algumas ferramentas para verificar sistemas temporizados estocasticos, aproximar problemas nao decidveis e resolver problemas complexos que, com as tecnicas classicas de verificacao,
+conduziriam a uma explosao do espaco de estado
+(David et al., 2011).
+3.1
+
+Ferramenta UPPAAL SMC
+
+Neste trabalho utilizaremos a ferramenta UPPAAL SMC que utiliza a tecnica de verificacao
+de modelos estatstica para automatos temporizados priced (PTAs - Priced Timed Automata)
+(Bulychev et al., 2012). PTAs sao automatos temporizados onde os relogios podem evoluir com diferentes taxas em diferentes lugares.
+Esta versao da ferramenta possibilita utilizar
+bordas rotuladas com pesos probabilsticos com
+desvios para mais de um lugar. Deste modo, e
+possvel modelar transicoes como eventos probabilsticos. Alem disto, e possvel modelar a permanencia do automato em um lugar especfico por
+meio de uma distribuicao exponencial com uma
+determinada taxa.
+UPPAAL SMC permite estimar a probabilidade (verificacao quantitativa) de uma expressao
+ser verdadeira dentro de um intervalo de confidencia, verificar qualitativamente se a probabilidade
+de uma propriedade e menor ou maior que um limite especificado, comparar duas probabilidades
+sem estima-las e estimar o valor de uma expressao via a execucao de um determinado numero de
+simulacoes.
+4
+
+Modelos da Rede CAN
+
+Nesta secao, apresenta-se o conjunto de automatos
+temporizados utilizado para modelar a rede CAN
+de acordo com a notacao e o modelo de mensagens
+apresentado na Secao 2.1, e as interferencias no
+barramento. O modelo e constitudo por cinco
+automatos (Figura 1) Tarefa Controlador CAN
+Arbitragem Interferencia e Erros.
+4.1
+
+Automatos da Rede CAN
+
+Para cada mensagem do sistema, a ferramenta
+UPPAAL SMC gera automaticamente um automato Tarefa e um automato Controlador CAN.
+Apenas um automato Arbitragem e gerado para o
+sistema.
+A execucao do sistema e iniciada no lugar Inicio do automato Tarefa (Fig. 1(a)). Este automato possui um relogio local tempo, utilizado para
+contar o oset da tarefa associada a mensagem,
+e utilizado implicitamente para marcar o perodo
+T ID e o tempo de resposta da mensagem. ID e
+uma variavel utilizada para indicar a prioridade e
+o identificador da mensagem.
+
+2542
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+Inicio
+
+ArbID  1
+
+tempo > 0
+tempo  0
+
+EsperAtivTar
+tempo < TID
+RxMsgID?
+
+comunic  CmID
+ackID!
+ArbID  0
+
+TarFimMsgLiber
+tempo < DID
+tempo > DID
+
+MsgFim
+
+TxMsg
+comunic < CmID
+
+NReq
+
+tempo  CID
+ReqTxMsgID!
+
+ErroTxID!
+
+comunic0
+SucessArbID?
+comunic  0
+
+ReqTxMsgID?
+RTxID0
+
+ExecTar
+tempo < CID
+tempo  TID
+tempo  0
+
+BufferTx
+
+TxMsg!
+
+tempo < TID
+
+comunic > 17*tbit
+Erro?
+RTxID++
+ErroTx
+Erro?
+
+RxMsgID!
+
+comunic  0
+MsgErro
+
+NEscalon
+
+FimTx
+
+(a) Tarefa.
+
+comunic < 23*tbit
+
+(b) Controlador CAN.
+NReqTxMsg
+
+i>(MAXID1)
+ Arbi0
+
+TxMsg?
+i0
+Arbit
+
+Inicio
+
+i<(MAXID1) 
+Arbi0
+i++
+
+TxMsg?
+i0
+
+SInterf
+TaxaExp
+
+acki?
+i0
+
+ErroTxi?
+Arbi>0
+i0
+SucessArbi!
+TxMsg
+
+Erro!
+Interf
+
+TxMsg?
+
+(c) Interferencia.
+
+(d) Arbitragem.
+
+Erro?
+
+(e) Erro.
+
+Figura 1 Conjunto de automatos temporizados de um rede CAN considerando erros de transmissao.
+A primeira instancia da tarefa relacionada a
+mensagem ID e liberada no lugar Inicio com um
+oset variando de 0 a T ID. As proximas instancias sao iniciadas periodicamente no lugar EsperAtivTar. O oset e implementado pela invariante de
+estado tempo < TID e o guarda tempo > 0.
+Apos iniciada, a tarefa e executada (lugar
+Exec Tarefa) durante CID unidades de tempo
+(consideramos que CID  0) e, em seguida, requisita a transmissao da mensagem com identificador ID modelada pelo canal ReqTxMsgID!. Entao, o automato vai para o lugar TarFim MsgLiber
+e aguarda a finalizacao da transmissao da mensagem. A finalizacao e indicada por um sinal via o
+canal broadcast RxMsgID? enviado pelo automato Controlador CAN (Fig. 1(b)). Apos receber este sinal, o automato permanece no lugar
+EsperAtivTar ate iniciar um novo perodo. Caso
+o valor do relogio tempo seja maior que o deadline DID enquanto o automato estiver no lugar TarFim MsgLiber, o automato alcanca o lugar
+N Escalon, indicando que o deadline nao foi satisfeito.
+O automato Controlador CAN (Fig. 1(b))
+permanece no seu lugar inicial N Req ate receber uma requisicao de transmissao de mensagem
+via o canal ReqTxMsgID?. Quando isto ocorre,
+a variavel indexada RTxID utilizada para contar o numero de retransmissoes da mensagem ID
+e zerada. Imediatamente, um sinal via o canal
+
+ISBN 978-85-8001-069-5
+
+TxMsg! e enviado para o automato arbitragem
+(Fig. 1(d)) e o array ArbID indexado com o valor do identificador da mensagem e ajustado para
+1, indicando que esta mensagem esta pronta para
+entrar no processo de arbitragem. O automato
+permanece no lugar BuerTx ate receber um sinal via o canal Sucess ArbID?. Este sinal indica
+que a mensagem venceu o processo de arbitragem
+e pode continuar a transmissao. Entao, o relogio
+comunic e zerado e o lugar Tx Msg e alcancado.
+Apos o relogio comunic contar CmID unidades
+de tempo, a mensagem e totalmente transmitida.
+Um sinal de reconhecimento e enviado pelo canal ackID! ao automato Arbitragem, e o array
+ArbID e zerado. Em seguida, um sinal via o
+canal RxMsgID! e enviado para o automato Tarefa que requisitou a transmissao da mensagem e
+o automato retorna para o lugar inicial N Req.
+Durante a transmissao da mensagem, modelado pelo lugar Tx Msg, e possvel que ocorra um
+erro de transmissao devido a interferencias no barramento. A deteccao de um erro na mensagem e
+indicada pela recepcao de um sinal via o canal
+Erro? enviada pelo automato Interferencia (Fig.
+1(c)). Quando isto ocorre, a variavel RT xID e
+incrementada e o lugar ErroTx e alcancado. Imediatamente, ocorrera uma transicao para o lugar
+Msg Erro e o relogio comunic e zerado. O lugar
+Msg Erro e utilizado para modelar a transmissao
+da mensagem de erro. O automato permanece
+
+2543
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+neste lugar ate que ocorra um erro de transmissao na mensagem de erro ou que o valor do relogio comunic esteja entre 17bit e 23bit (tempo de
+recuperacao de erro). Apos o tempo de recuperacao, um sinal via o canal Erro TxID! e enviado
+para o automato Arbitragem indicando que um
+novo processo de arbitragem pode ser iniciado, e
+o automato Controlador CAN retorna para o lugar BuerTx. O automato permanece neste lugar
+ate que a mensagem ID venca o processo de arbitragem.
+O controle de acesso ao meio da rede CAN e
+modelado pelo automato Arbitragem. Este automato permanece no lugar inicial N Req Tx Msg
+ate receber um sinal via o canal TxMsg? de
+um dos automatos Controlador CAN. Quando isto
+ocorre, a variavel i e zerada e o automato passa
+para o lugar urgente Arbit. Neste lugar, a mensagem com maior prioridade que requisitou uma
+transmissao e escolhida para ser transmitida. O
+array Arbi e verificado item por item, com o ndice i variando de 0 a MAXID-1, onde MAXID
+equivale ao numero de identificadores (mensagens)
+do sistema. Os identificadores das mensagens sao
+ordenados de forma crescente. A mensagem com
+maior prioridade possui ID  0, e a mensagem
+com menor prioridade ID  MAXID-1. Entao,
+o primeiro elemento do array Arbi com valor
+maior que 0 vencera o processo de arbitragem,
+e um sinal via o canal Sucess Arbi sera enviado para o automato Controlador CAN. O automato permanece no lugar Tx Msg ate receber o
+sinal de reconhecimento via ackID?, indicando
+que a mensagem foi transmitida, ou ate receber
+um sinal via Erro Txi, indicando que ocorreu
+um erro de transmissao. Em qualquer um dos
+casos, a variavel i e zerada e o automato retorna
+para o lugar Arbit e verifica se existe alguma mensagem pendente para ser transmitida. Caso nao
+exista, o automato retorna para o seu lugar inicial
+N Req Tx Msg.
+4.2
+
+Automatos do Modelo de Interferencia
+
+Existem dois automatos para modelar a interferencia no barramento Interferencia (Fig. 1(c)) e
+Erro (Fig. 1(e)).
+As interferencias no barramento sao modeladas pelo automato Interferencia. A ocorrencia de uma interferencia e sinalizada pelo sinal
+Erro!. Consideramos que toda interferencia gerada durante a transmissao de uma mensagem (os
+lugares Tx Msg ou Msg Erro de qualquer automato Controlador CAN estao ativos) causa um
+erro de transmissao e sempre e detectada pelos nos
+da rede. Caso nenhuma mensagem esteja sendo
+transmitida, o sinal Erro! sera recebido pelo automato Erro.
+O lugar S Interf do automato Interferencia
+e utilizado para modelar um perodo de tempo
+3 Os
+
+relogios locais param de contar.
+
+ISBN 978-85-8001-069-5
+
+onde nao existe interferencia no barramento. Enquanto que o lugar Interf e utilizado para indicar
+que houve uma interferencia. A probabilidade de
+ocorrer uma transicao do lugar S Interf para o
+lugar Interf apos um instante t, segue uma distribuicao exponencial com funcao de distribuicao
+de probabilidade indicada pela Equacao 2, onde
+ e a taxa de ocorrencia de erros por unidade de
+tempo. A taxa esta indicado no lugar S Interf
+pela constante Taxa Exp.
+P r(T  t)  1  expt
+5
+
+(2)
+
+Estudo de Caso e Analise dos
+Resultados
+
+Nesta secao, apresenta-se um estudo de caso com
+um conjunto de tres mensagens CAN. Os atributos das mensagens estao indicadas na Tabela 1. A
+poltica de atribuicao de prioridade adotada foi a
+deadline monotonico. Algumas propriedades temporais do sistema foram formuladas e verificadas
+de acordo com o modelo descrito na secao anterior,
+para derivar a analise probabilstica dos tempos de
+resposta dessas mensagens.
+Tabela
+ID
+0
+1
+2
+
+1 Atributos das mensagens em s.
+T
+C
+Cm
+D
+2500
+0
+125bit
+2500
+3500
+0
+125bit
+3500
+3500
+0
+125bit
+3500
+
+As propriedades a serem verificadas sao descritas a seguir em linguagem humana e linguagem
+de especificacao no formalismo do UPPAAL SMC.
+Verificamos a probabilidade das mensagens satisfazerem seus deadlines considerando ocorrencia de
+nenhuma, uma e duas retransmissoes (RT xID 
+0, 1 e 2), para as taxas de transmissao de 125, 167
+e 200 Kbps (bit  8, 6 e 5 s, respectivamente),
+e uma taxa de erros igual a 100 e 1000 erross. O
+fator de utilizacao da rede, desconsiderando erros
+de transmissao, e de 97, 73 e 61 para as taxas de 125, 167 e 200 Kbps. A notacao utilizada
+e identica a apresentada nos modelos.
+1. Qual a probabilidade do deadline da mensagem ID ser satisfeito se ela nao for retransmitida nenhuma vez?
+PrTarefa(ID).tempo < DID (<> Tarefa(ID).MsgFim and RTxID  0)
+2. Qual a probabilidade do deadline da mensagem ID ser satisfeito se ela for retransmitida
+uma vez?
+PrTarefa(ID).tempo < DID (<> Tarefa(ID).MsgFim and RTxID  0)
+3. Qual a probabilidade do deadline da mensagem ID ser satisfeito se ela for retransmitida
+duas vezes?
+PrTarefa(ID).tempo < DID (<> Tarefa(ID).MsgFim and RTxID  0)
+
+2544
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Estas propriedades foram verificadas utilizando a ferramenta UPPAAL SMC versao 4.1.9
+em um notebook com processador Intel core i3350M com 2 GB de memoria fsica e sistema operacional linux de 32 bits. O tempo total gasto na
+verificacao de todas as propriedades foi inferior a
+5 minutos.
+A ferramenta retorna um limite inferior e superior de probabilidade para cada propriedade verificada, com confidencia de 95. Os graficos
+das funcoes de distribuicao acumulada (valor medio dos limites de probabilidade) das propriedades
+para cada mensagem utilizandos as tres taxas de
+transmissao e as duas taxas de erro estao representadas na Figura 2.
+Analisando os graficos (Fig. 2), observe que,
+conforme esperado, a probabilidade de satisfazer
+os deadline para cada mensagem diminui quando
+a taxa de erro aumenta eou a taxa de transmissao
+diminui eou o numero de retransmissao aumenta.
+Para as curvas obtidas sem retransmissao de mensagem, ou seja, sem erro de transmissao, o tempo
+de resposta mnimo equivale exatamente ao tempo
+de transmissao da mensagem. Por exemplo, para
+o caso onde a taxa de transmissao e de 125 kbps
+(bit  8), o tempo de transmissao e igual a 1000
+s. Para o caso onde houve uma retransmissao de
+mensagem, observe que o tempo de resposta mnimo e inferior ao dobro do tempo de transmissao
+da mensagem. Isto acontece devido o modelo considerar que a interferencia pode ocorrer em qualquer instante de transmissao da mensagem, como
+de fato ocorre na pratica. Esta e uma consideracao que normalmente nao e tomada nos modelos
+que utilizam tecnicas analticas para determinar
+uma analise_de_tempos_de_resposta.
+6
+
+Conclusoes
+
+A utilizacao de modelos baseados em automatos
+temporizados estocasticos permite avaliar atributos quantitativos e propriedades funcionais de redes de comunicacao de dados do tipo CAN. No
+presente trabalho, usando esses modelos, foi possvel determinar para um conjunto de tres mensagens CAN periodicas os graficos da funcao de
+distribuicao acumulada dos tempos de resposta
+para tres diferentes taxas de transmissao (125, 167
+e 200 kbps), duas diferentes taxas de erros (100
+e 1000 erross), considerando nenhuma, uma ou
+duas retransmissoes de mensagens. A partir da
+analise dos graficos da funcao de distribuicao acumulada dos tempos de resposta apresentada na
+Secao 5, observou-se que os resultados obtidos sao
+consistentes.
+Pretende-se em trabalhos futuros aprimorar
+o modelo de interferencia compara o nosso modelo de interferencia com outros modelos encontrados na literatura realizar a verificacao para um
+numero maior de mensagens CAN, e utilizar este
+modelo para aplicacoes de sistemas_de_controle via
+
+ISBN 978-85-8001-069-5
+
+rede, de modo a desenvolver uma metodologia de
+projeto.
+Agradecimentos
+Os autores agradecem o apoio financeiro fornecido
+pela CAPES e CNPq.
+Referencias
+Berhmann, G., David, A. and Larsen, K. G.
+(2004). A tutorial on uppaal, formal methods
+for the design of real-time systems, In SFMRT, Springer-Verlag 965 200236.
+Bosch, R. (1991). Can specification version 2.0.
+Robert Bosch GmbH, Postfach 30 02 40, D70442 Stuttgart.
+Broster, I., Burns, A. and Rodrgues-Navas, G.
+(2002). Probabilistic analysis of can with
+faults, In Proceedings of the 23rd IEEE realtime systems symposium (RTSS02) pp. 269
+278.
+Bulychev, P., David, A., Larsen, K. G., Mikucionis, M., Poulsen, D. B., Legay, A. and Wang,
+Z. (2012). Statistical model_checking for priced timed automata, In proceedings of the
+10th workshop on quantitative aspects of programming languages .
+David, A., Larsen, K. G., Legay, A., Mikucionis,
+M. and Wang, Z. (2011). Time for statistical
+model_checking of real-time systems, In proceedings of the 23rd international conference
+on computer aided verication (CAV11) .
+Davis, R. I., Burns, A., Bril, R. J. and Lukkien,
+J. J. (2007). Controller area network schedulability analysis Refuted, revisited and revised, Real-Time Systems 35(3) 239272.
+Etschberger, K. (2001). Controller Area Network
+Basics, Protocols, Chips and Application,
+first edn, IXXAT Press, Germany.
+George, L., Rivierre, N. and Spuri, M. (1996). Preemptive and non-preemptive real-time uniprocessor scheduling, Technical Report RR2966, INRIA.
+Larsen, K. G., Pettersson, P. and Yi, W. (1995).
+Model-checking for real-time systems, In
+Proceedings of the 10th international conference on fundamentals of computation theory
+965 6288.
+Leung, J. Y. T. and Whitehead, J. (1982). On
+the complexity of fixed-priority scheduling of
+periodic, real-time tasks, Performance Evaluation 2(4) 237250.
+
+2545
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+0.8
+0.7
+0.6
+RTx0
+RTx1
+
+0.4
+0.3
+0.2
+
+RTx2
+
+0.1
+0
+1000
+
+1
+0.9
+
+0.8
+0.7
+
+0.5
+
+1500
+2000
+Tempo de Resposta  TR (us)
+
+0.2
+
+Função Distribuição Acumulada  FDA
+
+Função Distribuição Acumulada  FDA
+
+0.7
+0.6
+0.5
+0.4
+RTx0
+
+0.2
+RTx1
+RTx2
+
+1500
+
+2000
+2500
+Tempo de Resposta  TR (us)
+
+1000
+
+1200 1400 1600 1800 2000
+Tempo de Resposta  TR (us)
+
+2400
+
+3500
+
+0.2
+
+0
+600
+
+0.7
+RTx0
+
+0.5
+RTx1
+0.4
+RTx2
+0.3
+0.2
+100 erross
+1000 erross
+1500
+2000
+2500
+Tempo de Resposta  TR (us)
+
+3000
+
+Função Distribuição Acumulada  FDA
+
+0.6
+0.5
+0.4
+RTx0
+
+0.2
+RTx1
+
+1000
+
+1200 1400 1600 1800 2000
+Tempo de Resposta  TR (us)
+
+1500
+
+2000
+2500
+Tempo de Resposta  TR (us)
+
+(g) Mensagem 2 - 125 kbps.
+
+3500
+
+2600
+
+RTx0
+
+0.6
+
+RTx1
+RTx2
+
+0.5
+0.4
+0.3
+0.2
+
+100 erross
+1000 erross
+
+0
+500
+
+3500
+
+1000
+
+1500
+2000
+2500
+Tempo de Resposta  TR (us)
+
+3000
+
+3500
+
+(f) Mensagem 1 - 200 kbps.
+1
+0.9
+
+0.8
+0.7
+0.6
+0.5
+RTx0
+
+0.4
+0.3
+
+RTx1
+
+0.2
+
+RTx2
+
+0.1
+3000
+
+2400
+
+0.7
+
+0.8
+0.7
+RTx0
+
+0.6
+0.5
+
+RTx1
+
+0.4
+0.3
+
+RTx2
+0.2
+100 erross
+1000 erross
+
+0.1
+
+RTx2
+0
+1000
+
+2200
+
+0.8
+
+0.1
+
+100 erross
+1000 erross
+
+0.9
+
+0.7
+
+800
+
+(c) Mensagem 0 - 200 kbps.
+
+0.8
+
+1000
+
+100 erross
+1000 erross
+
+0.1
+
+2600
+
+1
+
+0.1
+
+0.3
+
+(e) Mensagem 1 - 167 kbps.
+
+100 erross
+1000 erross
+
+0.3
+
+0.4
+
+1
+
+0
+500
+
+0.9
+0.8
+
+0.5
+
+0.9
+
+0.6
+
+RTx0
+
+0.6
+
+1
+
+0.1
+3000
+
+2200
+
+RTx2
+
+0.7
+
+0.9
+
+(d) Mensagem 1 - 125 kbps.
+
+Função Distribuição Acumulada  FDA
+
+800
+
+RTx1
+
+0.8
+
+(b) Mensagem 0 - 167 kbps.
+
+0.8
+
+0
+1000
+
+100 erross
+1000 erross
+
+0
+600
+
+2500
+
+100 erross
+1000 erross
+
+0.1
+
+RTx2
+
+0.3
+
+0.1
+
+1
+
+0.3
+
+RTx0
+
+0.4
+
+(a) Mensagem 0 - 125 kbps.
+
+0.9
+
+RTx1
+
+0.6
+
+Função Distribuição Acumulada  FDA
+
+0.5
+
+1
+0.9
+
+Função Distribuição Acumulada  FDA
+
+Função Distribuição Acumulada  FDA
+
+Função Distribuição Acumulada  FDA
+
+100 erross
+1000 erross
+
+Função Distribuição Acumulada  FDA
+
+1
+0.9
+
+0
+500
+
+1000
+
+1500
+2000
+2500
+Tempo de Resposta  TR (us)
+
+3000
+
+(h) Mensagem 2 - 167 kbps.
+
+3500
+
+0
+500
+
+1000
+
+1500
+2000
+2500
+Tempo de Resposta  TR (us)
+
+3000
+
+3500
+
+(i) Mensagem 2 - 200 kbps.
+
+Figura 2 Graficos das funcoes de distribuicao acumulada das mensagens CAN 0, 1 e 2 para as taxas
+de transmissao de 125, 167 e 200 kbps, taxa de erro de 100 e 1000 erross e numero de retransmissoes
+(RTx) igual a 0, 1 e 2.
+Navet, N., Song, Y.-Q. and Simonot, F. (2000).
+Worst-case deadline failure probability in
+real-time applications distributed over controller area network, Journal of Systems Architecture 46 607617.
+Punnekkat, S., Hansson, H. and Norstrom, C.
+(2000). Response time analysis under erros for can, In Proceedings of the 6th realtime technology and applications symposium.
+IEEE Computer Society Press pp. 258265.
+Sa, J. S., Lima, A. M. N., Perkusic, A. and Neto,
+J. S. R. (2010). Analise dos tempos de resposta fim a fim de sistemas_de_controle via
+rede baseado na tecnica de verificacao de modelos, XVIII Congresso Brasileiro de Automatica - CBA 2010 .
+Sen, K., Viswanathan, M. and Agha, G. (2004).
+Statistical model_checking of black-box probabilistic systems, In CAV, LNCS 3114
+pp. 202215.
+
+ISBN 978-85-8001-069-5
+
+Tindell, K. and Burns, A. (1994a). Guaranteed message latencies for distributed safetycritical hard real-time control networks, Technical Report YCS229, Department of Computer Science University of York (UK).
+Tindell, K. W. and Burns, A. (1994b). Guaranteeing message latencies on controller area
+network (can), Proceedings of the 1st International CAN Conference pp. 111.
+Unruh, J., Mathony, H.-J. and Kaiser, K.-H.
+(1989). Error detection analysis of automotive communication protocols, Technical report, Robert Bosch GmbH.
+Waszniowsky, L., Hanzalek, Z. and Hanzalek, Z.
+(2009). Case study on distributed and fault
+tolerant system modeling based on timed automata, The journal of systems and software
+(82) 16781694.
+
+2546

@@ -64,11 +64,11 @@ class Medline(Source):
 
     def total_querys(self):
         files = open(self.local_file_q, 'r').read().split('.I')
-        raise len(files)
+        return len(files)
 
     def total_docs(self):
         files = open(self.local_file_doc, 'r').read().split('.I')
-        raise len(files)
+        return len(files)
 
     def lookup_querys(self,text):
         return [q for q in self.read_querys() if text in q.text]

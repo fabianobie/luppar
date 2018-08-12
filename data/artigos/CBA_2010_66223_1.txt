@@ -1,0 +1,691 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+FORMACAO DE CAMINHOS PARA NAVEGACAO A PARTIR DA
+APRENDIZAGEM POR OBSERVACAO
+Lgia Maria Ferreira de Aguiar, Julio Storch Dalfior, Raquel Frizera Vassallo
+
+
+Universidade Federal do Esprito Santo
+Av. Fernando Ferrari, 514, Goiabeiras, Vitoria - ES - CEP 29075-910
+Emails ligiamfa@gmail.com, juliostorch@gmail.com, raquel@ufes.br
+Abstract This paper presents a method to create paths in the environment observed by an idle robot,
+basically when it is not executing any task that envolves moving around. The robot has an omnidirectional
+vision that is used to determine points where people usually walk through the environment. By doing this, the
+robot may identify paths and places of interest in the the environment such as, doors, chairs, workstantions, etc.
+The method presented in this paper uses background subtraction to obtain the locations where people walk and,
+based on polynomials that relate points in the image with points in the world, recovers the 3D coordinates of these
+locations. Before generating the paths where the robot can navigate, the 3D points are clustered by mean-shift
+technique. In order to validate the proposed method, some experiments were performed and are shown in this
+paper.
+Keywords
+
+Omnidirectional Vision, Mobile Robots, Path Planning.
+
+Resumo Este trabalho apresenta um metodo para a criacao de caminhos no ambiente de trabalho de um robo
+movel, particularmente quando este robo esta ocioso. O robo e dotado de um sistema de visao_omnidirecional, o
+qual e utilizado para determinacao dos pontos por onde as pessoas normalmente caminham pelo ambiente. Desta
+maneira, os robos podem identificar caminhos e pontos de interesse no ambiente tais como portas, cadeiras,
+estacoes de trabalho, etc. O metodo apresentado neste trabalho utiliza a tecnica de subtracao de fundo para
+obter as posicoes por onde as pessoas passam num determinado ambiente e, baseado em polinomios que relacionam
+os pontos na imagem e no mundo, recuperar as coordenadas tridimensionais destes pontos. Antes de se gerar os
+caminhos por onde o robo ira passar, e realizada uma clusterizacao das coordenadas 3D dos pontos utilizando a
+tecnica mean shift. Para validar o metodo proposto, alguns experimentos foram realizados e sao mostrados neste
+artigo.
+Palavras-chave
+
+.
+
+Introducao
+
+cao das acoes feitas por outro robo ou um indivduo.
+Em (Bentivegna, 2004), um ambiente de simulacao e utilizado para possibilitar o aprendizado de
+tarefas primitivas por meio da observacao. Depois
+que a tarefa e inicialmente aprendida, o agente comeca a melhorar seu desempenho por repeticao.
+Ja em (Atkeson and Schaal, 1997), e desenvolvido
+um criterio de otimizacao a partir da demonstracao de uma tarefa e um modelo baseado em tentativas de realizar essa tarefa, e com isso, calcular
+um movimento apropriado para o robo.
+
+As primeiras aplicacoes em robotica eram principalmente voltadas para a area industrial e os
+robos eram usados para realizar tarefas simples e
+repetitivas em ambientes estruturados e sem a presenca de seres humanos (Takubo et al., 2002). Entretanto, ha, atualmente, uma demanda crescente
+por sistemas roboticos que sejam capazes de trabalhar em ambientes complexos e em cooperacao
+com os seres humanos (Langle and Worn, 2001).
+Ao deixar o ambiente controlado e seguro das
+fabricas para atuar em um meio menos estruturado, com obstaculos, buracos, e objetos moveis,
+os robos passaram a ser dotados de sensores que
+pudessem obter informacoes do ambiente em que
+o robo se encontra.
+
+Entretanto, muita coisa pode ser aprendida
+apenas observando o comportamento de outros
+indivduos. Por exemplo, o tempo que os robos
+ficam ociosos em um laboratorio recarregando baterias ou simplesmente desligados, pode ser utilizado para o aprendizado por observacao para
+a navegacao no ambiente de trabalho. Normalmente, um robo_autonomo necessita de um mapa
+para navegar no ambiente. Assim, pode ser interessante aproveitar esses momentos de ociosidade
+para realizar um processamento e aprendizado do
+ambiente que facilite a navegacao e experimentos futuros como em (Franca, 2007 Freitas, 2004).
+Tambem em (Appenzeller et al., 1997), mostra-se
+que um espaco_inteligente pode gerar um mapa
+topologico para robos apenas observando o movimento dos humanos no ambiente. Um espaco in-
+
+Alem disso, nas ultimas decadas, diversos
+pesquisadores tem desenvolvido pesquisas em robotica que envolvem aprendizado. Essa aprendizagem pode acontecer atraves de imitacao
+(Dautenhahn, 1995 Vassallo, 2004), por meio de
+demonstracao (Kasper et al., 2001 Dautenhahn
+and Nehaniv, 2002) ou por tentativas e erros. As
+aprendizagens por observacao ou imitacao tem a
+vantagem de se poder utilizar a experiencia previa
+de quem ja pratica uma determinada acao. Normalmente, este tipo de aprendizagem e implementado nos robos atraves da observacao e da repeti-
+
+238
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+teligente como em (Sasaki and Hashimoto, 2006),
+com varios sensores de visao distribudos, pode
+obter caminhos frequentes por onde humanos andam. Como esses caminhos nao sao aleatorios,
+isto e, eles estao relacionados a lugares e trajetorias especficos, o robo pode obter informacoes
+sobre o ambiente para realizar um desvio_de_obstaculos durante sua navegacao, como mostrado em
+(Bennewitz et al., 2002).
+
+2
+
+Etapa de Aquisicao de Dados
+
+A etapa de aquisicao_de_dados que sera apresentada nesta secao se divide em subetapas. A primeira delas e a realizacao de um background subtraction. A imagem obtida no background subtraction e processada na segunda subetapa de forma a
+gerar uma imagem binaria que contenha os contornos dos blobs das regioes que nao pertencem a imagem de fundo. Estas regioes provavelmente pertencem a humanos que se movem no ambiente de
+trabalho do robo. A seguir, estima-se uma elipse
+correspondente a cada blob e, por fim, estes blobs
+sao rastreados de forma a se estimar os pontos por
+onde o humano se locomoveu no ambiente.
+
+Este trabalho representa a continuacao dos
+projetos desenvolvidos no LAI - Laboratorio de
+Automacao Inteligente da UFES (Franca, 2007
+Freitas, 2004). Consiste em adquirir coordenadas
+3D de pontos por onde e possvel locomover-se, baseado na movimentacao de seres humanos em um
+ambiente de trabalho, de forma a facilitar atividades de navegacao de robos atraves da indicacao de
+caminhos livres de obstaculos. Para isso, utilizouse um robo_movel com um sistema de visao_omnidirecional, o qual e composto de uma camera
+perspectiva e um espelho hiperbolico que proporciona um campo visual de 360 na horizontal. O
+metodo proposto neste trabalho divide-se em duas
+etapas aquisicao_de_dados e processamento das
+informacoes.
+
+2.1
+
+Background Subtraction
+
+Esta fase consiste em determinar as regioes da
+imagem de entrada que diferem da imagem de
+fundo previamente criada pelo robo. O diferencial do metodo para calcular o background subtraction usado nesse trabalho, que pode ser visto
+em (Lampert et al., 2005), e que a imagem de media obtida (imagem de fundo) e a imagem de entrada sao convertidas para o espaco de cor YUV,
+de forma a diminuir a influencia da iluminacao.
+Assim, o canal que tem maior variacao com as mudancas de iluminacao (canal Y) tem menor contribuicao no calculo. A imagem de diferenca e
+calculada como
+
+Na etapa de aquisicao_de_dados, e realizado
+um background subtraction para reconhecer regioes que diferem da imagem de fundo. Em seguida, sao calculados os momentos de ordem zero,
+de primeira e de segunda ordem do blob selecionado, o qual deve corresponder a uma pessoa que
+se movimenta pelo ambiente. Com as informacoes de momento e centro do blob, pode-se definir
+uma elipse (Rocha et al., 2004) que represente o
+blob em questao. Em seguida, aplica-se Filtro de
+Kalman para o rastreamento deste blob e, consequentemente, da pessoa. Por fim, as coordenadas
+na imagem dos pontos no chao por onde a pessoa
+andou sao obtidas.
+
+I  0.25YI  YI + UI  UI + VI  VI, (1)
+onde I representa a imagem de diferenca, YI , UI e
+VI representam cada canal da imagem de entrada
+e YI, UI e VI, os canais da imagem de media.
+2.2
+
+Processamento da imagem de diferenca
+
+Apos calcular a imagem de diferenca, e realizada a
+deteccao de contornos dos blobs, que representam
+humanosobjetos, que nao fazem parte da imagem
+de fundo pelo metodo apresentado em (Suzuki and
+Abe, 1985). Nesse metodo, somente os contornos
+externos sao extrados, assim buracos dentro dos
+blobs sao ignorados.
+O proximo passo na etapa de aquisicao_de_dados, e a escolha do blob na imagem de diferenca
+que melhor corresponde a um ser humano se movendo pela sala. Sabe-se que em uma imagem gerada a partir de um sistema de visao_omnidirecional, um objeto que esta na vertical no mundo aparece de forma radial na imagem (Vassallo, 2004).
+Por isso, escolheu-se o blob que esta mais proximo
+do centro da imagem e possui uma area entre as
+areas mnima e maxima determinadas para uma
+perna humana. Estes valores de area foram obtidos experimentalmente por forma de medicoes em
+diferentes condicoes.
+
+Na etapa de processamento, a partir dos pontos no chao obtidos na etapa anterior, calculamse as coordenadas 3D dos mesmos por polinomios
+que relacionam os pontos no mundo e os pontos na
+imagem. Com isso, pode-se atingir o objetivo de
+construir caminhos e utiliza-los, posteriormente,
+para a navegacao do robo no ambiente de trabalho.
+O restante deste artigo esta organizado da seguinte forma. A Secao 2 apresenta as equacoes
+utilizadas para calcular o background subtraction e
+os parametros das elipses usadas. A Secao 3 mostra o metodo utilizado para obter os polinomios
+e os caminhos encontrados. Por fim, a Secao 4
+apresenta os resultados dos experimentos realizados enquanto a Secao 5 mostra as conclusoes deste
+trabalho e as propostas para trabalhos futuros.
+
+239
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+2.3
+
+Determinacao da elipse de inercia
+
+ao eixo-x do plano da imagem podem ser obtidas
+utilizando-se os momentos centrais (representados
+por  nesse trabalho) de ordem zero, de primeira
+e de segunda ordens como pode ser visto na Equacao 6.
+
+O calculo dos momentos de imagens tem sido
+muito utilizado nos ultimos anos, principalmente
+na area de reconhecimento_de_padroes. Essa e uma
+ferramenta interessante, ja que permite representar formas complexas de maneira simples e generica (Chaumette, 2004). Alem disso, a representacao geometrica fornecida pelos momentos de segmentos da imagem e mais intuitiva que aquela gerada pela abordagem proposta em (Collewet and
+Chaumette, 2000) de caractersticas obtidas do
+contorno de objetos.
+A determinacao da elipse de inercia inicia com
+o calculo dos momentos do segmento da imagem
+que possui o contorno do blob selcionado. O momento de ordem (p + q) de uma imagem e definido
+como
+Z Z
+mpq 
+I(x, y)xp y q dxdy,
+(2)
+
+a 
+
+r
+A
+2
+00
+
+b
+
+
+
+r
+B
+2
+00
+
+
+
+1
+arctan
+2
+
+
+
+(6)
+
+
+11
+20  02
+
+
+
+Os valores de A e B na Equacao 7 sao definidos como
+A
+
+onde I(x,y) e o nvel de intensidade do ponto na
+imagem de coordenadas x e y.
+Nesse etapa do trabalho sao utilizadas apenas
+imagens binarias. Assim, os pixels possuem apenas valores 1 e 0 e so aqueles de valor igual a 1
+precisam ser considerados. Dessa forma, simplificando a Equacao 2, tem-se que o momento de
+ordem (p + q) de uma imagem binaria e definido
+como
+Z Z
+mpq 
+xp y q dxdy,
+(3)
+
+B
+
+
+
+(20 + 02 ) + (20  02 )2 + 4211 
+2
+
+
+
+(20 + 02 )  (20  02 )2 + 4211 
+.
+2
+
+(7)
+
+A equacao que define o momento central pode
+ser vista na Equacao 8.
+Z 
+n (x) 
+(x  )n f (x)dx
+(8)
+
+
+onde, dada uma distribuicao f (x), n (x) e  representam, respectivamente, o momento central e
+a media dessa distribuicao.
+As Figuras 1 (a)-(b) mostram, respectivamente a imagem de fundo e uma imagem de entrada, onde aparece uma pessoa que se move no
+ambiente. Na imagem de entrada, foi aplicada
+uma mascara com o objetivo de excluir regioes
+que nao sao interessantes a base metalica do sistema de visao, porque influencia no background
+subtraction, e areas muito afastadas do centro da
+imagem, porque estao sujeitas a uma grande distorcao. O contorno do blob obtido a partir do
+background subtraction pode ser visto na imagem
+da Figura 1 (c) enquanto a elipse de inercia que
+circunscreve este blob aparece na Figura 1 (d).
+
+para p,q0,1,2...
+Para o caso de uma imagem digital, a integral na Equacao 3 pode ser substituda por um
+somatorio. Assim, tem-se
+X
+mpq 
+xp y q .
+(4)
+Neste trabalho, decidiu-se usar uma elipse,
+como representacao geometrica de um humano na
+imagem, e nao outras formas geometricas simples
+como retangulos e crculos, pois a elipse se adapta
+melhor ao perfil de um humano em pe em uma
+imagem omnidirecional. A elipse usada (elipse de
+inercia), como mostrado em (Rocha et al., 2004),
+e centrada no centroide c do objeto e seus eixos
+sao as linhas que passam por c, tal que, os momentos centrais de segunda ordem sao maximos e
+mnimos.
+Nota-se da Equacao 4 que, para se obter xc e
+yc , coordenadas do centroide c da elipse, somente
+e necessario calcular m00 e os momentos de primeira ordem m01 e m10 . Assim, as coordenadas
+do centroide da elipse sao
+
+
+m10 m01
+,
+.
+(5)
+(xc , yc ) 
+m00 m00
+
+2.4
+
+Rastreamento
+
+O objetivo do rastreamento dos blobs e conhecer
+em todos os instantes a posicao do humano e tambem prever a posicao do mesmo no instante posterior. Nesse trabalho utilizou-se o Filtro de Kalman
+para isso. Assim, foi possvel definir uma janela de
+procura (regiao ao redor da posicao prevista naquele instante) na qual se possa restringir a busca
+do contorno correpondente ao humano e, com isso,
+reduzir o custo_computacional. Desta forma, o
+rastreamento pode ser divido em tres etapas
+ Primeiramente, e realizada a previsao do estado atual, baseado no estado anterior, gerando uma janela de procura
+
+As dimensoes dos semi-eixos da elipse (a,b)
+e a orientacao () do semi-eixo maior em relacao
+
+240
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+(a)
+
+(b)
+
+(c)
+
+(d)
+
+Figura 2 Oito setores do campo de visao do sistema.
+
+Figura 1 Imagem de fundo (a). Imagem de entrada (b). Contorno do blob (c). Elipse de inercia
+em vermelho(d).
+
+A razao pela qual decidiu-se utilizar polinomios e nao o modelo de projecao do sistema omnidirecional, para se relacionar pontos na imagem
+e no mundo, e que a calibracao com os polinomios
+e mais simples e computacionalmente menos custosa que a calibracao completa usando o modelo
+de projecao do sistema de visao.
+
+ Em seguida, o blob desejado e procurado somente na janela de busca obtida anteriormente e a elipse de inercia correspondente e
+calculada
+
+3.2
+ Finalmente, a previsao do estado atual e corrigida utilizando-se as medicoes do item anterior.
+
+Como entrada para a obtencao das trajetorias,
+tem-se uma nuvem de pontos no mundo calculados anteriormente. O primeiro passo e reduzir o
+numero de pontos nessa nuvem por meio de uma
+clusterizacao, isto e, reduzir pontos proximos a um
+unico ponto, um agrupamento (cluster ). Foi utilizado, para isso, o mean-shift. Esse e um metodo
+de classificacao nao-supervisionada de dados. A
+analise de agrupamentos trata pontos no espaco de
+atributos multidimensional como uma funcao de
+densidade de probabilidade, em que regioes densas
+no espaco de atributos correspondem a maximos
+locais.
+A partir desses agrupamentos, pode-se gerar
+um grafo ligando os nos que possuem um distancia
+entre si menor que um valor dado. Para obter a
+trajetoria, dado um no inicial, escolhe-se o no que
+esta mais proximo da reta que liga o no atual e
+o destino, com a condicao adicional de que o no
+escolhido esta o mais perto possvel do ponto final.
+Esse processo e repetido ate que o robo chegue ao
+alvo ou nao tenha mais como se mover para um
+no mais proximo do destino.
+
+Nessa etapa, alem de rastrear um blob, tambem e selecionado o ponto da elipse que esta mais
+proximo do centro da imagem, e esse ponto representara o ponto de apoio do humano, ou seja, o
+ponto de contato de seus pes com o chao.
+3
+
+Processamento das Informacoes
+
+A etapa do processamento das informacoes, assim
+como a etapa de aquisicao_de_dados, tambem esta
+dividada em subetapas recuperar as coordenadas
+3D dos pontos de apoio do humano e construir os
+caminhos formados por esses pontos.
+3.1
+
+Obtencao das trajetorias
+
+Recuperacao de coordenadas 3D
+
+O sistema de visao_omnidirecional possui 360 de
+campo de visao que podem ser divididos em oito
+setores de 45 conforme a Figura 2.
+Cada um desse setores possui uma relacao diferente entre as coordenadas na imagem (x,y) e as
+coordenadas 3D no mundo (xmundo , ymundo ) que
+pode ser aproximada por um polinomio de terceiro grau (Gava, 2007). Para conseguir essa relacao, varios marcadores foram colocados em posicoes conhecidas no chao e suas coordenadas na
+imagem foram obtidas. A seguir, as coordenadas
+na imagem foram associadas as coordenadas tridimensionais no mundo para se encontrar os polinomios correspondentes a cada setor.
+
+4
+
+Experimentos
+
+Para validar o metodo proposto neste trabalho,
+foram realizados experimentos e alguns deles serao apresentados nesta secao. Para a realizacao
+destes, foi utilizado o robo_movel Pioneer 2-DX, o
+qual e equipado com um sistema de visao_omnidirecional composto por uma camera e um espelho
+hiperbolico.
+
+241
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+25
+
+O programa foi escrito em C++ e roda em um
+computador Intel Core 2 Duo com 2.1 GHz e 4GB
+de memoria RAM. O ciclo de aquisicao_de_dados,
+para apenas uma imagem de diferenca, executa
+em 0,5360 segundos ja o da fase de processamento
+das informacoes executa em 0,4317 segundos para
+recuperar as coordenadas 3D de 630 pontos, e em
+0,4041 segundos para gerar caminhos a partir da
+mesma quantidade de pontos quando se solicita
+ao robo ir de um ponto a outro do ambiente. O
+sistema de visao_omnidirecional e o robo usados
+podem ser vistos na Figura 3.
+
+erro percentual em x
+
+20
+
+15
+
+10
+
+5
+
+0
+0
+
+5
+
+10
+
+15
+20
+índice do ponto
+
+25
+
+30
+
+35
+
+25
+
+30
+
+35
+
+(a)
+25
+
+erro percentual em y
+
+20
+
+15
+
+10
+
+5
+
+0
+0
+
+5
+
+10
+
+15
+20
+índice do ponto
+
+(b)
+
+Figura 3 Sistema de visao_omnidirecional utilizado neste trabalho.
+
+4.1
+
+Figura 4 Erros percentuais das coordenadas em
+x dos pontos e o erro medio (a). Erros percentuais
+em y e o erro medio (b).
+
+Experimento 1
+inicial (0,0) ate o mais proximo possvel da trajetoria realizada pelo homem. Para isso, foi considerado que nao existia nenhum obstaculo nesse
+trajeto e que, portanto, a navegacao era possvel.
+Na Figura 5(a), pode-se ver a nuvem de pontos
+como . e os agrupamentos como +. Ja a Figura 5(b) mostra o grafo formado por todos os
+caminhos que ligam agupamentos a uma distancia menor que 60 cm.
+Depois de realizada a clusterizacao,
+determinou-se que o robo deveria sair da
+posicao inicial (0,0) e navegar ate a posicao
+(72,94112,1) e, ao chegar nesse ponto, deveria
+seguir ate (124,1703-148,8700) e, finalmente,
+retornar ao ponto inicial. Os caminhos descritos
+anteriormente correspondem na Figura 6 aos
+caminhos 1, 2 e 3, nessa ordem. Os pontos (0,0),
+(146,43442.7359) e (124,1703-148,8700) sao
+representados por um asterisco, um triangulo e
+um quadrado, respectivamente.
+Nota-se pela Figura 6, que o caminho tracado se aproxima bem do melhor caminho possvel (mais curto e o mais proximo possvel de uma
+reta). O erro encontrado na disposicao dos agrupamentos se deve ao erro apresentado na reconstrucao e no fato de que pessoas nao caminham
+com os pes alinhados, o que pode gerar cerca de 20
+cm de erro. Esta diferenca nao representa um pro-
+
+Nesse experimento, foram colocados marcadores
+no chao, para representar pontos por onde um humano poderia ter andado. A intencao e avaliar o
+erro de reconstrucao 3D dos pontos a partir das
+suas coordenadas na imagem. Assim por estarem
+em posicoes conhecidas, foi possvel calcular o erro
+entre a posicao real dos marcadores e a gerada pelo
+programa. Esses marcadores foram posicionados
+ao longo de todos os setores. Os eixos x e y, no
+mundo, foram definidos para frente e para a esquerda do robo, respectivamente.
+Os erros percentuais entre as coordenadas calculadas e as reais podem ser vistos nas Figuras
+4 (a)-(b).
+Notou-se que os erros medios calculados ficaram abaixo de 10, o que consiste em um bom
+resultado para a aplicacao proposta neste trabalho.
+4.2
+
+Experimento 2
+
+Esse experimento trata da reconstrucao de caminhos para a navegacao de um robo. Uma pessoa,
+sendo observada pelo robo, andou cerca de tres
+metros formando um T. Para que o robo chegasse ate o caminho executado pela pessoa, foram
+adicionados pontos que levam o robo da posicao
+
+242
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+100
+
+coordenada y
+
+50
+0
+50
+100
+150
+50
+
+0
+
+50
+100
+150
+coordenada x
+
+200
+
+250
+
+(a)
+100
+
+Figura 6 Caminhos para a navegacao de um robo.
+coordenada y
+
+50
+
+de um modelo estatstico da imagem de fundo do
+background subtraction a divisao de cada setor
+do campo de visao do sistema omnidirecional em
+subsetores de acordo com a distancia ate o centro, de forma a obter uma aproximacao melhor e
+a comparacao da recuperacao das coordenadas 3D
+entre o metodo apresentado e outro que utiliza as
+equacoes do sistema de visao_omnidirecional.
+
+0
+50
+
+100
+
+150
+50
+
+0
+
+50
+100
+coordenada x
+
+150
+
+200
+
+(b)
+
+Referencias
+
+Figura 5 Clusterizacao da nuvem de pontos obtida (a). Grafo com todos os caminhos possveis
+(b).
+
+Appenzeller, G., Lee, J.-H. and Hashimoto, H.
+(1997). Building topological maps by looking at people an example of cooperation between intelligent spaces and robots,
+3 13261333 vol.3.
+
+blema para a navegacao do robo, pois espera-se fazer uma suavizacao da trajetoria antes da sua movimentacao, alem de haver espaco livre em torno
+dos pontos considerados. A navegacao do robo
+usando caminhos criados com o metodo proposto
+corresponde a um dos trabalhos futuros deste projeto.
+5
+
+Atkeson, C. and Schaal, S. (1997). Learning tasks
+from a single demonstration, 2 17061712
+vol.2.
+Bennewitz, M., Burgard, W. and Thrun, S.
+(2002). Using em to learn motion behaviors of
+persons with mobile robots, 1 502507 vol.1.
+
+Conclusoes
+
+Bentivegna, D. C. (2004). Learning from observation using primitives. Director-Atkeson, Christopher G.
+
+Este trabalho abordou a criacao de caminhos possveis para a navegacao de um robo, observando a
+movimentacao de pessoas por um ambiente. Foram apresentadas estrategias para diferenciacao
+de imagem de fundo, rastreamento de pessoas, representacao de um blob por uma forma geometrica, recuperacao polinomial de coordenadas 3D
+e a criacao de trajetorias utilizando os pontos recuperados. A eficacia do metodo proposto e verificada por meio de experimentos comparando coordenadas conhecidas e calculadas e gerando caminhos a partir da observacao dos pontos por onde
+pessoas passaram.
+Como trabalhos futuros pode-se destacar a
+observacao do movimento de varias pessoas durante um intervalo de tempo prolongado, a suavizacao dos caminhos gerados, a navegacao do robo
+e a analise temporal para deteccao de pontos de
+interesse e posterior criacao de um mapa topologico. Como objetivos secundarios estao a criacao
+
+Chaumette, F. (2004). Image moments a general
+and useful set of features for visual servoing,
+Robotics, IEEE Transactions on 20(4) 713
+723.
+Collewet, C. and Chaumette, F. (2000). A contour
+approach for image-based control on objects
+with complex shape, 1 751756 vol.1.
+Dautenhahn, K. (1995). Getting to know each
+other - artificial social intelligence for autonomous robots, Robotics and Autonomous Systems 16 333356.
+Dautenhahn, K. and Nehaniv, C. L. (eds) (2002).
+Imitation in animals and artifacts, MIT
+Press, Cambridge, MA, USA.
+
+243
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Franca, A. S. (2007). Deteccao e segmentacao de
+movimento usando um sistema de visao_omnidirecional, Projeto de Graduacao - Universidade Federal do Esprito Santo.
+Freitas, R. (2004). Aprendizagem de mapas de
+navegacao atraves da observacao de pessoas,
+XV Congresso Brasileiro de Automatica .
+Gava, C. C. (2007). Controle de formacao de robos
+moveis baseado em visao_omnidirecional, Dissertacao de Mestrado - Universidade Federal
+do Esprito Santo.
+Kasper, M., Fricke, G., Steuernagel, K. and von
+Puttkamer, E. (2001). A behavior-based mobile robot architecture for learning from demonstration, Robotics and Autonomous Systems 34(2-3) 153164.
+Lampert, C. H., Braun, T., Ulges, A., Keysers,
+D. and Breuel, T. M. (2005). Oblivious document capture and real-time retrieval, International Workshop on Camera Based Document Analysis and Recognition (CBDAR),
+Seoul, South Korea, pp. 7986.
+Langle, T. and Worn, H. (2001). Human-robot
+cooperation using multi-agent-systems, J. Intell. Robotics Syst. 32(2) 143160.
+Rocha, L., Velho, L. and Carvalho, P. (2004). Motion reconstruction using moments analysis,
+pp. 354361.
+Sasaki, T. and Hashimoto, H. (2006). Human observation based mobile robot navigation in
+intelligent space, pp. 10441049.
+Suzuki, S. and Abe, K. (1985). Topological
+structural analysis of digitized binary images by border following, Computer Vision,
+Graphics, and Image Processing 30(1) 32
+46.
+Takubo, T., Arai, H., Hayashibara, Y. and Tanie,
+K. (2002). Human-robot cooperative manipulation using a virtual nonholonomic constraint, The international Journal of Robotics
+Research 21(56) 541553.
+Vassallo, R. F. (2004). Uso de mapeamentos
+visuomotores com imagens omnidirecionais
+para aprendizagem por imitacao em robotica,
+PhD thesis, Universidade Federal do Esprito
+Santo.
+
+244

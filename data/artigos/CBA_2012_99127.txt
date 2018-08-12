@@ -1,0 +1,656 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+CONTROLE ADAPTATIVO PARA UM SISTEMA DE TRÊS TANQUES
+DIEGO COLÓN, MAURÍCIO B. ROSA
+Grupo de Automação e Sistemas Integráveis - GASI, Engenharia de Controle e Automação, UNESP  Campus
+de Sorocaba, Av. Três de Março, 511- Alto da Boa Vista  Sorocaba, SP, BRASIL
+E-mails dcolon@sorocaba.unesp.br, mbr15@hotmail.com
+Abstract
+ This work applies self-tuning adaptive_control in order to regulate the liquid levels of two tanks in a Three Tank System. A Three Tank System is a multivariable didactical plant and presents several nonlinearities, some of them being hardnonsmooth nonlinearities. Also, the plant configuration can be altered manually, which greatly modifies its dynamics. This is a typical situation where adaptive_control can show its value. The closed-loop control is implemented in a real plant, in the control
+laboratory in the Paulista State University  Sorocaba Campus. The adaptation law is a normalized recursive least-squares with
+forgetting factor, and several different tests are conducted in order to find the influence of each parameter in the global performance.
+Keywords
+ Adaptive control, multivariable control, liquid level control.
+Resumo  Este trabalho aplica controle_adaptativo do tipo self-tuning de modo a regular o nível de líquido de dois tanques em
+um sistema didático Três Tanques Comunicantes. Este sistema, além de ser multivariável, ainda apresenta diversas nãolinearidades do tipo não suaves (hard nonlinearities). A configuração do sistema pode ser alterada manualmente durante a operação, o que modifica a dinâmica da planta. Esta é uma situação típica onde se recomenda aplicar controle_adaptativo. O sistema
+em malha_fechada é implementado na planta real, que é um kit_didático existente no laboratório de controle da UNESP de Sorocaba. A lei de adaptação é do tipo mínimos_quadrados recursivo normalizado e com fator de esquecimento, e diversos testes são
+conduzidos de forma a se verificar a influência dos diversos parâmetros no desempenho global do sistema.
+Palavras-chave
+ .
+
+1
+
+Introdução
+
+O objetivo deste trabalho é aplicar a teoria de
+controle_adaptativo self-tuning para o controle de
+nível de um sistema de três tanques, cuja configuração de válvulas pode ser mudada manualmente durante a operação do sistema. A planta física que será
+abordada neste trabalho é apresentada na Figura 1.
+Trata-se de uma planta contendo três tanques comunicantes, tais que as válvulas entre eles são proporcionais, e podem ser mudadas durante a operação.
+Ainda há válvulas proporcionais em cada tanque, que
+podem ser abertas manualmente para devolver água
+ao tanque reservatório. Duas bombas retiram a água
+deste reservatório para devolvê-la aos tanques 1 e 2
+(das extremidades). O tanque central (tanque 3) recebe água dos tanques 1 e 2, mas não tem seu nível
+medido. As seções dos três tanques são iguais. O
+tanque 2 possui uma válvula adicional que devolve
+água para o reservatório. Os dois tanques das extremidades possuem sensores de pressão nas suas bases,
+que funcionam como medidores de nível de líquido.
+Trata-se de uma planta multivariável, bastante nãolinear e com distúrbios, sendo que algumas destas
+não-linearidades são do tipo não-suaves.
+Tal sistema é o arquétipo da planta difícil de controlar, devido a estas características. De forma geral, os
+diversos trabalhos encontrados na literatura reportam
+que controladores clássicos não apresentam desempenho satisfatório, a menos que um esquema de chaveamento seja implementado.
+Em (Wang et al, 2009), adota-se a estratégia do desacoplamento dinâmico, e supõe-se que todas as
+funções da matriz de transferência da planta são de
+primeira ordem e com tempo_morto.
+
+ISBN 978-85-8001-069-5
+
+Figura 1. Diagrama esquemático do sistema de três tanques.
+
+Estas são identificadas e por fim a técnica de
+projeto é aplicada. Os resultados obtidos são somente
+por simulação. Tal controlador, entretanto, carece de
+robustez. Alguns trabalhos, porém, adotam técnicas
+de projeto baseadas em inteligência_artificial (IA).
+Em (Luna Filho et al., 2002), é aplicada a técnica de
+controle_fuzzy, e o algoritmo de controle trabalha
+sempre chaveando as bombas entre sete valores de
+vazão diferentes. É feita uma comparação de desempenho com um controlador proporcional + integral
+(PI), onde o controlador_fuzzy leva vantagem. Em
+(Henriques et al. 2001), utilizam-se redes_neurais
+para modelar a planta, devido  sua adequação para
+modelagem não-linear. As dificuldades normalmente
+associadas a controladores inteligentes são a natureza discreta da variável de controle (o desempenho
+poderia ser melhorado se todo o contínuo de valores
+
+309
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+de vazão das bombas fosse utilizado) e a falta de
+prova_de_estabilidade do sistema em malha_fechada.
+Em (Kubalcik e Bobal, 2008), técnicas de controle_adaptativo (self-tuning) e controle_preditivo
+(MPC) para modelos de matrizes polinomiais
+(MIMO) são utilizados. Os modelos identificados online são do tipo ARX (auto-regressivo com entrada
+exógena) de tempo_discreto. Pelo fato do modelo de
+projeto ser multivariável, a complexidade dos algoritmos de controle se torna significativa. Outros trabalhos utilizam este sistema como plataforma de
+testes para detectar a ocorrência de falhas, como por
+exemplo, vazamentos (simulados por aberturas das
+válvulas).
+O presente trabalho mantém a ideia de se utilizar
+a técnica de controle_adaptativo self-tuning, entretanto, não se considera o caráter multivariável do sistema, objetivando-se a simplicidade do controlador.
+Cada tanque das extremidades é considerado como
+um sistema SISO (uma-entrada-uma-saída) e esperase que as variações da dinâmica (causadas pelas
+aberturas e fechamentos de válvulas) sejam compensadas pela capacidade de adaptação dos controladores. Além disso, diversas outras características nãolineares são avaliadas, tais como a saturação dos
+atuadores (bombas) tanto nos valores máximo e mínimo, quanto nas taxas máxima e mínima (vazão
+máxima da bomba e das válvulas de saída). São feitas também avaliações do sinal de controle, o que
+não é apresentado em outros trabalhos.
+Na seção 2, apresenta-se resumidamente a teoria
+de controle_adaptativo que será utilizada. Na seção 3,
+algumas considerações sobre o modelo_matemático
+são traçadas. Na seção 4, os detalhes da implementação do controlador são apresentados, bem como
+algumas características da planta. Na seção 5, são
+apresentados os resultados experimentais de simulação obtidos. Na seção 6, são apresentadas as conclusões e sugestões de trabalhos futuros.
+2
+
+Controle Adaptativo
+
+O controle_adaptativo é tradicionalmente dividido em controle_adaptativo indireto, como é o caso,
+por exemplo, do self-tuning, e controle_adaptativo
+direto, usando, por exemplo, modelo_de_referência
+(Sastry and Bodson, 1989), (Astrm and Wittenmark,
+1995), (Narendra and Annaswamy, 2005), (Ioannou
+and Fidan, 2006). Todas estas referências são clássicas e cobrem, de uma forma ou de outra, o que será
+apresentado a seguir. Seja um sistema linear e invariante no tempo (SLIT) da forma y  ay + bu , onde
+as constantes a e b são arbitrárias, y é a saída e u é a
+entrada. Para obter uma estrutura linear nos parâmetros desconhecidos, aplica-se a transformada de Laplace, multiplica-se em cruz e divide-se por s+,
+onde  > 0, o que resulta em
+
+Y ( s )  (  a ) X 2 ( s) + bX 1 ( s)
+
+ISBN 978-85-8001-069-5
+
+(1)
+
+Os sinais X 1 ( s ) e X 2 ( s ) são versões filtradas
+(pelo filtro de primeira ordem 1(s+) ) dos sinais de
+entrada e de saída, respectivamente. Sendo assim, o
+erro de identificação fica (no domínio_do_tempo)
+
+eI   T x  y  b   a x1
+
+T
+x2   y (2)
+
+Há várias formas de se estimar os parâmetros da
+planta, como, por exemplo, o método do gradiente do
+erro, o gradiente da integral do erro, e o método dos
+mínimos_quadrados recursivo (de Mathelin, 2001).
+Outros métodos de identificação, usando-se geometria diferencial para descrever o espaço de parâmetros, também podem ser tentados para este caso particular, onde não há o problema de perda de controlabilidade do modelo de projeto (Colón e Pait, 2002),
+(Colón and Pait, 2004).
+Neste trabalho, será utilizado o algoritmo de identificação tipo mínimos_quadrados (MQ), que
+minimiza a integral do erro quadrático. Calculandose o gradiente do erro e igualando-o a zero, tem-se
+
+ (t )    x( ) x T ( )d 
+t
+
+
+
+
+
+0
+
+1 t
+
+ x( ) y( )d
+
+(3)
+
+0
+
+Para chegar a uma formulação recursiva, definese a matriz
+t
+
+P 1 (t )   x( ) x T ( )d
+
+(4)
+
+0
+
+Derivando-se as equações (3) e (4), e utilizandose a equação (2) chega-se finalmente nas equações
+recursivas que compõem o algoritmo tipo mínimos
+quadrados recursivos, que são
+
+    PxeI
+
+T
+ P   Pxx P
+
+(5)
+
+Pode-se mostrar que P(t ), (t )  L (ou seja, são
+limitadas) e P(t ) x(t ), (t )  L2 (ou seja, são de energia
+finita). Isto significa que a identificação não necessariamente vai produzir estimativas precisas dos parâmetros, mas vai garantir que o erro entre a saída
+estimada e a real seja de energia finita.
+Algumas melhorias podem ser feitas no algoritmo deduzido acima para que o mesmo se torne mais
+eficiente. Uma delas é a inclusão do fator de esquecimento , que faz com que o algoritmo dê peso
+maior a medidas mais recentes. O novo algoritmo
+tipo mínimos_quadrados com fator de esquecimento é
+exibido na equação (6) abaixo
+
+
+   PxeI
+
+T
+ P   g (P + Pxx P)
+
+(6)
+
+310
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+onde , g > 0. Ainda poderia se utilizar o algoritmo
+tipo mínimos_quadrados recursivo normalizado,
+cujos detalhes podem ser encontrados em (Sastry and
+Bodson, 1989)
+
+
+   g PxeI (1 + x T Px)
+
+T
+T
+ P   g (P + Pxx P ) (1 + x Px)
+
+4 Implementação do Controlador Adaptativo
+(7)
+
+Este identificador é uma parte essencial do sistema
+de controle_adaptativo, uma vez que ao mesmo tempo em que o sinal de controle é gerado e aplicado 
+planta, o sistema procede  identificação dos parâmetros da planta, que são desconhecidos no princípio, e
+até podendo ser variantes no tempo. Os parâmetros ,
+g,  > 0 são ajustados pelo projetista, e até onde vai o
+conhecimento destes autores, não há nenhuma técnica de projeto para estes (tal como o lugar das raízes,
+para projetar um controlador PID), muito embora os
+nomes destes parâmetros_sugiram as suas funções.
+Mais adiante, os valores destes serão variados e testes serão executados na planta real para se avaliar
+uma metodologia de ajuste para estes.
+É sabido que um sistema adaptativo usando-se
+este identificador e um controlador projetado pelo
+princípio da equivalência a certeza é estável em malha_fechada (de Mathelin, 2001). O controlador usado
+é do tipo proporcional, da forma u  ( + a ) y  b ,
+onde  deve ser maior que zero (o que garante a
+estabilidade do modelo de projeto).
+3
+
+Considerações sobre a Modelagem
+
+O sistema a ser modelado é o kit_didático DTS
+200, do fabricante Amira Elwe. O modelo_matemático de tal sistema pode ser facilmente obtido. Pela
+lei de conservação da massa, pode-se afirmar que
+Ah  q , onde A é a área da base do tanque, h é o
+nível de líquido e q é a vazão de entrada menos a de
+saída. De forma genérica, tem-se que a vazão na
+válvula é
+
+q  zS 2 g h
+
+tal modelo foi somente para explicitar a sua estrutura
+de terceira ordem. A estratégia adaptativa por princípio não necessita dos valores dos coeficientes.
+
+(8)
+
+onde, z é o coeficiente de vazão da válvula, S é a área
+da secção da válvula, g é a aceleração da gravidade e
+h é a diferença de altura do líquido entre os dois
+tanques ligados  válvula. Sendo os estados da planta
+os níveis de líquido de cada tanque, tem-se que o
+modelo em espaço_de_estados é da forma
+
+O
+controlador
+foi
+implementado
+em
+MATLABSimulink. Porém, diferentemente de
+(Kubalcik and Bobal, 2008), não é necessário se
+utilizar o Real Time Toolbox, uma vez que a dinâmica do sistema é bastante lenta (o tempo_real não é
+crítico). Os níveis dos tanques são medidos por sensores de pressão que entregam o sinal em Volts. O
+valor da saída para zero cm é +9 V e para 60 cm é -9
+V, e essa conversão é feita por software. A placa de
+aquisição utilizada foi a NI 6009, da National Instruments, que possui biblioteca para trabalhar com
+Simulink. Como esta placa somente fornece na saída
+um sinal de tensão de 0 a 5V, e um nível de corrente
+abaixo do necessário para o kit, foi feito um circuito
+amplificador onde o primeiro estágio adapta a tensão
+e um estágio push-pull amplifica a corrente. Todos
+estes sinais são ligados ao módulo eletrônico do kit,
+que possui conversões de sinais e amplificadores de
+potência para as bombas.
+4.1 Sinal de Referência
+A planta em questão possui certas limitações,
+dentre as quais se destacam a vazão máxima de 100
+mls das bombas e a incapacidade do sistema de
+retirar água dos tanques. Os controladores projetados
+devem então sempre ser testados até os extremos de
+operação, pois no caso de saturação dos atuadores, o
+controle não está mais cumprindo a sua função. Os
+sinais de referência a serem utilizados levarão estas
+taxas máximas em conta.
+Existem ainda dois filtros_digitais após os blocos
+que leem os níveis dos tanques e entregam o sinal ao
+Simulink, inseridos por haver muito ruído nos sensores. Experimentalmente, determinou-se uma largura
+de banda para os filtros que permitisse o controle e
+melhorasse a qualidade do sinal. Para o tanque 1 foi
+escolhido o filtro 12.5(s+12.5), enquanto que para o
+tanque 2 o filtro foi 12(s+12). Obviamente, estes
+filtros adicionam dinâmica em malha_aberta, que
+afeta a dinâmica em malha_fechada. Para todos os
+efeitos, podem ser considerados juntamente com a
+planta. Espera-se que os controladores adaptativos
+consigam lidar com esta dinâmica não modelada.
+5 Resultados Experimentais
+
+
+x1  (1 A)(u1  k1 sign(x1  x3 ) x1  x3 )
+
+
+x2  (1 A)(u2  k3 sign(x3  x2 ) x3  x2  k2 x2 )
+
+
+x3  (1 A)k3 sign(x1  x2 ) x1  x3  (1  A)k3 sign(x3  x2 ) x3  x2
+
+(9)
+
+As saídas são os próprios estados 1 e 2. Os coeficientes de vazão das bombas podem ser determinados experimentalmente. A intenção de se apresentar
+
+ISBN 978-85-8001-069-5
+
+A seguir, são apresentados os resultados e a
+maneira com a qual a variação de cada parâmetro
+influencia o comportamento do sistema. Esta
+abordagem poderia ser feita também por simulação.
+Entretanto, dada a disponibilidade do sistema real,
+fez-se a avaliação dos efeitos dos parâmetros
+
+311
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+diretamente na forma experimental. Para economia
+de espaço, algumas figuras apresentam os gráficos
+somente para um tanque (o comportamento do
+sistema em ambos os tanques usualmente é
+semelhante). A unidade de tempo é o segundo.
+5.1 Influência do fator de esquecimento na resposta
+(desempenho) do sistema
+O fator de esquecimento  é responsável por
+definir qual a importância a ser dada aos dados
+coletados.  medida em que se aumenta o fator de
+esquecimento, os dados mais recentes passam a ter
+peso maior para determinação das estimativas dos
+parâmetros da planta e de sua saída estimada. Da
+mesma forma, dados mais antigos terão menor
+influência nesses cálculos.
+É ilustrado a seguir o comportamento dos
+principais sinais do sistema quando da variação do
+parâmetro  (o sinal de referência é o mesmo para
+todos os testes, e é exibido na Figura 14). Para tanto,
+as outras variáveis foram mantidas constantes em
+g10, 0.1 e 15. A Figura 2 exibe o
+comportamento do ganho de realimentação (isto é
+)
+)
+(a +  )  b ), para três valores diferentes do fator de
+)
+)
+esquecimento, onde a e b são estimativas dos
+parâmetros da planta.
+
+menor for , maior o peso de dados antigos, o que
+tende a suavizar mais os sinais (análogo ao que
+ocorre no filtro de Kalman).
+5.2 Influência da taxa de aprendizagem g na
+resposta do sistema
+A taxa de aprendizagem g refere-se ao quão
+rápido o sistema será capaz de aprender sobre o
+comportamento da planta, ou seja, ela acelera ou
+freia a identificação dos seus parâmetros.
+
+Figura 3. Parâmetros estimados para diferentes valores de .
+
+Figura 2. Ganho da realimentação para diferentes .
+
+Percebe-se que  medida que o fator de esquecimento aumenta, o ganho varia mais rapidamente, o
+que significa que a capacidade de suavização (smoothing) é diminuída. Quanto maior a dependência de
+dados antigos, mais suave é o sinal.
+Na Figura 3 tem-se os parâmetros estimados
+para os mesmos três valores de . Percebe-se que 
+medida que  aumenta, o sistema tende a ser mais
+rápido. Por outro lado, o sinal de controle fica mais
+ruidoso, e atinge a saturação mais vezes, como pode
+ser observado na Figura 4. Conforme foi dito, quanto
+
+ISBN 978-85-8001-069-5
+
+Figura 4. Sinais de controle para diferentes valores de .
+
+As outras variáveis foram mantidas constantes
+em 0.25, 0.1 e 15. A Figura 5 exibe o
+comportamento do ganho de realimentação para
+variações da taxa de aprendizagem. Pode-se afirmar
+que quando g torna-se maior, o sistema se torna mais
+rápido em se adaptar. A Figura 6 ilustra a saída
+estimada (saída calculada) a partir da fórmula
+
+312
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+y  ay + bu
+
+(9)
+
+com relação  saída real do sistema para diferentes
+valores de g. Quanto maior a taxa de aprendizagem,
+melhor é a capacidade de seguir o sinal (capacidade
+servo) do sistema.
+
+Percebe-se nitidamente que quando a taxa de
+aprendizagem é aumentada, o sinal de controle passa
+a ficar mais oscilante. Essa evolução é semelhante 
+observada quando da variação de  e pode provocar
+os mesmos problemas. A influência de g sobre o
+seguimento de uma referência é ilustrada na Figura 9.
+
+Figura 8. Sinal de Controle para g variável
+
+Figura 5. Ganho de Realimentação para diferentes g.
+Figura 9. Nível dos tanques para valores diferentes de g.
+
+Figura 6. Saídas do sistema (real e estimada) para diferentes g.
+
+A Figura 7 mostra como a variação de g
+influencia a estimativa dos dos parâmetros.
+
+Outra característica é que para valores muito
+baixos de g , os atuadores são ligados precipitadamente, quando a referência ainda tem valor nulo,
+enquanto que para valores médios (g  20), existe
+um atraso, muito pequeno, no início de seu funcionamento. Passados alguns segundos, o controle com
+taxa de aprendizagem pequena atua bem até o fim de
+sua inclinação positiva, quando se torna lento e cria
+um erro grande entre as trajetórias requerida e real.
+Aumentando-se a taxa, o desempenho do controle
+melhora até que, para valores altos de g, a referência
+é seguida com perfeição. Contudo, ao atingir valores
+grandes, a taxa influenciará negativamente, como
+visto na Figura 8 (ruído).
+5.3. Influência da constante de realimentação  na
+resposta do sistema
+A Figura 10 exibe o ganho de realimentação
+variando-se  para g10, 0.1 e 0.25.
+
+Figura 7. Estimativas dos parâmetros para g diferente.
+
+O aumento da taxa de aprendizagem faz com
+que os parâmetros convirjam mais rapidamente
+(embora não seja conhecido os limites para estas
+convergências). A variação no comportamento do
+sinal de controle é exibida na Figura 8.
+Figura 10. Ganho de realimentação para diferentes  .
+
+ISBN 978-85-8001-069-5
+
+313
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Como poderia se prever, o ganho de realimentação tem seu valor aumentado devido ao aumento da
+constante . Elevando-se o valor da constante de
+realimentação, o ganho consequentemente também
+se torna maior.
+A Figura 11 ilustra a saída estimada com relação
+ saída real do sistema.
+
+Figura 11. Saída estimada para valores de  diferentes.
+
+Para  5, o sistema tem dificuldade em estimar
+a saída corretamente nos primeiros segundos.
+Passados cerca de dez segundos, a estimação ocorre
+perfeitamente. Aumentando-se a constante para 
+15 faz-se com que as saídas estimada e real sejam
+semelhantes desde o princípio, o que era esperado
+para controle proporcional. A Figura 12 mostra como
+a variação de  influencia a estimativa dos
+parâmetros.
+
+Figura 12. Parâmetros identificados para diferentes .
+
+Valores menores de  provocam picos que não
+acontecem quando os mesmos são maiores, já que
+para estes valores o valor estimado inicial tem sinal
+diferente do valor final (o controlador pensa que a
+planta é estável e depois troca para instável). No
+restante do período os parâmetros estimados são
+semelhantes. A variação no comportamento do sinal
+de controle é exibida na Figura 13.
+
+Nesse caso é nítida a influência causada pela
+variação da constante de realimentação. Para valores
+baixos,   0.5 e   5, os atuadores são acionados
+logo no ínicio, quando o sinal de referência ainda é
+nulo (como a estimativa inicial da planta é estável,
+que se mostra errada posteriormente). Isso provoca
+saturação nos momentos iniciais. O contrário
+acontece para 20, onde os atuadores atrasam seu
+início de funcionamento (por saturarem no valor
+mínimo) e para compensar esse tempo perdido
+permanecem em saturação por período considerável.
+A melhor situação é para 15, onde o atuador é
+ligado quando da inclinação do sinal de referência.
+Após essas divergências inicias, os sinais de controle
+são semelhantes, exceção feita para quando 0.5,
+que exibe um offset positivo do sinal, prejudicial ao
+controle do sistema. Também se observa que quanto
+maior , mais ruidoso é o sinal de controle.
+A influência de  sobre o seguimento de uma
+referência é mostrado na Figura 14.
+
+Figura 14. Seguimento de sinal para diferentes .
+
+Por esta figura, para valores pequenos de , temse um desempenho pobre da característica servo do
+sistema. Aumentando-se este parâmetro, o desempenho melhora, entretanto, se muito elevado, faz com
+que na parte inicial o controle atrase sua atuação e
+não seja capaz de seguir a referência.
+5.4. Efeito dos Distúrbios
+Mais uma série de testes foi realizada, com o objetivo de verificar a capacidade de adaptação do
+controlador diante de distúrbios causados por abertura e fechamento de todas as válvulas do sistema, ou
+seja, diante de variações da dinâmica. A Tabela 1
+apresenta como e quando foram gerados os distúrbios.
+
+Figura 13. Sinal de controle para diferentes .
+
+ISBN 978-85-8001-069-5
+
+314
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Tabela 1 - Distúrbios no sistema.
+Tempo (s)
+Distúrbio
+40
+Abertura da válvula 1 em 100
+Abertura da válvula 2 em 50
+60
+Fechamento da v6 em 50
+Fechamento da válvula 1 em
+50
+80
+Fechamento da válvula 5 em
+100
+Fechamento da válvula 2 em
+100
+100
+Fechamento da válvula 4 em
+50
+115
+Abertura da válvula 3 em 100
+135
+Volta  configuração original
+
+to a saturação inicial, que se deve simplesmente ao
+fato da escolha do sinal de referência (degrau). A
+escolha correta deveria ser um sinal trapezoidal,
+como uma taxa de crescimento inicial compatível
+com a vazão máxima das bombas, como foi feito
+anteriormente.
+
+A seguir são exibidos os resultados. Na Figura
+15, tem-se o efeito no ganho de realimentação. Na
+Figura 16, tem-se os parâmetros estimados. Na Figura 17, tem-se os sinais de controle, e na Figura 18, o
+sinal de referência e os sinais de nível medidos.
+
+Figura 17  Sinais de controle para caso com distúrbios.
+
+Figura 15  Ganho de realimentação com distúrbio.
+
+Figura 16  Parâmetros estimados para caso com distúrbios.
+
+Nota-se que o efeito causado pela aplicação destes
+distúrbios, que são grandes variações na dinâmica da
+planta, é compensado pelo controlador_adaptativo, a
+menos que a saturação dos atuadores seja atingida.
+Isto é exatamente o que ocorre no instante 115 s,
+quando se abre completamente a válvula 3. A válvula
+4 já está metade aberta, o que significa que a vazão
+de água do tanque três para o reservatório é maior
+que a vazão máxima da bomba, de modo que não há
+como os controladores agirem. Nos demais aspectos,
+o sistema adaptativo tem um bom desempenho diante
+de variações na dinâmica da planta. O sistema volta
+ normalidade quando, em t  135 s, a configuração
+original é restaurada. Também merece esclarecimen-
+
+ISBN 978-85-8001-069-5
+
+Figura 18  Seguimento de referência no caso com distúrbio.
+
+6 Conclusões
+Aplicou-se neste trabalho o controle_adaptativo
+do tipo self-tuning (controle_adaptativo indireto) para
+o controle_de_nível de dois tanques em um sistema de
+três tanques acoplados. Adotou-se a hipótese de que
+a planta era formada por dois sistemas_lineares invariantes no tempo de primeira ordem, com parâmetros
+desconhecidos, muito embora ela seja de ordem três
+com acoplamento. Os dois controladores adaptativos
+para plantas de primeira ordem que foram usados
+
+315
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+realizavam a identificação on-line dos parâmetros
+pelo método dos mínimos_quadrados recursivo normalizado e com fator de esquecimento. A lei de controle (variante no tempo e ajustada segundo os parâmetros estimados da planta) foi do tipo proporcional.
+Foram realizadas uma série de experimentações
+reais no sistema disponível, e as leis de controle
+foram implementadas em MATLABSimulink. Deste modo, avaliou-se o efeito dos parâmetros livres do
+controlador, para diversos valores que o projetista
+poderia ajustar. Notou-se que o controlador se adaptou a diversas situações de variação da dinâmica da
+planta, e o desempenho ficou limitado principalmente pela saturação dos atuadores.
+Em trabalho futuro, será desenvolvido um modelo_matemático mais preciso do que o apresentado
+aqui, e validado no sistema real, de forma a poder se
+aplicar técnicas de controle_lineares robustos
+(LQGLTR e H  , por exemplo) e controle_preditivo
+(MPC) e comparar o desempenho com o controle
+adaptativo, na presença de grandes variações da
+dinâmica, como apresentadas aqui. Também se pretende aplicar a técnica de controle_adaptativo_multivariável (mais complicada computacionalmente) para
+se comparar com a de dois controladores SISO.
+
+de Líquidos. Anais do XIV Congresso Brasileiro
+de Automática, Natal-RN, pp. 3017  3022.
+Narendra, K. S., Annaswamy, A. M. (2005). Stable
+Adaptive Systems. Dover Publications, Inc. 31
+East 2nd Street, Mineola, USA.
+Sastry, S. and Bodson, M. (1989). Adaptive Control
+Stability, Convergence and Robustness. Prentice
+Hall Information and System Sciences Series.
+Prentice Hall, Englewood Cliffs, New Jersey,
+USA.
+Wang, Q., Xing, L. Shi, X. (2009). Decoupling Control of Three-tank Liquid Level Systems Based
+on Feedforward Compensation, Proceedings of
+the 2009 Chinese Control and Decision Conference, Guilin, China, pp. 5863-5866.
+
+Referências Bibliográficas
+Astrm, K. J., Wittenmark, B. (1995). Adaptive
+Control. Addison-Wesley Series in Electrical
+Engineering Control Engineering. 2ed. AddisonWesley, USA.
+Colón, D., Pait, F. M. (2002). Controle Adaptativo e
+Variedades de Riccati Caso de Primeira Ordem.
+Anais do XIV Congresso Brasileiro de Automática, Natal-RN, pp. 167  172.
+Colón, D., Pait, F. M. (2004). Geometry of Adaptive
+Control Optimization and Geodesics. International Journal of Adaptive Control and Signal
+Processing. Vol. 18, pp. 381-392.
+De Mathelin, M. (2001). Panorama des Algorithmes
+Récursifs dEstimation Paramétrique. In Identification et Commande Adaptative, Herms Science Publications, Paris.
+Henriques, J., Gil, P., Dourado, A. (2001). StateSpace Neural Networks in Non-linear Adaptive
+Identification and Control. Proceedings of the
+IFAC Workshop on Advanced Fuzzy and Neural
+Control, Valencia, Spain.
+Ioannou, P. A., Fidan, B. (2006). Adaptive Control
+Tutorial. SIAM Advances in Design and Control.
+Society for Industrial and Applied Mathematics,
+Philadelphia, USA.
+Kubalcik, M and Bobal, V. (2008). Adaptive Control
+of Three-Tank-System Comparison of Two
+Methods. Proceedings of the 16th Mediterranean
+Conferece on Control and Automation, Ajaccio,
+France, pp. 1041- 1046.
+Luna Filho, F. M., Gosmann, H. L., Bauchspiess, A.
+(2002). Controle Fuzzy para Sistemas de Nível
+
+ISBN 978-85-8001-069-5
+
+316

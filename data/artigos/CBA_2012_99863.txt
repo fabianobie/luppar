@@ -1,0 +1,1463 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+MODELAGEM DE SISTEMAS MULTI-ROBOS PARA SINTESE DE
+CONTROLADORES UTILIZANDO ESTRUTURA DE JOGO
+Jose Gilmar Nunes de Carvalho Filho, Jean-Marie Alexandre Farines, Jose Eduardo
+Ribeiro Cury
+
+
+Universidade Federal de Santa Catarina
+Florianopolis, SC, Brasil
+
+Emails jcfilho@das.ufsc.br, farines@das.ufsc.br, cury@das.ufsc.br
+Abstract In this paper an approach to solve the coordination problem in Multi-Robot Systems (MRS)
+based in game structures is presented. A framework to MRS modelling is also proposed. MRS treated are
+centralized and operate in dynamic environments, considering global and partial observability. Some aspects of
+fault tolerance are discussed.
+MRS coordination, Game structure, DES.
+
+Keywords
+
+Resumo Neste artigo e apresentada uma abordagem para solucao do problema de coordenacao de Sistemas
+Multi-Robos (SMR) baseada em estrutura_de_jogos. Um framework para modelagem de SMR tambem e proposto.
+Sao tratados SMRs centralizados e operando em ambientes dinamicos, considerando observabilidade global e
+parcial. Tambem sao abordados aspectos de tolerancia a falta no sistema.
+Palavras-chave
+
+.
+
+Introducao
+
+Ao longo das ultimas decadas, Sistemas MultiRobos (SMR) tem sido utilizados em diversas
+areas e em diferentes configuracoes, principalmente, com o intuito de aumentar a eficiencia e a
+robustez na execucao das tarefas a serem desempenhadas por eles. Contudo, ao utilizar um sistema
+composto por varios agentes moveis, e necessario
+lidar com problemas relacionados com a coordenacao_de_robos, como a interferencia entre eles,
+falhas de comunicacao e a distribuicao de tarefas.
+Varios trabalhos (Andersen et al., 2004 Fainekos et al., 2005) abordam o problema de coordenacao de SMRs atraves da geracao de controladores_hbridos, compostos por duas camadas planejamento_de_tarefas e controle_de_trajetoria. A primeira corresponde a uma sequencia
+de acoespassos a serem executados pelos robos a
+fim de cumprir as tarefas associadas ao sistema,
+enquanto o controle_de_trajetoria corresponde a
+parte responsavel pela movimentacao dos robos no
+espaco de trabalho, de modo a realizar os passos
+descritos no plano de tarefas.
+Neste artigo e tratada apenas a camada de
+planejamento_de_tarefas, atraves do uso de metodos baseados em Sistemas a Eventos Discretos
+(SED). Dentre estes metodos, destacam-se os baseados na Teoria de Controle Supervisorio (TCS),
+model_checking e teoria de jogos.
+Nos metodos baseados em TCS (Wonham and
+Ramadge, 1987), o coordenador e obtido como um
+supervisor que permite atingir os objetivos fixados (estados marcados) desabilitando os eventos
+que poderiam levar o sistema a um estado proibido (estado em que a especificacao da planta e
+desrespeitada). No contexto de SMR, um estado
+
+ISBN 978-85-8001-069-5
+
+proibido pode representar, por exemplo, uma situacao de colisao entre dois robos do sistema.
+Entretanto, nos metodos baseados em TCS
+sao gerados coordenadores de natureza permissiva, sendo necessario definir um mecanismo de
+escolha de proxima acao, que ira decidir qual dos
+eventos nao desabilitados pelo supervisor devera
+ser executado no proximo passo.
+Nos metodos baseados em model_checking
+(Alur and Dill, 1990 Clarke, 1997), o coordenador
+e obtido como uma sequencia de eventos que levam a realizacao das tarefas. Contudo, nao ha
+uma diferenciacao entre os eventos controlaveis
+pelo sistema e aqueles nao controlados. Assim, os
+coordenadores gerados atraves dessa tecnica nao
+tratam as diversas mudancas que podem ocorrer
+no ambiente no qual o robo evolue.
+Nos metodos baseados em teoria de jogos
+(Maler et al., 1995 Kesten et al., 2005), considerase que o sistema e o ambiente (composto pelos outros elementos dinamicos sobre os quais o sistema
+nao tem controle e por elementos que possam gerar incertezas quanto ao estado da aplicacao) sao
+adversarios. Para que seja gerado um coordenador
+e necessario que o sistema sempre possa cumprir
+as especificacoes (objetivos e restricoes de operacoes) associadas a ele, independentemente das
+acoes do ambiente.
+Vale destacar que podem existir situacoes
+onde a dinamica do ambiente faz com que nem
+sempre o sistema possa cumprir suas especificacoes (ganhar o jogo). Por exemplo, quando um
+robo deve atravessar uma ponte (associada ao ambiente) para realizar uma tarefa. Em casos como
+estes, a ponte poderia permanecer sempre fechada,
+impedindo a passagem do robo. Para estes tipos
+de situacoes, quando possvel, devem ser feitas
+
+1826
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+hipoteses sobre o comportamento dos elementos
+do ambiente que permitem que o sistema ganhe
+o jogo, como a hipotese de que a ponte sempre
+abrira no futuro.
+Em muitos dos metodos baseados em teoria
+de jogos, a forma de modelagem nao permite definir hipoteses relacionadas a um evento que ocorre
+num futuro incerto. Por exemplo, hipoteses como
+a porta abre no futuro. Em Piterman et al. (2006)
+e proposto um metodo baseado em estrutura_de_jogos que permite declaracao deste tipo de hipoteses
+sobre o comportamento dos elementos do ambiente. Alem disso, a descricao de uma estrutura de
+jogo utiliza variaveis de estados (ao inves de um
+alfabeto de eventos), o que facilita a representacao
+de aspectos como a movimentacao simultanea de
+robos do sistema.
+Neste artigo, e proposto um framework para
+modelagem de SMRs operando em ambientes dinamicos, que permite a geracao de coordenadores
+de SMRs eficientes (em relacao ao numero de movimentos dos robos). Dentre as principais vantagens pretendidas com a abordagem proposta estao a garantia de realizacao das tarefas, respeitando as restricoes de operacao do sistema a possibilidade de movimentacao simultanea de robos e
+a realizacao de hipoteses sobre os elementos que
+compoem o ambiente.
+Este trabalho esta estruturado da seguinte
+forma. Nas secoes 2 e 3 sao apresentadas, respectivamente, a descricao do problema e o metodo proposto em Piterman et al. (2006), utilizado para
+modelar de SMRs neste trabalho. A secao 4 sao
+apresenta os princpios de modelagem propostos.
+Na secao 5 e descrita a modelagem do caso base
+(sistema com observabilidade global e robos sem
+falha). A secao 6 descreve a extensao do caso base
+para modelar sistemas com observabilidade parcial e situacoes de falhas em robos. Na secao 7 e
+mostrado um caso de estudo que utiliza estes modelos para sntese de coordenadores. Finalmente,
+a secao 8 apresenta as conclusoes do trabalho.
+2
+
+Assim como os elementos do sistema possuem
+algumas restricoes de operacao, e assumido que
+os elementos associados ao ambiente tambem possuem restricoes, que evitam que um objeto do ambiente tente ocupar uma posicao do espaco de trabalho que ja esta sendo ocupada por um robo do
+sistema ou outro elemento do ambiente.
+Para solucao do problema de coordenacao de
+SMRs, o espaco de trabalho e assumido como dividido em areas, representando, numa visao mais
+abstrata, posicoes discretas (celulas) que podem
+ser ocupadas pelos agentes do ambiente e do sistema. Na figura 1 e apresentado um exemplo simples de espaco de trabalho.
+C3
+X1
+
+X4
+
+C1
+
+C6
+C4
+
+C2
+X2
+X3
+
+C5
+
+Célula livre de
+interferência
+Célula com
+interferência
+Obstáculo fixo
+
+Figura 1 Exemplo de espaco de trabalho
+No espaco de trabalho da figura 1, Ci corresponde a uma celula onde nao ha interferencia do
+ambiente, enquanto que Xi esta associada a uma
+posicao que pode ser ocupada por um dos elementos do ambiente.
+Os SMRs considerados sao centralizados e podem observar as acoes do ambiente de duas formas visao global ou visao local. No primeiro caso,
+existe um subsistema (por exemplo um conjunto
+de cameras capturando todo o espaco de trabalho)
+que permite ao sistema ter conhecimento de todas
+as acoes realizadas pelos objetos associados ao ambiente. Na visao local, as acoes dos elementos do
+ambiente sao percebidas pelos sensores dos robos
+do sistema, quando estes estao na proximidade de
+um objeto do ambiente.
+Alem disso, tambem foram considerados casos
+em que existe a possibilidade de haver falha em
+robos do sistema.
+
+Descricao do Problema
+3
+
+O problema de coordenacao de SMRs pode ser definido como o da obtencao de uma estrategia que,
+considerando a dinamica do ambiente, coordene
+as acoes dos robos do sistema a fim de que um objetivo global seja atingido de forma satisfatoria.
+Quando sao tratados SMRs, alem das tarefas
+a serem realizadas, existem algumas restricoes de
+operacao que devem ser respeitadas pelos robos do
+sistema. Por exemplo, os robos nao devem colidir
+com obstaculos fixos ou com objetos dinamicos e
+tambem nao devem colidir entre si. As tarefas a
+serem realizadas correspondem a aplicacoes onde
+os robos do sistema devem alcancar determinadas
+posicoes, por exemplo, para coletar e, em seguida,
+entregar um objeto.
+
+ISBN 978-85-8001-069-5
+
+Metodo proposto em Piterman et al.
+(2006)
+
+No metodo proposto em Piterman et al. (2006), e
+definida uma Estrutura de Jogo (Game Structure)
+na qual as transicoes entre estados nao estao diretamente associadas com a ocorrencia explcita
+de um evento. Neste metodo, variaveis de estado
+sao declaradas e usadas para descrever a estrutura
+de jogo que representa uma aplicacao e suas especificacoes. Ao inves de eventos, as transicoes sao
+disparadas pela mudanca no valor das variaveis de
+estado.
+Uma estrutura de jogo e descrita em duas partes, uma associada ao ambiente e outra ao sistema. O ambiente e descrito pela formula e 
+
+1827
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+eo  et  eg , onde eo define a condicao inicial
+(valores iniciais das variaveis de estado associadas
+ao ambiente). A dinamica do ambiente e descrita
+na formula et , indicando como as variaveis de estado do ambiente podem ter seus valores modificados. Propriedades p, que devem ser satisfeitas
+pelo ambiente sempre no futuro, sao declaradas
+em eg (condicao de justica).
+De forma similar, o sistema e modelado pela
+formula s  so  st  sg , onde so define o valor inicial das variaveis de estado controladas pelo
+sistema e st descreve a dinamica do sistema. Propriedades q, que devem ser satisfeitas pelo sistema
+sempre no futuro, sao declaradas na condicao de
+justica do sistema (sg ).
+A especificacao do problema e definida como
+uma condicao de vitoria   eg  sg , onde e
+indicado que o sistema ganha o jogo quando sua
+condicao de justica e satisfeita ou quando o sistema consegue impedir que o ambiente cumpra
+sua condicao de justica (eg ). No caso em que
+existem m propriedades pi a serem satisfeitas pelo
+ambiente e n propriedades qj a serem cumpridas
+pelo sistema, a condicao de vitoria pode ser escrita
+como mostrado na formula 1.
+
+
+m
+
+
+pi 
+
+i1
+
+n
+
+
+qj
+
+Framework de modelagem
+
+Princpios de modelagem
+
+Um elemento E, associado ao sistema ou ao ambiente, e descrito usando variaveis de estado. Seja
+E
+E
+E  E
+o t g a formula que descreve o modelo
+de E. O valor inicial das variaveis utilizadas para
+descrever este elemento e definido em E
+o . A forma
+como o valor das variaveis e alterado, descrito em
+E
+t , e usada para representar o comportamente de
+E. Quando e necessario expressar propriedades
+satisfeitas pelo elemento sempre no futuro, estas
+
+ISBN 978-85-8001-069-5
+
+N
+e
+
+E k
+
+(2)
+
+k1
+
+O modelo do sistema e dividido em tres partes robos (R ), mecanismo de nao colisao (NCol )
+e tarefas a serem realizadas pelo sistema (T ).
+Seja NR o numero de robos do sistema e NT o
+de tarefas a serem realizadas. A condicao inicial
+(so ), dinamica (st ) e condicao de justica (sg ) do
+sistema sao descritas como mostrado na equacao
+3.
+
+
+
+(1)
+
+j1
+
+Neste artigo e apresentada uma abordagem_modularizada para descricao de aplicacoes em robotica
+movel, usando estrutura_de_jogos. Esta abordagem e baseada na construcao de modelos para os
+elementos do sistema e do ambiente. Entao, os
+modelos do sistema e do ambiente sao obtidos a
+partir da composicao de seus elementos.
+4.1
+
+e 
+
+so
+
+Para especificacoes no formato mostrado na
+formula 1, a verificacao de existencia de solucao
+e sntese do controlador sao realizadas em tempo
+O(Q3 ), onde Q corresponde a quantidade de
+elementos no espaco_de_estados da estrutura de
+jogo (Kesten et al., 2005). Alem disso, o controlador gerado pelo metodo proposto em Piterman
+et al. (2006) implementa uma estretegia para satisfazer cada condicao de justica ( qj ).
+4
+
+sao declaradas como formulas de justica (pi ou
+qi ) em E
+g .
+O ambiente e composto pelos elementos dinamicos sobre os quais o sistema nao tem controle ou
+que possam criar incerteza quanto a evolucao da
+aplicacao. Seja Ne o numero de elementos do ambiente e Ek o modelo do seu k-esimo elemento.
+O modelo do ambiente e obtido a partir da composicao dos modelos de todos o seus elementos,
+como mostrado na equacao 2.
+
+st 
+sg
+
+
+
+NR
+
+
+
+
+
+i 
+ R
+o
+
+i1
+NR
+ R
+ t i  
+i1
+
+
+
+NCol
+o
+
+
+
+
+NCol
+t
+
+
+
+  NCol
+g
+
+NT
+
+
+
+NT
+
+
+
+T
+
+o j 
+
+j1
+NT
+ Tj
+
+t 
+j1
+
+
+
+(3)
+
+
+
+T
+g j  
+j1
+
+
+
+Ri
+i
+No modelo de um robo Ri (Ri  R
+o  t ),
+Ri
+sua posicao inicial e definida em o . A formula
+R
+t i descreve como o robo pode se mover pelo espaco de trabalho. Como, neste trabalho, nao sao
+descritas propriedades de justica para robos do sisi
+tema, a formula R
+g e omitida do modelo do robo.
+Como o sistema possui como objetivo global
+que todas as tarefas e restricoes de operacao sejam
+satisfeitas, adotou-se a declaracao de apenas um
+operador  na condicao de justica do sistema,
+fazendo com que o controlador gerado implemente
+uma estrategia que considere a realizacao de todas
+as tarefas simultaneamente. Vale destacar que,
+como e declarado um unico operador  na condicao de justica do sistema, este operador e omitido na declaracao da condicao de justica de cada
+elemento associado ao sistema.
+Para facilitar o entendimento sobre a forma
+de modelagem proposta, e definido um caso base
+de modelagem que considera sistemas com observabilidade global e robos sem falha. A partir deste
+caso sao realizadas extensoes para permitir a modelagem de casos onde a observabilidade das acoes
+do ambiente e local e os casos em que os robos podem sofrer falha. Na secao 5 e apresentada a modelagem do caso base e na secao 6 e apresentada
+a modelagem das duas extensoes.
+
+1828
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+10
+
+X2
+
+11
+
+07
+
+12
+
+X1
+
+09
+
+04
+
+05
+
+06
+
+01
+
+02
+
+03
+
+Xi
+
+Posição de destino do
+robô RSi
+Porta
+
+RS1
+
+RS2
+
+Obstáculo fixo
+RSi
+
+Posição inicial do
+robô do sistema i
+
+Figura 2 Exemplos de espaco de trabalho com
+portas
+4.2
+
+Exemplo
+
+Para ilustrar a modelagem dos elementos que compoem o sistema e o ambiente, e utilizado o exemplo mostrado na figura 2, onde e considerado um
+espaco de trabalho com 12 celulas, um obstaculo
+fixo na posicao 8 e duas portas, nas posicoes 7 e
+9.
+Apesar de estar sendo utilizado um espaco de
+trabalho com celulas quadradas e de mesmo tamanho para ilustrar a descricao dos componentes
+do sistema e do ambiente, os modelos propostos
+podem ser aplicados a qualquer topologia de espaco de trabalho, desde que existam controladores de trajetoria que garantam a movimentacao
+dos robos entre as celulas vizinhas.
+
+O modelo de um robo do sistema e descrito como
+mostrado na equacao 4.
+Si
+Na primeira linha da formula R
+e definido
+t
+para cada posicao Pj do espaco de trabalho que,
+se o robo estiver ocupando-a (RSi  Pj ), ele pode
+permanecer na celula atual ou se mover para uma
+das vizinhas. Na segunda linha e indicado que,
+se uma celula estiver ocupada (ocp(Xj )), o robo
+nao pode se mover para ela. Como a colisao entre
+robos do sistema e resolvida pelo mecanismo de
+nao colisao, no modelo do robo essa restricao so e
+considerada na regiao (RI) que pode ser ocupada
+por elementos do ambiente.
+E importante destacar que, na restricao de
+movimentacao, e levado em conta o proximo status
+da celula, representado por (ocp(Xj )). Isso foi
+feito para permitir que o modelo da planta represente a possibilidade do estado do ambiente mudar
+durante o movimento do robo.
+Na equacao 5 e apresentado o modelo do robo
+RS1 , inserido espaco de trabalho mostrado na figura 2. Neste espaco de trabalho, o ambiente e
+composto pelas portas P1 e P2 , e assim, as restricoes de movimentacao impedem que o robo se
+desloque para as celulas da RI (7 e 9) se a porta
+associada nao estiver aberta. Os valores das variaveis associadas ao estado das portas (P1 e P2 )
+podem receber os valores A ou F , indicando que
+as portas estao abertas ou fechadas.
+R
+
+5
+
+Modelagem do caso base
+
+No caso base, sao considerados SMRs com observabilidade global (caso com menos restricoes no
+modelo) e compostos por robos sem possibilidade
+de falhas.
+Por ser considerada observabilidade global, o
+modelo de um elemento do ambiente e descrito
+considerando que as acoes deste elemento sempre
+sao percebidas pelo sistema. A seguir sao apresentadas as descricoes dos elementos do sistema
+(robos, mecanismo de nao colisao e tarefas) e a
+modelagem de um elemento do ambiente.
+5.1
+
+Elementos do sistema
+
+5.1.1
+
+Robo sem falha
+
+Ri
+i
+No modelo de um robo Ri (Ri  R
+o  t ), e
+Ri
+definida a celula (Cinit ) onde ele inicia a operacao
+Ri
+i
+(R
+o ) e sua dinamica (t ).
+Seja P o conjunto de celulas do espaco de trabalho, RI  P a particao de P associada as celulas que podem ser ocupadas por elementos nao
+controlados pelo sistema, NP o numero de celulas do espaco de trabalho e K o de celulas da RI.
+Seja V iz(Pi )  P  2P a funcao que associa uma
+posicao Pi  P as suas vizinhas e ocp(Pi ) uma
+assercao que indica se a posicao Pi esta ocupada.
+
+ISBN 978-85-8001-069-5
+
+o S1  (RS1  1)
+
+(RS1  1)  (RS1  1)
+
+
+
+(RS1  2)  (RS1  4)
+
+
+
+
+
+
+V
+R
+(RS1  12)  (RS1  12)
+t S1 
+
+
+
+ V (RS1  11)  (RS1  9)
+
+
+(P1 6 A) 
+(RS1 6 7)
+
+ V
+(P2 6 A) 
+(RS1 6 9)
+
+(5)
+
+Na equacao 5, as formulas (P1 6 A) e (P2 6
+A) correspondem as assercoes que indicam que as
+posicoes da regiao de interferencia 7 e 9 estao ocupadas (ocp(7) e ocp(9)).
+5.1.2
+
+Mecanismo de nao colisao entre
+robos
+
+Para descrever o mecanismo de nao colisao entre
+robos do sistema e utilizada uma variavel auxiliar
+N Col que representa (com valor verdade) que nao
+houve colisoes entre robos. Ela e inicializada com
+true e recebe false caso alguma das situacoes de
+colisao aconteca. Uma vez que N Col recebe false,
+ela nao pode mais voltar a ser verdade. Isso, associado a inclusao da formula (N Col  true) na
+condicao de justica do mecanismo, garante que
+as estrategias geradas nunca apresentem situacoes
+de colisao. Na equacao 6 e descrito o modelo do
+mecanismo de nao colisao, considerando um SMR
+com NR robos.
+Como explicado na secao 4.1, e declarado apenas um operador  no sistema, e assim, este
+
+1829
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+R
+
+Rsi )
+o Si  (RSi  
+Cinit
+ N
+C
+ 
+
+
+
+
+(R  Pj ) 
+
+
+ Si
+j1
+R
+t Si 
+K
+
+
+ 
+
+ (ocp(Xj )) 
+
+
+
+
+
+
+
+(RSi  Pj )  
+
+
+
+(RSi
+
+Ph  V iz(Pj )
+
+(RSi 6 Xj )
+
+
+
+ Ph )
+
+
+(4)
+
+j1
+
+NCol
+ (N Col
+o
+  true)
+
+
+NR 1
+NR
+
+ 
+
+
+
+
+
+
+(RSi  RSj )  ( RSi  RSj )  (RSi 
+
+
+
+i1
+ji+1
+
+
+NCol
+
+t
+NR 1
+NR
+
+
+ 
+
+V
+
+
+
+
+(RSi  RSj )  ( RSi  RSj )  (RSi 
+
+
+i1
+
+ji+1
+
+NCol
+ (N Col  true)
+g
+
+operador e omitido na declaracao da condicao de
+justica do mecanismo de nao colisao.
+5.1.3
+
+Modelagem das tarefas do sistema
+
+Uma tarefa Ti e descrita por T i  To i  Tt i  Tg i ,
+como mostrado na equacao 7. Nesse modelo, uma
+variavel de estado T i e utilizada para indicar que a
+i-esima tarefa (Ti ) foi realizada. Em To i define-se
+que T i e inicializada com f alse, esse valor indica
+que a tarefa ainda nao foi cumprida. Em To i e
+descrito que T i recebe true quando a tarefa e refalizada. Caso contrario o valor de T i nao pode ser
+alterado. Na condicao de justica (Tg i ) e definido
+que T i devera ser true sempre no futuro.
+i (T i  f alse)
+T
+o 
+
+(satisfeito)  ( T i)  T i
+T
+i
+V
+t 
+(satisfeito)  (T i  true)
+i
+T
+g  (T i  true)
+
+(7)
+
+Em Carvalho-Filho (2012) foram propostos
+modelos para tarefas de alcancabilidade, cobertura e sequenciamento para SMR. A partir destes
+modelos, foram descritos outros tipos de tarefas
+mais complexos, como a de busca e resgate. Para
+ilustrar a modelagem de uma tarefa, e apresentada a descricao de uma tarefa de alcancabilidade
+suficiente.
+ Alcancabilidade suficiente
+Uma tarefa de alcancabilidade suficiente e
+considerado como atingido se qualquer um dos
+robos alcanca a posicao de destino. Na equacao
+8 e mostrado o modelo geral deste tipo de tarefa.
+T
+
+o aC  (TaC  f alse)
+!
+
+N
+
+
+
+
+(R
+
+D)
+ ( TaC )  TaC 
+
+
+Si
+
+T
+i1
+!
+t aC 
+N
+
+
+
+ V
+
+(RSi  D)  (TaC  true)
+
+T
+
+i1
+
+g aC   (TaC  true)
+
+(8)
+
+onde N e o numero de robos que podem ser utilizados para realizar a tarefa de alcancar a posicao
+D.
+
+ISBN 978-85-8001-069-5
+
+
+
+RSj )   (
+
+
+
+RSj )  
+
+N Col)  N Col
+(6)
+(N Col  f alse)
+
+Na formula Tt aC e indicado que, se nenhum
+robo do sistema estiver na posicao D, a variavel
+indicadora TaC permanece inalterada. Uma vez
+que um dos robos alcanca a celula de destino D,
+TaC recebe true.
+
+5.2
+
+Modelagem do ambiente
+
+Para o caso base (onde as acoes do ambiente sao
+sempre percebidas), o comportamento real e completo de cada elemento do ambiente e modelado
+el
+el
+el
+por uma formula el  el
+o  t  g , onde o
+define os valores iniciais das variaveis de estados
+associadas ao elemento. Em el
+t e modelado como
+o elemento se move pelas celulas do espaco de trabalho, atraves da forma como suas variaveis de
+estado mudam de valor. Por ultimo, em el
+g sao
+descritas hipoteses sobre o elemento. A seguir,
+com o intuito de ilustrar a modelagem de um elemento do ambiente, e apresentada a descricao de
+uma porta.
+ Porta
+De modo geral, uma porta possui dois estados aberta e fechada. Sua abertura e fechamento
+se dao sem a intervencao do sistema. A unica
+restricao sobre o funcionamento deste elemento e
+que, caso a posicao do espaco de trabalho a qual
+a porta esta associada esteja ocupada, ela nao podera ser fechada. Esta restricao e utilizada como
+um mecanismo de seguranca que evita a colisao
+da porta com os robos do sistema.
+Quando o elemento do ambiente e uma porta,
+nao faz sentido considerar que ela esteja sempre
+fechada, pois este caso seria equivalente ao comportamento de um obstaculo fixo. Esta hipotese
+de que a porta nao estara sempre fechada e descritan na condicao de justica, sendo assumido que
+ela ira abrir sempre no futuro. Para uma porta P ,
+associada a posicao XP , o modelo e descrito na
+equacao 9, onde sao apresentadas as descricoes de
+sua condicao inicial (Po ), dinamica (Pt ) e hipotese
+(Pg ).
+
+1830
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+P
+o  (P  A)
+P
+t  ocp(XP ) 
+P
+6 F)
+g   (P 
+
+(P  A)
+
+(9)
+
+E assumido que inicialmente a porta esta
+aberta (P  A). Na formula Pt e indicado apenas
+que, se a posicao associada a porta estiver sendo
+ocupada (ocp(XP )  true), ela deve permanecer
+aberta. Para os casos em que XP esta livre, nada
+e definido sobre o estado da porta, permitindo que
+o status da porta varie entre aberta (P  A) e fechada (P  F ), irrestritamente.
+6
+
+Extensoes da modelagem
+
+Duas extensoes permitem representar os casos em
+que as acoes dos elementos do ambiente sao observadas localmente, atraves dos sensores dos robos
+dos sistema, e os casos onde os robos podem sofrer
+falha. Estas extensoes sao apresentadas a seguir.
+6.1
+
+s
+oi  (si  0) 
+
+
+
+K 
+
+
+
+
+
+
+
+
+
+
+
+si
+j1 
+t 
+
+
+K h
+
+
+
+
+
+(si
+
+
+j1
+
+
+
+
+
+
+
+
+
+
+Xh  V iz(Xj )
+
+6 Xj ) 
+
+
+(RSi 6 Xh )
+ 
+
+
+
+
+
+(si 
+6 Xj )
+
+
+
+
+i
+(RSi 6 Xj )
+(11)
+
+Na equacao 11, K corresponde ao numero de
+celulas da regiao de interferencia e si indica a posicao que esta sendo observada pelo sensor do robo
+RSi . A funcao V iz(Xj ) ja foi definida na secao 5.
+E assumido que os robos iniciam a execucao
+com seus sensores desativados (si  0). Na linha 1
+da formula st i e definido que, se no proximo passo
+o robo RSi nao estiver na vizinhanca de uma celula
+Xj  RI, o sensor nao podera ser direcionado
+para esta posicao (si 6 Xj ). Na segunda linha da
+formula st i e definido que, se o sensor de RSi nao
+estiver ligado e direcionado para a celula Xj  RI,
+este robo nao podera se deslocar para esta posicao.
+
+Observabilidade parcial
+
+Em muitos sistemas, as acoes do ambiente sao percebidas pelos sensores dos robos do sistema e nao
+por algum mecanismo que observa todo o espaco
+de trabalho (por exemplo um subsistema de visao
+global). Assim, aos robos de SMRs com observabilidade local (ou parcial), e agregado o modelo
+do sensor atraves do qual ele observa o ambiente
+a sua volta.
+6.1.1
+
+Sensores influencia na modelagem
+do sistema
+
+Assume-se que o sensor de cada robo e capaz de
+detectar uma unica celula por vez, modelando, assim, a situacao mais restritiva.
+A fim de evitar um aumento desnecessario do
+espaco_de_estados da estrutura de jogo, optou-se
+por definir que o sensor verifica apenas o estado de
+celulas da regiao de interferencia. Esta hipotese
+nao causa nenhuma limitacao no modelo. Alem
+disso, e assumido que, para um robo se deslocar
+para uma celula da RI, e necessario que seu sensor
+esteja observando esta posicao. Isso evita que o
+robo colida com um elemento do ambiente ao se
+deslocar para uma celula que ele nao sabe se esta
+livre.
+Na equacao 10 e definido o modelo de um robo
+para o caso em que o sistema opera com observabilidade parcial (RpSi )
+RpSi  RSi  si
+RSi
+
+(10)
+
+descreve o modelo de um robo
+onde a formula 
+do sistema considerando observabilidade global.
+Na equacao si e definido o modelo do sensor
+do robo i. Vale ressaltar que, para os sensores
+nao sao definidas condicoes de justica, assim, na
+equacao 11 sao descritas apenas a condicao inicial
+(soi ) de um sensor e sua dinamica(st i ).
+
+ISBN 978-85-8001-069-5
+
+6.1.2
+
+Sensores influencia na modelagem
+do ambiente
+
+Quando a aplicacao opera sob observabilidade
+parcial, os modelos dos elementos do ambiente devem descrever como o sistema os percebe e nao seu
+comportamento real e completo.
+el
+el
+Seja el  el
+o  t  g o modelo de um elemento, numa aplicacao em que e considerada observabilidade parcial. Em el
+t e descrita a forma
+como a movimentacao deste elemento dinamico e
+percebida pelo sistema. A seguir, o elemento porta
+e utilizado novamente para ilustrar a modelagem
+do um elemento do ambiente, considerando observabilidade parcial.
+
+ Porta
+No caso de uma porta, o comportamento percebido pelo sistema pode ser entendido da seguinte
+forma. Enquanto nao ha nenhum sensor direcionado para a posicao associada a uma porta, seu
+status e dito nao-determinado (P  N D). Uma vez
+que existe um sensor observando a posicao associada a ela, seu status deve ser mudado para aberta
+(P  A) ou fechada (P  F ).
+Ja na secao 5, foi assumida a existencia de um
+mecanismo que impede o fechamento da porta,
+caso haja um robo na posicao associada a ela.
+Nestes casos, o estado da porta permanece como
+aberta.
+Inicialmente, o estado de uma porta e nao detectada. Alem disso, a hipotese realizada sobre
+este elemento continua a mesma que a assumida
+para o caso global,  (P 6 F ). Na equacao 12 sao
+descritas a condicao inicial (Po ), a dinamica (Pt )
+e a hipotese (Pg ) de uma porta, considerando o
+
+1831
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+caso com observabilidade parcial.
+
+crito como mostrado na equacao 15.
+pfi
+
+P
+(P
+o  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P
+
+t
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+o
+
+
+
+ N D)
+
+
+
+N
+R
+
+(P  N D)
+(si  Xj )  (RSi  Xj ) 
+
+
+
+i1
+
+
+N
+
+ R
+
+V  
+(P  A)  (P  F )
+(si  Xj ) 
+
+
+
+i1
+
+
+ NR
+
+
+V  
+(RSi  Xj ) 
+(P  A)
+
+
+i1
+
+
+i
+pf
+t
+
+P
+g  (P 6 F )
+
+(12)
+
+Dado que a porta esta na celula Xj , na primeira linha dde Pt e definido que, se nao houver
+nenhum sensor direcionado para a celula Xj e se
+tambem nao houver nenhum robo do sistema nesta
+posicao, a porta nao pode ser detectada. Na segunda linha desta formula e descrito que, se houver pelo menos um sensor observando a posicao
+Xj , a porta e detectada e deve assumir o estado
+aberta (P  A) ou fechada (P  F ). Por ultimo
+e definido o mecanismo de seguranca da porta, o
+qual evita que uma porta feche caso haja um robo
+do sistema na posicao associada a ela.
+6.2
+
+Situacoes de falha
+
+Nos casos onde os robos do sistema podem sofrer falhas, e agregado o comportamento de falha
+ao modelo de cada robo do sistema. Para o ambiente, foi proposto um mecanismo simulador de
+falha para simular a ocorrencia e deteccao de uma
+falha.
+6.2.1
+
+Robo com possibilidade de falha
+
+Para representar a possibilidade de falha num
+robo, foi utilizada uma variavel sti que indica se
+um robo RSi esta ativo (sti  A) ou em falha
+(sti  F ).
+O modelo de um robo com possibilidade de
+falha (RFSi ) e obtido pela conjuncao do modelo
+do robo sem falha (RSi ) com o da possibilidade
+de falha (pfi ), como mostrado na equacao 13.
+RFSi  RSi  pfi
+
+(13)
+
+Para o caso com observabilidade parcial, o
+modelo do robo e obtido agregando o modelo do
+sensor ao modelo descrito em RFSi . Na equacao
+14 e apresentado o modelo do robo com falha no
+caso com observabilidade parcial.
+RF pSi  RFSi  si
+
+(14)
+
+Quanto ao modelo da possibilidade de falha,
+este foi descrito considerando que o robo so pode
+se movimentar caso esteja ativo (sti  A). Alem
+disso, tambem e definido que se o robo RSi estiver
+ativo e houver uma falha associada a ele (f  i),
+seu estado e alterado para em falha (sti  F ). Caso
+contrario, o valor de sti nao muda. Assim, o modelo da possibilidade de falha no robo RSi e des-
+
+ISBN 978-85-8001-069-5
+
+
+(sti  A)
+(sti 6 A)  ( RSi )  RSi 
+ V
+(sti  A)  (f  i)  (sti  F )
+
+V
+
+ (sti  A)  (f  i)  ( sti )  sti 
+(15)
+
+onde f indica que esta ocorrendo uma falha e o
+ndice (i) do robo (RSi ) afetado pela falha. Esta
+variavel tem seu valor alterado no simulador de
+falha.
+6.2.2
+
+Simulador de falha
+
+O simulador de falha foi utilizado para representar a ocorrencia de uma falha num dos robos do
+sistema a qualquer momento. Este mecanismo e
+descrito como parte do ambiente, para que, agindo
+como um adversario do sistema, force os controladores gerados a considerar todas as possibilidades
+de ocorrencia de falha.
+Alem disso, tambem foi considerado que o
+projetista pode definir um numero maximo de faltas (Fm ) com que seu sistema deve ser capaz de
+lidar. O modelo do simulador de falhas foi descrito
+como mostrado na equacao 16
+F
+o  (f
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+F
+t 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 0)  (nF  0)
+
+(f 6 0)  (
+V
+(f 6 0)  (
+
+nF )  nF 
+nF )  nF +1
+
+
+
+NR
+
+
+ 
+(f  i)
+(f  0)  
+i1
+V
+ (f  0)  (nF < Fm ) 
+(f  0)
+NR
+ 
+(sti  F ) 
+(f 6 i)
+i1
+(16)
+V
+
+(f  0)  (nF < Fm ) 
+
+onde nF e uma variavel utilizada para contar o
+numero de falhas ocorridas e f e uma variavel que
+indica em qual robo esta ocorrendo a falha.
+A dinamica definida na equacao Ft pode ser
+dividida em duas partes contador e ocorrencia de
+falhas. Nas duas primeiras linhas da formula e
+descrito o contador, definindo que ao ocorrer uma
+falha (f 6 0), a variavel nF e incrementada. Caso
+contrario, nF nao e alterada. Na segunda parte
+da dinamica e definido como o valor da variavel
+f pode ser alterado, a fim de indicar a falha num
+robo. Nas linhas 3 e 4 e descrito que a variavel
+so pode indicar a ocorrencia de falha num robo
+(f 6 0) se nao estiver sendo indicada outra falha e
+se o numero maximo nao tiver sido excedido (nF <
+Fm ). Por ultimo, e declarado na linha 5 de F
+t que,
+se um robo RSi nao estiver ativo (sti  F ), nao
+pode ser indicada uma falha neste robo.
+7
+
+Sntese de controladores
+
+Utilizando os elementos de modelagem apresentados nas secoes 5 e 6 e possvel descrever muitas das
+aplicacoes onde sao empregados SMRs. Uma vez
+que os modelos do sistema e do ambiente foram
+obtidos atraves da composicao dos componentes
+associados a eles, os algoritmos propostos em Kesten et al. (2005) e Piterman et al. (2006) sao utilizados para obter um coordenador que garante a
+
+1832
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+realizacao das tarefas, respeitando as restricoes de
+operacao e considerando a dinamica do ambiente.
+Foram realizados varios experimentos, considerando diferentes espacos de trabalho, ambientes compostos por diferentes componentes (portas,
+robos adversarios, etc.), variando a quantidade de
+robos dos SMRs e considerando diferentes tipos de
+tarefas (alcancabilidade, busca e resgate, etc.). A
+seguir sao apresentados dois dos casos utilizados
+nos experimentos, onde a abordagem proposta foi
+utilizada para obter coordenadores.
+No primeiro caso foi considerado o espaco de
+trabalho mostrado na figura 2, onde o sistema possui dois robos, o ambiente e composto por duas
+portas e existem duas tarefas de alcancabilidade
+suficiente a serem realizadas (posicoes 10 e 12 serem alcancadas por RS1 ou RS2 ).
+Na figura 3 sao apresentadas as rotas de cada
+robo, descritas no controlador gerado para o caso
+com observabilidade global. Quando se considera
+observabilidade parcial, para o mesmo problema,
+e gerado um controlador que implementa apenas
+as rotas mostradas em 3(a) e 3(b).
+
+considerar a ocorrencia simultanea de eventos,
+tanto do sistema quanto do ambiente e a possibilidade de realizar de hipoteses sobre os elementos
+do ambiente (como ocorreu com a porta). Alem
+disso, os modelos propostos consideram a possibilidade de mudanca no estado do ambiente durante
+a movimentacao dos robos do sistema e tratam aspectos de tolerancia a falta.
+Devido a ausencia do conceito de tempo no
+metodo proposto por Piterman et al. (2006), a
+minimizacao deste nao pode ser utilizada como
+parametro na escolha do controlador. Entretanto,
+os algoritmos propostos em Kesten et al. (2005)
+e Piterman et al. (2006) minimizam o numero
+de passos necessarios para levar o sistema de um
+estado inicial ate um estado em que sua especificacao esteja sendo satisfeita.
+Dentre as perspectivas de trabalhos futuros
+estao a extensao do metodo proposto em Piterman
+et al. (2006), de modo que se possa modelar o
+tempo, e o estudo do impacto da modelagem do
+tempo na eficiencia das estrategias geradas.
+Referencias
+
+10
+
+11
+
+07
+
+12
+
+10
+
+09
+
+07
+
+11
+
+12
+
+10
+
+09
+
+07
+
+11
+
+12
+
+09
+
+04
+
+05
+
+06
+
+04
+
+05
+
+06
+
+04
+
+05
+
+06
+
+01
+
+02
+
+03
+
+01
+
+02
+
+03
+
+01
+
+02
+
+03
+
+RS1
+
+RS2
+
+RS2
+
+RS1
+
+(a)
+
+(b)
+
+RS1
+
+RS2
+
+(c)
+
+Figura 3 Rotas no experimento com portas
+No segundo caso, o mesmo problema foi resolvido considerando SMRs com robos com possibilidade de falha. Neste caso, tanto na abordagem
+com observabilidade global quanto na parcial, o
+controlador gerado implementa as estrategias associadas as tres rotas mostradas na figura 3.
+No experimento com robos sem possibilidade
+de falha, a rota tomada pelos robos depende unicamente da abertura das portas. Ja no segundo experimento, tambem e considerada falha num dos
+robos.
+8
+
+Alur, R. and Dill, D. (1990). Automata for modeling realtime systems, Automata, languages and programming
+pp. 322335.
+Andersen, M., Jensen, R., Bak, T. and Quottrup, M.
+(2004). Motion planning in multi-robot systems using
+timed automata.
+Clarke, E. (1997). Model checking, Foundations of software
+technology and theoretical computer science, Springer,
+pp. 5456.
+Fainekos, G., Kress-Gazit, H. and Pappas, G. (2005). Temporal logic motion planning for mobile robots, Robotics and Automation, 2005. ICRA 2005. Proceedings
+of the 2005 IEEE International Conference on, IEEE,
+pp. 20202025.
+Kesten, Y., Piterman, N. and Pnueli, A. (2005). Bridging
+the gap between fair simulation and trace inclusion,
+Information and Computation 200(1) 3561.
+Maler, O., Pnueli, A. and Sifakis, J. (1995). On the synthesis of discrete controllers for timed systems, STACS
+95, Springer, pp. 229242.
+Wonham, W. and Ramadge, P. (1987). On the supremal
+controllable sublanguage of a given language, SIAM
+Journal on Control and Optimization 25 637.
+
+Conclusoes
+
+Com base na abordagem apresentada em Piterman et al. (2006), foi proposto um framework
+para modelagem de problemas de coordenacao de
+SMRs e obtencao de controladores que garantem
+a realizacao das tarefas associadas ao sistema. A
+partir dos resultados obtidos, foi possvel constatar que tanto os modelos dos elementos quanto
+a metodologia para composicao deles foram eficazes na modelagem das aplicacoes, possibilitando
+a obtencao de coordenadores para realizacao das
+tarefas em todos os casos abordados.
+Dentre as principais vantagens da abordagem
+proposta neste trabalho, estao a possibilidade de
+
+ISBN 978-85-8001-069-5
+
+1833

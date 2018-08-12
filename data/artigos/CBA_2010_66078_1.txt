@@ -1,0 +1,821 @@
+SÍNTESE E IMPLEMENTAÇÃO DE CONTROLE SUPERVISÓRIO MODULAR LOCAL PARA UM
+SISTEMA DE AGV
+YURI G. SILVA, MAX H. DE QUEIROZ, JOSÉ E. R. CURY
+Lab. de Autom. e Inform. Industrial, Depto. de Automação e Sistemas, Universidade Federal de Santa Catarina
+88040-900 Florianópolis, SC, Brasil
+E-mailsygarcia,max,cury@das.ufsc.br
+Abstract  The control of automated guided vehicles system is based on rules designed to maintain stability, security and synchronism of the system. In this paper, the Supervisory Control Theory is applied according to the modular control approach to
+coordinate an automated guided vehicles system testbed. A set of minimally restrictive supervisors dealing with local problems
+controls the system by disabling undesirable events during the evolution of the system. To preserve the characteristics of supervisors, the implementation follows a three level structure that works as an interface between the supervisors and the physical system. The supervisors are implemented in C language in a microcontroller of 8051 family that communicates with the vehicles 
+also embedded with microcontrollers of the same kind.
+Keywords  supervisory control, local modular supervisory control, AGV, automated guided vehicles.
+Resumo  O controle_de_sistemas de veículos_autoguiados baseia-se em regras que visam manter a estabilidade, segurança e
+sincronismo do sistema. Neste artigo, a Teoria de Controle Supervisório é aplicada em sua abordagem_modular local para coordenar uma bancada_experimental de um sistema de veículos_autoguiados. O sistema é controlado por um conjunto de supervisores minimamente restritivos que atuam em problemas locais, desabilitando os eventos indesejáveis durante a evolução do sistema. Para preservar as características dos supervisores, a implementação é feita em uma estrutura de três níveis que funciona como interface entre os supervisores e o sistema físico. Os supervisores são implementados em linguagem C em uma estação microcontrolada da família 8051 que se comunica com os veículos, também embarcados com microcontroladores do mesmo tipo.
+Palavras-chave  .
+
+1
+
+Introdução
+
+TCS oferece um método formal, baseado na teoria de
+autômatos e linguagens, para gerar um agente de controle chamado supervisor que coordena o sistema de
+acordo com regras de controle. Este método alcança
+o controle mais flexível para a planta  elemento a
+ser controlado , pois permite a ocorrência de todas
+as ações que não se oponham ao comportamento especificado.
+O Controle Modular Local, proposto por Queiroz e
+Cury (2000), é uma extensão da TCS que explora a
+modularidade das especificações e da planta. Nessa
+abordagem, são sintetizados vários supervisores modulares que controlam problemas locais do sistema e
+conseqentemente a complexidade computacional na
+síntese dos supervisores é reduzida em relação 
+TCS.
+Neste trabalho é descrito o processo de síntese e implementação de um conjunto de supervisores modulares locais para controlar um sistema de AGV. Os
+supervisores atuam no impedimento de colisões entre
+os veículos, no roteamento estático dos veículos, no
+gerenciamento da bateria dos veículos e na interação
+entre os veículos e as estações de carga e descarga.
+Os supervisores são implementados em linguagem C
+em um microcontrolador 8051, com base na hierarquia de três níveis proposta por Queiroz e Cury
+(2002). O problema tratado neste artigo foi inspirado
+pela publicação de Hsieh e Kang (1998) e a metodologia adotada para a solução foi a mesma usada em
+Silva e Queiroz (2009).
+Para dar continuidade ao artigo, na seção 2 são introduzidas a TCS e a abordagem_modular local. Posteriormente, na seção 3, é apresentado o sistema de AGV
+
+Veículos autoguiados (AGV) são veículos dedicados ao transporte de materiais que não requerem
+um operador humano para conduzi-los. Os AGVs são
+empregados em ambientes que possuem um fluxo
+repetitivo de deslocamento de materiais entre pontos
+previamente determinados. Conforme Schulze et al.
+(2008), no ambiente industrial os AGVs são aplicados na conexão de diferentes áreas de trabalho, coleta
+de pedidos, estocagem e linhas de montagem.
+Groover (2007) cita aplicações que abrangem escritórios e hospitais.
+O controle_de_sistemas de AGV é complexo e conforme visto em Vis (2006), abrange áreas distintas de
+conhecimento como, por exemplo, escalonamento,
+prevenção e impedimento de deadlocks e colisões,
+roteamento de veículos e regras de despacho. Na
+literatura, o controle de tráfego de AGVs por zonas é
+bastante discutido, sendo comum a utilização de redes de Petri, como em Wu e Zhou (2004) e Lee e Lin
+(1995), para evitar deadlocks e colisões. Hsieh e
+Kang (1998) apresentam um método para traduzir um
+modelo em alto nível de layout de percurso de sistemas de AGVs para uma lógica de controle em baixo
+nível utilizando redes de Petri como interface de controle entre esta lógica e o sistema real.
+A dinâmica de sistemas de AGV, analisada sob o
+ponto de vista de controle, pode ser interpretada como sendo da classe de sistemas_a_eventos_discretos.
+Para lidar com o problema de controle_de_sistemas a
+eventos_discretos, Ramadge e Wonham (1989) introduziram a Teoria de Controle Supervisório (TCS). A
+2808
+
+explora a modularidade das especificações e da planta. Nesta abordagem, para cada especificação há um
+supervisor modular controlando planta local correlata.
+Suponha que um sistema seja composto pelos subsistemas Gw  (w, Qw, w, q0w, Qmw), w  W. As especificações genéricas locais Ex, x  X, representam o
+comportamento desejável para este sistema e seus
+alfabetos são definidos por x  . Sendo  a operação de composição síncrona, a planta local Glocx 
+(locx, Qlocx, locx, q0locx, Qmlocx) referente  especificação Ex é expressa por Glocx   Gw, para Ilocx  w
+
+estudado neste trabalho e, na seção 4, é descrito o
+processo de síntese dos supervisores para o sistema
+em questão. A implementação dos supervisores no
+microcontrolador 8051 é explicada na seção 5.
+2 Teoria de Controle Supervisório
+A TCS, proposta por Ramadge e Wonham
+(1989), define um elemento controlador, chamado
+supervisor, que age sobre a planta. A planta é modelada por uma estrutura formal denominada gerador. O
+gerador é uma quíntupla de forma G  (, Q, , q0,
+Qm).  representa o conjunto de eventos, Q o conjunto de estados, q0  Q o estado inicial, Qm  Q o subconjunto de estados marcados e    Q  Q a função de transição parcial definida em cada estado de Q
+para um subconjunto de .
+* é o conjunto de todas as cadeias finitas formadas
+por elementos de , inclusive a cadeia vazia . Um
+linguagem é um conjunto L  *. O gerador está associado s linguagens gerada L(G) e marcada Lm(G).
+A primeira representa todas as seqências possíveis
+de ocorrer a partir do estado inicial. A segunda indica
+as seqências que alcançam um estado marcado a
+partir do estado inicial, o que significa conclusão de
+uma tarefa.
+Os geradores podem ser graficamente visualizados
+por diagramas de transição de estado, os quais são
+grafos direcionados. Os vértices do grafo simbolizam
+os estados. Já os arcos, associados com as respectivas
+funções de transições parciais, simbolizam a ocorrência dos eventos. Uma flecha aponta para o estado
+inicial, e os estados marcados são desenhados como
+círculos duplos. Os eventos controláveis possuem um
+traço sobre os arcos de transição.
+Para propósitos de controle, o conjunto dos eventos 
+é particionado em dois subconjuntos c e u, sendo
+c os eventos controláveis e u os não controláveis.
+Os eventos controláveis podem ser habilitados ou
+desabilitados por um supervisor S, ao passo que os
+não controláveis estão sempre habilitados.
+Seja SG um gerador que representa S controlando G.
+Um supervisor S é não bloqueante se Lm (S  G) 
+
+wI locx
+
+ W  w  x  .
+A especificação local Klocx é definida por Klocx  Glocx
+ Ex. Os supervisores locais Slocx são computados a
+partir das especificações locais, sendo os mesmos
+definidos por Slocx  SupC(Klocx, Glocx).
+Para verificar se a ação conjunta dos supervisores
+locais é equivalente a um supervisor monolítico, fazse necessário checar se os mesmos são não conflitantes.
+3 O Sistema de Veículos Autoguiados
+O sistema de AGVs, mostrado na figura 1, corresponde a uma bancada_experimental desenvolvida
+em parceria pelo Instituto Federal Santa Cataria
+(IFSC) e o Departamento de Automação e Sistemas
+da Universidade Federal de Santa Catarina. O desenvolvimento da bancada foi inspirada no problema
+apresentado por Hsieh e Kang (1998). No layout de
+percurso há imãs identificando os pontos importantes
+do trajeto como, por exemplo, cruzamentos e estações de carga e descarga de pallets.
+O sistema é composto por dois veículos  AGV1 e
+AGV2  e pelas estações de carga  ponto B , descarga  ponto G  e reabastecimento de bateria 
+ponto L. Cada AGV é controlado por um microcontrolador interno e possui sensores para monitorar o
+nível da bateria, navegar pelas guias do percurso e
+identificar os imãs do trajeto. Os AGVs são equipados com sistema de rolagem para efetuar operações
+de carga e descarga de pallets. O deslocamento dos
+AGVs é bidirecional entre o trecho HKL e conforme
+o sentido indicado pelas setas nos demais trechos.
+
+L(SG), sendo L o prefixo-fechamento da linguagem
+L. A condição necessária e suficiente para a existência de um supervisor S não bloqueante que satisfaça
+uma dada especificação K  Lm(SG)  Lm(G) é a
+controlabilidade de K. Diz-se que K é controlável
+e.r.a G se K u  L(G)  K , ou seja, ocorrendo um
+evento não controlável em G, uma seqência não
+pode sair da especificação. Seja C(K,G) o conjunto
+de todas as sublinguagens de K controláveis e.r.a G.
+Existe um elemento supremo, chamado SupC(K, G).
+No controle monolítico, a partir de um conjunto de
+especificações, gera-se um único supervisor atuando
+sobre a planta. A planta global é produto da composição síncrona de todos os geradores dos subsistemas
+a serem controlados. Queiroz e Cury (2000) estendem a TCS propondo o controle modular local, que
+
+Figura 1. Sistema de veículos_autoguiados
+
+2809
+
+não bloqueante e minimamente restritivo para este
+sistema de AGVs.
+
+As estações de carga e descarga são equipadas com
+sistema de rolagem para efetuar suas respectivas operações. Os AGVs são carregados com pallets na estação de carga, a qual possui um sensor para identificar
+a chegada dos pallets. A estação de reabastecimento
+de bateria é o local para a troca manual de bateria dos
+veículos e comporta um AGV.
+No sistema há um microcontrolador central que comanda as estações de carga e descarga e um microcontrolador em cada AGV. A comunicação entre os
+AGVs e o controlador central é feita por radiofreqência.
+A função dos AGVs é transportar os pallets que chegam  estação de carga B até a estação de descarga
+G. Para isso, o sistema deve seguir algumas restrições
+que estão separadas por categorias.
+
+4 Síntese dos Supervisores
+A metodologia para a síntese dos supervisores
+ótimos  minimamente restritivos e não bloqueantes
+ proposta por Ramadge e Wonham (1989) segue
+três etapas modelagem da planta a ser controlada,
+modelagem das especificações desejadas para a planta e síntese de uma lógica de controle ótima. Nas
+subseções seguintes são descritas estas etapas para a
+síntese dos supervisores locais do sistema de AGVs.
+Este trabalho utiliza o software TCT, visto em Feng e
+Wonham (2006), como ferramenta de suporte para a
+síntese dos supervisores.
+
+Posições iniciais dos veículos
+ O sistema é inicializado com o AGV1 no trecho
+AB e o AGV2 no trecho DE .
+
+4.1 Modelagem da Planta
+
+Impedimento de colisões
+
+As plantas dos AGVs são modeladas considerando os eventos que representam a passagem entre
+os trechos do layout de percurso e a chegada nos
+imãs onde há estação de carga ou descarga. Os eventos controláveis são representados por x<AGV>ly, para
+x,y  a,...,h, j, k,l e <AGV>  1,2, sendo x o ímã
+de origem do deslocamento, <AGV> a identificação do
+veículo, l o índice que indica a passagem do sensor
+magnético do AGV para o nível baixo (low), que
+ocorre assim que o AGV deixa o ímã, e y o ímã de
+destino do deslocamento. Os eventos não controláveis são expressos por y<AGV>h, sendo h o índice que
+indica a passagem do sensor magnético do AGV para
+o nível alto (high), que ocorre quando o AGV chega
+ao ímã. Observando a planta do AGV1  GAGV1 ,
+ilustrada na figura 2, interpreta-se o evento a1lb como o início do deslocamento do AGV1 entre o trecho
+AB. Já os eventos não controláveis b1h e g1h sinalizam a chegada do AGV1 sobre os imãs B e G respectivamente.
+
+ Os AGVs não podem ocupar simultaneamente o
+mesmo trecho (ECOLi, para i  1,... 9).
+Manipulação de pallets
+ A operação de carga é proibida se
+o Não houver chegado pallet na estação de carga (EMAN1)
+o Não houver veículo no ponto B (EMAN8)
+o Não houver bateria suficiente no veículo em B
+(EMAN2, EMAN3)
+ A operação de descarga é proibida se não houver
+veículo na posição G (EMAN9)
+ Uma vez iniciada a carga (descarga), não é permitido que os AGVs deixem o ponto B (G) até que
+esta operação seja finalizada (EMAN6, EMAN7)
+ Não deve ocorrer underflow ou overflow de pallets no compartimento de carga dos AGVs
+(EMAN4, EMAN5)
+ Caso haja pallet na estação de carga, o AGV com
+bateria e livre não pode passar por B sem carregar
+(EMAN10, EMAN11).
+Roteamento dos AGVs
+ É proibido o deslocamento de AGVs entre o trecho HKL, salvo na condição de bateria com pouca carga (EROT1, EROT2)
+ Não é autorizada a passagem do AGV pelo trecho
+CD e GH se estiver transportando um pallet
+(EROT3, EROT4).
+Não bloqueio
+ Não pode ocorrer deadlock no sistema
+ Os veículos devem ser capazes de retornar a posição inicial
+ Quando carregados, os AGVs devem ser capazes
+de descarregar a carga em questão.
+
+Figura 2. Gerador GAGV1
+
+Os estados das plantas dos AGVs indicam o segmento em que os veículos se localizam no percurso, com
+exceção dos estados alcançados por eventos não controláveis, que informam quando os AGVs estão nas
+posições B e G. Estas posições aparecem no modelo
+da planta porque para coordenar as operações de
+
+Com base nos critérios descritos, o objetivo deste
+trabalho é sintetizar e implementar um controlador
+
+2810
+
+tua entre os AGVs para cada zona  ECOLi, i  1, ..., 9
+ conforme o modelo genérico da figura 5, com exceção da zona HKL. Quando se especifica que um
+AGV inicia no interior de uma zona, deve-se alterar o
+estado inicial da especificação. Exemplificando com
+a zona AB, os eventos de entrada seriam b1lc e b2lc
+e os de saída a1lb e a2lb, sendo 2 o estado inicial da
+especificação. Ocorrendo a1lb, fica proibida a execução de a2lb até que b1lc aconteça.
+
+carga e descarga é necessário saber quando os AGVs
+as atingem. Os trechos que formam uma junção de
+percurso como, por exemplo, GH e KH são representados por um único estado, já que a saída da junção é
+a mesma para ambos. O AGV1 é inicialmente posicionado no trecho AB. A planta do AGV2  GAGV2 
+apresenta modelo análogo  figura 2, alterando-se
+apenas os índices numéricos dos eventos para 2 e a
+posição inicial do veículo, que passa a ser o trecho
+DE. Como é desejado que os AGVs possam retornar
+a posição inicial, este estado deve ser marcado.
+As estações de carga e descarga são modeladas considerando o início e fim de suas operações, pois estes
+são os eventos relevantes para a coordenação do sistema. A planta da estação de carga  GECARG  é exibida na figura 3. O modelo considera operações de
+cargas diferenciadas para cada veículo. Os eventos
+ac1 e bc1 equivalem ao início e fim da operação de
+carga do AGV1 respectivamente. Interpretação similar é feita para os outros eventos em relação  planta
+do AGV2  GAGV2. A planta da estação de descarga 
+GEDESC  segue a mesma lógica da figura 3, sofrendo
+alterações somente no índice c, que passa a ser d.
+Marcam-se os estados iniciais destas plantas, porque
+a operação de carga ou descarga deve ser finalizada
+após o seu início.
+
+Figura 5. Especificação de exclusão mútua genérica
+
+Utilizando a especificação da figura 5 para a zona
+HKL, caso um AGV entrasse nesta zona o evento
+h<AGV>lj para o outro AGV estaria desabilitado até
+que o AGV saísse da zona HLK. No entanto, desejase que enquanto um AGV estiver em HLK o percurso
+HJ possa ser acessado pelo outro AGV. Desta forma,
+a especificação para a zona HKL  ECOL9  foge do
+padrão da figura 5. A especificação para esta zona
+toma a forma da figura 6. Nela a exclusão mútua é
+tratada sem impedir o tráfego pelo trecho HJ, de modo que caso o AGV1 encontra-se na zona HKL 
+estado 1  o AGV2 pode seguir pela zona HJ  evento h2lj habilitado. Para o AGV2 em HKL, análise
+análoga é feita observando os eventos habilitados no
+estado 2.
+
+Figura 3. Gerador GCARGA
+
+As plantas dos sensores de chegada de pallets 
+GSENT  e nível de carga da bateria dos AGVs 
+GSBAT1 e GSBAT2  são exibidos na figura 4. Os eventos dos sensores são modelados como não controláveis e podem ocorrer a qualquer instante da operação
+do sistema.
+
+Figura 6. Especificação de exclusão mútua para a zona HKL
+
+Nas especificações relativas  manipulação dos pallets são tratados os problemas de interação entre as
+estações de carga, descarga e os AGVs.
+A especificação EMAN1, figura 7 (a), determina que as
+operações de carga dos veículos  eventos ac<AGV> 
+não podem ocorrer enquanto não houver pallet na
+estação de carga  evento arr. Conforme as especificações EMAN2 e EMAN3, ilustradas genericamente na
+figura 7 (b), a operação de carga não é autorizada
+quando os AGVs atingem o nível crítico de bateria 
+evento low<AGV>.
+
+Figura 4. Geradores (a) GSENT, (b) GSBAT1, (c) GSBAT2
+
+4.2 Modelagem das Especificações
+As especificações do sistema de AGVs se concentram na resolução dos problemas citados na seção
+3. Para o impedimento de colisões é utilizada a estratégia de controle por zona, a qual divide o layout de
+percurso em várias zonas de controle. Conforme exposto por Mulcahy (1999), cada zona permite o deslocamento de um veículo por vez e caso a zona esteja
+ocupada, o AGV permanece em espera até que a
+mesma seja liberada.
+Para o layout do sistema foram definidas nove zonas
+de controle AB, BC, CDF, DE, EJA, FG, GKH, HJ,
+HKL. É definida uma especificação de exclusão mú-
+
+Figura 7. Especificação (a) EMAN1 e especificação genérica para
+(b) EMAN2 e EMAN3
+
+Visando evitar overflow e underflow de pallets, conforme visto na figura 8 (a), EMAN4 e EMAN5 desabilitam
+a operação de descarga dos AGVs se eles não foram
+2811
+
+sempre que um veículo necessitar se deslocar entre
+dois pontos, ele se desloca pelo mesmo percurso. A
+especificação de roteamento EROT1, apresentada na
+figura 10, desabilita os eventos c1ld e h1lj e habilita
+h1lk, forçando o AGV1 se deslocar para a estação de
+carregamento de bateria. Esta especificação também
+se preocupa com a possibilidade de existir um AGV
+na zona HKL e desabilita o evento g1lh, fazendo que
+o AGV1 aguarde no imã G até que a zona esteja livre. Uma especificação equivalente a esta  EROT2  é
+feita para o AGV2.
+
+carregados anteriormente e desabilitam um novo carregamento até que os mesmos sejam descarregados.
+Preocupando-se com a sincronia das operações de
+carga e descarga, a especificação EMAN6 da figura 8
+(b) desabilita os eventos b<AGV>lc após o início da
+operação de carga  evento ac<AGV> , não permitindo que os veículos se desloquem antes de finalizar a
+operação de carga  evento bc<AGV>. Para a estação
+de descarga, é feita uma especificação EMAN7 que age
+segundo a mesma lógica. EMAN8, figura 8 (c), desabilita ac1 e ac2 se os AGVs não estiverem sobre o imã
+B  evento b<AGV>h. Especificação similar, EMAN9 é
+feita para a estação de descarga.
+
+Figura 10. Especificação EROT1
+
+Para lidar com o transporte dos pallets entre as estações de carga e descarga, têm-se as especificações de
+roteamento EROT3 e EROT4, expressas genericamente
+na figura 11. Elas desabilitam os eventos c<AGV>ld e
+g<AGV>lh após os AGVs serem carregados  evento
+bc<AGV> , conduzindo-os diretamente  estação de
+descarga. Estes eventos são habilitados novamente
+após a descarga do pallet  evento ad<AGV>.
+
+Figura 8. Especificação genérica para (a) EMAN4 e EMAN5 e especificações (b) EMAN6 e (c) EMAN8
+
+Quando houver pallet na estação de carga, as especificações EMAN10 e EMAN11 proíbem o AGV que apresente bateria suficiente e esteja livre passar para o
+trecho seguinte  evento b<AGV>l até que o mesmo
+seja carregado. Para obter estas especificações, modelaram-se os geradores da figura 9. O gerador da
+figura 9 (a) indica se há pallet  estado 2  ou não na
+estação de carga. Já o da figura 9 (b) mostra se a bateria do AGV é suficiente  estado 3  ou atingiu o
+nível crítico. Por fim o gerador visto na figura 9 (c)
+representa se o AGV transporta um pallet ou está
+livre  estado 5. Fazendo a composição síncrona destes geradores, e inserindo um auto-laço com o evento
+b<AGV>l em todos os seus estados, com exceção daquele que representa estar simultaneamente nos estados 2, 3 e 5 dos geradores descritos obtêm-se as especificações.
+
+Figura 11. Especificações EROT3 (<AGV>  1) e EROT4 (<AGV>  2)
+
+Ao todo, modelaram-se 24 especificações e as plantas
+locais referente a elas são expressas na tabela 1.
+Tabela 1. Plantas locais para o sistema de AGV
+
+Glocx
+GlocCOLi
+i  1,..., 9
+
+GlocMAN1
+GlocMAN2
+GlocMAN3
+GlocMAN4,
+GlocMAN5
+GlocMAN6,
+GlocMAN8
+GlocMAN7,
+GlocMAN9
+GlocMAN10
+GlocMAN11
+GlocROT1
+GlocROT2
+GlocROT3
+GlocROT4
+
+Figura 9. Geradores intermediários para se obter EMAN10 e EMAN11
+
+As especificações de roteamento são responsáveis
+por desabilitar alguns percursos do sistema de modo
+que o caminho autorizado conduz diretamente ao
+objetivo desejado. O roteamento é estático, ou seja,
+
+ Gx
+GAGV1  GAGV2
+GCARGA  GSENT
+GAGV1  GCARGA  GSBAT1
+GAGV2  GCARGA  GSBAT2
+GCARGA  GDESCARGA
+GAGV1  GAGV2  GCARGA
+GAGV1  GAGV2  GDESCARGA
+GAGV1  GCARGA  GDESCARGA  GSENT  GSBAT1
+GAGV2  GCARGA  GDESCARGA  GSENT  GSBAT2
+GAGV1  GAGV2  GSBAT1
+GAGV1  GAGV2  GSBAT2
+GAGV1  GCARGA  GDESCARGA
+GAGV2  GCARGA  GDESCARGA
+
+Para x   COLi, i  1,... 9 MANj, j  1, ..., 11
+ROTk, k  1, ..., 4 as especificações locais são definidas por Klocx  Glocx  Ex.
+2812
+
+no tamanho das plantas dos AGVs. A complexidade
+do problema também é agravada com a inserção de
+mais AGVs no sistema. A síntese de supervisores
+modulares locais para sistemas compostos por geradores com muitos estados esbarra no teste de não
+conflito, que pode ser demasiado complexo para ser
+calculado. Alguns trabalhos procuram soluções para
+tornar este teste abordável, como Pena et al. (2009) e
+por Flordal e Malik (2006).
+
+As restrições de não bloqueio são tradadas durante o cálculo dos supervisores, que leva em conta
+os estados marcados, os quais indicam a conclusão de
+tarefas.
+4.3 Síntese dos Supervisores Modulares Locais
+Das especificações locais Klocx são extraídas as
+máximas linguagens controláveis através da operação
+SupC(Klocx, Glocx). Para certificar que os supervisores
+modulares locais comportam-se de modo equivalente
+ solução monolítica, deve-se verificar se os mesmos
+são não conflitantes. Para isso, realiza-se a operação
+de composição síncrona entre os supervisores modulares locais e caso o gerador resultante seja não bloqueante, os supervisores modulares locais não são
+conflitantes. Para x   COLi, i  1,... 9 MANj, j 
+1, ..., 11 ROTk, k  1, ..., 4 , obteve-se S  Slocx. O
+gerador S é não bloqueante  portanto idêntico ao
+monolítico  e possui 4098 estados. Logo os supervisores sintetizados são não conflitantes.
+Pode-se obter a partir dos supervisores locais Slocx,
+supervisores reduzidos através de algoritmos de redução de supervisores como, por exemplo, o algoritmo de Su e Wonham (2004). A redução dos supervisores é de extrema importância para a implementação, discutida na próxima seção, pois proporciona
+redução do uso de memória computacional e torna
+compreensível a interpretação dos supervisores.
+A tabela 2 apresenta um resumo da síntese dos supervisores modulares locais quanto ao número de estados. Os supervisores reduzidos Sredx são próximos ou
+idênticos, em relação ao número de estados, s especificações genéricas locais Ex. Isto faz que a interpretação dos Sredx seja tão simples quanto a das Ex.
+
+5 Implementação de Supervisores em
+Microcontrolador
+O controle exercido pelos supervisores age diretamente sobre as plantas, que representam o sistema
+real de forma abstrata. A TCS supõe que os eventos
+gerados pelas plantas, quando não desabilitados, ocorrem espontaneamente sem a interferência de controle externo. No entanto, os eventos controláveis
+são, em geral, disparados por comandos enviados
+pelo sistema_de_controle. Como exemplo, para um
+AGV1 iniciar o deslocamento para a zona BC é necessário que seja enviado o comando b1lc, ao invés
+de simplesmente desabilitá-lo. Também é necessário
+traduzir os eventos abstratos dos modelos em seqências de operações sobre os atuadores e sensores.
+Para manter as características originais da TCS, implementa-se, conforme proposto por Queiroz e Cury
+(2002), uma interface, ilustrada pela figura 12, entre
+os supervisores e o sistema real.
+
+Tabela 2. Resumo da síntese dos supervisores
+
+X
+
+Ex
+
+Glocx
+
+Klocx
+
+Slocx
+
+Sredx
+
+COL1,COL3,
+COL6
+
+2
+
+196
+
+192
+
+192
+
+2
+
+COL2, COL4,
+COL5, COL8
+
+2
+
+196
+
+195
+
+195
+
+2
+
+COL7
+
+2
+
+196
+
+192
+
+153
+
+2
+
+COL9
+
+2
+
+196
+
+209
+
+209
+
+4
+
+MAN1
+
+2
+
+3
+
+6
+
+6
+
+2
+
+MAN2, MAN3
+
+2
+
+42
+
+84
+
+84
+
+2
+
+MAN4, MAN5
+
+2
+
+9
+
+18
+
+15
+
+2
+
+MAN6, MAN7
+
+2
+
+588
+
+588
+
+588
+
+2
+
+MAN8
+
+3
+
+588
+
+585
+
+576
+
+6
+
+MAN9
+
+3
+
+588
+
+585
+
+576
+
+4
+
+MAN10,
+MAN11
+
+8
+
+126
+
+1008
+
+588
+
+8
+
+ROT1, ROT2
+
+4
+
+196
+
+350
+
+350
+
+4
+
+ROT3, ROT4
+
+2
+
+126
+
+252
+
+210
+
+2
+
+Figura 12. Estrutura do sistema_de_controle
+
+A função desta interface é comandar o sistema real
+conforme os modelos abstratos das plantas e traduzir
+os comandos destes modelos em sinais de entrada do
+sistema real e as saídas do sistema real em respostas
+para os modelos abstratos. A abstração do sistema,
+chamada sistema produto, envia comandos para executar as seqências operacionais referentes aos eventos não desabilitados e recebe respostas destas. Sempre que o sistema produto envia comandos ou recebe
+respostas, os supervisores são atualizados. As seqências operacionais correspondem ao conjunto de
+ações de baixo nível que devem ser executadas, se-
+
+Na composição síncrona de geradores ocorre um
+crescimento exponencial do número de estados em
+relação ao número de subsistemas envolvidos. Ao se
+definir um layout de percurso que demande mais
+zonas de controle, ocorre um acréscimo considerável
+
+2813
+
+do sistema real, a função atualizaSeqênciasOperacionais() aciona o nível imediatamente superior 
+sistema-produto  a partir da função recebeRespostas(resposta), a qual recebe como argumento a resposta representativa da ação ocorrida no sistema real.
+A função executaEventosControláveis(), juntamente
+com a função recebeRespostas(resposta), constituem
+o nível do sistema-produto. Segundo a TCS, os eventos controláveis são executados quando não estiverem desabilitados. Para isso, o sistema produto deve
+sempre verificar se há algum evento controlável que
+deva ser disparado, o que é feito pela função executaEventosControláveis() no corpo da função main().
+Quando há dois ou mais eventos não desabilitados,
+implanta-se uma heurística de prioridade na execução
+destes eventos. A função recebeResposta(resposta) é
+responsável por tratar as respostas recebida do nível
+das seqências operacionais. Quando o sistemaproduto dispara um evento controlável ou recebe
+sinalizações das seqências operacionais, os estados
+das plantas do sistema-produto são atualizados e o
+evento ocorrido é repassado ao nível dos supervisores modulares locais através da função atualizaSupervisores(evento).
+A função atualizaSupervisores(evento) e atualizaDesabilitações() compõem o nível dos supervisores
+modulares locais. Os estados dos supervisores são
+atualizados ao ser chamada a função atualizaSupervisores(evento), a qual atualiza a lista de eventos controláveis que devem ser desabilitados nos estados
+atuais através da função atualizaDesabilitações().
+Quando ocorre uma sinalização do sistema real, somente devem ser atualizados os supervisores cujos
+estados sejam alterados por aquele evento.
+Os supervisores modulares locais, o sistema produto
+e as seqências operacionais das estações de carga e
+descarga são implementados no microcontrolador
+central. Já as seqências operacionais dos AGVs estão embarcadas nos microcontroladores dos mesmos.
+Neste trabalho foi desenvolvida uma interface_gráfica
+para simular a atuação dos supervisores no sistema,
+ilustrada na figura 14, que é atualizada de acordo
+com os estados dos supervisores.
+
+gundo determinada lógica, para realizar a ordem do
+comando enviado pelo sistema-produto.
+Na implementação da estrutura de controle no microcontrolador, é usada a linguagem de programação C.
+Cada nível da estrutura é expresso por um conjunto
+de funções e a interação entre estes níveis se dá através do aninhamento destas funções. O pseudocódigo
+da implementação desta estrutura de controle é organizado segundo a figura 13. Conforme é visto na função main(), o controlador começa chamando a função
+atualizaDesabilitações(), que define o conjunto de
+eventos inicialmente desabilitados no sistema. Posteriormente o programa entra num loop infinito que
+executa as funções executaEventosControláveis() e
+atualizaSeqênciasOperacionais().
+
+Figura 13. Estrutura do pseudo-código da implementação
+
+A função atualizaSeqênciasOperacionais() constitui
+o nível mais baixo na hierarquia de controle. Sabe-se
+que as ações de controle dos supervisores são reações
+aos sinais enviados pelo sistema real, os quais devem
+ser constantemente acompanhados. A função atualizaSeqênciasOperacionais() monitora a ocorrência
+destes sinais e responde ao sistema real com sinais de
+baixo nível de acordo com os comandos recebidos do
+sistema-produto. Quando ocorre um sinal de resposta
+
+Figura 14. Interface gráfica de simulação
+
+A interface foi desenvolvida utilizando a biblioteca
+allegro, vista em ALLEGRO (2009), para programação de jogos em CC++. A principal motivação para
+2814
+
+Hsieh, S. e Kang, M. Y. (1998). Developing AGVS petri
+net control models from flowpath nets. Journal
+of Manufacturing Systems, 17, 237-250.
+Keil
+(2010).
+Embedded
+Development
+Tools.
+httpwww.keil.com. 21012010.
+Lee, C. e Lin, J. (1995). Deadlock prediction and
+avoidance based on Petri nets for zone-control
+automated guided vehicle systems. International
+journal of production research, 33, 3249-3265.
+Mulcahy, D. E. (1999). Materials Handling Handbook,
+McGraw-Hill Professional.
+Pena, P., Cury, J. e Lafortune, S. (2009). Verification of
+Nonconflict of Supervisors Using Abstractions.
+IEEE Transactions on Automatic Control, 54,
+2803.
+Queiroz, M. H. e Cury, J. E. R. (2000). Modular
+supervisory control of large scale discrete event
+systems. Proceedings of the 5th International
+Workshop on Discrete Event Systems. Ghent,
+Belgium.
+Queiroz, M. H. e Cury, J. E. R. (2002). Synthesis and
+implementation of local modular supervisory
+control for a manufacturing cell. Sixth
+International Workshop on Discrete Event
+Systems. Zaragoza, Proceedings of the 6th
+International Workshop on Discrete Event
+Systems.
+Ramadge, P. J. G. e Wonham, W. M. (1989). The control
+of discrete event systems. Proceedings of the
+IEEE, 77, 81-98.
+Schulze, L., Behling, S. e Buhrs, S. (2008). Automated
+Guided Vehicle Systems a Driver for Increased
+Business Performance. Proceedings of the
+International MultiConference of Engineers and
+Computer Scientists, 2.
+Silva, Y. G. e Queiroz, M. H. (2009). Formal syntheis,
+simulation and automatic code generation of
+supervisory control for a manufacturing cell.
+Proceedings of the 20th International Congress
+of Mechanical Engineering. Gramado, Brazil.
+Su, R. e Wonham, W. M. (2004). Supervisor reduction for
+discrete-event systems. Discrete Event Dynamic
+Systems, 14, 31-53.
+Vis, I. F. A. (2006). Survey of research in the design and
+control of automated guided vehicle systems.
+European Journal of Operational Research, 170,
+677-709.
+Wu, N. e Zhou, M. (2004). Modeling and deadlock control
+of automated guided vehicle systems.
+IEEEASME Transactions on Mechatronics, 9,
+50-57.
+
+o desenvolvimento desta interface foi facilitar a visualização das leis de controle especificadas, de modo
+que a identificação dos erros de digitação do código
+fosse mais eficiente. A estrutura do código da interface pode ser aproveitada para a implementação de um
+ambiente de gerenciamento remoto para o sistema de
+AGV.
+A implementação do código em embedded C para
+8051 foi feita através do ambiente integrado de desenvolvimento vision3 da Keil, visto em KEIL
+(2010). Na prática, o sistema se comportou conforme
+observado nas simulações e, como esperado, não
+apresentou bloqueio. O sistema é flexível, executando todas as operações que não estão proibidas.
+6 Conclusão
+Com a abordagem_modular local da TCS foi possível
+sintetizar supervisores ótimos  minimamente restritivos e não bloqueantes  para coordenar o sistema.
+A modelagem das especificações através de geradores permite tratar os problemas de forma modular,
+tornando simples a alteração ou adição de novas leis
+de controle. Além de ser versátil, esta técnica de modelagem se estende a diversas classes de problemas.
+No entanto, a abordagem_modular local é dependente
+do teste de não conflito dos supervisores modulares
+locais para ser aplicada e o teste se torna impraticável
+para modelos muito complexos  layout de percuso
+extenso e elevado número de AGVs. Desta forma,
+para sistemas maiores e complexos sugere-se a utilização de módulos locais e distribuídos de controle
+que agiriam sobre um determinado conjunto de veículos e zonas.
+Agradecimentos
+O primeiro autor é grato pelo suporte financeiro fornecido pela CAPES e o terceiro pelo suporte do
+CNPq.
+Referências Bibliográficas
+Allegro
+
+(2009). A game programming library.
+httpalleg.sourceforge.net. 14112009.
+Feng, L. e Wonham, W. (2006). TCT A computation tool
+for supervisory control synthesis. Eighth
+International Workshop on Discrete Event
+Systems. Ann Arbor, Proceedings of the 8th
+International Workshop on Discrete Event
+Systems.
+Flordal, H. e Malik, R. (2006). Nonblocking verification
+using conflict equivalence. Proceedings of the
+8th International Workshop on Discrete Event
+Systems. Ann Arbor, USA.
+Groover, M. P. (2007). Automation, production systems,
+and
+computer-integrated
+manufacturing,
+Prentice Hall.
+
+2815

@@ -1,0 +1,740 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ANÁLISE DE DESEMPENHO DE UMA LEI DE CONTROLE PID INCORPORADA AO PROTOCOLO
+TCP PARA GERENCIAMENTO ATIVO DE FILA (AQM) EM ROTEADORES
+JULIANA P. DO NASCIMENTO, THIAGO W. M. ABREU, WALTER BARRA JR. ,
+JOSÉ A. L. BARREIROS, CARLOS T. DA COSTA JR.
+Laboratório de Sistemas de Controle, Faculdade de Engenharia Elétrica, Universidade Federal do Pará
+Rua Augusto Corrêa, 01 - Guamá. CEP 66075-110. Caixa Postal 479, Belém, PARÁ, BRASIL
+E-mails juliana.pdn@gmail.com, thiagowmabreu@yahoo.com.br, walbarra@ufpa.br,
+barreiro@ufpa.br, cartav@ufpa.br
+Abstract
+ The study of methods to improve computer networks performance has a great importance. The reason is that computer networks are essential to support a lot of operations such as internet banking, e-commerce and industrial applications, to
+name a few. The active queue management aims at to decrease congestion in routers, in order to preserve the quality of service.
+In this paper, the performance of a PID control strategy to queue management is assessed. The objective is to replace the traditional algorithms such as Drop-Tail and RED. In order to evaluate the control techniques, a MatlabSimulink model was implemented to simulate the dynamics of the TCP channel. The simulation results have shown that the PID strategy presents a better
+performance when compared with the traditional Drop-Tail and Red strategies.
+Keywords
+ Computer networks, active queue management, congestion avoidance, PID control.
+Resumo
+ O estudo de metodologias para melhorar o desempenho_de_redes_de_computadores é de grande importância. A razão
+é que as redes fornecem um suporte essencial para aplicações bancárias, comerciais e industriais. O gerenciamento ativo visa reduzir congestionamentos em roteadores, de modo a preservar a qualidade dos serviços. Neste artigo, analisa-se o desempenho de
+uma lei de controle PID, para gerenciamento_ativo_de_filas, em substituição s estratégias tradicionais Drop-Tail e RED. Para
+testar as técnicas apresentadas, foi desenvolvido um modelo MatlabSimulink do processo, para simular as dinâmicas do protocolo TCP. Os resultados de estudos de simulação mostram o bom desempenho da estratégia PID proposta, quando comparado ao
+desempenho obtido com as estratégias tradicionais RED e Drop-Tail.
+Palavras-chave
+ .
+
+1
+
+Introdução
+
+A quantidade de serviços providos pela Internet
+vem crescendo bastante nos últimos anos. Visto que é
+necessário garantir qualidade_de_serviço para todos
+os usuários finais, as medidas tomadas para prevenir
+congestionamentos nas redes distribuídas pelo mundo
+são muito interessantes (Kurose, 2010). O Gerenciamento Ativo de Filas atua sobre as características do
+protocolo TCP (Transmission Control Protocol) com
+o objetivo de reduzir o congestionamento em roteadores e, consequentemente, melhorar o tráfego na
+rede e garantir a qualidade do serviço.
+O protocolo TCP garante que dados enviados
+por um remetente serão recebidos pelo destinatário,
+mesmo que haja perda de uma parte da informação
+em algum momento na rede (Kurose, 2010), o que
+torna interessante a adoção de medidas para a melhoria de seu desempenho, de forma a se reduzir estas
+perdas.
+Diversos trabalhos apresentaram propostas de
+melhoria do desempenho das redes_de_computadores
+baseados nos avanços propostos por (Floyd e Jacobson, 1993). Eles introduziram uma metodologia de
+prevenção_de_congestionamento em pontos intermediários (nós) da rede entre um remetente e um destinatário que é utilizada até os dias atuais. (Misra et al,
+2000) e (Hollot et al, 2002) apresentaram uma repre-
+
+ISBN 978-85-8001-069-5
+
+sentação matemática do comportamento dinâmico do
+protocolo TCP, modelando um sistema com atraso de
+tempo, com a aplicação de técnicas de controle_automático por realimentação, através de controladores
+PI (Proporcional-Integral), como forma de se prevenir congestionamentos.
+Em Reguera et al (2008) verifica-se o impacto da
+utilização de técnicas de gerenciamento_ativo_de_filas
+no tráfego de voz na Internet, provando que essas
+técnicas garantem melhores serviços aos usuários.
+(Manfredi et al, 2009) propuseram a utilização de
+técnicas de controle de H para o desenvolvimento
+de um controlador_robusto, capaz de reduzir a sincronização nas redes, prevenindo o congestionamento
+delas.
+Neste artigo, apresenta-se uma comparação entre
+as técnicas tradicionais de gerenciamento ativo de
+filas (Floyd e Jacobson, 1993) e técnicas de controle
+PID (Proporcional-Integral-Derivativo) com ajuste
+ótimo para sistemas_com_atraso de tempo. O trabalho
+é baseado em um modelo não_linear proposto e explorado por (Misra et al, 2000) e (Hollot et al, 2002).
+Este artigo está organizado da seguinte forma.
+Na seção 2, os conceitos formais de gerenciamento
+ativo de filas são apresentados e o modelo proposto
+por (Misra et al, 2000) e (Hollot et al, 2002) é descrito, definindo-se as condições de operação que serão
+utilizadas para os testes comparativos de desempenho. Além disso, as técnicas convencionais de gerenciamento_ativo_de_filas propostas pelo modelo atual
+
+5051
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+do protocolo TCP são mostradas. Na seção 3, propõe-se a melhoria das técnicas tradicionais de prevenção_de_congestionamento, utilizando-se técnicas
+de controle PID com ajuste ótimo, conforme sugerido
+em (Madhuranthakam, 2008), que é adequado para o
+controle_de_sistemas_com_atraso de tempo.
+Os resultados do estudo das técnicas apresentadas nas seções 2 e 3 são avaliados na seção 4, comparando-se o desempenho obtido por cada uma das técnicas no problema de gerenciamento_ativo_de_filas em
+canais TCP. Verifica-se que a técnica de controle
+proposta poderia representar uma melhoria significativa na prevenção_de_congestionamentos em redes de
+computadores baseados no protocolo TCP. Finalmente, as conclusões são apresentadas na seção 5.
+2 Metodologias para Gerenciamento Ativo de
+Filas (AQM)
+O controle de congestionamento aplicado no tráfego das redes é realizado pelo protocolo TCP na
+camada de transporte, o qual está associado aos hosts
+da comunicação, ou seja, aos usuários finais de uma
+conexão. Contudo, a noção de controle de congestionamento tem a ver com medidas para prevenção de
+estouros de buffers nos elementos intermediários da
+rede (roteadores), os quais só tratam informações até
+a camada de inter-redes.
+Dessa forma, é possível estabelecer algumas políticas, para execução pelos roteadores, que previnam
+o congestionamento da rede, sem que se altere a forma como a pilha de camadas do TCPIP é executada
+nestes nós intermediários, como mostram (Floyd e
+Jacobson, 1993) e (Hollot et al, 2002). Estas políticas
+são chamadas de Gerenciamento Ativo de Filas
+(AQM  do inglês, Active Queue Management).
+O AQM baseia-se na premissa de descartes aleatórios de pacotes, baseado em alguma função de probabilidade, que evite o estouro de buffer de roteadores (Misra et al, 2000). A Figura 1 mostra uma representação de um sistema com congestionamento, onde
+Round-trip time corresponde ao tempo que o pacote
+leva para chegar ao destinatário, somado com o tempo necessário para o ACK (Acknowledgement) correspondente voltar ao remetente.
+
+Figura 1. Descarte de pacotes em roteador congestionado. Adaptado de (Hollot et al, 2002).
+
+pela metade, reduzindo o tráfego na rede. Mas como
+este descarte é aleatório, evita-se a perda generalizada de pacotes, ao estouro de um buffer, causando
+redução generalizada nas janelas de congestionamento de todos os emissores, o que leva a uma queda
+global das taxas de transmissão (Kurose, 2010).
+Uma premissa mais recente de AQM utiliza uma
+marcação explícita no cabeçalho do TCP para indicar
+o congestionamento, política conhecida como Explicit Congestion Notification (ECN), desenvolvida por
+(Ramakrishnan, 2001).
+Neste modelo, não se realiza o descarte de um
+pacote, mas alguns dos bits reservados do cabeçalho
+TCP são utilizados para indicar que há um congestionamento em algum roteador e que o emissor TCP
+deve reduzir sua taxa de envio, da mesma forma como se houvesse ocorrido o descarte deste pacote
+marcado no roteador congestionado. A vantagem
+deste método é que se evita a perda de um pacote,
+forçando sua retransmissão e ao mesmo tempo, aplica-se as estratégias de controle de congestionamento
+do protocolo TCP.
+2.1 Modelo Dinâmico do TCP
+Em (Misra et al, 2000) e (Hollot et al, 2002) um
+modelo_matemático foi proposto e validado para descrever as dinâmicas do protocolo TCP, de forma a se
+aplicar as políticas de AQM, através de análise de
+fluxo-fluído. Esse modelo será utilizado para o estudo proposto neste artigo.
+Dentre as considerações a serem feitas sobre o
+modelo, o mesmo considera um único roteador congestionado entre N conexões TCP que fluem através
+dele. Este modelo se baseia no comprimento médio
+da fila no buffer para que se calcule uma probabilidade de descarte de pacote. Tal modelo, desenvolvido através da análise de fluido é contínuo e, por isso,
+não representa os valores da fila de comprimento em
+pacotes (não possui um comportamento em degrau).
+Utiliza-se o algoritmo de ECN para indicar congestionamento na rede, quando se aplicou alguma política
+de AQM.
+O modelo considera uma representação para o
+tempo de envio do pacote e recebimento de um ACK
+correspondente, através do Round-trip Time. Este
+tempo é usado pelo TCP como base para ajustar o
+tempo do cronômetro de retransmissão do protocolo,
+responsável por indicar (indiretamente) se houve
+perda do pacote na rede.
+De acordo com (Hollot et al, 2002), tem-se o seguinte modelo_não-linear para representar a dinâmica
+média de um canal TCP
+1
+W (t ) W (t  R (t ))
+W (t ) 
+
+p (t  R (t ))
+R (t )
+2 R (t  R (t ))
+
+(1)
+
+Estes descartes preventivos podem atuar de forma eficaz, pois, ao sinal de perda_de_pacote, um emissor TCP reduz sua janela de congestionamento
+
+ISBN 978-85-8001-069-5
+
+5052
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+N (t )
+
+ C + R(t ) W (t )
+q>0
+
+q  
+q0
+
+
+N
+(
+t
+)
+max 0,C +
+W (t ),
+
+R
+(
+t
+)
+
+
+
+2.2 Linearização do modelo representativo do TCP
+(2)
+
+Onde 
+W (t )  tamanho médio da janela de congestionamento TCP (cwnd)
+q  tamanho médio da fila no buffer (pacotes)
+
+R(t )  Round-trip time  q(t ) + Tp ( s)
+C
+
+N  carga (número de sessões TCP)
+p  probabilidade de marcação de pacote
+
+R0C
+q
+ R0  0 + T p
+N
+C
+
+(3)
+(4)
+
+Considerou-se para os testes aqui realizados que
+a capacidade do enlace em bits é de 15Mbits e que
+os pacotes tinham um tamanho médio de 500 bytes, o
+que leva a uma capacidade do canal C3750 pacotess. Além disso, foram utilizadas 60 sessões TCP e
+o atraso de propagação inerente ao roteador foi definido em 0,200s.
+
+ISBN 978-85-8001-069-5
+
+N
+(W (t ) + W (t  R0 ))
+R02 C
+
+(5)
+
+R C2
+1
+(q(t ) + W (t  R0 ))  0 2 p(t  R0 )
+2
+R0 C
+2N
+N
+1
+(6)
+q (t )  W (t )  q(t ))
+R0
+R0
+
+Onde os desvios das variáveis em torno do ponto de
+operação são definidos como
+
+A dinâmica da janela de congestionamento é
+descrita na primeira equação diferencial, onde o termo 1R modela o aumento aditivo da janela e o termo
+W2 o decremento multiplicativo, de acordo com
+uma marcação de pacote. Sendo assim, o modelo só
+considera o aumento linear obtido através dos algoritmos de prevenção_de_congestionamento e de recuperação rápida, enquanto que o mecanismo de partida
+lenta não é retratado neste modelo.
+A segunda equação modela o comprimento da fila no buffer como a diferença entre a taxa de chegada
+de pacotes definida por NWR e a capacidade C do
+canal.
+O atraso de propagação Tp corresponde a um
+tempo fixo que o roteador despende entre o momento
+que recebe o pacote e o momento em que o encaminha. Mesmo que a fila esteja vazia, este encaminhamento não é feito de forma instantânea e este atraso é
+considerado nos cálculos do modelo.
+Para calcular as condições iniciais deste modelo,
+considera-se a capacidade do canal e o número de
+sessões TCP constantes, ou seja, N(t)  N e C(t)  C.
+Admitindo que p é a entrada do sistema e que (W, q)
+são os estados, o ponto de operação é definido quando W  0 e q  0 , o que leva a
+
+q  0  W0 
+
+W (t )  
+
+
+C  capacidade do canal (pacotess)
+T p  atraso de propagação
+
+W  0  W02 p 0  2
+
+Para projetar os controladores utilizados neste
+trabalho, os modelos descritos em (1) e (2) foram
+linearizados em torno de um ponto de operação
+q0  121 pacotes, tem-se que W0  15 pacotes e p0 
+0,0095.
+
+ W  W  W 0
+ q  q  q 0
+ p  p  p 0
+
+(7)
+
+O objetivo da linearização é permitir o projeto e
+a análise de controladores, para o processo AQM,
+com base nas teorias bem estabelecidas para de sistemas_dinâmicos lineares. Dessa forma, Hollot et al
+(2002) demonstraram que o sistema linearizado pode
+ser colocado na forma do diagrama_de_blocos da Figura 2.
+
+Figura 2. Representação simplificada do modelo_linearizado.
+Adaptado de (Hollot et al, 2002)
+
+Para o projeto de um controlador PID para o canal TCP, deseja-se isolar o comportamento nominal
+da planta (comportamento nas baixas frequências).
+Na Figura 2, a função_de_transferência P(s), que contem o comportamento nominal da planta (sem considerar o atraso_de_transporte), enquanto (s) é tratada
+como uma incerteza que varia com a freqência e que
+apresenta um ganho que cresce para altas frequências, mas que é consideravelmente baixo na faixa de
+interesse para o presente projeto, que é a faixa de
+baixas freqências. Dessa forma, (s), não será considerado para fins de projeto da lei de controle PID.
+Logo, para fins de projeto da estratégia para Gerenciamento do canal TCP, será considerado o seguinte modelo simplificado da planta, o qual inclui o
+efeito do atraso_de_transporte na entrada de controle
+p 
+
+5053
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+G(s) 
+
+q( s )
+ P ( s)e  sR
+p( s )
+
+0
+
+(8)
+
+Onde P(s) é dada por
+C2
+2N
+P( s ) 
+
+2 N 
+1 
+ s + 2  s +
+
+R0 C 
+R0 
+
+
+(9)
+
+ção de pacotes, pois o estado inicial calculado nas
+subseções anteriores admitia que a fila estivesse previamente ocupada (q0). O valor pmax é definido pelo
+usuário e corresponde ao máximo valor de probabilidade de descartemarcação que o RED configura,
+antes de descartarmarcar todos os pacotes do buffer.
+
+2.3 Estratégia de Controle Drop-Tail
+O algoritmo Drop-Tail consiste apenas na maneira intuitiva de funcionamento do TCP. Se o buffer
+de um roteador não estiver cheio, então a probabilidade de descarte de um pacote é p  0. Se o buffer
+ultrapassar um limite pré-especificado qmax (que pode
+ser o próprio limite físico ou um valor definido por
+conveniência do projetista do roteador) então todos
+os pacotes são descartadosmarcados e a fila é esvaziada (p  1).
+O comportamento do buffer do roteador, ao se
+aplicar esta política, pode ser observado na Figura 4.
+Observa-se que a fila vai sendo preenchida, uma vez
+que a taxa de chegada de pacotes NWR é maior que a
+capacidade C do canal, até o momento em que todos
+os pacotes são descartados.
+
+Figura 4. Utilização do buffer quando se aplica o Drop-Tail
+
+2.4 Estratégia de Controle Random Early Detection
+(RED)
+O algoritmo de RED é uma implementação de
+gerenciamento_ativo_de_filas, baseado em um ajuste
+da probabilidade de descarte de pacotes, que tenta
+impedir o comportamento cíclico do Drop-Tail, utilizando melhor os recursos da rede. O descarte destes
+pacotes é feito antes mesmo que o limite do buffer
+seja atingido, pois o objetivo do algoritmo é manter o
+roteador funcionando em uma faixa de operação que
+não varia drasticamente, mesmo que haja aumento da
+carga atuando sobre ele (Floyd e Jacobson, 1993).
+Sendo assim,  medida que o valor da fila aumenta, a probabilidade de descartemarcação associada a cada um dos pacotes ali contidos também aumenta, como forma de se compensar o aumento da
+carga no roteador.
+De acordo com a Figura 5, xmin e xmax são limites
+para o comprimento médio da fila no buffer, pmin é
+um valor muito pequeno de probabilidade de marca-
+
+ISBN 978-85-8001-069-5
+
+Figura 5. Probabilidade de marcação de pacote do RED
+
+3 Uma Estratégias de controle PID para Gerenciamento ativo de Fila
+3.1 Ajuste ótimo de um controlador PID para sistemas_de_segunda_ordem com atraso de tempo
+Diversos processos_industriais utilizam controladores PID (Ogata, 2003). Alguns trabalhos propõem
+fórmulas tabeladas para ajuste_de_parâmetros de controladores PID para plantas com modelo do tipo sistemas_de_segunda_ordem com atraso de tempo
+(SOPTD, do inglês, second-order plus time-delay),
+(Panda et al, 2003), (Skogestad, 2002). Um sistema
+SOPTD é caracterizado por uma função_de_transferência na forma descrita na equação (10)
+G(s) 
+
+G0 e s
+( 1s + 1)( 2 s + 1)
+
+(10)
+
+Onde G0 é o ganho estático, 1 e 2 são constantes de
+tempo, e  é o atraso_de_transporte da planta.
+Seja um controlador PID com uma estrutura na
+forma descrita na equação (11)
+
+ ds 
+1 
+ E ( s )  K p 
+Y ( s )
+U ( s )  K p 1 +
+ is 
+  d s + 1 
+
+(11)
+
+Onde Kp é o ganho proporcional do controlador,
+i é a constante de tempo integral, d é a constante de
+tempo derivativa e  é um fator a ser ajustado e U(s),
+E(s) e Y(s) são, respectivamente, as transformadas de
+Laplace dos sinais de controle, de erro, e de saída da
+planta.
+Em Madhuranthakam et al (2008) foram propostas as seguintes fórmulas para ajuste ótimo de parâmetros de um controladores PID, com estrutura na
+forma da equação (11), para uma planta de segunda
+ordem, com atraso_de_transporte (SOPTD), na forma
+da equação (10)
+
+5054
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Kp 
+
+
+0.6202 
+
+G0   +  1 +  2
+
+(12)
+
+
+
+
+
+
+ (13)
+
+
+
+
+
+
+  14.906
+ + 4.566 
+( +  1 )13.81 
+
+1
+  +1 + 2 
+  + 1 + 2 
+2
+
+i 
+
+
+
+
+
+
+
+ d  0.0921
+ + 1 +  2
+
+
+
+
+
+1.4849
+
+.
+
+( 2 +  )
+
+(14)
+
+1
+
+Para o modelo_linearizado do canal TCP, o sinal
+de controle é o desvio na probabilidade p de marcação de um pacote, enquanto que a saída será o desvio
+no comprimento da fila q e a referência seria o valor
+inicial da fila q0.
+Observando-se que o modelo simplificado obtido para o canal TCP, equações (8) e (9), é um modelo do tipo SOPTD, tem-se que
+  R0
+
+A análise mostra que para o RED, diferentemente do comportamento do Drop-Tail, a fila não cresce
+inicialmente, porque há uma probabilidade de descarte pmin  0 (Figura 6(a)) e este valor garante que pacotes, que chegarem além da capacidade de encaminhamento do roteador, serão marcados preventivamente, de forma a se evitar a marcação excessiva
+causado pela super-utilização do buffer. Percebe-se
+também que o round-trip time permanece constante
+(Figura 6(d)), o que indica que a quantidade de pacotes fluindo através da rede não varia significativamente. Logo, não há indícios de congestionamento na
+rede.
+
+(15)
+
+C.R02
+2N
+ 2  R0
+
+1 
+
+G 0  P (0 ) 
+
+C 3 .R03
+4N 2
+
+Dessa forma, dado um ponto de operação para o
+canal TCP, as fórmulas de (8),(9), (12)-(14) e (15),
+podem ser imediatamente utilizadas para se calcular
+os valores dos parâmetros de um controlador PID
+para manter regulado o comprimento da fila do roteador.
+4 Resultados Obtidos
+A partir do modelo apresentado em (Hollot et al,
+2002) e utilizando-se as equações descritas em (1) e
+(2), desenvolveu-se um modelo em MatlabSimulink
+que possibilitará aplicar-se estratégias de controle e
+de AQM para critérios de avaliação e de comparação
+de desempenhos. As condições iniciais para todos os
+testes, com base na subseção 2.1, foram definidas
+como
+W  15
+q0  121
+
+R0  0.2325
+C  3750
+Tp  0.200
+N  60
+p 0  0.0095
+4.1 Resultados usando Drop-Tail e RED
+Para representar o funcionamento dos algoritmos
+de Drop-Tail e RED foram criadas estruturas em MatlabSimulink, de acordo com o que foi descrito nas
+subseções 2.3 e 2.4. Para todos os casos considerouse o uso máximo do buffer antes do descarte igual a
+700 pacotes.
+
+ISBN 978-85-8001-069-5
+
+Figura 6. Comparação entre RED e Drop-Tail
+
+No momento em que todos os pacotes passam a
+ser marcados, o algoritmo de prevenção_de_congestionamento do protocolo TCP atua, reduzindo a janela
+de congestionamento para 1 (Figura 6(c)). Em seguida, ela volta a crescer linearmente, mas estabiliza em
+um valor próximo  metade do valor anterior, uma
+vez que há o dobro de sessões TCP enviando dados.
+Pode-se pensar que o novo valor da janela deveria ser
+exatamente a metade do valor antigo. Contudo, no
+modelo obtido de (Hollot et al, 2002), os valores
+calculados pertencem ao conjunto dos números reais
+(e não dos números inteiros). Estas pequenas diferenças de valores geram, ocasionalmente, essas leves
+desigualdades que não representam uma falha no
+modelo.
+É importante também ressaltar que o valor de R
+começa a aumentar quando o número de sessões dobra no instante t40s (Figura 6(d)). Este é um grande
+indicativo de que o número de pacotes na rede é maior que a capacidade de transmissão do roteador, o
+que leva a crer que um congestionamento está se
+formando.
+Quando o número de sessões dobra, enquanto o
+RED estabiliza o sistema novamente, o sistema com
+
+5055
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Drop-Tail passa a oscilar mais rapidamente. Contudo, para o RED esta estabilização se dá com um novo
+valor do tamanho médio da fila no buffer (aproximadamente 230 pacotes) (Figura 6(b)), maior que o valor anterior. Em outras palavras, há um erro de regime que este controle anão é capaz de anular. Isto
+significa que o algoritmo RED não implementa um
+controlador com ação integral em sua equação (Ogata, 2003).
+Um grande diferencial entre as duas estratégias
+de controle é que o RED não permite a sincronização
+do fluxo na rede. Isto significa que não há grandes
+variações globais nas taxas de envio, como acontece
+com o Drop-Tail (ver o comportamento da janela de
+congestionamento na Figura 6(c)).
+Logo, o usuário final não sente grandes oscilações nas taxas de transmissão (W aproximadamente
+constante) por períodos elevados de tempo, embora
+certamente, as velocidades individuais para cada emissor TCP tendam a diminuir devido a uma maior
+concorrência entre emissores. Percebe-se que a rede
+não se alterna entre momentos de subutilização e
+super-utilização do buffer.
+4.2 Resultados usando controlador PID
+Para exemplificar a atuação de um controlador
+PID no controle de congestionamento uma estrutura
+também foi montada em MatlabSimulink. O controlador foi obtido através do calculo dos parâmetros
+conforme proposto na Equação (11). Os resultados
+obtidos estão apresentados na Figura 7 assim como
+nos casos Drop-Tail e RED, o número de sessões foi
+dobrado no instante t40s.
+
+Inicialmente, percebe-se na Figura 8 que o sistema está estável antes da perturbação aplicada, o que
+mostra que o controlador projetado tem um bom ajuste.
+Quando a perturbação é aplicada, percebe-se que
+o tamanho da fila começa a crescer (Figura 7(b)),
+obrigando a atuação do controlador, que ajusta a
+probabilidade de marcação de um pacote (Figura
+7(a)), de modo que o sistema volte a entrar em regime. Como o controlador PID possui uma ação integral e uma característica desta ação é anular o erro de
+regime (Ogata, 2003), após um período transitório de
+aproximadamente 5s, a fila no buffer tende ao valor
+inicial q0.
+Como esperado, quando o valor de p aumenta, a
+janela de congestionamento observada na Figura 7(c)
+decresce, em função de uma maior marcação de pacotes (algoritmo de prevenção_de_congestionamento
+sendo executado). E simultaneamente, o valor de
+round-trip time na Figura 7(d) cresce no momento em
+que a fila começa a aumentar (em razão do incremento no número de sessões). Isto é um indicativo de que
+mais pacotes estão circulando na rede e o roteador
+está demorando mais para encaminhá-los.
+A Figura 8 mostra um comparativo dos desempenhos quando se usa AQM com RED e com o controlador PID.
+
+Figura 8. Comparação entre PID e RED
+
+Figura 7. Resultados obtidos com o PID
+
+ISBN 978-85-8001-069-5
+
+Observando o resultado mostrado na Figura 8(a),
+percebe-se que a probabilidade de marcação é bem
+menor quando se usa o controlador PID, pois com
+RED, o valor de p vai a 1 quando ocorre a perturbação em t40s. O resultado mais imediato disto é visto
+na Figura 8(c). A janela de congestionamento média
+das conexões TCP regride ao valor inicial próximo
+de 1 com o RED, pois 100 dos pacotes são marcados por certo período de tempo, o que leva a uma
+5056
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+pequena sincronização da rede (não tão intensa como
+na caso Drop-Tail). Quando isto ocorre, há uma
+chance muito grande que quase todos os usuários
+tenham algum pacote marcado, o que os obriga a
+reduzir W. Por outro lado, quando se usa PID, o valor
+de W reduz, mas a média não regride para o valor
+inicial (o valor mínimo atingido é de 5 pacotes), o
+que significa que o algoritmo de prevenção_de_congestionamento não é aplicado a todos os usuários da
+rede imediatamente. A explicação simples para isso
+vem do sinal de controle p operando para valores
+baixos, quando em comparação com RED.
+Observando-se a Figura 8(b), percebe-se que nos
+dois casos o sistema estabiliza após um período transitório, mas somente no caso PID o erro de regime é
+nulo, devido  ação integral do controlador. Como
+consequência disto, o valor de W, quando se utiliza
+RED, tende a ser mais elevado que o caso utilizando
+PID, mas, em compensação, o valor de round-trip
+time aumenta. É possível perceber que ao se utilizar
+PID, o buffer permanece vazio por mais tempo que o
+caso RED.
+Ainda com relação ao comprimento da fila q,
+percebe-se que ela permanece nula por um tempo
+maior quando se usa o controlador PID. No caso
+RED, quando o valor limiar é extrapolado, então
+p1, W 1 e q0. No instante em que q  0, o
+valor da probabilidade é ajustado como pmin, um valor muito pequeno. Logo, a fila volta a crescer rapidamente, até que xmin  q  xmax. Por outro lado, o
+controlador PID aumenta o valor de p sem, contudo,
+marcar todos os pacotes no buffer apesar disso, este
+valor mais elevado é suficiente para que a fila assuma
+valor nulo. Após atingir o valor de pico em t41s, p
+decresce lentamente (diferente do comportamento
+degrau de RED), o que ainda mantém por um período
+aproximado de 3s a fila vazia.
+Finalmente, ao se analisar o round-trip time (Figura 8(d)), observa-se uma correspondência com o
+valor de q na Figura 8(b). Com uma maior quantidade de pacotes circulando na rede, é natural que o valor de R aumente, indicando que um congestionamento está se aproximando. Contudo, quando as filas são
+anuladas, nos dois casos, R assume o valor mínimo
+definido pelo tempo de propagação Tp  0.200s. Por
+permanecer mais tempo neste estado, o valor de R
+para o sistema usando o controlador permanece o
+mínimo também por mais tempo. Mas observa-se que
+R volta ao seu estado inicial R0 após o período transitório, uma vez que o erro de regime da fila é nulo
+(qfinal  q0).
+5 Conclusão
+Neste artigo foi analisado o desempenho_dinâmico referente  incorporação de uma estratégia de controle PID para gerenciamento_ativo_de_filas em roteadores TCP.
+
+ISBN 978-85-8001-069-5
+
+O modelo proposto por (Misra et al, 2000) e
+(Hollot et al, 2002), para a modelagem do canal TCP,
+permitiu o desenvolvimento de um simulador em
+ambiente MatlabSimulink, de tal forma que foi possível aplicar-se técnicas de controle por realimentação como forma de se comparar com o desempenho
+das técnicas tradicionais de prevenção_de_congestionamento.
+O controle PID baseado no ajuste ótimo dos ganhos proposto por (Madhuranthakem et al, 2008)
+mostrou uma considerável melhoria em relação 
+utilização de RED para o gerenciamento ativo de
+filas, especialmente por garantir que a utilização do
+buffer permaneça igual, mesmo quando há aumento
+no número de sessões.
+Sendo assim, este trabalho mostrou que a utilização das técnicas de controle por realimentação aplicadas no gerenciamento_ativo_de_filas, no protocolo
+TCP, pode viabilizar um aumento significativo no
+desempenho das redes_de_computadores, garantindo
+qualidade_de_serviço ao usuário final. Para relato em
+futuros artigos, os autores também pretendem avaliar
+as estratégias de controle no ambiente de simulação
+de redes do aplicativo ns-2 (Network Simulator), de
+modo a fazer uma avaliação mais realística do processo, já que o modelo utilizado neste artigo foi obtido desprezando-se alguns fenômenos importantes que
+estão presentes na dinâmica do processo real.
+Agradecimentos
+O segundo autor agradece ao CNPQ pelo apoio recebido durante o mestrado.
+Referências Bibliográficas
+Floyd, S., Jacobson, V.. Random Early Detection
+Gateways
+for
+Congestion
+Avoidance.
+IEEEACM Transactions on Networking, Vol. 1,
+N 4, agosto 1993.
+Hollot, C.V., Misra, V., Towsley, D., Gong, W..
+Analysis and Design of Controllers for AQM
+Routers Supporting TCP Flows. IEEE
+Transactions on Automatic Control, Vol. 47, N
+6, junho 2002.
+Kurose, J.F., Redes de Computadores e a Internet
+uma abordagem topdown. Addison-Wesley, 5
+ed., São Paulo, 2010.
+Madhurantakam, C.R., Elkamel, A., Budman, H..
+Optimal tuning of PID controllers for FOPTD,
+SOPTD and SOPTD with lead processes.
+Chemical Engineering and Processing, N 47,
+pp. 251-264, 2008.
+Manfredi, S., Bernardo, M., Garofalo, F.. Design,
+validation and experimental testing of a robust
+AQM control. Control Engineering Practice, N
+17, pp. 394407, 2009.
+Misra, V., Gong, W., Towsley, D.. Fluid-based
+Analysis of a Network of AQM Routers
+
+5057
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Supporting TCP Flows with an Application to
+RED. ACM SIGCOMM 00, 2000.
+Ogata, K.. Engenharia de Controle Moderno. 4 Ed.,
+Prentice-Hall, São Paulo, 2003.
+Panda, R.C., Yu, C., Huang, H.. PID tuning rules for
+SOPTD systems Review and some new results.
+ISA Transactions, N 47, pp. 283-295, 2004.
+Ramakrishnan, K., Floyd, S., Black, D.. The Addition
+of Explicit Congestion Notification (ECN) to IP.
+RFC 3168, setembro 2001.
+Reguera, V.A., Paliza, F.F.A., Godoy JR., W.,
+Fernández, E.M.G.. On the impact of active
+queue management on VoIP quality of service.
+Computer Communications, N 31, pp. 73-87,
+2008.
+Skogestad, S.. Simple analytic rules for model
+reduction and PID controller tuning. Journal of
+Process Control, N 13, pp. 291-309, 2003.
+
+ISBN 978-85-8001-069-5
+
+5058

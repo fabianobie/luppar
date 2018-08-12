@@ -1,0 +1,1593 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ROBUST MULTIVARIABLE CONTROL APPLIED TO UNMANNED UNDERWATER
+VEHICLE IN A NETWORKED CONTROL SYSTEM
+Marco A. Grotkowsky, Newton Maruyama
+
+
+Av. Prof. Mello Moraes n.2231, Departamento de Engenharia Mecatronica e de Sistemas Mecanicos,
+Escola Politecnica, Universidade de Sao Paulo, Sao Paulo, SP, Brasil
+Emails marco.grotkowsky@usp.br, maruyama@usp.br
+Abstract This note presents the development of a robust multivariable controller for the UUV (Unmanned
+Underwater Vehicle) LAURS. The controller developed takes into consideration random delays introduced by
+the Networked Control System architecture. In previous studies, Robust Control techniques were applied to
+underwater vehicles in order to ensure the performance of the closed-loop system in face of modelling errors
+such as hydrodynamic coefficients. The implications of random time delays has been often neglected or handled
+by elaborate techniques like Stochastic Control that are difficult to implement in highly coupled multivariable
+systems. This paper presents a different and simple approach for ensuring performance in Networked Control
+Systems with time delays. This approach is based on the LQGLTR (linear quadratic Gaussian controller with
+loop transfer recovery) method. For this purpose, the velocity control of the unmanned underwater vehicle
+LAURS, built at the School of Engineering of University of Sao Paulo is developed. The effectiveness of the
+controller is evaluated after its discretization and simulation with a non-linear and multivariable plant simulator.
+Keywords robotics, underwater vehicles, unmanned vehicles, embedded_systems, real-time control, task
+scheduling, computer system, control system
+Resumo Este trabalho apresenta um controlador_robusto multivariavel para o Veculo Submarino Nao Tripulado LAURS. O controlador desenvolvido leva em consideracao os atrasos aleatorios introduzidos pelo uso da
+arquitetura distribuda em redes de comunicacao. Em estudos anteriores, tecnicas de Controle Robusto foram
+utilizadas para assegurar o desempenho em malha_fechada de sistemas para erros_de_modelagem, como por exemplo, a incerteza dos coeficientes hidrodinamicos. As consequencias dos atrasos aleatorios sao, em geral, ignoradas
+ou tratadas por tecnicas como Controle Estocastico, complicadas de se implementar em sistemas_multivariaveis
+acoplados. Este trabalho apresenta uma abordagem diferente e simples para garantir o desempenho do Sistema
+de Controle Distribudo com atrasos. A presente abordagem e baseada no controlador LQGLTR (Linear Quadratico Gaussiano com Recuperacao da funcao de transferencia). Para isso, o controle_de_velocidade do UUV
+LAURS, construdo na Escola Politecnica da Universidade de Sao Paulo, e desenvolvido. A efetividade do sistema
+e obtida apos a discretizacao do controlador, e a validacao e realizada por meio de um simulador do UUV nao
+linear e multivariavel com acoplamentos.
+Palavras-chave .
+
+1
+
+Introduction
+
+Modern control systems have several sensors and
+actuators. This increasing number of devices leads
+to a more complex and unreliable system. However, instead of wiring each device to a central
+controller in an old peer-to-peer fashion, a feasible way to design these systems is to distribute
+these devices over a network.
+There are several types of reliable and low cost
+networks that can be used in Networked Control
+Systems (NCS), for instance CANbus or Ethernet. The distributed architecture has also the advantage of reducing cost and weight, improving
+flexibility, ease of maintenance and fault diagnosis. It can be said that the more the communication networks evolve and the complexity of control
+systems increases, the more the NCS architecture
+will become popular and feasible. Even though
+these networks are reliable and well established,
+they have bandwidth constraints. This limitation
+begets the major drawback of using a network
+the random delays.
+In spite of being random, the probability density function of these delays can be estimated for
+
+ISBN 978-85-8001-069-5
+
+a particular case. Based on this information, the
+uncertainty that the delays bring into the model
+can be quantified by a multiplicative error. Later,
+following the LQGLTR methodology, the multiplicative error is applied to derive the stability
+barrier used at the loop-shaping process.
+The main goal of this paper is to instigate the
+use of robust controllers in the field of NCSs. The
+principle is that the controller can be robust to
+random delays introduced by the network. For the
+general purpose of this paper, a LQGLTR controller is developed for an unmanned underwater
+vehicle (UUV) in a NCS.
+Recently, underwater vehicles have become a
+subject of great matter for commercial and academic purposes, following the need of offshore industries and the progress of new technologies. The
+development of long life batteries and precise navigation instruments incited the use of these types
+of vehicles to various applications, for instance
+exploration and operation in great sea depths and
+adverse environments. In order to accomplish a
+mission, the vehicle must have a policy for reference trajectory control. In this paper, the velocity
+control of the vehicle is developed, and its guid-
+
+1444
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ance is led to a future implementation. The UUV
+model has six degrees of freedom and is well known
+for being highly non-linear and coupled.
+In previous studies, (Souza et al., 2004 Chin
+et al., 2005) applied robust control techniques to
+underwater vehicles in order to ensure the performance of the closed-loop system in face of modelling errors such as drag and added mass coefficients and the actuators dynamics. In general
+applications, the consequences of random time delays are often neglected. On the other hand, techniques like Stochastic Control are too elaborate
+to implement in complex systems such as the underwater vehicle. (Nilsson, 1998) devised an optimal stochastic controller for a distributed digital control system, but this method is not simple to implement in the UUV due to the plant
+model being very complex and the many performance requirements. (Luck and Ray, 1990) proposed a scheme that introduces timed buffers after each transfer. These buffers are designed to
+be longer than the maximum delay expected in
+the network. Also considering the time delays,
+(Takarabe et al., 2010) proposes a control solution
+for a remotely underwater vehicle that is based
+on PI controllers with feedback-feedforward structure. The controller parameters are defined as a
+function of the estimated delays for a particular
+network. However, (Takarabe et al., 2010) neglects the coupling between the vehicle degrees of
+freedom, addressing only SISO systems. Other approaches to the problem of NCSs with LQGLTR
+are done by (Hristu-Varsakelis and Zhang, 2008)
+and (Sun et al., 2010), by focusing on medium
+access policies and communication sequences.
+This paper presents a different and simple approach for ensuring performance in NCSs with
+time delays. This approach is based on LQGLTR
+methodology. The controller for velocity of the
+UUV is developed. The effectiveness of the controller is evaluated after its discretization and simulation with a non-linear plant simulator.
+This work is organized as follows The underwater vehicle equations of motion are detailed in
+the next session. Uncertainty modelling and the
+effect of time delays are addressed in section 4.
+Section 5 states the LQGLTR methodology and
+presents the controller development, and section 6
+explains the simulation and discusses the results
+obtained. Finally, section 7 contains the concluding remarks.
+2
+
+Table 1 Nomenclature used for marine vehicles.
+Dof
+1
+2
+3
+4
+5
+6
+
+Maneuver
+Surge
+Sway
+Heave
+Roll
+Pitch
+Yaw
+
+ISBN 978-85-8001-069-5
+
+Velocity
+u
+v
+w
+p
+q
+r
+
+Position
+x
+y
+z
+
+
+
+
+oped following (Fossen, 1994), (Souza et al., 2004),
+and (Avila, 2008), in which six degrees of freedom are considered. The model is well known for
+being multivariable, high coupled, and non linear (Faltinsen, 1990 Paster, 1986 Roberts and
+(Eds), 2005). Table 1 specifies the nomenclature
+adopted throughout this paper. The reference
+frames are presented in figure 1.
+The state variables are represented by
+  u, v, w, p, q, rT ,
+
+(1)
+
+where surge u, sway v, and heave w velocities, roll
+p, pitch q, and yaw r angular velocities are represented. The velocities are expressed in a body
+fixed inertial coordinate system. The inputs to
+the system are given by
+  X, M, N T ,
+
+(2)
+
+where X stands for the surge force, M represents
+pitch torque, and N corresponds to yaw torque,
+allowing surge, pitch, and yaw maneuvers to be
+done independently. The system outputs available
+are
+  u, q, rT ,
+(3)
+which corresponds to surge u velocity, and pitch q
+and yaw r angular velocities.
+Therefore, the dynamic equation of motion is
+given by
+M + C() + D() + g()  ,
+
+(4)
+
+Body-fixed
+
+OB
+Roll
+
+Sway
+
+YB
+
+Pitch
+Surge
+Yaw
+
+Z
+
+Vehicle modelling
+
+This work develops the control system for the
+UUV LAURS, built at the School of Engineering
+of USP. The hydrodynamic coefficients considered
+were obtained by (Avila, 2008), where experimental identification of parameters is performed. The
+underwater vehicle equations of motion are devel-
+
+Forces and Torques
+X
+M
+N
+
+XB
+
+Heave
+
+X
+
+ZB
+
+O
+
+Earth-fixed
+
+Y
+
+Figure 1 Body-fixed and Earth-fixed reference
+frames.
+
+1445
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+  J().
+
+(5)
+
+Nyquist plot
+
+1
+
+0.8
+
+0.6
+
+0.4
+
+0.2
+
+Im
+
+where the matrix M represents the rigid body inertia and the added mass terms, whereas the matrix C accounts for centripetal, rigid body and hydrodynamic Coriolis forces. Hydrodynamic damping are expressed in the matrix D, while restorative forces are expressed by the vector g. The full
+dynamic equation is presented in the appendix.
+The cinematic equation is given by
+
+0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+The vector of velocities  is expressed in terms
+of the body fixed coordinate system. The matrix
+J() relates the velocities represented by  to ,
+which expresses velocities in the inertial coordinate system. The matrix J() is presented in the
+appendix.
+3
+
+Communication Network Uncertainty
+
+As stated above, the introduction of random time
+delays is one of the main drawbacks of using a
+communication network to interconnect a control system. However, these delays can be estimated by conducting an experiment on the particular network in which the control system is inserted. The experiment consists in adding to the
+network two nodes, starting transferring identified messages between them, and logging information regarding relevant instants of each identified message. Synchronization of timers and timestamping of departure and arrival of messages are
+done on both nodes. It is important to note that
+the insertion of the two nodes results in a more
+loaded network, and it causes the estimate of the
+delays to be conservative. Finally, an array of previous delays is stored for posterior analysis. Based
+on this data, a probability density curve can be
+drawn, such as shown in figure 2. The curve shown
+in figure 2 gives essential information about the
+magnitude and distribution of the delays. That
+stated, a maximum delay Tmax can be chosen as
+a conservative approach.
+
+4.5
+
+Probability density function of the delays
+
+1
+2
+
+1.8
+
+1.6
+
+1.4
+
+1.2
+
+1
+
+0.8
+
+0.6
+
+0.4
+
+0.2
+
+0
+
+Re
+
+Figure 3 Nyquist plot of M (j).
+4
+
+Uncertainty modelling
+
+The uncertainties related to the time delays are
+estimated by a multiplicative error between the
+delay-free model represented by GN (j) and the
+model with delays expressed by GR (j). In this
+work, a maximum delay Tmax is assumed for all
+inputs, so that GR (j) is represented by
+GR (j)  eTmax j I33 GN (j).
+
+(6)
+
+The multiplicative error is calculated by
+M (j)  GR (j)  GN (j)GN (j)1 , (7)
+and substituting the definition of GR (j) in the
+last expression
+M (j)  eTmax j I33 GN (j)GN (j)GN (j)1 .
+(8)
+By taking the norm of M (j) from the equation
+above, it follows
+M (j)  eTmax j  1.
+
+(9)
+
+From the Nyquist plot of M (j), shown in figure
+3, it can be seen that the magnitude of M (j)
+changes periodically, as the frequency increases.
+The figure 4 presents M (j) as function of frequency, and the behavior of the multiplicative error can be seen clearly. The stability barrier used
+later in the LQGLTR control methodology is the
+inverse of M (j) for each frequency.
+
+4
+3.5
+
+5
+
+LQGLTR methodology
+
+3
+
+fX
+
+2.5
+2
+
+1.5
+1
+0.5
+0
+1.5
+
+2
+
+2.5
+
+3
+
+3.5
+
+4
+
+4.5
+
+Time (ms)
+
+Figure 2 Probability density function of the delays.
+
+ISBN 978-85-8001-069-5
+
+The problem addressed by the LQGLTR control theory is to find, for a linear system with
+zero-mean Gaussian noise, a feedback-control law
+which minimizes a quadratic cost. The solution to this problem comes from the separation principle, which asserts that the optimal
+feedback-control law can be obtained by two steps
+First, the optimal state is estimated by minimizing E(x  x)T (x  x) with the use of a
+Kalman Filter (which has the same structure as
+
+1446
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+linear systems. Hence, the UUV control is designed from the vehicle linearized equations of motion. The linearization is done by calculating the
+Jacobian matrices. The equation 4 is expressed
+such as   (,  ), and the linearized model is
+then given by
+
+M (j)
+
+2
+1.8
+1.6
+
+Magnitude (dB)
+
+1.4
+1.2
+1
+
+0.8
+
+y  JF (, )x + JF (,  )u,
+
+0.6
+
+(10)
+
+0.4
+0.2
+0
+
+0
+
+200
+
+400
+
+600
+
+800
+
+1000
+
+Frequency (rads)
+
+where JF (, ) represents the Jacobian matrix.
+As a result, the plant is represented by a linear
+system of the form
+
+Figure 4 Magnitude of M (j) as a function of
+frequency.
+a state observer). Second, the estimated state
+is considered in the solution to the LQ problem
+(which minimizes a deterministic cost) as if it
+was an exact measure. However, when the separation principle is applied, the robustness properties from the Kalman Filter or the full-state
+feedback control problem are lost. As a result,
+the LTR process is used. For detailed information, refer to (Maciejowski, 1989 Skogestad and
+Postlethwaite, 1996 Cruz, 1996). (Cruz, 1996)
+summarizes the LQGLTR control technique and
+presents it as a sequence of steps that leads to the
+choice of the controller. This procedure is detailed
+at the remaining of this note.
+5.1
+
+Performance Specifications
+
+The performance specifications ensure good reference trajectory tracking, disturbance rejection,
+and measurement noise rejection. For these purposes, a pair of values (gain and frequency) is
+defined for each one of the three specifications.
+The tolerance for reference tracking is a 20 deviation for inputs with frequency up to 1rads.
+This means that the system is capable of following closely a step input with a first-order pre-filter
+with time constant larger than one second. External disturbances are mainly introduced by ocean
+waves and currents. However, it can be assumed
+that ocean waves have a maximum frequency of
+0.25Hz (Fossen, 1994). Therefore, the controller
+is designed to attenuate disturbances by at least
+80 for frequencies lower than 1.57rads. The
+measurement noise with frequency starting from
+100rads is also intended to be rejected by 90.
+This means that the sensors used for this application are not precise when operated at frequencies
+higher that 100rads. Besides that, zero steadystate error for step inputs is achieved by adding
+integrators to each plant input.
+5.2
+
+Linearization
+
+The LQGLTR technique has a frequency domain
+approach, so that it is applied to time-invariant
+
+ISBN 978-85-8001-069-5
+
+x  Ax + Bu,
+
+(11)
+
+y  Cx,
+where the matrix A is represented by JF (, ),
+the matrix B is given by
+
+
+
+
+
+
+B
+
+
+
+
+1
+(Xu +m)
+
+0
+0
+0
+0
+0
+
+0
+0
+0
+0
+1
+(Mq +Iy )
+
+0
+
+0
+0
+0
+0
+0
+1
+(Nr +Iy )
+
+
+
+
+
+
+
+,
+
+
+
+
+(12)
+
+where Xu , Mq , and Nr represent added mass
+terms, and the matrix C is represented by
+
+
+1 0 0 0 0 0
+(13)
+C  0 0 0 0 1 0 ,
+0 0 0 0 0 1
+which corresponds to the measure of the states
+u, q, rT .
+The linearization points are chosen close
+to the origin of the reference frames, but not
+at the origin, so that the coupling of the degrees of freedom are maintained.
+The linearization points are u0  v0  w0  p0  q0  r0 T 
+0.001 0.001 0.001 0.001 0.001 0.001T , and as a
+result, the linearized system is stable. The reference input chosen corresponds to a surge velocity of 1ms, pitch angular velocity of 0 sec and
+yaw angular velocity of 3 sec. A verification of
+the model is done by comparing the natural response of the linearized and non-linear systems,
+where simulations with initial conditions around
+the nominal points are done. and the linear model
+is considered reasonable.
+5.3
+
+Loop-shaping
+
+The synthesis process aims to met the performance specifications by loop-shaping the openloop system function GN (j)K(j). The stability condition is met by placing the closed loop singular values
+1
+
+Cn (j)  GN (j)K(j) I + GN (j)K(j)
+(14)
+under the stability barrier.
+
+1447
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+Singular values of GN (j)K(j) and performance barriers
+
+Singular values of CN (j) and stability barrier
+
+80
+
+100
+Open loop SVs
+Performance barriers
+
+60
+
+Stability barrier
+Closed loop SVs
+
+80
+60
+
+40
+
+40
+20
+
+Gain (dB)
+
+Gain (dB)
+
+20
+0
+
+20
+
+40
+
+60
+
+80
+2
+10
+
+0
+20
+40
+60
+
+1
+
+10
+
+0
+
+10
+
+1
+
+10
+
+2
+
+10
+
+80
+2
+10
+
+3
+
+10
+
+Frequency (rads)
+
+1
+
+0
+
+10
+
+10
+
+1
+
+10
+
+2
+
+10
+
+3
+
+10
+
+Frequency (rads)
+
+Figure 5 Singular values of GN (j)K(j) and
+Performance barriers.
+
+Figure 6 Singular values of CN (j) and stability
+barrier.
+
+First, it is worth emphasizing that when developing the controller considering the performance specification of zero steady-state error for
+step input, integrators are added to the model of
+the plant. But after the definition of the controller, the integrators are removed from the plant,
+and added to the controller structure.
+(Cruz, 1996) details three steps to derive a
+possible controller. The first step consists in
+choosing  and L values so that the singular values
+
+
+1
+i
+C(jI  A)1 L)
+(15)
+
+
+the matrix G G 
+the structure below
+
+met the performance and stability barriers. In this
+paper, the matrix L is chosen to be
+
+
+(CA1 B)1
+L
+,
+(16)
+A1 B(CA1 B)1
+in order that all the singular values 1 , 2 , and
+3 represented by expression 15 become equal for
+each frequency. Besides that, the singular values
+from equation 15 are placed in a straight line with
+a decay of 20dBdec. Hence, the choice of L allows
+an easy loop-shaping.
+The second step is to find the Kalman Filter
+gain matrix H, so that the singular values of the
+target loop transfer matrix in equation 17 approximates the singular values obtained in expression
+15.
+GKF  C(jI  A)1 H
+(17)
+This step is done by using the  and L defined
+in step 1 as parameters to solve an Algebraic Ricatti equation, from which its solution  is used
+to calculate the H matrix H  1 CT .
+At this point, it is important to verify if the
+singular values of the target loop transfer matrix
+still met the performance and stability barriers.
+The final step consists on the LTR procedure,
+which aims to recover the behaviour of the target loop transfer matrix to the open loop system.
+This last step is done by choosing the parameter 
+in order to solve another Algebraic Ricatti equation, from which its result K is applied to derive
+
+ISBN 978-85-8001-069-5
+
+1 T
+ B K.
+
+The controller has
+
+K(s)  G(sI  A + BG + HC)1 H.
+
+(18)
+
+In figure 5, the singular values of G(j)K(j) are
+shown. It can be seen that the gain is high for
+lower frequencies, ensuring good reference tracking and disturbance attenuation. On the other
+hand, the gain is low for higher frequencies, guaranteeing satisfactory noise rejection. It is clear
+from figure 6 that the singular values of CN (j)
+are lower than the stability barrier, assuring a stable closed-loop system.
+5.4
+
+Discrete-time controller
+
+Considering that the controller is represented by
+the expression 18. Its state-space representation
+is given by
+xC  (A  BG  HC)xC + He,
+
+(19)
+
+u  GxC ,
+where e stands for the error between the output and the reference, and xC corresponds to the
+states of the controller. The discrete-time controller is given by
+xC (k + 1)  xC (k) + e(k),
+u(k)  CxC (k),
+
+(20)
+
+where, considering TS the sampling-time
+  eATS ,
+
+(21)
+
+  A1 (eATS  I)B.
+
+(22)
+
+and
+The sampling time considered for this work is
+TS  0.05s.
+6
+
+Simulation and Results
+
+If the purpose of a simulation is to verify that
+the controller designed satisfy the performance requirements, and therefore the design steps were
+
+1448
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Disturbance
+
+d
+dist
+
+states
+
+r1
+
+u
+
+U1
+
+1
+1s
+den(s)
+pf1
+1
+
+ur
+
+den(s)
+pf2
+1
+
+qr
+
+den(s)
+pf3
+
+rr
+
+Q4
+
+i2
+1s
+
+Q1
+
+i3
+1s
+
+Q2
+
+i4
+
+y(n)Cx(n)+Du(n)
+x(n+1)Ax(n)+Bu(n)
+
+Q5
+
+ZOH1
+
+ZOH2
+
+Controller
+
+d1
+
+d2
+
+Q3
+Q6
+
+ZOH3
+
+r2
+r2
+
+d3
+
+To
+delay1
+To
+delay2
+To
+delay3
+
+Fu
+
+q
+
+Sat1
+
+ROV statesdot
+
+1s
+
+q
+
+i1
+
+Tq
+
+r
+
+Sat2
+
+r
+x
+
+Tr
+
+x
+y
+
+Sat3
+UUV model
+
+x1
+z
+
+r3
+
+Y6
+
+u2
+
+r3
+t
+Clock
+
+u
+
+u1
+
+r1
+
+U2
+u3
+
+Time
+
+U3
+
+Figure 7 Simulink block diagram.
+
+r  1 0 0.0524T ,
+
+(23)
+
+or in appropriate units 1ms 0 s 3 sT . The
+response of the system is considered satisfactory.
+Further implementations may control depth by
+the actual state variable z instead of angular velocity q. Figure 11 shows that the control effort X
+remains close to 390N. Figure 12 shows that the
+control effort N also stays constant after a transient period. On the other hand, figures 10 and
+12 show that there is a constant error between the
+intended q and M and the actual ones. However,
+in absolute values, the error in q is almost negligible. The trajectory of the vehicle can be seen
+on figure 13. The simulation is executed for 60s,
+so that the yaw angular velocity of 3 s yields a
+curve of 180 at the end of the simulation.
+
+ISBN 978-85-8001-069-5
+
+Simulation of Time delays.
+64
+Control signal without delays
+Control signal with delay
+62
+
+60
+
+Control signal
+
+followed correctly, then that simulation must be
+done using the linearized system models adopted
+during the controller synthesis. On the other
+hand, if the simulation aims to predict how the
+real system is going to behave, that simulation
+must be done using the model that better approximates the reality.
+That stated, the simulation performed in this
+paper uses the non-linear model. It is important
+to note that due to the fact that the controller is
+designed considering the linearized system, the response of the non-linear simulation is not as good
+as the linear one. Besides that, the controller is
+being applied to regions far from where it was designed to work, because the initial conditions of
+the plant are chosen to be zero for all states.
+The time delays between the controller and
+the plant are also simulated, as seen in figure 8.
+The maximum value for each delay is one sample
+period. The simulation is done by MATLAB and
+Simulink, and its block diagram of the non-linear
+simulation is shown in figure 7.
+Figures 9 and 10 show the response of the system to the reference step input
+
+58
+
+56
+
+54
+
+52
+
+50
+2.5
+
+2.6
+
+2.7
+
+2.8
+
+Time
+
+2.9
+
+3
+4
+
+x 10
+
+Figure 8 Simulation of Time delays.
+7
+
+Conclusion
+
+The major goal of this work is to propose a simple method for ensuring that performance requirements are achieved when time delays are introduced by a NCS. For this purpose, a controller
+is designed for an unmanned underwater vehicle
+using the LQGLTR method. For detailed information about the methodology used, please refer
+to (Cruz, 1996) and (Maciejowski, 1989).
+The uncertainty modelling is focused on the
+influence of the time-delays in the multiplicative
+error between a real and a nominal transfer matrix. A stability barrier in the frequency domain is
+found for a maximum delay, which is estimated by
+performing an experiment that allows the knowledge of the delays distribution.
+Performance requirements comprise reference
+trajectory tracking, disturbance rejection and
+measurement noise attenuation. Besides that, the
+zero steady-state error for step inputs is met by
+placing integrators in the plant input.
+A simulator based on Simulink is devised for
+studying the effect of random delays introduced by
+the network between the controller and the plant.
+In this simulation, the controller is in its digitized
+form, and the maximum random delay considered
+
+1449
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+Surge velocity u
+
+1.4
+
+Control effort X
+
+500
+Reference
+System output
+
+450
+
+1.2
+400
+350
+
+1
+
+X (N)
+
+300
+
+u (ms)
+
+0.8
+
+250
+200
+
+0.6
+
+150
+0.4
+100
+50
+
+0.2
+
+0
+0
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+0
+
+10
+
+20
+
+Time (s)
+
+40
+
+50
+
+60
+
+Figure 11 Control effort X.
+
+Figure 9 Surge velocity reference trajectory and
+simulated output.
+
+Control effort M and N
+
+80
+70
+
+Angular velocities q and r
+
+0.06
+
+30
+
+Time (s)
+
+60
+
+M
+N
+
+60
+
+Reference Pitch
+System output Pitch
+Reference Yaw
+System output Yaw
+
+0.04
+
+q and r (rads)
+
+M and N (Nm)
+
+0.05
+
+0.03
+
+50
+40
+30
+20
+
+0.02
+10
+0.01
+
+0
+
+0
+
+10
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+Time (s)
+0.01
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+Time (s)
+
+Figure 10 Pitch and Yaw angular velocity reference trajectory and simulated response.
+
+Figure 12 Control effort M and N .
+maneuvering underwater robotic vehicle, 4th
+Asian Conference on Industrial Automation
+and Robotics, IEEE, Thailand.
+
+is one sample period.
+Results show that despite the effect of random
+delays and errors caused by the linearization, the
+controller behaved satisfactorily. The reference inputs considered are constant forward movement
+with speed of 1ms, pitch angular velocity of 0 s,
+and yaw angular velocity of 3 s.
+Future research includes the implementation
+of a guidance law and the study and application of
+Stochastic Control techniques to UUVs. Besides
+that, techniques for compensation of random time
+delays, such as model predictive controllers, are
+being studied.
+
+Hristu-Varsakelis, D. and Zhang, L. (2008). Lqg
+control of networked control systems with
+
+Acknowledgements
+
+UUV trajectory
+
+Faltinsen, O. M. (1990). Sea Loads On Ships
+And Offshore Structures, Cambridge University Press.
+Fossen, T. I. (1994). Guidance and Control of
+Ocean Vehicles, John Wiley  Sons.
+
+0.4
+
+0.3
+
+z(m)
+
+The authors would like to thank for the scholarship provided by the Conselho Nacional de Desenvolvimento Cientfico e Tecnologico - CNPq.
+
+Cruz, J. J. (1996). Controle Robusto Multivariavel O metodo LQGLTR, EDUSP.
+
+0.2
+
+References
+Avila, J. P. J. (2008). Modelagem e Identificacao de Parametros Hidrodinamicos de um
+Veculo Robotico Submarino, PhD thesis,
+Universidade de Sao Paulo.
+Chin, C. S., Lau, M. W. and Low, E. (2005).
+Analysis and linear control of a low-speed
+
+ISBN 978-85-8001-069-5
+
+0.1
+
+0
+60
+40
+
+20
+15
+
+20
+10
+
+0
+
+y(m)
+
+5
+20
+
+0
+
+x(m)
+
+Figure 13 UUV trajectory for a 60 seconds simulation.
+
+1450
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+X
+
+
+
+
+
+
+
+
+
+
+
+
+
+
++
+
+
+
+
+0
+0
+0
+0
+mw + Zw w
+mv  Yv v  Yp p
+
+
+
+
+
+
+
++
+
+
+
+
+
+Xu + Xuu u
+0
+0
+0
+0
+0
+
+0
+0
+0
+mw  Zw w
+0
+mu + Xu u + Xq q
+
+0
+Yv + Yvv v
+0
+0
+0
+0
+
+0
+0
+0
+mv + Yv v + Yp p
+mu  Xu u  Xq q
+0
+
+0
+0
+Zw + Zww w
+0
+0
+0
+
+cc
+sc
+
+ s
+J()  
+ 0
+ 0
+0
+
+
+u + m
+0
+0
+0
+Mu
+0
+
+0
+Yv + m
+0
+Kv
+0
+0
+
+0
+mw + Zw w
+mv  Yv v  Yp p
+0
+Iz r + Nr r
+Iy q  Xq u  Mq q
+
+0
+0
+0
+Kp + Kpp p
+0
+0
+
+sc + css
+cc + sss
+cs
+0
+0
+0
+
+access constraints and delays, International
+Journal of Control 81(8) 12661280.
+Luck, R. and Ray, A. (1990). An observer-based
+compensator for distributed delays, Automatica pp. 903908.
+Maciejowski, J. M. (1989). Multivariable Feedback
+Design, Addison-Wesley Publishing Company.
+Nilsson, J. (1998). Real-Time Control Systems
+with Delays, PhD thesis, Department of Automatic Control, Lund Institute of Technology.
+Paster, D. (1986). Importance of hydrodynamic
+considerations for underwater vehicle design,
+OCEANS 86, pp. 1413 1422.
+Roberts, G. and (Eds), R. S. (2005). Advances in
+Unmanned Vehicles, Institute of Engineering
+and Technology.
+Skogestad, S. and Postlethwaite, I. (1996). Multivariable Feedback Control, John Wiley 
+Sons.
+Souza, E. C., Cruz, J. J. and Maruyama, N.
+(2004). Lqgltr methodology for position
+control of unmanned underwater vehicles,
+Anais do XV Congresso Brasileiro de Automatica - CBA, IEEE, Gramado, RS, Brazil.
+
+0
+0
+Zw + m
+0
+0
+0
+
+0
+Yp
+0
+Kp + Ix
+0
+0
+
+mw  Zw w
+0
+mu + Xu u + Xq q
+Iz r  Nr r
+0
+Ix p + Yp v + Kp p
+
+0
+0
+0
+0
+Mq + Mqq q
+0
+
+ss + ccs
+cs + ssc
+cc
+0
+0
+0
+
+Xq
+0
+0
+0
+Mq + Iy
+0
+
+ 
+0
+u
+  v 
+0
+ 
+ w
+0
+ +
+  p 
+0
+ 
+ q
+0
+r
+Nr + Iz
+
+
+mv + Yv v + Yp p  
+u
+mu  Xu u  Xq q 
+ v
+ 
+0
+ w 
+   + (A-1)
+Iy q + Xq u + Mq q   p 
+ 
+Ix p  Yp v  Kp p  q
+r
+0
+
+
+0
+X 
+
+
+ 
+0
+ u
+0
+ v
+0
+0
+
+
+ 
+ 
+
+
+0
+ w 
+0
+0
+
+  + 
+
+   ,
+ p
+z
+Bcs
+0
+0
+
+
+B
+ 
+M 
+ z
+
+ q
+0
+B Bs
+
+N
+0
+r
+Nr + Nrr r
+
+0
+0
+0
+1
+0
+0
+
+0
+0
+0
+st
+c
+sc
+
+
+0
+0 
+
+0 
+
+ct 
+s 
+cc
+
+(A-2)
+
+de controle distribudos em redes de comunicacao, IX INDUSCON - International Conference on Industry Applications, IEEE, Sao
+Paulo.
+APPENDIX
+The complete non linear UUV equation 4 is presented in equation A-1, where
+ m represents mass Ix , Iy , Iz stand for the
+moment of inertia around the x, y, and z axis,
+respectively
+ Xu , Yv , Zw , Kp , Mq , and Nr , represent the
+added mass terms for surge, sway, heave, roll,
+pitch, and yaw directions caused by surge,
+sway, heave, roll, pitch, and yaw maneuvers,
+respectively
+ Xq , Yp , Kv , and Mu , represent added mass
+terms for surge, sway, roll, and pitch directions caused by pitch, roll, sway, and surge
+maneuvers, respectively
+ Xu , Yv , Zw , Kp , Mq , and Nr , represent the
+linear drag coefficients for surge, sway, heave,
+roll, pitch, and yaw, respectively
+ Xuu , Yvv , Zww , Kpp , Mqq , and Nrr ,
+represent the quadratic drag coefficients for
+surge, sway, heave, roll, pitch, and yaw, respectively
+
+Sun, L. K., Wan, Z. K. and Zhang, G. L. (2010).
+Lqg control design for class of mimo networked control system, Proceedings of the
+29th Chinese Control Conference, IEEE, Beijing, China.
+
+ zB , B, , ,  stand for vertical position of
+the center of buoyancy, buoyancy force, roll
+angle, pitch angle, and yaw angle, respectively,
+
+Takarabe, E., de Oliveira, W. P., Grotkowsky,
+M. A. and Maruyama, N. (2010). Sistemas
+
+and the rotation matrix J() from equation 5 is
+presented in equation A-2.
+
+ISBN 978-85-8001-069-5
+
+1451

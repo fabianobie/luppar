@@ -1,0 +1,1368 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+CONTROLE DE VEICULOS AUTONOMOS EM FORMACAO COM SEGUIMENTO
+DE REFERENCIA UTILIZANDO CONSENSO E RHC
+Filipe L. de Barros Correia, Bernardo Ordonez, Jes Cerqueira, Luis Almeida,
+Ubirajara F. Moreno
+
+
+Universidade Federal de Santa Catarina
+Centro Tecnologico  Departamento de Automacao e Sistemas
+
+
+Universidade Federal da Bahia
+Escola Politecnica  Departamento de Engenharia Eletrica
+
+Universidade do Porto
+Faculdade de Engenharia
+
+Emails filipelbc@gmail.com, bordonez@ufba.br, jes@ufba.br, lda@fe.up.pt,
+ubirajara.f.moreno@ufsc.br
+Abstract Moving in formation and tracking a reference trajectory are common problems when composing
+tasks for a group of cooperating autonomous vehicles. In this work, both problems are treated and solved using
+RHC (Receding Horizon Control) and the concept of virtual structures in a decentralized manner. Results of
+simulations with varying objetive function parameters are presented and analysed to show the effectiveness of
+the proposed method.
+Keywords
+
+Autonomous vehicles, cooperative control, formation control, consensus theory.
+
+Resumo O movimento em formacao e o seguimento de uma trajetoria de referencia sao alguns dos problemas
+que tipicamente compoem uma tarefa para um grupo de veculos_autonomos que cooperam entre si. Nesse
+trabalho, ambos os problemas sao abordados e resolvidos utilizando-se RHC (Receding Horizon Control) e o
+conceito de estruturas virtuais de forma descentralizada. Resultados de simulacoes com variados parametros da
+funcao objetivo sao apresentados e analisados para mostrar a eficacia da proposta.
+Palavras-chave
+
+.
+
+Introducao
+
+tica.
+Uma revisao dos principais temas sobre coordenacao em grupos de veculos e feita por Murray
+(2007). Para um sumario da bibliografia recente,
+os leitores sao direcionados para Cao et al. (2013).
+Introducoes sobre o problema de consenso podem
+ser encontradas em Ren et al. (2007) e OlfatiSaber et al. (2007).
+Dentre os metodos para controle_de_robos_moveis em formacao pode-se destacar o desenvolvido
+por Lewis e Tan (1997), que elabora o conceito de
+estrututura virtual para descricao da formacao.
+Ren e Sorensen (2008) utilizaram esse conceito
+para elaborar um algoritmo de consenso para o
+controle de veculos em formacao com seguimento
+de referencia de forma descentralizada.
+Ordonez et al. (2012) apresentam uma metodologia de controle baseada em consenso utilizando RHC para solucionar o problema de rendezvous, em que os robos devem concordar sobre
+um ponto de encontro e alcanca-lo ao mesmo
+tempo, de forma descentralizada. O problema de
+rendez-vous tambem e tratado por Ferrari-Trecate
+et al. (2009), que considera dinamicas de primeira e segunda ordem, e por Gowal e Martinoli
+(2012), que considera veculos com dinamicas naoholonomicas.
+Outros metodos que utilizam RHC para lidar
+com o problema de formacao em grupos de ve-
+
+O desenvolvimento das tecnologias de robotica,
+automacao e instrumentacao (principalmente na
+miniaturizacao de sistemas eletromecanicos) tem
+tornado possvel a utilizacao de veculos_autonomos, tambem chamados aqui de robos, para a realizacao de diversas tarefas. Entretanto, varios
+tipos de atividades podem ser realizadas mais eficientemente quando grupos de robos cooperam entre si. Entre essas atividades, podemos destacar
+monitoramento e vigilancia de uma regiao, busca e
+resgate de pessoas perdidas, e aplicacoes militares
+(Murray, 2007 Lucasa et al., 2012).
+Nessas atividades, a formacao dos robos, ou
+seja, a posicao relativa dos robos no grupo, e um
+elemento a ser controlado. Por exemplo, a cobertura de uma regiao durante uma atividade de
+monitoramento dependera, dentre outros fatores,
+da posicao relativa entre os veculos.
+Nesse contexto, observa-se a necessidade dos
+robos terem um consenso sobre determinadas informacoes, ou seja, suas informacoes devem ser
+coerentes entre si. Alem disso, em diversos casos pode nao haver possibilidade de comunicacao
+com uma central de gerencia e controle do grupo
+diz-se entao que o problema deve ser resolvido de
+forma descentralizada. Mais ainda, a comunicacao entre os robos_moveis geralmente deve ser minizada devido a necessidade de economia energe-
+
+3445
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+culos de forma descentralizada podem ser encontrados nos trabalhos de Dunbar e Murray (2006),
+e de Keviczky et al. (2008). Uma revisao tutorial a respeito de RHC pode ser encontrada em
+Christofides et al. (2013).
+Com base nisso, o presente trabalho apresenta
+uma incrementacao do metodo de Ordonez et al.
+(2012) para o controle_de_formacao e seguimento
+de referencia utilizando a ideia de estrutura virtual. Em relacao a proposta aqui apresentada, o
+metodo de Dunbar e Murray (2006) tem a desvantagem de necessitar de maior troca de informacao entre os robos cada robo comunica toda
+sua trajetoria prevista. Ja no de Keviczky et al.
+(2008), cada robo realiza a otimizacao para si e
+para seus vizinhos conhecidos, enquanto aqui cada
+robo realiza-a de forma individual, o que diminui a
+carga_computacional para resolucao do problema.
+Entretanto, a presente abordagem nao lida com o
+problema de evitar colisoes, enquanto essas duas
+sim.
+Este artigo tem a seguinte estrutura na Secao
+2 e feita uma breve introducao sobre o problema
+de consenso e a solucao de Ordonez et al. (2012)
+e apresentada na Secao 3 o algoritmo proposto
+e apresentado na Secao 4 sao apresentados e comentados os resultados das simulacoes realizadas
+e na Secao 5 sao feitos alguns comentarios finais
+sobre o trabalho.
+2
+
+outras palavras, deve haver pelo menos um veculo do qual todos os outros recebem informacao,
+direta ou indiretamente. Para o seguimento de referencia, fica claro que a referencia deve estar na
+raiz de uma tal arvore.
+Para o caso de uma topologia de comunicacao variante no tempo, basta que tal arvore exista
+com frequencia suficiente (Ren e Beard, 2005).
+Na formulacao mais comum do algoritmo de
+consenso em tempo contnuo, a dinamica da informacao e considerada como de primeira ordem,
+sendo dada pela formula seguinte (Ren et al.,
+2007)
+vi 
+
+X
+
+aij (xi  xj ),
+
+i  1, ..., n
+
+(2)
+
+j
+
+em que x representa a variavel sobre a qual se
+deseja o consenso e v  x, sua variacao. Em
+tempo_discreto, a atualizacao da informacao pode
+ser feita com
+xi,k+1  xi,k + hvi,k+1 ,
+
+i  1, ..., n
+
+(3)
+
+em que vi,k+1 e calculado como em (2) e h e o
+perodo de atualizacao.
+Para o problema de rendez-vous, v seria a velocidade do robo e x a sua posicao, sendo n o
+total de robos. Assume-se entao que cada robo
+possui um sistema_de_controle local que permita
+a correspondencia entre sua velocidade real e v e,
+consequentemente, sua posicao real e x.
+
+Consenso
+
+Em um tpico problema de consenso, tem-se varios
+veculos_autonomos que se comunicam trocando
+informacoes e processando-as de acordo com algum algoritmo. Ou seja, ao longo das iteracoes,
+os veculos recebem informacao de outros e executam um algoritmo para atualizar a sua, de forma
+que ela se torne coerente com a dos outros.
+A estrutura de comunicacao pode ser modelada atraves de um grafo orientado em que os nos
+representam indivduos e as arestas representam
+os canais de comunicacao. Matricialmente, esse
+grafo pode ser representado pela matriz de adjacencia
+ 
+Ad  aij
+(1)
+
+2.1
+
+RHC e rendez-vous
+
+O RHC consiste em se obter o valor da variavel
+de controle a partir da otimizacao de uma funcao
+objetivo (de custo) na variavel controlada (e na variavel de controle) tendo em vista um modelo do
+sistema e a previsao de seu comportamento para
+um determinado numero de iteracoes futuras (horizonte de predicao). A cada iteracao e realizada
+essa otimizacao e obtida uma lista de entradas de
+controle futuras, das quais apenas a primeira e
+aplicada.
+
+em que i e j representam indivduos do grupo,
+aij > 0 indica que i recebe informacao de j e aij 
+0 indica que nao recebe, sendo sempre aii  0.
+Para uma topologia de comunicacao estatica,
+pode-se mostrar que os nos que contribuem para
+o resultado final do consenso sao aqueles que enviam informacao, direta ou indiretamente, para
+todos os outros veculos (Ren et al., 2007). Ou
+seja, uma das condicoes fundamentais para que o
+consenso possa ser atingido e a existencia de pelo
+menos uma arvore de extensao orientada1 . Em
+
+Em Ordonez et al. (2012), o algoritmo basico
+de controle por consenso (2) foi reformulado como
+um problema de controle_preditivo. Nessa formulacao, a velocidade de cada veculo e obtida pela
+
+cessao do no raiz, que nao tem pai e possui um caminho
+orientado para todos os outros nos. Um caminho orientado e uma sequencia de conexoes orientadas, por exemplo
+(n1 , n2 ), (n2 , n3 ), ... (Ren et al., 2007).
+
+1 Uma arvore de extensao orientada e um grafo orientado em que cada no tem exatamente um no pai, com ex-
+
+3446
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+x1
+
+solucao do seguinte problema de otimizacao2 
+min Ji 
+vi,k
+
+p
+n+1
+XX
+j1 k1
+j6i
+
+kxi,k 
+
+xj,k k2aij
+
++
+
+p
+X
+
+xd1
+p1
+
+kvi,k k2i
+
+k1
+
+p3
+
+s.t. xi,k  xi,k1 + hvi,k , k  1, ..., p,
+xj,k  xj,0 , j 6 i, k  1, ..., p,
+vi,k  vi,k  vi,k1 , k  1, ..., p,
+vi,min  vi,k  vi,max , k  1, ..., p,
+
+xf1
+xf2
+
+p2
+
+Figura 1 Exemplo de formacao descrita por estrutura virtual.
+
+(4)
+i  1, ..., n, em que p e o horizonte de predicao,
+x representa posicao, v representa velocidade, o
+ndice i refere-se ao proprio veculo, j refere-se aos
+seus vizinhos e a referencia (caso em que j  n+1)
+e k indica o instante de predicao, sendo k  0 o
+valor conhecido no incio da iteracao e  e um
+fator de ponderacao.
+Em (4), o primeiro termo da funcao objetivo
+realiza o consenso da posicao de rendez-vous, enquanto o segundo penaliza a variacao na velocidade, suavizando a trajetoria. A primeira restricao refere-se a dinamica da trajetoria desejada
+para o veculo a segunda representa uma aproximacao da posicao dos outros veculos como suas
+velocidades nao sao conhecidas, sao consideradas
+nulas a ultima restricao refere-se a inerente limitacao na velocidade de um veculo real.
+Esse metodo permite a solucao do problema
+de rendez-vous de forma descentralizada e com
+topologia variante no tempo (comunicacao entre
+robos sujeita a falhas temporarias).
+3
+
+x
+
+xf3
+
+c
+
+da formacao. Essa instancia sera atualizada por
+ele mesmo atraves da solucao do problema de otimizacao, de forma a convergir para o mesmo valor
+das instancias dos outros veculos e da referencia.
+Como se deseja que o centro da formacao e
+consequentemente o proprio veculo sigam uma referencia variante no tempo, adicionam-se termos
+nas respectivas velocidades. A ideia e que a informacao das posicoes dos outros que cada veculo
+possui estara sempre um pouco atrasada em relacao as posicoes reais, pois os veculos se movem
+e ha atraso na transmissao de informacao, e ele
+precisara estimar as posicoes futuras para tentar
+compensar esse atraso.
+Percebendo-se, entao, que se pode tratar da
+referencia e das instancias do centro de formacao
+como se fossem veculos, obtem-se a seguinte funcao objetivo para o RHC, em que as variaveis de
+controle sao as velocidades (do proprio veculo e
+da sua instancia do centro da formacao)
+
+Controle de veculos em formacao
+
+O algoritmo de consenso desenvolvido por Ordonez et al. (2012) pode ser adaptado para o controle_de_formacao usando-se a ideia de estrutura
+virtual. O consenso agora e a respeito do centro
+da formacao, nao mais do ponto de encontro, e o
+controle do veculo visa posiciona-lo em seu respectivo lugar na formacao.
+Uma estrutura virtual descreve a formacao a
+partir de um centro (xc ), que funciona como um
+veculo virtual lder, e uma lista de vetores (xf )
+que indicam as posicoes, relativas ao centro, a serem ocupadas pelos veculos reais. Considera-se
+que todos os veculos conhecem a priori essa lista
+de posicoes relativas e, particularmente, qual posicao esta alocada para ele (xdi  xfi + xc ). Na
+Figura 1, tem-se um exemplo de estrutura virtual
+com tres posicoes p. Cada posicao deve ser ocupada por um veculo real. Por exemplo x1 deve
+se mover para xd1 .
+No algoritmo proposto cada robo tem uma
+instanciacao da estrutura virtual, como em Ren
+e Sorensen (2008), isto e, uma instancia do centro
+
+Ji 
+p 
+n+1
+XX
+j1 k1
+j6i
+p 
+X
+
++
+
++
+
+k1
+p
+X
+k1
+
+c
+iv kvi,k
+
+
+
+c
+vj,k
+k2aij
+
++
+
+ix kxci,k
+
+
+
+xcj,k k2aij
+
+d
+iv kvi,k  vi,k
+k2i + ix kxi,k  xdi,k k2i
+
+kvi,k k2i
+
++
+
+p
+X
+
+c
+kvi,k
+k2ci
+
+
+
+
+
+i  1, ..., n,
+
+k1
+
+(5)
+em que i ,  v ,  v ,  x ,  x sao fatores de ponderacao dos termos, cujos sobrescritos v e x correspondem a termos em velocidade e em posicao.
+A primeira linha dessa equacao refere-se ao consenso sobre o centro da formacao e inclui o termo
+da referencia (j  n + 1). A segunda e o termo
+para o controle do proprio veculo. A ultima linha
+refere-se a penalizacao na variacao das velocidades, como em (4). As restricoes para o problema
+de minimizacao continuam as mesmas mostradas
+em (4).
+
+2 Notacao kak2  a> ba, em que a e uma matrix ou
+b
+vetor e b e um escalar ou matriz quadrada de dimensoes
+compatveis com a.
+
+Considerando-se todas as dinamicas como lineares, pode-se reescrever a funcao objetivo em
+
+3447
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+formato matricial fazendo-se
+
+
+ c 
+xi,0
+xi,0
+ .. 
+ .. 
+c
+Xi,0   .  , Xi,0   .  ,
+
+Vi,0
+
+xi,0
+ 
+vi,0
+ 0 
+ 
+  . ,
+ .. 
+0
+
+c
+Vi,0
+
+xci,0
+ c 
+vi,0
+ 0 
+ 
+  . ,
+ .. 
+0
+
+Xi,f 0
+
+ f 
+x
+ i,. 0 
+
+
+ ..  ,
+f
+xi,0
+
+c
+Vj,0
+
+ c 
+vj,0
+ .. 
+ . 
+c
+vj,0
+
+acontece com a pose da formacao. Portanto, notese em (6) que o valor da posicao (x, y) no xfi de
+fato usado e orientado de acordo com a instancia
+c
+).
+do centro da formacao (i,0
+Assim, pode-se construir finalmente o problema de otimizacao para o controle de cada veculo computando-se (7) e (8) para cada coordenada
+ x
+ x >
+Vi
+Vi
+x
+Vic   x
+ Vic x 
+
+
+
+Hi
+0
+0 
+ Viy 
+1  Viy 
+y
+
+
+
+
+
+0
+H
+0
+Ji  
+y
+y
+c 
+i
+ c 
+2
+  Vi 
+ Vi  
+0
+0 Hi   
+ Vi 
+Vi
+c
+Vic 
+Vi
+(9)
+ x
+Vi
+Vic x 
+ y
+ Vi 
+
+ x
+
++ fi fiy fi 
+Vic y  ,
+ 
+ Vi 
+Vic 
+
+vetores com p linhas, em que o ndice 0 indica o
+valor da variavel no incio de cada iteracao (incio da janela deslizante do RHC), o sobrescrito f
+indica a posicao relativa desejada na formacao, e
+o ndice 0 indica uma informacao conhecida por
+todos igualmente. De forma que
+
+c
+Xic  Xi,0
++ hT Vic ,
+
+Xif
+,
+h
+f
+ Xif  Xi,0
+,
+
+Vid  Vic +
+
+Xi  Xi,0 + hT Vi ,
+
+f
+Xi,0
+
+Xid  Xic + Xif ,
+c
+c
+Xjc  Xj,0
++ hT Vj,0
+,
+
+em que os sobrescritos x, y e  indicam as coordenadas usadas na construcao dos termos.
+Nessa formulacao final, a unica restricao aplicada e a referente a limitacao na velocidade do
+proprio veculo. A velocidade do centro de formacao nao precisa ser limitada, pois ele e um objeto
+virtual.
+Note-se que o problema final tem a forma de
+uma otimizacao quadratica com restricoes lineares, para cuja solucao ha algoritmos bastante eficazes (Boyd e Vandenberghe, 2004).
+
+Vi  V Vi  Vi,0 ,
+c
+Vic  V Vic  Vi,0
+,
+c
+Vjc  Vj,0
+,
+
+c
+Xif  Xi,f 0 Rot>
+z (i,0 )
+
+em que
+
+1
+1
+
+T  .
+ ..
+1
+
+0 
+1 
+.. . .
+.
+.
+1 1
+
+
+0
+0
+
+,
+0
+1
+
+
+
+1
+1
+
+V   .
+ ..
+0
+
+(6)
+
+0 
+1 
+.. . .
+.
+.
+0 1
+
+
+0
+0
+
+,
+0
+1
+
+4
+
+Simulacoes e Discussao
+
+3
+
+e portanto pode-se definir as matrizes Hi e fi 
+
+
+
+
+0
+0
+i i
+P
+Hi 
+ Ai +
+ Bi
+n+1
+i i
+0
+aij
+j
+
+
+
+0
++ i
+ V > V ,
+0 ci
+(7)
+n+1
+X
+
+
+
+
+fi  0 1 
+aij Cij + i i  Di
+(8)
+j
+
+
+>
+>
+c
++ Vi,0 i V Vi,0
+ci V ,
+em que
+
+Foram feitas varias simulacoes com diferentes
+valores para os parametros da funcao objetivo
+visando-se encontrar sua melhor combinacao. As
+melhores combinacoes de parametros foram buscadas atraves de uma grid search, com as seguintes
+possibilidades para seus respectivos valores4 
+p  2, 6, 10
+i , aij , air  1, 10, 100
+ x ,  x  1, 2, 4
+ v ,  v  0, 1, 2, 4
+, c  0, 1, 10, 100
+
+Ai  iv Ip + ix T > h2 T,
+Bi 
+Cij 
+Di 
+
+Em todas as simulacoes considerou-se h  0, 5s.
+Para essa busca, utilizou-se a seguinte medida de
+erro como metrica (integrada para toda a simulacao) a ser minimizada
+
++ ix T > h2 T,
+c >
+c
+c >
+iv Vj,0
++ ix (Xi,0
+ Xj,0
+) hT,
+f
+Xi
+c
++ ix (Xi,0  Xi,0
+ Xif )> hT.
+iv
+iv Ip
+
+E
+
+h
+
+n
+n
+X
+X
+
+kxi  xj k  kxfi,0  xfj,0 k
+
+i1 ji+1
+
+Neste trabalho e considerado o caso de veculos
+terrestres, cuja pose e determinada por tres coordenadas, posicao (x, y) e orientacao . O mesmo
+
++
+
+n
+X
+i1
+
+3 Notacao
+
+4 Esses
+
+A  B  aij B, em que A e B sao matrizes
+arbitrarias, e o produto de Kronecker.
+
+kxi  xcr 
+
+xfi (rc )k
+
++
+
+n
+X
+
+(10)
+kxci  xcr k.
+
+i1
+
+conjuntos de valores possveis para os parametros
+resulta em pouco mais de 180.000 combinacoes.
+
+3448
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+r
+
+1r
+
+1
+
+45
+
+54
+
+2
+32
+
+3
+
+25
+
+5
+
+62
+63
+
+Tabela 1 Parametros das simulacoes e valor da
+metrica obtido.
+
+4
+
+12
+
+21
+
+3r
+
+41
+
+56
+
+6
+
+Figura 2 Grafo da comunicacao.
+
+Caso
+
+p
+
+i
+
+aij
+
+air
+
+x
+
+x
+
+A
+B
+C
+D
+E
+F
+G
+H
+
+2
+2, 6, 10
+2
+2
+2
+2
+2
+6
+
+1
+1
+1
+1
+1
+1
+10
+10
+
+10
+1
+1
+1
+10
+10
+10
+10
+
+100
+100
+1
+10
+100
+100
+100
+100
+
+4
+4
+4
+4
+4
+4
+4
+4
+
+2
+1
+1
+1
+4
+1
+1
+2
+
+(a)
+
+Essa metrica e composta por tres termos, que
+referem-se respectivamente ao erro da formacao,
+ao erro da posicao desejada do veculo e ao erro
+do centro de formacao, todos em relacao ao desejado.
+Os parametros dos termos em velocidades
+tambem podem ser zero para se avaliar a diferenca
+entre a presenca e ausencia desses termos. A seguinte alteracao torna-se entao necessaria
+(
+c
+hT Vj,0
+se v 6 0
+c
+c
+Xj  Xj,0 +
+0
+se v  0
+
+Caso
+
+v
+
+v
+
+
+
+c
+
+E
+
+A
+B
+C
+D
+E
+F
+G
+H
+
+1
+0
+4
+1
+1
+1
+1
+4
+
+0
+0
+0
+0
+1
+0
+0
+0
+
+0
+0
+0
+0
+0
+0
+1
+1
+
+0
+0
+0
+0
+0
+1
+0
+1
+
+3010,78
+7679,55
+4008,84
+3081,04
+3117,58
+3159,08
+3538,73
+3704,43
+
+(b)
+
+Atraves das simulacoes feitas, constatou-se o
+funcionamento do algoritmo. Os veculos iniciam
+fora de formacao e sao capazes de entrar em formacao e seguir a referencia, mas a qualidade do
+seguimento depende da escolha dos parametros da
+funcao objetivo.
+Nessas simulacoes os robos iniciam parados
+fora de formacao e devem entrar em formacao enquanto seguem a referencia, que tem uma trajetoria circular e modulo da velocidade constante.
+A topologia de comunicacao usada foi fixa e esta
+representada por um grafo na Figura 2. Notese que apenas os robos 1 e 3 recebem informacao
+diretamente da referencia, os 4, 6 e 2 recebem indiretamente com atraso de uma iteracao (atraves
+de 1 ou 3), e o 5, de duas iteracoes (atraves de 4
+e 6).
+A seguir sao apresentados os melhores resultados obtidos para os casos mais interessantes caso
+A, a melhor combinacao encontrada caso B, a melhor sem os termos em velocidade casos C e D, as
+melhores com air  1, 10 respectivamente casos
+E a H, com a presenca de outros termos em velocidade alem de v . Os parametros encontrados em
+cada caso estao mostrados nas Tabelas 1(a) e 1(b),
+assim como o valor obtido a partir da metrica em
+(10).
+No caso B o erro em regime_permanente dos
+veculos em relacao a suas posicoes desejadas na
+formacao e notavelmente maior (e cresce com a
+velocidade da formacao). Isso acontece porque,
+como nao se consideram as velocidades, cada robo
+considera, a cada momento, que os outros estao
+
+parados, e nao se adianta alem da posicao conhecida deles, que e intrinsecamente atrasada em relacao a real. Assim, ha nesse caso um atraso no
+seguimento tanto maior quanto menos se ponderar
+a referencia e quanto mais atrasada for a informacao da referencia que o veculo recebe, visto que
+nem todos se comunicam diretamente com ela.
+Levando-se em conta a velocidade, o veculo
+pode adiantar-se para uma posicao esperada. Essa
+compensacao so podera ocorrer perfeitamente no
+caso de uma trajetoria linear, pois a dinamica considerada e linear. Portanto, ha um erro em regime
+permanente proporcional a nao linearidade da trajetoria na posicao dos veculos. Alem disso, esse
+erro na estimativa da informacao futura e o que
+causa o impacto negativo de um aumento no horizonte de predicao na maioria dos casos, pois consiste numa extrapolacao que em geral desviara do
+valor real.
+Os resultados mostrados nas Tabelas 1(a) e
+1(b) tambem indicam um efeito negativo dos termos  e c , que tem como funcao suavizar a trajetoria do robo e de sua instancia do centro, respectivamente. Esses termos representam uma limitacao a mais imposta na velocidade, o que explica
+seu efeito negativo.
+Nas Figuras 3(a) e 3(b) sao mostrados os comportamentos das posicoes dos veculos (linhas coloridas) na simulacao para os casos A e B respectivamente. Para tres instantes estao destacados os veculos (triangulos coloridos) e a formacao desejada (triangulos cinzas) para comparacao.
+
+3449
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+x m
+
+40
+30
+
+y m
+
+20
+
+20
+15
+10
+5
+0
+5
+10
+15
+20
+
+0
+
+20
+
+10
+
+t s
+
+60
+
+80
+
+100
+
+60
+
+80
+
+100
+
+(a)
+
+x m
+
+0
+10
+
+40
+
+20
+
+10
+
+0
+x m
+
+10
+
+20
+
+(a)
+
+40
+
+20
+15
+10
+5
+0
+5
+10
+15
+20
+
+0
+
+20
+
+40
+
+t s
+
+(b)
+
+Figura 4 Evolucao da coordenada x das instancias do centro da formacao (veculos e referencia)
+para o caso A e caso B.
+
+30
+
+y m
+
+20
+lado. Nessa simulacao, foram utilizados os parametros do caso A.
+Nas Figuras 5(a) e 5(b) sao mostrados os comportamentos das instancias do centro da formacao
+e dos veculos (linhas coloridas), respectivamente,
+assim como da referencia (linha cinza). Aqui, a
+referencia apresenta tres descontinuidades de angulo, em que a trajetoria faz uma curva bruscamente (rc e descontnuo) de salto, em que a posicao varia repentinamente ((x, y)cr e descontnuo)
+da formacao, em que as posicoes relativas desejadas, xfi , variam. Por clareza, as descontinuidades
+de angulo e de salto estao indicadas na Figura
+5(a).
+Na Figura 5(a) tambem pode ser observado o
+atraso da informacao e o efeito da extrapolacao
+linear explicados anteriormente. Os robos 1 e 3
+(vermelho e azul), que recebem informacao diretamente da referencia, apresentam melhor seguimento. Na simulacao, a velocidade de referencia
+nao apresenta descontinuidade no salto, apenas a
+posicao, de forma que os robos 1 e 3 nao tentam se
+adiantar. Mas para os outros robos, a velocidade
+do centro da formacao que recebem apresenta uma
+variacao brusca, o que os faz tentarem se adiantar, acarretando em maior desvio da trajetoria
+desejada.
+Ademais, o erro em regime_permanente para o
+seguimento dos trechos de trajetoria linear e zero,
+como esperado.
+Para comparacao, os comportamentos para a
+simulacao com os parametros do caso B, ou seja,
+sem a comunicacao das velocidades, sao mostrados na Figura 6(a) e 6(b). Neste caso, a mudanca
+
+10
+0
+10
+
+20
+
+10
+
+0
+x m
+
+10
+
+20
+
+(b)
+
+Figura 3 Comportamento dos veculos para o
+caso A e o caso B.
+
+Observe-se que, no segundo momento evidenciado,
+o erro das posicoes relativo ao centro da formacao
+ja atingiu estado estacionario, sendo igual ao do
+terceiro instante.
+Nas Figuras 4(a) e 4(b) sao mostradas as evolucoes temporais das coordenadas x das instancias
+dos centros de formacao dos veculos (linhas coloridas) e da referencia (linha cinza). O fato de que
+os robos 1 e 3 (vermelho e azul) recebem informacao da referencia, enquanto os outros nao, refletese no atraso de fase visvel no caso B, Figura 4(b),
+conforme comentado anteriormente.
+4.1
+
+Referencia com descontinuidades
+
+O comportamento do metodo proposto para o caso
+de uma referencia descontnua tambem foi simu-
+
+3450
+
+30
+25
+20
+15
+10
+5
+0
+5
+
+ângulo
+salto
+
+20
+
+0
+
+20
+
+y m
+
+y m
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+x m
+
+40
+
+60
+
+80
+
+30
+25
+20
+15
+10
+5
+0
+5
+
+ângulo
+salto
+
+20
+
+40
+30
+20
+10
+0
+10
+
+40
+
+20
+
+0
+
+20 40
+x m
+
+60
+
+80
+
+20
+
+x m
+
+40
+
+60
+
+80
+
+(a) Instancias do centro da formacao.
+
+y m
+
+y m
+
+(a) Instancias do centro da formacao.
+
+0
+
+100
+
+40
+30
+20
+10
+0
+10
+40
+
+20
+
+0
+
+20 40
+x m
+
+60
+
+80
+
+100
+
+(b) Veculos.
+
+(b) Veculos.
+
+Figura 5 Simulacao para o caso de trajetoria descontnua.
+
+Figura 6 Simulacao para o caso de trajetoria descontnua se comunicacao de velocidade.
+
+na formacao afeta, ainda que pouco, o centro da
+formacao. Isso se da devido ao atraso no seguimento da trajetoria.
+
+proprio veculo. Entretanto, ha a desvantagem de
+nao lidar com o problema de evitar colisoes. Essa
+desvantagem porem pode ser superada tanto a nvel de controle local quanto pela adicao de certas
+restricoes. Em ambos os casos o impacto computacional e pequeno. Essa questao sera abordada
+em trabalhos futuros.
+Como proximas atividades tem-se a implementacao e teste desse algoritmo em veculos reais,
+o que requer adaptacao do algoritmo para robos
+com restricoes nao-holonomicas e o tratamento do
+problema de evitar colisoes. Alem disso, a limitacao de que cada robo deve conhecer a priori a
+posicao que ocupa na formacao sera abordada.
+
+5
+
+Conclusoes
+
+Neste trabalho, o algoritmo de consenso para
+rendez-vous de Ordonez et al. (2012) foi aumentado para suportar o controle_de_formacao e seguimento de referencia atraves do uso do conceito
+de estrutura virtual, de maneira similar a Ren e
+Sorensen (2008).
+Foi realizado um grid search para a escolha dos melhores parametros da funcao objetivo.
+Deve-se notar que, entretanto, a escolha dos melhores parametros esta naturalmente condicionada
+tanto pela metrica utilizada como pelos os estados
+iniciais dos robos e trajetoria da referencia.
+Mesmo com a escolha adequada de parametros o erro em regime permante para o caso de
+uma referencia variante no tempo nao pode ser
+anulado, sendo proporcional ao atraso da informacao e a qualidade da aproximacao linear usada
+para a previsao da trajetoria.
+As simulacoes apresentadas consideravam
+uma topologia de comunicacao fixa, mas o metodo
+proposto suporta tambem o caso de topologia variante.
+A vantagem do metodo proposto em relacao
+a outros da literatura que tambem utilizam RHC
+esta na menor quantidade de informacao trocada
+(apenas a posicao e a velocidade da instancia do
+centro da formacao) e menor esforco computacional, pois a otimizacao e realizada apenas para o
+
+Agradecimentos
+Este trabalho nao poderia ter sido realizado sem
+os recursos fornecidos pela Universidade Federal
+de Santa Catarina e pela CAPES.
+Referencias
+Boyd, S. e Vandenberghe, L. (2004). Convex Optimization, Cambridge University Press, New
+York, NY, EUA.
+Cao, Y., Yu, W., Ren, W. e Chen, G. (2013).
+An overview of recent progress in the
+study of distributed multi-agent coordination, IEEE Transactions on Industrial Informatics 9(1) 427438.
+Christofides, P. D., Scattolini, R., de la Pena,
+D. M. e Liu, J. (2013). Distributed model pre-
+
+3451
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+dictive control a tutorial review and future
+research directions, Computers and Chemical
+Engineering 51(5) 2141.
+
+Ren, W., Beard, R. W. e Atkins, E. M. (2007).
+Information consensus in multivehicle cooperative control, IEEE Control Systems Magazine 27(2) 7182.
+
+Dunbar, W. B. e Murray, R. M. (2006). Distributed receding horizon control for multivehicle formation stabilization, Automatica
+42(4) 549558.
+
+Ren, W. e Sorensen, N. (2008). Distributed coordination architecture for multi-robot formation control, Robotics and Autonomous Systems 56(4) 324333.
+
+Ferrari-Trecate, G., Galbusera, L., Marciandi, M.
+P. E. e Scattolini, R. (2009). Model predictive
+control schemes for consensus in multi-agent
+systems with single- and double-integrator
+dynamics, IEEE Transactions on Automatic
+Control 54(11) 25602572.
+Gowal, S. e Martinoli, A. (2012). Real-Time optimization of trajectories that guarantee the
+rendezvous of mobile robots, IEEERSJ International Conference on Intelligent Robots
+and Systems pp. 35183525.
+Keviczky, T., Borrelli, F., Fregene, K., Godbole, D. e Balas, G. J. (2008). Decentralized receding horizon control and coordination of autonomous vehicle formations, IEEE
+Transactions on Control Systems Technology
+16(1) 1933.
+Lewis, M. A. e Tan, K.-H. (1997). High precision formation control of mobile robots
+using virtual structures, Autonomous Robots
+4(4) 387403.
+Lucasa, N. P., Pandyaa, A. K. e Ellisb, D. (2012).
+Review of multi-robot taxonomy, trends and
+applications for defense and space, Proceedings of the SPIE Unmanned Systems Technology XIV 8387.
+Murray, R. M. (2007). Recent research in cooperative control of multi-vehicle systems, ASME
+Journal of Dynamic Systems, Measurement,
+and Control 129(5) 571583.
+Olfati-Saber, R., Fax, J. A. e Murray, R. M.
+(2007).
+Consensus and cooperation in
+networked multi-agent systems, Proceedings
+of the IEEE 95(1) 215  233.
+Ordonez, B., Moreno, U. F., Cerqueira, J. e Almeida, L. (2012). Generation of trajectories
+using predictive control for tracking consensus with sensing, Procedia Computer Science
+10 10941099.
+Ren, W. e Beard, R. W. (2005). Consensus seeking
+in multiagent systems under dynamically
+changing interaction topologies, IEEE Transactions on Automatic Control 50(5) 655
+661.
+
+3452

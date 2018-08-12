@@ -1,0 +1,1193 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+UMA ABORDAGEM EVOLUTIVA PARA CONTROLE ADAPTATIVO DE SISTEMAS
+CONTINUOS NO TEMPO COM FOLGA DESCONHECIDA
+Tala Simoes dos Santos, Andre R. Goncalves, Salomao S. Madeiro, Yuzo Iano,
+Fernando J. Von Zuben
+
+
+R. Paschoal Marmo, 1888 - CEP 13083-970
+Faculdade de Tecnologia da Unicamp - FT
+Limeira, Sao Paulo, Brasil
+
+
+Universidade Estadual de Campinas
+Departamento de Engenharia de Computacao e Automacao Industrial - FEEC
+Campinas, Sao Paulo, Brasil
+
+
+Universidade Estadual de Campinas
+Departamento de Comunicacoes - FEEC
+Campinas, Sao Paulo, Brasil
+Emails talia@ft.unicamp.br, andreric@dca.fee.unicamp.br ,
+salomaosm@dca.fee.unicamp.br, yuzo@decom.fee.unicamp.br, vonzuben@dca.fee.unicamp.br
+Abstract Backlash appear in a wide range of physical systems and often limit their performance. The
+harmful effects of backlash can be cancelled by, for example, adding one adaptive backlash inverse structure
+in a controller scheme. In this paper, we applied an evolutionary computation approach to perform adaptive
+control for continuous-time systems with unknown backlash. In order to do this, we added a backlash inverse
+structure before the backlash scheme and used the Covariance Matrix Adaptation-Evolution Strategy (CMA-ES)
+algorithm to estimate the parameters of the backlash inverse. The results presented in this paper for experimental
+simulations showed that the CMA-ES algorithm was able to find the values of the backlash inverse parameters
+faster than a well-established gradient descent based approach, besides being insensitive to the initial condition
+of the parameters.
+Backlash, backlash inverse, evolutionary computation, adaptive_control, CMA-ES algorithm.
+
+Keywords
+
+Resumo Folgas aparecem em uma ampla variedade de sistemas fsicos e muitas vezes limitam seu desempenho. Os efeitos prejudiciais da folga podem ser cancelados, por exemplo, adicionando uma estrutura da folga
+inversa adaptativa no esquema do controlador. Neste artigo, aplicou-se uma proposta de computacao_evolutiva
+para realizar o controle_adaptativo de sistemas_contnuos_no_tempo com folga desconhecida. A fim de realizar
+isto, adicionou-se uma estrutura inversa da folga antes do esquema da folga e o algoritmo Covariance Matrix
+Adaptation-Evolution Strategy (CMA-ES) foi utilizado para estimar os parametros da folga_inversa. Os resultados das simulacoes experimentais apresentados neste artigo mostram que o algoritmo CMA-ES foi capaz de
+encontrar os valores dos parametros da folga_inversa em um tempo em geral menor em comparacao com uma
+abordagem bem conhecida baseada em gradiente_descendente.
+Palavras-chave
+
+.
+
+Introducao
+
+Folga e uma nao linearidade geralmente presente
+em componentes de sistemas_de_controle, tais
+como conexoes mecanicas (trens de engrenagens)
+e dispositivos eletromagneticos com histerese (Tao
+and Kokotovic, 1995b), (Nordin and Gutman,
+2002), (Tao and Kokotovic, 1993), (Milani, 2006).
+Alguns efeitos indesejaveis da folga sao, por exemplo, a diminuicao da acuidade estatica e a instabilidade do sistema.
+Sistemas controlados com folga frequentemente apresentam erro de regime_permanente, ou
+ate mesmo ciclos limites em que o sistema oscila,
+geralmente em um comportamento irregular, com
+amplitude de pico a pico que pode exceder o tamanho de abertura total da folga (Nordin and Gutman, 2002), (Slotine and Li, 1991).
+Para se conseguir o cancelamento dos efeitos danosos da folga, existe uma tecnica muito
+
+ISBN 978-85-8001-069-5
+
+utilizada que faz a implementacao das suas caractersticas inversas na estrutura do controlador.
+Neste caso, a reducao dos efeitos indesejaveis da
+folga em um sistema e realizada por meio da estimacao dos parametros da folga_inversa. Esta
+tecnica pode ser empregada tanto em sistemas
+discretos no tempo (Tao and Kokotovic, 1995a),
+(Coelho, 1997), quanto em sistemas contnuos no
+tempo (Tao and Kokotovic, 1995b).
+Diversas abordagens para estimacao dos parametros da folga_inversa tem sido propostas (Tao
+and Kokotovic, 1995b Baruch et al., 2004 Zhou
+et al., 2007 Xiaofang et al., 2010 Gu et al., 2011).
+Embora algumas dessas abordagens utilizem tecnicas de Inteligencia Computacional, e.g. Redes Neurais (Baruch et al., 2004 Xiaofang et al.,
+2010), a aplicacao de algoritmos de Computacao Evolutiva ainda nao foi investigado neste problema.
+Algoritmos de Computacao Evolutiva (CE),
+
+4272
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+em geral, buscam incorporar alguns aspectos da
+evolucao (e.g. reproducao, selecao, competicao)
+com o objetivo de identificar solucoes promissoras para, por exemplo, problemas de otimizacao, com um custo_computacional relativamente
+baixo (Back et al., 2000). Abordagens de CE tem
+sido largamente aplicadas a problemas em varias
+areas do conhecimento (Back et al., 1997 Fleming
+and Purshouse, 2002 Kicinger et al., 2005 Yao
+and Xu, 2006). Mais recentemente, a abordagem
+Covariance Matrix Adaptation-Evolution Strategy
+(Hansen et al., 2003) (CMA-ES) tem se mostrado
+promissora quando aplicada a problemas de otimizacao desafiadores (Auger and Hansen, 2005).
+Este artigo, tem como objetivo investigar o
+desempenho do algoritmo CMA-ES aplicado ao
+problema de estimacao dos parametros da folga
+inversa com o objetivo de minimizar o erro de controle do sistema (i.e. a diferenca entre a sada da
+folga e a entrada da folga_inversa adaptativa). Foi
+adotado o esquema de controle a tempo contnuo
+baseado na estimacao da folga_inversa, proposto
+em Tao and Kokotovic (1995b).
+O artigo esta organizado como segue na Secao 2 sao descritas as estrategias_evolutivas juntamente com o algoritmo CMA-ES. Na Secao 3,
+a modelagem matematica do problema e descrita
+em detalhes, inserindo os modelos contnuos no
+tempo tanto da folga quanto da folga_inversa e
+da folga_inversa adaptativa. Na Secao 4, introduzimos o modelo computacional proposto para a
+atualizacao dos parametros. As simulacoes realizadas sao apresentadas na Secao 5. Finalmente,
+na Secao 6 o desempenho da proposta evolutiva e
+analisado apresentando os resultados obtidos atraves de um exemplo numerico, exemplo este retirado de Tao and Kokotovic (1995b) para efeito de
+comparacao.
+2
+
+Estrategias Evolutivas e CMA-ES
+
+Estrategias Evolutivas (Evolution Strategies - ES )
+sao uma classe de algoritmos_evolutivos desenvolvidos inicialmente para lidar com problemas de
+otimizacao de parametros de sistemas fsicos em
+dinamica dos fluidos (Back et al., 1991). Atualmente, algoritmos baseados em Estrategias Evolutivas tem sido largamente aplicados em problemas
+de diversas areas (Beyer and Schwefel, 2002).
+Em ES, cada indivduo v  (x, , C) e composto por um vetor x de atributos e os conjuntos
+ e C de parametros, onde  (vetor de desviopadrao) e C (matriz de covariancia) representam
+geralmente os parametros de uma funcao densidade de probabilidade utilizada na etapa de mutacao de um indivduo. Dada uma populacao composta por  indivduos,  filhos sao gerados a cada
+iteracao. A selecao de indivduos para a proxima
+geracao pode ser realizada utilizando-se um dos
+dois tipos de estrategias (1) escolhem-se os  in-
+
+ISBN 978-85-8001-069-5
+
+divduos mais aptos da populacao resultante da
+uniao dos conjuntos de  pais e  filhos (2) dos
+ filhos gerados (  ), escolhem-se os  indivduos mais aptos. A Figura 1 ilustra as principais
+etapas de uma Estrategia Evolutiva.
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+
+Inicialize  indivduos
+Avalie todos os indivduos
+k  1
+while CriterioParadaNaoSatisfeito() do
+i1
+while i   do
+Selecione (  2) pais aleatoriamente
+Recombine os indivduos
+Aplique mutacao sobre o indivduo gerado
+i  i + 1
+Avalie todos os indivduos gerados
+Selecione os  melhores indivduos de 
+ou  + 
+k  k + 1
+
+Figura 1 Pseudo-codigo de um algoritmo (, +)ES.
+Com o objetivo de auto-ajustar os valores dos
+parametros  e C da etapa de mutacao, Hansen
+and Ostermeier (2001) propuseram o algoritmo
+Covariance Matrix Adaptation - Evolution Strategy (CMA-ES). Para o (I , )-CMA-ES, os  descendentes da geracao g+1 sao criados por (Hansen
+et al., 2003)
+(g+1)
+
+xk
+
+(g+1)
+
+(g) (g) (g)
+ hxi(g)
+B D zk
+ +
+
+z
+
+N (0,C (g) )
+
+k  1, 2,    , ,
+onde
+hxi(g)
+ 
+
+1 X (g)
+xi ,
+
+(g)
+
+,
+
+
+(1)
+
+(2)
+
+iIsel
+
+representa o centro de massa dos indivduos da
+(g)
+geracao g selecionados, Isel representa o conjunto dos ndices dos indivduos selecionados, com
+(g)
+Isel  , e  (g) e o tamanho_do_passo global.
+Na Eq. (1), zk sao vetores amostrados seguindo uma distribuicao normal com media zero
+e matriz de covariancia dada pela matriz identidade (i.e. zk N (0, I)). Da mesma forma que para
+a Eq. (2), e possvel calcular o centro de massa
+(g+1)
+dos valores zk
+por meio da Eq. (3).
+hzi(g+1)
+
+
+
+1
+
+
+X
+
+(g+1)
+
+zi
+
+,
+
+(3)
+
+(g+1)
+iIsel
+
+Na Eq. (1), a matriz de covariancia C (g+1)
+(g+1)
+dos vetores B (g) D(g) zk
+e uma matriz n  n
+simetrica positiva. As colunas da matriz ortogonal B (g) representam os autovetores normalizados
+
+4273
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+da matriz de covariancia. D(g) e uma matriz diagonal cujos elementos sao a raiz quadrada dos
+autovalores da matriz de covariancia. Portanto,
+CMA emprega uma analise dos componentes_principais (Principal Component Analisys) dos passos de mutacao selecionados na geracao anterior
+para calcular a distribuicao a ser empregada pela
+mutacao na proxima geracao (Hansen and Ostermeier, 2001, p. 11).
+Os mecanismos de adaptacao determinsticos
+descritos a seguir, propostos para o CMA-ES, tornaram este algoritmo auto-ajustavel. O primeiro
+mecanismo a ser descrito diz respeito a adaptacao
+da matriz de covariancia C (g) . A Eq. (4) define
+o calculo do caminho da evolucao, que e usado na
+Eq. (5) para construir a matriz de covariancia da
+geracao (g + 1).
+p
+p(g+1)
+ (1  cc )  p(g)
+cc  (2  cc )
+c
+c +
+ 
+
+
+ (g) hxi(g+1)
+ hxi(g) , (4)
+
+
+z
+
+(g+1)
+
+u(t)
+m
+cl
+
+cr
+
+0
+
+v(t)
+u(t)
+
+v(t)
+
+m
+
+(a)
+
+(b)
+
+Figura 2 (a) Modelo da folga (b) Conexao mecanica.
+Atraves desta representacao, pode-se observar
+que v(t) e a entrada da folga, u(t) e a sada da
+folga, cr > 0 e o cruzamento direito com o eixo v,
+enquanto cl < 0 e o cruzamento esquerdo com o
+eixo v, e m e a inclinacao ascendente ou descendente, dependendo de qual lado esta se movendo
+(Tao and Kokotovic, 1996).
+As Equacoes (8) e (9) descrevem o modelo
+contnuo no tempo da folga.
+
+B (g) D(g) hzi
+
+C (g+1)  (1  ccov )  C (g)
+
+
+
++ ccov  pc(g+1) p(g+1)
+c
+
+T
+
+(5)
+
+.
+
+O segundo mecanismo de adaptacao do CMAES e empregado para ajustar o tamanho_do_passo
+global  (g) . Primeiramente, o caminho da evolucao de  (g+1) e calculado como dado na Eq. (6). O
+tamanho_do_passo global e atualizado como mostrado na Eq. (7).
+p
+p(g+1)
+ (1  c )  p(g)
+c  (2  c )
+ +
+
+ (g) (g+1)
+,
+
+B hzi
+z  
+
+
+
+1
+1
+
+(g)
+B (g) (D(g) ) (B (g) )
+hxi(g+1) hxi
+(g)
+(6)
+(g+1)
+
+
+
+(g+1)
+
+
+
+(g)
+
+ exp
+
+k  n
+1 kp
+d
+n
+
+!
+
+3.1
+
+,
+
+(7)
+
+Modelagem Matematica do Problema
+Modelo da Folga
+
+A folga e uma caracterstica cuja representacao
+grafica do seu modelo e mostrada na Figura 2.a.
+Este modelo de folga sera aplicado em uma conexao mecanica simples, descrita tambem em Tao
+and Kokotovic (1995b) e que pode ser vista na
+Figura 2.b.
+
+ISBN 978-85-8001-069-5
+
+u(t) 
+
+
+
+m  v(t),
+0,
+
+se v(t) > 0
+se v(t) < 0
+se v(t)  0
+
+se v(t) 6 0
+se v(t)  0
+
+(8)
+
+(9)
+
+onde os valores de m, cr e cl sao o ganho e as
+bordas de fenda, respectivamente (Coelho, 1997).
+As Equacoes (8) e (9) sao conhecidas como
+modelo de folga conduzida por atrito, ou seja, o
+membro conduzido retem sua posicao quando a
+fenda da folga esta aberta, como se fosse mantido
+em seu lugar por forte atrito. Pode ser verificado
+que (8) e (9) correspondem a um modelo_dinamico
+de primeira ordem, linear por partes, conduzido
+por velocidade, com tres regioes de comportamentos distintas, aqui denominadas de ativa subindo,
+ativa descendo e fenda (Milani, 2006).
+3.2
+
+onde n  EkN (0, I)k e d > 1 e um parametro
+do algoritmo.
+3
+
+
+m  (v(t)  cr ),
+u(t)  m  (v(t)  cl ),
+
+u(t),
+
+Modelo da Folga Inversa
+
+A funcao desejada da folga_inversa e cancelar os
+efeitos prejudiciais dela no desempenho do sistema. Um efeito prejudicial da folga e o atraso correspondente ao tempo necessario para atravessar o
+segmento interno da folga representado por B().
+Outro efeito prejudicial refere-se a informacao perdida que ocorre no segmento interno quando a
+sada u(t) permanece constante enquanto a entrada v(t) continua a mudar. Desta forma, a folga
+pode ser representada por u  B(v). Entao a
+ideia e fazer com que a folga_inversa BI() realize
+o mapeamento inverso, produzindo BI()B()  1
+(veja Figura 3).
+As Equacoes (10) e (11) descrevem o modelo
+contnuo no tempo da folga_inversa.
+
+4274
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ud
+
+u  ud
+
+v
+BI()
+
+B()
+
+Figura 3 Inversao da folga.
+
+ ud (t)
+ m + cr , se ud (t) > 0
+v(t)  udm(t) + cl , se ud (t) < 0
+
+v(t),
+se ud (t)  0
+ u
+
+d (t)
+
+v(t) 
+
+m
+
+0,
+
+v
+(10)
+cr
+
+, se ud (t) 6 0
+se ud (t)  0
+
+0
+
+v(t)
+
+1
+m
+
+1
+m
+
+Figura 5 Representacao grafica da folga_inversa
+estimada.
+
+Problema de Otimizacao
+
+O problema de otimizacao tratado neste artigo se
+baseia no fato de que a entrada da folga_inversa
+adaptativa ud tem que ser igual a sada da folga
+u. Isso e conseguido se os parametros da folga
+inversa forem estimados corretamente, cancelando
+os efeitos indesejaveis da folga (vide Figura 3).
+Assim, o problema de otimizacao considerado
+nas simulacoes realizadas neste trabalho e dado
+por
+
+ud (t)
+cl
+
+1
+m
+
+Figura 4 Modelo da folga_inversa.
+
+3.3
+
+ud
+cl
+
+3.4
+
+0
+
+1
+m
+
+(11)
+
+A Figura 4 ilustra o modelo da folga_inversa.
+Note que a formulacao da folga_inversa contnua no tempo, representada pelas Equacoes (10)
+e (11), faz uso das derivadas de ud (t) e v(t),
+tornando-se mais complexo em relacao ao sistema
+discreto_no_tempo com folga.
+
+cr
+
+da folga, sao utilizados os parametros estimados
+da mesma, uma vez que ela e desconhecida.
+O cancelamento dos efeitos prejudiciais da
+folga se da quando os parametros da folga_inversa
+estimada conseguem se igualar aos parametros da
+folga (vide Figura 3). Para atingir este objetivo,
+as Figuras 2.a e 5 mostram as representacoes graficas dos modelos_matematicos desta interpretacao.
+
+Folga Inversa Adaptativa
+
+Como os parametros da folga nao sao conhecidos,
+os parametros inversos deverao ser estimados, de
+acordo com a teoria_de_controle_adaptativo. Para
+
+uma folga_inversa adaptativa BI(),
+trocou-se os
+parametros da folga m, cr e cl pelos seus parametros estimados m, cr e cl . Isto resulta nas Equacoes (12) e (13) de atualizacao adaptativa para o
+modelo de folga_inversa contnuo no tempo.
+ ud (t)
+ m + cr , se ud (t) > 0
+v(t)  ud (t) + cl , se ud (t) < 0
+ m
+v(t),
+se ud (t)  0
+v(t) 
+
+1
+
+m ud (t),
+
+0,
+
+se ud (t) 6 0
+se ud (t)  0
+
+(12)
+
+(13)
+
+A Figura 5 ilustra o modelo da folga_inversa
+estimada representada pelas Equacoes (12) e (13),
+onde ud e a entrada e v e a sada que tambem e a
+entrada da folga. Note que a unica diferenca em
+relacao a Figura 4 e que ao inves dos parametros
+
+ISBN 978-85-8001-069-5
+
+min
+
+m,cr ,cl
+
+u(ti )  ud (ti )2 ,
+
+i  1...k
+
+sujeito a
+m  mmin , mmax 
+
+(14)
+
+cr  crmin , crmax 
+cl  clmin , clmax 
+sendo u(ti ) obtido atraves da Equacao (8), ti a
+i-esima janela de tempo definida no perodo de
+execucao e k o numero de janelas.
+Uma outra proposta seria considerar a funcao
+objetivo como a soma do erro acumulado desde o
+tempo t  0 ate o instante de tempo corrente, ou
+ainda durante uma janela de tempo, de maneira
+similar ao procedimento empregado em metodos
+de filtragem_adaptativa (Haykin, 2001). Esta proposta tambem foi investigada, porem os resultados
+nao foram satisfatorios. A metodologia de otimizacao instantanea descrita pela Eq. 14 se mostrou
+mais eficiente para o problema de controle_adaptativo de sistemas com folga desconhecida.
+
+4275
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+4
+
+Modelagem Computacional
+
+Na versao do algoritmo CMA-ES empregado aqui
+no controle_de_sistemas com folga, o numero de
+indivduos na populacao varia no decorrer da execucao do algoritmo. Partindo de um valor maximo, o numero de indivduos e reduzido exponencialmente no decorrer das geracoes. Este procedimento proporcionara ao algoritmo CMA-ES uma
+maior capacidade de exploracao na fase inicial da
+busca. O modelo exponencial que determina o numero de indivduos na t-esima geracao e dado por
+N (t)  max(Nmax  et , Nmin )
+
+v
+B()
+
+u  ud
+
+Planta
+
+Figura 6 Diagrama do modelo computacional utilizado.
+No procedimento de avaliacao de fitness, cada
+indivduo e avaliado como u(ti )  ud (ti )2 , onde
+u(ti ) e a sada do sistema utilizando os valores de
+m, cr e cl para aquele indivduo e ud (ti ) e o valor desejado da sada. Portanto, a cada avaliacao
+de fitness de um indivduo, e necessario atualizar
+os valores de m, cr e cl em BI() com os valores
+presentes na solucao a ser avaliada. Apos a avaliacao de um indivduo, os valores de m, cr e cl em
+BI() sao atualizados com a melhor solucao encontrada pelo CMA-ES ao longo da busca. Este procedimento e semelhante ao mecanismo de roubo
+de ciclo (cycle stealing) em arquitetura de sistemas_computacionais multiprocessados. Quando o
+tempo t e incrementado pelo sistema com folga,
+o valor da funcao de aptidao da melhor solucao e
+atualizado, dado que o valor de ud foi alterado.
+O algoritmo CMA-ES adaptado e o sistema
+com folga foram implementados em Matlab1 .
+1 www.mathworks.com
+
+ISBN 978-85-8001-069-5
+
+Simulacoes Numericas
+
+Nesta secao sao descritas as simulacoes realizadas
+com intuito de investigar a eficiencia da metodologia evolutiva proposta neste trabalho.
+5.1
+
+CMA-ES
+
+BI()
+
+5
+
+(15)
+
+onde Nmax e Nmin sao o numero maximo e
+mnimo de indivduos na populacao, respectivamente, e  e o parametro que determina a velocidade do decaimento do numero de indivduos por
+geracao. Nas simulacoes foi utilizado 0.001.
+O algoritmo CMA-ES e responsavel pelo mecanismo de adaptacao do subsistema de folga_inversa, sendo este mecanismo aplicado de forma paralela ao sistema em execucao (veja Figura 6). A
+cada novo valor ud amostrado o algoritmo CMAES buscara por valores de parametros m, cr e
+cl que minimize a Eq. 14. A Figura 6 ilustra o
+diagrama do modelo computacional desenvolvido
+neste trabalho.
+
+ud
+
+Embora este trabalho trate de sistemas com
+folga em tempo contnuo, para que o sistema seja
+possvel de ser simulado em computador, e necessario definir uma taxa de amostragem para o sinal
+de entrada. Nas simulacoes realizadas foi considerada uma taxa de 1000 amostrassegundo.
+
+Definicao das Simulacoes
+
+O foco das simulacoes foi na remocao dos efeitos
+da folga, portanto, abstraindo a planta do sistema.
+O seguinte sinal de entrada foi considerado
+ym (t)  10  sen(1, 3  t)
+
+(16)
+
+sendo os parametros de B() a serem identificados
+dados por m  0,7, cr  1,3 e cl  -0,5. O tempo
+de execucao foi fixado em 15 segundos. Este exemplo e o mesmo apresentado em Tao and Kokotovic (1995b). Os intervalos de busca para a estimativa dos parametros da folga sao m  0, 2,
+cr  0, 10 e cl  10, 0.
+Devido a variabilidade intrnseca dos resultados produzidos pelo CMA-ES, este foi executado
+50 vezes independentemente, sendo que os valores iniciais de m, cl e cr foram gerados aleatoriamente em cada execucao do algoritmo com distribuicao uniforme nos intervalos considerados. Os
+resultados sao analisados em termos da media e
+desvio-padrao. Para os parametros Nmax e Nmin ,
+foram utilizados os seguintes valores, respectivamente 100 e 20.
+As simulacoes foram executadas utilizando
+Matlab versao R2010a em um computador Intel
+Core tm 2 Quad Q6600 @ 2,40 Ghz, com 2 GB de
+RAM.
+5.2
+
+Algoritmos Comparados
+
+Com o intuito de analisar o desempenho da metodologia proposta neste trabalho frente a outros
+metodos consolidados na literatura, o amplamente
+difundido algoritmo de Tao-Kokotovic (Tao and
+Kokotovic, 1995b) foi utilizado. Este metodo, que
+tambem foi desenvolvido para sistemas contnuos
+no tempo, faz uso de uma equacao diferencial para
+modelar a dinamica do sistema. Aqui a taxa de
+amostragem do sinal de entrada tambem foi da
+ordem de 1000 amostrassegundo.
+E importante ressaltar que o metodo de TaoKokotovic realiza uma busca local, logo seu desempenho e condicionado a escolha de valores iniciais dos parametros que compartilham a mesma
+bacia de atracao do otimo global (Nocedal and
+
+4276
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Wright, 2000). Nas simulacoes realizadas, os parametros iniciais foram os mesmos utilizados em
+Tao and Kokotovic (1995b). Embora os valores
+iniciais adequados nao sao conhecidos a priori em
+outros sistemas com folgas, aqui esta informacao
+privilegiada e considerada disponvel (apenas para
+o metodo de Tao-Kokotovic).
+6
+
+Tabela 1 Tempo de convergencia do metodo TaoKokotovic para as mesmas condicoes iniciais utilizadas em (Tao and Kokotovic, 1995b).
+Valor de 
+
+Convergencia
+Tempo (seg.)
+
+0,1
+
+0,01
+
+0,001
+
+100
+11,46
+
+100
+17,47
+
+100
+25,25
+
+Resultados e Discussoes
+
+A diferenca entre os parametros de B() e os de
+
+sua inversa adaptativa BI(),
+estimados pelos metodos CMA-ES e Tao-Kokotovic (linha tracejada)
+sao mostrados na Figura 7. Para o CMA-ES,
+sao apresentados o valor medio das melhores solucoes obtidas ate o momento (linha solida - CMAESm) e os roubos de ciclos (pontos ao redor da
+linha solida - CMA-ESrc) realizados para o calculo do fitness dos indivduos sobre as 50 execucoes realizadas. E possvel observar que, conforme
+o algoritmo CMA-ES vai identificando as regioes
+promissoras no espaco de busca, a nuvem de pontos do roubo de ciclo vai se tornando mais estreita,
+claramente ilustrando o processo de convergencia
+do algoritmo (Veja Figura 7(f)).
+Com base nas figuras 7(a), 7(b) e 7(c), e possvel verificar que, em media, o algoritmo CMAES identifica os parametros da folga mais rapidamente (antes de 5 segundos) do que o metodo de
+Tao-Kokotovic. E provavel que a maior variacao
+no comportamento do CMA-ES na fase inicial se
+deva ao fato de um numero reduzido de pares u
+e ud ter sido apresentado ao algoritmo. Portanto,
+uma vez que o algoritmo CMA-ES ainda dispoe
+de pouca informacao acerca da topologia da funcao, e possvel que o CMA-ES acabe por explorar
+regioes relativamente distantes do otimo global no
+espaco de busca. A medida que sao apresentados
+mais pares (u, ud ), o CMA-ES e capaz de identificar regioes promissoras mais proximas do otimo
+global do problema de otimizacao em questao, que
+levam a um erro de controle menor.
+Para investigar o tempo de convergencia do
+algoritmo de Tao-Kokotovic calculou-se o tempo
+necessario para encontrar uma solucao que resultasse em um erro (ud  u)2 menor ou igual a um
+dado valor . Ou seja, uma vez alcancado um erro
+menor que , este se mantem menor ou igual em
+todo o restante da execucao. Para esta simulacao
+foi utilizado o mesmo conjunto de valores iniciais
+considerados em (Tao and Kokotovic, 1995b), os
+ 0 -0,55. A Taquais sao m0 1,51, cr
+ 0 0,2 e cl
+bela 1 mostra se o metodo alcancou a convergencia (100) e o tempo necessario para alcancar um
+erro nao maior que . Os resultados sao referentes a uma unica simulacao, dado o determinismo
+desta metodologia.
+Na Tabela 1, observa-se que, dada esta configuracao inicial, o metodo foi capaz de determinar
+os parametros otimos da folga_inversa. Porem,
+
+ISBN 978-85-8001-069-5
+
+levou mais de 25 segundos para atingir um erro
+inferior a 0,001.
+Como mencionado anteriormente, o metodo
+de Tao-Kokotovic e fortemente dependente da es 0 . A fim
+colha dos parametros iniciais m0 , cr
+ 0 e cl
+de investigar esta sensibilidade, simulacoes foram
+realizadas com diferentes configuracoes de valores
+iniciais.
+Para valores iniciais fora da bacia de atracao
+do otimo global, o metodo de Tao-Kokotovic nao
+e capaz de identificar os valores corretos dos parametros da folga_inversa. Alem disso, uma escolha
+inapropriada destes valores pode ocasionar severos problemas de instabilidade numerica no metodo de solucao de equacoes_diferenciais ordinarias utilizado pela abordagem de Tao-Kokotovic,
+como, por exemplo, o metodo de Dormand-Prince
+(Dormand and Prince, 1980) empregado neste trabalho. Logo, e de extrema importancia identificar
+a regiao na qual os valores iniciais levam a solucao da equacao diferencial e posteriormente a solucao do problema de otimizacao. Para o exemplo
+numerico aqui considerado, identificou-se experimentalmente que a escolha de valores iniciais dentro da seguinte regiao do espaco de busca leva aos
+valores corretos dos parametros da folga_inversa
+ 0  1, 0.
+m0  0 1, 7, cr
+ 0  0 0, 7 e cl
+Identificada a regiao buscou-se agora investigar o quao sensvel e o metodo de Tao-Kokotovic
+quanto a determinacao dos valores iniciais pertencentes a bacia de atracao do otimo global. Para
+isso, geraram-se aleatoriamente 50 valores iniciais
+nesta regiao e verificou-se a porcentagem de vezes
+e o tempo (em segundos) em que o algoritmo de
+Tao-Kokotovic encontrou uma solucao que levou a
+um erro (ud  u)2 menor ou igual a um dado valor
+. A mesma quantidade de execucoes foi realizada
+com o algoritmo CMA-ES gerando aleatoriamente
+valores iniciais por todo o espaco de busca (descrito na Secao 5.1). O teste de Mann-WhitneyWilcoxon foi aplicado com o intuito de comparar
+o desempenho de ambas as metodologias. Os resultados obtidos estao descritos na Tabela 2.
+Com base na Tabela 2, mesmo definindo valores iniciais pertencentes a bacia de atracao do
+otimo global o metodo de Tao-Kokotovic levou
+mais tempo do que o algoritmo CMA-ES para alcancar erros inferiores a . E importante notar
+que o desempenho do algoritmo CMA-ES nao foi
+sensvel a escolha dos valores iniciais dos parame-
+
+4277
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+6
+
+CMAESrc
+CMAESm
+TaoKokotovic
+
+5
+
+2
+
+10
+
+0
+
+8
+
+2
+
+6
+
+CMAESrc
+CMAESm
+TaoKokotovic
+
+2
+
+crcre
+
+3
+
+clcle
+
+mme
+
+4
+
+4
+
+6
+
+4
+
+2
+
+1
+
+8
+
+0
+
+1
+
+0
+
+5
+
+10
+
+10
+
+15
+
+0
+
+CMAESrc
+CMAESm
+TaoKokotovic
+0
+
+5
+
+10
+
+2
+
+15
+
+0
+
+5
+
+10
+
+Tempo (seg.)
+
+Tempo (seg.)
+
+(a) Diferenca entre m e m.
+
+(b) Diferenca entre cl e cl .
+
+10
+
+(c) Diferenca entre cr e cr .
+
+50
+
+CMAESrc
+CMAESm
+TaoKokotovic
+
+15
+
+Tempo (seg.)
+
+20
+
+CMAESrc
+CMAESm
+Sinal Ref.
+
+40
+
+CMAESrc
+CMAESm
+Sinal Ref.
+
+15
+
+Erro de controle (uud)
+
+5
+30
+
+10
+
+20
+
+5
+
+10
+
+0
+
+0
+
+5
+
+0
+
+5
+
+10
+
+10
+
+10
+
+15
+
+0
+
+5
+
+10
+
+15
+
+20
+
+0
+
+5
+
+Tempo (seg.)
+
+10
+
+15
+
+15
+
+0
+
+0.5
+
+Tempo (seg.)
+
+(d) Erro de controle (u  ud ).
+
+(e) Entrada ud e o valor u estimado.
+
+1
+
+1.5
+
+2
+
+2.5
+
+3
+
+3.5
+
+4
+
+4.5
+
+5
+
+Tempo (seg.)
+
+(f) Zoom da Figura 7(e) no intervalo de 0 a 5 segundos.
+
+Figura 7 Diferencas entre os parametros da folga (m, cl e cr ) e os parametros estimados (m, cl e cr )
+por ambos os metodos analisados no decorrer do tempo de execucao.
+
+Tabela 2 Convergencia para o otimo global dos
+metodos Tao-Kokotovic e CMA-ES para diferentes valores iniciais dos parametros m, cr e cl . Media e desvio-padrao do tempo de convergencia de
+cada algoritmo. p-values resultantes da aplicacao
+do teste de Mann-Whitney-Wilcoxon.
+Valor de 
+0,1
+Conv. TK
+Tempo (seg.)
+
+0,01
+
+0,001
+
+100
+100
+84
+11,20(3,05) 17,62(3,97) 23,86(3,82)
+
+Conv. CMA-ES
+Tempo (seg.)
+
+100
+7,72(0,65)
+
+100
+9,02(2,39)
+
+p-value
+
+8.92e-15
+
+1.74e-19
+
+100
+11,06(3,28)
+1.75e-19
+
+tros da folga_inversa. Isso se deve principalmente
+ao fato do CMA-ES ser um algoritmo de busca
+global que possui a capacidade de escapar de mnimos locais, embora nao seja possvel garantir sua
+convergencia.
+
+7
+
+Conclusoes
+
+Neste trabalho, a abordagem CMA-ES foi aplicada ao problema de controle_adaptativo de sistemas_contnuos_no_tempo com folga desconhecida
+baseado na modelagem da folga_inversa.
+Os resultados apresentados neste trabalho indicam que, em media, o CMA-ES foi capaz de
+aproximar os valores estimados dos valores reais dos parametros da folga_inversa em um intervalo de tempo menor do que o tempo requerido
+pela abordagem proposta por Tao and Kokotovic
+(1995b). Adicionalmente, em geral, o CMA-ES
+e capaz de identificar corretamente os valores dos
+parametros da folga_inversa partindo de diferentes
+condicoes iniciais dos parametros estimados.
+Como trabalho futuro, pretendemos extrapolar o esquema de controle para sistemas contnuos
+no tempo com histerese desconhecida, o que ira
+requerer uma maior flexibilidade do modelo de inversao de folga. Note que a histerese pode ser
+considerada como a juncao de varias folgas.
+Agradecimentos
+
+Vale ressaltar tambem que o tempo de convergencia do CMA-ES e significativamente menor
+do que o obtido pelo metodo de Tao-Kokotovic,
+como e possvel observar atraves dos p-values resultantes da aplicacao do teste nao-parametrico.
+
+ISBN 978-85-8001-069-5
+
+Os autores agradecem ao CNPq pelo suporte financeiro e ao Prof. Dr. Gang Tao (University of
+Virginia) pelos importantes conhecimentos transmitidos.
+
+4278
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Referencias
+Auger, A. and Hansen, N. (2005).
+Performance evaluation of an advanced local search evolutionary algorithm, Proceedings of
+the IEEE Congress on Evolutionary Computation, CEC 2005.
+
+Haykin, S. (2001). Adaptive Filter Theory (4th
+Edition), Prentice Hall.
+Kicinger, R., Arciszewski, T. and De Jong, K.
+(2005). Evolutionary computation and structural design A survey of the state-of-the-art,
+Computers and Structures 83 19431978.
+
+Back, T., Fogel, D. and Michalewicz, Z. (2000).
+Evolutionary Computation 1 Basic Algorithms and Operators, Taylor  Francis.
+
+Milani, B. E. A. (2006). Conjuntos de confinamento final uniforme para sistemas_lineares
+com folgas nos controles, Congresso Brasileiro de Automatica, pp. 601606.
+
+Back, T., Hammel, U. and Schwefel, H.-P. (1997).
+Evolutionary computation Comments on
+the history and current state, IEEE Transactions on Evolutionary Computation 1 317.
+
+Nocedal, J. and Wright, S. J. (2000). Numerical
+Optimization, Springer.
+
+Back, T., Hoffmeister, F. and Schwefel, H.-P.
+(1991). A survey of evolution strategies,
+Fourth International Conference on Genetic
+Algorithms.
+Baruch, I., Beltran, R. and Nenkova, B. (2004).
+A mechanical system backlash compensation
+by means of a recurrent neural multi-model,
+Proceedings of the 2nd IEEE International
+Conference on Intelligent Systems.
+Beyer, H.-G. and Schwefel, H.-P. (2002). Evolution strategies - a comprehensive introduction, Natural Computing 1(1) 352.
+Coelho, A. D. (1997). Controle adaptativo para
+sistemas com backlash, Masters thesis, Federal Engineering School of Itajuba.
+Dormand, J. and Prince, P. (1980). A family
+of embedded Runge-Kutta formulae, Journal
+of Computational and Applied Mathematics
+6 1926.
+Fleming, P. and Purshouse, R. (2002). Evolutionary algorithms in control systems engineering a survey, Control Engineering Practice
+10 (11) 12231241.
+Gu, G.-Y., Zhu, L., Feng, Y. and Su, C.-Y.
+(2011). Robust adaptive_control of a class of
+nonlinear_systems with inverse compensation
+of unknown asymmetrical backlash nonlinearity, Proceedings of the IEEE 5th International Conference on Cybernetics and Intelligent Systems, CIS 2011 pp. 16.
+Hansen, N., Muller, S. and Koumoutsakos, P.
+(2003). Reducing the time complexity of the
+derandomized evolution strategy with covariance matrix adaptation (CMA-ES), Evolutionary Computation 11(1) 118.
+
+Nordin, M. and Gutman, P. O. (2002). Controlling
+mechanical systems with backlash - a survey,
+Automatica 38 16331649.
+Slotine, J. J. E. and Li, W. (1991). Applied
+Nonlinear Control, Prentice Hall, Englewood
+Cliffs, NJ.
+Tao, G. and Kokotovic, P. V. (1993). Adaptive
+control of systems with backlash, Automatica
+29(02) 323335.
+Tao, G. and Kokotovic, P. V. (1995a). Adaptive control of systems with unknown output
+backlash, IEEE Transactions on Automatic
+Control 40(02) 326330.
+Tao,
+
+G. and Kokotovic, P. V. (1995b).
+Continuous-time adaptative control of
+systems with unkown backlash, IEEE Transactions on Automatic Control 40(06) 1083
+1087.
+
+Tao, G. and Kokotovic, P. V. (1996). Adaptive
+Control of Systems with Actuator and Sensor
+Nonlinearities, Jonh Wiley  Sons, Inc.
+Xiaofang, Y., Yaonan, W., Wei, S. and Lianghong,
+W. (2010). RBF networks-based adaptive
+inverse model control system for electronic
+throttle, IEEE Transactions on Control Systems Technology 18 (3) 750756.
+Yao, X. and Xu, Y. (2006). Recent advances in
+evolutionary computation, Journal of Computer Science and Technology 21 118.
+Zhou, J., Zhang, C. and Wen, C. (2007). Robust
+adaptive output control of uncertain nonlinear plants with unknown backlash nonlinearity, IEEE Transactions on Automatic Control 52 (3) 503509.
+
+Hansen, N. and Ostermeier, A. (2001). Completely derandomized self-adaptation in evolution strategies, Evolutionary computation
+9(2) 159195.
+
+ISBN 978-85-8001-069-5
+
+4279

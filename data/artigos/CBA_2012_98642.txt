@@ -1,0 +1,1099 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+CONTROLADOR PREDITIVO NAO LINEAR DO NIVEL DO MOLDE DO LINGOTAMENTO
+CONTINUO SINTONIZADO VIA ALGORITMO GENETICO
+G USTAVO M AIA DE A LMEIDA, J OS E L EANDRO F ELIX S ALLES
+
+
+Instituto Federal de Educacao Tecnologica, Coordenadoria de Automacao
+Serra, ES, Brasil,CEP 29173-087
+
+
+Universidade Federal do Esp. Santo, Dep. Eng. Eletrica
+Vitoria, ES, Brasil,CEP 29075-910.
+
+Emails gmaia@ifes.edu.br, jleandro@ufes.br
+Abstract The Model Based Predictive Control (MPC) is increasingly applied in industry because it generally exhibit a good
+performance and robustness, since the parameters are tuned correctly. In this chapter, it will be used the Genetic Algorithm to
+perform the tuning of the Neural and Hammerstein MPC parameters, which will be applied in the control of the mold level in
+the continuous casting process, since there is no analytical method that can be used to solve this tuning problem. The mold level
+control is one of the most important control loop present in the steel industry, since variations in the level above 10 mm reduce the
+quality of steel. The stability and robustness of two Neural MPC and the Hammerstein MPC algorithms will be compared when
+the mold level is affected by clogging and bulging disturbs.
+Keywords Predictive Control, Genetic Algorithm, Non Linear Model, Continuous Casting, Steel Industry
+Resumo O Controlador Preditivo Baseado em Modelo (MPC) tem sido cada vez mais aplicado nos processos_industriais, pois
+geralmente exibe um bom desempenho e robustez, desde que os seus parametros sejam sintonizados corretamente. Este artigo
+utiliza o Algoritmo Genetico para realizar a sintonia dos parametros do MPC Neural e Hammerstein aplicado no controle do nvel
+do molde do lingotamento_contnuo, ja que nao existe nenhum metodo analtico para resolver este problema de sintonia. O nvel
+do molde e uma das malhas_de_controle mais importantes na siderurgia, pois variacoes no nvel acima de 10 mm prejudicam a
+qualidade do aco produzido. A estabilidade e a robustez de dois tipos de algoritmos MPC neural e um de MPC Hammertein serao
+comparadas, quando o nvel do molde e afetado pelos disturbios de clogging e bulging.
+Palavras-chave
+
+.
+
+Introducao
+
+O processo de lingotamento_contnuo consiste, basicamente, da transformacao do aco, inicialmente em seu
+estado lquido e temperatura superiores a 1.600 C, em
+placas de aco de formato e propriedades mecanicas
+conhecidas segundo padroes existentes. E no molde
+da maquina de lingotamento_contnuo que se realiza
+o processo de resfriamento primario, formando uma
+cascade aco solido, que possibilitara o tracionamento da placa de aco que esta sendo formada atraves
+dos rolos da maquina de lingotamento.
+O controle do nvel de aco no molde constitui
+uma das malhas mais importantes no processo de
+lingotamento_contnuo, influindo diretamente na
+qualidade do aco produzido e, consequentemente, em
+seu valor comercial. As propriedades mecanicas e
+metalurgicas sao prejudicadas quando o nvel sofre
+variacoes entorno do set point, nao sendo permitido
+oscilacoes acima de 10 mm. No entanto, numa
+malha real de controle_de_nvel de molde, verifica-se
+a ocorrencia de uma serie de efeitos inerentes ao
+processo metalurgico de producao de placas, que
+afeta o regime estavel do nvel de aco na superfcie do
+molde. Entre os principais disturbios destacam-se o
+efeito mecanico causado pela tracao dos rolos abaixo
+do molde (chamado bulging) e a obstrucao parcial da
+valvula submersa (chamado clogging).
+
+ISBN 978-85-8001-069-5
+
+Neste artigo duas tecnicas de Controle Preditivo
+Baseado em Modelo (MPC) com Redes Neurais e
+uma com o Modelo Hammertein serao estudadas
+para o controle do nvel do Molde. Geralmente, em
+processos instaveis em malha_aberta, como o Nvel do
+Molde a ser estudado neste trabalho e tambem em sistemas_multivariaveis como o Laminador apresentado
+em (de Almeida et al. (2009b)), e muito difcil determinar os parametros de sintonia do MPC atraves de
+tentativa e erro, a fim de obter uma resposta estavel e
+otimizada. Nestes casos e fundamental a utilizacao de
+ferramentas computacionais baseadas em computacao
+evolucionaria a fim de obter automaticamente os
+parametros do controlador. Exemplos de artigos que
+utilizam o Algoritmo Genetico para sintonizar os
+parametros do MPC sao encontrados em (Filalit and
+Wertz (2001)de Almeida et al. (2006)de Almeida
+et al. (2009a)).
+
+Na Secao 2 apresentam-se os algoritmos MPC
+Neural e Hammertein a serem implementados, e
+mostra-se como o Algoritmo Genetico foi utilizado na
+sintonia destes controladores. Utilizando-se de dados
+reais, apresenta-se na Secao 3 a modelagem da malha_de_controle do nvel do molde e seus disturbios.
+Na Secao 4 e feita a comparacao entre as tres tecnicas
+MPC atraves de simulacao computacional, e na Secao
+5 e feita a conclusao.
+
+293
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+2 O Controlador Preditivo Baseado em Modelo
+Os algoritmos de controle pertencentes a famlia MPC
+sao caracterizados pelos seguintes elementos
+i) O Modelo do processo, que tem um papel decisivo
+no desempenho do controlador, devendo ser capaz de capturar a dinamica do processo de forma
+a predizer precisamente as sadas futuras, assim
+como ser simples na sua implementacao e entendimento.
+ii) O Preditor, que estima a sada futura, que e
+definida por y(t + k), k  N1 , . . . N2 onde N1
+e N2 sao os horizontes de predicao mnimo e
+maximo, respectivamente.
+iii) A Trajetoria de Referencia, que e o sinal desejavel
+que a sada do processo siga. A sada podera ou
+nao ser igual a Referencia, dependendo do sinal
+de controle calculado pelo Otimizador. A Trajetoria de Referencia definida por w e, normalmente, uma aproximacao suave do valor atual da
+sada, definida por y(t), em direcao a referencia
+conhecida (denominada r(t)) por meio de um sistema de primeira ordem representado por
+w(t)  y(t)
+(1)
+w(t + k)  w(t + k  1) + (1  )r(k),
+k  1, ..., N2  N1 ,
+onde  e um parametro entre 0 e 1 que suaviza a
+resposta do sistema a medida que se aproxima de
+1.
+v) O Otimizador, que determina uma sequencia de
+acoes de controle definida por u(t + k), k 
+0, 1, 2, . . . , Nu onde Nu e denominado horizonte
+de controle. Estas acoes sao obtidas minimizando
+uma funcao custo, que geralmente e uma funcao
+quadratica dada por
+J
+
+N2
+
+
+y(t + k)  w(t + k)2 (2)
+
+kN1
+
++
+
+Nu
+
+
+u(t + k  1)2 ,
+
+j1
+
+onde u(k)  u(k)  u(k  1)  e  sao
+parametros que ponderam os erros de previsao e
+o sinal de controle, respectivamente.
+Uma solucao explcita pode ser obtida se o modelo e linear e nao existem restricoes caso contrario
+um metodo de otimizacao iterativo tem que ser usado.
+O primeiro sinal (u(t) da sequencia das acoes de controle u(t + k), k  0, . . . , Nu  1 e enviado ao processo, enquanto que o restante da sequencia e descartada. Tal estrategia e denominada de Controle por
+Horizonte Retrocedente.
+
+ISBN 978-85-8001-069-5
+
+2.1 Sintonia do MPC
+O bom desempenho do controlador_preditivo e obtido
+somente se os parametros de sintonia ( horizonte de
+predicao (N2 ) horizonte de controle (Nu ), ponderacao
+do erro de previsao (), fator de supressao (), constante da trajetoria de referencia ()) forem adequadamente definidos pelo projetista. Entretanto, a selecao
+destes parametros nao e uma tarefa facil, na medida
+em que nao ha nenhum guia preciso para a selecao que
+assegure a estabilidade (Bitmead et al. (1995)). Em
+geral esta sintonia e feita atraves de heurstica, baseada em tentativa e erro, sendo viavel na sintonia do
+controlador_preditivo de processos que possuem comportamento estavel em malha_aberta. No, entanto, nos
+casos em que o processo e instavel em malha_aberta
+(como e o nvel do molde do Lingotamento Contnuo),
+este procedimento torna-se difcil, podendo nao obter
+uma resposta estavel em malha_fechada, ou quando o
+processo e estabilizado em malha_fechada , o desempenho do controlador_preditivo fica abaixo das expectativas.
+2.1.1 Sintonia do MPC Atraves do Algoritmo
+Genetico (AG)
+Uma das principais caractersticas do AG e realizar
+ajuste de todos os parametros de maneira automatica.
+A execucao do algoritmo e feita da seguinte maneira primeiramente, deve-se fornecer o modelo do
+processo. Em seguida define-se os parametros necessarios para a execucao do AG tais como o tamanho
+da populacao (M ), o numero de geracoes (G), a taxa
+de crossover e a taxa de mutacao, o tipo de funcao fitness considerada e o criterio de selecao. Feito isto, M
+indivduos serao criados aleatoriamente por AG, que
+terao o seguinte formato
+Nu , N2 , , , ,
+
+(3)
+
+sendo que a codificacao foi feita com variaveis reais.
+Depois disto, cada indivduo sera aplicado dentro do
+algoritmo do MPC, com o intuito de controlar o processo e calcular o fitness de cada indivduo dentro da
+populacao inicial. Atraves da funcao fitness, separamse os melhores dos piores indivduos. A funcao fitness
+denominada, F it e dada por
+F it(Nu , N2 , , , )  
+
+1
+,
+(y  w)2
+
+(4)
+
+onde y e a sada do processo e w e a referencia. Logo
+apos, o AG fara a evolucao da especie atraves da
+realizacao das tres operacoes geneticas (reproducao,
+crossover ponto unico e mutacao aleatoria) onde os
+melhores indivduos terao uma probabilidade maior
+de ter descendentes nas geracoes futuras. Neste
+trabalho, o metodo de selecao usado foi o da roleta,
+onde atraves da Equacao 4, se determina a porcao que
+o indivduo tera dentro da roleta. Foi feito M  1
+execucoes da roleta para selecionar os indivduos.
+Paralelo a selecao por roleta, foi utilizada a tecnica
+
+294
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+de elitismo, onde se assegura que os resultados nunca
+serao piores do que os da geracao anterior.O AG ira
+executar um loop de G geracoes, e ao final da ultima
+apresentar-se-a o melhor indivduo.
+Com este procedimento, basta entrar com o modelo da planta que se deseja controlar para que o algoritmo calcule os valores dos parametros do MPC de
+forma automatica sem a necessidade de um conhecimento previo do processo. E importante mencionar
+que o algoritmo desenvolvido neste trabalho pode ser
+aplicado em qualquer tipo de processo onde se possa
+utilizar o MPC.
+2.2 MPC Neural
+No MPC neural o modelo e obtido atraves de uma
+rede feedforward com pelo menos uma camada oculta,
+tendo em vista que tais redes sao consideradas estimadores universais ( Farago and Lugosi (1993)). No
+caso do modelo neural do Nvel do Molde, a rede tera
+a estrutura NNARX, cuja previsao da sada k passos a
+frente pode ser escrita como
+y(t + k) 
+gy(t + k  1), ..., y(t + k  mink, n),
+y(t  1), ..., y(t  maxn  k, 0),
+u(t + k  d), ..., u(t + k  d  m),
+
+Passo 0 Selecionar uma sequencia de controle U 0 (t),
+determinar GU 0 (t). Fazer B 0  I e i  0.
+Passo 1 Obter di  B i GU i , determinar o passo
+i e atualizar a sequencia de controle conforme
+(5)
+Passo 2 Va para o Passo 4 se U i+1  U i  <  ou o
+numero maximo de iteracoes for atingido.
+Passo 3 Faca i  i + 1, atualize o calculo de B i
+usando o metodo BFGS, e va para o passo 1.
+Passo 4 Aceitar a sequencia U i (t) como o mnimo de
+J no instante t e e aplique o primeiro elemento de
+U i na planta. Faca t  t + 1 e retorne ao Passo
+inicial.
+2.2.2 MPC Neural com Linearizacao Instantanea
+(PNLI)
+A ideia da linearizacao instantanea e extrair o modelo
+linear de uma rede_neural nao-linear em cada perodo
+de amostragem. Assume-se que o modelo de entrada
+e sada de uma rede_neural do sistema a ser controlado
+e avaliado como
+y(t)  g(t),
+onde o vetor de regressao e dado por
+(t)  y(t1), . . . , y(tn), u(td), . . . , u(tdm).
+
+onde n e o numero de regressores da sada, m e o
+numero de regressores da entrada, d e o atraso, g e
+uma rede perceptron de duas camadas.
+As estrategias_de_controle MPC Neural se diferem, basicamente, na forma de calcular a acao de controle que minimize a funcao custo J Uma classe utiliza a regra do gradiente, PNRG e outra realiza uma
+linearizacao local da funcao nao linear g da rede PNLI.
+Os algoritmos destas duas estrategias_de_controle_neural serao descritos a seguir.
+2.2.1 MPC Neural Com Regra Baseada no Gradiente (PNRG)
+Seja U i (t)  ui (t), ui (t + 1), ..., ui (t + Nu  1) o
+vetor de acoes de controle a ser determinado a cada
+iteracao i pelo Algoritmo PNRG atraves da seguinte
+regra
+U (i+1) (t)  U (i) (t) + i di ,
+(5)
+i
+
+i) Interpretar o vetor de regressao como um vetor definindo os estados do sistema e o tempo t   .
+Linearize g em torno dos estados corrente (t)
+para obter o modelo aproximado
+y(t)
+
+
+
+a1 y(t  1)  ...  an y(t  n) +
+b0 u(t  d) + ... + bm u(t  d  m),
+
+onde
+ai
+bi
+
+g(t)
+(t)( )
+y(t  i)
+g(t)
+ 
+(t)( ) ,
+u(t  d  i)
+ 
+
+e
+
+i
+
+onde  e o passo com que U caminha para o mnimo
+de J e di e o vetor direcao contrario ao Gradiente
+da funcao J em relacao a U i , o qual e denotado por
+GU i . O algoritmo PNRG se baseia no metodo de
+Quasi-Newton, o qual considera di  B i G(U i ),
+onde B i e a aproximacao da inversa da Hessiana
+de J em relacao a U i , calculada pelo metodo de
+Broyden-Fletcher-Goldfarb-Shanno (BFGS). O Algoritmo PNRG foi proposto por (Norgaard et al. (2000))
+sendo descrito resumidamente a seguir
+
+ISBN 978-85-8001-069-5
+
+O princpio da linearizacao instantanea e o seguinte (mais detalhes podem ser encontrados em (Norgaard et al. (2000)))
+
+y(t  i) 
+
+y(t  i)  y(  i)
+
+u(t  i) 
+
+u(t  1)  u(  1).
+
+ii) Separando a parte da expressao que contem os
+componentes do vetor de regressao corrente,
+(t), o modelo_linear aproximado pode ser representado como
+y(t)  1A(q 1 )y(t)+q d B(q 1 )u(t)+( ),
+
+295
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+onde o termo (t) e dado por
+(t) 
+
+y( ) + a1 y(  1) + ... + an y(  n)
+b0 u(  d)  ...  bm u(  d  m).
+
+Os coeficientes ai e bi sao os coeficientes dos polinomios A(q 1 ) e B(q 1 ) do modelo CARIMA.
+Apos obtido o modelo CARIMA, usa-se o algoritmo
+do controlador linear GPC irrestrito para determinar a
+acao de controle, conforme a metodologia apresentada
+em (Camacho and Bordons (2004)).
+2.3 Controle Preditivo Generalizado Para o Modelo
+Hammerstein (HGPC)
+O modelo Hammerstein consiste de uma nao linearidade estatica seguida por um modelo_dinamico linear
+do tipo CARIMA. A nao linearidade estatica pode ser
+representada por um polinomio de ordem m
+x(t)  1 u(t) + 2 u2 (t) + ... + m um (t),
+
+(6)
+
+onde x(t) e uma pseudo sada do bloco nao linear, u(t)
+e a variavel de entrada, i (i  1, ..., m) representa
+o coeficiente do polinomio. A dinamica do sistema
+linear e representada por um modelo CARIMA
+A(q 1 )y(t)  q d B(q 1 )x(t) + C(q 1 (t)),
+onde   (1  q 1 ), A(q 1 ), B(q 1 ) e C(q 1 )
+sao os polinomios de ordem na , nb e nc respectivamente. A lei de controle do HGPC e determinada pela
+minimizacao da funcao custo modificada
+JHGP C (x) 
+
+N2
+
+
+y(t + j)  w(t + j)2
+
+jN1
+
++
+
+Nu
+
+
+x2 (t + j  1).
+
+(7)
+
+j1
+
+A minimizacao irrestrita de JHGP C com relacao a
+x(t) e similar a lei de controle do GPC (veja Camacho and Bordons (2004)) e e dada por
+x(t)  K(w  f ),
+
+(8)
+
+onde K e a constante que depende do modelo CARIMA e f e a resposta livre definida em Camacho
+and Bordons (2004).
+A partir das raizes do polinomio (6) determinase a lei de controle real que e aplicado no processo.
+Desde que em alguns caso, pode-se ter multiplas
+razes, a lei de controle do HGPC u(t) que minimiza
+JHGP C resulta em multiplas solucoes que podem
+ser selecionadas. Neste trabalho, foi usada a tecnica
+proposta por (J.E.S. Santos (2004)), que se baseia em
+uma aproximacao por Serie de Taylor de x(t) proximo
+de u(t)  u(t  1), determinando
+x(t)  
+
+m
+
+
+i1
+
+ii u
+
+m
+
+(t1)u(t) (i1).i ui (t1)
+
+i1
+
+i2
+
+(9)
+
+ISBN 978-85-8001-069-5
+
+Portanto, de (9) um sinal de controle unico e determinado o qual e dado por
+m
+x(t) + i2 (i  1)i ui (t  1)
+m
+u(t) 
+.
+ i1 ii ui1 (t  1)
+3 Modelagem Da Malha De Controle Do Nvel
+Do Molde
+O sistema_de_controle utilizado atualmente na usina
+da Arcelor Mittal Tubarao e constitudo de tres partes
+principais a saber unidade de medicao, unidade de
+controle, unidade de atuacao hidraulica. A unidade
+de controle avalia o comportamento do nvel medido
+e envia as devidas correcoes ao sistema de atuacao
+hidraulica, que posiciona um cilindro acoplado a uma
+valvula gaveta, utilizada para regular a vazao de aco
+do distribuidor para a valvula submersa (localizada
+na sada da valvula gaveta e transporta o aco para
+o molde). Com a posicao da valvula gaveta (mais
+precisamente, sua placa central), estara definida
+a vazao de entrada de aco na valvula submersa e
+consequentemente no molde, que em uma situacao de
+regime deve contrapor ao volume de aco retirado do
+molde para continuidade do processo e formacao das
+placas na sada da maquina.
+A valvula gaveta e um dispositivo formado por
+tres placas sobrepostas que possuem um orifcio
+identico em cada uma destas placas, onde a placa central e provida de movimento horizontal (Xsg ), fazendo
+com que a area de passagem de aco, consista na area
+de interseccao dos orifcios. Obtem-se a area efetiva
+(As ) de passagem de aco, atraves de um calculo considerando a interseccao de orifcios concentricos de raio
+R. De acordo com Yoo (1991) a area efetiva e dada
+por
+(
+)
+X (t)
+R  sg2
+2
+1
+As  2R cos
+R
+
+(
+)
+(
+)2
+Xs g
+Xsg (t)
+ R
+RXsg 
+(t)
+.
+2
+2
+O transporte do fluxo do aco da valvula gaveta para o
+molde e feita atraves da valvula submersa cujo comprimento e L  600mm. Sendo a velocidadedo fluxo
+de aco na sada da valvula gaveta de Vn  2.g.h, o
+atraso_de_transporte sera dado por Tv  0, 11s. Assim
+a equacao dinamica do nvel do molde (Yoo (1991)), e
+dada por
+1
+dH(t)
+
+As .Vn (t  Tv )  Am .Vcs (t) , (10)
+dt
+Am
+onde H e a altura do nvel do molde Am e a area do
+molde g e a gravidade h e a altura do fluido entre os
+nveis de aco do distribuidor e do molde e Vcs Velocidade de Lingotamento ou extracao da placa. A partir
+de (10) chega-se a seguinte funcao de transferencia
+
+
+1 
+As esTv 2gh  Am Vcs ,
+(11)
+H
+Am s
+
+296
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+caracterizando-se, portanto, como uma malha integradora (nao estavel em malha_aberta). Para a
+representacao matematica dos demais blocos que
+compoem a malha_de_controle, foram realizados experimentos na planta real, afim de identificar o modelo
+conforme mostra (Sanchotene (2009)). Desta maneira,
+mostra-se na Figura 1 o sistema_nao-linear completo
+simulado no Matlab para representacao do processo
+real de controle do nvel do molde.
+
+Figura 1 Diagrama de Blocos da Malha de Controle
+de Nvel do Molde
+
+3.1 Os Disturbios Presentes no Controle do Nvel do
+Molde
+Em uma malha real de controle_de_nvel de molde,
+verifica-se a ocorrencia de uma serie de efeitos inerentes ou nao ao processo metalurgico de producao de
+placas que afetam de forma direta e indireta o regime
+estavel do nvel de aco na superfcie do molde, podendo entao ser interpretados como disturbios a serem
+controladosreduzidos pelo sistema_de_controle.
+A seguir sao descritos dois efeitos importantes que interferem na estabilidade de uma malha_de_controle de
+nvel de molde.
+3.1.1 Disturbio de Clogging
+O acumulo progressivo de deposicao de alumina ou
+outros produtos nas paredes da valvula submersa eou
+da propria valvula gaveta e conhecido como efeito
+Clogging. Como esse acumulo e progressivo, ha a
+reducao tambem progressiva da area efetiva de passagem de aco, fazendo-se necessaria a compensacao
+pelo controlador da abertura da valvula gaveta. Em
+adicao a esse efeito, ha tambem o desprendimento
+abrupto da alumina acumulada (unclogging), liberando o fluxo e provocando a necessidade de acao
+rapida do controlador para retornar o processo as
+condicoes anteriores.
+O comportamento do efeito de clogging pode ser perfeitamente simulado em Matlab, incluindo este na malha da valvula gaveta de acordo com a expressao
+
+ 1  1 (t  T1 ) , T1  t < T2
+f
+, T2  t < T 3
+Aclg (t) 
+
+f + 2 (t  T3 ) , T3  t < T4
+
+ISBN 978-85-8001-069-5
+
+onde T1 e o instante em que inicia o entupimento da
+valvula gaveta, T2 e o instante em que ocorre o entupimento maximo, T3 e T4 sao os instantes em que
+inicia e termina o processo do desentupimento respectivamente, f e o fator de entupimento maximo tal que
+0  f  1 e f  1  1 (T2  T1 )  1  2 (T4  T3 ).
+Quando a valvula esta completamente entupida teremos f  0 caso contrario, f  1 No processo de
+Clogging real, por observacao, e prudente afirmar que
+os instantes de T1 < T2 < T3 < T4 sao aleatorios e
+encontram-se entre os intervalos 20s < T2  T1 <
+120s e 10s < T3  T2 < 60s, 0 < T4  T3 < 5s.
+A inclusao do efeito de Clogging no processo
+pode ser visto na Figura 2
+
+Figura 2 Diagrama de bloco com a inclusao do efeito
+de clogging (K  As  Aclg )
+
+3.1.2 Disturbio de Bulging
+A placa de aco, ainda no estado lquido, exerce uma
+forca ferrostatica que tende a empurrar o aco lquido
+para fora do veio, movimento impedido pelos rolos
+que compoem os segmentos da maquina de lingotamento. Como estes rolos possuem um espacamento
+D entre eles, a pele de aco formada cede um pouco,
+de forma que o aco ocupe parte deste espacamento.
+Ao passar pelos rolos, havera diminuicao do espaco e
+consequente laminacao deste aco solidolquido, provocando o rearranjo de aco lquido no interior da
+maquina.
+Apos passar por entre os rolos, o aco expandese novamente ate o proximo conjunto (caso ainda
+nao tenha sido formada pele espessa o suficiente para
+contrapor a pressao ferrostatica). Este fenomeno de
+retracao e expansao ocorre simultaneamente por toda
+a maquina onde ha presenca de aco lquido no interior,
+chegando ate o molde. Como a maquina de lingotamento possui uma velocidade de extracao da placa em
+seu interior, denominada vc , verifica-se como efeito
+decorrente da expansao e retracao interna da placa no
+interior da maquina o surgimento de ondas senoidais
+na superfcie do molde.
+Estas ondas sao consequencia, portando, da
+variacao de volume de aco no interior do veio, funcao
+do espacamento entre os respectivos rolos de onde
+ocorre o fenomeno e da velocidade de extracao. A
+frequencia de oscilacao pode ser determinada com boa
+aproximacao por
+foscilacao (Hz) 
+
+Vc (mmin)
+D(m)  60
+
+297
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A insercao do efeito de bulging no processo pode
+ser visto na Figura 3
+
+A Figura 5 mostra a sada real do processo juntamente com a sada da rede com predicao de 30 passos
+a frente.
+
+Figura 3 Ponto de Inclusao do Efeito Bulging no Processo
+
+3.2 Os Modelos Neural e Hammerstein do Nvel do
+Molde Sem Disturbios
+Com o objetivo de desenvolver um modelo do processo para fins de implementacao da estrategia_de_controle avancada, realiza-se nesta secao a identificacao
+do sistema utilizando-se as redes_neurais artificiais e
+o modelo hammerstein. A Figura 4 mostra o conjunto de entrada - sada (input - output) utilizado na
+identificacao. Estes dados foram gerados a partir de
+uma perturbacao aleatoria imposta a variavel de entrada, dentro de certo limite (limite este factvel do
+ponto de vista operacional), onde a abertura maxima
+da valvula gaveta e de 70 milmetros. Os dados foram divididos em dois subconjuntos a saber i) treinamento ii) validacao.
+
+Figura 5 Sada real e sada prevista pela rede_neural a
+30 passos a frente.
+A Figura 6 mostra a sada real do processo juntamente com a sada do modelo hammerstein com
+predicao de 30 passos a frente.
+Predição 30 Passos a Frente
+0.025
+0.02
+0.015
+0.01
+0.005
+0
+0.005
+
+Abertura da válvula (m)
+
+0.05
+0.04
+
+0.01
+
+0.03
+
+0.015
+
+0.02
+
+0.02
+
+0.01
+0
+
+0
+
+1000
+
+2000
+
+3000
+4000
+5000
+número de amostras
+
+6000
+
+7000
+
+450
+
+500
+
+550
+600
+650
+número de amostras
+
+700
+
+750
+
+800
+
+8000
+
+Figura 6 Sada real e sada prevista com o modelo
+Hammerstein.
+
+1.5
+Nível do Molde (m)
+
+Dados Reais
+Dados do Modelo 97.4
+
+1
+0.5
+0
+0.5
+
+0
+
+1000
+
+2000
+
+3000
+4000
+5000
+número de amostras
+
+6000
+
+7000
+
+8000
+
+Figura 4 Dados de entrada e sada utilizados na
+identificacao do modelo.
+A rede_neural identificada foi uma NNARX com
+duas camadas e 10 neuronios na camada oculta e com
+m  2 e n  2.
+O modelo hammerstein identificado tem uma estrutura linear 220, com uma nao linearidade estatica
+representada por um polinomio de ordem 2 conforme
+mostra as expressoes
+y(t) 
+
+1.365y(t  1)  0.365y(t  2)
+
+ 0.701x(t  1) + 1x(t  2),
+x(t) 
+
+0.234u(t) + 1.0884u2 (t).
+
+ISBN 978-85-8001-069-5
+
+4 Resultados
+Os algoritmos discutidos na secao 2 para o controle
+preditivo foram modificados para incluir a sintonia
+feita atraves de algoritmo_genetico, cuja populacao e
+constituda por 50 indivduos com 30 geracoes e as
+taxas de crossover e mutacao sao de 0,8 e 0,01 respectivamente.
+As condicoes operacionais em que a simulacao foi realizada no MatLab sao h  1, 2m(Altura do Distribuidor) Am  0, 25m2 (area do molde) Xsg 
+0, 35m (Abertura da valvula gaveta para uma velocidade constante de 0, 02mseg). O perodo de amostragem foi de 0, 1seg..
+As restricoes no processo sao abertura da Valvula
+Gaveta ( u(t)  0, 7m) e na sua velocidade de abertura ( u(t)  0, 0041m por perodo de amostragem
+) e nos limites fsicos do sensor do nvel do molde (
+y(t)  0, 2m ).
+
+298
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+4.1 Controle Preditivo Sem Disturbios
+
+4.3 Controle Preditivo com Disturbio de Clogging
+
+Nível do Molde (m)
+
+0.6
+0.5
+0.4
+
+Set Point
+HGPC
+PNLI
+PNRG
+
+0.3
+0.2
+0.1
+0
+0
+
+50
+
+100
+
+150
+
+200
+250
+300
+tempo (seg.)
+
+350
+
+400
+
+450
+
+500
+
+Figura 7 Resposta a diferentes degraus do nvel para
+os controladores.
+controladores projetados, conseguem fazer com que o
+nvel siga a referencia em quase todo o intervalo da
+altura do molde. E importante mecnionar que para o
+caso do PNLI e PNRG, embora nao mostrada, foi simulado degraus com amplitudes maiores e variando
+toda a faixa do molde, e para os dois casos, os controladores conseguiram seguir a referencia. Para o
+HGPC, o controlador nao conseguiu variar toda extensao do molde e nao conseguiu seguir a referencia
+quando degraus aplicados com amplitudes maiores de
+30cm fossem aplicados. O ndice ISE (integral do erro
+quadratico) para cada casi foi PNLI3,2, PNRG3,3
+e HGPC0,9.
+
+Set Point
+PNRG
+PNLI
+HGPC
+
+0.2
+Nível do Molde (m)
+
+0.7
+
+0.15
+0.1
+0.05
+0
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+tempo (seg.)
+
+0.08
+Sinal de Controle
+
+0.8
+
+Neste parte, sera simulado o controle_de_nvel do
+molde com o disturbio de clogging, considerando
+o pior caso do disturbio, pois desta forma, tem-se
+um controlador_preditivo robusto. Nas simulacoes,
+iniciou-se com com o fator de entupimento f  1
+(valvula totalmente desobstruda) e gradativamente
+este fator foi decrementado 10 em 10 para se obter
+o entupimento maximo da valvula para o qual o controlador consegue estabilizar o nvel.
+As Figuras 9, 8 e 10, mostram o controle do nvel do
+molde com a presenca do disturbio de clogging mais
+severo, ou seja onde este entupimento chega ate um
+maximo 75 para o PNRG, 80 para o PNLI e 90
+para o HGPC bem como os seus respectivos sinais de
+controle e variacao do sinal de controle. E importante
+mencionar que foi preciso fazer um ressintonia, tanto
+o PNLI, quanto para o PNRG, pois os parametros utilizados nos exemplos sem disturbio, nao foram capazes
+de estabilizar o sistema com o entupimento citado. Esses parametros foram
+PNLI 2 4 0, 1342 14, 2027 1, 5825
+PNRG 4 0, 1522 825, 8170 538, 3424
+HGPC nao precisou de ressintonia.
+
+PNRG
+PNLI
+HGPC
+
+0.06
+0.04
+0.02
+0
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+tempo (seg.)
+
+Figura 8 Simulacao com Entupimento de 75 (f 
+0, 25).
+
+0.2
+Nível do Molde (m)
+
+Primeiramente, nao se considera a presenca dos
+disturbios.Para esta situacao o vetor de parametros (3)
+ajustados por AG para a sintonia dos controladores
+preditivos foram
+PNLI 10 10 0, 8843 91, 3287 0, 0796,
+PNRG 1 1 0, 5755 747, 6628 645, 5345
+HGPC2 7 0, 5836 37, 3579 22, 1695.
+Desta forma, as respostas a diversos degraus do nvel
+do lingotamento_contnuo, apresentadas para os controladores sem a presenca de disturbios pode ser vista
+na Figura 7. Observa-se atraves da Figura, que os
+
+0.1
+0.05
+0
+0
+
+4.2 Controle Preditivo com Disturbio de Bulging
+
+Set Point
+PNLI
+HGPC
+
+0.15
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+tempo (seg.)
+
+O disturbio de bulging pode ser representado por
+um sinal senoidal com amplitude de 20mm e uma
+frequencia w  (2)(0, 077) radseg, interferindo no
+nvel do Molde. Desta forma, a resposta apresentada
+pelo sistema de nvel do lingotamento_contnuo com a
+presenca do disturbio de bulging utilizando o PNLI e o
+PNRG, permitiu que as oscilacoes no nvel do Molde
+fossem reduzidas de 20mm para cerca de 5mm, ja
+para o HGPC, o nvel de oscilacao foi reduzido de
+20mm para cerca de 1mm o que mostra a eficacia
+destes controladores para este tipo de disturbio em especial o HGPC.
+Os parametros de sintonia dos controladores foram os mesmos anteriores para o caso sem disturbio.
+
+ISBN 978-85-8001-069-5
+
+Sinal de Controle
+
+0.08
+PNLI
+HGPC
+
+0.06
+0.04
+0.02
+0
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+tempo (seg.)
+
+Figura 9 Simulacao com Entupimento de 80 (f 
+0, 2).
+Observa-se nas Figuras 9, 8 e 10 que no momento
+em que se inicia o processo de entupimento, aplica-se
+um degrau no sistema para que o nvel do molde suba,
+pois, caso contrario, o nvel ficaria negativo durante
+um instante de tempo apos ocorrer o desentupimento
+da valvula, o que nao poderia acontecer na pratica.
+
+299
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Nível do Molde (m)
+
+0.2
+Set Point
+HGPC
+
+0.15
+0.1
+0.05
+0
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+tempo (seg.)
+
+Sinal de Controle
+
+0.08
+HGPC
+0.06
+0.04
+
+HGPC em relacao aos outros dois quando disturbios
+sao utilizados.
+E oportuno esclarecer que estas conclusoes nao poderiam ser obtidas se a sintonia do controlador_preditivo
+fosse feita por tentativa e erro, pois para este tipo de
+processo (instavel em malha_aberta) esta metodologia
+nao e viavel de ser usada.
+
+0.02
+0
+0
+
+20
+
+40
+
+60
+
+80
+
+100
+
+120
+
+tempo (seg.)
+
+Referencias
+
+Figura 10 Simulacao com Entupimento de 90 (f 
+0, 1).
+
+Bitmead, R. R., Gevers, M. and Wertz, V. (1995).
+Adaptative optimal control. The thinking mans
+GPC, System and Control Engineering Englewood Cliffs, New Jersey Prentice-Hall.
+
+Para que o algoritmo do controlador PNRG consiga
+controlar o nvel com disturbio clogging, e necessario
+reinicializa-lo no momento em que acontece o desentupimento. Isto e devido aos erros numericos do
+calculo da Hessiana aumetarem no instante de desentupimento, causando instabilidade no algoritmo
+PNRG.
+
+Camacho, E. F. and Bordons, C. (2004). Model Predictive Control, New York Springer.
+
+5
+
+Conclusao
+
+Neste trabalho foi analisado o desempenho_de_controladores preditivos nao lineares no controle do nvel do
+molde sujeito a disturbios de bulging e clogging. Tres
+algoritmos foram implementados Dois deles usam o
+modelo neural onde um utiliza a regra do gradiente
+(PNRG) para atualizar a lei de controle e o outro realiza a linearizacao da rede (PNLI) para obter o controle, o terceiro, utiliza o modelo_de_hammerstein.
+Tais controladores foram sintonizados atraves do Algoritmo Genetico a fim de obter a acao de controle
+robusta diante dos efeitos dos disturbios de bulging e
+clogging.
+A partir dos resultados obtidos por simulacao computacional, conclui-se que as estrategias PNLI e PNRG
+possuem desempenhos semelhantes e com uma pequena vantagem em relacao ao HGPC quando o processo esta sem disturbio. Quanto ao disturbio de bulging, o PNLI e o PNRG reduziram as oscilacoes na
+sada de 20mm para 5 mm, o que esta dentro da faixa
+toleravel que e de 10 mm, porem, o HGPC reduziu
+a oscilacao de 20mm para 1mm, apresentando assim
+uma boa vantagem em relacao aos outros dois.
+Na presenca do disturbio de clogging, foi necessario
+fazer a ressintonia dos parametros dos controladores
+PNLI e PNRG (o que nao foi necessario para o HGPC)
+para garantir que o molde nao transborde ou esvazie
+durante o perodo em que ocorre este disturbio. Para o
+pior caso de clogging, observou-se uma pequena superioridade do controlador PNLI em relacao ao PNRG,
+pois o primeiro mantem o nvel do aco dentro dos limites fsicos do sensor, quando o entupimento da valvula
+atinge 80, enquanto que no PNRG o maximo entupimento chega a 75. Para o caso do HGPC o entupimento da valvula chegou a 90 que e o maximo
+apresentado na pratica, o que comprova a vantagem do
+
+ISBN 978-85-8001-069-5
+
+de Almeida, G., Salles, J. and Filho, J. (2006). Using
+genetic algorithms for tuning the parameters of
+generalized predictive control, VII Conferencia
+Internacional de Aplicacoes Industriais INDUSCON, Recife.
+de Almeida, G., Salles, J. and Filho, J. (2009a). Optimal tuning parameters of the dynamic matrix
+predictive controller with constraints, Latin American Research Appplied 39(1).
+de Almeida, G., Salles, J. and Filho, J. (2009b). Tunning multivariable preditctive control od a hot
+rolling mill with genetic algorithm, IX Simposio
+Brasileiro de Automacao Inteligente (SBAI).
+Farago, A. and Lugosi, G. (1993). Strong universal
+consistency of neural networks classifiers, IEEE
+Trans. On Information Theory 39 11461151.
+Filalit, S. and Wertz, V. (2001). Using genetic algorithms to optimize the design parameters of
+generalized predictive controllers, International
+Journal of Systems Science 32(4) 503512.
+J.E.S. Santos, R. S. e. A. C. (2004). Uma solucao
+para a multiplicidade da lei de controle_preditivo
+para o modelo hammerstein, XV Congresso Brasileiro de Automatica, Gramado, RS.
+Norgaard, M., Ravn, O., Poulsen, N. and Hansen,
+L. (2000). Neural Networks for Modelling and
+Control of Dynamic Systems, Springer-Verlag.
+Sanchotene, F. (2009). Modelagem e controle no sistema de nvel de aco no molde do lingotamento
+contnuo da arcelor mittal tubarao, Masters thesis, DEL-UFES.
+Yoo, S. (1991). Development of mold level controller using sliding mode control in a continuous
+casting processing., Instrumentation and Control
+Research Team, Posco,Korea.
+
+300

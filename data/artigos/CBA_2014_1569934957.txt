@@ -1,0 +1,1086 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+MODELAGEM E CONTROLE DE CORPO COMPLETO USANDO QUATÉRNIOS
+DUAIS PARA UM MANIPULADOR MÓVEL
+Fredy Rolando Salazar-Sangucho, Bruno Vilhena Adorno
+
+
+Programa de Pós-Graduação em Engenharia Elétrica - Universidade Federal de Minas Gerais
+Av. Antônio Carlos 6627, Belo Horizonte, MG 31270-010 Brasil
+fsalazar@ufmg.br, adorno@ufmg.br
+
+Resumo Este trabalho visa implementar uma técnica de modelagem_e_controle de corpo completo para um
+manipulador_móvel composto por um robô manipulador acoplado a um robô_móvel não holonômico de tração
+diferencial. Esta técnica baseia-se na álgebra de quatérnios_duais para encontrar os modelos cinemáticos direto
+e diferencial da cadeia serialmente acoplada. Além disso, um controlador_cinemático  no qual a referência
+é dada pelo quatérnio dual representando a pose do efetuador  produz o movimento do robô e utiliza o
+Jacobiano do corpo completo para gerar simultaneamente o sinal de controle de todos os graus de liberdade.
+Esta implementação é avaliada por meio de experimentos que demostram a validade da técnica de modelagem e
+controle de corpo completo.
+Palavras-chave .
+
+1
+
+Introdução
+
+ceria com a Universidade de Tokyo. Sentis 
+Khatib (2006) apresentam uma estrutura de controle de corpo inteiro que utiliza o modelo_dinâmico do robô e que leva em consideração múltiplas tarefas com diferentes prioridades de execução, permitindo assim controlar múltiplas tarefas enquanto as limitações físicas e cinemáticas do
+robô são respeitadas. Basicamente três níveis de
+prioridade são utilizados e referem-se s limitações físicas do robô,  execução de tarefas e ao
+controle da postura do robô. Este controle foi
+aplicado ao robô humanoide ASIMO da Honda.
+Gienger et al. (2006) apresentam um algoritmo
+de movimento de corpo inteiro para permitir intervalos de deslocamento no espaço de trabalho.
+Analogamente ao movimento no espaço nulo proposto inicialmente por Liegeois (1977), os intervalos de deslocamento são explorados para satisfazer
+simultaneamente uma ou várias funções de custo
+e este algoritmo foi avaliado no robô humanoide
+ASIMO. Nagasaka et al. (2010) propõem uma estrutura de controle para um robô composto por
+dois manipuladores e uma base móvel. Este pode
+coordenar todas as forças conjuntas para alcançar diversos objetivos de movimento, como posição, velocidade, aceleração, força e impedância em
+qualquer parte do corpo. Adorno (2011) apresentou um método de controle_cinemático, que é uma
+extensão do Espaço Dual de Cooperação (EDC)
+proposto por Adorno et al. (2010), e que leva em
+consideração o movimento do corpo inteiro para
+a realização de manipulações bimanuais realizadas por um robô composto por uma base móvel
+não holonômica, um dorso com um grau de liberdade e dois braços. A manipulação é descrita em
+termos de duas variáveis a variável relativa, que
+representa a relação entre as poses dos dois efetuadores (garras) do robô, e a variável absoluta,
+que representa a pose do objeto que está sendo
+manipulado. A ideia de sistemas cinemáticos acoplados serialmente, os quais são representados por
+
+Nos últimos anos muitas pesquisas envolvendo robótica têm se concentrado em trabalhos que caracterizam a chamada robótica de assistência. De
+fato, recentemente houve um aumento considerável no desenvolvimento de robôs_móveis e humanoides capazes de interagir com humanos e também capazes de ajudar pessoas que possuem necessidades especiais, como pessoas muito idosas ou
+que tenham algum tipo de deficiência (Mast et al.,
+2012). Robôs assistentes têm ganhado bastante
+relevância nos cenários ou ambientes que envolvem o contato com humanos (Kemp et al., 2007)
+e dessa maneira muitos trabalhos recentes visam
+melhorar esses tipos de robôs. Por exemplo, alguns trabalhos levam em consideração a implementação de uma aparência antropomórfica (Spexard et al., 2007), enquanto outros se focam no
+controle simultâneo de vários graus de liberdade
+(Nishiwaki et al., 2005 Gienger et al., 2006 Sentis
+ Khatib, 2006 Nagasaka et al., 2010 Dietrich
+et al., 2011 Dalibard et al., 2013 Saab et al.,
+2013), manipulação cooperativa (Adorno et al.,
+2014) e interação_humano-robô tanto no nível físico (De Santis et al., 2008) quanto no cognitivo
+(Breazeal, 2003). Nessa perspectiva, espera-se que
+em um futuro próximo robôs e humanos compartilhem espaços comuns e trabalhem de forma cooperativa.
+Com o objetivo de fazer com que os robôs interajam com os humanos de forma mais natural, é
+desejável que os movimentos dos robôs sejam fluidos e que envolvam a estrutura completa do robô.
+Diferentes trabalhos nesta área foram desenvolvidos e aplicados em manipuladores móveis e robôs
+humanoides. Nishiwaki et al. (2005) propuseram
+um método de controle de corpo inteiro realizando
+movimentos que mantêm a pose e o equilíbrio automaticamente. Este método foi aplicado ao robô
+humanoide H7 das Indústrias Kawada em par-
+
+1544
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+quatérnios_duais, foi introduzida a fim de descrever as variáveis absolutas em termos de todos os
+graus de liberdade que estão presentes no sistema
+cinemático completo. Este método foi avaliado
+mediante simulação. Park, H. Andy Lee (2013)
+propuseram um método de controle de equilíbrio
+de robôs_humanoides baseada no EDC. O método
+fornece uma maneira eficiente para a estabilização
+do corpo inteiro por meio da modificação da posição horizontal da cintura gerada pelo movimento
+coordenado de ambas as pernas. Este método baseado no EDC prevê a possibilidade de gerar uma
+grande biblioteca de movimentos de corpo inteiro
+para robôs_humanoides e foi validado por meio de
+simulações, que incluem casos que mostraram um
+robô humanoide HOAP-2 andando em um terreno
+plano e subindo escadas. Dietrich et al. (2011)
+apresentam um controlador de corpo inteiro baseado na impedância mecânica do sistema para fornecer uma interface entre o espaço da tarefa (do
+inglês task-space) e algoritmos de planejamento
+de nível superior. Ao utilizar uma única matriz
+Jacobiana para todo o sistema, exceto para as
+mãos, um comportamento sincronizado é alcançado. Este controlador foi avaliado no humanoide
+móvel Justin. Dalibard et al. (2013) propuseram
+um método geral para o planejamento_de_movimentos de corpo inteiro que facilita uma marcha
+livre de colisão em robôs_humanoides. Este algoritmo de planejamento considera modelos exatos
+do robô e seu ambiente e é usado para resolver
+problemas de navegação e manipulação. O método foi aplicado em um robô humanoide HRP-2.
+Todos os trabalhos supracitados apresentam
+técnicas que permitem integrar movimentos simultâneos de subsistemas que compõem um corpo
+inteiro por meio do controle de todos os graus
+de liberdade disponíveis do robô. Essas técnicas
+são particularmente úteis para a geração de movimento de sistemas altamente redundantes, como
+humanoides e manipuladores móveis.
+A contribuição principal deste artigo consiste
+na implementação da técnica de modelagem e
+controle de corpo completo proposta por Adorno
+(2011). Esta técnica baseia-se na álgebra de quatérnios_duais para encontrar o modelo_cinemático
+direto e o modelo_cinemático_diferencial direto da
+cadeia serialmente acoplada, que neste trabalho
+é composta por um manipulador acoplado a um
+robô_móvel não holonômico. Além disso, um controlador_cinemático  no qual a referência é dada
+pelo quatérnio dual representando a pose do efetuador  produz o movimento do robô e utiliza o
+Jacobiano do corpo completo para gerar simultaneamente o sinal de controle de todos os graus de
+liberdade.
+O artigo está organizado da seguinte forma
+na seção 2 é feita uma revisão de quatérnios_duais
+e seu uso na representação de movimentos rígidos
+a seção 3 apresenta os modelos cinemáticos direto
+
+e diferencial direto do robô manipulador, da base
+móvel não holonômica e do sistema serialmente
+acoplado que representa o corpo completo do manipulador_móvel na seção 4 apresenta-se uma revisão do controle_cinemático usado para gerar o
+movimento simultâneo de todos os graus de liberdade do corpo completo na seção 5 apresenta-se
+os resultados dos experimentos realizados com um
+manipulador_móvel real e, por último, a seção 6
+encerra o artigo com as discussões finais e conclusões.
+2
+
+Fundamentos matemáticos
+
+Os quatérnios_duais fornecem uma forma conveniente para representações de sistemas robóticos.
+Entre as vantagens do uso dos quatérnios_duais
+pode-se ressaltar a representação compacta e direta de movimentos rígidos e transformações homogêneas. Mais especificamente, eles descrevem
+simultaneamente posições e orientações usando
+apenas oito parâmetros e desempenham o mesmo
+papel das matrizes de transformação homogêneas,
+onde o movimento rígido completo é descrito por
+um único objeto matemático. (Adorno, 2011).
+Os quatérnios foram introduzidos por Hamilton no século XIX, e podem ser considerados como
+uma extensão dos números complexos, onde as
+três componentes imaginárias , , k (também chamadas unidades quaterniônicas) são usadas e possuem as seguintes propriedades (Kuipers, 2002)
+2  2  k2  k  1
+O quatérnio h inclui uma componente real e
+uma componente imaginária envolvendo as três
+
+unidades imaginárias, ou seja, h  a+b+c+dk,
+onde a, b, c, d  R. Uma rotação r, composta pelo ângulo de rotação  em torno do eixo
+ é dada pelo quatérnio unin  nx  + ny  + nz k,
+tário r  cos (2) + sin (2) n. Uma translação
+p é representada por um quatérnio puro, ou seja,
+um quatérnio cuja parte real é igual a zero. Logo,
+
+p  px  + py  + pz k.
+O quatérnio dual unitário x  r +  (12) pr
+representa um movimento rígido composto por
+uma translação p seguida de uma rotação r, onde
+ é uma unidade dual de Clifford que obedece
+ 6 0 e 2  0 (Selig, 2005). Assim, x representa a pose de um corpo rígido no espaço dos
+quatérnios_duais unitários.
+O operador vec realiza o mapeamento injetor
+T
+vec  H  R8 , ou seja, vec
+ x  x1 .....x8  , onde
+
+
+x  x1 +x2 +x3 +x4 k+
+x5 + x6  + x7  + x8 k
+e H representa o conjunto dos quatérnios_duais.
+Os operadores de Hamilton são as matrizes
++
+
+
+
+H () e H () que satisfazem (Adorno, 2011)
++
+
+
+
+vec xy  H (x) vec y  H y vec x.
+
+1545
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+3
+
+Tabela 1 Parâmetros D-H do manipulador_robótico AX18 (Lana et al., 2013).
+
+Modelos cinemáticos direto e
+diferencial direto para o corpo
+completo
+
+Elo
+L1
+L2
+L3
+V
+L4
+L5
+
+Podemos considerar vários sistemas que podem ser
+descritos por movimentos rígidos, por exemplo
+robôs manipuladores, bases móveis, robôs voadores, etc.
+Quando utilizado para representar o modelo
+cinemático direto de um robô manipulador, o quatérnio dual x é uma função da posição_angular
+das juntas do robô, ou seja, x  f (), onde  é
+o vetor n-dimensional que representa as juntas do
+robô e f é a função que faz o mapeamento entre o
+espaço toroidal das juntas e o quatérnio dual que
+representa a pose do efetuador do robô (Adorno,
+2011).
+De maneira geral, o modelo_cinemático_diferencial do robô manipulador é dado por vec x  J ,
+onde J é a matriz Jacobiana analítica que pode
+ser encontrada algebricamente (Adorno, 2011).
+Quando utilizado para representar o modelo
+cinemático direto de uma base móvel, o quatérnio
+dual x é uma função das coordenadas cartesianas
+(x, y) e do ângulo  da base móvel. Dessa forma
+x  f (x, y, ) (Adorno, 2011).
+Os modelos cinemáticos diretos e diferenciais
+do robô manipulador e da base móvel são diferentes e cada um é descrito por funções do tipo
+xi  f i ( i ), com i  0, 1, que correspondem
+ base móvel e ao manipulador, respectivamente.
+Como estes sistemas são acoplados serialmente, alterações no estado de sistemas cinemáticos anteriores causam variações em todo o resto da cadeia
+cinemática. Consequentemente, a variação do último sistema na cadeia será uma função da variação de todos os sistemas anteriores.
+3.1
+
+d (m)
+0.167
+0
+0
+0.0815
+0.041
+0
+
+ (rad)
+0
+0
+2
+0
+2
+0
+
+a (m)
+0
+0.159
+0
+0.02225
+0
+0
+
+ (rad)
+2
+0
+2
+0
+2
+0
+
+V  Elo virtual Este não representa uma ligação física do robô
+
+x4
+z3
+x3
+
+zEF
+z4
+L5
+
+yEF
+xEF
+
+y4
+
+z2 L2
+x2
+
+y3
+L4
+L3
+
+y2
+
+Gripper
+
+z5
+x5
+
+y5
+
+z1
+
+y1
+x1
+
+L1
+
+Figura 1 Sistemas de referência atribuídos ao
+robô manipulador AX18, a fim de obter os parâmetros DH (Lana et al., 2013).
+mação entre dois elos é dada por (Adorno, 2011)
+xLi  r i pd pa r i ,
+i
+
+i
+
+(1)
+
+Dado um robô específico, xLi é função de i para
+uma junta rotativa e função de di para uma junta
+prismática, pois o restante dos parâmetros_são
+constantes. No caso específico do robô manipulador usado neste trabalho, os parâmetros DH são
+apresentados na tabela 1. O efetuador é representado pelo quatérnio dual
+1
+xG  r G + pG r G ,
+2
+
+Modelo cinemático do robô manipulador
+
+(2)
+
+onde pG  0.17k e r G  cos (4)  sin (4) k
+(Lana et al., 2013). Usando (1), (2) e os parâmetros DH da tabela 1, o modelo_cinemático direto
+é dado por
+
+O robô manipulador usado neste trabalho é o
+AX18 Smart Robot Arm (CrustCrawler Robotics,
+Arizona, USA) que tem cinco graus de liberdade
+e um efetuador final.
+Para se obter o modelo_cinemático do robô
+manipulador usa-se uma abordagem já bem estabelecida que consiste em usar os parâmetros de
+Denavit-Hartenberg (DH). Os quatro parâmetros
+DH são associados a uma convenção padrão que
+estabelece a relação entre dois elos sucessivos dentro de uma cadeia cinemática serial. Utilizandose a representação em quatérnios_duais, primeiramente aplica-se uma rotação i em torno do
+ seeixo z (i.e., r i  cos (i 2) + sin (i 2) k),
+guida de uma translação di ao longo do eixo z
+ de uma translação ai
+(i.e., pd  1 +  (di 2) k),
+i
+ao longo do eixo x (i.e., pa  1 +  (ai 2) ) e,
+i
+finalmente, de uma rotação i em torno do eixo x
+(i.e., r i  cos (i 2) + sin (i 2) ). A transfor-
+
+xE  f ( braco )  xL1 xL2 xL3 xV xL4 xL5 xG ,
+(3)
+onde  braco é o vetor contendo as variáveis das
+juntas do robô.
+O modelo_cinemático_diferencial direto pode
+ser encontrado por meio da derivada da equação (3), ou seja, vec xE  J braco  braco , onde a
+matriz Jacobiana J braco  R85 é obtida algebricamente utilizando-se a metodologia proposta por
+Adorno (2011).
+3.2
+
+Modelo cinemático da base móvel nãoholonômica
+
+Neste trabalho, utiliza-se uma base móvel nãoholonômica iRobot Create que tem três graus
+
+1546
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+de liberdade. Este robô tem o modelo_cinemático
+de um uniciclo, ou seja, possui duas rodas com
+acionamento independente acopladas a um eixo
+comum e uma roda livre.
+Para se obter o modelo_cinemático da base
+móvel não-holonômica primeiro considera-se uma
+base móvel holonômica. Esta pode ser parameT
+trizada por  xy  x, y,  , onde x, y são as
+coordenadas cartesianas e  é o ângulo da base
+com respeito a um sistema de coordenadas inercial. Usando a representação em quatérnios_duais proposta por Adorno (2011), a posição no
+plano é pbase  x + y, a orientação é r base 
+cos (2) + k sin (2), de forma que o quatérnio
+dual unitário resultante é dado por
+1
+xbase  r base +  pbase r base .
+2
+Expandindo-se a equação (4), obtém-se
+
+Figura 2 Manipulador móvel utilizado neste trabalho.
+
+(4)
+
+3.3
+
+
+
+
+ 
+
+
++ k sin
+2
+2
+ 
+ 
+ 
+1
+
+
++
+ x cos
++ y sin
+2
+2
+2
+
+ 
+ 
+
+
++ x sin
++ y cos
+.
+2
+2
+
+xbase  cos
+
+A derivada no tempo de xbase fornece a relação entre a derivada do quatérnio dual e os parâmetros do robô_móvel holonômico, isto é,
+(5)
+
+vec xbase  J hol  xy
+
+onde J hol  (aij )  R83 e todos os elementos
+aij são iguais a zero, com exceção dos elementos
+seguintes
+1
+a13  a62  a71   sin (2)
+2
+1
+a43  a61  a72  cos (2)
+2
+1
+a63  x sin (2) + y cos (2)
+4
+1
+a73  x sin (2)  y cos (2) .
+4
+A equação (5) não leva em consideração as
+restrições holonômicas da base móvel. A relação
+a seguir deve ser usada para impor as restrições
+não-holonômicas (Adorno, 2011)
+
+
+ xy  
+
+
+r
+2
+r
+2
+
+cos 
+sin 
+r
+2b
+
+r
+2
+r
+2
+
+
+
+cos  
+r
+sin  
+,
+l
+r
+ 2b
+ z 
+z
+
+
+J restricoes
+
+(6)
+
+ rodas
+
+onde r e l são as velocidades angulares da roda
+direita e esquerda respectivamente, r é o raio das
+rodas e b é a distância entre elas. Substituindo a
+equação (6) em (5) podemos obter a equação da
+cinemática diferencial direta da base móvel não
+holonômica
+vec xbase  J hol J restricoes  rodas  J nhol  rodas .
+
+1547
+
+Representação do modelo_cinemático serialmente acoplado
+
+Seja um robô manipulador serial fixado no topo de
+uma base móvel não-holonômica, como ilustrado
+na figura 2. A configuração do efetuador final em
+relação a um sistema global de referência será uma
+função tanto da posição das articulações do robô
+manipulador e a configuração da base móvel.
+Frequentemente, as diferentes partes de um
+sistema robótico complexo são modelados separadamente. Por exemplo, na modelagem de um robô
+humanoide, pode-se dividí-lo em pernas, tronco,
+braços e cabeça, sendo cada parte considerada
+como um subsistema. Depois que cada subsistema
+é modelado separadamente, o objetivo é encontrar
+o modelo completo considerando-se a interação de
+todos os subsistemas individuais (Adorno, 2011).
+O mesmo princípio é aplicável ao caso de um manipulador_móvel.
+A seguir será apresentada uma metodologia
+sistemática e direta, proposta por Adorno (2011),
+a fim de se obter modelos cinemáticos da cadeia
+cinemática completa a partir de sistemas serialmente acoplados. No caso do robô manipulador
+fixado na parte superior de uma base móvel, esta
+integração irá permitir a descrição do manipulador_móvel como uma entidade única. Além disso,
+mesmo se mais sistemas sejam adicionados em série, estes podem ser adicionados  descrição final
+de maneira bem direta utilizando-se a mesma metodologia.
+Dado um sistema cinemático serial, este é
+composto por um conjunto de k subsistemas acoplados, cada um descrito pelas transformações rígidas x1 ,x2 ,...,xk . Acoplando esses subsistemas
+serialmente, tem-se que x0k  x01 x12    xk1
+, onde
+k
+xii+1 representa a pose do (i + 1)-ésimo subsistema com respeito ao i-ésimo subsistema. Dessa
+maneira, x0k corresponde  transformação do último sistema Fk com respeito ao sistema base F0
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+e a derivada primeira é dada por (Adorno, 2011)
+vec x0k 
+
+k1
+X
+i0
+
++
+
+
+vec xii+1 ,
+H x0i H xi+1
+k
+
+onde  t é a configuração do sistema completo
+(posição_angular das juntas do manipulador e das
+rodas da base móvel) no t-ésimo instante discreto
+de tempo, K  R88 é uma matriz positiva definida, e xd e xm são os valores desejado e medido
+da pose do efetuador, respectivamente. A matriz
+
+1
+J x0 , J Tx0 J x0k J Tx0 + 2 I
+é a inversa amor-
+
+(7)
+
++
+
+
+
+onde H xii  H xii  I8 .
+Usando a equação (7), o modelo_cinemático
+diferencial do manipulador_móvel completo é facilmente obtido, pois a base móvel e o manipulador
+estão ligados serialmente. Mais
+
+ especificamente,
+vec x0E  J x0E , onde T   Tbraco  Trodas e
+ braco refere-se s velocidades das juntas do robô
+manipulador e  rodas corresponde s velocidades
+das rodas da base móvel não holonômica.
+A equação (7) pode ser reescrita em função
+dos Jacobianos do manipulador e da base móvel. Mais especificamente, considera-se o caso em
+que k subsistemas estão serialmente acoplados.
+Como cada subsistema intermediário tem um modelo_cinemático_diferencial dado por vec xii+1 
+J xii+1  i+1 , logo
+
+vec x0k 
+
+k1
+X
+i0
+
+
+
+k1
+X
+
+k
+
++
+
+
+H x0i H xi+1
+vec xii+1
+i
+
++
+
+
+J xii+1 .
+com Li+1  H x0i H xi+1
+i
+Analisando-se a equação (8), nota-se que as
+matrizes Li+1 compõem o Jacobiano
+do sistema
+
+
+completo, ou seja, J x0k  L1    Lk
+e
+ T
+T
+T
+  1     k
+.
+Consequentemente,
+vec x0k J x0k .
+Considerando o manipulador_móvel da figura 2 composto por dois subsistemas (i.e., robô
+manipulador e base móvel), logo k  2 e as matrizes L1 e L2 são dadas pela equação (8) e mostradas na tabela 2.
+
+Tabela 2 Matrizes L1 e L2 que compõem o Jacobiano completo do robô.
++
+
+Li+1
+
+H x0i
+
+0
+
+L1
+
+I8
++
+
+1
+
+4
+
+L2
+
+H
+
+x01
+
+
+
+
+
+H xi+1
+E
+
+
+
+I8
+
+
+
+H x1E
+
+
+
+
+
+J xi
+
+i+1
+
+ i+1
+
+J nhol
+
+ rodas
+
+J braco
+
+ braco
+
+Controle cinemático de corpo completo
+
+A lei discreta de controle_cinemático usada para
+controlar a cinemática e gerar o movimento do
+robô é dada por
+ t   t  1 + J x0 K vec (xd  xm ) ,
+k
+
+Resultados
+
+Os métodos apresentados nas seções 3 e 4 foram
+validados mediante experimentos em um manipulador_móvel real, mostrado na figura 2. O algoritmo foi implementado no software Matlab
+em conjunto com a biblioteca DQRobotics Toolbox,1 a biblioteca de interface com o robô manipulador AX18 desenvolvida por Lana et al. (2013)
+e a biblioteca de interface com o robô iRobot Create disponibilizada pelo próprio fabricante.
+A tarefa do robô foi definida em duas subtarefas da seguinte maneira 1) Dada a configuração inicial do manipulador_móvel mostrada
+na figura 3a, o objetivo é pegar uma garrafa que
+está inicialmente fora do alcance do manipulador
+e 2) Em seguida levá-la e colocá-la dentro de uma
+caixa. Tanto a pose da garrafa (pose desejada 1)
+quanto a da caixa na qual ela deve ser depositada (pose desejada 2) foram escolhidas arbitrariamente e são conhecidas a priori, sendo constantes ao longo de todo o experimento. A configuração inicial do manipulador_móvel também foi
+escolhida arbitrariamente, e assume-se que o sistema de coordenadas inercial global encontra-se
+alinhado com o sistema de coordenadas da base
+móvel no instante t  0. A matriz de ganho
+do controlador_cinemático foi escolhida empiricamente como K  0, 04I 8 de maneira a gerar um comportamento suave, mas com tempo
+de resposta rápido o suficiente para a execução
+da tarefa. A sequência completa da manipulação
+encontra-se na figura 3. É importante ressaltar
+que a manipulação fina de objetos está fora do
+
+i0
+
+i
+
+k
+
+5
+(8)
+
+Li+1  i+1 ,
+
+k
+
+tecida da matriz Jacobiana J x0k  R87 do sistema completo (Chiaverini, 1997) e  é o fator de
+amortecimento. A inversa amortecida é uma metodologia bastante conhecida adotada para evitar
+singularidades cinemáticas. Basicamente o objetivo do controlador é fazer com que a pose atual
+xm do efetuador convirja para a pose desejada xd ,
+ou seja (xd  xm )  0 para t  . É importante
+ressaltar que, como a referência do controlador é
+dada por quatérnios_duais, a posição e orientação
+do efetuador são controladas simultaneamente de
+maneira acoplada. Uma desvantagem deste controlador é o fato dele não levar em consideração a
+dinâmica do robô. Dessa maneira, ele possui bom
+desempenho apenas para acelerações moderadas e
+uma rigidez estrutural adequada do robô.
+
+(9)
+
+1 httpdqrobotics.sourceforge.net
+
+1548
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+junta 3
+
+1
+
+junta 5
+
+x3
+0.0598
+
+0.0615
+
+junta 2
+
+0
+
+roda direita
+roda esquerda
+
+-0.5
+
+-0.7046
+
+junta 1
+
+0.0605
+
+0.059
+
+0.0595
+
+0.0586
+
+x5
+
+junta 4
+
+-1.5
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+
+-0.15
+
+0.15
+
+-0.16
+0.05
+
+0.15
+0
+
+Figura 4 Atuação de todas as variáveis de controle do manipulador_móvel.
+
+-0.14
+150
+
+300
+
+0
+
+0
+150
+
+300
+
+0
+
+-0.17
+150
+
+300
+
+0
+
+150
+
+300
+
+Iterações t
+
+Figura 5 Coeficientes do quatérnio dual desejado
+(curva tracejada) e coeficientes do quatérnio dual
+medido (curva sólida) para a subtarefa de pegar
+a garrafa.
+
+escopo deste artigo, pois o efetuador do robô consiste apenas em uma pinça. Porém, este efetuador
+é suficiente para pegar uma garrafa comum.
+É importante ressaltar que a referência para
+o controlador é apenas a pose desejada do efetuador. O controlador_cinemático é responsável por
+gerar o sinal de controle para todos os graus de liberdade simultaneamente, como mostra a figura 4.
+Este comportamento é desejável por simplificar a
+definição da tarefa, pois o projetista não precisa
+definir trajetórias separadamente para o braço e
+para a base móvel. Alternativamente, um sistema
+de mais alto nível, como um sistema de visão_computacional, poderia estimar a pose da garrafa e então definir a pose do efetuador desejada para que
+a manipulação ocorresse. Uma outra vantagem
+de se utilizar um algoritmo de controle de corpo
+completo é que o movimento do robô tende a ficar
+mais natural e fluido, pois toda a cadeia cinemática trabalha para a realização da tarefa. Além
+disso, como o sistema completo se torna altamente
+redundante, formalismos de controle_hierárquico
+de tarefas podem explorar essa redundância para
+realizar tarefas secundárias no espaço nulo da tarefa principal (Liegeois, 1977 Chiaverini, 1997).
+A figura 5 mostra a convergência da pose do
+efetuador para a pose final desejada para a subtarefa de pegar a garrafa. É importante notar
+que o controlador usado, dado pela equação (9),
+tem bom desempenho apenas localmente devido
+s restrições não holonômicas do sistema impostas pela base móvel. Isso significa que para situações nas quais a pose desejada encontra-se fora
+do espaço de trabalho do manipulador, mas que
+requeiram um movimento mais acentuado da base
+móvel (e.g., rotação de 90 graus), a pose final não
+vai convergir para a pose desejada, porém será estabilizada, resultando em um erro em regime_permanente.
+6
+
+-0.14
+
+-0.1
+
+35
+
+Iterações t
+
+x8
+
+0.25
+
+0.17
+0.16
+
+0
+
+-0.7046
+x7
+
+x6
+
+-0.06
+
+-2
+
+-0.7045
+
+0.0594
+
+-0.02
+
+-1
+
+x4
+
+0.0625
+
+-0.7044
+
+-0.7045
+
+0.5
+rads
+
+x2
+
+x1
+
+2
+1.5
+
+tração diferencial. Esta técnica baseia-se na álgebra de quatérnios_duais para encontrar os modelos
+cinemáticos direto e diferencial da cadeia serialmente acoplada. Foi mostrado como o controlador
+cinemático implementado  no qual a referência
+é dada pelo quatérnio dual representando a pose
+do efetuador  produz o movimento do robô e
+utiliza o Jacobiano do corpo completo para gerar
+simultaneamente o sinal de controle tanto do manipulador e da base móvel.
+Resultados experimentais demonstraram o
+bom desempenho do controle_cinemático de corpo
+completo para as condições analisadas. No entanto, como a base móvel tem restrições nãoholonômicas, a lei de controle utilizada tem uma
+convergência local. Consequentemente, o controlador não vai convergir (porém vai estabilizar)
+sempre que a referência desejada esteja fora do
+espaço de trabalho do manipulador e, ao mesmo
+tempo, exija movimentos que violem as restrições
+não holonômicas da base móvel. Porém, se as restrições não holonômicas não forem violadas, o controlador vai convergir mesmo que a pose desejada
+esteja fora do espaço de trabalho do manipulador, pois um movimento de corpo completo será
+realizado. Dessa maneira, os próximos desenvolvimentos se focarão no estudo e implementação
+de controladores de corpo completo que tenham
+uma zona de convergência mais ampla, se possível
+global, para manipuladores móveis com restrições
+não-holonômicas.
+Trabalhos futuros também serão concentrados
+na integração de um sistema de visão_computacional com o algoritmo de controle_cinemático de
+corpo completo. Assim, o sistema de visão_computacional será responsável por passar as referências
+desejadas para o controlador_cinemático de corpo
+completo em função do objeto a ser manipulado.
+
+Conclusão
+
+Este artigo apresentou uma técnica de modelagem_e_controle de corpo completo para um manipulador_móvel composto por um robô manipulador acoplado a um robô_móvel não holonômico de
+
+Agradecimentos
+Este trabalho recebeu suporte financeiro da Secretaria Nacional de Educación Superior, Ciencia,
+
+1549
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Garrafa
+a pegar
+
+Configuração inicial
+do manipulador
+
+Caixa para
+depositar
+a garrafa
+
+(a)
+
+(b)
+
+(c)
+
+(d)
+
+(e)
+
+Figura 3 Experimento de controle do corpo completo de um manipulador_móvel. As imagens  esquerda
+mostram a visão lateral do experimento, enquanto as imagens  direita mostram a visão de topo (a)
+configuração inicial do sistema, (b) o robô realiza um movimento de corpo completo para se aproximar
+da garrafa, (c) o robô pega a garrafa, (d ) leva-a até a segunda pose desejada e (e) a solta dentro da
+caixa.
+
+1550
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Tecnología e Innovación (SENESCYT) do Equador e das agências brasileiras CAPES, CNPq e
+Fapemig.
+
+Kuipers, J. B. (2002). Quaternions and rotation
+sequences A primer with applications to orbits,
+aerospace and virtual reality. Princeton University Press.
+
+Referências
+
+Lana, E. P., Adorno, B. V.,  Tierra-Criollo,
+C. J. (2013). Assistance Task Using a Manipulator Robot and User Kinematics Feedback.
+Simpósio Brasileiro de Automação Inteligente
+(SBAI), (pp. 16).
+
+Adorno, B. V. (2011). Two-arm manipulation
+from manipulators to enhanced human-robot
+collaboration Contribution  la manipulation 
+deux bras  des manipulateurs  la collaboration
+homme-robot. PhD thesis.
+
+Liegeois, A. (1977). Automatic Supervisory Control of the Configuration and Behavior of Multibody Mechanisms. IEEE Transactions on Systems, Man and Cybernetics, 7(12), 868871.
+
+Adorno, B. V., Bó, a. P. L.,  Fraisse, P. (2014).
+Kinematic modeling and control for humanrobot cooperation considering different interaction roles. Robotica, (February), 118.
+
+Mast, M., Burmester, M., Kruger, K., Fatikow, S.,
+Arbeiter, G., Graf, B., Kronreif, G., Pigini, L.,
+Facal, D.,  Qiu, R. (2012). User-Centered Design of a Dynamic-Autonomy Remote Interaction Concept for Manipulation-Capable Robots
+to Assist Elderly People in the Home. Journal
+of Human-Robot Interaction, 1(1), 96118.
+
+Adorno, B. V., Fraisse, P.,  Druon, S. (2010).
+Dual position control strategies using the cooperative dual task-space framework. In 2010
+IEEERSJ International Conference on Intelligent Robots and Systems (pp. 39553960). Taipei IEEE.
+
+Nagasaka, K., Kawanami, Y., Shimizu, S., Kito,
+T., Tsuboi, T., Miyamoto, A., Fukushima, T.,
+ Shimomura, H. (2010). Whole-body cooperative force control for a two-armed and twowheeled mobile robot using Generalized Inverse
+Dynamics and Idealized Joint Units. 2010 IEEE
+International Conference on Robotics and Automation, (pp. 33773383).
+
+Breazeal, C. (2003). Toward sociable robots. Robotics and Autonomous Systems, 42(3-4), 167
+175.
+Chiaverini, S. (1997). Singularity-robust taskpriority redundancy resolution for real-time kinematic control of robot manipulators. IEEE
+Transactions on Robotics and Automation,
+13(3).
+
+Nishiwaki, K., Kagami, S.,  Inoue, H. (2005).
+Object manipulation by hand using whole-body
+motion coordination. 2005 IEEE International
+Conference, (July), 17781783.
+
+Dalibard, S., El Khoury, A., Lamiraux, F.,
+Nakhaei, A., Taix, M.,  Laumond, J.-P.
+(2013). Dynamic walking and whole-body motion planning for humanoid robots an integrated approach. The International Journal of Robotics Research, 32(9-10), 10891103.
+
+Park, H. Andy Lee, C. S. G. (2013). CooperativeDual-Task-Space-based whole-body motion balancing for humanoid robots. 2013 IEEE International Conference on Robotics and Automation, (pp. 47974802).
+
+De Santis, A., Siciliano, B., De Luca, A.,  Bicchi,
+A. (2008). An atlas of physical human-robot
+interaction. Mechanism and Machine Theory,
+43(3), 253270.
+
+Saab, L., Ramos, O. E., Keith, F., Mansard, N.,
+Soueres, P.,  Fourquet, J.-Y. (2013). Dynamic Whole-Body Motion Generation Under Rigid Contacts and Other Unilateral Constraints.
+IEEE Transactions on Robotics, 29(2), 346362.
+
+Dietrich, a., Wimbock, T.,  Albu-Schaffer, A.
+(2011). Dynamic whole-body mobile manipulation with a torque controlled humanoid robot
+via impedance control laws. 2011 IEEERSJ
+International Conference on Intelligent Robots
+and Systems, (pp. 31993206).
+
+Selig, J. M. (2005). Geometric fundamentals of
+robotics. Springer-Verlag Inc.
+Sentis, L.  Khatib, O. (2006). A whole-body
+control framework for humanoids operating in
+human environments. 2006 IEEE International
+Conference on Robotics and Automation, 2006.
+ICRA 2006., (May), 26412648.
+
+Gienger, M., Janben, H.,  Goerick, C. (2006).
+Exploiting Task Intervals for Whole Body Robot Control. 2006 IEEERSJ International
+Conference on Intelligent Robots and Systems,
+(pp. 24842490).
+
+Spexard, T., Hanheide, M.,  Sagerer, G. (2007).
+Human-Oriented Interaction With an Anthropomorphic Robot. IEEE Transactions on Robotics, 23(5).
+
+Kemp, C., Edsinger, A.,  Torres-Jara, E. (2007).
+Challenges for robot manipulation in human
+environments Grand Challenges of Robotics.
+IEEE Robotics  Automation Magazine, 14(1).
+
+1551

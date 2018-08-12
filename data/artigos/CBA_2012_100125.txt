@@ -1,0 +1,1403 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+CINEMÁTICA INVERSA DE ROBÔS MANIPULADORES UTILIZANDO INVERSA
+FILTRADA
+Lucas V. Vargas, Antonio C. Leite, Ramon R. Costa
+
+
+Programa de Engenharia Elétrica  COPPE
+Universidade Federal do Rio de Janeiro - UFRJ
+Rio de Janeiro, RJ, Brasil
+Emails lucasvar@coep.ufrj.br, toni@coep.ufrj.br, ramon@coep.ufrj.br
+Abstract In this work we present a kinematic control scheme for robot manipulators based on an algorithm
+that calculates the inverse of the Jacobian matrix in a dynamic way, in order to deal with the problem of kinematic
+singularities. The convergence and stability analysis is based on the Lyapunov stability theory and the output
+of the algorithm can be interpreted as the filtered inverse of the Jacobian matrix. A case study for redundant
+manipulator is presented and simulation results illustrate the performance of the proposed methodology.
+Keywords
+
+Inverse kinematics, Redundant manipulators, Robot kinematics, Singularities.
+
+Resumo Este trabalho apresenta um esquema de controle_cinemático para robôs manipuladores baseado em
+um algoritmo que calcula a inversa da matriz Jacobiana dinamicamente. A saída do algoritmo pode ser interpretada como uma inversa filtrada da matriz Jacobiana. Uma propriedade interessante do algoritmo de inversão
+é a sua habilidade para lidar com o problema de singularidades cinemáticas. A análise_de_estabilidade e convergência é baseada na teoria de estabilidade de Lyapunov. Um estudo de caso para manipuladores_redundantes é
+apresentado e resultados de simulações ilustram o desempenho da metodologia proposta.
+Palavras-chave
+
+.
+
+Introdução
+
+Nas últimas décadas um esforço de pesquisa considerável tem sido realizado para identicar uma solução
+genérica e robusta para o problema de cinemática_inversa, usualmente encontrado em sistemas_de_controle
+de manipuladores robóticos (Tchon  Jakubiak 2006,
+Chiaverini, Oriolo  Walker 2008). O problema de cinemática_inversa consiste em determinar as variáveis
+das juntas associadas a uma determinada posição e
+orientação do efetuador. Em geral, o desempenho das
+soluções apresentadas é avaliado de acordo com a estabilidade, custo_computacional e robustez s singularidades (Wampler 1986, Tchon  Muszynski 1998, Nenchev, Tsumaki  Uchiyama 2000).
+Singularidades cinemáticas são as congurações
+do espaço das juntas onde a matriz Jacobiana possui posto incompleto. Sua determinação é fundamental na área de robótica pois, em uma conguração
+singular, pequenas velocidades no espaço operacional
+podem causar grandes velocidades no espaço das juntas e, consequentemente, a saturação dos atuadores.
+Além disso, na vizinhança de uma singularidade, a
+mobilidade da estrutura é reduzida e podem existir innitas soluções para o problema de cinemática_inversa
+(Siciliano, Sciavicco, Villani  Oriolo 2009). Uma
+abordagem alternativa para lidar com o problema
+de singularidades em manipuladores_redundantes consiste em utilizar os graus de mobilidade extras da estrutura cinemática para evitar alguns tipos de singularidades (Tchon  Matuszok 1995, Chiaverini 1997).
+O problema de cinemática_inversa apresenta soluções nitas na forma fechada apenas para manipuladores que possuem estrutura cinemática simples
+(e.g., manipuladores de cadeia aberta formados tipicamente por um braço e um punho esférico) e a maioria das técnicas propostas são baseadas em métodos
+numéricos ou técnicas_de_otimização (Maciejewski 
+Klein 1989, Wang  Chen 1991). A diculdade para
+
+ISBN 978-85-8001-069-5
+
+obtenção de soluções admissíveis surge sempre que (i)
+o efetuador atinge uma posição ou orientação particular no espaço operacional onde, por exemplo, duas
+ou mais juntas de revolução são colineares, (ii) a estrutura cinemática do manipulador é complexa e não
+é possível relacionar a postura do efetuador com diferentes congurações de variáveis das juntas (iii) o
+manipulador é cinematicamente redundante. Essas limitações são, em geral, devidas  relação não-linear
+entre as variáveis no espaço das juntas e as variáveis
+no espaço operacional. Por outro lado, a equação de
+cinemática diferencial representa um mapeamento linear entre a velocidade no espaço das juntas e a velocidade no espaço operacional, embora esta relação,
+representada pela matriz Jacobiana, dependa da conguração atual dos ângulos das juntas. Este fato sugere
+que é possível utilizar a equação de cinemática diferencial para resolver o problema de cinemática_inversa
+(Siciliano et al. 2009)
+A obtenção das variáveis de juntas a partir de
+um esquema em malha_aberta baseado em técnicas
+de integração numérica está sujeita ao fenômeno de
+drift da solução e, como consequência, a postura do
+efetuador correspondente s variáveis das juntas computadas pode ser diferente da postura desejada. Uma
+solução alternativa consiste em utilizar esquemas em
+malha-fechada, baseados na pseudo-inversa e na transposta da matriz Jacobiana, que consideram o erro no
+espaço operacional entre as posturas desejada e atual
+do efetuador.
+Os métodos que utilizam a pseudo-inversa do Jacobiano podem falhar na busca de soluções admissíveis na vizinhança de uma singularidade, aumentando
+o erro de regime_permanente eou produzindo elevadas velocidades das juntas. Por outro lado, os métodos baseado no Jacobiano transposto são numericamente ecientes na presença de singularidades, mas
+não garantem a estabilidade assintótica do erro para
+tarefas de rastreamento (Siciliano et al. 2009). Neste
+
+3541
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+contexto, uma análise mais rigorosa do comportamento da solução na vizinhança de uma conguração singular pode ser desenvolvida recorrendo-se a decomposição em valores singulares da matriz Jacobiana ou SVD (no inglês, singular value decomposition)
+(Maciejewski  Klein 1989). Outros métodos para solucionar o problema de cinemática_inversa recorrem a
+diferentes técnicas_de_otimização como, por exemplo,
+o método CCD (no inglês, cyclic coordinate descent)
+que é baseado em programação_não-linear (Wang 
+Chen 1991). O algoritmo de cinemática_inversa DLS
+(no inglês, damped least square), baseado em Jacobiano pseudo-inverso, utiliza um fator de amortecimento
+para evitar as singularidades estabelecendo um compromisso entre a exatidão e a viabilidade da solução
+(Nakamura  Hanafusa 1986, Chiaverini, Siciliano 
+Egeland 1994). O método de cinemática_inversa realimentado ou FIK (no inglês, feedback inverse kinematics) não requer um fator de amortecimento e emprega
+um laço de realimentação para minimizar a diferença
+entre as velocidades atual e desejada no espaço operacional (Pechev 2008, Ahmed  Pechev 2009).
+Neste trabalho apresenta-se um esquema de controle_cinemático para robôs manipuladores baseado
+em um algoritmo que calcula a inversa da matriz Jacobiana dinamicamente. No caso particular em que
+a matriz a ser invertida é constante, a saída do algoritmo pode ser interpretada como a sua inversa ltrada. Uma propriedade interessante do algoritmo de
+inversão é a sua habilidade para lidar com o problema
+de singularidades (Costa 2012). A estabilidade e as
+propriedades de convergência do algoritmo são avaliadas utilizando-se a teoria de estabilidade de Lyapunov.
+Em contraste com outros métodos de inversão descritos na literatura, a sintonia do algoritmo proposto depende apenas do ajuste de um único parâmetro, que
+é um ganho. Um estudo de caso é apresentado considerando o problema de seguimento de trajetórias para
+um manipulador cinemático redundante. Resultados
+de simulações ilustram o desempenho e a viabilidade
+da metodologia proposta.
+
+onde J(q)  h(q)
+ Rmn é o Jacobiano analítico.
+q
+O modelo_cinemático introduzido em (2) possui a seguinte propriedade que será utilizada no projeto de
+controle e na análise subsequentes para robôs manipuladores com juntas de revolução
+Propriedade 1 (Dixon 2007) J(q) é limitado para todos os possíveis valores de q(t), isto é, este termo depende de q(t) como argumento de funções_trigonométricas limitadas e
+J(q) < c1 ,
+onde c1  R é uma constante positiva conhecida.
+2.2
+
+Controle cinemático
+
+Agora, considere o problema de controle_cinemático
+para um robô manipulador. Aqui, as seguintes hipóteses são consideradas
+(H1) a cinemática do robô é conhecida
+(H2) o efeito da dinâmica do robô é desprezível.
+Esta última hipótese é aplicável  maioria dos robôs
+comerciais com altas taxas de redução nas engrenagens eou quando a velocidade de execução da tarefa
+não é muito elevada. Neste contexto, o movimento do
+robô pode ser descrito simplesmente por
+qi  ui ,
+
+(i  1,    , n) ,
+
+onde qi é a velocidade_angular da i-ésima junta, ui
+é o sinal de controle_de_velocidade aplicado ao drive
+do motor da i-ésima junta e n é o número de juntas.
+Então, a partir da equação de cinemática direta (1) e
+considerando a abordagem de controle_cinemático (3),
+obtém-se o seguinte sistema_de_controle
+p  J(q) u .
+
+(5)
+
+Cinemática de Manipuladores
+
+Nesta seção, apresenta-se a modelagem cinemática
+para robôs manipuladores, a abordagem de controle
+cinemático e uma breve discussão sobre singularidades cinemáticas.
+2.1
+
+(4)
+
+Um sinal de controle cartesiano v(t) pode ser transformado em sinal de controle nas juntas usando
+u  J 1 (q) v ,
+
+2
+
+(3)
+
+Modelagem cinemática
+
+Considere a modelagem cinemática para um robô manipulador. A posição do efetuador p  Rm é obtida
+por meio do mapeamento de cinemática direta
+p  h(q) ,
+
+(1)
+
+onde q  Rn é o vetor de ângulos das juntas do manipulador e h()  Rn  Rm é um mapeamento em geral
+não-linear, que descreve a relação entre o espaço das
+juntas Q e o espaço operacional O.
+A equação de cinemática diferencial pode ser obtida a partir da derivada temporal da equação de cinemática direta (1) como
+p  J(q) q ,
+
+ISBN 978-85-8001-069-5
+
+(2)
+
+desde que a matriz Jacobiana seja quadrada (m  n)
+e não-singular. Para o caso onde m < n o sinal de
+controle nas juntas pode ser obtido por
+u  J  (q) v ,
+
+(6)
+
+onde J   J T (J J T )1 é a matriz pseudo-inversa 
+direita de J. A solução obtida a partir de (6) minimiza localmente a norma das velocidades das juntas,
+desde que v(t) não conduza o robô para congurações
+singulares. A falha desta última condição ainda é um
+tema de pesquisa relevante na área da robótica, e será
+discutido a seguir.
+Então, considere o problema de controle_de_posição para um manipulador cinemático de n-DoF (no
+inglês, degrees of freedom). Neste trabalho, por simplicidade, o problema de controle de orientação não
+será considerado. Aqui, assume-se que o objetivo de
+controle é rastrear uma trajetória desejada variante no
+tempo pd (t) a partir da posição atual do efetuador p,
+isto é
+p  pd (t) ,
+
+ep  pd  p  0 ,
+
+3542
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+onde ep  Rm é o erro de posição do efetuador. Combinando (4) e (5) tem-se que p  v e, deste modo, a
+equação do erro de posição é dada por ep  pd  v.
+Então, usando uma lei de controle feedforward e proporcional
+(7)
+v  pd + Kp ep ,
+
+Uma solução para superar o problema da inversão
+da equação de cinemática diferencial na vizinhança
+de uma singularidade é fornecida pelo método DLS
+proposto em (Nakamura  Hanafusa 1986), onde a
+inversa do Jacobiano é substituída por
+J   J T (JJ T +  I)1 ,
+
+onde Kp  kp I, a dinâmica do erro de posição é governada por ep + Kp ep  0. Portanto, a partir de uma
+escolha apropriada de kp como uma constante positiva, o sistema em malha-fechada é exponencialmente
+estável e, consequentemente, limt ep (t)  0.
+Note que, a partir das equações (1) a (7), é possível projetar um algoritmo de controle_cinemático
+para solucionar o problema de cinemática_inversa, conforme ilustrado no diagrama em blocos da Figura 1.
+Contudo, quando o robô manipulador é redundante
+(m < n) a matriz Jacobiana possui mais colunas do
+que linhas e, por isso, existem innitas soluções para
+(4). Uma abordagem interessante consiste em formular o problema de controle_cinemático como um problema de otimização linear com restrições (Siciliano
+et al. 2009).
+p
+pd
+
++
+
+e
+
+
+
+Kp
+
++
+
+
+
+v
+
+J  ()
+
+u
+
+
+
+
++
+
+Então, devido  presença de n  m graus de liberdade redundantes, a solução (6) pode ser modicada
+introduzindo-se um termo de projeção no espaço nulo
+de J, isto é,
+
+
+
+u  J  v + I  J  J q0 ,
+
+(8)
+
+onde J   J T (J J T )1 é a matriz pseudo-inversa 
+direita de J e q0 é um vetor de velocidades arbitrárias
+das juntas que pode ser especicado para satisfazer
+uma restrição adicional ao problema, com prioridade
+secundária (e.g., evitar singularidades ou desviar de
+obstáculos). Note que, a solução obtida localmente
+minimiza a norma das velocidades das juntas e permite a geração de movimentos internos para recongurar a estrutura do manipulador sem modicar a
+postura do efetuador (Siciliano et al. 2009).
+Singularidades cinemáticas
+
+A solução de (5) pode ser computada somente quando
+a matriz Jacobiana possui posto completo. Entretanto, ela pode tornar-se sem sentido quando o manipulador está em uma configuração singular e neste
+caso o sistema_de_controle (4) possui equações linearmente dependentes. É importante ressaltar que a
+inversão da matriz Jacobiana pode representar um
+grande inconveniente não apenas em uma conguração singular mas também na vizinhança de uma singularidade, onde a matriz se torna mal condicionada,
+apresentando pivôs muito pequenos e resultando em
+grandes valores de velocidades das juntas.
+
+ISBN 978-85-8001-069-5
+
+
+
+w
+w0
+
+2
+
+se w  w0 ,
+,
+
+se w < w0 ,
+
+(10)
+
+
+
+3
+
+Solução Proposta
+
+Considere uma planta SISO não-linear de 1a ordem
+descrita por
+y  k(t) u ,
+(11)
+
+Figura 1 Algoritmo de Cinemática Inversa.
+
+
+
+0,
+
+0 1 
+
+onde w  det J(q)J T (q) é a medida de manipulabilidade do manipulador, 0 é uma constante que estabelece um fator de escalamento nas congurações
+singulares e w0 é um parâmetro que dene o limite da
+vizinhança de uma conguração singular. A principal
+ideia por trás do método é amortecer as velocidades
+das juntas não-factíveis na vizinhança de uma conguração singular, permitindo ao efetuador desviar da
+trajetória de referência desejada, alterando a direção
+e magnitude do movimento (Nenchev et al. 2000).
+q
+
+
+
+pd
+
+2.3
+
+onde  é um fator de amortecimento que torna a inversão melhor condicionada de um ponto de vista numérico, e é dado por
+
+h()
+
+
+
+(9)
+
+onde u  L é a entrada escalar da planta ou a variável de controle do sistema, y é a saída da planta e
+k(t) é uma função escalar não-linear. Assumindo que
+o objetivo de controle seja rastrear uma trajetória de
+referência desejada r(t), uma lei de controle u que lineariza o sistema e garante a estabilidade assintótica
+do erro de rastreamento e  r  y é dada por
+u  (t)  r +  e  ,
+
+ > 0,
+
+(12)
+
+onde (t) é a inversa da função k(t). Agora, considere que (t) não seja computada instantaneamente
+como 1k(t), mas seja atualizada dinamicamente tal
+que k  1 (Costa 2012). Então, para estabelecer
+uma dinâmica adequada para (t), introduz-se o seguinte sinal de erro não-linear
+S  k  1 ,
+
+(13)
+
+e considera-se a função de Lyapunov 2V (S)  S 2 cuja
+derivada temporal é dada por
+V (S)  S S  S
+
+
+
+
+
+k  + k  .
+
+(14)
+
+Em vista de (14), escolhe-se a seguinte lei de atualização paramétrica
+   S k ,
+
+(15)
+
+onde  > 0, e como resultado obtém-se
+V (S)  S k    S 2 k2 .
+
+(16)
+
+Note que, V (S) depende de k. A seguir serão analisadas algumas possibilidades. Por agora, suponha o
+
+3543
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+caso mais simples em que k  0. Neste caso (15) pode
+ser reescrita como
+   ( k  1) k   k2  +  k .
+
+(17)
+
+Então, usando o operador diferencial s, pode-se explicitar  como
+
+
+1
+k
+
+1k ,
+s +  k2
+s + 1
+
+k 
+
+k 
+
+S0
+S>0
+k>0
+ < 0
+S  1
+S<0
+
+Portanto, a solução de (22) é dada por
+1
+,
+2at k2 (0) + 1
+
+(23)
+
+que converge para zero mais lentamente que qualquer
+exponencial. As propriedades do algoritmo (15) podem ser resumidas como
+(P1) k  0  (t)  (0).
+(P2) k constante
+
+   L .
+
+(P3) k  L    L .
+(P4) (t) não possui escape em tempo nito.
+3.2
+
+Inversa Filtrada de Matrizes
+
+O algoritmo (15) pode ser generalizado para inverter
+matrizes. Considere a seguinte planta MIMO nãolinear de 1a ordem descrita por
+y  K(t) u ,
+
+u  (t) vr ,
+k
+S<0
+k>0
+ > 0
+
+vr  r +  e ,
+
+(24)
+
+Figura 2 Plano   k.
+Considera-se agora o caso em que k tende para
+zero. A seguir será construído um exemplo mostrando
+que, neste caso,  pode crescer sem limites mas de maneira muito lenta. Considere uma trajetória no interior da região sombreada satisfazendo V  S 2  f (t),
+onde f (t) é uma função contínua tal que 0 < f (t) < 1
+para t. Como 1 < S < 0 e k > 0, segue de (13) que
+
+1 f
+,
+(19)
+
+k
+
+(25)
+
+onde (t) é a inversa da matriz K(t) e   T > 0.
+Novamente, considera-se que a inversa não é computada instantaneamente como K 1 (t), mas é atualizada dinamicamente. Então, para estabelecer uma dinâmica adequada para (t), introduz-se os seguintes
+sinais de erro não-lineares para a inversa  direita
+Sr  K  I ,
+
+ISBN 978-85-8001-069-5
+
+(21)
+
+onde u  Rn é a entrada da planta ou a variável de
+controle do sistema, y  Rm é a saída da planta e K 
+Rmn é uma função matricial não-linear. Assumindo
+que o objetivo de controle seja rastrear uma trajetória
+de referência desejada r(t), uma lei de controle u que
+lineariza o sistema e garante a estabilidade assintótica
+do erro de rastreamento e  r  y é dada por
+
+
+
+S>0
+k<0
+ > 0
+
+f +  f k2
+ k.
+f f
+
+k(t)  k(0)
+
+Uma propriedade importante do algoritmo proposto é
+que para k  0 tem-se que   0 e, como consequência,
+(t)  (0). A Figura 2 ilustra o plano   k com o
+lugar geométrico de S  0 e algumas trajetórias para
+diferentes condições iniciais (0). De acordo com a
+gura pode-se armar que para qualquer k constante
+a saída (t) é limitada.
+Considere agora o caso de uma função k(t) variante no tempo. A partir da gura é evidente que a
+única possibilidade para (t) crescer sem limites está
+na região delimitada por 1 < S < 0, isto é, na região
+sombreada no primeiro quadrante. Note que, quanto
+mais próximo de zero é o valor de k, maior pode ser
+o valor de . Entretanto, pode-se vericar que nesta
+região 0 < k < 1 e 0 <  < , implicando que  não
+apresenta escape em tempo nito.
+
+(20)
+
+Para uma função constante f (t)  c, com 0 < c < 1, a
+equação (21) assume a forma
+
+ c
+ .
+(22)
+k  a k3 ,
+a
+1 c
+
+Propriedades da Inversa Filtrada
+
+S<0
+k<0
+ < 0
+
+f +  f k2
+.
+S
+
+Então, substituindo (19) em (20) obtém-se
+
+(18)
+
+onde   1k2 . Deste modo,  pode ser interpretado
+como a saída de um ltro linear onde a entrada é a
+inversa 1k. Por isso, o sinal  será denominado de
+inversa filtrada da função k. Note que, quanto menor é o valor de k maior é a constante do ltro  e,
+consequentemente, mais lento é o ltro.
+3.1
+
+Por sua vez, como V  f, a partir de (14) e sabendo
+que S  0 tem-se
+
+(26)
+
+e para a inversa  esquerda
+S  K  I ,
+
+(27)
+
+onde Sr  R
+e S  R
+. Considere inicialmente
+o erro (26) e a função de Lyapunov 2 Vr  tr(SrT Sr ),
+onde tr() é a função traço. A partir de (26), a derivada temporal de Vr ao longo das trajetórias do sistema é dada por
+mm
+
+nn
+
+2 Vr  tr(SrT Sr + SrT Sr )
+ 2tr(SrT K ) + 2tr(SrT K ) .
+
+(28)
+
+3544
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Em vista de (28), escolhe-se a seguinte lei de atualização
+  K T Sr ,
+
+  T > 0 ,
+
+(29)
+
+função de Lyapunov 2Ve  eT e, cuja derivada com
+respeito ao tempo, ao longo das trajetórias do sistema,
+é dada por Ve  eT (r  J u). Então, para u  uII ,
+obtém-se a seguinte equação
+
+onde  é uma matriz de ganho de atualização. Como
+resultado, tem-se
+Vr  tr(SrT K )  tr(SrT K  K T Sr ) .
+
+(30)
+
+Similarmente, para o erro (27) considera-se a função candidata de Lyapunov, denida positiva 2 V 
+tr(ST S ), com derivada temporal ao longo das trajetórias do sistema dada por
+
+Ve  eT (I  P P T ) r  eT  P P T  e ,
+
+(37)
+
+
+
+onde P  J . Note que o termo  corresponde a uma
+parcela semi-denida negativa, independente da qualidade da estimativa da inversa dada pelo algoritmo
+de atualização (34). Além disso, a norma da matriz 
+pode ser ajustada para que o termo  prevaleça sobre
+o termo  esquerda de (37).
+
+2 V  tr(ST S + ST S )
+ 2tr(ST  K) + 2tr(ST  K) .
+
+Novamente, uma escolha para a lei de adaptação é
+  S K T ,
+
+(32)
+
+T
+
+onde    > 0 é a matriz de ganho de atualização,
+resultando em
+V  tr(ST  K)  tr(K ST  S K T ) .
+
+(33)
+
+Para o caso de manipuladores não-redundantes
+(m  n), as leis de atualização (29) e (32) são capazes
+de resolver individualmente o problema de determinação da cinemática_inversa, uma vez que as matrizes
+inversa  esquerda e inversa  direita são iguais. Por
+outro lado, para o caso de manipuladores_redundantes (m < n), as matrizes Sr e S apresentam dimensões diferentes. Para uma matriz Jacobiana com posto
+completo por linhas, isto é, rank(J)  m, existem innitas soluções X tal que JX  I, enquanto que não
+existe solução Y tal que Y J  I. A atualização de  a
+partir da matriz de erro Sr permite o rastreamento da
+trajetória no espaço operacional, porém devido a innidade de soluções, a variável de controle u apresenta
+componentes no espaço nulo de J. Estas componentes de velocidades, desenvolvidas a nível de juntas,
+não alteram a velocidade do efetuador no espaço cartesiano. Pode-se mostrar que a atualização de  a
+partir da matriz de erro S minimiza a projeção de u
+no espaço nulo de J, resultando em uma variável de
+controle ótima. Desta forma, é proposta uma lei de
+atualização que considere as duas matrizes de erro, Sr
+e S , simultaneamente
+  (S K T + K T Sr ) .
+
+(34)
+
+A lei de atualização composta (34) é facilmente obtida a partir da análise_de_estabilidade da função de
+Lyapunov Vc  Vr + V . Na próxima seção, esta nova
+proposta é aplicada ao problema de determinação da
+cinemática_inversa de robôs manipuladores_redundantes. A única exigência para a convergência do método
+é que a trajetória desejada não tenda (mais lentamente
+do que uma exponencial) para uma singularidade.
+Nas simulações, serão consideradas duas leis de
+controle,
+uI   vr ,
+uII   T J T vr .
+
+(35)
+(36)
+
+A lei (35) corresponde  proposta inicial (25). A
+lei (36) é uma modicação motivada pela análise da
+
+ISBN 978-85-8001-069-5
+
+4
+
+(31)
+
+Resultados de Simulação
+
+Nesta seção, apresentam-se os resultados obtidos através de simulação para um manipulador planar com 3
+juntas de revolução (Figura 3), portanto redundante.
+O desempenho do algoritmo de cinemática_inversa
+proposto é analisado para algumas trajetórias de interesse e comparado com o algoritmo DLS (Nakamura
+ Hanafusa 1986).
+(px , py )
+
+Trajetória
+
+3
+
+2
+
+q3
+
+q2
+
+1
+y
+q1
+x
+
+Figura 3 Robô planar redundante, com 3 juntas de
+revolução.
+O manipulador considerado possui 1  2, 2  1
+e 3  1. Considera-se kp  5, 0  0.3 e 0  1
+(Pechev 2008). Para os estudos de caso I e II utilizase ganho de adaptação   25 I, enquanto que para
+o caso III utiliza-se   100 I. As condições iniciais foram (0)  032 , qI (0)   8 3 3 T rad e
+qII (0)  qIII (0)   4 3 3 T rad. O mapeamento
+de cinemática direta para o manipulador é dado por
+
+
+
+h(q) 
+
+1 c1 + 2 c12 + 3 c123
+1 s1 + 2 s12 + 3 s123
+
+
+
+(38)
+
+onde c1  cos(q1 ), s1  sin(q1 ), c12  cos(q1 +q2 ), s12 
+sin(q1+q2 ), c123  cos(q1+q2+q3 ), s123  sin(q1+q2 +q3 ),
+e a matriz Jacobiana é obtida a partir de J(q)  h(q)
+.
+q
+4.1
+
+Estudo de caso I
+
+Inicialmente, considera-se o problema de rastreamento
+de uma trajetória livre e afastada de singularidades,
+dada em função do tempo por
+
+
+
+pId (t) 
+
+
+
+2 + 0.5 sin(0.4 t)
+.
+0.5 cos(0.2 t)
+
+(39)
+
+3545
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+2
+
+1
+
+1.5
+
+0.9
+
+0.8
+
+1
+
+Trajetória desejada
+
+0.7
+
+c
+
+0.5
+
+y
+
+Inversa Filtrada I
+Inversa Filtrada II
+DLS
+
+0
+
+0.6
+
+0.5
+
+0.5
+
+Elo 3
+Elo 1
+
+1
+
+0.4
+
+Elo 2
+
+1.5
+
+2
+1
+
+0.5
+
+0
+
+0.5
+
+1
+
+1.5
+
+2
+
+0.3
+
+2.5
+
+0.2
+0
+
+3
+
+5
+
+10
+
+15
+
+4.2
+A Figura 4 mostra a trajetória desejada. Como
+esperado, os três métodos possibilitaram o rastreamento com erro praticamente nulo. As trajetórias efetuadas e as normas dos erros de posição são mostradas
+nas Figuras 5 e 6, respectivamente. Note também que
+os resultados são praticamente coincidentes. O número de condicionamento c  min (JJ T )max (JJ T )
+é mostrado na Figura 7 e evidencia o fato de que a trajetória desejada está longe de singularidades. Desta
+forma,   0 para todo tempo t.
+
+1
+
+Inversa Filtrada I
+Inversa Filtrada II
+DLS
+Referência
+
+0.6
+
+y
+
+0.4
+
+0.2
+
+0
+
+0.2
+
+0.4
+
+0.6
+1.4
+
+1.6
+
+1.8
+
+2
+
+2.2
+
+2.4
+
+2.6
+
+25
+
+30
+
+35
+
+Figura 7 Caso I - Número de condicionamento c
+
+Figura 4 Caso I - Trajetória desejada pd
+
+0.8
+
+20
+
+tempo s
+
+x
+
+2.8
+
+x
+
+Estudo de caso II
+
+Neste caso, considera-se novamente uma trajetória livre de congurações singulares mas que, em determinado momento (t  20s), se aproxima do ponto de
+singularidade ps  (0, 0), apresentando manipulabilidade reduzida. A trajetória desejada é dada em função
+do tempo por
+
+
+
+pII
+d (t)
+
+
+
+1.1 + sin(0.2 t)
+
+.
+0.35 cos(0.2 t)
+
+(40)
+
+Os três métodos permitiram o rastreamento da trajetória desejada e evitaram a aproximação do efetuador
+de pontos de pouca manipulabilidade. As trajetórias
+efetuadas e os erros de posição são apresentados nas
+Figuras 8 e 10, respectivamente. Para os ganhos e parâmetros considerados na simulação, os métodos que
+utilizam a inversa ltrada do Jacobiano permitiram
+uma melhor aproximação (ver Fig. 9), apresentando
+erro de rastreamento menor na região próxima a origem e conduzindo o manipulador a congurações de
+menor manipulabilidade (ver Figura 11). Note que reduzindo 0 eou 0 é possível alterar o desempenho
+do método DLS, aproximando o efetuador da região
+de pouca manipulabilidade.
+
+Figura 5 Caso I - Trajetórias p
+
+1.5
+
+Inversa Filtrada I
+Inversa Filtrada II
+DLS
+Referência
+
+1
+
+0.5
+
+0.6
+
+y
+
+Inversa Filtrada I
+Inversa Filtrada II
+DLS
+
+0.5
+
+0
+
+0.5
+0.4
+
+1
+
+e
+
+0.3
+
+1.5
+0
+
+0.2
+
+0.5
+
+1
+
+1.5
+
+2
+
+2.5
+
+3
+
+x
+0.1
+
+Figura 8 Caso II - Trajetórias p
+
+0
+
+0.1
+0
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+
+35
+
+tempo s
+
+4.3
+Figura 6 Caso I - Norma do erro e
+
+ISBN 978-85-8001-069-5
+
+Estudo de caso III
+
+Neste último caso, analisa-se o desempenho dos métodos propostos para uma trajetória que contem o ponto
+
+3546
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+0.15
+
+3
+
+Inversa Filtrada I
+Inversa Filtrada II
+DLS
+Referência
+
+0.1
+
+Inversa Filtrada I
+Inversa Filtrada II
+DLS
+Referência
+
+2.5
+
+2
+
+0.05
+
+1.5
+
+y
+
+y
+
+1
+0
+
+0.5
+
+0.05
+
+0
+
+0.5
+0.1
+1
+
+0.15
+0.08
+
+0.1
+
+0.12
+
+0.14
+
+0.16
+
+0.18
+
+0.2
+
+1.5
+1.5
+
+0.22
+
+1
+
+0.5
+
+0
+
+0.5
+
+x
+
+1
+
+1.5
+
+2
+
+2.5
+
+3
+
+x
+
+Figura 9 Caso II - Trajetórias p (ampliadas)
+
+Figura 12 Caso III - Trajetórias p
+0.3
+
+0.3
+
+Inversa Filtrada I
+Inversa Filtrada II
+DLS
+
+0.25
+
+Inversa Filtrada I
+Inversa Filtrada II
+DLS
+Referência
+
+0.2
+
+0.1
+
+0.15
+
+0
+
+y
+
+e
+
+0.2
+
+0.1
+
+0.1
+
+0.05
+
+0.2
+
+0
+
+0.3
+
+0.05
+0
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+
+0.4
+0.4
+
+35
+
+0.3
+
+0.2
+
+0.1
+
+0
+
+0.1
+
+0.2
+
+0.3
+
+x
+
+tempo s
+
+Figura 13 Caso III - Trajetórias p (ampliadas)
+
+Figura 10 Caso II - Norma do erro e
+1
+
+0.6
+
+Inversa Filtrada I
+Inversa Filtrada II
+DLS
+
+0.9
+0.8
+
+Inversa Filtrada I
+Inversa Filtrada II
+DLS
+
+0.5
+
+0.4
+
+0.7
+0.6
+
+e
+
+c
+
+0.3
+0.5
+
+0.2
+
+0.4
+0.3
+
+0.1
+
+0.2
+0
+0.1
+0
+0
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+
+0.1
+0
+
+35
+
+5
+
+tempo s
+
+de singularidade ps  (0, 0). A trajetória desejada é
+dada em função do tempo por (41).
+
+
+
+2  0.1 t
+
+2  0.1 t
+
+
+(41)
+
+para 0  t  35. As trajetórias efetuadas são mostradas nas Figuras 12 e 13(ampliada) os erros de posição
+são apresentados na Figura 14 e os números de condicionamento são dados na Figura 15. Os três métodos
+analisados resultaram em trajetórias que evitaram o
+ponto de singularidade ps  (0, 0). Note que a utilização do método modicado para a inversa ltrada proporcionou um afastamento mais suave do ponto singular. As velocidades das juntas q permanecem abaixo
+de 4 rads para os três métodos analisados.
+
+ISBN 978-85-8001-069-5
+
+15
+
+20
+
+25
+
+30
+
+35
+
+tempo s
+
+Figura 11 Caso II - Número de condicionamento c
+
+pIII
+d (t)
+
+10
+
+Figura 14 Caso III - Norma do erro e
+
+5
+
+Conclusões e Perspectivas
+
+Este trabalho apresenta um algoritmo alternativo para
+o cálculo da inversa cinemática_de_robôs manipuladores, que pode ser interpretado como uma inversa ltrada. Foram apresentados vários resultados de simulação que ilustram o bom desempenho do algoritmo
+proposto. Embora neste trabalho apenas o problema
+de controle_de_posição tenha sido abordado, a aplicação do método é naturalmente estendida para o problema de controle de orientação. Simulações preliminares mostraram que o desempenho para ambos os
+casos é semelhante. Resultados bastante interessantes foram obtidos para o caso em que a posição e a
+orientação de referência não podem ser atingidas simultaneamente. Neste caso, a utilização do algoritmo
+
+3547
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+0.9
+
+Inversa Filtrada I
+Inversa Filtrada II
+DLS
+
+0.8
+
+0.7
+
+0.6
+
+c
+
+0.5
+
+0.4
+
+0.3
+
+Chiaverini, S., Siciliano, B.  Egeland, O. (1994), Review of the Damped Least-Squares Inverse Kinematics with Experiments on an Industrial Robot Manipulator, IEEE Transactions on Control
+Systems Technology 2(2), 123134.
+Costa, R. R. (2012), Model-reference Adaptive Control using Filtered Inverse, in (Submitted to)
+IEEE Conference on Decision and Control,
+Maui, Hawaii, USA.
+
+0.2
+
+0.1
+
+0
+0
+
+botics, 1st edn, Springer-Verlag Ltd., pp. 245
+268.
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+
+35
+
+tempo s
+
+Figura 15 Caso III - Número de condicionamento c
+
+proposto e o ajuste_de_ganhos permite a priorização
+de um dos objetivos de controle. Este é um tópico de
+pesquisa atualmente em desenvolvimento.
+Uma diculdade encontrada na aplicação do método ocorre quando a conguração inicial é singular.
+Nesta situação, o algoritmo de atualização da inversa
+ltrada apresentará posto reduzido, comprometendo
+o desempenho do método. A escolha de uma condição
+inicial adequada para esta matriz permite contornar
+tal problema com a lei uI , porém o mesmo não é observado para a lei uII , uma vez que a mesma inclui a
+matriz Jacobiana no cálculo. Outra condição para a
+aplicação do método é que a trajetória desejada não
+tenda para uma singularidade mais lentamente do que
+uma exponencial, o que é uma condição bastante razoável do ponto de vista prático.
+Comparado com outros algoritmos descritos na literatura, uma vantagem do algoritmo proposto é sua
+facilidade de sintonia pois possui apenas um parâmetro de ajuste um ganho de adaptação. Do ponto
+de vista computacional, o método proposto apresenta
+uma maior eciência quando comparado ao método
+DLS inverso por não requerer a inversão da matriz
+Jacobiana.
+Agradecimentos
+Os autores agradecem ao CNPq e  CAPES pelo apoio
+e suporte nanceiro, bem como aos revisores anônimos pelas críticas e sugestões valiosas que contribuiram para a melhoria do manuscrito.
+Referências
+Ahmed, S. M.  Pechev, A. N. (2009), Performance
+Analysis of FIK and DLS Inverse Kinematics
+using Six Degree of Freedom Manipulator, in
+IEEE International Conference on Robotics and
+Biomimetics, Guilin, China, pp. 14051410.
+Chiaverini, S. (1997), Singularity-robust Taskpriority Redundancy Resolution for Real-time
+Kinematic Control of Robot Manipulators,
+IEEE Transactions on Robotics and Automation
+13(3), 398410.
+
+Dixon, W. E. (2007), Adaptive Regulation of Amplitude Limited Robot Manipulators with Uncertain Kinematics and Dynamics, IEEE Transactions on Automatic Control 52(3), 488493.
+Maciejewski, A. A.  Klein, C. A. (1989), The Singular Value Decomposition Computation and Applications to Robotics, The International Journal of Robotics Research 8(6), 6379.
+Nakamura, Y.  Hanafusa, H. (1986), Inverse Kinematic Solution with Singularity Robustness
+for Robot Manipulator Control, ASME Journal
+of Dynamic Systems, Measurement and Control
+108(3), 163171.
+Nenchev, D. N., Tsumaki, Y.  Uchiyama, M.
+(2000), Singularity-Consistent Parameterization
+of Robot Motion and Control, The International
+Journal of Robotics Research 19(2), 159182.
+Pechev, A. N. (2008), Inverse Kinematics without
+Matrix Inversion, in IEEE International Conference on Robotics  Automation, Pasadena,
+CA, USA, pp. 20052012.
+Siciliano, B., Sciavicco, L., Villani, L.  Oriolo, G.
+(2009), Robotics Modelling, Planning and Control, Springer Publishing Company, Inc.
+Tchon, K.  Jakubiak, J. (2006), Extended Jacobian
+Inverse Kinematics Algorithm for Nonholonomic
+Mobile Robots, International Journal of Control
+79(8), 895909.
+Tchon, K.  Matuszok, A. (1995), On Avoiding Singularities in Redundant Robot Kinematics, Robotica 13, 599606.
+Tchon, K.  Muszynski, R. (1998), Singular Inverse
+Kinematic Problem for Robotic Manipulators A
+Normal Form Approach, IEEE Transactions on
+Robotics and Automation 14(1), 93104.
+Wampler, C. W. (1986), Manipulator Inverse Kinematic Solutions based on Vector Formulations and Damped Least-Squares Methods, IEEE
+Transactions on System, Man and Cybernetics.
+16(1), 93101.
+Wang, L.-C. T.  Chen, C. C. (1991), A Combined
+Optimization Method for Solving the Inverse Kinematics Problem of Mechanical Manipulators,
+IEEE Transactions on Robotics and Automation
+7(4), 489499.
+
+Chiaverini, S., Oriolo, G.  Walker, I. D. (2008), Kinematically Redundant Manipulators, in B. Siciliano  O. Khatib, eds, Springer Handbook of Ro-
+
+ISBN 978-85-8001-069-5
+
+3548

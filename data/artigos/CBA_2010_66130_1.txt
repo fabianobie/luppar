@@ -1,0 +1,708 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+UMA METODOLOGIA PARA APRENDIZADO SUPERVISIONADO APLICADA
+EM VEÍCULOS INTELIGENTES
+LEONARDO M. HONÓRIO1, LUIZ L. G. VERMAAS2, LUCIANO M. GONÇALVES2, MICHAEL VIDIGAL2
+1. Instituto Nacional de Ciência e Tecnologia em Energia Elétrica, Universidade Federal de Juiz de Fora
+Rua José Lourenço Kelmer, sn - São Pedro Juiz de Fora, MG, BRASIL
+E-mails leonardo.honorio@ufjf.edu.br
+2. Instituto de Engenharia de Sistemas e Tecnologia da Informação, Universidade Federal de Itajubá
+Av. BPS 1303, 37500-000 Itajubá, MG, BRASIL
+E-mails lenarth@unifei.edu.br, michael@unifei.edu.br
+
+Abstract
+ The goal of this work is the development of a methodology for a vehicle to automatically learn how to drive and perform maneuvers itself. This will be done through the observation of the driver behavior in different situations, generating a
+knowledge base about the vehicle state, the environment and the driver actions. The methodology has three phases. The first one
+is the creation of a data base of information about the vehicle and the environment. The second phase is the extraction of the
+driver knowledge from the data base and the induction of a Fuzzy System. The algorithm used to solve this phase applies concepts of Gradient-based Artificial Immune Systems with two different populations of antibodies one for learning and the other
+one for optimization. By using a co-evolution process of both populations, it is possible to exchange information between them,
+as they depend on each other, avoid local optima and increase the generated system fitness. The last phase is the application of
+the Fuzzy System to the vehicle. In order to validate this proposal, the methodology was tested in two real situations steering
+control and parallel parking maneuvers. The achieved results have proved the efficacy of the proposed algorithm.
+Keywords
+ Intelligent Vehicles, Supervised Learning, Optimization, Fuzzy Systems, Artificial Immune Systems.
+Resumo
+ O objetivo deste trabalho é o desenvolvimento de uma metodologia que possibilite o aprendizado_supervisionado de
+tarefas de navegação e realização de manobras em veículos_inteligentes. Isto será feito através da observação do comportamento
+de um motorista humano em diversos cenários criando, desta forma, uma base de conhecimento capaz de lidar com uma grande
+quantidade de incertezas. A metodologia proposta consiste em 3 fases. A primeira é a criação de um banco_de_dados com informações do ambiente e do próprio veículo. A segunda fase consiste na extração do conhecimento do motorista contido na base de
+dados através da indução de um sistema de lógica_difusa. A implementação do algoritmo para solucionar este problema, aplica os
+conceitos de Sistema Imunológico Artificial baseado em Gradiente com duas populações distintas de anticorpos uma para aprendizagem e outra para otimização. A fase final é a aplicação do conjunto fuzzy no veículo autônomo. Para validar esta proposta, a metodologia foi aplicada em situações reais de navegação e estacionamento de um veículo inteligente. Os resultados práticos
+obtidos para os problemas de controle_de_direção e estacionamento em vaga paralela comprovaram a eficácia do algoritmo proposto.
+Palavras-chave
+ .
+
+1
+
+veículos participantes do Darpa Grand Challenge e
+Darpa Urban Challenge. O envolvimento de diversas universidades, principalmente dos EUA, em
+parceria com empresas do setor automobilístico, faz
+desta competição uma vitrine para o que existe de
+mais desenvolvido em V.I..
+O vencedor do Urban Challenge 2007, denominado Boss, é uma Chevy Tahoe que utiliza um sistema de percepção, software de planejamento e controle para tomar decisões sobre como navegar de forma
+segura em condições de tráfego em ambientes urbanos (Baker  Dolan 2008). Este veículo foi equipado
+com mais de doze sensores do tipo laser, radares e
+câmeras. Um algoritmo de alto nível para planejamento de rota determina o melhor trajeto em uma
+malha rodoviária. Além disso, o controle de navegação é capaz de lidar com obstáculos estáticos e dinâmicos detectar pista, limites da rodovia, vaga de
+estacionamento, sinais de parada e limites de velocidade. Toda esta tecnologia permite ao Boss navegar
+de forma autônoma, obedecer a regras de trânsito,
+
+Introdução
+
+Veículos Inteligentes (V.I.) não são mais tecnologias
+visionárias que poderiam estar presentes em situações reais em um futuro muito distante. Desde aplicações mais simples de auxílio ao motorista, tais
+como o controle eletrônico de velocidade ou sistemas
+de frenagem antitravamento (ABS), até as mais complexas, tais como sistemas militares autônomos de
+alta tecnologia ou sistemas_automáticos de estacionamento de veículos, estas tecnologias estão se tornando cada vez mais comuns na atualidade (Bishop,
+2000).
+Neste artigo o termo V.I. será utilizado para designar veículos terrestres não-holonômicos com capacidade de perceber o ambiente onde ele está, através de sensores, e tomar decisões estratégicas autônomas de navegação e de controle_de_direção.
+Um bom ponto de partida para a identificação do
+estado da arte em V.I. é analisar as características dos
+
+1028
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+seguir outros veículos mantendo distância segura,
+estacionar em uma vaga e reagir a condições dinâmicas, tais como rodovias interditadas, passagem de
+pedestres ou demais obstáculos.
+Já o veículo Stanley (Thrun et al. 2006), vencedor do Grand Challenge 2005, é um Touareg R5 da
+Volkswagen. O veículo é atuado através de um sistema drive-by-wire, incorporando medições de
+DGPS e sistema de navegação inercial. Quando em
+movimento, o ambiente é percebido através de 4
+scanners laser, sistema de radar, um par de câmeras
+stereo e um sistema de visão monocular. Dados do
+veículo, tais como velocidade e ângulo da direção,
+são obtidos através da interface de comunicação
+Controller Area Network  CAN do próprio veículo.
+Todo o processamento é feito em 6 computadores
+Pentium alimentados por um sistema auxiliar de
+baterias. Uma característica importante deste projeto
+é a possibilidade de ativar e desativar o sistema autônomo, permitindo que o motorista a qualquer momento, mesmo com o veículo em movimento, possa
+assumir o controle_de_direção.
+A análise dos documentos técnicos (DARPA,
+2005 DARPA 2007 Chen, 2004 and Ozguner ET al.
+2007) dos cinco primeiros colocados nas duas competições promovidas pelo Darpa em 2005 e 2007,
+mostra que a utilização de DGPS, sistemas de navegação inercial, câmeras, e sensores laser são pontos
+comuns entre eles, variando em quantidade, local de
+instalação, especificações técnicas e fabricante. Outro aspecto importante a ser considerado são os sistemas_de_controle, ou a inteligência do veículo. Os
+sistemas_de_controle de alto nível destes veículos
+utilizam algoritmos baseados em Lógica Fuzzy, Algoritmos Genéticos, Redes Neurais, Planejamento e
+outras técnicas de Inteligência Artificial.
+Além da grande visibilidade alcançada pelos desafios propostos pelo DARPA nos EUA, diversos
+outros grupos ao redor do mundo já se propuseram,
+na última década, a desenvolver um projeto rentável
+e seguro de direção autônoma. Alguns programas de
+grande porte na Comunidade Européia, tais como o
+Program for European Traffic with Highest Efficiency and Unprecedent Safety  PROMETEUS (Figueiredo et al. 2001). Outro programa de destaque na
+Europa é o Dedicated Road Infrastructure for Vehicle Safety in Europe  DRIVE. Estes programas
+ampliam o espectro de pesquisas e aplicações para os
+chamados Sistemas de Transporte Inteligente abordando a interação entre V.I.s entre si e com a própria
+rodovia.
+Ainda na Europa o programa AUTOPIA (Naranjo et al. 2006), conduzido por pesquisadores espanhóis, do Instituto de Automática Industrial, também
+estão focadas na direção autônoma cooperativa. Estes
+pesquisadores equiparam três automóveis comerciais
+com o objetivo de dirigirem automaticamente em um
+circuito fechado. A pista, com 1 km de comprimento
+total, permite reproduzir a maioria das situações de
+tráfego, tais como virar, parar e sair, ultrapassagem,
+dirigir em comboio e estacionar entre outras. Além
+do GPS instalado nos três carros, o primeiro usa
+
+também um scanner a laser para detecção de obstáculos, o segundo utiliza um sistema de visão_artificial
+para identificação da pista e o terceiro utiliza um
+sistema de visão stereo usado para detecção de pedestres e obstáculos na pista. Um recurso especial
+utilizado neste projeto foi uma rede_local sem fio (WLAN) para transmitir o dado de correção diferencial
+do GPS base para os GPS receptores instalados nos
+carros.
+Outros projetos de destaque na área de V.I. também são realizados no Japão. Estes projetos tiveram
+início na década de 70, podendo-se destacar três
+importantes contribuições o projeto denominado
+Intelligent Vehicle (Tsugawa et al. 1991) , o projeto Personal Vehicle System  PVS (Graefe  Kuhnert 1988) desenvolvido no final da década de 80 e o
+projeto Automated Highway Vehicle System 
+AHVS (Suzuki et al. 1992 Tachibana et al. 1992)
+desenvolvido pela Toyota. Além da Toyota outras
+montadoras de automóveis no Japão vêm conduzindo
+pesquisas em V.I., focadas principalmente em sistemas de visão_computacional. Assim como acontece
+na Europa, o avanço tecnológico nesta área é tão
+grande que as pesquisas não se restringem apenas ao
+V.I. isoladamente, mas também ao Sistema de
+Transporte Inteligente (Ohtsuka, 2008) com apoio
+governamental.
+Conforme apresentado nesta seção, diversas abordagens já foram propostas para controlar a navegação de veículos_inteligentes, sendo a abordagem
+mais comum no desenvolvimento de algoritmos de
+controle de alto nível, a utilização de técnicas de IA
+em algoritmos pré-programados.
+O objetivo deste trabalho é explorar um tema
+pouco pesquisado nas aplicações de Veículos Inteligentes uma metodologia que permita que o veículo
+aprenda manobras de dirigibilidade com um motorista humano.
+2
+
+Plataforma de Teste Projeto Driving4u
+
+A proposta apresentada neste artigo é parte de um
+projeto de pesquisa mais abrangente do Grupo de
+Automação e Tecnologia da Informação da UNIFEI,
+que recebeu a denominação Driving4u. O projeto
+Driving4u tem por objetivo a estruturação de uma
+plataforma de trabalho para pesquisa e desenvolvimento na área de Veículos Inteligentes. Esta plataforma consiste de uma pista para testes e um veículo
+equipado com sistemas de percepção e de atuação
+eletrônico, assim como microcomputadores para
+aquisição, tratamento de dados e processamento dos
+algoritmos de controle utilizando técnicas de IA.
+A pista de testes é um circuito fechado que permite a realização das principais manobras em situações de trânsito, tais como parar e sair em cruzamentos, ultrapassagem de veículos, manter distância
+segura em relação a outros veículos, estacionar, realizar curvas com ângulos diferentes, entre outras.
+
+1029
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Figura 1. Diagrama em Blocos do Sistema de Controle do Veículo Inteligente  Projeto Driving4u
+
+O veículo pode ser operado de duas formas manual, onde todos os dados obtidos com a percepção
+do ambiente_externo e das ações do motorista são
+armazenados em um banco_de_dados ou automático,
+onde o veículo recorre ao conhecimento previamente
+construído para executar uma determinada manobra
+de direção.
+O sistema de percepção proposto consiste de
+DGPS, acelerômetro, giroscópio, sensores ultrasônicos e laser, assim como medição_de_velocidade do
+veículo através dos sensores já instalados nas rodas.
+A atuação no veículo é realizada através de um
+servomotor instalado na barra de direção e no pedal
+de freio permitindo o acionamento eletrônico dos
+mesmos. A mudança na alavanca de transmissão
+automática para as posições Estacionamento, Dirigir e Ré também é implementada através de um
+servomotor instalado no mecanismo da alavanca.
+Finalmente, a aceleração é realizada através do sistema Cruise Control do próprio veículo que atua
+diretamente no módulo eletrônico de controle do
+motor.
+A diversidade destes elementos junto com o
+tempo de resposta de cada informação cria uma dificuldade para o sincronismo de informações. Para
+melhorar a compatibilidade os sensores foram divididos em clusters de acordo com a finalidade, importância e a necessidade de resposta. A Figura 1 mostra
+a estrutura de controle do veículo inteligente e a
+Figura 2 mostra os principais componentes instaladosprevistos no projeto.
+
+Figura 2. Diagrama de sensores e atuadores do veículo.
+
+3
+
+Aprendizado Supervisionado de Sistemas
+Fuzzy em Veículos Inteligentes
+
+3.1 Objetivo Geral
+Conforme apresentado na Introdução deste trabalho,
+diversas abordagens já foram propostas para controlar a navegação de veículos_inteligentes algumas das
+principais são controladores Fuzzy, Redes Neurais
+Artificiais, Planejamento, Sistemas Classificadores,
+além de técnicas de localização e rastreamento por
+visão_computacional e instrumentação avançada
+(técnicas utilizadas isoladamente ou de maneira
+combinada). No entanto, a abordagem mais comum
+no desenvolvimento de algoritmos de controle de alto
+nível aplicados em V.I é a utilização de técnicas de
+IA em algoritmos pré-programados.
+
+1030
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+O objetivo deste artigo é explorar um tema pouco pesquisado nas aplicações de Veículos Inteligentes uma metodologia que permita que o veículo
+aprenda manobras de dirigibilidade com um motorista humano. Ao final deste processo deseja-se substituir o controlador_humano (motorista) representado
+na Figura 3 por um controlador_fuzzy que aprendeu a
+dirigir com o motorista e que seja capaz de executar suas funções.
+
+O processo de otimização inicia com a geração
+de uma população de anticorpos, onde cada indivíduo é responsável por guardar informações sobre a
+posição e formato de todas as funções de pertinência
+associadas com as variáveis do sistema. Já o processo
+de aprendizado inicia com a análise do Banco de
+Dados Inicial (BDI) e a construção de uma Tabela de
+Regras Potenciais (TRP). A TRP é construída utilizando-se a idéia essencial apresentada em (Wang 
+Mendel 1992), mas sem a abordagem de evitar inconsistências. Portanto, esta tabela conterá todas as
+possíveis regras necessárias para representar o banco
+de dados inicial. Continuando este processo, a segunda população de anticorpos deve decidir que
+regras da TRP podem ser usadas para melhor representação do BDI. Estas duas populações co-evoluem
+juntas até o final do processo de geração de regras
+fuzzy. Importante ressaltar que embora as duas populações possuam uma forte relação entre si e o mesmo
+objetivo, durante o processo de co-evolução, melhorias em uma população podem causar impactos negativos na outra. Para evitar este tipo de conflito, a
+otimização de Pareto é utilizada de forma que uma
+população apenas evoluirá se esta não prejudicar a
+outra.
+Conforme já mencionado, regras fuzzy estão diretamente relacionadas e dependem fortemente das
+funções de pertinência. É impossível extrair qualquer
+regra de uma base de dados se estas funções não
+tiverem sido definidas. Assim, o primeiro passo para
+a construção de um sistema_fuzzy é a geração de uma
+população de funções de pertinência fmPopfAb1,,fAbn. Para cada indivíduo fAbi, uma
+nova população rPopi  riAb1,,riAbm responsável
+pelo aprendizado das regras de inferência é criada e
+evolui utilizando Sistemas Imunológicos Artificiais.
+Após o aprendizado das regras, cada indivíduo fAbi
+da primeira população terá sua função de pertinência
+otimizada. Este processo é ilustrado na Figura 4.
+Como o objetivo principal deste processo é representar de forma precisa um sistema real a partir de
+um banco_de_dados, o fitness do anticorpo fAbi é
+dado por
+
+Figura 3. Interação Motorista  Veículo - Ambiente
+
+3.2 Detalhamento da Metodologia Proposta
+A metodologia proposta é dividida em 3 fases
+geração de um banco_de_dados de manobras, indução de um Sistema Fuzzy a partir deste banco
+de dados e aplicação do Controlador Fuzzy no V.I.
+para navegação e realização de manobras.
+Para gerar um banco_de_dados de manobras é necessário equipar o veículo com um conjunto de sensores capazes de perceber o ambiente_externo. É
+necessário também registrar variáveis internas do
+próprio veículo, tais como velocidade, ângulo da
+roda, distância percorrida e ações do motorista acelerar, frear, virar direção. Desta forma será possível
+observar o comportamento do motorista em diversos
+cenários e armazenar estas informações em um banco
+de dados para utilização futura.
+A segunda fase consiste na extração do conhecimento do motorista contido na base de dados através da indução de um sistema de lógica_difusa. A
+geração deste Sistema Fuzzy implica na geração de
+regras fuzzy e funções de pertinência (FP) que representem adequadamente o conjunto de exemplos de
+treinamento. Assim, o problema é dividido em duas
+partes uma responsável pelo aprendizado das regras
+e a outra responsável pela otimização das funções de
+pertinência. A implementação do algoritmo para
+solucionar este problema, aplica os conceitos de
+Sistema Imunológico Artificial baseado em Gradiente (Vermaas et al. 2009) com duas populações distintas de anticorpos uma para aprendizagem e outra
+para otimização. Através do processo de co-evolução
+das duas populações é possível trocar informações
+entre elas, uma vez que as mesmas são interdependentes, evitar o surgimento de ótimos locais e aumentar o fitness do sistema gerado.
+
+
+
+
+   
+
+
+
+ 
+
+(1)
+
+Onde
+- Ne é o número de amostras do banco_de_dados,
+- ipDSa representa o valor de saída da amostra a,
+- Penalty(.) é a uma função que retorna um valor
+muito alto (isto é 1099) se fAbi não possui nenhuma
+regra associada a ipDsa.
+A descrição detalhada do processo de indução de
+regras fuzzy e de como cada população evolui individualmente é apresentada em (Vermaas et al. 2009).
+
+1031
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+fAb1
+
+Gerar
+rPop1  rAb1, ..., rAbn
+
+Evoluir
+rPop1
+
+Evoluir
+fmPop
+
+Gerar
+fmPop  fAb1, ..., fAbn
+
+fAbn
+
+Gerar
+rPop1  rAb1, ..., rAbn
+
+Sistema
+Fuzzy
+
+Evoluir
+rPopn
+
+Figura 4. Processo Co-evolucionário
+
+por
+4
+
+Aplicação e Resultados Obtidos
+
+ carro
+
+e o vetor ângulo da trajetória
+
+trajetória . O
+
+ErroAngular pode assumir os valores linguísticos
+Esquerda ou Direita.
+A Figura 6 ilustra os vetores ângulo do carro,
+ângulo da trajetória e a variável ErroAngular.
+O cálculo destes ângulos utiliza as seguintes equações
+
+A metodologia proposta neste trabalho foi aplicada
+em um veículo real, uma Zafira  GM automática,
+equipada conforme descrição na seção 2 deste
+artigo. A Figura 5 apresenta uma foto do veículo
+utilizado nos testes práticos. Mais especificamente
+foram realizados dois tipos de manobras navegação em um circuito fechado e estacionamento em
+vaga paralela (balisa).
+Nos dois casos os exemplos de treinamento
+que geram o banco_de_dados foram obtidos enquanto um motorista dirigia o veículo. Os dados
+gerados foram utilizados para o aprendizado do
+Sistema Fuzzy responsável por controlar o veículo
+em modo automático.
+
+ Ycatual  Ycanterior
+ Xcatual  Xcanterior
+
+ carro  arctg 
+
+
+
+
+
+ Yt próximo  Ycatual 
+
+
+Xt
+
+Xc
+próximo
+atual
+
+
+
+ trajetória  arctg 
+
+(2)
+
+(3)
+
+Onde
+
+Xcatual , Ycatual
+
+ coordenadas da posição atual
+
+do carro medidas pelo DGPS
+
+Xcanterior , Ycanterior
+
+ coordenadas da posição
+
+anterior do carro medidas pelo DGPS 
+
+Xt próximo , Yt próximo  coordenadas do próximo
+ponto da trajetória
+Os ângulos são corrigidos de forma que eles assumam apenas valores positivos. Desta forma, um
+vetor apontando para o norte aponta para 00, aumentando gradativamente em sentido anti-horário. Finalmente, o ErroAngular, é calculado por
+Figura 5. Veículo Inteligente  Projeto Driving4u
+
+Erro  Angular   trajetória   carro
+4.1 Sistema de Controle de Direção para Navegação
+em um Circuito com Waypoints
+
+(4)
+
+As variáveis do sistema_de_controle de navegação são computadas utilizando dados de um DGPS e
+do mapa contendo os Waypoints da trajetória a ser
+seguida. A variável de saída do controlador_fuzzy é
+Direção e indica a direção que o volante do veículo
+deve ser virado para corrigir o erro de entrada. Da
+mesma forma, a variável Direção assume os valores
+linguísticos Esquerda ou Direita, indicando respectivamente que o volante deve virar no sentido antihorário ou horário.
+Para gerar o banco_de_dados de navegação em
+um circuito mapeado por waypoints, o carro foi dirigido por um motorista no trajeto apresentado na
+Figura 7.
+
+O objetivo do Sistema de Controle de Direção é
+permitir que o Veículo Inteligente seja capaz de
+seguir uma trajetória. Esta trajetória é determinada
+por pontos, chamados Waypoints, que representam
+coordenadas globais válidas e alcançáveis. O veículo
+Inteligente deverá ser capaz de trafegar de uma posição global inicial para uma posição global objetivo
+seguindo os Waypoints.
+Para modelar o desvio lateral e angular percebido pelo motorista humano em relação  rota a ser
+seguida, utilizou-se a variável fuzzy ErroAngular.
+Esta variável consiste na diferença de ângulo entre
+dois vetores o vetor ângulo do carro, representado
+1032
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+tória a ser seguida pelo veículo aplicando o controlador_fuzzy aprendido.
+Durante o percurso registrou-se as coordenadas
+GPS da trajetória, executada automaticamente pelo
+veículo, comparadas com a trajetória mapeada. O
+resultado, apresentado na Figura 10, mostra a performance do veículo em velocidade média de 15
+kmh durante o percurso.
+
+Figura 6. Vetores ângulo do carro, da trajetória e Erroangular
+
+Este circuito apresenta exemplos de treinamento
+com retas, curvas acentuadas e curvas leves  esquerda e  direita. Esta diversidade é importante para
+o aprendizado do sistema_fuzzy.
+Figura 9. Waypoints do circuito de 800m de extensão utilizado
+para teste do Controlador Fuzzy
+
+Figura 7. Circuito de teste utilizado para treinamento do veículo
+
+As regras obtidas a partir destes exemplos de
+treinamento geraram as regras fuzzy apresentadas na
+Tabela 1 e as funções de pertinência ilustradas na
+Figura 8.
+
+Figura 10. Comparação das Trajetórias Mapeada e Executada
+
+4.2 Estacionamento em Vaga Paralela
+
+Tabela 1 - Regras obtidas para navegação
+Antecedente
+
+SE ErroAngular  E
+SE ErroAngular  D
+SE ErroAngular  C
+
+ErroAngular
+
+ENTÃO
+ENTÃO
+ENTÃO
+
+Uma das mais atraentes situações de direção autônoma, inclusive comercialmente, refere-se  manobra
+de estacionamento paralelo ou baliza. Esta tarefa
+específica vem atraindo a atenção de pesquisadores e
+da indústria, levando a uma variedade de estratégias
+de implementação.
+Nesta aplicação utilizou-se a estratégia de estacionamento baseada em um controlador_fuzzy com
+realimentação de três variáveis de entrada  - ângulo
+do carro em relação  vaga, XA  distância do carro
+até o limite da vaga e YD  distância do carro até o
+meio fio, conforme ilustrado na Figura 11.
+O banco_de_dados para treinamento deste controlador_fuzzy foi gerado a partir de diversas manobras
+de estacionamento bem sucedidas. Desta forma, os
+exemplos de treinamento consideram as possíveis
+variações nesta manobra.
+
+Consequente
+Direção  D
+Direção  E
+Direção  C
+
+Direção
+
+Figura 8. Memberships para Controlador Fuzzy de Navegação
+
+O controlador_fuzzy gerado para navegação do
+V.I., utilizando as regras e memberships apresentados
+na Tabela 1 e na Figura 8 respectivamente, foi aplicado em um cenário diferente daquele utilizado para
+o treinamento. A Figura 9 apresenta uma foto do
+circuito de 800m e os Waypoints que definem a traje-
+
+1033
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+As regras obtidas a partir dos exemplos de treinamento apresentados na Figura 12 geraram as regras
+fuzzy apresentadas na Tabela 2 e as funções de pertinência ilustradas na Figura 13.
+Tabela 2  Regras obtidas para estacionamento paralelo
+Antecedente
+
+SE XA  G
+SE XA  G
+SE XA  M
+SE XA  P
+SE XA  P
+
+Figura 11. Variáveis consideradas no problema de estacionamento
+paralelo
+
+A Figura 12 apresenta um gráfico com os exemplos
+de treinamento utilizados para aprendizado do controlador_fuzzy responsável pelo estacionamento paralelo.
+Manobra 1
+
+Manobra 2
+
+Manobra 3
+
+YD  G
+YD  G
+YD  G
+YD  G
+YD  P
+
+E
+E
+E
+E
+E
+
+P
+G
+G
+G
+G
+
+Consequente
+Direção  C
+
+ENTÃO
+ENTÃO
+ENTÃO
+ENTÃO
+ENTÃO
+
+Direção  D
+Direção  D
+Direção  C
+Direção  E
+
+XA
+
+YD
+
+
+
+Direção
+
+Manobra 4
+
+2,5
+
+Distância y - metros
+
+E
+E
+E
+E
+E
+
+Figura 13. Funções de Pertinência para Controlador Fuzzy de
+Estacionamento
+
+2
+1,5
+1
+
+A aplicação deste controlador_fuzzy em uma situação real de estacionamento paralelo mostrou a
+eficácia do sistema_fuzzy gerado através do algoritmo
+proposto neste artigo. A Figura 14 apresenta alguns
+quadros da manobra de estacionamento paralelo
+executada de forma autônoma a partir deste sistema
+fuzzy.
+
+0,5
+0
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+Distância x - metros
+
+Figura 12. Exemplos de TreinamentoEstacionamento Paralelo
+
+Figura 14. Estacionamento paralelo executado de forma autônoma utilizando o sistema_fuzzy aprendido com o motorista humano.
+
+1034
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Naranjo, J Gonzalez,C. Pedro,T. Garcia,R.
+Alonso, J and Sotelo, M (2006). AUTOPIA
+Architecture for Automatic Driving and
+Maneuvering. IEEE Proc. Intell. Transp. Syst.,
+pp. 1220-1225.
+Ohtsuka, E (2008). Communications policy and ITS
+in Japan. 8th International Conference on ITS
+Telecommunications, pp.24-24.
+Ozguner, U. Stiller, C. and Redmill, K (2007).
+Systems for Safety and Autonomous Behavior in
+Cars The DARPA Grand Challenge Experience.
+Proc. IEEE, vol. 95, no. 2, pp. 397  412.
+Suzuki, T. Aoki, K. Tachibana, A. Moribe, H. and
+Inoue, H (1992) An automated highway vehicle
+system using computer_vision - Recognition of
+white
+guidelines. in 1992 JSAEAutumn
+Convention Proc. 924, vol. 1, pp. 161-164.
+Tachibana, A. Aoki, K. and Suzuki, T (1992). An
+automated highway vehicle system using
+computer_vision -A vehicle control method using
+a lane line detection system-, in 1992 JSAE
+Autumn Convention Proc. 924, vol. 1, pp. 157160.
+Thrun, S. Montemerlo, M. and Dahlkamp, H (2006).
+Stanley The robot that won the DARPA Grand
+Challenge. Journal of Field Robotics, vol 2, no.
+9, pp. 661-692.
+Tsugawa, S. Hirose, T. and Yatabe, T (1991).
+Studies on the intelligent vehicle. Rep.
+Mechanical Eng. Lab., no. 156.
+Vermaas, L.L.G. Honorio, L.M. Freire, M. and
+Barbosa, D (2009). Learning Fuzzy Systems by
+a Co-Evolutionary Artificial Immune-Based
+Algorithm. Lecture Notes in Artificial
+Intelligence, pp 312-319.
+Wang, L. and Mendel, J.M (1992). Generating Fuzzy
+Rules by Learning from Examples. IEEE
+Transactions on Systems, Man, and Cybernetics
+6, vol. 22, pp. 1414-1427.
+
+5 Conclusão
+Este trabalhou propôs uma metodologia aplicada em
+veículos_inteligentes para aprendizado_supervisionado de regras de direção e manobras baseada no comportamento do motorista humano. A metodologia
+consiste em obter um banco_de_dados através do
+sistema de percepção do veículo, gerar um sistema
+fuzzy a partir deste banco_de_dados e finalmente aplicar o sistema_fuzzy para controlar o veículo de forma
+autônoma.
+Para a implementação desta metodologia, foram
+aplicadas técnicas de Aprendizado de Máquina, Lógica Fuzzy e Sistemas Imunológicos Artificiais baseados em gradiente e clusterização.
+O algoritmo proposto foi avaliado através da aplicação desta metodologia em um problema real de
+navegação de um veículo autônomo em circuitos
+mapeado por DGPS e no estacionamento em vaga
+paralela. Os resultados obtidos nos casos reais demonstraram a viabilidade e a eficácia deste algoritmo.
+Agradecimentos
+Este projeto de pesquisa tem apoio financeiro da
+Financiadora de Estudos e Projetos  FINEP e Fundação de Amparo  Pesquisa do Estado de Minas
+Gerais - FAPEMIG.
+Referências Bibliográficas
+Baker, C. R. Dolan, J.M (2008). Traffic interaction
+in the urban challenge Putting boss on its best
+behavior, IEEE International Conference on
+Intelligent Robots and Systems, pp.22-26.
+Bishop, R (2000). Intelligent Vehicle Applications
+Worldwide, IEEE Intelligent Systems and
+Their Applications, vol. 15, no 1, pp. 78-81.
+Chen, Q. et al. (2004). Ohio State University at the
+2004 Darpa Grand Challenge Developing a
+Completely Autonomous Vehicle. IEEE
+Intelligent Systems.
+DARPA Grande Challenge (2005). Disponível em
+<httpwww.darpa.milgrandchallenge05>
+Acesso em 08 Nov 2008.
+DARPA Urban Challenge (2007). Disponívem em
+<httpwww.darpa.milgrandchallengeindex.asp
+> Acesso em 08 Nov 2008.
+Figueiredo, L. Jesus, I. and Machado, J.A (2001),
+Towards the development of intelligent
+transportation systems ,
+IEEE Proc. of
+Intelligent Transportation Systems, pp. 12061211.
+Graefe, V. and Kuhnert,K (1988). A high speed
+image processing system utilized in autonomous
+vehicle guidance. in Proc. IAPR Workshop
+Comput. Vision, Tokyo, Japan, pp. 10-13.
+
+1035

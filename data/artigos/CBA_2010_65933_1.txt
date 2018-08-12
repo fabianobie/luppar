@@ -1,0 +1,815 @@
+MAPEAMENTO E CLASSIFICACAO DE TERRENOS UTILIZANDO
+APRENDIZADO SUPERVISIONADO
+Alberto Yukinobu Hata, Patrick Yuri Shinzato, Denis Fernando Wolf
+
+
+Universidade de Sao Paulo - USP
+Laboratorio de Robotica Movel - LRM
+Sao Carlos, SP, Brasil
+Emails hata@icmc.usp.br, shinzato@icmc.usp.br, denis@icmc.usp.br
+Abstract This paper presents the development of a system that classifies the navigability of irregular terrains, like streets and sidewalks. The scenario mapping has been done using a robotic platform equipped with
+a laser range finder sensor directed to the ground. Two terrain mapping algorithms has been devolped. One
+for environment fine details visualization, generating a point cloud map, and other to visualize appropriated and
+inappropriate places to robot navigation, resulting in a navigability map. In this map, it has used supervised
+learning machine methods to classify terrain portions in navigable (plane regions), partially navigable (grass,
+gravel) or non-navigable (obstacles). The classification methods employed were artificial neural networks and
+support_vector_machines. The classification results obtained by both were later compared to determine the most
+appropriated technique to execute this task.
+Keywords
+machines.
+
+Mobile robots, laser range finder, environment mapping, artificial neural networks, support vector
+
+Resumo Este artigo apresenta o desenvolvimento de um sistema de classificacao da navegabilidade de terrenos irregulares, como por exemplo, ruas e calcadas. O mapeamento do cenario e realizado atraves de uma
+plataforma robotica equipada com um sensor_laser direcionado para o solo. Foram desenvolvidos dois algoritmos
+para o mapeamento de terrenos. Um para a visualizacao dos detalhes finos do ambiente, gerando um mapa de
+nuvem de pontos e outro para a visualizacao das regioes proprias e improprias para o trafego do robo, resultando
+em um mapa de navegabilidade. No mapa de navegabilidade, sao utilizados metodos de aprendizado_de_maquina
+supervisionado para classificar o terreno em navegavel (regioes planas), parcialmente navegavel (grama, casacalho) ou nao navegavel (obstaculos). Os metodos empregados foram, redes_neurais artificais e maquinas de suporte
+vetorial. Os resultados de classificacao obtidos por ambos foram posteriormente comparados para determinar a
+tecnica mais apropriada para desempenhar esta tarefa.
+Palavras-chave
+.
+
+1
+
+Robos moveis, sensor_laser, mapeamento_de_ambientes, redes_neurais artificiais, maquina
+
+Introducao
+
+sistema_de_navegacao.
+
+Este artigo apresenta um sistema para identificacao das regioes navegaveis de um terreno desestruturado. Basicamente foram desenvolvidos dois
+conjuntos de algoritmos, um para realizar o mapeamento do ambiente e outro para a classificacao
+dos terrenos. O algoritmo de mapeamento gera representacoes computacionais do cenario de forma
+que o robo possa identificar os elementos presentes
+ao seu redor, enquanto o algoritmo de classificacao realiza a deteccao das porcoes do terreno que
+sao consideradas navegaveis para o robo e aquelas
+que nao sao.
+Para a classificacao, sao utilizados dois metodos de aprendizado_supervisionado, sendo estes
+redes_neurais artificiais e maquinas . Ao final do processo, e gerado um mapa de
+navegabilidade com a classificacao de cada porcao
+do terreno em navegavel, parcialmente navegavel
+e nao navegavel. Os resultados de classificacao obtidos pelos dois metodos de aprendizado sao posteriormente avaliados e comparados, de forma a
+determinar qual e o mais adequado para desempenhar esta tarefa. Os mapas de navegabilidade
+do terreno obtidos podem ser aplicados em algoritmos de controle_de_robos para automatizar o
+
+2
+
+Trabalhos Correlatos
+
+Existem varios metodos de mapeamento que utilizam exclusivamente sensores laser 2D. Dentre os
+mais recentes, podemos citar (Thrun et al., 2000)
+que utiliza dois sensores laser de alta resolucao
+afixados ao robo. Um sensor_laser direcionado
+para frente e utilizado para a tarefa de localizacao do robo no ambiente e o outro, direcionado
+para cima e utilizado para realizar o mapeamento
+3D do ambiente. Com o sensor nesta configuracao, e necessario que o robo esteja em movimento
+para realizar a varredura do ambiente, uma vez
+que estes sensores realizam apenas leituras horizontais. Para a localizacao do robo, sao utilizados
+dados coletado por outros robos que circulam no
+mesmo ambiente.
+Na abordagem dada por (Harrison and Newman, 2008), o sensor_laser 2D e acoplado em um
+plataforma movel fixada ao robo. Para realizar o
+mapeamento do ambiente, a plataforma rotaciona
+o laser para cima e para baixo com um perodo de
+1,2s, permitindo gerar as imagens tridimensionais
+mesmo com o robo parado. Porem, para gerar
+um mapa perfeito do ambiente, a cada leitura do
+
+122
+
+laser e necessario conhecer precisamente a inclinacao da plataforma. Isto acaba demandando um
+sincronismo perfeito entre o sensor_laser e o mecanismo de inclinacao do laser, o que nem sempre e
+possvel. Uma metodologia similar e apresentada
+em (Blaer and Allen, 2007), porem, e utilizado
+um sensor_laser 3D, descartando-se a presenca de
+uma plataforma movel. O problema desse metodo
+e o custo desses tipos de sensores que sao muito
+mais caros em relacao aos lasers 2D. No trabalho proposto em (Pfaff et al., 2007), e utilizado
+um carro_autonomo para construir mapas 3D de
+regioes mais extensas, do tamanho de vilas ou pequenas cidades. O carro e equipado com um dispositivo GPS (Global Positioning System) para a
+localizacao do robo e cinco sensores laser 2D para
+mapeamento. Tres sensores laser estao direcionados para frente e os outros dois estao fixados verticalmente em um suporte rotativo no teto do carro.
+Os sensores que estao fixados na frente sao utilizados para mapear o terreno, permitindo detectar as
+regioes navegaveis e os sensores que estao na parte
+superior possibilitam a varredura completa ao redor do carro. Em (Wolf et al., 2005) sao utilizados
+robos_moveis equipados com um sensor_laser 2D
+inclinado para baixo. A partir dos mapas gerados,
+o terreno e classificado em regioes navegaveis e nao
+navegaveis. Dessa forma, locais planos, tal como
+calcadas sao rotulados como seguros para a passagem do robo e superfcies nao uniformes como
+grama e cascalho sao avaliadas como inseguras.
+3
+
+junto de dados que modela o comportamento do
+problema (Haykin, 1998).
+Uma rede_neural consiste basicamente na interligacao dos neuronios artificiais, formando uma
+malha composta de algumas ou varias unidades de processamento_de_sinais. A estrutura da
+ANN adotada implica diretamente no algoritmo
+de aprendizado a ser utilizado. E por meio do algoritmo de aprendizado que a ANN obtem os conhecimentos necessarios para a resolucao do problema. Consequentemente, este algoritmo acaba
+por determinar a capacidade das ANNs de resolverem os problemas.
+3.2
+
+As maquinas  (SVM) tem como
+fundamento a determinacao de um hiperplano que
+maximize a margem de separacao de um conjunto de dados em classes distintas (Haykin, 1998)
+(Lorena and de Carvalho, 2007). Na fase de
+treinamento, exemplos constitudos por pares de
+entradas e sadas desejadas, sao alimentados no
+SVM para determinar os melhores parametros
+desse hiperplano. Em virtude do seu modo de
+operacao, o SVM e largamente utilizado em problemas de otimizacao e de regressao nao-linear
+(Russell and Norvig, 2003).
+O classificador mais simples, o SVM linear e
+utilizado para a separacao dos dados em duas classes. Entretanto, muitas vezes o SVM linear nao
+e capaz de determinar este hiperplano, devido a
+disposicao dos dados. Nesses casos, e utilizado
+o SVM nao-linear que contam com funcoes denominadas kernel para transferir os dados para
+uma dimensao linearmente separavel. No classificador nao-linear, sao determinados alem dos parametros do hiperplano, os parametros da funcao
+kernel que melhor ajustam os dados. Em outras
+situacoes, tem-se problemas em que e necessario
+separar os dados em mais de duas classes. Para
+isso, o SVM multiclasse propoe a separacao dos
+dados em um numero indefinido de classes. Basicamente, o SVM multiclasse determina um hiperplano para cada dois conjuntos de dados.
+
+Aprendizado de Maquina
+
+O Aprendizado de Maquina (AM) e uma area
+da Inteligencia Artificial (IA) na qual sao investigados metodos computacionais que automatizam a tarefa de aquisicao de conhecimento,
+processo tambem denominado de aprendizagem
+(Baranauskas and Monard, 2003). O AM divide os metodos de aprendizagem em tres categorias aprendizado_supervisionado, aprendizado nao-supervisionado e aprendizado_por_reforco (Baranauskas and Monard, 2003) (Mitchell,
+1997) (Carbonell et al., 1984). Neste trabalho foram utilizados dois metodos de aprendizado_supervisionado redes_neurais artificiais e maquinas
+.
+3.1
+
+Maquinas 
+
+4
+
+Mapeamento de Terrenos
+
+O mapeamento e uma das fases preliminares que
+possibilita a atuacao do robo em um ambiente desconhecido (Thrun, 2003). Com os mapas, o robo
+torna a conhecer os obstaculos que estao a sua
+volta. Neste trabalho e realizado o mapeamento
+do terreno para identificar as areas seguras para
+a navegacao. E utilizado um sensor_laser 2D disposto em um robo_movel para realizar a coleta de
+dados do ambiente.
+O mapeamento do ambiente e realizado em
+duas etapas, que estao descritas nas proximas secoes.
+
+Redes Neurais Artificiais
+
+As redes_neurais artificiais (ANNs) compreendem
+no paradigma da IA que busca a solucao dos problemas por meio da simulacao computacional dos
+mecanismos e estruturas do cerebro humano. Assim, como no modelo biologico, as ANNs sao formadas por um conjunto de neuronios e suas interligacoes, os quais sao responsaveis pelo processamento das informacoes. As ANNs determinam
+as solucoes por meio da generalizacao de um con-
+
+123
+
+4.1
+
+Mapeamento 3D de Terrenos
+
+O mapeamento 3D, consiste no modelagem dos
+pontos do terreno, coletados pelo sensor_laser, em
+uma representacao tridimensional virtual (tambem chamado mapa de nuvem de pontos). Este
+tipo de mapa e capaz de representar cenarios com
+um alto nvel de detalhes. Detalhes do algoritmo
+de mapeamento 3D podem ser obtidos em (Hata
+and Wolf, 2009).
+4.2
+
+Figura 1 Plataforma robotica utilizado nos experimentos.
+
+Mapa de Navegabilidade do Terreno
+
+A quantidade de dados que um mapa de nuvem
+de pontos possui pode tornar o processo de busca
+por obstaculos muito lento. Por essa razao, e interessante construir mapas mais compactos que
+possibilite ao algoritmo de classificacao analisar
+porcoes do terreno, ao inves de pontos do terreno.
+Dessa forma, o algoritmo de mapeamento foi remodelado para criar mapas reduzidos do terreno,
+chamados de mapas de navegabilidade.
+O mapa de navegabilidade e representado
+atraves de uma grade bidimensional, sendo que
+cada porcao, denominada celula, corresponde a
+uma regiao do terreno, o que reduz consideravelmente a quantidade de informacoes necessarias
+para descrever o terreno. Cada celula armazena
+tres valores que informam certas caractersticas da
+superfcie
+
+O algoritmo de classificacao utiliza os dados
+da altura relativa e absoluta da celula para verificar a navegabilidade. Sendo um metodo de
+AM, a classificacao e realizada atraves do modelo generalizado do conjunto de dados de treinamento. Dessa forma, para que o classificador
+funcione corretamente, e necessario que o mesmo
+seja treinado com exemplos que caracterizam adequadamente cada tipo de terreno. O classificador
+possui tres sadas, uma para cada categoria de terreno, sendo que apenas uma pode ser ativada. Por
+fim, essa sada e armazenada na celula. Para a
+classificacao foram utilizados dois metodos rede
+neural artificial (ANN) e maquina  (SVM). Estas duas tecnicas foram escolhidas pois sao citadas na literatura como eficientes
+metodos para a resolucao_de_problemas de classificacao (Haykin, 1998) (Cristianini and ShaweTaylor, 2000).
+
+1. Altura absoluta Indica a altura da celula em
+relacao ao plano do robo.
+2. Altura relativa Indica a altura da celula em
+relacao as suas celulas vizinhas.
+
+6
+
+Os experimentos foram dividos em duas etapas
+mapeamento de terrenos e classificacao de terrenos. A descricao das etapas e os resultados obtidos
+sao apresentados nas secoes a seguir.
+
+3. Navegabilidade Indica se essa celula e navegavel ou nao.
+No mapa de navegabilidade, o robo possui
+uma posicao fixa no centro da grade. Dessa forma,
+a grade se desloca conforme o movimento do robo.
+Em outras palavras, o mapa de navegabilidade
+funciona como uma janela que possui informacoes
+da area do terreno sendo explorada pelo robo. Outra informacao que deve ser computado e a navegabilidade do terreno, que e detalhado mais adiante.
+5
+
+Experimentos e Resultados
+
+6.1
+
+Mapeamento de Terrenos
+
+O primeiro experimento realizado consistiu na validacao do algoritmo de mapeamento de terrenos.
+Inicialmente, foram coletados manualmente dados
+de terrenos utilizando um robo Pioneer 3-AT equipado com um sensor_laser 2D SICK LMS 200,
+como mostrado na Figura 1. O sensor esta configurado para coletar a cada varredura, 181 pontos
+do ambiente a 10Hz.
+Foram escolhidos quatro cenarios distintos
+(rotulados como Cenario IIV) para a coleta dos
+dados, cada uma possuindo caractersticas especficas.
+
+Classificacao de Terrenos
+
+Para determinar quais partes do terreno sao trafegaveis, e utilizado um classificador que com base
+nas informacoes contidas na celula do mapa de
+navegabilidade, retorna o nvel de seguranca. O
+classificador e baseado em metodos de aprendizado_de_maquina supervisionado. Cada celula e
+classificado em tres categorias navegavel (ruas
+pavimentadas e calcadas), parcialmente navegavel (grama e cascalho) e nao navegavel (paredes e
+postes).
+
+ Cenario I Terreno inclinado com obstaculos
+e vegetacao alta nas laterais (Figura 2(a)).
+ Cenario II Terreno plano com grama baixa
+na lateral (Figura 2(b)).
+
+124
+
+(a) Cenario I
+
+(b) Cenario II
+
+(c) Cenario III
+
+(d) Cenario IV
+
+Figura 2 Ambientes utilizados nos experimentos. (a) Via com grama na lateral. (b) Rampa. (c) Via
+com grama nas laterais. (d) Paraleleppedo.
+
+(a) Mapa I
+
+(b) Mapa II
+
+(c) Mapa III
+
+(d) Mapa IV
+
+Figura 3 Mapas 3D gerados pelo algoritmo de mapeamento. Mapas I a IV correspondem respectivamente
+aos Cenarios I a IV.
+
+125
+
+ Cenario III Passagem com vegetacao de tamanhos diversos nas laterais (Figura 2(c)).
+
+rede_neural foi testada com os conjuntos de validacoes (Padrao IIV) de forma a verificar a acuracia
+dos classificadores. A Tabela 2 mostra o erro obtido por cada classificador_neural. Nota-se que as
+taxas de erro sao menores nas redes testadas com
+padroes extrados de validacao dos mesmos cenarios que a do padrao de treinamento. Alem disso,
+como mencionado anteriormente, como o Padrao
+I so tinha rotulos para duas classes (navegavel e
+nao navegavel), a rede treinada com o mesmo nao
+foi capaz de ser testada para outros padroes de
+validacao, os quais possuiam tres classes de sada.
+Para o treinamento do classificador SVM,
+foram utilizados quatro kernels diferentes linear (K0), polinomial (K1), funcao base radial
+(RBF) (K2) e sigmoid (K3). A biblioteca SVM
+Light (Joachims, 2002) foi utilizada para a criacao
+dos classificadores. Com o intuito de comparar o
+desempenho do SVM com a ANN, foram efetuados os mesmos experimentos no processo de treinamento e de validacao dos classificadores SVM.
+Dessa forma, os padroes de treinamento foram utilizados para a aprendizagem dos classificadores e
+em seguida testados com os padroes de validacao.
+A Tabela 3 mostra as taxas de erro no processo de
+classificacao dos padroes de validacao. Note que
+o algoritmo de treinamento nao convergiu para o
+kernel RBF para o Padrao IV e o Padrao V, consequentemente nao puderam ser criados classificadores obtidos por meio destes padroes. Da mesma
+forma como nas ANNs, os modelos avaliados utilizando os mesmos cenarios que os do treinamento
+obtiveram os menores erros de classificacao.
+Apos o treinamento e teste dos classificadores
+de terrenos, utilizamo-os para classificar os arquivos de registros que contem informacoes capturadas pelo sensor_laser em um trecho de terreno
+(cada arquivo de registro contem dados de um terreno (cenario) capturado pelo sensor_laser). Para
+esta tarefa utilizamos os modelos ANN e SVM que
+obtiveram os menores erros no processo de validacao de cada cenario. Na Figura 4 sao apresentados os cenarios classificados com ANN e na Figura 5 com SVM. Os pontos vermelhos se referem
+as porcoes nao navegaveis, pontos azuis as porcoes parcialmente navegaveis e pontos verdes as
+porcoes navegaveis. Nos Cenarios I, II e IV, ambos os metodos obteram resultados bem similares,
+porem quanto ao Cenario III, atraves da analise
+visual, notamos que o metodo SVM classificou incorretamente algumas celulas do mapa que eram
+parcialmente navegaveis como nao navegaveis.
+Para determinar qual tecnica de aprendizado
+de maquina alcancou os melhores resultados na tarefa de classificacao de terrenos, foi comparado o
+numero de vezes, para todos os modelos treinados,
+qual classificador obteve a menor taxa de erro para
+cada conujunto de validacao. A Tabela 4 mostra
+os resultados da comparacao. Nesta tabela podemos observar que exceto para o modelo treinado
+
+ Cenario IV Paraleleppedo com vegetacao
+nas laterais (Figura 2(d)).
+Apos a fase de coleta de dados, os arquivos de
+registro foram alimentados no algoritmo de mapeamento 3D de terrenos. Para cada cenario foi
+gerado o mapa de nuvem de pontos no formato
+VRML, cujos resultados sao apresentados na Figura 3. Nota-se que nos mapas gerados, pode-se
+recriar detalhes precisos do terreno.
+Para a criacao dos mapas de navegabilidade,
+foram utilizados os mesmos arquivos de registro
+coletados pela plataforma robotica apresentada
+inicialmente. A grade do mapa foi ajustada para
+tamanho 600  600 e celulas com dimensao de
+5cm  5cm.
+6.2
+
+Classificacao de Terrenos
+
+O passo inicial para a criacao dos classificadores
+foi a geracao de um conjunto de padroes de treinamento e um outro de validacao. Na criacao
+desse conjunto de dados, foram extradas amostras
+de celulas do mapa de navegabilidade e rotulados
+manualmente. Para cada terreno apresentado na
+secao anterior (Cenario IIV) foi criado um arquivo com padrao de treinamento e de validacao
+(Padrao IIV) utilizando amostras de celulas do
+mesmo cenario. Um arquivo adicional (Padrao V)
+que inclui o padrao de treinamento e validacao do
+Cenario IIV foi tambem gerado. Pelo fato de
+que o Cenario I visualmente nao apresentava muitas porcoes de terreno consideradas parcialmente
+navegaveis, particularmente para este terreno, os
+arquivos de treinamento e de validacao nao continham padroes rotulados nessa categoria. Na Tabela 1 sao listados os conjuntos de padroes criados
+e a quantidade de padroes de treinamento e de
+validacao contido em cada arquivo. Os modelos
+de redes_neurais e SVM criados foram treinados e
+avaliados com os Padroes IV.
+No caso da ANN, foram utilizadas redes modeladas com a arquitetura multilayer perceptron.
+A topologia da rede adotada possui 3 camadas,
+composta por 2 elementos de entrada (altura relativa e altura absoluta) e 3 elementos de sada
+(classes navegavel, parcialmente navegavel e nao
+navegavel). O numero de elementos na camada
+intermediaria foi variado, sendo que foram criadas redes com 4, 8, 16 e 32 elementos nessa camada. Para a manipulacao das ANNs, contou-se
+com a biblioteca SNNS (Zell et al., 1993). Para
+o treinamento das redes_neurais foi utilizado o algoritmo de aprendizado resilient backpropagation.
+Cada treinamento foi realizado com 10000 ciclos,
+sendo que foi constatado por metodos empricos
+que este perodo e suficiente para a generalizacao
+das redes. Apos o processo de treinamento, cada
+
+126
+
+Conjunto de padrao
+Padrao I
+Padrao II
+Padrao III
+Padrao IV
+Padrao V
+
+Terreno
+Cenario I
+Cenario II
+Cenario III
+Cenario IV
+Cenarios IIV
+
+Numero de padroes
+Treinamento Validacao
+628
+363
+783
+262
+2478
+825
+2529
+841
+6418
+2291
+
+Tabela 1 Lista do conjunto de padroes com informacoes sobre qual ambiente foi extrado os exemplos e
+o numero de padroes de treinamento e de validacao utilizados.
+
+Modelo de treinamento
+4 n.o.
+8 n.o.
+Padrao I
+16 n.o.
+32 n.o.
+4 n.o.
+8 n.o.
+Padrao II
+16 n.o.
+32 n.o.
+4 n.o.
+8 n.o.
+Padrao III
+16 n.o.
+32 n.o.
+4 n.o.
+8 n.o.
+Padrao IV
+16 n.o.
+32 n.o.
+4 n.o.
+8 n.o.
+Padrao V
+16 n.o.
+32 n.o.
+
+Padrao I
+>0,00
+>0,00
+>0,00
+>0,00
+2,29
+5.73
+16,03
+11,83
+13,36
+8,02
+11,07
+11,45
+11,45
+10,31
+11,45
+11,07
+6,87
+4,96
+4,96
+3,82
+
+Conjunto de validacao (erro)
+Padrao II Padrao III Padrao IV
+1,10
+10,67
+21,05
+0,28
+6,91
+14,15
+4,68
+7,76
+42,93
+2,20
+5,45
+33,53
+1,10
+5,45
+42,69
+3,03
+4,85
+34,72
+1,38
+4,48
+36,03
+2,75
+6,55
+37,46
+1,65
+22,67
+11,89
+5,23
+19,52
+10,23
+4,96
+20,12
+12,01
+6,34
+20,97
+11,77
+>0,00
+6,67
+13,67
+>0,00
+6,91
+11,41
+0,28
+5,94
+14,39
+>0,00
+7,27
+13,91
+
+Padrao V
+12,00
+8,38
+21,13
+15,98
+19,34
+15,89
+16,32
+17,85
+14,10
+12,79
+13,75
+14,14
+7,99
+7,16
+8,03
+8,21
+
+Tabela 2 Taxa de erro no processo de validacao das redes_neurais para cada padrao(n.o. denota o
+numero de neuronios ocultos usados na rede). As menores taxas de erros de cada modelo avaliado estao
+destacadas em negrito.
+com o Padrao III, em todos os outros o classificador por ANN obteve os melhores resultados. Em
+outras palavras, as redes_neurais classificaram melhor 13 vezes contra duas para o SVM. Alem de
+que nos resultados graficos, podemos confirmar a
+superioridade das ANNs por gerar classificacoes
+mais precisas, como mencionado para o Cenario
+III. Outra desvantagem encontrada no SVM foi
+a incapacidade do algoritmo de convergir para o
+Padrao IV e Padrao V. Uma explicacao para os
+resultados inferiores para o classificador SVM e o
+fato de que este metodo necessita do ajuste correto de diversos parametros de forma a funcionar
+corretamente.
+7
+
+Modelo treinado
+Padrao I
+Padrao II
+Padrao III
+Padrao IV
+Padrao V
+Total
+
+Classificador
+ANN SVM
+1
+0
+3
+0
+2
+2
+4
+0
+4
+0
+13
+2
+
+Tabela 4 Numero de vezes que os classificadores
+ANN e SVM obtiveram as menores taxas de erro
+para cada conjunto de validacao.
+
+de ambientes coletados por meio de um sensor_laser 2D equipado em um robo_movel.
+
+Conclusao
+
+Primeiramente, foi desenvolvido um metodo
+para criacao de mapas 3D de ambientes. Este
+mapa e composto por um conjunto de pontos que
+descrevem objetos do ambiente. Nos mapas gerados, nota-se que detalhes minuciosos dos terrenos
+
+Neste trabalho foi apresentado um metodo para
+mapeamento e classificacao de ambientes externos. Na realizacao dos experimentos para a validacao dos resultados, foram utilizados dados reais
+
+127
+
+Modelo de treinamento
+K0
+K1
+Padrao I
+K2
+K3
+K0
+K1
+Padrao II
+K2
+K3
+K0
+K1
+Padrao III
+K2
+K3
+K0
+K1
+Padrao IV
+K2
+K3
+K0
+K1
+Padrao V
+K2
+K3
+
+Padrao I
+34,35
+0,38
+0,38
+0,38
+70,61
+38,55
+38,17
+38,55
+91,60
+46,56
+48,09
+47,71
+79,77
+32,06
+32,44
+79,39
+42,37
+41,98
+-
+
+Conjunto de validacao (erro)
+Padrao II Padrao III Padrao IV
+52,62
+49,94
+41,62
+0,28
+11,76
+22,59
+2,20
+13,70
+22,59
+1,93
+12,24
+21,05
+74,10
+51,52
+68,85
+1,10
+7,27
+38,41
+1,38
+6,79
+37,46
+0,83
+7,15
+33,53
+50,96
+54,30
+43,64
+11,02
+33,70
+17,72
+10,74
+33,09
+17,48
+51,24
+54,06
+43,28
+1,10
+12,24
+20,69
+1,10
+12,00
+20,69
+-
+
+Padrao V
+45,00
+13,92
+14,32
+13,79
+62,55
+18,03
+17,37
+15,93
+47,58
+21,96
+21,56
+47,45
+12,75
+12,70
+-
+
+Tabela 3 Taxa de erro no processo de validacao dos classificadores SVM utilizando quatro diferentes
+kernels. As menores taxas de erros de cada modelo avaliado estao destacadas em negrito.
+puderam ser reproduzidos, constatando a precisao
+do algoritmo. Entretanto, aplicar um mapa de nuvem de pontos para a classificacao de terrenos nao
+seria muito interessante, pois, seria necessario realizar uma analise ponto a ponto. Dessa forma,
+uma estrutura chamada mapas de navegabilidade
+foram desenvolvidas para reduzir a quantidade de
+informacao a ser processada para a identificacao
+de obstaculo nos terrenos. A unidade basica dos
+mapas de navegabilidade sao as celulas, as quais
+representam regioes quadiculares do terreno. Utilizando esta estrutura, pode-se reduzir mais pela
+metada o volume de informacoes que seriam necessarias para a classificacao de terrenos.
+Em relacao ao sistema de classificacao de terrenos, foram abordados dois metodos baseados em
+aprendizado_de_maquina supervisionado, sendo estes, ANN e SVM. Para o treinamento dos classificadores, foram utilizados padroes de treinamento
+e de validacao extrados de ambientes reais e rotulados manualmente. Verificando os resultados
+obtidos pela validacao dos resultados, nota-se que
+o classificador por ANNs geraram classificacoes
+mais precisas. Alem disso, verificando-se os resultados graficos das classificacoes, constata-se a
+superioridade das ANNs nestes experimentos.
+8
+
+processo 5739632008-9 e 0857870-9.
+Referencias
+Baranauskas, J. A. and Monard, M. C. (2003).
+Combining symbolic classifiers from multiple inducers, Knowledge-Based Systems
+16(3) 129  136.
+Blaer, P. and Allen, P. (2007). Data acquisition
+and view planning for 3-d modeling tasks,
+Intelligent Robots and Systems, 2007. IROS
+2007. IEEERSJ International Conference
+on, pp. 417422.
+Carbonell, J. G., Michalski, R. S. and Mitchell,
+T. M. (1984). An overview of machine learning, in R. S. Michalski, J. G. Carbonell
+and T. M. Mitchell (eds), Machine Learning
+An Artificial Intelligence Approach, Springer,
+Berlin, Heidelberg, pp. 323.
+Cristianini, N. and Shawe-Taylor, J. (2000).
+An introduction to support Vector Machines and other kernel-based learning methods,
+Cambridge University Press, New York, NY,
+USA.
+
+Agradecimentos
+Harrison, A. and Newman, P. (2008). High quality
+3d laser ranging under general vehicle motion, Proc. IEEE International Conference
+on Robotics and Automation ICRA 2008,
+pp. 712.
+
+Os autores agradecem o auxlio oferecido pela
+FAPESP, processo 200802204-4, e CNPq e FAPESP ao INCT-SEC(Instituto Nacional de Ciencia e Tecnologia - Sistemas Embarcados Crticos),
+
+128
+
+(a) Cenario I
+
+(b) Cenario II
+
+(c) Cenario III
+
+(d) Cenario IV
+
+Figura 4 Resultado das melhores classificacoes utilizando ANN. Celulas vermelhas representam as regioes
+nao navegaveis, azuis as regioes parcialmente navegaveis e verdes as regioes navegaveis.
+
+(a) Cenario I
+
+(b) Cenario II
+
+(c) Cenario III
+
+(d) Cenario IV
+
+Figura 5 Resultado das melhores classificacoes utilizando SVM. Celulas vermelhas representam as regioes
+nao navegaveis, azuis as regioes parcialmente navegaveis e verdes as regioes navegaveis.
+Hata, A. Y. and Wolf, D. F. (2009). Mapeamento
+de terrenos utilizando robos_moveis e sensor_laser, Latin American Informatics Conference (CLEI), Universidade Federal de Pelotas (UFPel), Pelotas - RS, p. 49.
+
+Russell, S. J. and Norvig, P. (2003). Artificial
+Intelligence A Modern Approach, Pearson
+Education.
+Thrun, S. (2003). Robotic mapping a survey, Exploring artificial intelligence in the new millennium, Morgan Kaufmann Publishers Inc.,
+San Francisco, CA, USA, pp. 135.
+
+Haykin, S. (1998). Neural Networks A Comprehensive Foundation (2nd Edition), 2 edn,
+Prentice Hall.
+Joachims,
+T.
+(2002).
+SVM
+httpsvmlight.joachims.org.
+
+Thrun, S., Burgard, W. and Fox, D. (2000). A
+real-time algorithm for mobile robot mapping with applications to multi-robot and 3d
+mapping, Proc. IEEE International Conference on Robotics and Automation ICRA 00,
+Vol. 1, pp. 321328.
+
+light,
+
+Lorena, A. C. and de Carvalho, A. C. P. L. F.
+(2007). Uma introducao as support vector
+machines, Revista de Informatica Teorica e
+Aplicada (RITA) XIV(2) 4367.
+
+Wolf, D. F., Sukhatme, G. S., Fox, D. and Burgard, W. (2005). Autonomous terrain mapping and classification using hidden markov models, Proc. IEEE International Conference on Robotics and Automation ICRA
+2005, pp. 20262031.
+
+Mitchell, T. (1997). Machine Learning (McgrawHill International Edit), 1st edn, McGrawHill Education (ISE Editions).
+
+Zell, A., Mache, N., Hubner, R., Mamier, G.,
+Vogt, M., uwe Herrmann, K., Schmalzl,
+M., Sommer, T., Hatzigeorgiou, A., Doring,
+S., Posselt, D. and Martin, M. R. (1993).
+Snns - stuttgart neural network simulator,
+httpwww.ra.cs.uni-tuebingen.desnns.
+
+Pfaff, P., Triebel, R., Stachniss, C., Lamon,
+P., Burgard, W. and Siegwart, R. (2007).
+Towards mapping of cities, Proc. IEEE International Conference on Robotics and Automation, pp. 48074813.
+
+129

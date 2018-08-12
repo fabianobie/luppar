@@ -1,0 +1,1266 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+TECNICAS DE CONTROLE APLICADAS A QUADRIMOTORES NAVEGANDO EM
+AMBIENTES EXTERIORES
+Lucas Vago Santana, Alexandre Santos Brandao, Mario Sarcinelli-Filho
+
+
+
+Coordenadoria de Automacao Industrial, Instituto Federal do Esprito Santo, Linhares, ES, Brasil
+
+Departamento de Engenharia Eletrica, Universidade Federal de Vicosa - UFV, Vicosa - MG, Brasil
+
+
+Programa de Pos-Graduacao em Engenharia Eletrica, Universidade Federal do Esprito Santo,
+Vitoria, ES, Brasil
+Emails lucas@ifes.edu.br, alexandre.brandao@ufv.br, mario.sarcinelli@ufes.br
+
+Abstract Automatic control techniques applied to a commercial quadrotor navigating in outdoor environments are presented and tested in this work. The objective is to allow a general view of the application of methods
+commonly used in the literature, but adopting a more didactic approach, using simplifications and practical interpretations of the mathematic models involved in the design of the controllers for autonomous flight. This
+way, the contribution of this paper is focused on the formation of readers interested in to understand and to reproduce simplified methods with proven efficiency, allowing developing research using commercial equipments of
+easy access. The control applications here addressed include positioning and trajectory tracking, using a ground
+computer as auxiliary equipment to the quadrotor.
+Keywords
+
+AR.Drone, Autonomous Navigation, Outdoor Environments, UAV Control.
+
+Resumo Neste trabalho sao apresentadas e testadas tecnicas de controle_automatico aplicadas a um quadrimotor comercial navegando em ambientes_exteriores. O objetivo e proporcionar uma visao geral da aplicacao de
+metodos comumente utilizados na literatura, porem com uma abordagem mais didatica, usando simplificacoes
+e interpretacoes praticas dos modelos_matematicos envolvidos no projeto dos controladores. Dessa forma, este
+artigo contribui para formacao dos leitores interessados em entender e reproduzir metodos simplificados com
+eficiencia pratica consolidada, que permitem o desenvolvimento de pesquisas utilizando equipamentos comerciais de facil acesso. As aplicacoes de controle contempladas incluem posicionamento e seguimento_de_trajetoria,
+utilizando-se como equipamento auxiliar ao quadrimotor uma estacao computadorizada em solo.
+Palavras-chave
+
+.Drone, Navegacao Autonoma, Ambientes Exteriores, Controle de VANTs.
+
+Introducao
+
+A aplicacao de tecnicas de controle para veculos
+aereos nao tripulados (VANTs) e um assunto interessante e bastante explorado na literatura ha
+algum tempo em trabalhos como os de Castillo
+et al. (2004), Hoffmann et al. (2007), Michael et al.
+(2010) e Engel et al. (2014), que representam alguns dos resultados publicos utilizando este tipo
+de veculo. Por se tratar de uma estrutura com
+mecanismos complexos, a descricao matematica
+e os controladores usados nos VANTs sao usualmente de difcil compreensao, principalmente para
+o leitor iniciante.
+Neste trabalho, uma abordagem diferenciada
+acerca destes temas e realizada, buscando simplificar a descricao matematica de um quadrimotor e
+propor controladores automaticos de voo baseados
+nesta simplificacao. Durante a discussao das proximas secoes, aspectos relevantes do estado da arte
+sao usados para dar sustentacao teorica aos metodos apresentados e, alem disso, realizam-se voos
+experimentais que validam as suposicoes propostas. Dessa forma, a contribuicao do trabalho consiste, principalmente, na validacao_experimental
+do metodo de simplificacao matematica proposto
+atraves dos experimentos em ambientes_exteriores.
+Na sequencia do artigo, a Secao 2 apresenta
+brevemente o equipamento utilizado no desenvol-
+
+ISSN 2525-8311
+
+vimento deste trabalho, assim como informacoes
+uteis sobre o VANT escolhido, enquanto a Secao
+3 discute uma representacao matematica para o
+VANT, assim como sua simplificacao, para tornar
+o modelo mais didatico. Na sequencia, a Secao
+4 apresenta os controladores automaticos de voo
+propostos. Continuando, a Secao 5 discute brevemente a organizacao do software utilizado, seguida
+pela Secao 6, onde se apresentam os resultados experimentais obtidos neste artigo. Por fim, a Secao
+7 conclui o texto, com algumas observacoes sobre
+o desenvolvimento deste trabalho.
+2
+
+O hardware utilizado
+
+O hardware utilizado neste trabalho e composto
+por um computador portatil, funcionando como
+estacao de controle em solo onde os algoritmos sao
+implementados. A outra parte e um quadrimotor comercial da marca Parrot, modelo AR.Drone
+2.0, que pode ser visto na Figura 1. Este equipamento foi considerado para este trabalho principalmente por ter custo moderado (cerca de US
+450) e ser de facil aquisicao no mercado. Alem
+disso, este VANT possui caractersticas importantes que facilitam o desenvolvimento de codigos de
+computador para seu comando, conforme Bristeau
+et al. (2011) e no manual contido em (Piskorski
+et al., 2012). Ha no veculo um computador de
+
+665
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Figura 1 O quadrimotor Parrot AR.Drone 2.0 e
+seu modulo de GPS. Os sistemas de coordenadas
+adotados sao o global (w) e aquele fixado no
+corpo do VANT (b).
+bordo que auxilia em manobras importantes tais
+como decolagem, pouso e controle da atitude (angulos de orientacao).
+2.1
+
+et al., 2010), ate versoes mais simplificadas, que
+consideram os veculos como corpos rgidos no espaco controlados por sinais de alto nvel definidos como forcas e torques, conforme descrito em
+(Castillo et al., 2004) e (Kendoul et al., 2010).
+Neste trabalho busca-se produzir uma representacao simplificada e eficaz (do ponto de vista
+pratico) do veculo, a fim de facilitar o projeto de
+controladores. Neste contexto, a inspiracao vem
+da ideia primeiramente apresentada por Castillo
+et al. (2004), onde o veculo e modelado em funcao de sinais de controle de alto nvel, gerando as
+equacoes_diferenciais
+x  F (sin  sin  + cos  cos  sin )m
+y  F ( cos  sin  + sin  cos  sin )m
+
+(1)
+(2)
+
+para a dinamica translacional, e
+  
+
+(3)
+
+  
+
+(4)
+
+Comunicacao do VANT com um computador
+
+Atraves de protocolos de comunicacao detalhados
+em (Piskorski et al., 2012), e possvel criar uma
+rede wi-fi e assim estabelecer a comunicacao entre um computador e o VANT. Assim, e possvel
+requisitar dados dos sensores embarcados no veculo e enviar sinais de movimento para o drone.
+Os dados sensoriais disponveis ficam organizados
+como
+
+T
+q  z vx vy vz    lat lng ,
+onde z e a altitude (em m) relativa ao referencial
+global, vx , vy e vz sao as velocidades lineares (em
+ms) relativas ao referencial do corpo, e ,  e 
+sao os angulos de Euler (em rad) relativos referencial global. Os valores lat e lng sao a latitude
+e a longitude (em  ), relativos a um referencial
+geografico nao representado na Figura 1.
+Para execucao de movimentos, o computador
+de bordo do AR.Drone recebe quatro sinais de
+controle, normalizados e arranjados como
+
+T 
+
+u  u u uz u  1.0, +1.0 ,
+onde u representa um comando de modificacao
+da orientacao , u representa um comando de
+modificacao da orientacao , uz representa um comando de modificacao da altitude z e u representa um comando para modificacao da orientacao
+ (Piskorski et al., 2012).
+3
+
+O modelo simplificado do VANT
+
+O modelo_matematico de quadrimotores e bastante conhecido na literatura, possuindo desde
+versoes mais detalhadas, que incluem equacoes
+para os motores, efeitos aerodinamicos nos atuadores e no corpo do veculo, como aqueles detalhados em (Hoffmann et al., 2007) e em (Michael
+
+ISSN 2525-8311
+
+para a dinamica rotacional, onde x e y sao as posicoes globais,  e  sao angulos de Euler, m e a
+massa do veculo. Os sinais de controle de alto
+nvel do modelo sao definidos como F , representando a forca de propulsao total gerada pelos motores,  e  , representando sinais de entrada virtuais do modelo, obtidos de uma transformacao
+matematica envolvendo os sinais de torque produzidos pela combinacao das acoes dos propulsores do veculo (Kendoul et al., 2010). Chama-se
+atencao para a omissao neste modelo das equacoes
+referentes ao movimento do VANT nos graus de
+liberdade z e , a razao para isso e o controlador
+projetado para eles na Secao 4.
+As equacoes (1) a (4) se aplicam bem para
+VANTs modernos, como o AR.Drone, os quais
+possuem um computador de bordo responsavel
+por realizar o controle de baixo nvel dos rotores,
+ajustando automaticamente a propulsao e tambem a orientacao do veculo a partir dos comandos
+de movimento (u) enviados pelo usuario. Neste
+contexto, pode-se propor simplificacoes interessantes ao modelo, considerando que, na pratica,
+os voos serao realizados em condicoes de orientacao proximas ao voo pairado, com   0.0 rad e
+  0.0 rad (ha, inclusive, um parametro configuravel no computador de bordo do AR.Drone limitando sua inclinacao maxima). Nesta condicao,
+numericamente e possvel considerar uma equivalencia entre a propulsao gerada pelos rotores e o
+peso do veculo (F  mg, com g sendo a aceleracao da gravidade) como verdadeira, caso o veculo
+nao modifique sua altitude. Vale lembrar, tambem, que para pequenos angulos sin()  .
+Incluindo tais relacoes nas equacoes (1) e (2),
+pode-se reescreve-las como
+ 
+
+  
+x
+sin 
+cos 
+
+g
+,
+(5)
+y
+ cos  sin 
+
+
+666
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+onde se percebe que as orientacoes  e  modificam as posicoes x e y do veculo, esclarecendo o
+acoplamento existente entre as dinamicas translacional e rotacional.
+Na dinamica rotacional, representada nas
+equacoes (3) e (4), tambem e possvel estabelecer
+algumas simplificacoes. Porem, e relevante dizer
+que a relacao entre os sinais  e  e os comandos reais de orientacao u e u e bastante complexa. Da perspectiva da literatura, e claramente
+explicado por Michael et al. (2010), Kendoul et al.
+(2010), Brandao et al. (2014) e muitos outros autores, que o equacionamento tradicional para esta
+relacao usa parametros fsicos do veculo (momentos de inercia, distancia entre os eixos dos motores, etc.) para estabelecer formulas relacionando
+o comando eletronico dos motores e as forcas e
+torques produzidos por eles no corpo do veculo.
+Entretanto, um fator dificulta o uso deste metodo
+com o AR.Drone, pois neste veculo nao e normal
+comandar individualmente cada um dos motores,
+e sim enviar um comando u ou u , o qual e interpretado como referencia no computador de bordo
+do veculo, que se responsabiliza por modificar as
+velocidades dos motores, movimentando o VANT
+ate uma orientacao comandada. Tal observacao
+indica a existencia de um controlador de baixo
+nvel implementado no veculo, controlando sua
+atitude (angulos de orientacao).
+Sendo assim, neste trabalho se propoe considerar que a resposta dinamica do veculo aos comandos de orientacao u e u ja e controlada, retirando tal suposicao da arquitetura interna do veculo descrita em (Bristeau et al., 2011), cuja representacao matematica e aproximada pelas equacoes
+diferenciais lineares de segunda ordem
+   2
+
+ u  2    2 
+
+,
+(6)
+
+
+2 u  2    2 
+onde  ,  ,  e  sao parametros de desempenho do controlador de atitude implementado no
+computador de bordo do VANT.
+4
+
+Os controladores de voo
+
+Para o AR.Drone, e possvel regular os movimentos relativos a z e  em valores desejados fixos
+utilizando um algoritmo linear, como um controlador Proporcional-Derivativo (PD). Esta ideia ja
+foi consolidada para este veculo em alguns trabalhos, tais como (Krajnik et al., 2011) e (Engel
+et al., 2014), onde os autores mostram a eficiencia
+de algoritmos similares nesta tarefa. Sendo assim,
+utiliza-se para estas variaveis
+   p
+
+kz z  kzd z
+uz
+ p
+,
+(7)
+u
+k   kd 
+onde kPz  0.5 e kP  0.8 sao ganhos propor
+z
+cionais, kD
+ 0.3 e kD
+ 0.3 sao ganhos derivativos, obtidos atraves de ajustes experimentais,
+
+ISSN 2525-8311
+
+z  zd  z e o erro de altitude, com zd sendo
+a altitude desejada e z aquela lida dos sensores,
+  d   e o erro de orientacao, com d sendo
+a orientacao desejada e  aquela lida dos sensores.
+Para controlar a dinamica translacional, a
+explicacao e um pouco mais complexa. Neste
+trabalho, aplica-se uma estrutura hierarquica de
+controle, similar aquelas defendidas por Kendoul
+et al. (2010) e Bertrand et al. (2011). Nesta estrategia um loop externo de controle e usado para
+controlar as posicoes x e y, gerando como resultado sinais de orientacoes desejadas, que por sua
+vez representam referencias de angulo para um
+loop interno de controle de  e . As Notas 1
+e 2 formalizam esta ideia.
+Nota 1 (Controladores Independentes A)
+Bertrand et al. (2011) comprova que e possvel
+projetar controladores independentes para as
+dinamicas translacional e rotacional de VANTs,
+utilizando um princpio denominado Time-Scale
+Separation, explicando que em malha-fechada se
+a convergencia da orientacao for mais rapida que
+a da posicao, o sistema_de_controle anula os erros
+em regime_permanente.
+Nota 2 (Controladores Independentes B)
+Kendoul et al. (2010) demonstra a mesma
+situacao, porem oferecendo uma analise da estabilidade_global do sistema em cascata (dinamicas
+acopladas), atraves da propriedade denominada
+Input-to-State-Stability.
+Aplicando a proposta de controladores independentes, primeiro se estabelece o loop externo
+de controle. Para isto, define-se d e d como sinais auxiliares de controle, representando as orientacoes desejadas para o loop interno. Logo a
+equacao (5) e reescrita como
+ 
+
+  
+x
+sin 
+cos 
+d
+g
+,
+(8)
+y
+ cos  sin 
+d
+de onde se pode projetar os sinais auxiliares como
+a inversao
+
+  
+ 
+1 sin   cos 
+x
+d
+,
+(9)
+
+sin 
+y
+d
+g cos 
+com
+
+  
+
+x 
+x
+x + kPx x + kD
+x
+ d
+y  ,
+y
+yd + kPy y + kD
+y
+
+(10)
+
+onde x  xd  x e y  yd  y representam os
+erros de posicao, com xd e yd sendo os valores
+desejados e x e y os valores obtidos dos sensores,
+kPx  2.0 and kPy  2.0 sao ganhos proporcionais,
+y
+x
+e, finalmente, kD
+ 2.0 e kD
+ 2.0 sao ganhos
+derivativos.
+Substituindo (9) e (10) em (8), a dinamica do
+erro translacional, em malha-fechada, se torna
+   x
+
+x 
+
+x
+kP x  kD
+x
+
+(11)
+y  ,
+y
+kPy y  kD
+y
+
+667
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+concluindo que x, y  0 com t  , desde que
+y
+x
+kPx > 0, kD
+> 0, kPy > 0 e kD
+> 0.
+Agora, (9) e usada para determinar valores
+para as entradas de controle auxiliares como
+
+
+1
+sin x  cos y  ,
+(12)
+d  sat,
+g
+
+
+1
+d  sat,
+cos x + sin y  ,
+(13)
+g
+onde
+(
+, se     0.175 rad
+sat, () 
+0.175sign() , de outra forma
+e uma funcao de saturacao limitando a inclinacao
+ate a norma de 0.175 rad (valor escolhido por testes praticos).
+Assumindo que o loop interno de regulagem
+da orientacao seja capaz de seguir as referencias
+dadas por (12) e (13), o efeito pratico da funcao
+de saturacao e truncar a inclinacao do veculo, que
+por sua vez ira assumir momentaneamente uma
+orientacao limite constante, movendo-se em direcao a posicao desejada. Tal comportamento, eventualmente, modifica a regiao de operacao do controlador para fora da zona de saturacao, mantendo
+a estabilidade, garantida pela analise da equacao
+(11).
+Finalmente, as referencias das orientacoes sao
+passadas ao loop de controle interno como
+   
+u
+
+ d ,
+(14)
+u
+d
+pois neste caso substituindo estes sinais na equacao (6), a dinamica rotacional torna-se
+   2
+
+   2    2 
+
+ 2 d
+,
+
+ d  2    2 
+
+(15)
+
+a qual sugere que o controlador do loop interno
+sera capaz de seguir uma referencia de orientacao
+desejada, com o desempenho determinado pelos
+parametros do modelo. Tal conclusao pode ser
+obtida com uma breve analise, feita considerando
+apenas o angulo , cuja funcao de tranferencia no
+domnio de Laplace aparece como
+(s) 
+
+s2
+
+2
+d (s).
++ 2  s + 2
+
+5
+
+Arquitetura desenvolvida para os
+experimentos
+
+Para execucao dos experimentos, na estacao de
+solo foram programados alguns algoritmos representados por blocos no diagrama da Figura 2. No
+bloco Gerador de Referencias declara-se os valores desejados para a navegacao do veculo. Tais
+valores sao fixos para z e  e controlados pelo
+bloco Controlador PD correspondente a equacao
+(7). A sada deste bloco e enviada ao computador
+de bordo do AR.Drone, por sua vez modifica os
+atuadores de acordo com o requisitado.
+Para x e y os valores desejados podem variar
+no tempo, e sao controlados pela estrutura hierarquica da Secao 4. O bloco Controlador de Posicao
+se refere ao loop externo de controle, e significa a
+implementacao das equacoes (9) ate (14). A sada
+deste bloco e enviada ao AR.Drone, que executa
+tanto seu loop interno de controle da orientacao
+quanto o controle dos atuadores atraves de codigos implementados no computador de bordo do
+VANT, aos quais nao se tem acesso.
+Finalmente, o bloco denominado Filtro de
+Kalman se refere a uma implementacao baseada
+em (Santana et al., 2015), onde o codigo de um
+estimador de estados e detalhado, mostrando um
+metodo para fornecer dados sensoriais de realimentacao para os controladores, tais como posicoes e velocidades do VANT no referencial global. Na implementacao deste bloco, os calculos
+sao realizados atraves da fusao dos dados de GPS
+e dos sensores_inerciais, usando as variaveis fornecidas pelo computador de bordo do veculo em
+q. Para maiores informacoes, recomenda-se leitura de (Santana et al., 2015).
+
+(16)
+
+Utilizando-se a ideia de Bertrand et al. (2011),
+supoe-se que as referencias de angulo serao constantes durante todo o perodo de execucao do loop
+externo de controle. Logo, o comportamento da
+referencia (d ) neste intervalo de tempo e similar
+a um degrau. Pelo teorema do valor final, e simples concluir para o degrau em (16) que   d
+em um tempo t finito. Em relacao a Nota 1, se
+este tempo de convergencia for menor do que o
+
+ISSN 2525-8311
+
+perodo do loop externo de controle, a estrutura
+hierarquica funcionara corretamente. De fato, isto
+e compatvel com a realidade, conforme se comprova nos experimentos da Secao 6. Alem disso, o
+computador de bordo do AR.Drone controla sua
+orientacao (loop interno) a uma frequencia de 200
+Hz (Bristeau et al., 2011), enquanto o loop externo de controle esta configurado para rodar a 50
+Hz. Assim, considera-se que nestas configuracoes
+as Notas 1 e 2 sao validas para  e tambem para
+, de forma analoga.
+
+Figura 2 Arquitetura de software em diagrama
+de blocos.
+
+668
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+Resposta das Orientações
+
+Resposta das Posições
+
+20
+
+30
+
+40
+
+50
+
+ (rad)
+
+y (m)
+
+0
+2
+
+10
+
+20
+
+30
+
+40
+
+50
+
+z (m)
+
+1
+0
+1
+
+Referência
+Resposta
+0
+
+10
+
+20
+
+30
+
+40
+
+30
+
+40
+
+5
+
+50
+
+ (rad)
+
+x (m)
+20
+
+0
+
+10
+
+20
+
+30
+
+40
+
+10
+
+20
+
+30
+
+40
+
+10
+
+20
+
+30
+
+40
+
+Referência
+Resposta
+0
+
+10
+
+20
+
+30
+
+40
+
+0
+1
+
+50
+
+0
+
+10
+
+20
+
+T empo (seg)
+
+T empo (seg)
+
+(a)
+
+30
+
+40
+
+20
+
+30
+
+40
+
+50
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+0.5
+0
+0.5
+
+50
+
+10
+
+0
+
+50
+
+1
+
+0
+
+0.5
+
+0.5
+0
+
+2
+
+0
+
+0
+
+50
+
+0
+5
+
+50
+
+0.5
+
+0.5
+0
+
+5
+
+0.5
+
+0.5
+
+50
+
+10
+
+0
+0.2
+
+0
+
+0
+
+0.2
+
+ (rad)
+
+10
+
+2
+
+0
+
+ (rad)
+
+0.2
+0
+
+4
+
+5
+
+0
+
+y (m)
+
+0
+2
+
+Erros de Orientação
+
+Erros de Posição
+
+0.2
+
+z (m)
+
+ (rad)
+
+2
+
+ (rad)
+
+x (m)
+
+4
+
+T empo (seg)
+
+T empo (seg)
+
+(b)
+
+(c)
+
+(d)
+
+Figura 3 Experimento de navegacao entre vertices de um quadrado.
+
+50
+
+60
+
+70
+
+80
+
+90
+
+y (m)
+
+ (rad)
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+90
+
+z (m)
+
+1
+0
+Referência
+Resposta
+
+1
+2
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+90
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+2
+
+90
+
+0
+
+10
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+40
+
+50
+
+60
+
+70
+
+80
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+Referência
+Resposta
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+90
+
+1
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+90
+
+0
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+90
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+90
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+90
+
+0.5
+0
+0.5
+
+90
+
+0
+
+0.5
+
+0.5
+
+90
+
+0
+2
+
+90
+
+T empo (seg)
+
+(a)
+
+30
+
+1
+
+0
+
+T empo (seg)
+
+20
+
+2
+
+0.2
+
+0.2
+
+ (rad)
+
+x (m)
+10
+
+0
+0.2
+
+0
+
+0
+
+0.2
+
+ (rad)
+
+40
+
+0
+
+ (rad)
+
+30
+
+y (m)
+
+20
+
+0
+5
+
+0
+
+z (m)
+
+ (rad)
+10
+
+Erros de Orientação
+
+2
+
+0.2
+
+0.2
+0
+
+5
+
+ (rad)
+
+x (m)
+
+0
+5
+
+Erros de Posição
+
+Resposta das Orientações
+
+Resposta das Posições
+5
+
+0.2
+0
+0.2
+
+T empo (seg)
+
+(b)
+
+(c)
+
+T empo (seg)
+
+(d)
+
+Figura 4 Experimento de seguimento_de_trajetoria circular.
+6
+
+Resultados experimentais
+
+Nesta Secao sao apresentados dois experimentos
+envolvendo os conceitos discutidos neste trabalho, comprovando a eficacia pratica das suposicoes feitas anteriormente. Nos graficos desta secao, considerem-se os sinais   d  ,   d  
+e   d   como erros de orientacao em radianos.
+6.1
+
+Navegacao entre pontos
+
+O primeiro experimento e ilustrado na Figura 3,
+e corresponde a uma navegacao entre pontos distintos definidos como os vertices de um quadrado
+com lado de 3 m. Para um melhor entendimento,
+um video deste experimento esta disponvel em
+httpsyoutu.be36AoFZthfKU. O objetivo deste experimento e averiguar a capacidade do sistema
+em controlar a posicao do veculo no espaco, bem
+como avaliar a sua resposta em situacoes de saturacao, introduzidas atraves dos erros de posicao
+desejada. A altitude desejada e zd  0.5 m, e a
+orientacao desejada e d  0.0 rad, enquanto os
+valores de xd e yd sao modificados a cada t  10 s,
+de acordo com a sequencia
+
+xd  0.0 m, yd  0.0 m
+
+
+
+x  0.0 m, y  3.0 m
+d
+d
+
+x
+
+3.0
+m,
+y
+d
+d  3.0 m
+
+
+
+xd  3.0 m, yd  0.0 m.
+Nas Figuras 3(a) e 3(b) e possvel observar os dados do experimento, em termos dos valores de referencia (desejados) comparados com os valores capturados dos sensores do veculo, para variaveis de
+
+ISSN 2525-8311
+
+interesse no controle. Observe-se que a cada mudanca de xd e yd grandes erros de posicao (ver
+Figura 3(c)) e de orientacao (ver Figura 3(d) sao
+introduzidos. Nestes casos, e introduzida uma saturacao forcada, e mesmo assim e possvel notar
+a capacidade do sistema de recuperar os valores
+desejados, tanto de posicao como de orientacao.
+Fica claro que mesmo enfrentando falhas no seguimento das referencias, todos os erros em regime
+permanente tendem para zero. As imperfeicoes e
+rudos presentes nos graficos das curvas sao atribudos a erros numericos oriundos dos dados sensoriais e dos calculos numericos envolvidos no sistema_de_controle. Tambem e provavel que erros
+de modelagem influenciem nestas curvas, principalmente em relacao as imperfeicoes notadas no
+rastreamento dos valores desejados de orientacao.
+Entretanto, como pode ser visto na Figura 3, a resposta real do veculo no experimento acompanha
+o que se esperava, a partir das analises nas secoes
+anteriores, tornando as suposicoes e simplificacoes
+teoricas coerentes com o voo pratico.
+6.2
+
+Seguimento de trajetoria circular
+
+O segundo experimento e ilustrado na Figura 4, e
+corresponde ao seguimento de uma trajetoria circular. O objetivo deste experimento e averiguar a
+capacidade do sistema em controlar a navegacao
+do veculo em posicoes que variam no tempo. A
+altitude desejada e zd  0.5 m, e a orientacao desejada e d  0.0 rad, enquanto os valores de xd
+e yd variam de acordo com
+(
+
+2
+t m
+xd  3.0 sin 20.0
+
+2
+yd  3.0 cos 20.0
+t m.
+
+669
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Nas Figuras de 4(a) ate 4(d) uma analise similar a do experimento anterior pode ser feita pelo
+leitor. Observe-se que para esta trajetoria os valores desejados de orientacao nao ultrapassam o
+limite estabelecido de 0.175 rad, apresentando saturacao pequenos intervalos deste experimento. E
+possvel ainda notar a capacidade do sistema de
+guiar o veculo sobre a trajetoria, minimizando os
+erros em regime, mantendo-os proximos de zero,
+concluindo a eficiencia pratica da tecnica de controle. Supondo uma situacao ideal, onde nao houvesse rudo nem erro de modelagem e nem forcas
+externas (como a influencia do vento no voo), o seguimento seria perfeito. Entretanto, na pratica os
+sinais sempre sao imperfeitos, o que leva as curvas
+a possurem a caracterstica observada na Figura
+4. Para uma melhor analise do desempenho do sistema, um video deste experimento esta disponvel
+em httpsyoutu.beBbGa7DiBbvU.
+7
+
+Conclusoes
+
+Neste trabalho apresentou-se uma abordagem
+para modelagem e projeto_de_controladores automaticos para um VANT do tipo quadrimotor. Os
+controladores foram testados em ambientes_exteriores, utilizando-se realimentacao com dados inerciais e de GPS. Verificou-se a possibilidade de dar
+uma interpretacao mais pratica a um equacionamento tradicional da literatura deste veculo, tornando o projeto_de_controladores uma tarefa simplificada e didatica. Os testes praticos foram exibidos em vdeo, proporcionando uma melhor interpretacao dos assuntos abordados, concluindo as
+suposicoes e simplificacoes acerca do modelo do
+veculo e seu computador de bordo como validas
+nos experimentos, onde claramente os comportamentos esperados foram observados.
+
+Brandao, A. S., Gandolfo, D., Sarcinelli-Filho, M.
+and Carelli, R. (2014). Pvtol maneuvers guided by a high-level nonlinear_controller applied to a rotorcraft machine, European Journal of Control 20(4) 172  179.
+Bristeau, P.-J., Callou, F., Vissiere, D. and Petit,
+N. (2011). The navigation and control technology inside the ar.drone micro uav, Proceedings of the 18th IFAC World Congress,
+Vol. 18, Milan, Italy.
+Castillo, P., Dzul, A. and Lozano, R. (2004). Realtime stabilization and tracking of a four-rotor
+mini rotorcraft, IEEE Transactions on Control Systems Technology 12(4) 510516.
+Engel, J., Sturm, J. and Cremers, D. (2014).
+Scale-aware navigation of a low-cost quadrocopter with a monocular camera, Robotics
+and Autonomous Systems 62(11) 16461656.
+Hoffmann, G. M., Huang, H., Wasl, S. L. and
+Tomlin, E. C. J. (2007). Quadrotor helicopter flight dynamics and control Theory and
+experiment, In Proc. of the AIAA Guidance,
+Navigation, and Control Conference.
+Kendoul, F., Yu, Z. and Nonami, K. (2010).
+Guidance and nonlinear control system for
+autonomous flight of minirotorcraft unmanned aerial vehicles, Journal of Field Robotics
+27(3) 311334.
+Krajnik, T., Vonasek, V., Fiser, D. and Faigl, J.
+(2011). Ar-drone as a platform for robotic
+research and education, Research and Education in Robotics, Vol. 161, Springer.
+Michael, N., Mellinger, D., Lindsey, Q. and Kumar, V. (2010). The grasp multiple microuav testbed, Robotics Automation Magazine,
+IEEE 17(3) 5665.
+
+Agradecimentos
+Os autores agradecem ao CNPq - Conselho Nacional de Desenvolvimento Cientfico e Tecnologico,
+e a FAPES - Fundacao de Amparo a Pesquisa e
+Inovacao do Esprito Santo, pelo apoio financeiro
+para a realizacao desta pesquisa. Eles tambem
+agradecem a UFES, ao IFES, a UFV e a FAPEMIG, por viabilizarem sua participacao neste trabalho.
+
+Piskorski, S., Brulez, N., Eline, P. and DHaeyer,
+F. (2012). AR.Drone Developer Guide, Parrot. SDK Version 2.0.
+Santana, L. V., Brandao, A. S. and SarcinelliFilho, M. (2015). An automatic flight control system for the ar.drone quadrotor in outdoor environments, 2015 Workshop on Research, Education and Development of Unmanned Aerial Systems, pp. 401410.
+
+Referencias
+Bertrand, S., Guenard, N., Hamel, T., PietLahanier, H. and Eck, L. (2011). A hierarchical controller for miniature VTOL
+uavs Design and stability analysis using singular perturbation theory, Control Engineering Practice 19(10) 1099  1108.
+
+ISSN 2525-8311
+
+670

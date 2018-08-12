@@ -1,0 +1,872 @@
+REDES NEURAIS GRANULARES PARA APRENDIZAGEM
+INCREMENTAL SEMI-SUPERVISIONADA
+Daniel F. Leite, Pyramo Costa Jr., Fernando Gomide
+
+
+
+
+Faculdade de Engenharia Eletrica e Computacao - Universidade Estadual de Campinas
+(UNICAMP), Campinas, SP, Brasil
+
+Programa de Pos-Graduacao em Engenharia Eletrica - Universidade Catolica de Minas Gerais
+(PUC-MG), Belo Horizonte, MG, Brasil
+
+Emails danfl7@dca.fee.unicamp.br, pyramo@pucminas.br, gomide@dca.fee.unicamp.br
+Abstract This paper suggests an adaptive fuzzy neural network framework to classify data streams using
+a partially supervised learning algorithm. The framework consists of an evolving granular neural network which
+processes nonstationary data streams using a one-pass incremental algorithm. The granular neural network
+evolves fuzzy hyperboxes and uses a new nullnorm-based neuron model. Contrary to the usual parametric
+approaches, learning performs simultaneous structural and parametric adaptation whenever environment changes
+are reflected in input data. The approach does not require prior statistical knowledge about data and classes.
+Computational experiments show that the granular neural network is robust, processes unlabeled examples, and
+handles different types of concept drift efficiently.
+Keywords
+
+Granular Computing, Evolving Systems, Incremental Learning, Concept Drift.
+
+Resumo Este artigo sugere uma abordagem para modelagem neuro-fuzzy adaptativa visando classificacao
+de fluxo de dados usando um algoritmo de aprendizagem parcialmente supervisionado. A abordagem consiste
+de uma rede_neural granular evolutiva capaz de processar fluxos de dados nao-estacionarios a partir de um
+algoritmo incremental de um passo. A rede_neural granular evolui hiper-retangulos fuzzy e utiliza modelos de
+neuronios baseados em nullnormas. O algoritmo realiza adaptacao parametrica e estrutural de modelos sempre
+que mudancas no ambiente sao refletidas nos dados de entrada. A aprendizagem nao requer conhecimento
+estatstico previo sobre dados e classes. Experimentos computacionais mostram que a rede_neural granular e
+robusta a diferentes tipos de mudancas de conceito e e capaz de lidar eficientemente com exemplos nao-rotulados.
+Palavras-chave
+
+.
+
+abruptas, contractveis ou expansveis, determinsticas ou aleatorias, ou cclicas. Modelos de
+aprendizagem on-line devem ser capazes de lidar
+com estas mudancas.
+Os desafios envolvidos em modelagem evolutiva compreendem (i) a impossibilidade de armazenar dados historicos. Modelos devem reter o
+conhecimento previamente adquirido e que ainda
+e relevante, e usar apenas os dados mais recentes
+para adaptacao (ii) novos dados podem trazer
+novas caractersticas e sugerir novas classes que,
+por vez, requerem uma adaptacao estrutural do
+modelo (iii) dados com rudo, valores imprecisos
+ou incorretos sao ocorrencias comuns. Tecnicas
+padroes de mineracao_de_dados que assumem estacionariedade e requerem multiplos passos sobre
+bases de dados se tornam infactveis em contextos
+dinamicos.
+Este trabalho sugere uma abordagem baseada
+em redes_neurais granulares evolutivas (eGNN)
+para tratar do problema da modelagem on-line
+de fluxos nao-estacionarios de dados. A eGNN e
+uma variante evolutiva de redes_neuro-fuzzy granulares capaz de lidar com ambientes dinamicos.
+A origem da eGNN esta relacionada com pesquisa
+recente em processamento de fluxos de dados sem
+a necessidade do pleno re-treinamento de modelos (Leite et al., 2009b), (Leite et al., 2010). Este
+artigo enfatiza problemas de classificacao parcialmente supervisionados.
+
+Introducao
+
+A disponibilidade de grandes quantidades de dados tem motivado o desenvolvimento de novos
+algoritmos de aprendizagem on-line para considerar fluxos de dados (Angelov  Filev, 2004),
+(Bouchachia et al., 2007), (Gabrys  Bargiela,
+2000), (Kasabov, 2007), (Leite et al., 2009a),
+(Leite et al., 2009b), (Muhlbaier et al., 2009),
+(Ozawa et al., 2008). A aprendizagem com fluxos de dados provenientes de ambientes dinamicos
+nao-estacionarios traz problemas unicos e requer
+um consideravel esforco de pesquisa e desenvolvimento.
+Uma das questoes mais importantes em mineracao on-line de dados diz respeito a naoestacionariedade intrnseca a fluxos de dados. Por
+exemplo, na industria, maquinas sofrem estresses, envelhecem, sao sujeitas a faltas em sistemas
+economicos, indicadores_de_desempenho e ndices
+de estoque variam continuamente em sistemas de
+comunicacao, parametros e condicoes dos meios de
+transmissao sao sujeitos a mudancas frequentes.
+Em geral, mudancas no ambiente afetam as caractersticas monitoradas ocasionando diferentes formas de nao-linearidades e nao-estacionariedades.
+Em ambientes nao-estacionarios, a distribuicao estatstica inerente aos dados (medias, variancias, estrutura de correlacao) muda ao longo
+do tempo. As mudancas podem ser graduais ou
+
+2592
+
+Colocado de uma maneira geral, o classificador eGNN sumariza, atraves de regras SEENTAO, o comportamento de um sistema e suas
+classes usando uma descricao em um espaco de
+atributos e respectivos dados de treinamento.
+Para isto, eGNN usa hiper-retangulos fuzzy para
+granular os dados, e neuronios T-S para agregar
+atributos associados aos granulos (Pedrycz  Gomide, 2007). O algoritmo de aprendizagem adapta
+a estrutura e parametros de eGNN de forma incremental sempre que o ambiente muda e a mudanca e refletida nos dados. Alem disso, o algoritmo trata simultaneamente de dados rotulados
+e nao-rotulados em um procedimento unico. Ele
+pode processar tanto dados numericos como granulares.
+Apos esta introducao, a proxima secao
+apresenta o problema de aprendizagem semisupervisionada que tratamos. A Secao 3 descreve
+as caractersticas gerais da modelagem eGNN e
+mostra a estrutura da rede_neural. A Secao 4
+detalha os procedimentos do algoritmo de aprendizagem. A Secao 5 avalia o comportamento de
+redes_neurais eGNN quando submetidas a diferentes dinamicas e proporcoes de dados rotulados. A
+conclusao e sugestoes para trabalhos futuros sao
+considerados na Secao 6.
+2
+
+bilidades da aprendizagem semi-supervisionada e
+ilustrado na Fig. 1.
+
+Figura 1 Espectro da aprendizagem semisupervisionada
+Considere uma variavel de entrada x e uma
+variavel resposta y relacionadas atraves de y 
+f (x). Buscamos uma aproximacao para f que nos
+permita obter o valor de y dado x. Em problemas
+de classificacao y e um rotulo de classe, um valor
+no conjunto C1 , ..., Cm   Nm (Garnett  Roberts, 2008). A relacao f especifica os limites das
+classes. No caso mais geral, semi-supervisionado,
+Ck pode ou nao ser conhecido quando x e disponibilizado.
+Classificacao de fluxo de dados envolve pares
+(x, C)h de dados sequenciados no tempo, indexados por h. Quando as caractersticas das classes mudam com o tempo dizemos que existe mudanca de conceito. Mudancas de conceitos requerem que classificadores adaptativos on-line identifiquem relacoes f h variantes no tempo para realizar classificacao.
+
+Aprendizagem Semi-supervisionada
+3
+
+Em termos de aprendizagem, classificacao e agrupamento_de_dados podem ser feitos usando algoritmos supervisionados e nao-supervisionados. Em
+aprendizagem supervisionada, rotulos de classes
+sao conhecidos previamente e procuramos limites
+de decisao entre classes. A aprendizagem naosupervisionada processa exemplos de treinamento
+nao-rotulados e tenta encontrar agrupamentos naturais entre dados. Em ambos os casos o resultado
+e uma particao de dados em classes.
+Abordagens semi-supervisionadas para aprendizagem e construcao de modelos (Grabrys  Petrakieva, 2004), (Grabrys, 2004), (Pedrycz, 2005)
+usam dados rotulados e nao-rotulados para treinamento. Mistura de padroes rotulados e naorotulados e facilmente encontrada na pratica. As
+vezes, a aquisicao_de_dados rotulados requer que
+especialistas humanos classifiquem manualmente
+padroes de treinamento. Isto pode ser infactvel,
+especialmente quando lidamos com grandes bases
+de dados em ambientes on-line. Existem situacoes
+em que os dados sao totalmente rotulados, tal que
+demandam metodos de aprendizagem supervisionada e projeto de classificadores. Entretanto, o
+processo de rotulacao empregado nao foi preciso e
+nossa confianca nos rotulos ja associados e relativamente baixa. Nestes casos, recorremos a aprendizagem semi-supervisionada e aceitamos apenas
+uma fracao de exemplos que acreditamos terem
+sido rotulados corretamente. O espectro de possi-
+
+3.1
+
+Redes Neurais Granulares Evolutivas
+Introducao
+
+O conceito de redes_neurais granulares (GNN) foi
+inicialmente estabelecido em (Pedrycz  Vukovich, 2001), enquanto que o de eGNN foi proposto
+em (Leite et al., 2009b). Ambas as abordagens enfatizam redes_neurais artificiais capazes de processar dados originalmente granulares, ou numericos
+como um caso particular. Entretanto, eGNN focaliza aprendizagem_incremental on-line a partir
+de fluxo de dados.
+A aprendizagem em GNN e eGNN segue um
+princpio comum que envolve dois estagios. Primeiro, granulos de informacao - intervalos ou conjuntos_fuzzy - sao construdos a partir de uma base
+de representacao numerica. Em seguida, a aprendizagem - construcao e refinamento - da rede_neural e baseada nos granulos de informacao ao inves de nos dados originais. Logo, a rede nao precisa ser exposta a todos os dados de treinamento,
+muito mais numerosos que os granulos quando
+nao transportando nova informacao, exemplos sao
+descartados.
+Fundamentalmente, modelos eGNN processam dados observando um fluxo uma unica vez.
+eGNN comeca a aprender a partir de uma base
+de regras vazia e sem conhecimento previo das
+propriedades estatsticas dos dados e classes. A
+abordagem consiste em formar limites discrimi-
+
+2593
+
+nantes entre classes a partir da granulacao do espaco de atributos usando hiper-retangulos fuzzy.
+Em suma, dentre as caractersticas principais de
+eGNN estao, eGNN ajusta sua estrutura e parametros para aprender um novo conceito, enquanto
+esquece o que nao e mais relevante lida com dados rotulados e nao-rotulados utilizando um procedimento unico detecta mudancas no ambiente
+e lida com incerteza nos dados possui habilidade
+nao-linear de separacao de classes e desenvolve
+aprendizado ao longo da vida usando mecanismos
+construtivos bottom-up e destrutivos top-down.
+3.2
+
+sada compreende indicadores de rotulos de classes. Todas as camadas, exceto a camada de entrada, evoluem dado o fluxo xh , h  1, 2, ....
+A adaptacao parametrica e estrutural do classificador eGNN pode ser realizada de diferentes
+maneiras dependendo da aplicacao. Por exemplo,
+o numero de classes pode ser automaticamente
+controlado quando temos esta informacao de antemao. O numero de granulos na estrutura do
+modelo pode tambem ser limitado se memoria e
+tempo de processamento sao restricoes. Em ambientes desconhecidos ambos, o numero de granulos
+e classes, podem ser automaticamente controlados
+pelo algoritmo de aprendizagem.
+
+eGNN Estrutura e Processamento
+
+Redes eGNN aprendem a partir de um fluxo de
+dados xh , h  1, 2, .... Os exemplos de treinamento podem ou nao ser acompanhados de um
+rotulo de classe C h . Cada granulo de informacao  i da colecao finita dos granulos existentes
+   1 , ...,  c , definido no espaco de atributos
+X  Rn , e associado a uma classe Ck da colecao
+finita de classes C  C1 , ..., Cm  no espaco de
+sada Y  N. eGNN associa os espacos de atributos e de sada usando granulos extrados do fluxo
+de dados e uma camada de neuronios T-S.
+A rede_neural tem uma estrutura em cinco
+camadas, como ilustra a Fig. 2. A camada de
+entrada basicamente apresenta vetores caractersticos xh  (x1 , ..., xj , ..., xn )h , h  1, ..., a rede
+neural a camada granular consiste de um conjunto de granulos  i i formado como um escopo
+do fluxo de dados. Sobreposicao parcial de granulos sao permitidas a camada de agregacao contem
+os neuronios T-S, T Sni i. Eles agregam graus
+de pertinencia para gerar medidas de compatibilidade oi i entre exemplo e granulos na camada de
+decisao, as medidas de compatibilidade sao comparadas e a classe Ck associada ao granulo  i que
+apresentou a maior compatibilidade para um dado
+exemplo e induzida na sada da rede a camada de
+
+4
+
+Algoritmo de Aprendizagem
+
+Esta secao detalha os procedimentos que constituem o algoritmo de aprendizagem de redes_neurais eGNN.
+4.1
+
+Atualizacao da Granularidade
+
+A escolha dos parametros iniciais de modelos e
+crucial na obtencao de solucoes. Esta questao e de
+certa forma facilitada se os algoritmos de aprendizagem contemplam mecanismos que adaptam continuamente os parametros. O tamanho maximo 
+que um granulo pode assumir no espaco de atributos define a capacidade do modelo em capturar
+limites discriminantes nao-lineares entre classes.
+Um procedimento para adaptar  on-line e o seguinte primeiro considere que  1 , ...,    sejam
+os granulos criados apos um certo numero de passos de processamento HG . Se a quantidade de granulos  cresce a uma taxa maior que um limiar ,
+entao  e aumentado como segue
+
+(novo) 
+
+
+
+
+(velho).
+1+
+HG
+
+Ao contrario, se  cresce a um taxa menor que ,
+entao  e diminudo como segue
+
+(novo) 
+
+
+
+(  )
+(velho).
+1
+HG
+
+O valor de (novo) e mantido constante nos proximos passos.
+4.2
+
+Criacao e Atualizacao de Granulos
+
+Nenhum granulo existe ate o incio da aprendizagem. Eles sao criados durante o processo evolutivo. As funcoes de pertinencia Aij j associadas
+ao granulo  i sao definidas no espaco do atributo
+correspondente. Por simplicidade, assumimos funcoes triangulares ou trapezoidais. Elas sao definidas pela quadrupla lji , ij , ij , Lij , onde lji e Lij
+sao os limites da funcao de pertinencia, e ij e ij
+
+Figura 2 Modelo eGNN para classificacao de
+fluxo de dados
+
+2594
+
+sao valores intermediarios da funcao. Para funcoes
+trapezoidais ij < ij , e para funcoes triangulares
+ij  ij . Granulos  i sao associados a rotulos de
+classe Ck k.
+O procedimento de criacao de granulos e exeh
+cutado sempre que xj 
+ lji , Lij  j, i ou quando
+
+com  sendo um limiar pre-definido, os granulos  w e  z sao declarados similares e podem ser
+associados a mesma classe ou mesclados. Uma
+forma de monitorar o numero de classes e associar
+os granulos com os menores valores em Dis() a
+mesma classe de sada sempre que o numero de
+classes aumenta. Analogamente, para manter o
+numero de granulos constante na estrutura da rede
+neural, uma forma e mesclar os granulos vizinhos
+mais proximos  w e  z em um unico granulo  c+1
+com parametros c+1
+ c+1
+ min(ljz , ljw ) +
+j
+j
+c+1
+z
+z
+w
+max(Lw
+ c+1
+ 2
+j  lj , Lj  lj )2 lj
+j
+c+1
+w
+e Lc+1
+
+
++
+2
+em
+seguida
+excluir
+
+e z .
+j
+j
+
+h
+
+xj  lji , Lij  j e algum i, mas o rotulo de classe
+do dado de entrada C h difere daquele previamente associado a  i . O novo granulo  c+1 e
+construdo usando funcoes de pertinencia trianh
+
+gulares Ac+1
+j, com parametros ljc+1  xj  2j 
+j
+h
+
+h
+
+
+
+c+1
+ c+1
+ xj  e Lc+1
+ xj + 2j . Caso
+j
+j
+j
+uma nova entrada xh+ , onde  e um inteiro
+positivo, esteja dentro dos limites atuais de algum granulo  i e sua respectiva classe C h+ seja
+a mesma daquela associada a  i , entao os parametros ij e ij j sao atualizados para acomodar xh+ . Basicamente, a adaptacao consiste
+h+
+h+
+em ajustar ij  xj
+, se xj
+ lji , ij  ou
+h+
+
+ij  xj
+4.3
+
+h+
+
+, se xj
+
+4.4
+
+Rotulando Dados Nao-rotulados
+
+O procedimento para rotulacao on-line de entradas nao-rotuladas que sugerimos neste artigo pertence a categoria de abordagens baseadas em prerotulacao (Grabrys  Petrakieva, 2004). O procedimento consiste em rotular um exemplo por vez
+sempre que a informacao de sua classe nao e fornecida, isto e C h  . Depois que um rotulo de
+classe e disponibilizado, o algoritmo de aprendizagem eGNN processa o exemplo como no caso de
+dados rotulados.
+Definimos ponto central de  i como
+
+ ij , Lij .
+
+Monitoramento de Distancias
+
+Uma maneira de medir o quao proximo os granulos existentes estao e atraves do monitoramento de
+uma matriz Dis() cujos elementos sao as distancias entre dois granulos correspondentes. Distancias nulas significam que os granulos sao os mesmos, com estrutura e limites identicos. Valores
+maiores de distancia significam granulos diferentes, possivelmente sem sobreposicao. A matriz de
+distancia ajuda a monitorar o processo de evolucao e mesclar granulos e classes. O procedimento
+mantem uma estrutura compacta e atualizada do
+modelo.
+Definindo
+
+
+
+(Lin  lni )
+(Li1  l1i )
+i
+i
+, ..., ln +
+.
+mp( )  l1 +
+2
+2
+i
+
+O procedimento de rotulacao basicamente associa
+o rotulo de classe Ck a  i para algum (x, C)h
+quando mp( i ) e o mais proximo a xh de acordo
+com
+mp( i )  arg min
+i
+
+Dis( w ,  z )  ljw +
+
+(Lw
+j
+
+
+2
+
+ljw )
+
+, ljz +
+
+(Lzj
+
+
+2
+
+ljz )
+
+,
+
+4.5
+
+
+
+Dis()  
+
+
+Dis( 1 ,  1 )
+Dis( 2 ,  1 )
+..
+.
+
+...
+...
+..
+.
+
+Dis( 1 ,  c )
+Dis( 2 ,  c )
+..
+.
+
+Dis( c ,  1 )
+
+...
+
+Dis( c ,  c )
+
+xh  mp( i )
+
+
+i .
+
+Ajuste de Pesos da Camada de Agregacao
+
+Os pesos wji j, i da camada de agregacao capturam a contribuicao do atributo j de  i na diferenciacao de classes. Inicialmente, a aprendizagem
+admite wji  1.
+Pares de dados podem causar a revisao de
+ i se este granulo e o mais compatvel com xh ,
+mas C h difere da classe Ck atualmente associada ao granulo. O seguinte procedimento e usado
+para comprimir  i e reduzir sua compatibilidade
+com xh . Duas situacoes sao de interesse (i) se
+Aij i e algum j e tal que o grau de pertinencia
+
+onde Dis( w ,  z ) e a distancia entre os granulos
+ w e  z , e . uma medida de distancia, e coletando todos Dis( w ,  z ) w, z em uma matriz
+temos
+
+
+
+
+
+
+
+.
+
+
+ih
+
+xj
+
+Dis() e uma matriz simetrica c  c com zeros na
+diagonal principal. Se um dado de entrada causa a
+criacao de um novo granulo, entao a matriz Dis()
+e atualizada apropriadamente.
+Sempre que um valor
+
+h
+
+h
+
+ 0, 1, entao ajuste lji  xj se xj  ij  ou
+h
+
+h
+
+faca Lij  xj se xj  ij  e (ii) se Aij i e tal que
+ih
+
+xj  1 para algum j, entao os parametros de Aij
+sao mantidos os mesmos e os pesos associados ao
+atributo j de  i e adaptado como segue
+wji (novo)  wji (velho),
+
+Dis( w ,  z )  ,
+
+2595
+
+onde   0, 1 e uma constante de decremento. O
+procedimento de atualizacao e justificado porque
+Aij nao contribui satisfatoriamente para diferenciar classes. Note que este procedimento relembra tecnicas incrementais de selecao de atributos
+onde diferentes graus de importancia sao permitidos para cada atributo. O procedimento visa
+encontrar subconjuntos relevantes de atributos no
+ambiente atual.
+4.6
+
+Um procedimento para iniciar e ajustar os elementos neutros ei i dos neuronios T-S e o seguinte. Primeiro, no comeco do aprendizado, escolha uma T-norma e uma S-norma para os neuronios T-S. Sempre que um granulo  c+1 e criado,
+ajuste o elemento neutro do neuronio T-S correspondente, ec+1 , para 0. Isto induz uma T-norma.
+Durante a evolucao, alguns ei podem aumentar
+seus valores dependendo dos dados de entrada.
+Por exemplo, se alguns (nao todos) os atributos
+h
+de xj j ativam as funcoes de pertinencia Aij j
+de algum  i , preservamos  i como candidato para
+acomodar (x, C)h aumentando ei como segue
+
+Poda de Granulos
+
+Manter granulos irrelevantes durante longos perodos pode tornar o algoritmo eGNN ineficiente
+em acompanhar rapidas mudancas de conceito.
+Uma forma de reduzir este problema e considerar mecanismos de poda que preservem eficiencia
+na classificacao. Neste artigo, optamos por adotar uma abordagem de poda dos granulos inativos.
+Este tipo de poda ajuda a detectar dinamicas mais
+rapidamente no contexto da aprendizagem semisupervisionada. Os pesos da camada de decisao
+(refira-se a Fig. 2) ajudam o procedimento de
+poda como descrito a seguir.
+Os pesos  i i codificam a quantidade de dados associados a  i . Em geral,  i e uma maneira
+de identificar regioes densas e esparsas no espaco
+de atributos. Quanto maior o valor de  i , maior as
+chances de ativacao de  i nos passos subsequentes. A aprendizagem inicia  i  1, i. Durante a
+evolucao,  i pode ser reduzido sempre que  i nao e
+ativado durante um certo numero de passos. Para
+isto fazemos
+
+ei (novo)  ei (velho) + (1  ei (velho)),
+onde   0, 1 e uma constante de crescimento.
+Este procedimento geralmente evita a criacao de
+granulos similares e ajuda a manter um numero
+pequeno de granulos na estrutura da rede_neural.
+4.8
+
+Decisao de Classificacao
+
+O neuronio max winner-takes-all da rede eGNN
+determina o maior valor de oi i. Como sada, o
+neuronio apresenta o rotulo de classe Ck associado ao granulo  i com o maior grau de compatibilidade para a entrada atual xh . O erro entre
+Ck e a classe esperadadesejada C h e computado
+usando
+  Ck  C h .
+
+ i (novo)   i (velho),
+Quando   0, o algoritmo refina os parametros
+do modelo. Quando  6 0, os procedimentos de
+compressao de granulos e ajuste de pesos sao processados. Note que, se C h  , entao o procedimento de pre-rotulacao da Secao 4.4 associa um
+rotulo ao dado a priori ao processamento.
+
+onde   0, 1. Se  i e ativado, entao  i e aumentado como segue
+ i (novo)   i (velho) + (1   i (velho)).
+Quando  i  , sendo  um limiar,  i e podado
+para manter uma quantidade razoavel de informacao e conhecimento atualizado disponvel. Os
+valores de  e  dependem dos nveis de estabilidade e plasticidade requeridos pela aplicacao. Se
+a aplicacao requer memorizacao de eventos raros,
+ou, caso ciclos (sazonalidades) sejam esperados,
+entao pode ser o caso de ajustarmos   0 e permitir que  i  0+ .
+4.7
+
+4.9
+
+Deteccao de Outliers
+
+Dados nao condizentes com o modelo geral de classificacao sao chamados outliers (Barnett  Lewis,
+1994). Certos ambientes de aplicacao devem obrigatoriamente descartar outliers porque eles podem carregar rudos inaceitaveis, erros, ou serem
+excecoes. Entretanto, existem circunstancias em
+que a enfase e de certa forma oposta o interesse e
+nos eventos raros. Exemplos incluem deteccao de
+falta e spams, fraudes financeiras e problemas de
+diagnostico. A questao de como distinguir eventos
+raros de outliers permanece aberta.
+Outliers sao detectados em modelos eGNN
+atraves do parametro , cuja proposta e oposta
+a do parametro  do procedimento de mesclagem
+de granulos da Secao 4.3. Um vetor de entrada
+e considerado um outlier sempre que ele induz a
+criacao de um novo granulo  c+1 tal que
+
+Atualizacao dos Elementos Neutros
+
+Redes eGNN usam neuronios T-S and -dominados
+(Pedrycz  Gomide, 2007) para agregar atributos de classificacao.
+O i-esimo neuronio
+ih
+T Sni processa xj
+j associado a  i usando
+ih
+
+V (xj , wji ) j, onde V (.) e uma nullnorma. O
+resultado e um valor de sada unico oi que representa o grau de compatibilidade entre xh e  i .
+
+2596
+
+de conceito, neste caso uma nova classe que se
+reflete no fluxo de dados. O ultimo experimento
+avalia o comportamento de eGNN na classificacao
+de fluxos nao-estacionarios de dados parcialmente
+rotulados.
+Os seguintes valores de parametros foram adotados durante todos os experimentos 0  0.25,
+HG  100,   2,   5,     0.1,
+    0.9,   0.2, e neuronios T-S min-max.
+O algoritmo de aprendizagem foi executado varias
+vezes para avaliacao. Os resultados obtidos foram
+essencialmente os mesmos em todas as execucoes.
+
+Dis( c+1 ,  i )  , i.
+Isto significa que o novo granulo esta localizado
+longe dos demais granulos existentes. Claramente,
+o significado de longe depende da aplicacao. Uma
+alternativa para monitorar outliers e considerar
+um mecanismo de estimulacao, como o sugerido
+em (Silva et al., 2005).
+4.10
+
+Algoritmo de Aprendizagem eGNN
+
+Os procedimentos descritos nas secoes anteriores
+sao sintetizados no algoritmo de aprendizagem
+como segue
+
+
+5.1
+
+Neste experimento, duas Gaussianas parcialmente
+sobrepostas, centradas em (4,4) e (6,6) com desvio padrao 0.8, giram gradualmente 90o no sentido
+anti-horario em torno do centro (5,5), como mostra a Fig. 3. Queremos encontrar o limite de decisao entre as classes usando apenas os exemplos
+mais recentes aleatoriamente selecionados.
+
+INICIO
+Inicializar , HG , , , , , , , , c  0
+Selecionar um tipo de T-norma e S-norma
+Fazer sempre
+Ler (x, C)h , h  1, ...
+Se (h  1)
+Primeira iteracao
+Criar  c+1 (Sec. 4.2) e T Snc+1  Associa-los a C h  c++
+Caso contrario
+Se (C h  )
+Executar procedimento de rotulacao (Sec. 4.4)
+Alimentar xh a rede_neural
+Computar o no. de granulos G com oi > 0 para xh 
+Se (G  0)
+Ajustar ei , i  1, ..., c (Sec. 4.7)
+Criar  c+1 e T Snc+1  Associa-los a C h  c++
+Caso contrario
+Para g  1, ..., G faca
+Computar o g-esimo granulo vencedor para xh ,   
+Calcular o erro k , k  1, ..., m (Sec. 4.8)
+Se (k  0, k)
+
+Ajustar A
+(Sec. 4.2)
+j , j  1, ..., n, de 
+Terminar loop g
+Caso contrario
+
+Comprimir A
+j j Ajustar wj j (Sec. 4.5)
+Se (g  G)
+ultimo vencedor
+Ajustar ei , i  1, ..., c
+Criar  c+1 e T Snc+1  Associa-los a C h  c++
+Se (h  HG )
+Atualizar a granularidade (Sec. 4.1)
+Calcular Dis() Mesclar granulos e classes (Sec. 4.3)
+DetectarExcluir outliers (Sec. 4.9)
+Ajustar  i i Podar granulos inativos (Sec. 4.6)
+FIM
+
+Figura 3 Problema das Gaussianas rotativas
+A Fig. 4 mostra o limite de decisao e os ultimos
+200 exemplos em diferentes instantes da evolucao.
+A rotacao inicia-se em h  200 e termina em
+h  400. Em h  200, eGNN mantem cinco granulos em sua estrutura, dois associados a Classe
+1 e tres referentes a Classe 2. O modelo obteve
+uma taxa corretoerrado de 18911, isto e 94.5.
+Apos a rotacao, isto e, em h  400, a rede usa
+cinco unidades locais em sua estrutura, tres para
+a Classe 1 e duas para a Classe 2, alcancando o desempenho de reconhecimento de 1955, em torno
+de 97.5.
+
+
+5
+
+Rotacao das Gaussianas Gemeas
+
+Resultados Experimentais
+
+Esta secao apresenta os resultados experimentais que ilustram a efetividade da rede eGNN.
+Tres experimentos, cada dos quais com um proposito especfico, sao realizados. O primeiro considera que os dados sao distribudos de acordo com
+duas Gaussianas parcialmente sobrepostas rotacionando em torno de um ponto central. Cada
+Gaussiana representa uma classe. O problema
+consiste em encontrar um limite discriminante entre as classes usando apenas os dados mais recentes. O proposito deste experimento e mostrar que
+eGNN e capaz de capturar mudancas graduais de
+conceito. O segundo experimento enfatiza a capacidade da eGNN em descobrir uma nova classe.
+O proposito e mostrar que eGNN se auto-adapta
+estruturalmente para lidar com mudanca brusca
+
+5.2
+
+Nova Classe
+
+Nesta secao, assumimos que uma nova classe
+Gaussiana centrada em (7, 3) com dispersao 0.8
+aparece em h  200 como mostra a Fig. 5.
+Adaptacao estrutural de eGNN e requerida para o
+aprendizado da classe previamente desconhecida.
+Isto deve ocorrer tao logo que a informacao da
+nova classe surja no fluxo de dados de entrada.
+A figura 6 mostra os limites de decisao e as
+ultimas 200 medicoes em h  400. A rede_neural eGNN evoluiu um total de seis granulos, tres
+
+2597
+
+Figura 5 Uma terceira classe aparece em h  200
+(a)
+
+Figura 6 Limites discriminantes e ultimos 200
+dados em h  400
+(b)
+
+de classificacao consideravelmente maior do que
+quando simplesmente descarta as instancias naorotuladas. Os dados nao-rotulados guiam a classificacao de eGNN com sucesso, especialmente nos
+casos onde eles representam proporcoes maiores
+do conjunto de dados. Esta avaliacao e valida
+em todos os experimentos conduzidos, isto e, para
+o problema das Gaussianas nao-rotativas (fluxo
+de dados estacionario) para o problema de rotacao gradual das Gaussianas (mudanca gradual de
+conceito) e para o problema do aparecimento de
+uma nova classe (mudanca brusca de conceito).
+O desempenho de reconhecimento da rede_neural usando o algoritmo de aprendizagem hbrido
+e considerando 50 de dados rotulados degradou
+ligeiramente em relacao a quando todos os exemplos eram rotulados, degradacao em torno de 6.
+Em contraste, se eGNN nao fosse capaz de manipular misturas de dados rotulados e nao-rotulados
+e usasse somente instancias rotuladas para treinamento, podemos notar na Fig. 8 uma diminuicao
+de aproximadamente 35 na taxa de classificacao.
+
+Figura 4 Limite de decisao e ultimos 200 dados
+em (a) h  200 e (b) h  400
+
+associados com cada uma das duas primeiras classes, durante os 200 passos iniciais, e alcancou uma
+taxa de classificacao de 1937 (96.5). Dados
+sobre a terceira classe comecaram a chegar em
+h  200, e em h  400 eGNN desenvolveu oito
+granulos, tres associados a Classe 1, dois referentes a Classe 2, e tres a Classe 3, com uma taxa de
+classificacao de 19010 (95.0).
+As funcoes de pertinencia que constituem os
+hiper-retangulos fuzzy de eGNN sao mostradas na
+Fig. 7. Aqui, os granulos  1 ,  4 ,  8  representam
+a Classe 1, e  2 ,  6  e  3 ,  5 ,  7  sao associados
+as classes 2 e 3, respectivamente.
+
+5.3
+
+Combinando
+rotulados
+
+Dados
+
+Rotulados
+
+e
+
+Nao-
+
+Nesta secao o desempenho de eGNN e investigado considerando variacoes da proporcao de dados nao-rotulados entre 0 e 100. Admitimos
+o problema das classes Gaussianas rotativas e o
+problema das tres classes das duas secoes imediatamente anteriores. A Fig. 8 ilustra o desempenho
+medio do algoritmo avaliado em cinco simulacoes.
+Referindo-se a Fig. 8, observa-se que quando
+consideramos toda a informacao contida no fluxo
+de dados no treinamento, incluindo aquela dos
+dados nao-rotulados, eGNN alcanca uma taxa
+
+6
+
+Conclusao
+
+Uma estrutura de rede_neural fuzzy granular evolutiva e um algoritmo de aprendizagem para classificacao de fluxo de dados nao-estacionarios foram
+apresentados neste trabalho. A rede_neural fuzzy
+granular evolutiva faz a classificacao de dados em
+modo on-line e lida com mudancas de conceito eficientemente. A efetividade do algoritmo de aprendizado foi verificada atraves de experimentos com-
+
+2598
+
+Gabrys, B. Bargiela, A. (2000). General fuzzy
+min-max neural network for clustering and classification. IEEE Transactions on Neural Networks,
+Vol. 11-3, pp 769-783.
+Gabrys, B. Petrakieva, L. (2004). Combining
+labelled and unlabelled data in the design of pattern classification systems. International Journal
+of Approximate Reasoning, Vol. 35, pp 251-273.
+Gabrys, B. (2004). Learning hybrid neuro-fuzzy
+classifier models from data to combine or not to
+combine?. Fuzzy Sets and Systems, Vol. 147, pp
+39-56.
+
+Figura 7 Funcoes de pertinencia eGNN em h 
+400
+
+Garnett, R. Roberts, S. J. (2008). Learning from
+Data Streams with Concept Drift. Technical Report PARG-08-01, Dept. of Engineering Science,
+University of Oxford, Jun. 2008, 64p.
+Kasabov, N. (2007) Evolving Connectionist Systems The Knowledge Engineering Approach.
+Springer, London, 2a edicao, 451p.
+Leite, D. F. Costa Jr., P. Gomide, F.
+(2009a).
+Interval-based evolving modeling.
+IEEE Workshop on Evolving and Self-Developing
+Intelligent Systems, pp 1-8.
+
+Figura 8 Desempenho de eGNN usando diferentes proporcoes de dados rotulados
+
+Leite, D. F. Costa Jr., P. Gomide, F.
+(2009b). Evolving Granular Classification Neural Networks. International Joint Conference on
+Neural Networks, pp 1736-1743.
+
+preendendo diferentes tipos de dinamicas e proporcoes de dados rotulados e nao-rotulados. Os
+resultados confirmaram que o algoritmo e robusto
+e capaz de lidar bem com nao-estacionariedades
+nos dados. Trabalhos futuros considerarao redes
+neurais granulares evolutivas lidando com diferentes tipos de dados de entrada e sada granulares,
+alem de testes com abordagens similares propostas recentemente.
+
+Leite, D. F. Costa Jr., P. Gomide, F. (2010).
+Evolving Granular Neural Network for Semisupervised Data Stream Classification. World
+Congress on Computational Intelligence, 8p (Em
+processamento).
+Muhlbaier, M. D. Topalis, A. Polikar, R. (2009).
+Learn++ .NC Combining Ensemble of Classifiers
+With Dynamically Weighted Consult-and-Vote for
+Efficient Incremental Learning of New Classes.
+IEEE Transactions on Neural Networks, Vol. 201, pp 152-168.
+
+Agradecimento
+O primeiro autor agradece a CAPES pelo apoio
+financeiro. O segundo autor agradece a CEMIG
+pelo suporte PD178. O ultimo autor e grato ao
+CNPq, processo 3048572006-8.
+
+Ozawa, S. Pang, S. Kasabov, N. (2008). Incremental Learning of Chunk Data for Online Pattern Classification Systems. IEEE Transactions
+on Neural Networks, Vol. 19-6, pp 1061-1074.
+Pedrycz, W. Gomide, F. (2007). Fuzzy systems
+engineering Toward human-centric computing.
+Wiley, Hoboken, NJ, USA, 2007, 526p.
+
+Referencias
+Angelov, P. Filev, D. (2004). An approach to online identification of evolving Takagi-Sugeno models. IEEE Transactions on SMC - Part B, Vol.
+34-1, pp 484-498.
+
+Pedrycz, W. (2005). Knowledge-based clustering from data to information granules. Wiley,
+1a edicao, 336p.
+
+Barnett, V. Lewis, T. (1994). Outliers in Statistical Data. Wiley Series in Probability and
+Mathematical Statistics, 3a edicao, 604p.
+
+Pedrycz, W. Vukovich, W. (2001). Granular
+Neural Networks. Neurocomputing, Vol. 36, pp
+205-224.
+
+Bouchachia, A. Gabrys, B. Sahel, Z. (2007).
+Overview of some incremental learning algorithms. IEEE International Fuzzy Systems Conference, pp 1-6.
+
+Silva, L. Gomide, F. Yager, R. (2005). Participatory Learning in Fuzzy Clustering. IEEE
+International Conference on Fuzzy Systems, pp
+857-861.
+
+2599

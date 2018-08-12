@@ -1,0 +1,773 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+MODELAGEM E CONTROLE DE UM SISTEMA INDUSTRIAL DE TRANSPORTE PNEUMÁTICO
+DE MATÉRIAS-PRIMAS EM PÓ USANDO A TEORIA DE CONTROLE SUPERVISÓRIO
+THIAGO B. OTTO*, ANDRÉ B. LEAL*, YURI K. LOPES*, RODRIGO TRENTINI*
+
+*Grupo de Pesquisa em Automação de Sistemas e Robótica  GARS
+Departamento de Engenharia Elétrica, Universidade do Estado de Santa Catarina  UDESC
+Campus Universitário Prof. Avelino Marcante sn, Bom Retiro, 89223-100, Joinville, SC, Brasil
+E-mails thiagobeckert@gmail.com, leal@joinville.udesc.br,
+yurikazuba@gmail.com, rodrigo.trentini@gmail.com
+Abstract
+ In this paper, we apply the Supervisory Control Theory of Discrete Event Systems to model an industrial system of
+transportation of powder raw material. We use the monolithic approach for the synthesis of a nonblocking and minimally
+restrictive supervisor for this system to restrict its closed-loop behavior to meet the control specifications. The automaton
+obtained for the supervisor is translated to a programming language suitable for use on a Programmable Logic Controller. The
+logic implemented is then tested on a test platform, yielding a closed loop behavior in accordance with the control specifications.
+Keywords
+ Supervisory Control Theory, Discrete Event Systems, PLC, industrial system of transportation, powder raw
+material.
+Resumo
+ Neste trabalho aplica-se a Teoria de Controle Supervisório de Sistemas a Eventos Discretos para modelar um sistema
+industrial de transporte de matérias-primas_em_pó. Utiliza-se a abordagem monolítica para a síntese de um supervisor não
+bloqueante e minimamente restritivo para este sistema a fim de restringir o seu comportamento de malha_fechada de forma que
+atenda s especificações de controle. O autômato obtido para o supervisor é traduzido num programa em linguagem Ladder e
+implementado num Controlador Lógico Programável. A lógica implementada é então testada sobre uma plataforma_de_testes,
+obtendo-se o comportamento de malha_fechada em consonância com as especificações de controle.
+Palavras-chave
+ .
+
+1 Introdução
+O mercado atual depende fortemente de contínuos
+avanços tecnológicos a fim de atender a exigências
+dos consumidores com preços baixos, produtos de
+qualidade e adequação s suas necessidades. Diante
+desta situação, as empresas devem otimizar seus
+processos produtivos, realizando melhoria na
+qualidade, aumento da produtividade e redução dos
+custos. Neste sentido, os projetos de automatização
+visam diversos benefícios, atendendo também estas
+melhorias nos processos de produção.
+De acordo com Goeking (2010) a automatização
+surgiu como o caminho para a redução da
+participação do trabalho manual do homem sobre os
+processos_industriais. Diante disso, as empresas
+investem no sistema de transporte automatizado para
+mecanizar o abastecimento nas máquinas de
+fabricação.
+Segundo Klinzing (2010), de uma maneira geral
+as empresas investem nestes sistemas com intuito de
+adquirir benefícios relacionados com o transporte de
+uma variedade de produtos livres de poeiras,
+segurança no manuseio, flexibilidade da rotina,
+distribuição para diversas áreas da fábrica e pela
+facilidade no controle proveniente da automação.
+Ribeiro (2003) explica que o fluxo de material é
+manipulado sob o comando de um controlador, de
+forma a manter a variável do processo em um valor
+desejado, devendo também prever, no programa do
+supervisor, ocasiões externas que possam ocorrer na
+execução de algum evento.
+
+ISBN 978-85-8001-069-5
+
+Contudo, os problemas de controle industriais
+usualmente são solucionados sem auxílio de uma
+sistemática, sendo estes resolvidos com base na
+experiência profissional do projetista. Todavia, no
+meio acadêmico existem ferramentas e metodologias
+formais para solução destes problemas. De interesse
+especial para o contexto deste trabalho, a Teoria de
+Controle Supervisório (TCS) de Sistemas a Eventos
+Discretos (SEDs) é uma ferramenta importante para a
+síntese de supervisores não bloqueantes e
+minimamente restritivos (Ramadge e Wonham,
+1989).
+Entretanto, de acordo com Brandin (1996), esta
+metodologia carece de aplicações em problemas reais
+para que seja utilizada mais amplamente. Ainda,
+Queiroz (2004) discute sobre as dificuldades práticas
+encontradas no processo de implementação da
+estrutura de controle_supervisório.
+Diante deste contexto, o presente artigo tem por
+objetivo utilizar a Teoria de Controle Supervisório
+para sintetizar a lógica de controle para um sistema
+industrial de transporte pneumático de matériasprimas em pó, e implementar esta lógica em um CLP
+(Controlador Lógico Programável) a fim de garantir
+que o comportamento do sistema real atenda s
+especificações de controle.
+O restante deste artigo está organizado da
+seguinte forma Na Seção 2 é apresentado o
+embasamento teórico acerca da automatização e do
+sistema de transporte tratado neste trabalho, além de
+apresentar uma breve revisão sobre a Teoria de
+Controle Supervisório. Na Seção 3 é apresentado o
+sistema de transporte de matérias-primas_em_pó
+5302
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+considerado neste trabalho e é aplicada a TCS para a
+síntese de um supervisor não bloqueante e
+minimamente restritivo para este sistema. A Seção 4
+é dedicada  implementação da lógica de controle do
+supervisor em CLP usando linguagem Ladder. Por
+fim, o artigo apresenta as conclusões do trabalho
+desenvolvido e algumas sugestões de trabalhos
+futuros.
+2 Fundamentação Teórica
+2.1 Automatização
+O transporte pneumático, de acordo com Cartaxo
+(2000), consiste no arraste de partículas sólidas por
+uma corrente gasosa, através de uma tubulação
+estanque. Segundo Monteiro (2005), o tamanho de
+partículas que podem ser transportadas com esta
+tecnologia pode variar desde a ordem de grandeza
+dos micrômetros até partículas com tamanho em
+ordem de grandeza do centímetro.
+Nesta perspectiva, os equipamentos são
+compostos por tubulações estanques, gerador de
+movimento, dispositivo de dosagem no início do
+transporte, sistema de automação para controle e
+acionamentos de diversos acessórios, além de um
+conjunto de componentes. Para o controle destes
+equipamentos em geral são utilizados Controladores
+Lógicos Programáveis  CLPs, os quais, segundo
+Otto (2010), geram confiabilidade_operacional,
+permitem comunicações em redes interligadas,
+controlam fabricações, além de apresentarem uma
+simplificação em painéis elétricos para uso
+operacional. Cruz (2011) complementa estas
+informações afirmando que estes sistemas estão
+difundidos no controle_de_processos de automação
+industrial para controlar equipamentos e instalações.
+Contudo, a lógica de controle destes sistemas em
+geral é desenvolvida de forma empírica, baseada na
+experiência do profissional da área e sem uma
+metodologia formal. Há, portanto, uma grande
+dependência
+da
+habilidade
+humana
+no
+desenvolvimento e na implementação desta lógica.
+2.2 Teoria de Controle Supervisório
+A Teoria de Controle Supervisório (TCS) de
+Sistemas a Eventos Discretos (SEDs) se baseia no
+uso de linguagens controláveis e autômatos de
+estados finitos (CURY, 2001). De acordo com a
+TCS, o comportamento de um SED pode ser
+representado por um autômato G  (, Q, , q0, Qm)
+tal que  é o alfabeto dos eventos, Q é o conjunto de
+estados,   Q  Q representa a função de
+transição, q0  Q é o estado inicial e Qm  Q
+representa o subconjunto de estados marcados ou
+finais (Wonham, 2011). A função de transição citada
+é uma função parcial em Q para um subconjunto de
+. Seja * o conjunto de todas as cadeias finitas de 
+incluindo a cadeia nula , então uma linguagem é um
+subconjunto de *. A planta pode ser modelada por
+
+ISBN 978-85-8001-069-5
+
+um autômato G caracterizado por duas linguagens o
+comportamento fechado de G, com todas as
+possibilidades de sequências de eventos que a planta
+gera, denotado por L(G) e o comportamento
+marcado de G, o qual contempla as sequências
+representando tarefas completas, denotado por
+Lm(G). O operador  representa a composição
+síncrona de linguagens ou de autômatos.
+Na TCS o alfabeto de eventos é subdividido em
+dois subconjuntos disjuntos, a saber, um subconjunto
+de eventos controláveis e outro de eventos não
+controláveis. Os eventos controláveis c   são
+aqueles possíveis de serem impedidos de ocorrer
+através de um agente externo de controle
+(denominado supervisor), enquanto que os eventos
+não controláveis u   não podem ser impedidos de
+ocorrer diretamente pelo supervisor, sendo portanto
+considerados
+permanentemente
+habilitados
+(Ramadge e Wonham, 1989).
+Uma linguagem K  Lm(G) é dita controlável se
+u  ( )  , sendo
+o prefixo fechamento de
+K. Com isso, a ocorrência de um evento não
+controlável e fisicamente possível de ocorrer após ,
+mantém a sequência no conjunto
+. Segundo
+(Ramadge e Wonham, 1989), o conjunto de todas as
+sublinguagens de K que são controláveis em relação
+a G possui um elemento supremo único, chamado de
+máxima linguagem controlável, denotado SupC(K,
+G).
+Os autômatos podem ser graficamente
+representados por diagramas de transição de estados
+(grafos direcionados) nos quais os nós representam
+os estados e arcos etiquetados representam as
+transições entre os estados. O estado inicial é
+identificado por uma seta apontando para o mesmo e
+os estados marcados são ilustrados por nós com
+linhas duplas. Os eventos controláveis são
+diferenciados dos demais por intermédio de um traço
+cortando os arcos.
+Na abordagem monolítica de síntese de
+supervisores, proposta por Ramadge e Wonham
+(1989), o objetivo consiste em sintetizar um único
+supervisor que é responsável por restringir
+comportamentos indesejados da planta e, desta
+forma, garantir que o sistema em malha_fechada
+atenda s especificações de controle. Este supervisor
+pode ser representado por um autômato S e um mapa
+de controle contendo as desabilitações de eventos
+para cada estado de S. O sistema controlado é
+denotado por SG e o seu comportamento é
+modelado pelo autômato GS. Assim, os
+comportamentos fechado e marcado da planta sob
+supervisão são respectivamente representados por
+L(SG)  L(SG) e Lm(SG)  Lm(SG).
+Ainda, um supervisor S é dito ser não bloqueante
+se (  ) 
+(  ), isto é, se a partir de qualquer
+estado alcançável de SG sempre é possível atingir
+um estado marcado. Assim, dada uma linguagem K
+ Lm(G), o objetivo de controle consiste em obter
+um supervisor não bloqueante S tal que Lm(S) 
+SupC(K, G).
+
+5303
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+3 O Sistema de Transporte de Matérias-primas
+em Pó
+3.1 Descrição do Sistema
+O sistema utilizado como base para o
+desenvolvimento deste trabalho consiste num
+conjunto de equipamentos responsáveis pelo
+transporte de matérias-primas_em_pó. A título de
+ilustração, na Figura 1 apresenta-se um sistema real
+implantado em uma indústria para transportar
+matérias-primas_em_pó até uma máquina de
+fabricação.
+
+Figura 2. Layout da linha de produção
+
+Figura 1. Sistema real para transportar matérias-primas_em_pó
+
+Este sistema contém moegas destinadas ao
+recebimento de matérias-primas proveniente de bigbags (sacos industriais para armazenar matériasprimas em grandes quantidades), contém também
+dosadores e balanças a fim de obter a quantidade
+necessária de matérias-primas para fabricação, além
+de um conjunto de vácuo responsável por gerar a
+energia para transporte de tais matérias-primas. O
+transporte ocorre pelo interior da tubulação instalada
+da balança até o alimentador localizado acima da
+máquina utilizada para a fabricação de um produto a
+partir das matérias-primas transportadas.
+Neste trabalho considerou-se um problema
+similar ao apresentado na Figura 1, porém um pouco
+simplificado, diminuindo a quantidade de elementos
+da planta. O problema tratado é ilustrado na Figura 2.
+A ideia, de acordo com o layout apresentado, é
+transportar o material recebido em BIG-BAG para o
+interior da máquina produtiva, localizada abaixo do
+equipamento ALIM. Foi alocada uma MOEGA para
+recebimento do material proveniente do BIG-BAG e
+um conjunto de tubulação para transportar o material
+da MOEGA até o ALIM. O conjunto de vácuo está
+interligado com o ALIM, permitindo, assim, fazer o
+manuseio desejado.
+
+ISBN 978-85-8001-069-5
+
+A balança, através de células de carga, acusa a
+quantidade de material presente na moega. Para o
+caso específico deste trabalho, considerou-se como
+quantidade mínima de material com 5 kg e
+quantidade máxima com 30 kg.
+As válvulas borboleta permitem ou impedem a
+passagem de material do BIG-BAG para a MOEGA
+(eventos AbraVB4 e FechaVB4) e do ALIM
+para a máquina produtiva (eventos AbraVB8 e
+FechaVB8).
+Os sensores de níveis são do tipo pás-rotativas e,
+na presença de material AtivaSNmax ou
+AtivaSNmin, detectam e emitem sinal para o CLP.
+Enquanto não houver material no nível do sensor é
+acusado DesativaSNmax ou DesativaSNmin. O
+vácuo, por sua vez, é ligado com IniVacuo e
+desligado com FimVacuo.
+3.2 Modelagem da Planta
+De acordo com a Teoria de Controle Supervisório
+(TCS) de Ramadge e Wonham (1989), o primeiro
+passo para a síntese do supervisor consiste na
+modelagem da planta. Assim, o comportamento de
+cada um dos subsistemas que compõem o sistema de
+transporte foi modelado por intermédio de
+autômatos, os quais são apresentados na Figura 3.
+Nesta modelagem foram considerados como eventos
+controláveis aqueles associados aos comandos
+enviados aos atuadores e como eventos não
+controláveis aqueles associados aos sinais gerados
+pelos sensores.
+
+5304
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+(a) Vácuo
+
+(b) Válvula borboleta 8
+
+(c) Válvula borboleta 4
+
+(d) Sensor de nível mínimo
+
+(e) Sensor de nível máximo
+
+(f) Balança
+
+Figura 3. Elementos da planta
+
+3.3 Modelagem das Restrições Físicas
+Conforme Moraes e Leal (2006), muito embora os
+modelos individuais descrevam o comportamento de
+cada subsistema, eles podem não possuir algumas
+informações importantes sobre aspectos construtivos
+do sistema global. Assim, neste trabalho foram
+criadas algumas restrições físicas da planta a fim de
+obter um modelo no qual transições de estado que
+não são fisicamente possíveis de ocorrer na planta
+real também não sejam contempladas no
+comportamento modelado. Os autômatos para as
+restrições físicas são apresentados na Figura 4.
+
+(a) Restrição R1
+
+(b) Restrição R2
+
+(c) Restrição R3
+
+(d) Restrição R4
+
+(e) Restrição R5
+
+(f) Restrição R6
+Figura 4. Restrições Físicas
+
+ISBN 978-85-8001-069-5
+
+A restrição R1 mostrada na Fig. 4(a) modela a
+impossibilidade de ocorrer falta de material no
+interior da moega quando o vácuo está desligado.
+O autômato da Fig. 4(b) modela a restrição física
+de que a balança não acusará valor maior de 30kg se
+a válvula borboleta 8 não estiver aberta.
+Na Fig. 4(c) modela-se a restrição de que os
+sensores de nível mínimo e máximo, presentes no
+alimentador, só poderão ser desativados caso a
+válvula borboleta 4 esteja aberta.
+O autômato da Fig. 4(d) modela a restrição R4
+de que o sensor_de_nível máximo só será ativado
+quando o sensor_de_nível mínimo estiver ativado.
+De forma similar, o sensor_de_nível mínimo
+somente será desativado se o sensor_de_nível máximo
+também estiver desativado, restrição esta modelada
+pelo autômato da Fig. 4(e).
+Por fim, a restrição modelada na Fig. 4(f) referese ao fato de que no início da operação do sistema o
+sensor_de_nível mínimo somente será ativado após o
+vácuo ter sido ligado, pois somente assim poderá
+haver material no interior do alimentador. Note que
+não foram modeladas restrições para ativação dos
+sensores quando o vácuo estiver desligado, pois
+apesar de improvável, não é impossível que estes
+eventos ocorram em função da inércia existente no
+transporte de material após o desligamento do vácuo.
+3.4 Modelagem das Especificações de Controle
+Outro passo necessário para a solução do problema
+de controle_supervisório consiste na modelagem das
+especificações de controle. Foram definidas então 9
+(nove) especificações a fim de restringir o
+comportamento livre da planta a um comportamento
+desejado em malha_fechada. Estas especificações
+estão caracterizadas na Figura 5 e são sucintamente
+descritas na sequência.
+A especificação E1, vista na Figura 5(a),
+relaciona os elementos válvula borboleta 8 e
+balança e impõe que uma vez aberta, esta válvula só
+poderá ser fechada quando a moega atingir o limite
+máximo de quantidade de material, sendo acusado
+pela balança como mais do que 30 kg. Além disso,
+após ser fechada, esta válvula só poderá ser aberta
+novamente quando houver falta de material na
+moega, ou seja, quando a balança acusar valor menor
+do que 5 kg.
+O objetivo das especificações E2 e E3,
+mostradas nas Figuras 5(b) e 5(c), respectivamente,
+consiste em permitir o início do vácuo somente
+quando as duas
+válvulas borboleta estiverem
+fechadas.
+A especificação E4, Figura 5(d), permite que o
+vácuo seja gerado somente quando houver material
+considerado suficiente no interior da moega, ou seja,
+no início o vácuo só poderá ser gerado quando a
+balança acusar peso maior que 30 kg e, na sequência,
+poderá ser acionado diversas vezes até que a balança
+acuse carga mínima de 5 kg, quando então este ciclo
+volta a se repetir.
+
+5305
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+(a) Especificação E1
+
+(b) Especificação E2
+
+(c) Especificação E3
+
+(d) Especificação E4
+
+(e) Especificação E5
+
+(f) Especificação E6
+
+(g) Especificação E7
+
+(h) Especificação E8
+
+comportamento global da planta G, e da
+especificação de controle E. Estes modelos foram
+obtidos fazendo-se a composição síncrona dos
+modelos individuais, ou seja, G  G1...G6 e E 
+E1...E9.
+Seguindo (Moraes e Leal, 2006), para a obtenção
+de um modelo mais refinado para a planta foram
+consideradas as restrições físicas modeladas na
+Seção 3.3, ou seja, obteve-se um autômato GR 
+GR, onde R  R1...R6. Este processo foi realizado
+com auxílio da ferramenta IDES (Rudie, 2006) e
+resultou em um autômato para GR com 56 estados e
+242 transições e um autômato para E com 128
+estados e 516 transições.
+Por fim, obteve-se a linguagem-alvo K fazendose K  GR  E, e a máxima sublinguagem de K que é
+controlável em relação a GR, dada por SupC(K,GR).
+O autômato obtido para o supervisor SR tal que
+Lm(SRGR)  SupC(K,GR) possui 118 estados e 286
+transições.
+Para fins de comparação, obteve-se também o
+supervisor S considerando-se o modelo da planta G
+sem as restrições físicas. Na Tabela 1 são
+apresentadas informações destes supervisores,
+podendo perceber que o supervisor SR possui um
+número significativamente menor de transições e de
+estados do que o supervisor S.
+Tabela 1. Comparativo entre os supervisores
+
+(i) Especificação E9
+Figura 5. Especificações de Controle
+
+De modo complementar, a especificação E5,
+mostrada na Figura 5(e), permite que o fim do vácuo
+seja realizado somente após a ativação do sensor de
+nível máximo ou no momento em que a balança
+acusar menos que 5 kg de material na moega.
+A Figura 5(f) apresenta a especificação E6, a
+qual permite abrir a válvula 4 somente após a
+ativação do sensor_de_nível máximo, ou seja, após
+haver material carregado no interior do alimentador.
+Todavia, a especificação E7 mostrada na Figura
+5(g) propõe que esta mesma válvula borboleta 4 só
+poderá ser fechada após desativar o sensor_de_nível
+mínimo, no momento em que o material for
+despejado do alimentador para a máquina produtiva.
+A especificação E8, por sua vez, proíbe as
+válvulas borboleta 8 e 4 de serem abertas durante a
+geração de vácuo (ver Figura 5(h)).
+Por último, a especificação E9 ilustrada na
+Figura 5(i) garante que o vácuo não será gerado
+enquanto o sensor_de_nível máximo estiver ativado,
+obrigando-o a acontecer somente quando este sensor
+for desativado.
+3.5 Síntese do Supervisor
+
+No de estados
+No de transições
+
+Supervisor S
+256
+1.032
+
+Supervisor SR
+118
+286
+
+É importante destacar que as transições
+excedentes no supervisor S não são possíveis de
+ocorrer na planta física, de modo que a eliminação
+delas não significa qualquer restrição imposta pelo
+controlador.
+Tendo em vista a dificuldade de visualização
+gráfica do autômato do supervisor no IDES, devido a
+grande quantidade de estados e transições, exportouse este para o formato Grail+ (Reiser et al., 2006), o
+qual pode ser aberto em qualquer editor de texto.
+Basicamente este formato apresenta a estrutura de
+transição do autômato na forma estado de partida 
+evento  estado de chegada.
+No intuito de ilustrar a lógica de controle obtida,
+parte deste supervisor é mostrada na Figura 6, onde o
+estado inicial e final estão indicados por pseudo
+instruções, separados por símbolos  e . As
+informações (START) e (FINAL) são pseudo estados
+(Reiser et al., 2006).
+Outras ferramentas poderiam ser utilizadas para
+realização destas operações, como o TCT (Feng e
+Wonham, 2006), o DECADA (Stamp et al., 2006), o
+Supremica (Akesson et al., 2006) e o DESUMA
+(Ricker e Lafortune, 2006).
+
+O próximo passo no processo de síntese de um
+supervisor monolítico (Ramadge e Wonham, 1989)
+consiste em obter autômatos que representem o
+
+ISBN 978-85-8001-069-5
+
+5306
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 6. Trecho do Supervisor no formato Grail+
+
+A Network 1 da Figura 7 representa a transição
+do estado 0 para o estado 1 do trecho do supervisor
+mostrado na Figura 6, bem como contempla a
+geração do evento controlável destinado a abrir a
+válvula borboleta 8, dando-se início ao processo de
+abastecimento. Com isso, o programa seta a variável
+referente  abertura desta válvula e reseta a variável
+referente ao fechamento da mesma.
+Na Network 2 é feita a transição do estado 1 para
+o estado 2 do supervisor (ver Figura 6) a partir da
+identificação do evento não controlável emitido pela
+balança, acusando >30kg de material na moega. Com
+isso, o programa reseta esta informação da balança e
+seta o próximo estado, para dar continuidade a lógica
+projetada.
+Para maiores informações sobre implementação
+da estrutura de controle_supervisório em CLP sugerese consultar (Leal et al., 2012).
+
+4 Implementação e testes
+4.2 Realização de Testes Preliminares
+4.1 Implementação da Lógica de Controle em CLP
+Como elemento de controle deste sistema é utilizado
+um CLP S7-200 da Siemens, o qual recebe sinais dos
+sensores e da balança e, em resposta, atua sobre o
+conjunto de vácuo e das válvulas borboleta.
+Assim, para implementar a lógica de controle
+neste CLP é necessário traduzir a estrutura de
+transição e de desabilitação do supervisor numa
+linguagem de programação aceita pelo mesmo. Esta
+etapa foi realizada sem auxílio de uma ferramenta
+computacional, projetando a lógica Ladder de forma
+manual e inserindo os dados no software STEP-7MicroWIN para posterior carregamento no CLP. A
+metodologia de implementação adotada foi baseada
+em (Curzel, 2008) e foram seguidos preceitos
+importantes como o de priorização no tratamento dos
+eventos não controláveis da planta.
+Na Figura 7 apresenta-se parte do programa
+referente  lógica de controle implementada no CLP
+em linguagem Ladder.
+
+Figura 7. Trecho da lógica de controle implementada em Ladder
+
+ISBN 978-85-8001-069-5
+
+No intuito de realizar alguns testes preliminares,
+montou-se uma plataforma_de_testes na qual foram
+utilizadas chaves do tipo liga-desliga para simular a
+ocorrência de eventos não controláveis, e
+sinalizadores luminosos para indicar a ocorrência de
+eventos controláveis. Como elemento de controle
+utilizou-se um CLP S7-200 da Siemens.
+Os equipamentos do sistema de transporte
+estudado foram esboçados na plataforma_de_testes e
+os comandos de saída do CLP (eventos controláveis)
+foram identificados por sinalizadores luminosos
+instalados junto a esta plataforma.
+Foram realizados diversos testes sobre esta
+plataforma, simulando diversas opções que podem
+ocorrer na planta real, e em todos eles obteve-se um
+comportamento de malha_fechada em consonância
+com as especificações de controle.
+5 Conclusão
+Neste trabalho, utilizou-se a Teoria de Controle
+Supervisório de Sistemas a Eventos Discretos para
+sintetizar um supervisor para um sistema industrial
+de transporte pneumático de matérias-primas_em_pó.
+No processo de síntese do supervisor monolítico
+foram modeladas algumas restrições físicas da
+planta, o que resultou em um autômato para o
+supervisor com menor número de estados e
+transições quando comparado com o supervisor
+obtido sem considerar as restrições físicas.
+Esta redução facilitou a tradução manual da
+estrutura de controle obtida em uma lógica de
+controle em linguagem Ladder. Esta lógica foi então
+implementada em um CLP e testes foram realizados
+em uma plataforma_de_testes, obtendo-se um
+funcionamento do sistema de acordo com as
+especificações de controle.
+Na sequência deste trabalho pretende-se finalizar
+uma ferramenta de geração de código que está em
+desenvolvimento, de modo a facilitar a tradução da
+
+5307
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+estrutura de controle_supervisório numa linguagem
+de programação do CLP. De acordo com Pires et al.
+(2011), não há uma padronização acerca da
+metodologia de implementação, permitindo que cada
+programador siga sua própria linha de raciocínio, o
+que dificulta a compreensão da lógica de controle e,
+consequentemente, a realização de manutenções e
+atualizações nos programas usuais.
+Vale destacar que o problema tratado neste
+artigo também foi solucionado por intermédio da
+abordagem_modular local de síntese de supervisores,
+proposta por Queiroz (2000). Assim, tendo em vista
+que os supervisores modulares locais obtidos são não
+conflitantes, pretende-se, num trabalho futuro, fazer a
+implementação da estrutura de controle_supervisório
+proposta por Queiroz (2004) a fim de comparar os
+resultados obtidos com o uso da abordagem
+monolítica.
+Por fim, também num trabalho futuro, deve-se
+complementar este trabalho no sentido de tratar o
+sistema completo ilustrado na Figura 1 e
+implementar a lógica de controle obtida em um
+sistema real. Esta etapa deverá ser realizada na
+empresa Albag Engenharia Industrial Ltda
+(httpwww.albag.com.br),
+fabricante
+do
+equipamento mostrado na Figura 1.
+Referências Bibliográficas
+Akesson, K. Fabian, M. Flordal, H. Malik, R.
+(2006). Supremica  An integrated environment
+for verification, synthesis and simulation of
+discrete event systems, Proceedings of the 8th
+International Workshop on Discrete Event
+Systems  WODES06, pp. 384-385.
+Brandin, B. A. (1996). The real-time supervisory
+control of an experimental manufacturing
+cell.IEEE Transactions on Robotics and
+Automation, v. 12, n. 1, pp. 1-14.
+Cartaxo, S. J. M. (2000). Simulação Orientada a
+Objeto do Transporte Pneumático. Tese de
+Doutorado.Programa de Pós-Graduação em
+Engenharia Química, Universidade Estadual de
+Campinas, São Paulo - SP.
+Cruz, D. L. L. (2011). Metodologia para
+implementação de controle_supervisório modular
+local em controladores_lógicos_programáveis.
+Dissertação para Universidade do Estado de
+Santa Catarina.
+Cury, J. E. R. (2001). Teoria de Controle
+Supervisório de Sistemas a Eventos Discretos. V
+Simpósio Brasileiro de Automação Inteligente.
+UFSC.
+Curzel, J. L. (2008). Síntese e Implementação de
+Controle Supervisório em uma Célula Flexível
+de Manufatura Didática. Dissertação (Mestrado
+em Engenharia Elétrica). Universidade do
+Estado de Santa Catarina.
+Feng, L. and Wonham, W. M. (2006). TCT a
+computation tool for supervisory control
+synthesis, Proceedings of the 8th International
+
+ISBN 978-85-8001-069-5
+
+Workshop on Discrete Event Systems 
+WODES06, pp. 388-389.
+Goeking, W. (2010). Da máquina a vapor aos
+softwares de automação. Revista O Setor
+Elétrico. Editora Atitude. Edição 52, pág. 70.
+Klinzing, G. E. (2010). Pneumatic conveying of
+solids a theoretical and practical approach.
+Thirdedition USA.
+Leal, A. B. Cruz, D. L. L. Hounsell, M. S. (2012)
+PLC-based Implementation of Local Modular
+Supervisory Control for Manufacturing Systems.
+In Faieza Abdul Aziz (Ed.). Manufacturing
+System. 1 ed. INTECH, p. 159-182.
+Monteiro, R. N. B. B. (2005). Estudo do transporte
+pneumático vertical de rolhas de cortiça.
+Dissertação de Mestrado em Fundamentos e
+Aplicações da Mecânica dos Fluidos, Porto.
+Otto, T. B. (2010). Implantação do planejamento
+estratégico em uma empresa de sistemas de
+automatização. Trabalho de graduação em
+Engenharia de Produção na Universidade do
+Estado de Santa Catarina, Joinville - SC.
+Moraes, W. R. de Leal, A. B. (2006). Controle
+supervisório do transportador de entrada de um
+sistema_flexível_de_manufatura. In VII
+Conferência Internacional de Aplicações
+Industriais - INDUSCON, 2006, Recife, PE.
+Anais da VII Conferência Internacional de
+Aplicações Industriais.
+Pires, A. O. Cruz, D. L. L. Leal, A. B. (2011).
+Concepção de uma ferramenta para geração
+automática de código para CLPs baseada na
+Teoria de Controle Supervisório. VII Seminário
+Nacional de Controle e Automação. Salvador,
+BA.
+Queiroz, M. H. (2000). Controle Supervisório
+Modular de Sistemas de Grande Porte.
+Dissertação (Mestrado). Programa de PósGraduação
+em
+Engenharia
+Elétrica.
+Universidade Federal de Santa Catarina.
+Florianópolis.
+Queiroz, M. H. (2004). Controle Supervisório
+Modular e Multitarefa de Sistemas Compostos.
+Tese (Doutorado). Programa de Pós-Graduação
+em Engenharia Elétrica. Universidade Federal de
+Santa Catarina. Florianópolis.
+Ramadge, P. Wonham, W. (1989). The control of
+discrete event systems, Proceedings of the IEEE.
+Reiser, C. Cunha, A. E. C. da and Cury, J. E. R.
+(2006). The Environment Grail for Supervisory
+Control of Discrete Event Systems, Proceedings
+of the 8th International Workshop on Discrete
+Event Systems  WODES06, pp. 390-391.
+Ribeiro, M. A. (2003). Aplicações de Automação.
+Curso ministrado a engenheiros e técnicos da
+automação_industrial. Salvador.
+Ricker, L. Lafortune, S. G. (2006). DESUMA A
+Tool Integrating GIDDES and UMDES,
+Proceedings of the 8th International Workshop
+on Discrete Event Systems  WODES06, pp.
+392-393.
+
+5308
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Rudie, K. (2006). The Integrated Discrete-Event
+Systems Tool, Proceedings of the 8th
+International Workshop on Discrete Event
+Systems  WODES06, pp. 394-395.
+Stamp, G. Ong, Y. Kumar R. Zhou C. (2006).
+DECADA Tool for Discrete-Event Control and
+Diagnosis Analysis, Proceedings of the 8th
+International Workshop on Discrete Event
+Systems  WODES06, pp. 396-397.
+Wonham, W. M. (2011). Supervisory Control of
+Discrete-Event
+Systems.
+Electrical
+and
+Computer Engineering, University of Toronto.
+
+ISBN 978-85-8001-069-5
+
+5309

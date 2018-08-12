@@ -1,0 +1,849 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+PONDERAÇÃO NEURAL DE EXPERTS
+
+RAFAEL DE O. VALLE DOS SANTOS, MARLEY M.B.R. VELLASCO
+Departamento de Engenharia Elétrica, PUC-Rio
+Rua Marquês de São Vicente 225, Gávea, Rio de Janeiro - RJ
+E-mails rvsantos@petrobras.com.br, marley@ele.puc-rio.br
+Abstract
+ This article describes a novel framework for combining forecasters. It uses neural network regression models to
+estimate, at a given point in time, the linear weights of the available experts (forecasters) at that time with those weights, the
+experts can be linearly combined to produce a single, potentially more accurate, forecast. Preliminary results show that this
+weight generation framework can be especially useful for multi-step-ahead forecasting.
+Keywords
+ Forecast combination, neural networks, linear combination.
+Resumo
+ Este artigo descreve um novo framework para combinação_de_previsores. Ele empregra modelos de regressão
+baseados em redes_neurais para estiomar, em um dado ponto no tempo, os pesos lineares dos experts (previsores) disponíveis
+naquele isntante com esses pesos, os experts podem ser combiandos linerarmente para obetnçaõ de uma previsão única,
+potencialmente melhor. Resultados preliminares mostram que esse novo framewrok para geração de pesos pode ser
+especialmente útil em previsões muitos-passos a frente.
+Palavras-chave
+ .
+
+1
+
+conhecimento e reger os aumentos ou diminuições
+nos valores dos pesos.
+Este artigo apresenta a proposta de uma abordagem
+adaptativa onde, em um dado instante de tempo, os
+pesos para combinação_linear de um dado conjunto
+de experts são estimados por modelos de redes
+neurais, baseados não em atributos extraídos da série
+original, mas diretamente nos valores das previsões
+disponíveis, defasados ou não. Em outras palavras, as
+previsões dos experts vão servir como variáveis de
+entrada para um ou mais modelos de regressão não
+linear.
+Como é sabido para qualquer técnica de aprendizado
+supervisionado (aprendizado por exemplos), as redes
+neurais precisam ser supridas com pares de
+treinamento, i.e., pares históricos de entrada-saída,
+para que seus parâmetros possam ser ajustados
+(treinados) na solução aqui proposta, cada par de
+treinamento será constituído de (i) previsões dos
+experts (defasadas ou não) e (ii) pesos sugeridos
+para combinação_linear (o processo de cálculo dos
+pesos sugeridos será explicado mais adiante). O
+modelo de regressão ajustado deve ser capaz de
+generalizar a partir do conjunto de treinamento
+observado, mapeando vetores de previsões em pesos
+potencialmente ótimos para combinação_linear dos
+experts.
+O restante deste artigo está organizado da seguinte
+forma a seção 2 apresenta o modelo básico para
+combinação_linear. A seção 3 introduz o framework
+para ponderação neural de experts. A seção 4 provê
+resultados experimentais obtidos com o métodos
+propostos. A seção 5 conclui o trabalho.
+
+Introdução
+
+A pesquisa em combinação_de_previsores foi
+recentemente resumida em Timmermann (2006).
+Outras referências interessantes no assunto são Hibon
+e Evgeniou (2005), Yang (2004) e Sánchez (2008).
+Algumas conclusões emprícas nessa área sugerem
+que (i) é menos arriscado combinar previsores do
+que selecionar um método individual, i.e., em média,
+combinações levam vantagem e também que (ii) as
+combinações simples  combinações que não
+requerem estimação de muitos parâmetros, e.g.,
+média simples ou com pesos baseados no inverso do
+erro quadrático médio, são difícies de serem batidas.
+Com a proposta de um novo framework para
+estimação dinâmica de pesos lineares para
+combinação_de_previsores, baseado em modelos de
+redes_neurais, buscam-se dois objetivos nesse
+trabalho reforçar a afirmativa (i) e enfraquecer a
+afirmativa (ii).
+O emprego de redes_neurais para geração de pesos
+para combinações lineares foi proposto em Prudêncio
+e Ludermir (2006). Contudo, a abordagem utilizada
+naquele trabalho usou a idéia de inferir pesos fixos
+para cada um dos previsores envolvidos, com base
+em um conjunto pré-definido de características
+extraídas da série em questão (comprimento,
+tendência básica, percentual de pontos de inflexão
+etc.). A idéia básica de extração de atributos foi
+também utilizada em trabalhos na área dos sistemas
+baseados em regras ou sistemas baseados em
+conhecimento (Adya et al., 2001 Arinze 1994). Uma
+grande dificuldade em sistemas dessa natureza, além
+da definição de quais os melhores atributos a extrair
+(um problema comum a quase todas as técnicas) , é a
+escolha das regras que vão compor a base de
+
+1339
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+onde os pesos dependem de medidas de desempenho
+e portanto devem ser mantidos fixos para horizontes
+de projeção maiores do que um (já que não se
+conhece a realização futura da série e, portanto, não
+há possibilidade de se calcular desempenhos).
+Como será visto nas próximas subseções, há duas
+possibilidades de arquitetura para o NEW. A
+primeira arquitetura considera múltiplas redes_neurais
+de tamanho reduzido, uma para cada expert, com
+saídas escalares representando o peso individual
+daquele previsor a segunda considera uma rede
+única, mais complexa, cuja saída não é apenas um
+peso individual mas o vetor completo de pesos. A
+Fig.1 ilustra essas idéias (desconsiderando índices de
+tempo por simplicidade).
+
+2 Modelo de Combinação Linear
+A combinação_linear de N previsores, muitas
+vezes referenciada na literatura, assume a seguinte
+forma
+N
+
+y t ( N )   wt ,k . y t , k
+
+(1)
+
+k 1
+
+onde t é a previsão combinada (previsão do
+ensemble), t,k é a previsão fornecida pelo k-ésimo
+expert e wt,k é o peso desse expert no instante t.
+Considerando previsões pontuais, como é o caso
+nesse trabalho, o esquema de combinação em (1) é
+altamente desejável, por sua simplicidade de
+interpretação. Em aplicações reais, a falta de
+interpretação direta das relevâncias dos experts
+(pesos) pode ser vista com uma falha importante em
+um esquema de combinação. Nessa linha, a
+dificuldade de interpretação é uma das principais
+críticas aos ensembles não_lineares, tais como os
+baseados diretamente em redes_neurais (Donaldson
+and Kamstra, 1999). Por outro lado, considerando
+previsões bayesianas (em oposição s previsões
+pontuais), o esquema de combinação (não_linear)
+geométrico tem apresentado relativo sucesso
+(Mubwandarikwa, 2007).
+3
+
+Fig.1. (a) NEW com arquitetura multi-net. Para cada elemento no
+vetor de pesos estimado, há uma rede_neural (MLP). (b) NEW
+com arquitetura single-net. Um modelo MLP único e mais
+complexo é responsável pelo vetor completo de pesos. Tanto para
+(a) quanto para (b) se considera previsões de k experts (EXP1,
+EXP2 etc.). Os índicdes de tempo estão suprimidos por
+simplicidade.
+
+Ponderação Neural de Experts
+
+3.1 NEW multi-rede
+1
+
+A Ponderação Neural de Experts (NEW ) é
+proposta como um novo framework para combinação
+de previsores. Basicamente, a metodologia se resume
+a um conjunto de modelos adaptativos de regressão,
+onde previsões especialistas selecionadas são
+mapeadas em pesos potencialmente ótimos para
+combinação_linear dos experts envolvidos. O
+framework NEW está baseado em modelos (nãolineares) de redes_neurais, especificamente falando,
+em modelos do tipo multilayer perceptron (MLP)
+(Bishop, 1995) ele é dito adaptativo (dinâmico) na
+medida em que o vetor de pesos gerado varia no
+tempo, i.e., o modelo gera vetores diferentes e
+potencialmente melhores a cada instante. Segundo
+Timmermann (2006, p.55) esse dinamismo a cada
+novo instante de tempo pode ser desejável Uma
+certa variação no tempo ou algum ajuste adaptativo
+nos pesos da combinação (or talvez nos modelos
+sendo combinados) podem muitas vezes melhorar o
+desempenho de previsão. Uma importante melhoria
+esperada com a metodologia NEW é que ela forneça
+modelos de regressão que se comportem
+dinamicamente também nas previsões muitos-passos
+a frente isso vai de encontro a muitas das técnicas de
+geração dinâmica de pesos recentemente abordadas
+(Sánchez 2008, Yang 2004, Stock and Watson 2001),
+1
+
+A arquitetura NEW multi-rede considera redes
+neurais individuais, uma para cada um dos experts a
+serem combinados. Em outras palavras, cada expert
+tem o seu próprio modelo gerador de pesos. A idéia
+de se ter uma rede por expert, ao contrário da
+arquitetura onde se tem apenas uma rede que agrupa
+todas as previsões e gera um vetor de pesos
+correspondente (subseção 3.2), é aumentar a
+parcimônia escalabilidade do sistema isso porque,
+uma vez que as variáveis de entrada (i.e., a
+quantidade de previsões defasadas ou não a serem
+consideradas) tenham sido definidas, o número de
+parâmetros da rede irá se manter fixo,
+independentemente do número de experts que se
+considere. O aumento indiscriminado de parâmetros
+em qualquer modelo de regressão eleva a dificuldade
+de ajuste, exigindo maiores amostras de dados em
+termos de implementação, os algoritmos de
+aprendizado passam a consumir mais memória e
+capacidade de processamento, o que muitas vezes os
+torna computacionalmente inviáveis. Por outro lado,
+a abordagem com múltiplas redes tira a possibilidade
+do aprendizado natural das possíveis correlações de
+desempenho entre os experts, característica que pode
+ser importante para a geração de pesos.
+Seja yt a variável dependente (endógena) no instante
+t seja t,k a previsão feita pelo expert k (k  1,2,..., N)
+naquele mesmo instante e seja t,k o peso linear
+
+Neural Expert Weighing
+
+1340
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+estimado correspondente. A obtenção de t,k é o
+objetivo contudo, antes de se realizar essa tarefa com
+uma rede_neural treinada, é necessário que se forneça
+a essa rede um conjunto de pares de treinamento
+(amostras de entrada-saída do mapeamento
+desejado), de maneira que seus parâmetros internos
+(pesos sinápticos) possam ser ajustados. Isso
+significa que, de algum modo, um histórico de
+estimativas de peso deve ser obtido. Os métodos para
+obtenção desse histórico de estimativas são aqui
+dividos em duas classes (i) métodos exatos (e.g.
+mínimos_quadrados) e (ii) métodos heurísticos (e.g.
+inverso do erro quadrático médio). Para a estimação
+exata é comum a utilização de mínimos_quadrados
+restrito (Gill et al. 1984 Mathworks Inc. 2009a)
+N
+
+
+min   y t   wt ,k . y t ,k 
+w
+t 1 
+k 1
+
+s.a.
+T
+
+N
+
+w
+
+t ,k
+
+É importante notar que, como t,k() não é um vetor
+com medidas de desempenho, pode haver defasagem
+zero ao longo do vetor de defasagem , o que
+significa que t,k() pode ser composto não apenas de
+previsões defasadas, mas também de previsões feitas
+no mesmo instante em que se deseja calcular os
+pesos. Essa fato possibilita maior flexibilidade nos
+modelos de regressão suportados pelo framework
+NEW. Outra observação importante é que no NEW,
+da maneira como sugerido neste trabalho, os modelos
+gerados são baseados apenas em previsões nominais
+e não em medidas de desempenho, o que permite a
+geração adaptativa de pesos também em horizontes
+muitos-passos a frente em outras palavras, a
+realização futura da série não precisa ser conhecida
+para que se calcule métricas de desempenho a partir
+dela, e os pesos podem continuar evoluindo
+dinamicamente ao invés de serem mantidos fixos
+quando os horizontes de projeção são maiores do que
+um (nos resultados apresentados nesse trabalho,
+todos os pesos foram mantidos fixos fora-da-amostra,
+objetivando estabelecer-se, preliminarmente, uma
+comparação mais justa com os métodos
+tradicionais).
+
+2
+
+(2)
+
+ 1 e wt ,k  0
+
+k 1
+
+Sobre os métodos aproximados, o mais simples de
+todos é a considerar pesos fixos e iguais, i.e., t,k
+1N, k  1,2,...,N (isso nada mais é do que fazer a
+média simples das previsões). Outro método simples
+mas difícil de ser batido (Timmermann 2006) é
+considerar o inverso do erro quadrático médio (MSE)
+(Stock and Watson, 2001)
+
+3.2 NEW rede única
+A arquitetura NEW com rede única estende a
+arquitetura multi-rede para dimensões maiores.
+Primeiro, não há mais pesos estimados
+individualamente, mas sim um vetor estimado de
+pesos
+
+Wt   w t ,1
+
+1
+
+ 1 v
+2
+v  ( y t i  y t i ,k ) 
+i 1
+
+w t ,k ( )  
+1
+N
+ 1 v
+2
+
+
+v  ( y t  i  y t  i , k ) 
+k 1 
+i 1
+
+
+Wt  f It ( )
+
+y t c2 ,k
+
+... y t cm ,k 
+
+(6)
+
+(7)
+
+Onde Ît()t,1()  t,2()  ...  t,N()  é a matriz de
+previsões dos experts. Como em (5), cada vetor
+deprevisões (compondo uma linha da matriz) é
+definido pelas defasagens ci  0,1,2,..., envolvidas
+
+ y t c1 ,1
+ y
+I ( )   t c1 , 2
+t
+ M
+
+ y t c1 , N
+
+(4)
+
+Onde t,k() é composto por m previsões feitas pelo
+expert k, sendo essas previsões determinadas pelo
+vetor de defasagens  c1 c2 ... cm, ci  0,1,2,..., da
+seguinte maneira
+
+Yt ,k ( )   y t c1 ,k
+
+... w t , N 
+
+O modelo de regressão passa então a ser assim
+enunciado
+
+(3)
+
+Onde   1,2,3... é o tamando da janela desliazante
+de tempo.
+Escolhida uma forma para geração dos pesos
+históricos, o núcleo do framework NEW pode ser
+definido, impondo-se que todo peso estimado é
+função do vetor de entrada t,k()
+
+w t ,k  f Yt ,k ( )
+
+w t , 2
+
+y t c2 ,1
+y t c2 , 2
+M
+y t c2 , N
+
+... y t cn ,1 
+... y t cn , 2 
+M
+M 
+
+... y t  cn , N 
+
+(8)
+
+Como discutido na subseção 3.1, o NEW com rede
+vai permitir o aprendizado natural de correlações
+entre os experts. Por outro lado, essa arquitetura pode
+aumentar dramaticamente a complexidade do modelo
+de regressão, uma vez que, para modelos MLP
+tradicionais, o número de parâmetros na rede
+
+(5)
+
+1341
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+aumenta exponencialmente com o número de
+variáveis de entrada.
+
+3.4 Procedimento de treino
+Como em qualquer técnica que recaia em um
+processo de aprendizado por minimização do erro
+(aprendizado_supervisionado), as redes_neurais
+precisam ser abastecidas com uma amostra de
+treinamento, i.e., pares históricos contendo entrada e
+saída respectiva. No framework NEW, considerando
+o arquitetura multi-rede (subseção 3.1), os pares de
+treinamento assumem a seguinte forma
+
+3.3 Modelo de rede_neural
+As redes_neurais utilizadas no framework NEW
+são do tipo multilayer perceptron (Bishop, 1995). O
+modelo MLP é descrito pela seguinte equação
+h
+
+n
+
+i 1
+
+j 1
+
+y  F(x1,...,xn )  i .tanh(ij xj +i ) + C
+
+(9)
+
+< Yt ,k ( )  w t ,k >
+
+Onde  é a aproximação da variável endógena
+(dependente) y x1, x2,...,xn são as variáveis exógenas
+(independentes) e ,  e  (com seus respectivos
+índices) são os parâmetros a serem ajustados. O
+índice superior h, referido na literatura como número
+de neurônios ocultos da rede_neural, é um
+hiperparâmetro
+que deve ser determinado
+empiricamente essa determinação normalmente é
+feita com procedimentos estatísticos, durante a fase
+de treinamento da rede (subseção 3.4). Finalmente, a
+função tanh (tangente hiperbólica) assume a seguinte
+forma
+
+tanh( z ) 
+
+e z  e z
+e z + ez
+
+Já quando se considera a arquitetura com rede única
+(subseção 3.2), os pares de treinamento ficam assim
+
+< It ( )  W t >
+
+P  P
+
+P
+
+(13)
+
+Definidos os pares de treinamento, deve-se adotar um
+procedimento estatístico razoável para que se tenha
+um bom ajuste dos parâmetros e hiperparâmetros
+(e.g., número de neurônios ocultos) da rede_neural. A
+opção escolhida foi o holdout repetido (Witten e
+Frank, 2005). O holdout repetido apresenta dois
+passos principais primeiro, uma porção da amostra
+de treinamento é separada, constituindo assim um
+novo conjunto chamado de conjunto de validação
+depois, a porção que sobra do conjunto original é
+utilizada para treinar a rede diversas vezes, sendo
+cada uma dessas vezes chamada de replicação e
+caracterizada por dois aspectos (i) ponto de partida
+(iniciação) do algoritmo de treinamento e (ii) número
+de neurônios ocultos na arquitetura. Ao final de todas
+as replicações projetadas, elege-se a rede que
+apresentar o melhor desempenho no conjunto de
+validação (que em nenhum momento foi utilizado
+diretamente no ajuste_de_parâmetros). A Fig.2 ilustra
+o fluxo geral do algoritmo. É importante notar que,
+principalmente nas aplicações envolvendo séries
+temporais, é uma boa prática a seleção dos pontos
+mais recentes da amostra de treinamento para
+composição do conjunto de validação essa prática
+visa a manutenção da relação serial no processo de
+aprendizado. Depois de todo o processo de
+treinamento, a rede selecionada está pronta para ser
+usada sobre outros conjuntos de dados, inéditos, para
+os chamados testes fora-da- amostra.
+Finalmente, é importante observar que o modelo em
+(9), independente da normalização proposta em (11),
+pode sempre devolver valores negativos ou que não
+nescessariamente somem um. Em alguns casos isso
+pode ser não desejável um exemplo é quando os
+conjuntos de treinamento são baseados em mínimos
+quadrados restrito (2) ou inversodo MSE (3). Nesses
+casos, a seguinte normalização é proposta
+
+(10)
+
+A função tanh tem algumas propriedades que
+permitem a validade do chamado teorema da
+aproximação universal (Cybenko, 1989), o teorema
+que suporta o uso das redes_neurais com modelos de
+aproximação de funções.
+Enquanto modelos não-lineares complexos, as redes
+MLP são treinadas com algoritmos aproximados de
+otimização todas as redes_neurais no NEW são
+treinadas com Back-propagation LevenbergMarquardt (Bishop 1995 Mathworks Inc. 2009b).
+Independentemente do algoritmo selecionado, é
+quase sempre uma boa prática, antes de se proceder
+ao treinamento desse tipo de modelo, a transformação
+das variáveis endógenas e exógenas em scores
+padronizados. Uma variável P é padronizada da
+seguinte forma
+
+Ps tan dard 
+
+(12)
+
+(11)
+
+Onde p é a média da amostra de treinamento e p é o
+desvio padrão correspondente. É importante salientar
+que, em se trabalhando com variáveis padronizadas,
+deve-se sempre tomar cuidado com a necessidade de
+transformação inversa dos valores obtidos na saída
+do modelo treinado.
+
+1342
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+w t , k 
+
+w t ,k +  min(W t )
+N
+
+  w
+
+t ,k
+
++  min(W t )
+
+(subseção 3.2). Foram realizadas comparações estatísticas entre os resultados obtidos com o NEW e os
+resultados dos previsores individuais também foram
+feitas comparações com os resultados de outros métodos de combinação. Nesse trabalho, três métodos
+de previsão individuais foram escolhidos para os
+testes (i) alisamento exponencial simples, (ii) ajuste
+de polinômio quadrático e (iii) modelo autoregressivo de ordem 2 (AR2) (Makridakis et al.,
+1998). Esses métodos foram implementados no trabalho, sendo o primeiro e o terceiro essencialmente
+univariados (dependentes de valores passados da
+variável de estudo) e o segundo dependente apenas
+da variável tempo y  a.t + b.t É importante ressaltar que, no escopo desse trabalho, não houve preocupação maior com a adequação ou calibração dos métodos individuais sendo combinados (por exemplo,
+consideração de sazonalidade) o objetivo foi apenas
+mostrar as vantagens do framework de combinação.
+Com o propósito de estabelecer uma comparação
+relativa entre os métodos testados (individuais ou
+ensembles), para cada uma das 111 séries analisadas
+os erros percentuais absolutos médios (MAPEs) apresentados por cada método foram divididos pelo
+menor MAPE observado na série. Dessa forma, obteve-se uma medida de MAPE relativo, como exemplificado na Fig. 3.
+
+(14)
+
+k 1
+
+Sendo min(t) o valor mínimo encontrado no vetor
+de pesos t e  um fator binário obedecendo a
+seguinte regra   1 se min(t) < 0   0 caso
+contrário.
+
+MAPE
+Série Método 1 Método 2 Método 3
+1
+20
+15
+5
+2
+12
+17
+10
+3
+10
+18
+18
+
+Fig. 2. Algortimo de treinamento. Para cada nova replicação rep, os parâmetros iniciais da rede são reinciados e
+diferentes números de neurônios são testados. Ao final, a
+melhor rede (aquela com menor erro agregado no conjunto
+de validação) é selecionada.
+
+Série
+1
+2
+3
+
+MAPE relativo
+Método 1 Método 2 Método 3
+4
+3
+1
+1.2
+1.7
+1
+1
+1.8
+1.8
+
+Fig. 3. Cálculo do MAPE relativo.
+
+Através desse procedimento de normalização, métodos que apresentem resultados médios (ao longo das
+111 séries) mais próximos da unidade podem ser
+considerados potencialmente melhores.
+Antes de passar a análise das tabelas de resultados,
+deve-se observar que os conjuntos de treinamento
+para o NEW foram formados, nesse trabalho, utilizando-se mínimos_quadrados restrito (2) ou inverso
+do MSE (3). Ainda, todos os resultados foram baseados em uma janela deslizante de tempo com tamanho
+3 (três) e vetor de defasagens   1 2 3 (4), (5),
+(7), (8).
+A Tabela 1 mostra o primeiro conjunto de resultados,
+estabelecendo uma comparação entre os métodos
+individuais e os modelos de combinação (listados na
+primeira coluna). Para esse primeiro caso, consideraram-se as 18 previsões um-passo a frente dos métodos individuais e admitiu-se re-estimação dos modelos geradores de pesos a cada instante, excetuando-se
+os modelos do framework NEW. Nesse caso, pode-se
+
+4 Experimentos
+Experimentos preliminares com o framework
+NEW foram conduzidos considerando-se dados da
+NN3-competition, uma competição de previsão específica para métodos de inteligência_computacional
+(NN3-competition homepage). Esses dados consistem em 111 séries mensais representando dados de
+transporte (incluindo tráfego em auto-estradas, tráfego de carros em túneis, tráfego em pedágios, tráfego
+de pessoas em estações de metrô, vôos domésticos,
+entregas de importação, cruzamento de fronteiras,
+fluxo em dutos e transporte ferroviário).
+Os testes fora-da-amostra foram sempre realizados
+nos últimos 18 meses de cada série dentro-daamostra, reteve-se os últimos 12 meses para formação dos conjuntos de validação (subseção 3.4).
+Os experimentos incluíram os dois tipos de arquiteturas possíveis multi-rede (subseção 3.1) e rede única
+1343
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+que tanto (i) quanto (ii) valem, já que os modelos
+mais complexos, baseados em redes_neurais, não
+foram capazes de bater os modelos mais simples e
+tradicionais de combinação (embora ainda poderia-se
+argumentar que não houve re-treinamento das redes
+neurais a cada período, ao contrário do ocorrido com
+os métodos tradicionais). Ainda que o modelo mais
+simples de todos, a média simples, também não tenha
+tido desempenho significativo, os métodos de
+mínimos_quadrados restrito e inverso do MSE foram
+melhores. Por outro lado, considerando-se previsões
+muitos-passos a frente, pode-se dizer que (i) vale
+mas (ii) fica um pouco mais fraca (ainda que não
+muito até o momento), na medida em que os
+resultados indicam vantagem para as abordagens
+NEW, mesmo considerando-se nesse caso pesos fixos
+no horizonte de projeção.
+Atualmente, novos experimentos vêm sendo realizados dentro do framework NEW, considerando-se
+principalmente (i) mais e melhores experts a serem
+combinados (ii) utilização de outros métodos tradicionais (ou algum pool de métodos) para o treinamento das redes geradoras de pesos (iii) extensão do
+framework para novos formatos de regressão (e.g.
+consideração de valores realizados da série como
+entradas dos modelos NEW).
+
+observar que o melhor método de ensemble foi o
+inverso do MSE, em sua versão tradicional, i.e., não
+baseada em redes_neurais (ganho significativo de
+0,062). O framework NEW não teve bom desempenho um-passo a frente, o que poderia ser justificado
+pelo fato de que neste estudo, ao contrário dos modelos de combinação tradicionais, não houve retreinamento das redes_neurais a cada período.
+A Tabela 2 é análoga a primeira, mas traz resultados
+muitos-passos a frente. Nestes experimentos, foram
+consideradas as previsões multi-período realizadas
+pelos métodos individuais logicamente, essas previsões podem ser constantes, diretas ou iterativas, dependendo do método em si. É importante destacar
+que os pesos de combinação_linear fora-da-amostra
+foram mantidos constantes para todos os métodos de
+combinação testados, incluindo-se aí os métodos
+NEW, pela razão citada ao final da subseção 3.1  o
+estabelecimento de uma comparação preliminar
+mais justa em relação aos métodos tradicionais.
+Observa-se também que manter os pesos de combinação_linear constantes é o mesmo que replicar no
+horizonte de previsão de 18 meses a última projeção
+de vetor de pesos feita dentro da amostra. Finalmente, analisando-se os resultados muitos-passos a frente,
+vê-se que as quatro instâncias NEW apresentadas
+mostraram ganho de desempenho significativo em
+relação aos métodos individuais, ainda que no ambiente com pesos constantes na projeção.
+As Tabelas 3 e 4 trazem comparações diretas entre os
+ensembles tradicionais e os baseados no NEW, para
+os estudos multi-período. Os resultados confirmam
+que, considerando previsões muitos-passos a frente,
+alguns dos ensembles NEW, particularmente aqueles
+baseados no inverso do MSE, batem os melhores
+métodos de combinação tradicional (que também
+tinham apresentado ganho sobre os métodos individuais). No que tange s arquiteturas consideradas, as
+tabelas 2 a 4 também mostram que a arquitetura com
+rede única apresentou melhores resultados.
+
+Agradecimentos
+Rafael O. Valle dos Santos agradece a Roberto
+Iachan, seu chefe no setor de Pesquisa Operacional
+da PETROBRAS.
+Referências Bibliográficas
+ADYA, M. et al. (2001) Automatic identification of
+time series features for rule-based forecasting.
+International Journal of Forecasting, 17,
+pp.143-157.
+ARINZE, B. (1994) Selecting appropriate forecasting
+models using rule induction. Omega International Journal of Management Science,
+22, pp.647-658.
+BISHOP, C. M. (1995) Neural networks for pattern
+recognition. Oxford University Press, UK.
+CYBENKO, G. (1989) Approximations by
+superpositions
+of
+sigmoidal
+functions.
+Mathematics of Control, Signals, and Systems, 2,
+pp.303-314.
+DONALDSON, R. G. AND KAMSTRA, M. (1999)
+Neural network forecast combining with
+interaction effects. Journal of the Franklin
+Institute, 336, pp. 227-236.
+GILL, P. E. et al. (1984) Procedures for optimization
+problems with a mixture of bounds and general
+linear constraints. ACM Transactions on
+Mathematical Software, 10, pp. 282-298.
+HIBON, M. AND EVGENIOU, T. (2005) To
+combine or not to combine selecting among
+
+5 Conclusão
+Como discutido antes, considerando a área de
+combinação_de_previsores, conclusões empíricas
+sugerem que (i) é menos arriscado combinar
+previsores do que selecionar um método individual,
+i.e., em média, combinações levam vantagem e
+também que (ii) as combinações simples 
+combinações que não requerem estimação de muitos
+parâmetros, e.g., média simples ou com pesos
+baseados no inverso do erro quadrático médio, são
+difícies de serem batidas. Com a proposta do
+framework para ponderação neural de experts
+(NEW), baseado em redes MLP, o objetivo era
+reforçar a conclusão (i) mas enfraquecer a conclusão
+(ii). Com a realização de experimentos com 111
+séries mensais, algumas conclusões, ainda que
+preliminares, podem ser tiradas. Considerando-se
+apenas os resultados um-passo a frente, pode ser dito
+1344
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+forecasts and their combinations. International
+Journal of Forecasting, 21, pp. 524.
+MAKRIDAKIS, S. et al. (1998) Forecasting
+methods and applications. 3rd ed. John Wiley 
+Sons.
+MATHWORKS Inc. (2009a) MATLAB Optimization
+Toolbox 4  Users Guide WWW Available
+from
+httpwww.mathworks.comaccesshelpdeskhelp
+pdfdocoptimoptimtb.pdf acessed 030310.
+MATHWORKS Inc. (2009b) MATLAB Neural
+Network Toolbox 6  Users Guide WWW
+Available from
+httpwww.mathworks.comaccesshelpdeskhel
+ppdfdocnnetnnet.pdf acessed 030310.
+MUBWANDARIKWA,
+E.
+(2007)
+Modality
+conditions and prior weights in the geometric
+combination of bayesian forecasting models.
+Thesis (PhD), The Open University Walton Hall,
+UK.
+NN3-COMPETITION homepage (n.d.) WWW
+Available from httpwww.neural-forecastingcompetition.comNN3index.htm
+acessed
+030310.
+PRUDÊNCIO, R. B. C AND LUDERMIR, T. B.
+(2006) Learning weights for linear combination
+of forecasting methods. In Proceedings of the
+9th Brazilian Symposium on Neural Networks,
+Ribeirão Preto, IEEE, pp.113-118.
+SÁNCHEZ, I. (2008) Adaptive combination of
+forecasts with application to wind energy.
+International Journal of Forecasting, 24, pp.
+679-693.
+STOCK, J. H., WATSON, M. (2001) A comparison
+of linear and nonlinear univariate models for
+forecasting macroeconomic time series. In
+ENGLE, R. F. AND WHITE, H., (eds.)
+Festschrift in Honour of Clive Granger.
+Cambridge University Press, Cambridge, pp.144.
+TIMMERMANN, A. (2006) Forecast combination.
+In ELLIOT, G. et al., (eds.) Handbook of
+Economic
+Forecasting. North-Holland, pp.
+135196.
+WITTEN, I. H. AND FRANK, E. (2005) Data
+Mining Practical Machine Learning Tools and
+Techniques. 2nd ed. Morgan Kaufmann.
+YANG, Y. (2004) Combining forecasting
+procedures
+some
+theoretical
+results.
+Econometric Theory, 20, pp.176-222.
+
+1345
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Tabela 1. Individuais x Ensembles
+(um-passo a frente)
+
+Os valores de desempenho estão em MAPE relativo. Os métodos individuais são (i) alisamento exponencial (Exp), (ii) ajuste de
+polinômio quadrático (Poly2) e (iii) modelo auto-regressivo de ordem (AR2). A coluna ensemble traz os resultados dos métodos de combinação testados (listados na primeira coluna), enquanto a coluna ganho traz a diferença de desempenho entre o
+método de combinação e o melhor método individual. A hipótese do ganho (positivo ou não) ser estatisticamente significativo
+foi testada com confiança de 95.
+
+Tabela 2. Individuais x Ensembles
+(muitos-passos a frente)
+
+Os valores de desempenho estão em MAPE relativo. Os métodos individuais são (i) alisamento exponencial (Exp), (ii) ajuste
+de polinômio quadrático (Poly2) e (iii) modelo auto-regressivo de ordem (AR2). A coluna ensemble traz os resultados dos
+métodos de combinação testados (listados na primeira coluna), enquanto a coluna ganho traz a diferença de desempenho
+entre o método de combinação e o melhor método individual. A hipótese do ganho (positivo ou não) ser estatisticamente significativo foi testada com confiança de 95.
+
+1346
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Tabela 3. Mínimos Quadrados x NEW
+(muitos-passos a frente)
+
+Os valores de desempenho estão em MAPE relativo. O método benchmarking (tradicional) de combinação é o mínimos_quadrados
+restrito (MQR). A coluna NEW traz o desempenho do método NEW testado, enquanto a coluna ganho traz a diferença de desempenho entre o ensemble NEW e o método benchmarking. A hipótese do ganho (positivo ou não) ser estatisticamente significativo foi testada com confiança de 95.
+
+Tabela 4. Inverso do MSE x NEW
+(muitos-passos a frente)
+
+Os valores de desempenho estão em MAPE relativo. O método benchmarking (tradicional) de combinação é o inverso do MSE
+(invMSE). A coluna NEW traz o desempenho do método NEW testado, enquanto a coluna ganho traz a diferença de desempenho entre o ensemble NEW e o método benchmarking. A hipótese do ganho (positivo ou não) ser estatisticamente significativo foi
+testada com confiança de 95.
+
+1347

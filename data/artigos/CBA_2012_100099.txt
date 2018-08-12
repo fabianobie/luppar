@@ -1,0 +1,668 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+DESENVOLVIMENTO DE UM SISTEMA DE AQUISICAO, ARMAZENAMENTO E
+PUBLICACAO DE DADOS BASEADO EM SISTEMAS PIMS
+Thiago C. Jesus, Breno C. Ramos, Germano P. Guedes
+
+
+Departamento de Tecnologia
+Universidade Estadual de Feira de Santana
+Feira de Santana, BA, Brasil
+
+
+Departamento de Fsica
+Universidade Estadual de Feira de Santana
+Feira de Santana, BA, Brasil
+Emails jesus@ecomp.uefs.br, brenoecomp@gmail.com, germano@uefs.br
+Abstract This paper addresses the modeling and development of a system of data management systems
+based on PIMS. In this case a software must collect data from sensors, apply a compression algorithm on these
+data, store this information in a database and display them through a web application. For testing purposes,
+the system developed is used to automate a station dedicated to the remote monitoring of solarimetric variables.
+The system goal is to provide high rates of data compression, resulting in a performance gain of the system,
+maintaining the philosophy of freeware.
+Keywords
+
+Automation Systems, PIMS, Database, Web Systems
+
+Resumo Este trabalho aborda a modelagem e desenvolvimento de um sistema de gerenciamento de dados
+baseado em sistemas PIMS. Neste caso um software deve coletar dados de sensores, aplicar um algoritmo de
+compressao sobre esses dados, armazenar essas informacoes em um banco_de_dados e exibi-las por meio de uma
+aplicacao web. Para fins de testes, o sistema desenvolvido e utilizado para a automatizacao de uma estacao
+meteorologica dedicada ao monitoramento_remoto de variaveis solarimetricas. O objetivo do sistema e conceder
+altas taxas de compressao_de_dados, implicando em um ganho de desempenho do sistema, mantendo a filosofia
+de software_livre e gratuito.
+Palavras-chave
+
+
+
+Introducao
+
+O modelo ERP (Enterprise Resource Planning) e uma
+das mais importantes evolucoes na aplicacao da tecnologia da informacao realizada pelas empresas desde a
+decada de 1990 (Davenport, 1998). Esse modelo visa o
+gerenciamento da informacao de distintos sistemas de
+forma integrada, organizando diversos processos em
+um unico sistema (Zancul and Rozenfeld, 2004). Esse
+conceito e tambem aplicado no meio industrial, no
+qual a informacao de sensores e atuadores sao transmitidas em rede, sendo utilizadas por sistemas_supervisorios para a representacao fidedigna do estado atual do
+sistema industrial em questao. Esses dados gerados
+podem ser armazenados e utilizados posteriormente
+para analise de desempenho do sistema, verificacao de
+enquadramento em normas operacionais, gestao de recursos, etc.
+Nesse contexto, uma das ferramentas que surgem para dar suporte ao modelo ERP sao os PIMS
+(Plant Information Manage Systems). Tais sistemas
+sao gerenciadores de informacoes de plantas industriais, sendo formados por sistemas de coleta, armazenamento, exibicao e analise de dados oriundos de
+sistemas_de_controle e supervisao industrial, que armazenam dados de instrumentos de automacao de
+forma comprimida, com perda mnima de informacao,
+exibindo e analisando-os (Seixas Filho, 2011 Souza
+et al., 2009).
+Embora a utilizacao de PIMS seja largamente difundida, ela se torna uma solucao inadequada para
+pequenas aplicacoes (aplicacoes com algumas deze-
+
+ISBN 978-85-8001-069-5
+
+nas de sensores e fontes de dados). Isso se deve ao
+fato de que para o funcionamento de um PIMS, uma
+infra-estrutura utilizando sistemas_industriais e necessaria. Porem, como a infra-estrutura industrial segue
+padroes, a utilizacao em sistemas de pequeno porte
+demandaria um grande esforco e aquisicao de uma
+nova infra-estrutura para sua adequacao (Seixas Filho, 2011). Alem disso, os custos para adquirir tal
+infra-estrutura de automacao, bem como os softwares
+necessarios para a implementacao de um PIMS poderiam tornar projeto financeiramente inviavel.
+Assim, neste trabalho e proposto um modelo de
+software que implementa todas as bases de um PIMS.
+Neste caso o software deve coletar dados de sensores,
+aplicar um algoritmo de compressao sobre esses dados,
+armazenar essas informacoes em um banco_de_dados
+e exibi-las por meio de uma aplicacao web. O sistema
+implementado utiliza um banco_de_dados temporal,
+com um algoritmo de compressao em tempo_real, que
+garante taxas de compressao de ate 191.
+Esse modelo de software e voltado para pequenas
+aplicacoes (as quais um PIMS seria inviavel), sendo
+projetado, entao, segundo a filosofia de software_livre
+e gratuito. Para fins de testes, o sistema desenvolvido e utilizado para a automatizacao de uma estacao
+meteorologica dedicada ao monitoramento_remoto de
+variaveis solarimetricas.
+Este trabalho esta estruturado da seguinte forma
+na secao 2 a nomenclatura e algumas nocoes preliminares sobre PIMS, bancos de dados temporais e compressao_de_dados sao apresentadas. Na secao 3 e apresentada a metodologia de desenvolvimento do sistema.
+
+4122
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Os resultados obtidos sao apresentados na secao 4. Finalmente, na secao 5, as conclusoes sao apresentadas.
+2
+2.1
+
+Nocoes Preliminares
+
+PIMS
+
+PIMS sao sistemas de aquisicao_de_dados que, basicamente, recuperam os dados do processo residente
+em fontes distintas, os armazenam em um banco de
+dados unico e os disponibilizam atraves de diversas
+ferramentas (Carvalho et al., 2005). Com este sistema e possvel visualizar e organizar dados historicos e em tempo_real de forma que estes dados tragam informacoes uteis para a gestao do processo_industrial. Alem disso, podem-se montar tabelas, graficos de tendencias, telas sinopticas e relatorios dinamicos, concentrando a informacao e possibilitando
+uma visao unificada de todo processo produtivo. A figura 1 apresenta a arquitetura utilizada em um PIMS.
+(Urbano, 2009 Buchmann, 2005).
+A camada inferior de um PIMS e a camada de
+coleta, na qual dados sao adquiridos de instrumentos
+ligados diretamente a fontes como CLP (Controladores Logico-Programaveis), sistemas SCADA (Supervisory Control  Data Aquisition) e SDCD (Sistemas
+Digitais de Controle Distribudo). Cada fonte pode
+ser responsavel pela aquisicao_de_dados de mais de
+uma variavel, sendo que cada variavel esta associada
+a um sensor. Essas variaveis sao chamadas de tags
+e sao as principais unidades da camada de armazenamento. Essa camada e responsavel por manter os
+dados de forma centralizada em um servidor de banco
+de dados. Pela natureza do grande e constante volume
+de dados em sistemas_industriais, esse armazenamento
+deve prover alguma forma de compressao_de_dados.
+Assim os dados armazenados devem possuir uma estrutura simples no banco_de_dados. Por essa razao,
+uma tag no banco_de_dados deve ser formada apenas
+por um nome identificador, o valor que ela assume em
+determinado momento, bem como esse momento no
+tempo (timestamp). Uma tag pode estar associada ao
+seu instrumento correspondente na rede de automacao. Por fim, a camada de exibicao e responsavel por
+recuperar dados historicos e em tempo_real da camada
+de armazenamento, e exibi-los de forma grafica, como
+relatorios ou graficos de tendencias. (S. et al., 2006)
+Uma das maiores vantagens de utilizar o modelo
+PIMS e otimizar o armazenamento e a busca de informacoes. Para melhorar o tempo de busca de dados, o
+banco_de_dados de um PIMS deve ser um banco_de_dados temporal, sujeito a compactacao em tempo_real realizada com baixa perda de informacao. Isso tambem
+garante um armazenamento eficiente, uma vez que os
+algoritmos utilizados nesses sistemas geram uma taxa
+de compressao tpica de 101, podendo chegar ate a
+201.
+O conceito de banco_de_dados temporal e o algoritmo de compressao utilizado em PIMS sao apresentados nas secoes 2.2 e 2.3, respectivamente.
+2.2
+
+Banco de Dados Temporal
+
+Para a implantacao de um sistema baseado em armazenamento PIMS, pode ser utilizada a estrategia
+de modelagem Temporal Entidade Relacionamento
+
+ISBN 978-85-8001-069-5
+
+(TempER). Em linhas gerais, essa modelagem baseiase em variacoes do modelo relacional, adicionando associacoes e atributos temporais (Oliveira, 2001 Mahmood et al., 2010).
+Em um banco_de_dados relacional as tabelas se
+desenvolvem em duas dimensoes as linhas (instancias dos dados) e as colunas (atributos). A dimensao temporal traz a associacao do carimbo de tempo
+a cada valor. Desta forma, os dados que precisarem
+ser alterados, geralmente perdendo o valor no modelo
+tradicional, sao armazenado como uma nova linha no
+modelo TempER, tendo a informacao alterada associada ao instante de tempo no qual a alteracao ocorreu.
+Essa pratica possibilita o armazenamento de todo o
+historico do determinado atributo, dando uma dimensao temporal ao banco_de_dados. Isso nao quer dizer
+que no modelo temporal os dados nao sao alterados.
+Porem, quando houver a necessidade de uma alteracao, sera para correcao de conteudo, como um valor
+digitado errado.
+Dados temporais tem a sua propria semantica e
+organizacao, requerendo algumas modificacoes do modelo relacional. Atributos em uma relacao podem
+ser variaveis no tempo, sendo chamados de temporais. Caso contrario, tem-se atributos atemporais. Por
+exemplo, para o atributo salario de um empregado,
+existe uma associacao temporal, pois geralmente os
+valores salariais mudam com o passar do tempo. O
+atributo de sexo do empregado, ao contrario, nao varia com o tempo, sendo assim um atributo atemporal
+(Mahmood et al., 2010).
+Com essa estrutura temporal, e possvel obter um
+menor tempo de resposta de uma consulta em relacao
+ao modelo relacional. Isso se deve ao fato de o armazenamento e a leitura de um banco_de_dados serem realizados de forma sequencial. Assim, para uma busca
+por perodo, os dados de respostas ja se encontram
+agrupados, sendo necessario apenas encontrar os ndices do primeiro e do ultimo registro cujos carimbos de
+tempo definem o perodo buscado. Desta forma, nao e
+necessario comparar varios ndices e campos em uma
+tabela, aumentando o desempenho das consultas.
+Outra caracterstica que possibilita um bom desempenho ao utilizar bancos de dados temporais e que
+a validade temporal dos dados armazenados (tempo
+em que a informacao modela a realidade) em um banco
+de dados temporal e variavel, isso implica que a granularidade do banco_de_dados tambem e variavel, ou
+seja, o intervalo de tempo entre o armazenamento de
+dois registros distintos nao e fixo. Essa caracterstica
+influencia diretamente no processo de compressao de
+dados.
+2.3
+
+Algoritmo de Compressao
+
+Um sistema de compressao eficiente e de fundamental
+importancia para sistemas historiadores_de_dados de
+automacao. Em PIMS a informacao pode ser recuperada com integridade e com grande velocidade. Analisando a estrategia de compressao, os PIMS possuem
+as seguintes caractersticas
+ Taxa de compressao alta
+ Reconstrucao simples dos dados
+ Algoritmo veloz na compressao e reconstrucao
+dos dados
+
+4123
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 1 Arquitetura de um PIMS. FONTE (URBANO, 2009)
+Para tanto, ao inves de amostrar os dados a intervalos fixos, sendo obrigado a aumentar o perodo de
+amostragem para melhorar a compressao (o que implica muitas vezes em perda de informacoes), os sistemas PIMS amostram a curva no ponto adequado, garantindo que um valor seja armazenado apenas quando
+existem mudancas significativas acontecendo. Com
+isso consegue-se uma taxa de compressao sem perda
+de qualidade de dados. (Carvalho et al., 2005)
+Um dos algoritmo de compressao mais utilizados
+por PIMS e o Swinging Doors, devido a sua eficiencia e simplicidade, alem de realizar a compressao em
+tempo_real, nao necessitando de janelamento em um
+perodo, ou seja, a medida em que os dados chegam da
+interface de coleta para a camada de armazenamento,
+eles sao armazenados de forma comprimida.
+A ideia basica desse algoritmo e criar uma area de
+cobertura no formato de um paralelogramo que indica
+a faixa de valores que nao apresentam drasticas variacoes em relacao aos dados ja armazenados. Assim, se
+o valor recebido de uma variavel estiver dentro desse
+paralelogramo, ele nao precisara ser armazenado. Se o
+valor recebido estiver fora do paralelogramo, ele precisa ser armazenado para garantir a reconstrucao da
+informacao.
+O Swinging Doors contem dois parametros que
+sao definidos para cada variavel cujas informacoes serao comprimidas. Esses parametros sao tempo maximo de compressao e desvio de compressao. O desvio de compressao e utilizado na criacao do paralelogramo, cuja largura e igual ao dobro do valor do desvio. O ultimo valor recebido e sempre armazenado se
+o tempo transcorrido desde o ultimo valor armazenado
+for maior que o tempo maximo de compressao. Assim,
+quanto maior for o tempo maximo de compressao e o
+desvio de compressao, maior sera a taxa de compressao, porem, maior sera a perda de informacao (Souza
+et al., 2005).
+O funcionamento do algoritmo Swinging Doors e
+ilustrado na figura 2. Esse algoritmo precisa decidir se
+um determinado valor Va recebido pela camada de armazenamento no tempo ta deve ser armazenado. Para
+tanto o algoritmo precisa saber qual foi o valor do ultimo dado gravado no banco_de_dados e qual sera o
+proximo valor recebido. Assim, Suponha que um va-
+
+ISBN 978-85-8001-069-5
+
+lor Vg recebido pela camada de armazenamento no
+instante de tempo tg (tg < ta ) seja o ultimo valor
+gravado, e que um valor mais recente, Vr , tenha sido
+recebido em um instante de tempo tr (tr > ta ). Conhecendo esses valores, uma reta e tracada desde Vg
+ate Vr . Considerando o valor do desvio, sao traca
+
+das retas paralelas a reta Vg Vr , acima e abaixo dela,
+criando assim a regiao do paralelogramo. Se o valor
+Va estiver contido em uma dessas retas no instante de
+tempo ta , ele nao sera armazenado, como mostra a figura 2(a). Caso contrario, ele sera armazenado como
+mostra a figura 2(b).
+Note que pode haver diversos valores entre o ultimo valor gravado e o valor recebido mais recentemente, desde que todos eles estejam dentro do paralelogramo. Ainda e importante salientar que, caso o
+intervalo de tempo entre o valor recebido mais recentemente e o ultimo valor armazenado seja maior do que
+o tempo maximo de compressao, entao o valor mais
+recente deve ser armazenado para garantir a precisao
+da reconstituicao da informacao armazenada.
+3
+
+Metodologia e Desenvolvimento
+
+O sistema objeto de estudo foi uma pequena estacao
+meteorologica dedicada ao monitoramento_remoto de
+variaveis solarimetricas e foi organizado como um sistema PIMS, possuindo tres modulos como ja mostrado
+na secao 2.1. O modulo de coleta foi baseado na estacao meteorologica Nomad II, que e um equipamento
+fabricado pela Secondwind dedicado a aquisicao_de_dados meteorologicos. Essa estacao foi a fonte de dados
+da interface de coleta. No modulo de armazenamento
+funciona o servidor principal, que possui o sistema de
+compressao e o banco_de_dados da aplicacao. Nesse
+mesmo servidor executa o servico web que contem as
+paginas do modulo de exibicao.
+Todo o sistema foi desenvolvido utilizando a plataforma Java. A ideia inicial de desenvolvimento deste
+trabalho era coletar em tempo_real os dados provenientes da estacao meteorologica NomadII via protocolo
+RS-232, realizar o tratamento, compressao e armazenamento desses dados, para entao poder exibi-los. Entretanto, a codificacao das informacoes transmitidas
+pela estacao NomadII nao e aberta ao publico. As-
+
+4124
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+(a)
+
+(b)
+
+Figura 2 Ilustracao do algoritmo Swinging Doors. FONTE (SOUZA et al., 2005)
+sim, foi preciso simular o envio de dados da estacao
+NomadII via RS-232. Para tal proposito foi criada
+uma aplicacao auxiliar que simula a estacao, fazendo
+a leitura de um arquivo de entrada e enviando as informacoes coletadas pela porta_serial. O arquivo de
+entrada e um arquivo de extensao *.txt cujos dados
+sao exatamente os mesmos adquiridos pela estacao e
+salvos em um cartao de memoria. Entao, a aplicacao
+auxiliar envia (via protocolo RS-232) os dados coletados para a camada de armazenamento.
+O arquivo de entrada deste software contem tres
+amostras da estacao de coleta na ordem em que foram
+lidas durante o mes de Janeiro de 2010. Essas amostras fazem parte do experimento de estudo de celulas
+fotovoltaicas de Sampaio et al. (2010), todas variam
+o valor de 0 a 5 e tem uma amostragem de um minuto. A primeira e a Amostra1(A1kipp(V)) que e a
+tensao gerada por um piranometro exposto a radiacao
+solar. A amostra Amostra2(A2ICC cel(V)) representa
+a corrente de curto_circuito da celula fotovoltaica em
+estudo. A ultima amostra Amostra3(Temp cel(V)) representa a temperatura da celula fotovoltaica.
+Para a implementacao da camada de armazenamento, foi utilizado um banco_de_dados MySQL modelado como mostram a figura 3. Esse modelo apresenta as tabelas Node, que armazena as informacoes
+dos nos de coleta Datasource, que armazena informacoes dos equipamentos que servem como fonte de
+dados Tag, que armazena as informacoes de cada variavel monitorada snapshot, que armazena sempre
+o ultimo estado para o conjunto de tags e valores
+que armazena todo o historico para os tags existentes
+no momento em que as mudancas acontecerem. Nesse
+modelo apenas a entidade valores e transitoria, assim
+como seu relacionamento com a entidade tag.
+Vale ressaltar que, uma vez que os dados lidos de
+sensores sao valores numericos, esse modelo de dados
+e generico, podendo variar de aplicacao para aplicacao apenas no tamanho de cada atributo no banco de
+dados..
+Alem do bando de dados, e preciso aplicar o teste
+do paralelogramo para cada valor recebido pela camada de armazenamento. Para montar o paralelogramo e saber se o valor atual esta dentro da faixa de
+valores esperada, foi utilizado o calculo do coeficiente
+angular da reta entre o ultimo valor gravado (Vg ) e
+o ultimo recebido recentemente (Vr ), considerando os
+desvios para mais e para menos, como mostram a figura 4. Assim, como base nos conceitos apresentados
+na secao 2.3, tem-se
+
+ISBN 978-85-8001-069-5
+
+T g() 
+
+Ve  Vg
+Vr  Vg
+
+,
+Tr  Tg
+Ta  Tg
+
+(1)
+
+(Vr  Vg )(Ta  Tg )
++ Vg .
+(2)
+Tr  Tg
+Ve e o valor que se esperado para o tempo Ta .
+Conhecendo Ve , e possvel descobrir o valor maximo
+(Ve + desvio) e o mnimo (Ve  desvio) que Va pode
+assumir. Portanto, se Ve  desvio  Va  Ve + desvio,
+entao Va nao deve ser armazenado.
+Por fim, a camada de exibicao e constituda de
+uma aplicacao Web que faz uma consulta no banco de
+dados e exibe o resultado de forma grafica. Esses graficos sao criados utilizando um conjunto de bibliotecas
+e funcoes do Google, chamadas de Google Chart Tool.
+A comunicacao entre os tres modulos e realizada
+via socket, que e um canal de comunicacao criado para
+a interacao entre software por portas de rede. Com
+um socket sistemas que executam em computadores
+diferentes, criados em linguagens de programacao diferentes podem se comunicar.
+Maiores detalhes sobre o desenvolvimento do sistema, como a modelagem UML (Unified Modeling
+Language) e aspectos praticos, podem ser vistos em
+(Ramos, 2012).
+Ve 
+
+4
+
+Resultados
+
+O sistema desenvolvido foi submetido a seis dias
+(amostras de 16012010 a 21012010) de testes, sem
+interrupcao, com variacao de parametros de compressao. Todos os testes criados tem o mesmo padrao,
+sendo definidos desvios de compressao de um, dois e
+cinco por cento com a mudanca de tempo maximo de
+compressao de quinze e trinta minutos, a fim de avaliar
+a taxa de compressao resultante, a fidelidade do grafico gerado e o tempo de resposta do banco_de_dados.
+Os parametros de compressao foram alterados ao fim
+de cada dia de coleta, iniciando em 1 e 15 minutos
+e terminando em 5 e 30 minutos.
+Esta parametrizacao e definida a fim de estipular qual a melhor configuracao de compressao para
+as tres amostras armazenadas. Os testes foram executados em um computador pessoal configurado com
+um processador de dois nucleos com 1.66 GHz de capacidade de processamento, Core 2 Duo T 5500, com
+memoria principal de 1GB e disco rgido de 120GB e
+5400rpm. Esse computador executa o sistema operacional W indows XP Service P ack 3. Enquanto eram
+aplicados os testes, o sistema operacional executava o
+banco_de_dados, a interface de desenvolvimento Java,
+
+4125
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 3 Visao das tabelas do banco_de_dados criado
+
+(a)
+
+(b)
+
+Figura 4 Aplicacao do Swinging Doors
+o ambiente Eclipse, e o servico W eb Apache T omcat 7.
+A variacao da configuracao de hardware ou software
+do sistema onde os testes foram executados podem influenciar principalmente nos tempos de resposta das
+amostras.
+As tabelas 1, 2 e 3 mostram os resultados dos teste
+do 1 , 3 e 6 dia, respectivamente. Esses resultados
+sao exibidos graficamente nas figuras 5, 6 e 7.
+Na tabela 1 pode-se notar que, mesmo com o desvio definido no algoritmo em 1 foi alcancada uma
+compressao total de ate 80, com erro maximo entre
+o valor comprimido e o valor real de 2,39. Este ja e
+um cenario bastante favoravel para justificar a implantacao de um PIMS. Os tempos de resposta do banco de
+dados mostram que a utilizacao de compressao torna
+a aplicacao mais rapida, chegando a uma relacao de
+191 entre o retorno de um conjunto de dados sem e
+com compressao.
+Na figura 5, como em todas as repostas graficas
+do algoritmo, sao mostrados tres graficos as respostas
+com compressao e sem compressao (em azul e vermelho, respectivamente) estao visivelmente sobrepostas,
+e terceiro grafico, em amarelo, mostra o modulo da
+diferenca entre os valores sem compressao e com compressao, que esta muito proximo a zero.
+Na tabela 2, mesmo com o aumento da compressao de 1 para 2, as taxas compressao das amostra
+1 e 2 foram menores. O fato e que os sinais de entrada variaram mais, fazendo com que mais pontos
+
+ISBN 978-85-8001-069-5
+
+fossem armazenados na compressao, isso mostra que a
+natureza do sinal tem bastante influencia na hora da
+compressao.
+O grafico apresentado na figura 6 representa um
+sinal de temperatura. Como a variacao da temperatura durante o dia nao e tao grande quanto a das
+outras amostras a imagem e mais linear. Ja e possvel
+notar mais desvios entre os valores comprimidos e sem
+compressao, mas ainda assim os comportamentos dos
+valores sao muito proximo.
+Com a parametrizacao de desvio e tempo maximo em 5 e 30 minutos foram encontradas as maiores taxas de compressao, apresentadas na tabela 3.
+Essa parametrizacao faz com que o banco_de_dados
+se torne menor, mas em compensacao o erro encontrado se torna maior, passando de 20 na amostra 3,
+situacao que nao e aceitavel.
+O grafico da figura 7, e o que mais diferencia a
+informacao, com e sem compressao. Essa diferenca
+entre os graficos foi mais visvel neste teste pois mais
+informacoes foram desprezadas durante a compressao,
+fazendo com que os intervalos de interpolacao do sinal fossem maiores, diminuindo a fidelidade do grafico
+com compressao.
+A maior taxa de compressao encontrada neste trabalho foi de 191. Essa taxa pode permitir que dez a
+vinte anos de producao de um sistema possam ser armazenadas em um disco rgido tpico. Obviamente que
+isso depende do sistema, pois, como visto, a natureza
+
+4126
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Tabela 1 Tabela comparativa. Dia 1, desvio de 1 e tempo maximo de 15min.
+Tag
+01
+02
+03
+
+No de amostras
+s compressao
+1433
+1432
+1432
+
+No de amostras
+c compressao
+331
+326
+274
+
+Taxa de
+Compressao
+76,90
+77,23
+80,86
+
+Desvio
+maximo
+2,29
+2,39
+1,88
+
+Tempo de resp.
+s compressao
+578 ms
+593 ms
+594 ms
+
+Tempo de resp.
+c compressao
+47 ms
+47 ms
+31 ms
+
+Figura 5 Resposta para amostra1. Dia 1, desvio de 1 e tempo maximo de 15min.
+
+Figura 6 Resposta para amostra3. Dia 3, desvio de 2 e tempo maximo de 15min.
+
+Figura 7 Resposta para amostra3. Dia 6, desvio de 5 e tempo maximo de 30min.
+
+Tabela 2 Tabela comparativa. Dia 3, desvio de 2 e tempo maximo de 15min.
+Tag
+01
+02
+03
+
+No de amostras
+s compressao
+1438
+1438
+1438
+
+ISBN 978-85-8001-069-5
+
+No de amostras
+c compressao
+372
+348
+169
+
+Taxa de
+Compressao
+74,13
+75,79
+88,24
+
+Desvio
+maximo
+5,83
+4,76
+5,08
+
+Tempo de resp.
+s compressao
+563 ms
+609 ms
+562 ms
+
+Tempo de resp.
+c compressao
+47 ms
+47 ms
+31 ms
+
+4127
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Tabela 3 Tabela comparativa. Dia 6, desvio de 5 e tempo maximo de 30min.
+Tag
+01
+02
+03
+
+No de amostras
+s compressao
+1438
+1437
+1438
+
+No de amostras
+c compressao
+212
+205
+64
+
+Taxa de
+Compressao
+85,25
+85,73
+95,54
+
+dos dados influencia na taxa de compressao. Apenas
+para exemplificar a autonomia de um PIMS implementado como apresentado neste trabalho e alcancando
+uma taxa de compressao de 191, suponha que para
+armazenar uma tag seja necessario a insercao de 1 KiloByte de dados em todo o banco_de_dados (o que e
+um valor razoavel). Se valores para essa tag forem inseridos no banco a cada minuto informacao, ao final
+de dez anos seria necessario um disco de aproximadamente 5.26 GigaBytes para armazenar apenas essa tag.
+Assim, para um sistema de pequeno porte, com aproximadamente cinquenta tags seria preciso um disco
+de aproximadamente 264 GigaBytes. Com a taxa de
+compressao de 191, com apenas 5 GigaBytes, aproximadamente, seria possvel guardar os valores dessas
+cinquenta tags em dez anos.
+
+5
+
+Conclusoes
+
+Neste trabalho foi apresentado o procedimento de desenvolvimento dos modulos do sistema baseado em um
+PIMS. Tal sistema consiste em fontes de dados associadas a uma camada de coleta, que envia esses dados
+para serem comprimidos e armazenados na camada de
+armazenamento que, por sua vez, disponibiliza esses
+dados para que a camada de exibicao possa mostralos ao usuario. O sistema desenvolvido utiliza variados metodos de comunicacao, como interface serial,
+sockets Java e leitura e escrita em banco_de_dados via
+sistemas Web.
+Ha uma vasta literatura mostrando ideias de
+como realizar a tarefa de compressao_de_dados. Neste
+trabalho, decidiu-se utilizar um calculo simples baseado em geometria basica para a implementacao do
+teste do paralelogramo, que mostrou-se ser bastante
+eficiente, alcancando taxas de compressao de 191 com
+baixa variacao entre a informacao armazenada e a real,
+gerando assim bons resultados quanto a taxa de compressao_de_dados e quanto ao tempo de resposta do
+banco_de_dados.
+Ao contrario de sistemas PIMS de mercado que
+custam caro, se tornando financeiramente incompatveis com pequenas aplicacoes, o sistema desenvolvido neste trabalho buscou implementacao gratuita,
+por isso utilizou plataformas e ferramentas gratuitas,
+como a plataforma Java, o banco_de_dados MySQL 1
+e o Google Chart, nao gerado custos a implementacao
+do sistema.
+Na continuacao do projeto serao criadas as funcoes de visualizacao em tempo_real, assim como sera
+desenvolvido o sistema para o usuario gerente, alem
+da realizacao de outros algoritmos de compressao para
+fins de comparacao.
+1 Desde que a aplicacao desenvolvida seja distribuda
+com a licenca GPL, o MySQL e gratuito.
+
+ISBN 978-85-8001-069-5
+
+Desvio
+maximo
+13,96
+11,72
+20,74
+
+Tempo de resp.
+s compressao
+578 ms
+672 ms
+594 ms
+
+Tempo de resp.
+c compressao
+31 ms
+31 ms
+31 ms
+
+Referencias
+Buchmann, A. (2005). Real Time Database Systems,
+Encyclopedia of Database Technologies and Applications Idea Group.
+Carvalho, F. B., S., T. B., Fonseca, M. O. and Seixas Filho, C. (2005). Sistemas PIMS - Conceituacao, Usos e Benefcios, Tecnologia em Metalurgia e Materiais, Vol 4, Abr-Jun.
+Davenport, T. (1998). Putting the enterprise into
+the enterprise system, Harvard Business Review
+pp. 121131.
+Mahmood, N., Burney, A. and Ahsan, K. (2010). A
+Logical Temporal Relational Data Model, IJCSI
+International Journal of Computer Science Issues, Vol. 7, Issue 1, No. 1.
+Oliveira, R. A. (2001). Modelagem e desenvolvimento
+de um banco_de_dados temporal, Monografia de
+graduacao. Universidade Federal de Lavras, Lavras, MG.
+Ramos, B. C. (2012). Desenvolvimento de um sistema de armazenamento e publicacao de dados de
+pequenos sistemas meteorologicos com aquisicao
+automatizada, baseado em sistemas PIMS, Monografia de graduacao. Universidade Estadual de
+Feira de Santana, Feira de Santana, BA.
+S., A. W. L., Souza, A. J., Feijo, R. H., Bezerra, C. G.,
+Maitelli, A. L., Medeiros, A. A. D. and Oliveira,
+L. A. H. G. (2006). Gerencia e armazenamento
+de dados em tempo_real em ambientes industriais, Anais da VII Conferencia Internacional de
+Aplicacoes Industriais - Induscon pp. 16.
+Sampaio, J. S., Guedes, G. P. and David, D. G. F.
+(2010). Estudo de Celulas Fotovoltaicas de Silcio como Radiometros, III Congresso Brasileiro
+de Energia Solar, Belem.
+Seixas Filho, C. (2011). PIMS - Process Information Mamagement System - Uma introducao.,
+httpwww.cpdee.ufmg.brseixasPaginaII
+DownloadDownloadFilesPims.PDF
+<Acessado em 10032011>.
+Souza, A. J., Andrade, W. L. S., Guedes, L. A., Maitelli, A. L., Feijo, R. H., Bezerra, C. G., Leitao, G. B. P. and Medeiros, A. A. D. (2005).
+Gerencia de informacao de processos_industriais um estudo de caso na producao de petroleo e
+gas, VII Simposio Brasileiro de Automacao Inteligente, Fortaleza.
+Souza, R. D., Correia, E. J. M. and Neto, E. R. (2009).
+Projeto pims do patio de minerios - uma poderosa
+ferramenta de apoio a manutencao., XX Seminario Espritossantense de Manutencao .
+Urbano, L. R. H. (2009). Gerenciamento de ativos
+de automacao Uma solucao baseada em pims,
+
+4128
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+4o Seminario Nacional de sistemas Industriais e
+Automacao .
+Zancul, E. and Rozenfeld, H. (2004). A utilizacao de
+sistemas_erp na gestao e em atividades do processo de desenvolvimento de produtos de tres empresas, Anais do XXIV Encontro Nacacional de
+Engenharia de Producao pp. 27592766.
+
+ISBN 978-85-8001-069-5
+
+4129

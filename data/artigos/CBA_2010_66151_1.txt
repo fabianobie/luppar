@@ -1,0 +1,965 @@
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+DETECÇÃO E RASTREAMENTO DE OBSTÁCULOS COM USO DE SENSOR LASER 2D
+DANILO HABERMANN E CLAUDIO GARCIA
+Departamento de Engenharia de Telecomunicações e Controle da Escola Politécnica da USP
+Av. Prof. Luciano Gualberto, trav. 3, n 158, Cidade Universitária, São PauloSP, Brasil - CEP 05508-900
+E-mails danilo.habermann@gmail.com, clgarcia@lac.usp.br
+Abstract An obstacle detection and tracking system using a 2D laser sensor and the Kalman filter is presented. This filter is
+not very efficient in case of severe disturbances in the measured position of the obstacle, as for instance, when an object being
+tracked is behind a barrier, thus interrupting the laser beam, making it impossible to receive the sensor information about its
+position. This work suggests a method to minimize this problem by using an algorithm called Corrector of Discrepancies.
+Keywords vehicle tracking, object detection, Kalman filter, laser sensor.
+Resumo Este artigo apresenta um sistema de rastreamento de obstáculos, utilizando sensor_laser 2D e filtro de Kalman. Este
+filtro não é muito eficiente em situações em que haja severas perturbações na posição medida do obstáculo como, por exemplo,
+quando um objeto que está sendo rastreado passa por trás de uma barreira, interrompendo o feixe de laser por alguns instantes,
+tornando impossível receber do sensor as informações sobre sua posição. Este trabalho sugere um método de minimizar esse
+problema com o uso de um algoritmo denominado Corretor de Discrepâncias.
+Palavras-chave  .
+
+1
+
+movimento. As aplicações práticas para este tipo de
+situação são mais restritas, no entanto, este estudo
+servirá de base para um futuro uso com sensores
+instalados em veículos em movimento, mapeando e
+rastreando obstáculos ao seu redor. Almeja-se ainda
+que este trabalho possa colaborar no projeto
+Desenvolvimento de Plataforma Robótica para
+Estudos de Mobilidade Terrestre (Semi-)Autônoma,
+que conta com aporte financeiro do Ministério da
+Defesa e que tem a colaboração de pesquisadores da
+UNICAMP, USP e IME.
+A Seção 2 apresenta as características do sensor_laser
+2D usado. A Seção 3 expõe os principais
+componentes de um sistema de detecção e
+rastreamento de obstáculos. Os resultados obtidos
+nos testes feitos com veículos em movimento podem
+ser verificados na Seção 4. Por fim, a Seção 5 traz as
+conclusões obtidas com o uso do software e apresenta
+as sugestões para trabalhos futuros, visando 
+melhoria do sistema.
+
+Introdução
+
+Desde 2002 a agência americana DARPA
+(Defense Advanced Research Projects Agency)
+estimula universidades e empresas de dentro e fora
+dos EUA a desenvolver veículos_autônomos. Funções
+essenciais para esses veículos são a detecção e o
+rastreamento de obstáculos, que servem tanto para
+navegação de veículos_autônomos, como podem ser
+empregadas em interfaces de auxílio ao condutor
+para mostrar-lhe os obstáculos ao redor do carro e
+alertá-lo sobre possíveis colisões (Miranda Neto
+Zampieri, 2008).
+Câmeras de vídeo são ideais para identificar sinais de
+trânsito e as faixas da pista. No entanto, possuem
+dificuldade em estimar com precisão as distâncias
+dos diversos objetos que se apresentam na imagem.
+Essa carência pode ser dirimida pelos sensores laser,
+que possuem uma precisão muito grande em
+medições de distância e podem ser empregados
+independentemente de condições de luminosidade.
+Na indústria, a detecção de obstáculos pode ser
+empregada em aplicações visando  segurança de
+pessoal e de máquinas, como é o caso da
+movimentação de containers em portos e de veículos
+autônomos em minas (Roberts Cork, 2001).
+Neste trabalho o objetivo é apresentar um sistema
+capaz de detectar e rastrear obstáculos em uma pista,
+utilizando um sensor_laser fixo ao solo. A detecção e
+o rastreamento tornam-se mais complexos quando se
+tem o sensor_em movimento. O motivo de se
+trabalhar com o sensor fixo é de evitar os ruídos
+oriundos da movimentação do veículo. Assim, o foco
+inicial é a obtenção de um software confiável para
+detecção e rastreamento de obstáculos fixos e em
+
+2
+
+Sensor Laser
+
+O sensor_laser Sick LMS-291 é utilizado neste
+trabalho. Ele opera por meio da medição do tempo de
+ida e volta de pulsos de luz laser. Um feixe de laser
+pulsado é emitido. Quando incide em um objeto, a
+reflexão é registrada pelo módulo receptor do sensor.
+O tempo entre a transmissão e a recepção do impulso
+é diretamente proporcional  distância entre o Sick
+LMS e o objeto. Com auxílio de um espelho rotativo
+integrado, o laser é emitido para todas as direções,
+cobrindo um ângulo de até 180 (Figura 1).
+
+3839
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+Grupo 2
+d1>D
+
+d2>D
+
+Primeira
+Medição
+
+Última
+Medição
+
+Grupo 1
+
+Varredura de
+180
+
+Figura 1. Representação da varredura de 180 do sensor_laser Sick
+LMS-291.
+
+Grupo 3
+
+Figura 3. Representação de 3 grupos ou obstáculos para um
+determinado valor de D.
+
+O contorno dos objetos-alvo é definido na sequência
+de impulsos recebidos. As medidas são tomadas a
+cada 0,25 , 0,5  ou 1. O alcance desse sensor é de
+80 m, dependendo da refletividade do objeto. Os
+dados da medição são enviados ao computador em
+tempo_real em coordenadas polares ou cartesianas.
+
+Analisando-se as Figuras 3 e 4, verifica-se a
+influência da distância pré-definida D como base
+para realizar a confirmação de um obstáculo.
+Dependendo do valor de D, pode-se detectar mais ou
+menos obstáculos, podendo ser diferente da
+realidade.
+
+3 Visão geral do sistema de detecção e
+rastreamento de obstáculos
+
+Grupo 1
+
+A Figura 2 apresenta uma visão geral da
+arquitetura do sistema. O sensor_laser é instalado em
+um local onde se deseja detectar e rastrear os objetos
+de interesse e os seus dados são processados pela
+rotina de detecção e rastreamento, representado pelos
+módulos no interior do retângulo tracejado. O
+resultado pode ser observado em uma interface
+homem-máquina (IHM), permitindo que se acompanhe em tempo_real a presença e movimentação de
+obstáculos dentro do raio de alcance do sensor. Esses
+dados podem ainda ser enviados a outro sistema,
+como por exemplo, na fusão_de_dados com outros
+sensores em aplicações de veículos_autônomos
+(Cheng et al, 2007).
+
+d>D
+
+Grupo 2
+
+Figura 4. Representação de 2 grupos ou obstáculos para um
+determinado valor de D maior que o definido na Figura 3. Os
+grupos 1 e 2 da Figura 3 foram fundidos em um só grupo.
+
+Após o agrupamento dos pontos visando definir
+obstáculos, encontra-se o ponto médio de cada um
+deles.
+3.2 Confirmação do ponto médio
+
+SENSOR LASER
+
+Em cada varredura podem ser identificados
+vários obstáculos. Estes são numerados conforme seu
+posicionamento, a fim de viabilizar o rastreamento. O
+objeto mais  direita passa a ser o primeiro obstáculo,
+já o mais  esquerda é considerado o último. Isso é
+em virtude da operação do sensor, que faz a
+varredura da direita para a esquerda, conforme Figura
+1.
+A Figura 5(a) mostra dois veículos se aproximando
+do sensor. Inicialmente, apenas o veículo da esquerda
+se encontra dentro do seu raio de alcance,
+simbolizado pela linha pontilhada. Assim ele é
+definido como obstáculo 1. Instantes mais tarde, os
+dois estão na área de atuação do sensor, como pode
+ser verificado na Figura 5(b). Nesta situação, o
+veículo da direita será considerado inicialmente como
+o primeiro obstáculo, por estar  direita do sensor e o
+outro carro como o segundo. Esse problema
+inviabilizaria o rastreamento, pois o veículo da
+esquerda, que era o primeiro, passa a ser o segundo
+obstáculo com a presença do outro objeto.
+
+AGRUPAMENTO DE PONTOS E DETERMINAÇÃO DO PONTO
+MÉDIO DE CADA OBSTÁCULO
+
+CONFIRMAÇÃO DOS PONTOS MÉDIOS DOS OBSTÁCULOS
+
+MEDIÇÃO DA VELOCIDADE
+
+RASTREAMENTO DOS OBSTÁCULOS
+CORRETOR DE DISCREPÂNCIAS
+FILTRO DE KALMAN
+
+IHM
+
+Figura 2. Visão geral do sistema de detecção e rastreamento de
+obstáculos.
+
+3.1 Agrupamento de pontos e determinação dos
+pontos médios dos obstáculos
+O tamanho dos obstáculos influencia de forma
+significativa, pois ao receber os dados brutos
+oriundos de cada varredura do sensor, o agrupamento
+de pontos para se definir um obstáculo será de acordo
+com as distâncias entre dois pontos consecutivos.
+Pontos pertencem ao mesmo grupo quando a
+distância entre dois pontos vizinhos for inferior a um
+valor pré-estabelecido D (Mendes et al., 2004).
+3840
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+aumentar a confiabilidade do software. Neste
+trabalho, para realizar o rastreamento, empregam-se o
+filtro de Kalman e uma função para corrigir grandes
+erros de posicionamento, chamada de Corretor de
+Discrepâncias ou simplesmente Corretor.
+3.4.1 Corretor de Discrepâncias
+Sensor
+Laser
+
+(a)
+
+A maior preocupação deste trabalho é rastrear
+veículos. Sabe-se que seus deslocamentos seguem um
+determinado padrão. Assim, consegue-se identificar
+variações bruscas nesse comportamento. Quando um
+veículo sendo rastreado passa por uma área onde há
+uma barreira entre ele e o sensor, por alguns
+instantes, não é possível detectar a sua posição. Neste
+caso, as suas últimas posições apresentam pequenos
+erros, pois nos instantes em que o veículo é
+parcialmente coberto, haverá erro na determinação do
+valor médio de sua posição e da sua velocidade, que
+tende a diminuir, conforme se pode observar na
+Figura 6. Como o filtro de Kalman não é capaz de
+corrigir variações muito bruscas, é preciso fazer uma
+melhoria antes da aplicação do filtro.
+
+Sensor
+Laser
+
+(b)
+
+Figura 5. Dois veículos se aproximando do sensor_laser.
+
+Para resolver esse impasse é necessário criar uma
+rotina para confirmar o ponto médio do obstáculo
+que está se rastreando, representado pelas
+coordenadas_retangulares xmik e ymik , em que i
+representa os obstáculos de cada coleta de dados do
+sensor e k representa a atual varredura. Seja
+Pk   p1k , p2k ,...,pik  , o vetor que armazena os
+pontos médios dos i obstáculos encontrados na késima varredura, em que pik  ( xmik , ymik ) . Seja
+Pk 1 o vetor que armazena os pontos médios dos i
+obstáculos encontrados na (k+1) -ésima varredura.
+Para garantir que os obstáculos sendo rastreados
+sempre tenham a mesma posição dentro do vetor, é
+preciso comparar todos os elementos dos vetores
+Pk e Pk 1 . Toma-se o primeiro elemento de Pk e
+calculam-se as distâncias entre ele e todos os
+elementos de Pk 1 . O elemento de Pk 1 que possui a
+menor distância, passa a ser o primeiro elemento de
+um vetor auxiliar Vaux . Faz-se isso com os demais
+elementos de Pk . Ao final, assume-se que
+Pk 1  Vaux . Isso corrige o problema inicial, pois a
+diferença de posição dos obstáculos em relação 
+próxima varredura geralmente é muito pequena.
+
+(k)
+
+(k+1)
+
+(k+2)
+
+Figura 6. Veículo passando por trás de uma barreira.
+
+Para cada obstáculo, a média das distâncias entre as
+suas últimas cinco posições mi é observada. Quando a
+distância entre duas sucessivas posições de um objeto
+pi (k 1) e pik for maior que três vezes mi , então
+aplica-se a correção, conforme explicado a seguir. As
+médias das dez últimas velocidades dos obstáculos,
+Vxm i e Vym i , obtidas por meio de xmik e ymik , que
+
+3.3 Medição da Velocidade
+O cálculo da velocidade dos objetos, nos eixos x
+e y, é realizado conforme as equações (1) e (2), em
+que h representa o tempo de varredura do sistema.
+xmik  xmi (k 1)
+(1)
+xmik 
+h
+ymik  ymi (k 1)
+ymik 
+(2)
+h
+Essas informações são úteis na aplicação do filtro de
+Kalman, apresentado na subseção 3.4.2.
+
+são as velocidades nos eixos x e y após a aplicação
+do filtro de Kalman, são frequentemente atualizadas.
+Ao verificar que há uma discrepância entre pi (k 1) e
+pik , despreza-se o valor pik e atribui-se a ele um
+novo valor, conforme equações (3) e (4).
+xmik  xmi (k  1)  (Vxmi )h
+
+
+
+
+
+ymik  ymi k  1  (Vymi )h
+
+(3)
+(4)
+
+Esses novos valores de xmik e ymik são usados no
+algoritmo de Kalman para encontrar xmik e ymik ,
+
+3.4 Rastreamento dos obstáculos
+
+conforme é explicado a seguir.
+
+O rastreamento basicamente é feito por meio do
+armazenamento dos pontos médios dos obstáculos
+encontrados nos vetores P. No entanto, essas
+posições são obtidas apenas baseadas nos dados
+oriundos do sensor. Ruídos ou outras perturbações
+como oclusões podem gerar erro no sistema. Dessa
+forma, é necessário aplicar outras técnicas a fim de
+
+3.4.2 Filtro de Kalman
+O filtro de Kalman é um algoritmo recursivo
+muito usado quando se deseja rastrear obstáculos,
+sendo utilizado para estimar as variáveis de estado de
+sistemas representados por equações de estado
+
+3841
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+lineares. Para sua aplicação, considera-se que o
+sistema seja linear e perturbado por ruído gaussiano.
+
+xk  Ak xk 1  Bk uk  
+
+(5)
+
+y k  Ck xk  
+
+(6)
+
+Entrada  k 1 ,  k 1
+Predição k  Ak k 1  Bk uk
+k  Ak  k 1 AkT  Rk
+Correção K   C T (C  C T  Q ) 1
+k
+k k
+k k k
+k
+
+k  k  K k ( yk  Ck k )
+
+A equação (5) mostra como as variáveis de estado
+x k evoluem em função do estado anterior e da ação
+
+ k  ( I  K k Ck ) k
+
+de controle. A matriz Ak descreve como o estado
+evolui de k para k+1, baseado apenas no estado
+anterior. A matriz Bk , descreve como a ação de
+
+Retorna
+
+Os seguintes parâmetros_são usados
+yik   xmik , xmik , ymik , ymik T , B  0
+
+controle u k modifica o estado de k para k+1. Essas
+duas matrizes são determinísticas. Essa equação é
+utilizada para modelar o estado no emprego do filtro
+de Kalman. A equação (6) modela as variáveis de
+estado medidas e também precisa ser linear e
+perturbada por ruído gaussiano. Os vetores  e  das
+equações (5) e (6) representam o ruído do processo e
+da medição, respectivamente, com média zero,
+independentes e com covariância R e Q.
+A fim de se analisar o ruído produzido pelo
+dispositivo de medição, mil coletas de dados foram
+realizadas de um obstáculo que se encontrava a
+quinze metros do sensor_laser. Subtraíram-se os
+valores encontrados de 15 metros e obteve-se um
+vetor com os erros do sensor. A Fig. 7 mostra o
+histograma obtido com os dados oriundos do ruído
+do sensor. Percebe-se que os dados muito se
+aproximam de uma distribuição normal. Assim,
+considera-se que os erros de medição do sensor
+seguem essa distribuição, podendo-se utilizar, desta
+forma, o filtro de Kalman. A variância encontrada
+nesta coleta de dados é 0,000093 m. Esse valor é
+utilizado como , isto é, o ruído da medição para a
+aplicação do filtro de Kalman.
+
+1
+0
+A
+0
+
+0
+
+0
+R
+0
+
+0
+0.1 0
+ 0 0.1
+0  
+0
+0
+
+0
+0
+
+
+4 Resultados obtidos
+Neste capítulo são apresentados alguns testes
+práticos realizados a fim de verificar o desempenho
+do software de rastreamento de obstáculos. Em todos
+os testes foram utilizados os seguintes equipamentos
+ Sensor laser Sick LMS-291, configurado para um
+alcance de 80 m, varredura de 180 e resolução
+angular de 0,5 , posicionado a 0,4 m acima do solo.
+ Veículo Ford Fiesta modelo 2007, cor prata,
+dimensões 420 x 176 x 146 cm.
+Durante os testes, o motorista teve apenas o auxílio
+do velocímetro interno para manter o carro na
+velocidade estipulada, gerando dessa forma erro em
+virtude da imprecisão do aparelho e da dificuldade de
+se manter o veículo com direção e velocidade
+constantes. Utilizou-se 0,00009 e 0,00003 ( 3
+). O valor de  foi extraído do ruído da medição,
+conforme explicado na seção 3.4.2. O valor de  foi
+obtido empiricamente. Trabalhou-se com um tempo
+de varredura do sensor de 215 ms.
+
+140
+
+Frequencia
+
+120
+100
+80
+60
+40
+20
+
+-0.03
+
+-0.02
+
+-0.01
+
+0
+
+0.01
+
+0.02
+
+0.03
+
+0.04
+
+h 0 0
+1 0 0 0
+
+0 1 0 0 
+1 0 0 ,
+,
+C
+0 0 1 0 
+0 1 h
+
+
+
+0 0 1
+0 0 0 1 
+ 0 0 0 
+0 0 0
+0  0 0
+
+ 0 0 ,
+,
+Q
+0 0  0
+0  0
+
+
+
+0 0 
+0 0 0  
+0
+0
+0
+0  e    xm ,0, ym ,0T .
+i0
+i0
+i0
+0.1 0 
+
+0 0.1
+
+O resultado do filtro é armazenado no vetor
+ , xmik
+ , ymik
+ , ymik
+ T .
+k  X ik   xmik
+
+160
+
+0
+-0.04
+
+k , k
+
+0.05
+
+Dados do Ruído
+
+Fig. 7. Histograma do ruído do sensor_laser LMS-291 para um
+objeto a 15 m de distância.
+
+A seguir é apresentado o algoritmo do filtro de
+Kalman utilizado neste trabalho (Thrun, 2006).
+
+4.1 Teste com um veículo a velocidade constante de
+20 kmh em linha reta
+O primeiro teste realizado foi de um veículo se
+aproximando do sensor com velocidade constante de
+20 kmh. A pista de teste tinha uma ligeira curva no
+
+3842
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+y
+
+41.65
+
+8
+
+41.6
+
+7
+
+41.55
+
+6
+
+41.5
+
+5
+(m)
+
+(m)
+
+início e 40 m de reta, conforme Figura 8. O veículo
+começou a acelerar de forma a chegar na reta da pista
+a uma velocidade de 20 kmh e manteve-se nesse
+ritmo até passar pelo sensor. Em relação ao eixo x, o
+veículo na reta ficou a 3 metros do sensor.
+
+41.45
+
+3
+
+41.35
+
+2
+
+41.3
+Início
+
+20
+kmh
+
+4
+
+41.4
+
+1
+
+41.25
+0.5
+
+1
+(a)
+
+1.5
+(m)
+
+0
+
+2
+
+1
+
+1.5
+
+2
+
+2.5
+
+3
+(m)
+
+3.5
+
+4
+
+4.5
+
+(b)
+
+40 m
+
+Figura 10. Medições feitas pelo sensor_laser de um mesmo veículo.
+(a) apenas 3 pontos são obtidos pelo laser a cerca de 41,5 m de
+distância e (b) diversos pontos coletados a uma distância de cerca
+de 1,5 m, o contorno da frente e do lado esquerdo do veículo.
+
+3m
+
+Fim
+
+x
+
+Sensor
+Laser
+
+A Figura 11 mostra uma comparação entre os pontos
+médios da posição do veículo, no eixo y, obtidos pelo
+software, utilizando o módulo de rastreamento, com a
+equação que rege o movimento retilíneo uniforme
+com velocidade de 20 kmh (linha contínua). Foram
+considerados os primeiros 28 dados coletados a partir
+do momento em que o veículo chegou a uma
+distância de 40 m do sensor. A velocidade média no
+eixo y obtida pelo software foi de 20,57 kmh e o
+máximo erro absoluto entre a posição medida e a reta
+S40-5,55t foi de 1,48 m, sendo a média de 0,8 m.
+
+Figura 8. Um veículo se aproximando do sensor a 20 kmh.
+
+A Figura 9 mostra os resultados obtidos. Os losangos
+simbolizam a posição do veículo obtida dos dados do
+sensor durante 42 varreduras. Os pontos são as
+posições do veículo obtidas pelo módulo de
+rastreamento, ou seja, usando o Corretor de Discrepâncias e o filtro de Kalman. A primeira posição observada do veículo foi a 51,6 m do sensor.
+50
+
+40
+
+40
+
+Distância do veículo ao sensor (m)
+
+Distância em relação ao sensor (m)
+
+45
+
+35
+30
+25
+20
+15
+10
+
+35
+30
+25
+20
+15
+10
+5
+
+5
+0
+
+0
+
+0
+
+0.5
+
+1
+
+1.5
+
+2
+
+2.5
+
+3
+
+3.5
+
+4
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+tempo (s)
+
+Distância em relação ao sensor (m)
+
+Figura 11. Comparação do deslocamento real do veículo (+)com e
+equação S40-5,55t (linha contínua).
+
+Figura 9. Um veículo se aproximando do sensor a 20 kmh.
+
+Nota-se que mesmo após o veículo entrar na reta a
+40 m do sensor, houve uma variação de cerca de 1 m
+no eixo x. Isso se deve a dois fatores. O primeiro é
+em virtude de erro humano na condução do veículo e
+o segundo é pelo motivo do sistema apresentar um
+pequeno erro na obtenção do ponto médio. A Figura
+10 apresenta as medições feitas pelo laser de um
+mesmo veículo a distâncias diferentes. Pode-se verificar na Figura 10(a) que apenas três pontos são
+obtidos de um veículo a cerca de 41,5 m do sensor,
+caracterizando apenas a frente do mesmo. Quando o
+carro chega a cerca de 1,5 m do sensor, muitos
+pontos são obtidos, podendo-se notar claramente o
+contorno das partes frontal e esquerda do mesmo.
+Como neste trabalho a posição do veículo é obtida
+pelo ponto médio de todos os pontos presentes em
+uma varredura, gera-se uma imprecisão em relação
+ao real local em que se encontra o objeto.
+
+4.2 Teste com um veículo a velocidade de 20 kmh
+ultrapassando um veículo parado
+O objetivo desse teste é verificar como o sistema
+se comporta quando existe uma barreira entre o
+sensor e o obstáculo sendo rastreado. O veículo mais
+distante do sensor_laser na Figura 12 representa o
+veículo a ser rastreado, que trafega a 20 kmh na
+direção do eixo x. O veículo mais próximo do sensor
+fica o tempo todo parado.
+y
+
+Sensor
+Laser
+
+x
+
+Figura 12. Representação da configuração do teste com um
+veículo em movimento e o outro parado.
+
+3843
+
+XVIII Congresso Brasileiro de Automática  12 a 16 Setembro 2010, Bonito-MS.
+
+veículos realizando outros tipos de manobras para
+verificar seu desempenho.
+
+Na Figura 13 verificam-se os pontos médios do
+veículo no eixo x obtidos com o uso do filtro de
+Kalman e do Corretor e a reta S-32,5+5,55t (linha
+contínua), que representa o deslocamento do veículo,
+com uma velocidade de 20 kmh. Há pequenas
+diferenças entre as linhas, que decorrem da passagem
+do veículo atrás da barreira, fazendo com que os
+dados da medição sejam interrompidos e, também em
+virtude da incerteza do deslocamento real do veículo.
+
+Distância em relação ao sensor (m)
+
+15
+
+20
+
+10
+
+5
+
+0
+-40
+
+-35
+
+-30
+
+0
+
+-25
+-20
+-15
+-10
+-5
+0
+Distância em relação ao sensor (m)
+
+5
+
+10
+
+15
+
+5
+
+10
+
+15
+
+(a)
+
+15
+
+-10
+
+14.8
+Distância em relação ao sensor (m)
+
+posição do veículo (m)
+
+10
+
+-20
+-30
+-40
+
+0
+
+1
+
+2
+
+3
+
+4
+5
+tempo (s)
+
+6
+
+7
+
+8
+
+9
+
+Figura 13. Comparação do deslocamento estimado do veículo (+)
+com e equação S-32,5+5,55t (linha contínua).
+
+14.6
+14.4
+14.2
+14
+13.8
+13.6
+13.4
+13.2
+13
+-40
+
+Na Figura 14(a) há um grande espaçamento entre os
+losangos no intervalo de -4<x<4. Esses losangos
+representam a posição registrada do veículo sem usar
+o módulo de rastreamento. Os pontos representam a
+posição do veículo empregando o filtro de Kalman,
+contudo, sem utilizar a função Corretor. O sensor
+laser não consegue enxergar o veículo em movimento
+quando ele passa por trás da barreira, retornando dois
+valores nulos. O filtro de Kalman não consegue
+corrigir adequadamente o posicionamento do veículo
+neste caso, pois a variação de posição é muito
+acentuada. Antes de entrar na barreira, o carro
+percorria em média 1,10 m a cada varredura. A
+distância entre o último ponto medido antes do
+veículo entrar atrás da barreira e o primeiro ponto ao
+sair da mesma foi de 6,8 m. O uso do Corretor de
+Discrepâncias e, em seguida, o filtro de Kalman gera
+um melhor rastreamento. Os resultados são vistos na
+Figura 14(b). Há uma diminuição da distância
+máxima entre dois pontos sucessivos, que nesse caso
+foi de 2,6 m em vez de 6,8 m.
+
+-35
+
+-30
+
+-25
+-20
+-15
+-10
+-5
+0
+Distância em relação ao sensor (m)
+(b)
+
+Figura 14. Posição do veículo a cada varredura (a) só com filtro de
+Kalman. (b) com Corretor de Discrepâncias e filtro de Kalman.
+
+Agradecimentos
+Os autores agradecem ao Ministério da Defesa
+CAPES, ao Arsenal de Guerra de São Paulo e ao
+DMC-FEM-UNICAMP.
+Referências bibliográficas
+Cheng, H. Zheng, N. Zhang, N. Qin, J. e Wetering,
+H. (2007) Interactive road situation analysis for
+driver assistance and safety warning systems
+framework and algorithms. IEEE ITSS, vol. 8, n.
+1, pp. 157-167.
+Mendes, A., Bento, L. C. e Nunes, U. (2004) Multitarget detection and tracking with a laserscanner.
+Intelligent Vehicles Symposium, University of
+Parma, Parma, Italy, June 14-17.
+Miranda Neto, A. e Zampieri, D. (2008) Sistema de
+navegação (semi)-autônomo de assistência ao
+condutor.
+Roberts, J e Corke, P. (2001) Obstacle detection for a
+mining vehicle using a 2D laser, CSIRO
+Manufacturing Science  Technology.
+Thrun, S. Burgard, W. e Fox, D. (2006) Probalistic
+Robotics, MIT Press.
+Urmson, C. Anhalt, J. e Bagnell, D. (2008)
+Autonomous driving in urban environments
+Boss and the Urban Challenge, Journal of Field
+Robotics, vol. 25, n. 8, pp. 425466.
+
+5 Conclusão
+Uma das necessidades dos veículos_autônomos é
+a detecção e rastreamento de obstáculos. Para isso,
+muitos sensores são utilizados, sendo um deles o
+laser, detalhado na Seção 2. Na Seção 3 puderam ser
+observados os principais módulos do sistema de
+detecção e rastreamento de obstáculos, utilizando o
+sensor_laser Sick LMS-291 fixo ao solo. O uso do
+filtro de Kalman em conjunto com a função Corretor
+de Discrepâncias oferece bons resultados, em
+especial, quando o veículo rastreado passa por trás de
+uma barreira. É necessário testar este sistema com
+
+3844

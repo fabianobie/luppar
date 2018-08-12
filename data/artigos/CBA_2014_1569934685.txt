@@ -1,0 +1,1288 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+MODELAGEM, ESTIMACAO DE ESTADOS E CONTROLE DE FORMACAO
+LIDER-SEGUIDOR USANDO O QUADRIMOTOR AR.DRONE
+Lucas Vago Santana, Alexandre Santos Brandao, Mario Sarcinelli Filho, Ricardo
+Carelli
+
+
+
+Coordenadoria de Automacao Industrial, Instituto Federal do Esprito Santo, Linhares, ES, Brasil
+
+Departamento de Engenharia Eletrica, Universidade Federal de Vicosa - UFV, Vicosa - MG, Brasil
+
+
+Programa de Pos-Graduacao em Engenharia Eletrica, Universidade Federal do Esprito Santo,
+Vitoria, ES, Brasil
+
+
+
+INAUT - Instituto de Automatica, Universidad Nacional de San Juan, San Juan, Argentina
+
+Emails lucas@ifes.edu.br, alexandre.brandao@ufv.br, mario.sarcinelli@ufes.br,
+rcarelli@inaut.unsj.edu.ar
+Abstract This paper presents a computational system for the control of a leader-follower formation between
+two unmanned aerial vehicles (UAVs). The system developed adopts an approach that allows, through a main
+computer, the teleoperation of the leader vehicle and the automatic control of the follower vehicle. The paper
+presents the experimental platform, the methods adopted for modeling, control and state estimation considering
+the leader-follower formation. Experimental results are presented to demonstrate the eectiveness of the proposed
+method.
+UAV, Visual-Inertial Navigation, Leader-Follower Formation, Autonomous Flight
+
+Keywords
+
+Resumo Este artigo apresenta um sistema computacional para o controle de uma formacao_lder-seguidor
+entre dois veculos_aereos_nao_tripulados (VANTs). O sistema desenvolvido utiliza uma abordagem que permite,
+atraves de um computador principal, a teleoperacao do veculo lder e o controle_automatico do veculo seguidor.
+O artigo descreve a plataforma experimental e os metodos adotados para modelagem, controle e estimacao de
+estados, considerando uma formacao_lder-seguidor. Resultados experimentais sao apresentados, para comprovar
+a ecacia do metodo proposto.
+Palavras-chave
+
+., 2012), onde pequenos quadrimotores voam em formacao geometrica realizando manobras artsticas impressionantes. Apesar de seu excelente desempenho, sistemas desse tipo sao inviaveis para alguns projetos
+envolvendo controle de VANTs devido ao seu elevado preco comercial2 .
+Por outro lado, alguns estudos tem se dedicado a investigar meios de possibilitar a navegacao_autonoma de um VANT, utilizando apenas
+sensores de menor custo embarcados na propria
+aeronave. No caso dos VANTs, em sua maioria, entende-se por sensores embarcados unidades inerciais, cameras de vdeo e modulos de GPS
+que quando combinados em algoritmos especficos,
+eliminam a necessidade de um ambiente previamente preparado para navegacao. Este e o caso
+em (Krajnik et al., 2011), por exemplo, onde e
+apresentada uma serie de experimentos realizados
+com base em controle_servo-visual de posicao em
+ambientes internos, regulando a posicao de um
+quadrimotor em relacao a um robo_movel a rodas
+carregando um alvo visual. Nota-se, nesse trabalho, a dependencia constante do contato visual entre a camera do VANT e um alvo preso no veculo
+terrestre.
+Nos trabalhos de Engel et al. (2012) e Santana
+
+Introducao
+
+O estudo de tecnicas de controle aplicadas a veculos_aereos_nao_tripulados (VANTs) tem sido um
+assunto bastante explorado no meio academico,
+com resultados significativos ja publicados como
+os de Muller et al. (2011), Mellinger and Kumar
+(2011) e Kushleyev et al. (2012). Todos esses
+trabalhos utilizam como plataforma experimental
+veculos aereos de pas rotativas do tipo quadrimotor. Tal caracterstica em comum, deve-se principalmente a versatilidade destes veculo e sua capacidade de realizar manobras em voo.
+Entretanto, estes resultados ficam limitados,
+em se tratando de aplicacoes reais, principalmente
+porque se baseiam no uso de sistemas de visao
+computacional com cameras externas ao veculo,
+como por exemplo o sistema_de_captura_de_movimentos Vicon1 . Este tipo de equipamento e muito
+preciso em suas informacoes e e utilizado para realizar a localizacao dos VANTs, dentro de um ambiente de laboratorio controlado, como e o caso em
+(Muller et al., 2011), onde quadrimotores sao utilizados para realizar malabarismos com bolas de
+plastico, em (Mellinger and Kumar, 2011), onde
+eles sao utilizados para realizar manobras agressivas passando por dentro de alvos circulares e,
+1 httpwww.vicon.com
+
+2 Em
+
+3453
+
+torno de USD 200.000,00 - cotacao nao ocial
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+et al. (2013), metodos mais robustos sao discutidos. Ali, o controle de posicao para um VANT
+e realizado atraves da estimativa de sua localizacao tridimensional, obtida por meio da fusao de
+dados sensoriais em um filtro de Kalman estendido (do ingles Extended Kalman Filter - EKF ).
+Dessa forma, os sistemas aplicados permitem que
+o VANT se recupere no controle, mesmo quando
+sofre perturbacoes esporadicas ou perda de contato visual com alvos de localizacao.
+
+Figura 1 O quadrimotor AR.Drone 2.0 e o sistema de coordenadas adotado (w e b sao os
+sistemas de coordenadas global e do veculo, respectivamente).
+
+Sobre o controle_de_formacao de veculos_autonomos, em (Duan and Liu, 2010) e realizado um
+estudo teorico a respeito do uso de VANTs e veculos terestres nao tripulados (VTNTs) em formacoes heterogeneas, durante missoes taticas de combate. Nesse trabalho, destaca-se que os VANTs
+apresentam vantagens importantes em relacao aos
+VTNTs, principalmente quanto a visualizacao de
+grandes areas, devido a sua mobilidade tridimensional. Em contraste, os VTNTs possuem mobilidade em terrenos acidentados com obstaculos e
+podem atuar mais facilmente em alvos terrestres.
+Ja em (Brandao et al., 2013) e possvel observar
+melhor as exigencias praticas para resolver problemas de controle de veculos_autonomos em formacao, destacando-se a necessidade de dominar tecnicas de modelagem matematica para o controle
+da formacao, alem de conceber sistemas_computacionais para realizar o sensoriamento, a comunicacao e o processamento das informacoes necessarias
+para o controle.
+
+2
+
+A plataforma experimental AR.Drone
+
+A plataforma experimental escolhida neste artigo
+e o quadrimotor AR.Drone, da fabricante Parrot,
+em sua versao 2.0, conforme pode ser visto na Figura 1, juntamente com os sistemas de coordenadas adotados.
+Trata-se de um veculo aereo nao tripulado
+de pas rotativas, comercializado como um brinquedo de ultima geracao, originalmente projetado
+para ser controlado atraves de smartphones ou tablets, atraves de uma rede Wi-Fi e protocolos especficos de comunicacao. O AR.Drone pode ser
+facilmente comprado no mercado a um custo reduzido3 , e tambem e simples adquirir pecas de
+reposicao para mante-lo funcionando, bem como
+conserta-lo em caso de danos. Alem disso, a Parrot fornece gratuitamente um conjunto de ferramentas de software, que facilita o desenvolvimento
+de algoritmos de comunicacao e controle para o
+AR.Drone. Detalhes adicionais podem ser encontrados em (Piskorski et al., 2012). Estas sao as
+principais razoes para a sua selecao como plataforma experimental neste trabalho.
+
+Desses estudos, verifica-se que algumas tarefas
+requerem cooperacao entre robos, pois assim podem ser executadas de forma mais eficiente. Tanto
+em (Duan and Liu, 2010) quanto em (Brandao
+et al., 2013) o que se observa e o desafio tecnologico que representa construir sistemas que permitam a navegacao de veculos_autonomos em formacao.
+
+2.1
+
+Dados sensoriais
+
+O AR.Drone 2.0 vem de fabrica equipado com
+duas placas eletronicas. A primeira delas, chamada placa dos sensores, contem um conjunto de
+sensores com acelerometro, giroscopio, magnetometro, ultrassom e um sensor de pressao barometrico. A segunda, chamada placa-mae, e a unidade central de processamento do veculo, baseada
+em um processador ARM Cortex-A8 de 1GHz, rodando uma versao embarcada do sistema operacional Linux. Esta placa gerencia todos os dados
+oriundos da placa dos sensores, os sinais de vdeo
+das duas cameras do AR.Drone e uma rede de comunicacao_sem_fio do VANT.
+O firmware instalado na placa-mae e capaz de
+realizar automaticamente os procedimentos de decolagem, pouso e estabilizacao de voo, alem de responder a comandos externos de movimento para
+o veculo. Como resultado da estabilizacao, esta
+
+Sendo assim, neste artigo o que se propoe e
+uma estrutura centralizada que permita o controle
+de navegacao de VANTs em uma formacao do tipo
+lder-seguidor. Na estrutura proposta, ambos serao controlados por um computador central, que
+gerencia uma rede de comunicacao de dados sensoriais e de controle entre os veculos.
+Destaque-se que, no escopo deste artigo, o veculo lder sera teleoperado por um controlador_humano, e o veculo seguidor sera regulado automaticamente em uma formacao rgida pre-definida com
+o lder. As tecnicas empregadas na implementacao do sistema proposto representam desafios cientficos importantes, e tambem possuem vocacao
+em diversas aplicacoes reais, tais como missoes de
+transporte_de_cargas, de busca e resgate, na exploracao de ambientes hostis, em missoes de fotografia e inspecao aerea, alem de varias outras.
+
+3 Em
+
+3454
+
+torno de USD 300,00.
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+placa tambem
+disponibiliza o conjunto
+de varia
+
+veis q  z vx vy    , onde
+
+Tais observacoes sobre os sinais de controle
+sao discutidas ema (Krajnik et al., 2011), (Engel
+et al., 2012) e (Santana et al., 2013), onde os autores relatam a possibilidade de aproximar a resposta do AR.Drone aos seus comandos de entrada
+como se se tratasse de sistemas_lineares.
+
+ ,  e  representam os angulos de orientacao do AR.Drone, referenciados no sistema de
+coordenadas global
+ z representa a cota de altitude do VANT, relativa ao solo abaixo dele. A superfcie do
+solo e considerada plana e o firmware ja trata
+a influencia das inclinacoes  e  sobre z
+
+2.3
+
+O modelo_dinamico para um quadrimotor ja e
+conhecido na literatura e pode ser representado
+como (Kim et al., 2010)
+
+ vx e vy representam as velocidades lineares
+desenvolvidas pelo veculo, em relacao aos eixos xb e yb .
+
+
+mx  (cos  sin  + cos  cos  sin )u1
+
+
+
+
+my
+ ( cos  sin  + sin  cos  sin )u1
+
+
+ mz  (cos  cos )u  mg
+1
+.
+I
+
+
+u
+
+(I
+
+Iyy )
+
+xx
+2
+zz
+
+
+
+I   u3  (Ixx  Izz )
+
+
+ yy
+Izz   u4
+(1)
+Neste modelo, a principal consideracao e que
+os movimentos do veculo sao descritos como
+transformacoes de corpo rgido, sendo o centro de
+massa o ponto de interesse. Nesta descricao, m
+representa a massa, g a aceleracao da gravidade e
+Ixx , Iyy e Izz sao os momentos de inercia. Adicionalmente, os sinais u1 ,    , u4 , sao parametros de
+controle correspondentes a forcas e torques gerados pelos propulsores do quadrimotor.
+Conforme Bristeau et al. (2011), no firmware
+do AR.Drone um modelo similar a (1) e considerado, levando tambem em conta efeitos aerodinamicos no casco e nos propulsores do veculo, a
+fim de alcancar sua estabilizacao em voo. Apesar disso, desenvolvedores nao podem acessar os
+parametros deste modelo.
+Mesmo assim, conforme relatado nos trabalhos de Krajnik et al. (2011), Engel et al. (2012),
+Falcon et al. (2013) e Santana et al. (2013), ao
+inves de lidar com a dinamica complexa de um
+quadrimotor, como em (1), e possvel modelar a
+resposta do AR.Drone aos sinais de controle de
+outra forma, considerando ja os efeitos de seus
+controladores internos. Assumindo este contexto,
+propomos o modelo (2), para representar a dinamica do AR.Drone em seu proprio sistema de coordenadas, tendo seu centro de massa como ponto
+de interesse, ou seja,
+
+A descricao de tais informacoes, bem como
+o acesso as mesmas, e discutida em (Piskorski
+et al., 2012). Ja as tecnicas aplicadas internamente no firmware para obtencao das mesmas sao
+analisadas em (Bristeau et al., 2011).
+Apesar de todas estas caractersticas, o
+AR.Drone nao possui a capacidade de realizar um
+voo pairado completamente autonomo. Os procedimentos de decolagem e aterrissagem acontecem
+de forma autonoma, porem uma vez no ar o VANT
+comeca a deslizar, deslocando-se da sua posicao
+inicial. Tal efeito e conhecido na literatura especfica como drifting, e e decorrente dos erros do
+sistema de medicao a medida que ha uma evolucao temporal. Assim, para realizar o controle do
+veculo garantindo sua localizacao se faz necessario estimar e corrigir a variacao da posicao atraves
+de um sistema_de_controle em malha_fechada, assegurando a realizacao de voo sobre uma referencia
+dada.
+2.2
+
+Um modelo_matematico para o AR.Drone
+
+Controle de movimentos
+
+Os comandos de movimento para o AR.Drone
+sao enviados atraves de um protocolo especfico
+em sua rede Wi-Fi. Neste protocolo, os sinais
+de comando sao normalizados, de sorte que cada
+elemento
+do vetor
+
+ de sinais de controle u 
+uz , u , u , u  1.0, +1.0 , sendo que
+ uz representa um comando de velocidade de
+deslocamento linear sobre o eixo z
+ u representa um comando de velocidade_angular em torno do eixo z
+
+
+vx  K1 uv  K2 vx
+
+
+ v  K u x  K v
+y
+3 vy
+4 y
+,
+ z  K5 uz  K6 z
+
+
+  K7 u  K8 
+
+ u representa um comando de inclinacao em
+relacao a xw , o que indiretamente representa
+um comando de velocidade linear relacionado
+ao eixo yb . Portanto, daqui em diante tal valor sera chamado de uvy 
+
+(2)
+
+onde vx e vy representam aceleracoes lineares em
+relacao aos eixos xb e yb , z representa a aceleracao
+linear com respeito ao eixo zw , e  representa a
+aceleracao angular com respeito ao eixo zw . Os
+parametros K1 ,    , K8 sao constantes de proporcionalidade a ser identificadas experimentalmente.
+
+ u representa um comando de inclinacao em
+relacao a yw , o que indiretamente representa
+um comando de velocidade linear relacionado
+ao eixo xb . Portanto, daqui em diante tal
+valor sera chamado de uvx .
+
+3455
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Adotando tal modelo, assume-se que os quatro graus de liberdade de interesse (z, vx , vy , e ),
+podem ser modelados como um conjunto de subsistemas_lineares independentes, em funcao dos sinais de controle reais do AR.Drone (u). Assim,
+este modelo nao pode ser considerado como uma
+representacao completa da dinamica do VANT,
+mas e uma aproximacao suficiente para nossos
+propositos, pois conforme pode ser observado na
+Figura 2, (2) fornece uma boa aproximacao entre as medidas capturadas do AR.Drone durante
+um voo experimental e a simulacao do comportamento do modelo (2), para os mesmos sinais de
+entrada aplicados no VANT.
+
+ms
+
+Estimacao de Estados
+
+Na proposta deste trabalho, para possibilitar o
+controle_de_formacao_lder-seguidor e necessario
+conhecer a posicao relativa entre os veculos que a
+compoem em um referencial fixo, conforme a Figura 3.
+
+Medido
+Modelado
+
+vx
+
+1
+
+3
+
+0
+1
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+vy
+ms
+
+1
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+50
+
+60
+
+70
+
+80
+
+z
+
+0.2
+
+ms
+
+Figura 3 d1 e d2 referenciam os sistemas de
+coordenada do drone lder e seguidor respectivamente. w representa o sistema de coordenadas
+global. d representa a distancia entre os centros
+dos sistemas de coordenadas d1 e d2.
+
+0
+1
+
+0
+0.2
+
+20
+
+30
+
+40
+
+
+
+No caso do AR.Drone, tal tarefa poderia ser
+realizada por odometria, rotacionando as velocidades vx e vy e integrando-as sobre o tempo. Porem, apesar deste procedimento gerar uma estimativa da posicao 3D do veculo, ela apresentara
+falhas devido ao drifting. Quando se trata de veculos aereos, a solucao mais comum para este problema, em ambientes internos, e adotar o EKF,
+como tecnica de fusao_sensorial entre dados do
+sistema inercial e os dados de posicao absoluta
+obtidos por visao_computacional, como e o caso
+em (Engel et al., 2012) e (Santana et al., 2013).
+Entretanto, em nossa experiencia com o
+AR.Drone verificamos a possibilidade de implementar a estimacao_de_estados, mantendo a eficacia no resultado, fazendo a fusao_sensorial com um
+Filtro de Kalman (KF), que e um algoritmo mais
+simples do que o EKF e bastante conhecido na literatura. Neste texto, nao se expoe em detalhes a
+implementacao deste algoritmo, comenta-se apenas as adaptacoes feitas no KF para o AR.Drone.
+Para maiores informacoes sobre o Filtro de Kalman e suas aplicacoes, recomenda-se a leitura de
+(Thrun et al., 2005).
+
+rads
+
+0.5
+0
+0.5
+
+20
+
+30
+
+40
+
+50
+
+60
+
+70
+
+80
+
+Figura 2 Comparacao entre dados experimentais
+coletados em voo e dados oriundos do modelo (2).
+Testes em voo mostraram tambem que z e 
+podem ser representados diretamente no sistema
+global de referencia, uma vez que o firmware do
+AR.Drone ja compensa as influencias das orientacoes  e . Portanto, o modelo (2) referenciado
+em coordenadas globais se torna
+X  f1 U  f2 X
+onde
+
+e
+
+(3)
+
+ 
+ 
+ 
+x
+vx
+uvx
+ y 
+uvy 
+vy 
+
+ 
+ 
+X  
+ z  , U   uz  , X   z  ,
+u
+
+
+
+
+K1 cos  K3 sin  0
+0
+ K1 sin  K3 cos 
+0
+0
+
+f1  
+
+0
+0
+K5 0 
+0
+0
+0 K7
+
+K2 cos 
+ K2 sin 
+f2  
+
+0
+0
+
+K4 sin 
+K4 cos 
+0
+0
+
+0
+0
+K6
+0
+
+3.1
+
+Implementacao do Filtro de Kalman
+
+Em nossa aplicacao, o KF deve estimar a posicao
+do centro de massa dos AR.Drones, cujos estados
+sao definidos como
+
+
+0
+0
+
+0
+K8
+
+
+T
+xk  x y z  x y z  ,
+
+3456
+
+(4)
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+onde o ndice k representa um instante discreto de
+tempo, x, y, z e  sao as posicoes e a orientacao de
+guinada do VANT, referenciados no sistema global
+e x, y, z e  sao as respectivas velocidades.
+O modelo do processo e definido atraves das
+equacoes
+
+
+
+
+
+
+Figura 4 Alvo que fica preso ao veculo lder.
+
+
+
+xk + txk
+xk+1
+ yk+1   yk + tyk 
+
+ 
+
+ zk+1   zk + tzk 
+
+ 
+
+k+1  k + tk 
+
+
+,
+ xk+1  
+
+xk
+
+ 
+
+ yk+1  
+
+yk
+
+ 
+
+ zk+1  
+
+zk
+k+1
+k
+
+transformacoes geometricas, geram-se as variaveis
+xw e yw representando as cotas de posicao global
+do veculo seguidor. Nesta etapa, considera-se o
+movimento do veculo lder para auxiliar na obtencao da posicao global do seguidor, pois o alvo
+visual se movimenta junto com ele.
+Estas novas informacoes, permitem aumentar
+o vetor de medidas do KF do veculo seguidor para
+
+(5)
+
+onde t e o tempo de amostragem.
+Este modelo, inspirado naqueles presentes em
+(Bar-Shalom et al., 2002), representa a implementacao discreta do modelo_cinematico de movimento de uma partcula com velocidade constante que, no contexto do KF, assume que as mudancas de velocidade entre os instantes de tempo
+tk  tk+1  podem ser modeladas como um rudo
+branco.
+Para aplicar (5), ha necessidade que t seja
+pequeno e que a variancia do processo no KF reflita as possveis mudancas de velocidade de um
+instante de tempo para outro. Para conseguir isto,
+a implementacao e feita como a descricao a seguir.
+A cada intervalo de tempo t, utilizam-se as
+informacoes entregues pelo firmware do AR.Drone
+(q) para rodar o algoritmo do KF em conjunto
+com o vetor de medidas
+
+  
+z
+z
+  
+
+
+ 
+
+z1  
+ x   cos  vx  sin  vy 
+y
+sin  vx + cos  vy
+e o modelo de observacao dos estados
+
+0 0 1 0 0 0 0
+0 0 0 1 0 0 0
+
+H1  
+0 0 0 0 1 0 0
+0 0 0 0 0 1 0
+
+
+0
+0
+ .
+0
+0
+
+
+  
+xw
+x
+
+y  
+yw
+
+  
+
+z  
+z
+
+
+
+
+z2     
+
+
+
+  
+
+ x  cos  vx  sin  vy 
+sin  vx + cos  vy
+y
+e o seu modelo de
+
+1
+0
+
+0
+H2  
+0
+
+0
+0
+
+(8)
+
+observacao para
+0
+1
+0
+0
+0
+0
+
+0
+0
+1
+0
+0
+0
+
+0
+0
+0
+1
+0
+0
+
+0
+0
+0
+0
+1
+0
+
+0
+0
+0
+0
+0
+1
+
+0
+0
+0
+0
+0
+0
+
+
+0
+0
+
+0
+
+0
+
+0
+0
+
+(9)
+
+A execucao do KF e feita para os dois VANTs
+a cada intervalo de tempo t. No caso do veculo
+lder, suas posicoes e velocidades sao sempre estimadas utilizando (6) e (7). Para o veculo seguidor, utiliza-se (6) e (7) na ausencia de informacoes
+visuais, ou (8) e (9) na presenca delas. Assim, o
+KF e capaz de estimar a posicao dos VANTs, alem
+de estimar as velocidades z e .
+Observe-se, tambem, que o KF ainda elimina
+o efeito de drifting da posicao relativa entre os
+VANTs, sempre que dados visuais sao capturados
+pelo sistema. Para reforcar esta caracterstica, na
+Figura 5, ha um trecho de experimento onde e possvel observar o efeito do KF sobre a posicao global
+x do veculo seguidor. Para gerar esta curva, o veculo lder foi mantido totalmente parado. Note-se,
+por exemplo, que durante o intervalo de t  34s
+ate t  37s os dados do sistema visual ficam constantes, o que indica perda de contato visual com
+o alvo. Durante este intervalo, o KF estima a posicao a partir dos dados de velocidade, e logo que
+novos dados visuais chegam ele comeca a corrigir
+sua estimativa. Comparando a sada do KF com
+a estimativa realizada puramente por odometria,
+percebe-se que os dois se distanciam com o passar
+do tempo, o que caracteriza o efeito drifting.
+
+(6)
+
+(7)
+
+Dessa forma, e possvel atraves do KF estimar
+a posicao e as velocidades dos VANTs em relacao
+ao sistema de coordenadas global.
+Eventualmente o sistema contara tambem
+com informacoes adicionais oriundas de um algoritmo visual. Tais informacoes sao obtidas
+quando se detecta nas imagens da camera frontal do VANT seguidor, o alvo da Figura 4, que
+fica preso no VANT lder.
+Com os dados de posicao e orientacao do lder
+e do seguidor concentrados em um unico computador, e possvel estimar a posicao relativa entre
+os veculos. Assim, ao aplicar uma sequencia de
+
+3457
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+4.2
+
+Posição Global X
+Odometria
+Algoritmo Visual
+Filtro de Kalman
+
+1
+0.8
+
+Para o sistema (12), um controlador por dinamica
+inversa, similar aqueles deduzidos em (Slotine and
+Li, 1991), pode ser proposto adotando a lei de
+controle
+
+0.6
+0.4
+X (m)
+
+Controlador para a formacao
+
+0.2
+0
+0.2
+0.4
+
+Ud2 
+
+(
+)
+ f1 1
+f
+X
+
+f
+U
++
+f
+X
++
+
+2d2
+d2
+1d1
+d1
+2d1
+d1
+d2
+
+0.6
+0.8
+1
+34
+
+36
+
+38
+
+40
+
+42
+Tempo (s)
+
+44
+
+46
+
+48
+
+(13)
+
+50
+
+onde  e a funcao auxiliar dada por
+Figura 5 Comparacao da posicao global x do veculo seguidor estimada usando odometria pura, o
+filtro de Kalman e o algoritmo visual.
+4
+
+ ,
+  Xfd + p Xf + d X
+f
+Xfd e o valor desejado para as variaveis de interesse da formacao, caracterizado como
+
+
+x1d  x2d
+ y1d  y2d 
+
+Xfd  
+ z1d  z2d  ,
+1d  2d
+
+Controle de Formacao
+
+Esta Secao apresenta um esquema de controle da
+formacao_lder-seguidor, conforme a Figura 3. A
+proposta e de um algoritmo nao-linear que permita regular automaticamente o voo de um VANT
+seguidor, mantendo-o a uma distancia fixa em relacao ao lder. Destaque-se que tal estrutura poderia ser aplicada, por exemplo, no transporte cooperativo de carga pelos dois veculos.
+4.1
+
+Xf  Xfd  Xf , representa o erro da formacao, e
+p e d sao matrizes de ganho diagonais, definidas
+positivas.
+Substituindo a lei de controle (13) no sistema
+(12), obtem-se, em malha_fechada, a equacao que
+governa a dinamica da formacao como
+
+Modelo da formacao
+
+ +  X +  X
+
+X
+f
+p f
+d f  0,
+
+Para obter o controlador, primeiramente se define a modelagem matematica da formacao.
+Considerem-se as variaveis de interesse
+T do VANT
+lder como X1  x1 y1 z1 1 e do VANT
+
+T
+seguidor como X2  x2 y2 z2 2 , onde x,
+y,z representam a posicao dos VANTs em coordenadas globais e  sua orientacao global de guinada.
+Dessa forma, a estrutura da formacao pode
+ser representada, em coordenadas globais, como
+
+x1  x2
+ y1  y2 
+
+Xf  X1  X2  
+ z1  z2 
+1  2
+
+que se caracteriza como um sistema assintoticamente estavel (Slotine and Li, 1991), permitindo
+concluir que Xf  0 quando t  .
+Destaque-se que pelo formato da acao de controle (13) o veculo seguidor sera guiado pelo controlador levando em consideracao tambem os sinais de controle enviados ao veculo lder (Ud1 ),
+bem como as velocidades desenvolvidas por ele
+(Xd1 ). Isto implica, em termos praticos, que
+VANT seguidor se movimenta em conjunto com o
+VANT lder, minimizando os atrasos provocados
+no transporte das informacoes ate o computador
+de controle, como podera ser verificado na Secao
+6.
+
+
+
+(10)
+
+Tomando a segunda derivada desta estrutura,
+obtem-se
+Xf  X1  X2
+
+5
+
+Implementacao
+
+Para a implementacao do sistema proposto neste
+artigo utilizou-se como computador central um
+notebook com processador Intel Core i7 de nucleo quadruplo de 2GHz, com 4Gb de memoria
+RAM e uma placa Wi-Fi padrao. Neste computador foram instalados softwares para controle do
+AR.Drone (SDK) e a biblioteca OpenCV, para facilitar implementacao de algoritmos de algebra linear e visao_computacional.
+Este computador foi utilizado para gerenciar
+uma rede de comunicacao entre ele e os dois
+
+(11)
+
+Substituindo o modelo (3) em (11), vem
+(
+)
+Xf  f1d1 Ud1  f2d1 Xd1 
+(
+)
+f1d2 Ud2  f2d2 Xd2 ,
+
+(14)
+
+(12)
+
+onde os ndices d1 e d2 indicam os VANTs lder e
+seguidor, respectivamente.
+
+3458
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+VANTs, para coletar atraves dela dados sensoriais
+dos veculos (q) e as imagens da camera frontal do
+veculo seguidor, alem de enviar os comandos de
+controle (u) dos VANTs.
+No computador principal, primeiramente as
+imagens recebidas sao utilizadas em um algoritmo
+de extracao visual, onde e verificada a possibilidade de encontrar as variaveis xw e yw . Apos
+esta deteccao, passa-se a execucao do filtro de Kalman com os dados contidos nos vetores q de cada
+VANT, e, se possvel, com as informacoes fornecidas pelo sistema visual. A sada do KF e utilizada no algoritmo do controlador, que calcula os
+sinais de controle a serem enviados ao veculo seguidor para se manter em formacao com o lder.
+Todos estes procedimentos rodam continuamente,
+em um ciclo com t  16ms.
+6
+
+obter um bom desempenho. Tal ajuste pode ser
+intuitivo, analisando os efeitos praticos que p e
+d causam na formacao. A matriz p regula a
+agressividade com que o veculo seguidor retoma
+um erro de posicionamento, enquanto d influencia na oscilacao da posicao do seguidor durante o
+controle.
+7
+
+Conclusoes
+
+O metodo apresentado neste artigo permite o
+controle de uma formacao_lder-seguidor entre
+VANTs, resolvendo, atraves de fusao_sensorial,
+problemas de estimacao_de_estados, como o drifting, apresentando uma modelagem simplificada,
+porem eficiente para possibilitar uso de tecnicas
+de controle_nao-linear na realizacao da missao.
+O sistema apresentado preve que o VANT lder sera pilotado por algum operador. Porem, se
+chama a atencao para a possibilidade de se propor algum tipo de controlador automatico tambem para este veculo. Este estudo foge do escopo
+deste artigo, mas fica como expectativa futura ao
+inserir, por exemplo, um sensor de posicionamento
+do tipo GPS no veculo lder, o que permitiria controle da formacao em ambientes externos.
+O controlador proposto para regular o veculo
+seguidor na formacao considera, em sua arquitetura, os sinais de controle enviados ao veculo lder, alem das velocidades desenvolvidas por ele.
+Tal estrutura exige que os dados sensoriais e de
+controle de ambos os VANTs estejam acessveis
+em um computador central, mas em contrapartida
+e capaz executar manobras com atrasos mnimos
+de movimento do veculo lder em relacao ao seguidor.
+
+Resultado Experimental
+
+Nesta Secao apresenta-se o resultado de um experimento realizado com o sistema proposto neste
+artigo. A formacao desejada e estabelecida como
+
+ 
+
+x1d  x2d
+2.0 m
+ y1d  y2d   0.0 m 
+ 
+
+Xfd  
+ z1d  z2d    0.0 m  ,
+1d  2d
+0.0 rad
+isto e, o robo seguidor devera se localizar sempre
+2.0 m atras do robo lder. Os dois terao valores
+iguais de y, z e , e, portanto, os movimentos do
+lder serao repetidos pelo seguidor.
+O objetivo deste experimento era verificar a
+resposta do sistema, ao manter a formacao entre
+os veculos navegando dentro do espaco interno
+de um laboratorio. Conforme a proposta inicial,
+o VANT lder nao apresenta nenhum sistema de
+correcao absoluta de sua posicao. Portanto, seus
+dados de posicionamento sao obtidos pelo KF somente por odometria, conforme explicado na Secao 3, e seu controle foi realizado manualmente
+por um operador posicionado no computador central. Ja o veculo seguidor e guiado automaticamente pelo sistema, conforme explicado na Secao
+4.
+Na Figura 6(a) esta a representacao grafica
+das variaveis de interesse dos dois VANTs, expressas no referencial global. Note-se que a estrutura
+mantem ambos os veculos realizando os mesmos
+movimentos. Na Figura 6(b) estao as variaveis da
+formacao, tanto no que se refere aos valores desejados (Xfd ) quanto aos valores reais (Xf ), coletados
+dos dados sensoriais lidos durante o experimento.
+Finalmente, para uma melhor compreensao
+desta secao, o leitor e convidado a assistir o vdeo
+do experimento que originou os resultados aqui
+apresentados, no link
+httpyoutu.beV5cd1vJosvE.
+Destaque-se que durante os experimentos as
+matrizes de ganho tem que ser ajustadas para se
+
+Agradecimentos
+Os autores agradecem ao CNPq pelo apoio financeiro para a realizacao desta pesquisa (processo 4731852012-1). Eles tambem agradecem a
+UFES, ao IFES, a UFV e a FAPEMIG, por viabilizarem sua participacao neste trabalho. Dr.
+Sarcinelli Filho tambem agradece o apoio financeiro adicional da FAPES - Fundacao de Amparo
+a Pesquisa e a Inovacao do Esprito Santo ao projeto.
+Referencias
+Bar-Shalom, Y., Kirubarajan, T. and Li, X.-R.
+(2002). Estimation with Applications to Tracking and Navigation, John Wiley  Sons,
+Inc., New York, NY, USA.
+Brandao, A. S., Filho, M. S. and Carelli, R.
+(2013). Leader-following control of a uavugv formation, Proceedings of the 16th In-
+
+3459
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+Líder
+Seguidor
+
+Desejado
+Real
+
+0
+
+Xf (m)
+
+Posição X (m)
+
+2.5
+
+2
+4
+
+1.5
+40
+
+60
+
+80
+
+100
+
+120
+
+140
+
+Yf (m)
+
+Posição Y (m)
+
+40
+
+60
+
+80
+
+100
+
+120
+
+140
+
+40
+
+60
+
+80
+
+100
+
+120
+
+140
+
+40
+
+60
+
+80
+
+100
+
+120
+
+140
+
+40
+
+60
+
+80
+100
+Tempo (seg)
+
+120
+
+140
+
+0.5
+
+2
+
+0
+
+2
+
+2
+
+40
+
+60
+
+80
+
+100
+
+120
+
+0
+0.5
+1
+
+140
+
+0.2
+1
+
+0
+0.2
+
+0
+
+40
+
+60
+
+80
+
+100
+
+120
+
+140
+
+0.1
+
+0.1
+
+f (rad)
+
+Orientação  (rad)
+
+Zf (m)
+
+Posição Z (m)
+
+2
+
+0
+
+0.1
+
+40
+
+60
+
+80
+100
+Tempo (seg)
+
+120
+
+0.1
+
+140
+
+(a) Posicao e orientacao global dos VANTs.
+
+0
+
+(b) Comparacao entre as variaveis desejadas para a
+formacao e a variaveis capturada durante o voo real.
+
+Figura 6 Resultado experimental.
+ternational Conference on Advanced Robotics
+(ICAR13), Montevideo, Uruguay.
+
+of Communications in Computer and Information Science, Springer, pp. 172186.
+
+Bristeau, P.-J., Callou, F., Vissiere, D. and Petit,
+N. (2011). The navigation and control technology inside the ar.drone micro uav, Proceedings of the 18th IFAC World Congress,
+Vol. 18, Milan, Italy, pp. 14771484.
+
+Kushleyev, A., Kumar, V. and Mellinger, D.
+(2012). Towards a swarm of agile micro quadrotors, Proceedings of Robotics Science and
+Systems, Sydney, Australia.
+Mellinger, D. and Kumar, V. (2011). Minimum
+snap trajectory generation and control for
+quadrotors, Proceedings of the 2011 IEEE International Conference on Robotics and Automation, Shanghai, China, pp. 25202525.
+
+Duan, H. and Liu, S. (2010).
+Unmanned
+airground vehicles heterogeneous cooperative techniques Current status and prospects, Science China Technological Sciences
+53(5) 13491355.
+
+Muller, M. W., Lupashin, S. and DAndrea, R.
+(2011). Quadrocopter ball juggling, Proceedings of the 24th IEEERSJ International
+Conference on Intelligent Robot Systems, San
+Francisco, USA, pp. 51135120.
+
+Engel, J., Sturm, J. and Cremers, D. (2012).
+Camera-based navigation of a low-cost
+quadrocopter, Proceedings of the 2012
+IEEERSJ International Conference on Intelligent Robots and Systems, VilamouraAlgarve, Portugal, pp. 28152821.
+
+Piskorski, S., Brulez, N., Eline, P. and DHaeyer,
+F. (2012). AR.Drone Developer Guide, Parrot. SDK Version 2.0.
+
+Falcon, P., Barreiro, A. and Cacho, M. D. (2013).
+Modeling of parrot ardrone and passivitybased reset control, Proceedings of the 9th
+Asian Control Conference (ASCC13), Istanbul, Turkish.
+
+Santana, L. V., Filho, M. S. and Carelli, R. (2013).
+Estimation and control of the 3d position of
+a quadrotor in indoor environments, Proceedings of the 16th International Conference
+on Advanced Robotics (ICAR13), Montevideo, Uruguay.
+
+Kim, J., Kang, M.-S. and Park, S. (2010). Accurate modeling and robust hovering control
+for a quadrotor vtol aircraft, Journal of Intelligent  Robotic Systems 57(1-4) 926.
+
+Slotine, J.-J. and Li, W. (1991). Applied Nonlinear
+Control, Prentice Hall.
+
+Krajnik, T., Vonasek, V., Fiser, D. and Faigl, J.
+(2011). Ar-drone as a platform for robotic
+research and education, in D. Obdrzalek and
+A. Gottscheber (eds), Research and Education in Robotics - EUROBOT 2011, Vol. 161
+
+Thrun, S., Burgard, W. and Fox, D. (2005). Probabilistic Robotics (Intelligent Robotics and
+Autonomous Agents), The MIT Press.
+
+3460

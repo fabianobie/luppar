@@ -1,0 +1,1638 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+MÉTODO DE AJUSTE DE MPC PARA SISTEMAS NÃO QUADRADOS BASEADO EM MULTICENÁRIOS
+JOSÉ EDUARDO W. SANTOS, JORGE OTÁVIO TRIERWEILER, MARCELO FARENZENA
+Grupo de Intensificação, Modelagem, Simulação, Controle e Otimização de Processos, Departamento de
+Engenharia Química, Universidade Federal do Rio Grande do Sul
+Rua Engenheiro Luiz Englert, sn, 90040-040,Campus Central, Porto Alegre, Rio Grande do Sul, Brasil
+E-mails jews,jorge,farenz@enq.ufrgs.br
+Abstract A novel strategy for predictive controllers tuning considering non-square systems for zone regions tracking is presented. This methodology consists of a determination of the best attainable performance function for the multi-scenarios, obtained from the global model, through a constrained optimization problem. Based on the attainable performance function the optimal scaling and the weights that will lead the plant to the best operational condition are determined. This constrained strategy
+was applied in the controller design of the Shell heavy oil fractionator problem presenting good results for soft-constraint operation.
+Keywords predictive controller, tuning, non-square systems, soft-constraints, attainable performance.
+Resumo Uma nova estratégia para ajuste de controladores preditivos considerando sistemas_não_quadrados operando faixas é
+apresentada. Essa metodologia consiste na determinação do melhor desempenho_alcançável para os multi-cenários obtidos do
+modelo original, através de um problema de otimização com restrições. Baseado na função de desempenho_alcançável o escalonamento ótimo do processo e os pesos do controlador_preditivo que irão direcionar a planta para a melhor condição operacional
+são determinados. Essa estratégia de ajuste com restrição é aplicada no projeto_de_controlador para a fracionadora de óleo pesado
+Shell apresentando bons resultados para a operação através de soft-constraints.
+Palavras-chave .
+
+1. Introdução
+O controle_preditivo baseado em modelo (MPC)
+é uma estratégia discreta de controle que utiliza um
+modelo em malha_aberta do processo para descrever
+o comportamento da planta através de um horizonte
+pré-definido, chamado horizonte de predição, e baseado nesse modelo, calcula ações de controle que
+minimizam uma função objetivo (Camacho 
+Bordons, 1999). Essa estratégia possui uma ampla
+aplicação e sucesso na indústria de processos devido
+ formulação do problema de controle, ao uso explícito do modelo para predizer a evolução da planta e 
+consideração explícita das restrições no problema de
+otimização (Ferramosca et al., 2009). Isso permite a
+consideração de plantas com comportamentos dinâmicos complexos e natureza multivariável melhor
+que metodologias clássicas de controle, lidando com
+limites físicos dos atuadores e permitindo uma operação próxima das restrições (Maciejowski, 2002).
+Qin  Badgwell (2003) e Holkar  Waghmare
+(2010) destacam as principais diferenças entre a
+aplicação industrial e a consolidada teoria sobre
+MPCs. Os principais pontos estão relacionados 
+determinação de modelos do processo (lineares, nãolineares, empíricos ou fenomenológicos),  utilização
+de soft-constraints ao invés de setpoints, mantendo
+as variáveis controladas em zonas ou regiões e 
+consideração de sistemas_não_quadrados com graus
+de liberdade negativos, i.e., com mais variáveis controladas (CVs) do que manipuladas (MVs). Sistemas
+não quadrados com mais saídas do que entradas são
+comuns em processos químicos e podem ocorrer
+também em sistemas originalmente quadrados que
+
+ISSN 2525-8311
+
+saturam um ou mais atuadores (Lima  Georgakis,
+2006). Uma forma de manter todas as CVs dentro
+das especificações, para sistemas que operam dessa
+maneira, é através da utilização de faixas_de_operação
+(soft-constraints) a fim de tornar o problema de controle atingível e garantir uma maior flexibilidade para
+o controlador (Shead et al., 2007).
+O papel do MPC é direcionar a planta para melhor condição operacional respeitando as restrições e
+minimizando o erro ao longo da trajetória dada por
+um valor de referência ou uma zona na qual as saídas
+podem permanecer (Qin  Badgwell, 2003). Cada
+parâmetro de ajuste possui uma particular importância no problema de controle sendo responsáveis em
+não exceder esforço computacional, oriundo de um
+baixo tempo de amostragem e elevados horizontes de
+controle e predição, priorizando as variáveis controladas e manipuladas mais importantes para o sucesso
+econômico da unidade (Trierweiler  Farina, 2003).
+A sintonia correta dos parâmetros do controlador
+preditivo possui grande importância na operação
+adequada do processo, uma vez que uma má sintonia
+não contribui para a redução da variabilidade das
+variáveis controladas além de ocasionar um aumento
+na oscilação dificultando a otimização da planta
+(Campos et al., 2013).
+Garriga  Soroush (2010) classificam as metodologias para sintonia de MPCs em fórmulas baseadas em aproximaçõessimulações da dinâmica do
+processo fornecendo boas ferramentas para ajuste,
+mas dedicadas apenas para algoritmos particulares,
+sistemas quadrados, utilização de setpoint e modelos
+do processo específicos dificultando a aplicação
+industrial. Como forma de considerar uma grande
+variedade de algoritmos para MPC, uma série de
+1337
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+metodologias baseadas em problemas_de_otimização
+não-lineares é proposta para sistemas com e sem
+restrição (Nery Júnior et al., 2014) e (Gous  de
+Vaal, 2012). Dentre os trabalhos reportados observou-se a falta de metodologias de ajuste que contemplem a utilização de faixas_de_operação e sistemas
+não quadrados.
+Baseado nisso, a metodologia de ajuste aqui introduzida permite o ajuste de MPCs não quadrados
+(com maior número de CVs frente s MVs). Para
+isso, o modelo original é dividido em cenários quadrados e o melhor desempenho robusto alcançável
+para cada cenário é calculado considerando métricas
+adequadas. Com base nessas funções, são determinadas as matrizes de escalonamento para a planta, os
+pesos que penalizam o excesso de movimento das
+variáveis manipuladas e a penalização da violação da
+faixa de operação.
+O presente trabalho está estruturado da seguinte
+forma na Seção 2 são apresentados os conceitos
+fundamentais necessários para o entendimento da
+metodologia. Na Seção 3 é descrita a metodologia de
+ajuste para MPCs baseado em multi-cenários. Na
+seção 4, a estratégia de ajuste é aplicada na fracionadora de óleo pesado Shell e, por fim, as conclusões
+são apresentadas.
+2. Fundamentação da Metodologia
+2.1 Controle Preditivo Baseado em Modelo
+O MPC utiliza um modelo discreto do processo.
+Baseado nesse modelo, ações de controle que minimizam o erro entre as saídas e a trajetória de referência são calculadas, penalizando o excesso de movimento das variáveis manipuladas até um determinado
+intervalo, chamado horizonte de controle. Nas variáveis controladas é possível determinar uma folga, ou
+faixa (soft-constraints) na qual são permitidas violações temporárias até um valor inviolável (hardconstraints). Em alguns casos, é computado também
+o erro entre as variáveis manipuladas e um valor de
+referência, chamado target, que é usualmente obtido
+por uma camada de otimização. Os movimentos são
+calculados em cada instante de amostragem enviando
+ao processo apenas a primeira ação calculada segundo uma estratégia chamada horizonte deslizante.
+Uma forma geral de representar o problema de otimização resolvido por um MPC é
+
+
+min   min ( + )  ( + )2
+,
+
+,
+
+1
+
+
+
++ ( +  
+1
+
+1)2
+
+  ()  á
+  ()  (  1)  á
+    ()  á + 
+
+(1a)
++   
+
+(1b)
+
+onde ( + ) é a saída predita pelo modelo  instantes de amostragem no futuro, ( + ) é trajetória
+ISSN 2525-8311
+
+de referência, ()  ()  (  1),  é o maior desvio da soft-constraint e 2 é a norma-peso
+Euclidiana de    definida como 2    
+com    positivo definido. Em (1b) são apresentadas as restrições do problema de otimização
+referentes s variáveis controladas, manipuladas e
+variação das ações de controle.
+Os parâmetros de sintonia são Horizonte de
+predição (), Horizonte de controle (), tempo de
+amostragem ( ), matriz-peso de erro das variáveis
+controladas (), matriz-peso de supressão do movimento () e penalização por violação da softcontraint ( ).
+O horizonte de predição  marca os limites de
+tempo que se deseja para a saída seguir a trajetória de
+referência e o horizonte de controle  especifica os
+graus de liberdade em selecionar ações de controle
+(após  períodos de amostragem não há mais alteração nas variáveis manipuladas). O tempo de amostragem  deve ser compatível com a dinâmica da
+planta sendo cuidadosamente selecionado a fim de
+não aumentar o esforço computacional (os horizontes
+ e  são dependentes dessa escolha e afetarão a
+dimensão do problema de otimização). As matrizespeso  e  são diagonais onde os seus elementos
+são sintonizados a fim de direcionar o sistema ao
+valor de referência priorizando qual variável é mais
+importante e escalonando o sistema. A penalização
+por violação  é responsável por manter as saídas
+em uma aceitável zona de controle.
+2.2 Metodologia RPN
+A função de desempenho robusto () foi desenvolvida por Trierweiler (1997) como uma medida da
+dificuldade para um dado sistema atingir o desempenho desejado de forma robusta, sendo desta forma
+uma medida da controlabilidade do processo. Essa
+função é definida em (2a) e o máximo valor dessa
+curva, definido em (2b), é denominado Número de
+desempenho robusto (  Robust Performance
+Number).
+(, , )
+
+   ()()   () +
+
+1
+
+  ()
+
+  Á (, , )  max(, , )
+
+
+
+
+(2a)
+(2b)
+
+onde   () é o condicionamento mínimo de
+(), (  ) é o máximo valor singular da
+matriz de transferência    e () é a função de
+desempenho em malha_fechada alcançável para o
+modelo ().
+A função de desempenho_alcançável, (), é
+calculada utilizando a Fatoração Blaschke e para o
+caso de zeros de transmissão no semi-plano direito
+(SPD) pela seguinte expressão
+
+(0) ()
+()  , (),
+(3)
+onde , () é a fatoração Blaschke para a direção
+
+(0) é a
+de saída do zero localizado no SPD, ,
+1338
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+pseudo-inversa de , () e  () é a função de
+desempenho desejado. Essa fatoração computa o
+desempenho_alcançável para sistemas que possuem
+fatores de fase não mínima causados pela presença
+de zeros positivos SPD.
+O número de desempenho robusto relativo
+(), desenvolvido por Trierweiler (2002), é
+obtido como uma medida relativa do desvio da área
+sob a curva da função  e a função  .
+
+
+
+(, )     (,  )
+
+
+ 
+
+ (,  )
+
+
+(4)
+
+
+
+2.5
+
+
+REF
+
+ e REF
+
+1.5
+
+1
+
+0.5
+
+0
+-4
+10
+
+-3
+
+10
+
+-2
+
+10
+
+-1
+
+10
+
+Frequência rads
+
+Figura 1. Funções  e  .
+
+3. Metodologia de Ajuste
+Nessa seção, será descrita a metodologia para
+ajuste de controladores preditivos. A ideia principal
+do método consiste na decomposição do modelo
+original do processo em cenários, que se tratam de
+subcasos quadrados que compõe a matriz de transferência original. Essa decomposição é necessária pelo
+fato de controladores não quadrados com mais variáveis controladas do que manipuladas, trabalhando em
+faixas_de_operação, consideram um problema de
+controle variante no tempo, que é função das variáveis manipuladas disponíveis e as variáveis que irão
+violar as soft-constraints. Além disso, em alguns
+casos, um subcaso que compõe o modelo global pode
+trazer limitações de desempenho que não se encontram no problema inteiro. Assim, a melhor função de
+desempenho_alcançável para cada cenário é determinada e utilizada para a determinação do escalonamento ótimo e para a sintonia dos pesos de ajuste.
+O método consiste na determinação da função de
+desempenho_alcançável em malha_fechada para o
+modelo global, compreendendo as restrições alcançáveis presentes em cada cenário originado do modelo global.
+
+ISSN 2525-8311
+
+
+
+min ()  min , 
+
+
+sujeito a
+
+A função  representa o menor valor possível
+para função  para uma determinada função de desempenho desejado  (função não fatorada, i.e., os
+fatores de fase não mínimos não são considerados) e
+o melhor condicionamento mínimo da matriz de
+transferência   ()  1. As funções  e 
+estão ilustradas na Figura 1.
+2
+
+Como observado na Eq. 3, dada uma função de
+desempenho desejado em malha_fechada para o modelo global do processo,  (), sendo necessário
+especificar apenas os tempos de subida de cada canal
+ ,  e a taxa de overshoot, a função de desempenho_alcançável é computada através da Fatoração
+Blaschke considerando os fatores de fase nãomínima presentes no sistema original. Assim, a determinação de  (), mantendo a taxa de overshoot
+fixa em 5 para cada canal, é dada por
+
+
+1
+
+2
+
+(5a)
+
+()  1
+()  2,2
+()  1,2
+()  10
+
+(5b)
+
+onde   ,1 , ,2 ,  , ,  sendo   1,  ,  o número de canais da matriz de transferência original,
+  1,  ,  é o número de cenários presentes no
+modelo original, () é o Número de desempenho robusto relativo para cada cenário ,  é o
+valor da função de máxima sensibilidade para cada
+cenário  e () é o máximo valor da função ()
+que relaciona   () para cada cenário .
+A minimização do índice (), apresentado na
+Eq. 5a, tem por objetivo obter a função de desempenho desejado com menor tempo de subida, respeitando as restrições atingíveis existentes em cada cenário.
+A frequência , em que ocorre o  em
+cada cenário possui um papel importante na determinação do escalonamento ótimo do sistema ao introduzir os fatores de robustez e desempenho automaticamente no problema de controle através das matrizes de escalonamento. Os valores para essas matrizes
+de escalonamento do sistema são então obtidas através do condicionamento mínimo global
+   min  ,  
+(6)
+ ,
+onde  e  são matrizes diagonais de escalonamento para as variáveis de entrada_e_saída, respectivamente, ,  é o modelo global do processo
+avaliado na frequência , onde ocorre o  da
+trajetória alcançável em cada cenário , () é o
+condicionamento mínimo de  e  é a norma
+infinita de .
+As matrizes  e  serão usadas para escalonar
+o modelo da planta utilizado na simulação, e para o
+projeto do controlador MPC, sendo considerado o
+modelo    () . A configuração do sistema
+plantacontrolador é ilustrada na Fig. 2.
+MPC
+SP
+Restr.
+
+Projetado para
+o Sistema
+Linear
+Escalonado, Gs
+
+Rs
+
+MVS
+
+Planta
+
+CVS
+
+Ls
+
+Figura 2. Configuração do sistema_de_controle.
+
+1339
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Para o caso em que todas as CVs são controladas
+por faixa, o passo final é a sintonia dos parâmetros
+ e  , que irão penalizar o excesso de movimento
+das variáveis manipuladas e a violação das faixas de
+operação, respectivamente. A diagonal da matriz  é
+considerada zero, uma vez que as saídas podem desviar da trajetória de referência desde que permaneçam dentro da soft-constraint. Aqui, a determinação
+da função de desempenho_alcançável é importante
+apenas para o cálculo do escalonamento ótimo, já
+que as saídas podem seguir qualquer trajetória sem
+violar as restrições. O cálculo para os pesos do MPC
+é dado por
+
+
+min ()  min  2
+
+
+
+
+(7)
+
+1
+
+onde     e  é a maior violação da softconstraint das variáveis controladas utilizando o
+sistema escalonado  como modelo do controlador,
+e as matrizes de escalonamento para a planta.
+4. Estudo de Caso
+Como estudo de caso foi considerado a fracionadora de óleo pesado Shell proposta por Prett 
+Morari (1987) apresentada na Fig. 3. Esse sistema
+consiste numa coluna_de_destilação que compreende
+relevantes problemas de controle através da interação
+entre as entradas e saídas e grandes valores de tempo
+morto.
+
+Cada canal do modelo é composto por uma função de
+primeira ordem com tempo_morto, dada por
+0
+
+4,05 + 2,111 27
+
+
+ 50 + 1
+5,39
++
+3,29
+1
+
+ 18
+ 50 + 1
+ 3,66 + 2,291 2
+
+
+9 + 1
+5,92 + 2,341
+
+ 11
+12 + 1
+ 4,13 + 1.71
+1 5
+
+
+8 + 1
+
+4,06
++
+2,39
+1
+
+ 8
+ 13 + 1
+4,38 + 3,111 20
+ 33 + 1 
+
+1,77 + 0,392 28
+
+60 + 1
+5,72 + 0,572 14
+
+60 + 1
+1,65 + 0,352 20
+
+30 + 1
+2,54 + 0,242 12
+
+27 + 1
+2,38 + 0,932 7
+
+19 + 1
+4,18 + 0,352 4
+
+33 + 1
+4,42 + 0,732 22
+
+44 + 1
+
+5,88 + 0,593 27
+
+
+50 + 1
+
+6,90 + 0,893 15 
+
+40 + 1
+
+5,53 + 0,673 2 
+
+
+40 + 1
+8,10 + 0,323 2 
+
+
+20 + 1
+6,23 + 0,303 2 
+
+
+10 + 1
+
+6,53 + 0,723 1 
+
+9 + 1
+
+7,20 + 1,333 
+
+19 + 1
+
+(8)
+
+onde  são as incertezas no ganho do modelo, e as
+constantes de tempo são dadas em minutos.
+As saídas 1 e 2 devem permanecer na especificação 0,005, e 3 , 4 , 5 , 6 e 7 devem permanecer em 0,5 no estado estacionário. Todas as variáveis manipuladas possuem como restrição rígida
+(inviolável) 0,5. A maior amplitude de movimento
+para as variáveis manipuladas é 0,20 por amostragem, considerando   4 .
+A matriz de transferência que representa os distúrbios é dada por
+1,20 + 0,124 27
+
+
+ 45 + 1
+1,52
++
+0,13
+4
+
+ 15
+ 25 + 1
+1,16
++
+0,08
+
+4
+
+11 + 1
+ 1,73 + 0,024
+0  
+5 + 1
+ 1,31 + 0,03
+4
+
+2 + 1
+
+ 1,19 + 0,084
+19 + 1
+
+ 1,14 + 0,184
+
+24 + 1
+
+4.1 Caso 1
+
+1,44 + 0,165 27
+
+
+40 + 1
+
+1,83 + 0,135 15 
+
+20 + 1
+
+1,27 + 0,085 
+
+6 + 1
+1,79 + 0,044 
+
+19 + 1
+1,26 + 0,025 
+
+22 + 1
+
+1,17 + 0,015 
+24 + 1
+
+1,26 + 0,185 
+
+32 + 1
+
+(9)
+
+Nessa simulação foi considerado que o modelo
+do controlador e a planta não possuem incerteza nos
+ganhos, i.e., 1  2  3  4  5  0, e foram
+enviados degraus aos distúrbios, no tempo  
+100 , de valores 1  2  0,5. Foram assumidas que todas as entradas e saídas iniciais do modelo
+do controlador e da planta são iguais  zero. A resposta em malha_aberta das saídas em relação aos
+distúrbios é ilustrada pela Fig. 4.
+2
+
+0
+
+ISSN 2525-8311
+
+500
+
+1000
+
+1000
+
+0
+
+500
+
+1000
+
+0
+
+500
+Tempo min
+
+1000
+
+1
+0
+
+0
+
+500
+
+1000
+2
+
+1
+
+1
+
+y
+
+6
+
+2
+
+y
+
+5
+
+500
+
+y
+
+4
+
+1
+0
+
+0
+
+0
+0
+
+500
+
+1000
+
+0
+
+500
+Tempo min
+
+1000
+
+2
+7
+
+0
+2
+
+y
+
+3
+
+2
+
+1
+
+CVs
+soft-constraints
+
+y
+
+O sistema original é comporto por 7 variáveis
+monitoradas e 5 entradas, nas quais 3 são variáveis
+manipuladas e 2 são distúrbios. O objetivo é controlar a composição de saída de topo (1 ), composição
+de saída lateral (2 ), temperatura de topo (3 ), temperatura do refluxo superior (4 ), temperatura de
+retirada lateral (5 ), temperatura do refluxo intermediário (6 ) e temperatura do refluxo de fundo (7 )
+através da manipulação da retirada de topo (1 ),
+retirada lateral (2 ) e taxa de refluxo de fundo (3 )
+rejeitando os distúrbios dados pela taxa de refluxo
+intermediário (1 ) e taxa de refluxo superior (2 ).
+
+1.5
+1
+0.5
+0
+
+y
+
+1
+
+1.5
+1
+0.5
+0
+
+y
+
+Figura 3. Representação da fracionadora de óleo pesado Shell
+(Fonte Maciejowski, 2002).
+
+0
+
+Figura 4. Resposta em malha_aberta das saídas frente aos distúrbios enviados ao processo no Caso 1.
+
+1340
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+0.05
+
+0
+
+0
+
+-2
+
+-0.5
+
+0
+
+500
+
+1000
+
+1000
+
+0.5
+
+3
+
+y
+
+-2
+
+-1
+
+0
+
+0
+
+500
+
+1000
+
+6
+
+5
+
+y
+
+500
+
+1000
+
+0
+
+500
+
+1000
+
+0
+
+500
+Tempo min
+
+1000
+
+-1
+-2
+
+1000
+
+500
+
+0
+
+0
+
+-1
+-2
+
+y
+
+0
+
+0
+
+-1
+
+0
+
+1
+
+0
+
+y
+
+0
+4
+
+500
+
+1
+y
+
+y
+
+0
+
+0
+
+6
+
+1000
+
+-2
+
+1000
+
+500
+
+0
+
+5
+
+500
+
+y
+
+3
+
+0.5
+
+0
+
+-0.05
+
+4
+
+-0.05
+
+-1
+
+y
+
+y
+
+y
+
+0
+
+-1
+
+y
+
+2
+
+1
+
+y
+
+1
+
+0
+2
+
+0.05
+
+0
+
+-1
+-2
+
+1000
+
+500
+
+0
+
+500
+Tempo min
+
+1000
+
+Os horizontes  e , o número de cenários, as
+matrizes de escalonamento e os valores das matrizespeso foram mantidos iguais s sintonizadas no Caso
+1. A simulação encontra-se na Fig. 7.
+
+0
+
+0
+
+0
+
+-0.1
+
+-0.1
+
+-0.1
+
+u
+
+0.05
+
+-0.3
+
+-0.3
+
+-0.3
+
+0
+
+0
+
+1000
+500
+Tempo min
+
+-0.05
+0
+
+500 1000
+Tempo min
+
+(b)
+
+500
+
+0
+
+500
+
+1000
+
+0
+
+500
+
+1000
+
+0
+
+500
+Tempo min
+
+1000
+
+0
+-0.5
+
+0
+5
+
+0
+
+0.5
+
+500
+
+1000
+
+0.5
+
+0.5
+
+0
+
+y
+
+y
+
+0
+-0.05
+
+1000
+
+-0.5
+
+Figura 5. Variáveis (a) controladas e (b) manipuladas para ajuste
+baseado em multi-cenários no Caso 1.
+
+0
+
+-0.5
+0
+
+500
+
+1000
+
+y
+
+7
+
+0.5
+
+-0.5
+
+0
+-0.5
+
+0
+
+500
+Tempo min
+
+CVs
+soft-constraints
+
+1000
+
+(a)
+0.4
+
+0.4
+
+0.4
+
+0.3
+
+0.3
+
+0.3
+
+0.2
+
+0.2
+
+0.2
+
+1
+
+u
+
+Os horizontes de predição () e controle ()
+foram sintonizados conforme proposto por
+Trierweiler  Farina (2003), sendo  baseado no
+tempo de assentamento do modelo do processo em
+malha_aberta e   4. Para o ajuste do MPC não
+quadrado, em faixas_de_operação foram considerados
+98 cenários decompostos do modelo original (63
+cenários 2  2 e 35 cenários 3  3). As frequências
+com que ocorre o  em cada cenário foram utilizadas para o cálculo das matrizes de escalonamento
+através do condicionamento mínimo global. Os valores para as matrizes, obtidas através do algoritmo
+Nelder-Mead são   1,5151 0,7575 1,0 e
+  0,0012 2,0854 0,0013 1,3287 5,51 
+106  0,0002 2,6241. Essas matrizes serão responsáveis pela normalização entre as entradas e saídas,
+considerando as grandezas em um mesmo tamanho.
+O sistema foi configurado conforme a Fig. 2, e os
+pesos do controlador_preditivo calculado através do
+algoritmo Nelder-Mead. A simulação encontra-se na
+Fig. 5.
+
+0
+
+0.5
+3
+
+500 1000
+Tempo min
+
+y
+
+0
+
+0.05
+
+0.1
+
+3
+
+-0.2
+
+u
+
+-0.2
+
+y
+
+-0.2
+
+1
+
+u
+
+3
+
+0.1
+
+2
+
+0.1
+
+u
+
+1
+
+(a)
+0.1
+
+Figura 6. Resposta em malha_aberta das saídas frente aos distúrbios enviados ao processo no Caso 2.
+
+2
+
+500
+Tempo min
+
+y
+
+0
+
+1000
+
+500
+Tempo min
+
+0
+
+4
+
+y
+
+-0.5
+
+-2
+
+y
+
+7
+
+CVs
+soft-constraints
+
+0
+
+CVs
+soft-constraints
+
+-1
+
+1000
+
+6
+
+0
+
+2
+
+1000
+
+500
+
+0.5
+
+u
+
+-1
+0
+
+y
+
+-0.5
+
+7
+
+0
+
+0.1
+
+0.1
+
+0
+
+0
+
+0
+
+-0.1
+
+-0.1
+
+-0.1
+
+0
+
+500
+1000
+Tempo min
+
+0
+
+500
+1000
+Tempo min
+
+0
+
+500
+1000
+Tempo min
+
+(b)
+Figura 7. Variáveis (a) controladas e (b) manipuladas para ajuste
+baseado em multi-cenários no Caso 2.
+
+4.3. Sintonia Direta
+4.2 Caso 2
+Nessa simulação, foi considerado como incertezas do modelo os valores 1  1, 2  1 e
+3  4  5  0. Foram enviados degraus aos distúrbios no tempo   100  iguais a 1  2 
+0,5, e os valores iniciais para as entradas e saídas
+do controlador e planta foram considerados zero. A
+resposta em malha_aberta das saídas em relação aos
+distúrbios é dada pela Fig. 6
+
+ISSN 2525-8311
+
+Como forma de comparar a estratégia de ajuste
+proposta nesse trabalho, foi considerada uma sintonia
+direta para a determinação dos pesos do MPC. Essa
+sintonia trata-se da minimização direta da Eq. 7, ou
+seja, é minimizada a violação da soft-constraint sem
+considerar o escalonamento do sistema. Os valores
+das matrizes de peso foram obtidos através do algoritmo Nelder-Mead (função fminsearch do Matlab
+
+1341
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+R2012b). As simulações para os casos 1 e 2 encontram-se nas Figuras 8 e 9.
+2
+
+0.05
+
+0
+0
+
+500
+
+1000
+4
+
+0
+-0.5
+
+500
+
+1000
+
+0
+
+500
+
+1000
+
+0
+-0.5
+
+0
+
+500
+
+1000
+0.5
+0
+
+1000
+
+1
+
+0
+
+500
+Tempo min
+
+7
+
+y
+
+0
+
+1000
+
+CVs
+soft-constraints
+0
+
+500
+Tempo min
+
+1000
+
+0
+
+500
+
+1000
+
+0
+500
+
+6
+
+0
+
+7
+
+y
+
+-0.2
+
+1000
+
+0
+
+500
+Tempo min
+
+1000
+
+0
+
+500
+
+1000
+
+0.5
+
+3
+
+u
+
+2
+
+u
+
+1
+
+u
+
+-0.2
+
+0
+
+0
+
+0
+
+500
+
+-0.5
+
+-0.5
+0
+
+0
+0.5
+
+y
+
+5
+
+y
+
+0.2
+
+1000
+
+0
+
+1000
+
+0.5
+
+0.2
+
+500
+
+-0.5
+0
+
+0.2
+
+0
+
+0.5
+
+-0.5
+
+(a)
+
+0
+-0.05
+
+0.5
+
+y
+
+-0.5
+
+-0.05
+
+y
+
+500
+
+0
+
+4
+
+0
+0.5
+
+0.05
+2
+
+0.05
+
+-0.5
+
+y
+
+y
+
+0
+-0.5
+
+y
+
+6
+
+0.5
+5
+
+0
+
+0.5
+y
+
+y
+
+3
+
+0.5
+
+y
+
+0
+-0.05
+
+3
+
+-0.05
+
+y
+
+y
+
+1
+
+0.05
+
+garantir que o sistema opere dentro das restrições
+desejadas sem instabilizar.
+Cabe salientar que a fracionadora Shell é um
+problema padrão proposto por Prett  Morari (1987)
+onde normalmente é considerado em seu subcaso
+(3  3) dada a sua dificuldade. Não foi encontrado
+na literatura nenhum artigo envolvendo MPC capaz
+de resolver o sistema proposto originalmente na
+versão analisada neste trabalho.
+
+-0.2
+
+CVs
+soft-constraints
+
+0
+-0.5
+
+-0.4
+
+0
+
+500
+1000
+Tempo min
+
+0
+
+-0.4
+
+-0.4
+
+0
+
+500
+1000
+Tempo min
+
+0
+
+500
+Tempo min
+
+1000
+
+(a)
+
+500
+1000
+Tempo min
+
+0.4
+
+0.2
+
+0.2
+
+0.2
+
+Observa-se que o ajuste proposto se mostrou
+fundamental para a operação estável do processo
+garantindo que as CVs permanecessem nas faixas
+especificadas e não excedendo movimento nas ações
+de controle. O ajuste obtido através da sintonia direta
+além de não garantir a estabilidade do processo apresentou excesso de movimento para as MVs.
+5. Conclusão
+Este trabalho propõe uma estratégia de ajuste para MPC baseado em multi-cenarios, focando nos
+sistemas_não_quadrados, com mais CVs do que MVs,
+e utilização de faixas_de_operação. A sintonia é obtida através da determinação do desempenho_alcançável para o modelo global, com restrições de desempenho obtidas para cada subcaso quadrado, do escalonamento do sistema e da determinação dos pesos
+que levam a planta para a melhor condição operacional. É feita a abordagem em cenários a fim de incluir
+na sintonia do sistema global, fatores limitantes de
+desempenho presentes em cenários quadrados que
+por vezes não estão presentes no sistema global, e
+surgem ao saturar uma ou mais variáveis.
+A metodologia foi empregada na fracionadora de
+óleo pesado Shell, apresentando bons resultados para
+rejeição_de_distúrbios. O escalonamento se mostrou
+fundamental para a boa operação do sistema, uma
+vez que é responsável pela paridade entre as variáveis de entrada_e_saída e agrega fatores de robustez e
+desempenho garantidos pelo Número de Desempenho robusto. Os pesos do controlador foram obtidos a
+fim de priorizar as variáveis de entrada_e_saída e
+
+ISSN 2525-8311
+
+0
+
+-0.2
+
+u
+
+u
+
+3
+
+0.4
+
+2
+
+0.4
+
+u
+
+Figura 8. Variáveis (a) controladas e (b) manipuladas para ajuste
+através da sintonia direta para o Caso 1.
+
+1
+
+(b)
+
+0
+
+0
+
+500
+1000
+Tempo min
+
+-0.2
+
+0
+
+0
+
+500
+1000
+Tempo min
+
+-0.2
+
+0
+
+500
+1000
+Tempo min
+
+(b)
+Figura 9. Variáveis (a) controladas e (b) manipuladas para ajuste
+através da sintonia direta para o Caso 2.
+
+Referências Bibliográficas
+Camacho, E. F.  Bordons, C. (1999). Model Predictive Control.
+Campos, M. C. M. M. d., Gomes, M. V. d. C.  Perez, J. M. G. T. (2013)
+Controle Avançado e Otimização na Indústria do Petróleo, 1 Edição.
+Rio de Janeiro.
+Ferramosca, A., Limon, D., González, A. H., Odloak, D.  Camacho, E. F.
+(2009) MPC for tracking target sets, Proceedings of the IEEE
+Conference on Decision and Control.
+Garriga, J. L.  Soroush, M. (2010) Model predictive control tuning
+methods A review. Industrial and Engineering Chemistry Research,
+49(8), 3505-3515.
+Gous, G. Z.  de Vaal, P. L. (2012) Using MV overshoot as a tuning metric
+in choosing DMC move suppression values. ISA transactions, 51(5),
+657-664.
+Holkar, K. S.  Waghmare, L. M. (2010) An overview of model predictive
+control. International Journal of Control and Automation, 3(4), 7.
+Lima, F.  Georgakis, C. (2006) Operability of multivariable non-square
+systems. Proc. IFAC Symp. ADCHEM.
+Maciejowski, J. M. (2002). Predictive Control with Constraints.
+Nery Júnior, G. A., Martins, M. A. F.  Kalid, R. (2014) A PSO-based
+optimal tuning strategy for constrained multivariable predictive
+controllers with model uncertainty. ISA Transactions, 53(2), 560-567.
+Prett, D. M.  Morari, M. (1987). Shell Process Control Workshop, 369.
+Qin, S. J.  Badgwell, T. A. (2003) A survey of industrial model predictive
+control technology. Control Engineering Practice, 11(7), 733-764.
+Shead, L. R. E., Anastassakis, C. G.  Rossiter, J. A. (2007) Steady-state
+operability of multi-variable non-square systems Application to Model
+Predictive Control (MPC) of the Shell Heavy Oil Fractionator (SHOF),
+2007 Mediterranean Conference on Control and Automation, MED.
+Trierweiler, J. O. (1997). A Systematic Approach to Control Structure
+Design.
+Trierweiler, J. O. (2002) Application of the RPN methodology for
+quantification of the operability of the quadruple-tank process.
+Brazilian Journal of Chemical Engineering, 19, 195-206.
+Trierweiler, J. O.  Farina, L. A. (2003) RPN tuning strategy for model
+predictive control. Journal of Process Control, 13(7), 591-598.
+
+1342

@@ -1,0 +1,1576 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+CARREGAMENTO COOPERATIVO DE CARGA UTILIZANDO QUADRIMOTORES
+Igor H. B. Pizetta Alexandre S. Brandao Mario Sarcinelli-Filho
+
+
+
+
+
+
+Instituto Federal de Ciencia e Tecnologia do Esprito Santo
+Aracruz  ES, Brasil
+
+Departamento de Engenharia Eletrica, Universidade Federal de Vicosa
+Vicosa  MG, Brasil
+
+Programa de Pos-Graduacao em Engenharia Eletrica, Universidade Federal do Esprito Santo
+Vitoria  ES, Brasil
+
+Email igor.pizetta@ifes.edu.br alexandre.brandao@ufv.br mario.sarcinelli@ele.ufes.br
+Resumo This work proposes the representation of the high level dynamic modelling of a formation of two
+quadrotor UAVs cooperatively carrying a suspended load. The two quadrotors are attached to the load by
+massless and stretchable cables, which can slack and taut. The cable is modeled as a high stiffness spring with
+a damping coefficient, according to the Hookes law. A fictitious repulsion force is also introduced to minimize
+the risk of a collision between the UAVs during flight tasks. Finally, to dealt with disturbance rejection caused
+by the load compensation and the cable tension variations, a nonlinear_controller is proposed to guide the UAVs
+cooperatively during positioning and trajectory-tracking tasks, considering that the movement of the UAVs is
+restricted to the XZplane. Finally, simulated results are presented, in order to validate the proposal.
+Palavras-chave
+
+.
+
+Palavras-chave . A carga e fixada aos quadrimotores atraves
+de cabos elasticos e sem massa, que podem ficar tensionados ou nao durante o cumprimento das tarefas de voo.
+O cabo e modelado como uma mola com alta rigidez elastica com coeficiente de amortecimento de acordo com as
+leis de Hooke. Uma forca fictcia de repulsao e introduzida a fim de minimizar os riscos de colisao entre os veculos
+durante as tarefas de voo. Por fim, para lidar com a rejeicao do disturbio gerado pela compensacao da carga,
+um controlador_nao_linear e proposto para guiar os veculos cooperativamente em tarefas de posicionamento e
+seguimento_de_trajetoria. Resultados simulados sao apresentados para validar a proposta.
+Palavras-chave .
+
+1
+
+Introducao
+
+A alta aplicabilidade dos veculos_aereos_nao_tripulados (VANTs) e o aumento de sua tecnologia
+associada tem causado um aumento significativo
+nas pesquisas utilizando este tipo de veculo nas
+ultimas decadas. Apesar de serem veculos de difcil controle, sua mobilidade tridimensional, capacidade de voo estacionario, decolagem e pouso
+verticais os tornam uma plataforma de desenvolvimento propcia para a utilizacao em diversas aplicacoes, alem daquelas associadas a veculos_terrestres_nao_tripulados. Estas aplicacoes envolvem
+seguranca publica (Kanistras et al., 2015) (supervisao do espaco aereo e trafego urbano), gerenciamento de riscos naturais (Melita et al., 2015)
+(vulcoes e tsunamis), gestao ambiental (Brust e
+Strimbu, 2015) (medicao de poluicao do ar e monitoramento de florestas), intervencao em ambientes hostis (Merino et al., 2015), manutencao
+de infraestruturas(Araar e Aouf, 2013) (linhas de
+transmissao e dutos de fluido e gas), agricultura
+de precisao (Rey et al., 2013), transporte_de_carga
+(Feng et al., 2015), dentre outros.
+Dependendo da tarefa, e muito mais vantajoso a utilizacao de diversos veculos do que somente um especializado para completa-la. Executando a tarefa de forma cooperativa, os veculos podem nao somente aumentar o desempenho
+
+ISSN 2525-8311
+
+na tarefa como superar as limitacoes individuais.
+Por exemplo, uma area pode ser inspecionada em
+menor tempo utilizando um time de VANTs ou
+ainda, uma carga pesada, maior que a carga util
+de cada um, pode ser levantada utilizando dois ou
+mais veculos. Em (Merino et al., 2015) e apresentada uma arquitetura_de_controle e decisao para
+times de veculos_aereos_nao_tripulados para deteccao, monitoramento e extincao de incendios florestais. Um grupo e utilizado, ao inves de um unico
+veculo, porque uma maior area pode ser inspecionada ao mesmo tempo e uma maior quantidade
+de sensores pode ser carregada.
+Ao realizar uma tarefa de carregamento de
+carga, as oscilacoes geradas por ela geram dificuldades no controle do veculo, mesmo para pilotos
+experientes. A maioria deles considera prefervel
+estabilizar o veculo e esperar que as oscilacoes se
+extingam. A distribuicao do peso da carga com
+mais de um veculo e uma alternativa para controlar as oscilacoes angulares de maneira distinta.
+Neste caso, os angulos sao relativos aos cabos que
+estao conectados entre a carga e o VANT.
+Uma aplicacao similar pode ser vista em
+(Ollero, 2011), onde um helicoptero miniatura
+autonomo e utilizado para transporte e entrega
+de kits de socorro em missoes de busca e resgate. Ainda e apresentado um sistema multiVANT composto por tres helicopteros de pequeno
+
+3222
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+porte e uma carga pesada, a qual ultrapassa a
+carga util de um veculo. Sensores de torque e
+forca sao utilizados para realimentar os lacos de
+controle.
+Ainda considerando transporte_de_carga, em
+(Feng et al., 2015) um VANT com uma carga pendurada e modelado como um sistema multi corpo
+conectado por um cabo sem massa e inelastico. O
+Lagrangiano e utilizado para obter a dinamica do
+sistema e uma lei de controle quadratica e proposta para guiar a aeronave ao longo de missoes
+de seguimento_de_trajetoria, considerando massas
+e comprimentos de cabos distintos. Em (Guerrero
+et al., 2015), o IDA-PBC (Interconnection and
+Damping Assignment Passivity-Based Control) e
+utilizado para executar tarefas de posicionamento
+rapido de carga com um mnimo de oscilacao para
+o caso planar (XZplane). Nesta estrategia, o
+sinal de controle atinge a forma de energia e injeta o termo de amortecimento a fim de alcancar
+o objetivo de controle e minimizar as oscilacoes
+da carga, respectivamente, sem a necessidade de
+medicao dos angulos.
+Em transporte_de_carga suspenso por cabos,
+existem algumas nao linearidades que devem ser
+tomadas em conta. Por exemplo, apos a decolagem, no momento quando a carga esta para
+ser levantada do solo, o veculo sente a forca de
+tracao da carga, quando o cabo muda seu estado de frouxo para tensionado. Em contraste,
+quando o veculo perde altitude, o cabo momentaneamente fica frouxo. Este efeito pode ser observado quando multiplos veculos estao carregando a
+mesma carga. Um controle geometrico nao linear
+considerando o icamento da carga do solo e suas
+nao linearidades e proposto em (Cruz et al., 2015).
+Por sua vez, em (Goodarzi et al., 2015) a nao linearidade e considerada na flexibilidade do cabo
+durante transporte_de_carga. Os autores representam o cabo como um conjunto de ligacoes rgidas conectadas em serie com uma carga pontual.
+Um controle geometrico assintoticamente estavel
+e proposto para guiar o sistema VANT-Carga ao
+longo de tarefas de posicionamento, validado por
+simulacoes numericas e experimentos.
+Outra abordagem para o carregamento de
+carga e a utilizacao de garras, para captura da
+carga e seu carregamento proximo ao corpo do
+veculo conectado de forma rgida. Nesta abordagem, o momento de inercia do veculo aumenta,
+as respostas de guinada tornam-se mais lentas e
+os movimentos menos agressivos. Em (Mellinger
+et al., 2011), uma estrategia utilizando garras e
+apresentada com a estimacao dos parametros de
+inercia. O VANT pode carregar diferentes cargas com diferentes caractersticas. Um controlador com trajetorias quasi-estacionarias e apresentado em simulacoes para o caso planar. Em continuacao a este trabalho, uma tarefa de cooperacao utilizando garras e apresentado em (Mellinger
+
+ISSN 2525-8311
+
+et al., 2013 Lindsey et al., 2012). Experimentos
+mostram um grupo de MVANT (Micro Veculo
+Aereo Nao Tripulado) transportando cargas de diferentes tamanhos e formas e as conectando para
+formar cubos.
+Neste contexto, este trabalho lida com o carregamento de cargo de forma cooperativa. Em
+nossa proposta, dois quadrimotores sao conectados a uma carga por cabos elasticos e sem massa.
+O cabo e modelado de tal forma que pode ficar
+frouxo ou esticado ao longo das manobras de voo,
+por exemplo, na decolagem ou quando apenas um
+veculo esta suportando toda a massa da carga.
+O cabo e modelado como uma mola de alta rigidez com um coeficiente de amortecimento, de
+acordo com as leis de Hook. Em seu comportamento e considerada a estimacao da perturbacao.
+Em adicao, uma forca fictcia de repulsao foi introduzida a fim de minimizar o risco de colisao entre os VANTs durante deslocamentos laterais. Por
+fim, para lidar com a rejeicao do disturbio causado
+pela carga e pela variacao de tracao dos cabos,
+um controlador_nao_linear e proposto para guiar
+o VANT de forma cooperativa durante tarefas de
+posicionamento e seguimento_de_trajetoria. E importante ressaltar que este trabalho e uma sequencia dos trabalhos publicados em (Beloti Pizetta
+et al., 2015a Beloti Pizetta et al., 2015b), onde
+o VANT carrega uma carga suspensa por uma
+cabo inelastico e rgido utilizando a plataforma
+AuRoRA, desenvolvida em (Pizetta et al., 2016),
+para lidar com experimentos e simulacoes.
+Para dar detalhes sobre esse desenvolvimento,
+este trabalho e dividido nas seguintes secoes 2
+apresenta uma visao geral do modelo da aeronave
+com a carga suspensa, considerando os efeitos da
+carga, enfatizando as variaveis_de_controle e os
+graus de liberdade disponveis para o controle.
+Seguindo, e apresentado o modelo do VANT na
+forma subatuada, e proposto um controlador por
+linearizacao de realimentacao para guia-lo. Na
+sequencia, o disturbio e modelado considerando
+o efeito de estiramento dos cabos e da forca de repulsao fictcia entre os veculos. Na secao 3 alguns
+resultados simulados e sua discussao sao apresentados, a fim de validar a proposta, considerando
+tarefas de posicionamento e seguimento_de_trajetoria. Por fim, a Secao 4 destaca as principais
+conclusoes do trabalho.
+2
+
+O Modelo Dinamico do Sistema
+Cooperativo de Carregamento de
+Carga
+
+Esta secao introduz o modelo_dinamico dos veculos aereos carregando uma carga suspensa de
+forma cooperativa. Nesta abordagem, o sistema e
+composto de uma carga conectada a dois VANTs
+por cabos sem massa e extensveis. Supoe-se que
+o cabo e elastico, conectado ao centro de massa
+
+3223
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+b1
+
+f3,22
+
+z
+
+s1
+
+z
+
+f3,21 b1z
+
+s1
+
+z
+
+f
+
+x
+
+x
+
+2
+
+(x1,z1)
+
+s1
+
+x
+l
+
+l
+
+2
+
+2
+
+1 s1
+
+2
+
+l
+
+mcg
+1
+
+e
+
+z
+
+x
+
+(xc,zc)
+
+T1
+
+x
+
+l
+lsin2
+
+1
+
+(xc,zc)
+
+1
+
+e
+
+z
+
+l
+
+1
+
+T2
+
+x
+
+lcos1
+
+z
+
+lcos2
+
+l
+
+z
+
+2
+
+b1
+
+b1
+(x2,z2)
+
+l
+
+l
+
+f4,11
+
+2
+4,1
+
+lsin1
+mcg
+
+b1
+2
+3,2
+
+f
+
+z
+
+s1
+
+z
+
+f3,21 b1z
+
+s1
+
+z
+f4,11
+
+f4,12
+
+b1
+
+x
+
+b1
+
+x
+
+2
+(x2,z2)
+
+(x1,z1)
+
+s1
+
+x
+l
+
+l
+
+e
+
+l
+
+2
+
+2
+
+x
+
+x
+
+lcos1
+
+z
+
+lcos2
+
+1 s1
+
+1
+
+1
+
+l
+
+x
+
+lsin2
+
+(xc,zc)
+
+lsin1
+mcg
+
+Figura 1 Sistema de referencia adotado para o
+caso de dois quadrimotores carregando uma carga.
+de cada quadrimotor e que a forca de resistencia
+do ar e desprezvel. A Figura 1 ilustra a tarefa
+a ser realizada, e tambem o sistema de referencia
+adotado. O modelo_dinamico e descrito de acordo
+com as equacoes de Euler-Lagrange para os quadrimotores e a carga.
+Neste trabalho, o modelo e baseado no quadrimotor AR.Drone, da Parrot Inc. Um importante
+detalhe e que os motores sao alinhados com os eixos b x e b y, porem rotacionados em 45o em torno
+do eixo b z. Assim, manobras laterais ou longitudinais requerem a acao combinada de todos os
+quatro motores.
+Considere o quadrimotor como um VANT no
+caso planar, com seus movimentos restritos ao
+plano XZ, i.e., nao ha deslocamento no eixo y
+nem variacoes nos angulos de rolagem () e guinada (). Neste veculo, as forcas f3 e f2 atuam
+em conjunto para realizar os movimentos, assim
+como as forcas f4 e f1 .
+Dois veculos conectados por cabos, direta ou
+indiretamente, geram forcas entre si, transmitidas
+pelo elo de ligacao. Por exemplo, se os veculos
+tentarem voar em direcoes opostas no eixo x a
+forca de tracao associada aos cabos ira aumentar
+ate a forca de arrasto maxima do VANT, fazendo
+com que eles fiquem estaticos.
+Para introduzir esta modelagem, e definida,
+primeiramente, a atitude de cada VANT no plano
+generalizado de coordenadas 2D, denominado por
+
+T
+e
+q  e i e i e c
+com i  1, 2. Note que
+nao ha movimento no eixo y, assim o vetor de
+
+T
+coordenadas se torna e i  xi zi  R2 com
+i  1, 2, correspondente aos deslocamentos normal e longitudinal, de acordo com os sistema de
+referencia inercial hei, s i  i  R com i  1, 2,
+corresponde apenas com os angulos de arfagem, de
+acordo
+ com o sistema de coordenadas espacial hsi,
+b
+  1 2  R, corresponde ao angulo da carga
+com respeito ao veculo da frente e o de tras, respectivamente, ao seu proprio sistema de referencia
+hli.
+Existem dois cabos conectando a carga aos
+quadrimotores, havendo, entao, duas forcas de
+tracao com a adicao da forca gravitacional, agindo
+na carga, como detalhado na Figura 2.
+
+ISSN 2525-8311
+
+e
+
+x
+
+Figura 2 Detalhe das forcas agindo na carga
+transportada pelos dois veculos aereos.
+O objetivo do controle e compensar a forca
+gravitacional da carga mc g, a qual e sentidaatraves da forca de tracao T1 e T2 pelo quadrimotores. A dinamica da carga pode ser descrita
+atraves de
+mc xc
+
+
+
+T1 sen 1 + T2 sen 2
+
+(1)
+
+mc zc + mc g
+
+
+
+T1 cos 1 + T2 cos 2 ,
+
+(2)
+
+
+T
+onde e qc  xc zc e a posicao da carga no sistema referencial. No equilbrio as forcas de tracao
+devem compensar a forca gravitacional. Todavia,
+os VANTs devem impor uma forca de tracao em
+posicoes opostas, isto devido a compensacao da
+forca gravitacional e ao angulo entre o veculo e a
+carga. Por outro lado, os VANTs irao balancear
+apenas a forca gravitacional, e, como consequencia, a forca de tracao tende a zero, assim os quadrimotores irao se aproximar um do outro.
+2.1
+
+O modelo do VANT
+
+Considerando o esquema mostrado na Figura 1, a
+funcao Lagrangeano pode ser escrita como
+L
+
+1
+1
+1
+mx2 + mz 2  mgz + Iyy 2 ,
+2
+2
+2
+
+(3)
+
+onde m e Iyy sao a massa e o momento de inercia
+do VANT.
+Aplicando as restricoes de Euler-Lagrange
+d L L
+
+ ,
+dt  q
+q
+obtem-se
+
+   
+  
+mx
+0
+u sen 
+Dx
+ mz  + mg   u cos  + Dz  ,
+0
+
+0
+Iyy 
+onde u 
+
+4
+X
+
+(4)
+
+fi e   k(f1 + f2 + f3  f4 ) sao os
+
+i1
+
+sianis de controle, sendo k a distancia entre cada
+motor e o centro de gravidade do veculo. Dx e Dz ,
+
+3224
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+nesta modelagem, sao as perturbacoes horizontais
+e normais causadas pelo efeito de tracao da carga.
+E importante ressaltar que o modelo do
+VANT (4) e o mesmo para os dois quadrimotores, em excecao pelo vetor de disturbio, o qual e
+
+T
+D1  T1 sen 1 T1 cos 1 0 , para o ve
+T
+culo frontal, e D2  T2 sen 2 T2 cos 2 0
+para o veculo traseiro.
+Sabendo que o quadrimotor e um sistema subatuado (Raffo et al., 2011 Brandao et al., 2014),
+i.e., ha mais graus de liberdade que entradas de
+controle, algumas variaveis podem ser consideradas como ativas (ou diretamente atuadas), enquanto outras podem ser classificadas como passivas (ou nao atuadas). Na representacao atual,
+
+T
+qa  z  e qp  x, onde o subscrito a e p se
+referem as variaveis ativas e passivas respectivamente.
+Agora representando (4) na forma subatuada,
+obtem-se
+
+     
+Mpp Mpa qp
+Ep
+0
++
+
+,
+(5)
+Map Maa qa
+Ea
+F
+onde
+
+
+Mpp  m cos ,
+Mpa  m sen  0 ,
+
+
+
+
+m sen 
+m cos  0
+Map 
+, Maa 
+,
+0
+0
+Iyy
+com
+Ep  Dx cos   (mg  Dz ) sen 
+
+
+Dx sen  + (mg  Dz ) cos 
+Ea 
+.
+0
+2.2
+
+O Controlador Nao linear Subatuado
+
+A partir de (5) tem-se
+F  Map qp + Maa qa + Ea ,
+
+(6)
+
+0
+
+(7)
+
+ Mpp qp + Mpa qa + Ep .
+
+Substituindo (7) em (6), tem-se
+F
+
+
+
+
+Map M1
+pp (Mpa qa + Ep ) + Maa qa + Ea ,
+(Maa 
+
+
+Map M1
+pp Mpa ) qa
+z
+
+Maa
+
+
+
++ Ea 
+
+
+(8)
+
+Map M1
+pp Ep
+z
+
+Ea
+
+.
+
+
+
+Agora, aplicando a realimentacao por linearizacao
+parcial, pode-se propor a lei de controle dada por
+F  Maa a + Ea ,
+
+(9)
+
+onde a
+
+qad + Ka1 tanh(Ka2 q a ) +
+Ka3 tanh(Ka4 qa ), com Kai  R2 sendo matrizes de ganho positiva definidas.
+Portanto, a equacao de malha_fechada e dada
+por
+ a + Ka1 tanh(Ka2 q a ) + Ka3 tanh(Ka4 qa )  0,
+q
+
+ISSN 2525-8311
+
+que garante que q e q tendem a zero assintoticamente, quando t  , desde
+d  arctan
+
+px
+,
+az + g
+
+(10)
+
+onde px
+
+qp d + Kp1 tanh(Kp2 q p ) +
+Kp3 tanh(Kp4 qp ), com Kpi  R sendo ganhos
+positivos.
+A demonstracao completa da estabilidade do
+sistema no sentido de Lyapunov pode ser encontrada em (Brandao et al., 2013).
+2.3
+
+O efeito do alongamento
+
+Algumas consideracoes sobre a tarefa de carregamento de carga devem ser consideradas quando
+existem mais de um veculo. Se um unico VANT
+e capaz de elevar a carga e se movimentar, o
+sistema_dinamico se comporta como um pendulo
+sub atuado (os trabalhos anteriores (Beloti Pizetta
+et al., 2015a Beloti Pizetta et al., 2015b) lidam
+com este problema). Em contraste, se multiplos
+VANTs estao movendo a carga, a tracao do cabo
+causa disturbios nos veculos. Assim, os disturbios nao sao somente geradas pela compensacao
+da massa da carga como tambem pelos deslocamentos dos outros veculos.
+Comumente, durante o primeiro estagio da
+manobra de decolagem, a carga e posicionada ao
+solo na mesma altitude do veculo, entao o cabo
+os conectando nao esta esticado. Desta forma o
+movimento da carga nao pode ser descrito completamente por (1) e (2). Em outras palavras, se
+a distancia entre VANT e carga e menor que o
+comprimento do cabo, a tensao e igual a zero (assumindo a premissa de um cabo sem massa). Caso
+contrario, a tensao e calculada com o objetivo de
+atingir o equilbrio.
+Considerando uma manobra de pairagem
+onde todos os elementos da Figura 1 sao estabilizados, pode-se concluir que a carga esta estatica e T1 e T2 atingiram o equilbrio. Todavia,
+se ambos veculos elevam suas altitudes simultaneamente, a carga quase se move imediatamente
+para cima, isto devido a caracterstica elastica dos
+cabos. Portanto, pode-se considerar que o efeito
+elastico (como mostrado na Figura 3) ocorre nos
+cabos neste instante, explicado pela inercia da
+carga.
+Apos apresentar esta consideracao, as tensoes
+dos cabos sao dadas por
+T1
+
+T2
+
+sen 2
++ T1 , if k1  qc k  l1 ,
+sen (1 + 2 )
+
+
+
+mc g
+
+
+
+0, otherwise.
+
+
+
+mc g
+
+
+
+0, otherwise,
+
+sen 1
++ T2 , if k2  qc k  l2 ,
+sen (1 + 2 )
+
+3225
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+onde Ti representa o efeito elastico e e dado por
+d
+l, with ij  0.
+dt
+
+Ti  i1 l + i2
+
+(11)
+
+E importante mencionar que l  ki  qc k 
+li e que Ti induzem uma reacao de tracao amortecida no sistema.
+2.4
+
+A Forca de Repulsao Fictcia entre os
+VANTs
+
+Observando mais uma vez a Figura 1, se ambos
+quadrimotores se movem para a esquerda porem
+o veculo da direita move mais rapido que o da esquerda, eles poderao colidir durante a execucao
+da tarefa. Esta situacao pode ser evitada (ou
+superada) pela adicao de algumas restricoes de
+voo. Todavia, esta pode introduzir descontinuidades, que podem comprometer a tarefa de carregamento. Assim, e proposto introduzir uma forca
+fictcia de repulsao entre os VANTs. A Figura 4
+ilustra a ideia do campo e suas linhas de repulsao,
+como se fossem dois imas de campos magneticos
+iguais. Pode-se observar que, quanto mais proximo os veculos, maior a forca de repulsao.
+A forca de repulsao e aqui definida como
+fri  (fmax  fmin )
+
+dmax  d
++ fmin ,
+dmax  dmin
+
+(12)
+
+onde fmax e fmin estabelece a forca maxima e mnima, quando os veculos estao distantes dmin e
+dmax entre si. Na presente proposta, fri atua somente no eixo e x, assim d  kx1  x2 k.
+E importante mencionar que, se d > dmax ,
+entao fri  fmin , e isto implica que os veculos
+estao distantes o suficiente entre si. Em adicao, se
+d < dmin , entao fri  fmax , e isto representa um
+situacao crtica de voo (possibilidade de colisao)
+2.5
+
+O Disturbio Modelado
+
+A partir de (4) obtem-se o vetor de perturbacoes Di , o qual
+pode ser modelado para ser aplicado na lei de controle (9).
+
+f3,21
+
+Neste caso, ele e dado por
+
+
+
+
+T2 sen 2 + fr2
+T1 sen 1 + fr1
+
+
+
+and D2 
+T2 cos 2  . (13)
+D1 
+T1 cos 1
+0
+0
+
+Note que fr1  fr2 , i.e., a forca de repulsao sao
+aplicadas em direcoes opostas.
+Portanto, Pode-se confirmar que o controlador proposto e projetado para guiar o VANT
+mesmo na presenca de perturbacoes, as quais sao
+modeladas pelas tensoes dos cabos VANT-Carga
+e pelas forcas fictcias de repulsao agindo nos veculos.
+3
+
+Resultados
+
+Os resultados foram obtidos utilizando a Plataforma AuRoRa para representar o modelo virtual
+dos VANTS, neste caso, o quadrimotor AR.Drone
+cujo modelo e controlador foram introduzidos nas
+secoes anteriores.
+A fim de demonstrar a eficacia da estrategia
+abordada utilizando forca de repulsao e a eficacia do controlador proposto, esta secao apresenta
+duas simulacoes. A primeira e uma tarefa de posicionamento, a qual contempla as tarefas de pairamento e levantamento da carga, i.e., os quadrimotores sao programados para atingir uma determinada altitude, porem, antes de atingi-la, a carga
+perde o contato com o solo, comecando a afetar
+o movimento do sistema a partir deste momento.
+Uma segunda simulacao e apresentada para demonstrar a necessidade do campo de rejeicao para
+que os veculos mantenham uma distancia segura
+entre si. Um vdeo das simulacoes pode ser visto
+no link httpsyoutu.beresPvYggpBs.
+A Figura 5 mostra o comportamento das variaveis do sistema x e z ao longo do tempo. Nos
+primeiros segundos os veculos devem realizar a tarefa de decolagem, atingindo a altura de 1m. No
+incio da tarefa a carga nao induz nenhum efeito no
+sistema, contudo, aproximadamente no instante
+7s, os cabos ficam esticados e a carga comeca a
+afetar os movimentos dos dois veculos, que podem ser vistos na figura. Ainda podem ser vistas
+oscilacoes angulares na Figura 6, que mostram o
+
+f4,11
+1
+
+l
+
+1
+
+1
+
+Tx
+
+e
+
+z
+
+T
+
+l
+Tz+mg
+
+e
+
+x
+
+Figura 3 Efeito elastico causada pela tensao adicional nos cabos.
+
+ISSN 2525-8311
+
+fr2
+
+e
+
+z
+
+2
+
+1
+
+fr1
+
+e
+
+x
+
+Figura 4 Repulsion forces adopted to prevent collisions involving the two UAVs.
+
+3226
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+forca que o empurra, ajudando seu movimento,
+enquanto que o outro recebe uma forca que o puxa,
+dificultando seu movimento e tornando este veculo mais lento que o outro. Assim, os veculos vao
+se aproximar diminuindo o angulo entre a carga,
+porem uma distancia segura deve ser mantida entre eles, que e o proposito da forca de repulsao. A
+Figura 9 mostra uma simulacao onde o campo de
+repulsao foi desabilitado. Neste caso nao somente
+o segundo VANT atinge a posicao desejada ante
+que o primeiro, como a distancia entre eles diminui consideravelmente, ate atingir a distancia de
+um veculo, significando uma possvel colisao.
+A ultima simulacao mostra a performance do
+sistema em um seguimento_de_trajetoria em formato de 8. A Figura 10 pode ser vista como a
+evolucao temporal das variaveis de posicao, onde a
+linha tracejada representa a posicao desejada para
+os veculos. Como o objetivo do controle e rejeitar
+o disturbio criado pela carga e nao guia-la, nao ha
+calor de referencia para a carga.
+A Figura 11 mostra as variacoes angulares dos
+veculos enquanto a Figura 13 mostra as variaveis
+A
+
+1.5
+
+f1,4 N
+
+1
+
+0.5
+
+0
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+0
+
+10
+
+20
+
+30
+time s
+
+40
+
+50
+
+60
+
+1.5
+
+1
+f2,3 N
+
+esforco do controlador para rejeitar as perturbacoes criadas no momentos que os cabos saem do
+estado frouxo e passam a ficar esticados.
+Um esforco extra realizado pelos veculos pode
+ser visto na Figura 7, apontando para direcoes
+opostas. Isto e pelo fato que, alem da massa extra
+adionado pela carga no sistema, existe a componente horizontal da tracao, que mantem os angulos maiores que um mnimo. Quanto maior os
+angulos, maior a componente horizontal da forca,
+assim, maior a forca que os veculos aplicam entre
+si.
+Os angulos da carga dependem da distancia
+dos veculos, com mostrado na Figura 8, que mostra sua evolucao ao longo do tempo. No comeco
+da simulacao, tais angulos sao de 90o , porque os
+veculos e a carga estao no solo (z  0), antes
+da decolagem, e depois, com o tempo, eles atingem um valor quase constante. A tensao e o comprimento dos cabos sao apresentados na Figura
+8, onde pode-se verificar que os cabos comecam
+a ficar tensionados apenas apos a decolagem, no
+mesmo momento quando o comprimento atinge
+aproximadamente 1m, que e um comprimento pre
+determinado. Existe uma grande nao linearidade
+neste ponto, e o controlador deve garantir a estabilidade do sistema. Esta grande descontinuidade
+implica em uma grande variacao angular vista,
+previamente, na Figura 6.
+Como mencionado anteriormente, os veculos
+devem manter uma distancia segura entre si, e
+quanto maior esta distancia, maior sera a componente horizontal da forca de tracao, aumentando
+o esforco dos propulsores e o consumo_de_energia.
+De fato, deslocamentos laterais, devido a decomposicao da forca de tracao, um veculo recebe uma
+
+0.5
+
+0
+
+Figura 7 Forcas geradas pelos propulsores dos
+veculos.
+A
+
+100
+ degrees
+
+A
+
+2
+1.5
+
+50
+
+x m
+
+1
+
+0
+
+0.5
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+Tension N
+
+0.5
+
+0
+
+Load
+UAV1
+
+20
+
+30
+
+40
+
+50
+
+60
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+UAV1D
+
+1
+
+UAV
+
+2
+
+0.5
+
+1.5
+
+Cable Length m
+
+z m
+
+10
+
+0.5
+
+2
+1.5
+
+0
+
+0
+
+1
+
+0
+
+10
+
+20
+
+30
+time s
+
+40
+
+50
+
+1
+
+Cable2
+
+UAV2D
+0
+
+Cable
+
+1
+
+0.5
+
+0
+
+10
+
+20
+
+30
+time s
+
+40
+
+50
+
+60
+
+60
+
+Figura 8 Variacao das variaveis da carga.
+
+Figura 5 Variacao das coordenadas.
+2
+1.5
+
+A
+
+8
+
+ degrees
+
+1
+
+x m
+
+10
+
+0.5
+
+6
+
+0
+
+4
+
+0.5
+
+0
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+
+2
+2
+
+Carga
+VANT1
+
+0
+1.5
+z m
+
+2
+4
+
+VANT1D
+
+1
+
+VANT2
+
+0.5
+
+VANT2D
+
+6
+
+VANT1
+
+8
+
+0
+
+VANT
+
+2
+
+10
+
+0
+
+10
+
+20
+
+30
+time s
+
+40
+
+50
+
+Figura 6 Variacao angular dos veculos.
+
+ISSN 2525-8311
+
+0
+
+5
+
+10
+
+15
+time s
+
+20
+
+25
+
+30
+
+60
+
+Figura 9 Variacoes de x e z sem o campo de
+rejeicao.
+
+3227
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+relativas a carga. Pode-se notar uma maior oscilacao no comeco da trajetoria. Quando muda-se a
+posicao desejada de um ponto_fixo para uma trajetoria, o veculo sofre uma grande variacao nos
+valores desejados, e assim, um maior esforco do
+controlador para mudar de posicao, resultando em
+uma manobra mais agressiva a fim de seguir a trajetoria. Apos um certo tempo, os veculos seguem
+os valores desejados e seus movimentos e variacoes angulares se mantem suaves. As variacoes
+no plano xz podem ser vistas na Figura 12, onde
+e claro a trajetoria em formado de 8 e a proximidade da posicao realizada com a posicao desejada,
+indicando a eficacia do controlador proposto.
+2
+1
+x m
+
+0
+1
+2
+3
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+4
+
+Consideracoes Finais
+
+O transporte_de_carga utilizando veculos aereos
+nao tripulados e util e interessante em diversas
+aplicacoes. Neste trabalho o carregamento de
+carga de forma cooperativa foi considerada, onde
+dois veculos quadrimotores sao conectados com
+uma carga atraves de cabos. Foi considerado o
+caso onde os cabos sao elasticos, rgidos e sem
+massa. O modelo de extensao dos cabos tambem
+e considerado, e, devido a dinamica do sistema, foi
+introduzida uma forca de repulsao fictcia entre os
+dois VANTs a fim de manter uma distancia segura
+entre eles. Para demonstrar a proposta, foram
+apresentados resultados simulados, enfatizando o
+efeito do esticamento dos cabos assim como a importancia da consideracao do campo de repulsao.
+Para tal, foram apresentadas tarefas de posicionamento e seguimento_de_trajetoria.
+
+60
+
+2.5
+
+Carga
+VANT1
+
+2
+z m
+
+1.5
+
+VANT1D
+
+1
+0.5
+0
+
+VANT2D
+0
+
+10
+
+20
+
+30
+time s
+
+40
+
+50
+
+60
+
+Figura 10 Variacoes das coordenadas.
+0.15
+
+0.1
+
+0.05
+
+0
+
+ degrees
+
+Agradecimentos
+
+VANT2
+
+0.05
+
+0.1
+
+Carga
+VANT1
+
+0.15
+
+VANT2
+0.2
+
+0
+
+10
+
+20
+
+30
+time s
+
+40
+
+50
+
+60
+
+Os autores agradecem ao CNPq  Conselho Nacional de Desenvolvimento Cientfico e Tecnologico,
+e a FAPES  Fundacao de Amparo a Pesquisa
+e Inovacao do Esprito Santo, pelo financiamento
+concedido ao projeto. Os autores tambem agradecem ao Instituto Federal do Esprito Santo, a
+Universidade Federal de Vicosa e a Universidade
+Federal do Esprito Santo, pelo suporte dado a
+sua participacao nessa pesquisa. Alexandre Brandao tambem agradece a FAPEMIG  Fundacao
+de Amparo a Pesquisa de Minas Gerais, e a Funarbe  Fundacao Arthur Bernardes, por apoiar
+sua participacao no trabalho.
+
+Figura 11 Variacoes angulares dos veculos.
+Referencias
+2.5
+
+Araar, O. e Aouf, N. (2013). Visual servoing of a
+quadrotor uav for the tracking of linear structured infrastructures, Systems, Man, and Cybernetics (SMC), 2013 IEEE International
+Conference on, pp. 33103315.
+
+2
+
+z m
+
+1.5
+
+1
+
+Carga
+VANT
+
+1
+
+VANT1D
+
+0.5
+
+VANT2
+VANT
+0
+2.5
+
+2D
+
+2
+
+1.5
+
+1
+
+0.5
+x m
+
+0
+
+0.5
+
+1
+
+1.5
+
+Figura 12 Variacoes das coordenadas no plano
+xz.
+
+Beloti Pizetta, I., Santos Brandao, A. e SarcinelliFilho, M. (2015a). Modelling and control of
+a pvtol quadrotor carrying a suspended load,
+Unmanned Aircraft Systems (ICUAS), 2015
+International Conference on, pp. 444450.
+
+ degrees
+
+100
+
+50
+
+0
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+60
+
+Tension N
+
+1
+
+0.5
+
+Cable Length m
+
+0
+1.5
+
+Cabo
+
+1
+
+Cabo
+0.5
+
+0
+
+10
+
+20
+
+30
+time s
+
+40
+
+50
+
+Figura 13 Variacao das variaveis da carga.
+
+ISSN 2525-8311
+
+Beloti Pizetta, I., Santos Brandao, A. e SarcinelliFilho, M. (2015b). Modelling and control of
+a quadrotor carrying a suspended load, 2015
+Workshop on Research, Education and Development of Unmanned Aerial Systems (REDUAS), pp. 249257.
+
+1
+2
+60
+
+Brandao, A. S., Carelli, R. et al. (2013).
+High-level underactuated nonlinear control
+for rotorcraft machines, IEEE International
+
+3228
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Conference on Mechatronics (ICM), IEEE,
+pp. 279285.
+Brandao, A. S., Gandolfo, D., Sarcinelli-Filho, M.
+e Carelli, R. (2014). Pvtol maneuvers guided
+by a high-level nonlinear_controller applied
+to a rotorcraft machine, European Journal of
+Control 20(4) 172179.
+Brust, M. e Strimbu, B. (2015). A networked
+swarm model for uav deployment in the assessment of forest environments, Intelligent
+Sensors, Sensor Networks and Information
+Processing (ISSNIP), 2015 IEEE Tenth International Conference on, pp. 16.
+Cruz, P., Oishi, M. e Fierro, R. (2015). Lift of
+a cable-suspended load by a quadrotor A
+hybrid system approach, American Control
+Conference (ACC), 2015, pp. 18871892.
+Feng, Y., Rabbath, C. A. e Su, C.-Y. (2015).
+Handbook of Unmanned Aerial Vehicles,
+Springer Netherlands, Dordrecht, chapter
+Modeling of a Micro UAV with Slung Payload, pp. 12571272.
+Goodarzi, F. A., Lee, D. e Lee, T. (2015). Geometric control of a quadrotor uav transporting
+a payload connected via flexible cable, International Journal of Control, Automation and
+Systems .
+Guerrero, M., Mercado, D., Lozano, R. e Garcia,
+C. (2015). Ida-pbc methodology for a quadrotor uav transporting a cable-suspended payload, Unmanned Aircraft Systems (ICUAS),
+2015 International Conference on, pp. 470
+476.
+
+Mellinger, D., Shomin, M., Michael, N. e Kumar, V. (2013). Cooperative grasping and
+transport using multiple quadrotors, Distributed autonomous robotic systems, Springer,
+pp. 545558.
+Merino, L., Martnez-de Dios, J. R. e Ollero, A.
+(2015). Handbook of Unmanned Aerial Vehicles, Springer Netherlands, Dordrecht, chapter Cooperative Unmanned Aerial Systems
+for Fire Detection, Monitoring, and Extinguishing, pp. 26932722.
+Ollero, M. B. K. K. I. M. A. (2011). Autonomous
+transportation and deployment with aerial
+robots for search and rescue missions, Journal of Field Robotics 28.
+Pizetta, I. H. B., Brandao, A. S. e Sarcinelli-Filho,
+M. (2016). A hardware-in-loop platform for
+rotary-wing unmanned aerial vehicles, Journal of Intelligent and Robotic Systems (To appear).
+Raffo, G. V., Ortega, M. G. e Rubio, F. R. (2011).
+Path tracking of a uav via an underactuated
+control strategy, European Journal of Control
+17(2) 194  213.
+Rey, C., Martn, M. P., Lobo, A., Luna, I., Diago, M. P., Millan, B. e Tardaguila, J. (2013).
+Precision agriculture 13, Wageningen Academic Publishers, Wageningen, chapter Multispectral imagery acquired from a UAV to
+assess the spatial variability of a Tempranillo
+vineyard, pp. 617624.
+
+Kanistras, K., Martins, G., Rutherford, M. J. e
+Valavanis, K. P. (2015). Handbook of Unmanned Aerial Vehicles, Springer Netherlands,
+Dordrecht, chapter Survey of Unmanned Aerial Vehicles (UAVs) for Traffic Monitoring,
+pp. 26432666.
+Lindsey, Q., Mellinger, D. e Kumar, V. (2012).
+Construction with quadrotor teams, Autonomous Robots 33(3) 323336.
+Melita, C. D., Longo, D., Muscato, G. e Giudice, G. (2015). Handbook of Unmanned Aerial Vehicles, Springer Netherlands, Dordrecht, chapter Measurement and Exploration in
+Volcanic Environments, pp. 26672692.
+Mellinger, D., Lindsey, Q., Shomin, M. e Kumar,
+V. (2011). Design, modeling, estimation and
+control for aerial grasping and manipulation,
+IEEERSJ International Conference on Intelligent Robots and Systems (IROS), IEEE,
+pp. 26682673.
+
+ISSN 2525-8311
+
+3229

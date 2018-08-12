@@ -1,0 +1,685 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+SISTEMA FUZZY PARA ANÁLISE DE VARIÁVEIS DE TEMPO DE UMA REDE PROFIBUS DP
+EDUARDO A. MOSSIN, DENNIS BRANDÃO, RENATO VEIGA TORRES
+Laboratório de Automação Industrial, Departamento de Engenharia Elétrica, Escola de Engenharia de São
+Carlos, Universidade de São Paulo
+Av. Trabalhador Sãocarlense, 400. São Carlos  SP. CEP 13560-970
+E-mails emossin@yahoo.com.br, dennis@sc.usp.br, renatoveigatorres@usp.br
+Abstract This paper proposes the development of a system that aims to inform the user if one of the main Profibus DP time
+variables are configured in a satisfactory manner, after all, it is known that many users or even some configuration tools estimate this variable value incorrectly. This variable is the Target Rotation Time and refers to the interval between the beginning and the end of the master communication with all slave devices on a network. Given the typical imprecision of this time
+parameter, it was chosen a fuzzy system to perform such analysis. The project was validated based on simulated data and satisfactory results were obtained, providing to the user an information that the value of the Target Rotation Time is
+"low", "very low", "good", "high", "very high" and recommending an approximated value for a good setup.
+Keywords Profibus, classification, time, fuzzy, automation.
+Resumo Este trabalho propõe o desenvolvimento de um sistema que tem o objetivo de indicar ao usuário se uma das principais variáveis de tempo da rede Profibus DP estão configuradas de maneira satisfatória, afinal, sabe-se que muitas vezes o usuário ou até mesmo algumas ferramentas de configuração estimam o valor desta variável de maneira incorreta. Tal variável é o
+Target Rotation Time e refere-se ao intervalo entre o início e o término da comunicação do mestre com todos os dispositivos escravos de uma rede. Considerando a imprecisão característica deste parâmetro de tempo, optou-se pelo uso de um sistema_fuzzy
+para a realização de tal análise. O projeto foi validado a partir de dados simulados e obteve resultados satisfatórios, trazendo ao
+usuário uma informação de que o valor do Target Rotation Time está com um valor "baixo", "muito baixo", "bom", "alto", "muito alto" e recomendando um valor aproximado para uma boa configuração.
+Palavras-chave .
+
+1
+
+Introdução
+
+O uso de dispositivos automáticos inteligentes no
+controle_de_processos de indústrias é uma prática
+bastante difundida (Berge, 2002).
+Considerando que a inteligência dos sistemas_de_controle pode estar distribuída entre os dispositivos instalados nas plantas industriais, surge a necessidade de
+uma interconexão entre todos os dispositivos, criando
+uma rede de instrumentos chamada de fieldbus.
+O grande interesse das indústrias em instalar este tipo
+de rede, levou vários desenvolvedores a implementar
+seus próprios mecanismos ou protocolos_de_comunicação. Desta forma, vários protocolos proprietários
+surgiram, onde apenas dispositivos de um mesmo
+fabricante poderiam se comunicar entre si. Com o
+objetivo de eliminar tal limitação, algumas organizações surgiram a fim de definir protocolos_de_comunicação padronizados. Desta maneira, dispositivos de
+diferentes fabricantes poderiam ser usados em uma
+mesma rede.
+Com o tempo, uma série de protocolos surgiram no
+mercado. Pode-se destacar CAN (Control Area
+Network), Interbus, DeviceNet, Hart, Modbus, AS-I
+(AS-Interface), Profibus e o FOUNDATION Fieldbus. Dentre estes protocolos citados, destaca-se o
+Profibus DP, que é o protocolo estudado neste trabalho.
+
+ISBN 978-85-8001-069-5
+
+A rede Profibus DP é uma rede do tipo multidrop,
+assíncrona, half duplex e utiliza a comunicação do
+tipo passagem de token (Token Passing) e mestreescravo. Neste tipo de comunicação, somente mestres
+podem iniciar uma atividade na linha. Estações escravas não iniciam a comunicação no barramento e
+somente respondem a requisições dos mestres. O
+mestre se comunica com todos os escravos e após
+isso, inicia novamente o mesmo processo continuamente, formando assim, ciclos de comunicação.
+Redes fieldbus, incluindo o Profibus DP, possuem
+várias vantagens quando comparadas com as arquiteturas ponto a ponto. Apesar disso, estas redes podem
+apresentar falhas ocasionadas por erros na configuração das mesmas. Dentre os vários parâmetros a serem
+configurados em uma rede Profibus, destacam-se
+alguns parâmetros relacionados  temporização da
+rede. Um dos principais parâmetros de tempo e objeto de estudo deste trabalho é o Target Rotation Time
+- TTR. Este parâmetro refere-se ao intervalo entre o
+início e o término da comunicação do mestre com
+todos os dispositivos escravos de uma rede, ou seja, o
+intervalo entre o início e o fim de um ciclo de comunicação (Normative Parts of Profibus FMS, DP And
+PA, 1998). É importante notar que este parâmetro é
+configurado pelo usuário no momento da configuração da rede (off-line). Quando a rede está em operação (online), o tempo de um ciclo é chamado Real
+Rotation Time (TRR).
+Sabe-se que muitas vezes o usuário ou até mesmo
+algumas ferramentas de configuração estimam o va-
+
+4467
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+lor do TTR de maneira indevida no início da operação.
+Este tipo de atitude pode deixar o tempo de ciclo da
+rede muito alto fazendo com que em caso de queda
+da rede, os dispositivos demorem muito para entrar
+em modo de segurança deixando uma planta industrial em uma situação de risco. Além disso, o tempo de
+configuração pode ser baixo o suficiente para que um
+dispositivo escravo entre em modo de segurança de
+forma indevida e abandone a troca de dados com o
+mestre. Mais detalhes destes cenários são abordados
+no item 2 deste artigo. Sendo assim, o objetivo deste
+trabalho é analisar se o valor configurado para o parâmetro TTR está em um intervalo de valores aceitáveis. Considerando a imprecisão característica deste
+problema, é proposto o uso de um sistema Fuzzy para
+tal análise.
+Desta maneira, este artigo está organizado em mais 4
+seções. A seção 2 descreve mais detalhadamente os
+problemas apresentados e detalha um pouco mais do
+funcionamento das redes Profibus. A seção 3 descreve a solução proposta além de conceitos necessários
+para o entendimento de tal solução. A seção 4 apresenta os resultados obtidos. Por fim, a seção 5 apresenta as conclusões obtidas nesta pesquisa.
+2 Descrição do problema
+Primeiramente, esta seção apresenta alguns conceitos
+relacionados s variáveis de tempo de uma rede Profibus DP e em seguida descreve os possíveis problemas que estas variáveis podem causar se forem mal
+configuradas.
+O primeiro conceito a ser apresentado é de que um
+ciclo de comunicação de um mestre com um conjunto
+de escravos é chamado ciclo de mensagens. Um escravo deve responder somente quando uma requisição estiver endereçada a ele. A resposta deve ocorrer
+dentro de um tempo pré-definido (SlotTime)  este é
+o tempo que o mestre aguarda a resposta, antes de
+tentar novamente a requisição para a mesma estação
+(cada nova tentativa é chamada de retry). Uma estação que deixa de responder a uma requisição, mesmo
+após sucessivas tentativas do mestre é marcada como
+não operacional (Torres, 2011).
+Cada mestre acessa o canal de comunicação no modo
+mestre-escravo. Ao fim do acesso, transmite uma
+mensagem de token ao próximo mestre. Então, este
+comanda o canal e posteriormente passa o token ao
+próximo mestre. O token é um tipo de mensagem que
+é transmitida entre os mestres e é usado com o objetivo de um mestre transferir o acesso ao meio para
+outro mestre. Quando o último mestre termina de
+realizar os comandos necessários aos escravos e aos
+outros mestres, ele passa o token novamente ao primeiro mestre e o processo reinicia. A esse anel lógico
+dá-se o nome de logical token ring.
+Uma rede que tem somente um único mestre resume
+sua operação na comunicação tipo mestre-escravo e
+
+ISBN 978-85-8001-069-5
+
+ao fim de cada ciclo o mestre passa o token para ele
+mesmo (pois é único).
+Cada mestre mantém sua própria lista (configuração)
+de equipamentos escravos pertencentes  comunicação cíclica. Ao fim da comunicação cíclica, prioritária, é realizada a comunicação acíclica e pelo menos
+um endereço não operacional é consultado.
+A comunicação cíclica é baseada em respostas imediatas dos escravos e mestres, mantém prioridade sobre
+as mensagens acíclicas e são usadas para comunicação de dados de controle do processo. As mensagens
+acíclicas são baseadas em consulta, isto é, o mestre
+inicia a requisição e no próximo ciclo pergunta novamente para verificar se a estação já tem a resposta.
+Em geral, são usadas para supervisão ou parametrização de dados internos das estações.
+Mensagens cíclicas e acíclicas, além da manutenção
+da rede devem ocorrer dentro de um período configurado pela aplicação (Target Rotation Time - TTR). É
+importante notar que o valor do T TR é configurado
+por um usuário a partir de uma ferramenta de configuração qualquer e armazenado no mestre. As principais ferramentas de configuração Profibus, fazem
+automaticamente o cálculo para o valor do TTR.
+Quando a rede estiver em operação, o tempo entre o
+mestre receber o token pela primeira vez, realizar
+suas operações, passar o token para o próximo mestre
+e por fim, receber novamente o token completando
+um ciclo, é chamado Real Rotation Time (TRR). Sendo assim, o TTR configurado deve ser maior do que o
+TRR para garantir o bom funcionamento da rede.
+Além do TTR, outro parâmetro de tempo muito importante para uma rede Profibus é o tempo de watchdog.
+Assim como o TTR, este tempo também é configurado
+pelo usuário. O watchdog é usado para garantir a
+operação segura de um sistema no caso de uma falha
+no mestre ou no cabo de comunicação. Caso o escravo pare de receber comandos do mestre por qualquer
+motivo, ele aguardará este período (WatchDog Time TWD) antes de ir para o modo de segurança.
+O TWD não pode ser menor do que o T TR, pois caso
+isto aconteça, o tempo entre duas requisições ao
+mesmo escravo excederá o tempo de WatchDog e
+este escravo abandonará a troca de dados. Em geral,
+o WatchDog deve ser maior do que o TTR configurado. Recomenda-se um valor entre 5 e 10 vezes o valor do TTR.
+Durante o processo de parametrização dos escravos,
+o mestre envia num telegrama de parametrização o
+valor do TWD. Este valor é armazenado no escravo e
+após o início da troca de dados, o escravo fica monitorando continuamente se está recebendo novas requisições. Caso não receba uma nova requisição do
+mestre dentro deste período de tempo, ele irá para
+uma condição segura e aguardará por uma nova reconfiguração.
+Nota-se a partir das explanações anteriores que a
+configuração correta do valor do TTR é fundamental
+para o bom funcionamento da rede. Neste contexto, a
+maioria das ferramentas de configuração executam
+
+4468
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+cálculos a fim de fazer tal configuração de maneira
+automática evitando erros dos usuários. Estes cálculos são baseados em equações que levam em consideração alguns outros parâmetros da rede Profibus.
+Segundo a Normative Parts of Profibus FMS, DP and
+PA, 1998
+min TTR  NA * (TTC  highTMC )  k * lowTMC  MT * retTMC (1)
+
+O parâmetro NA representa o número de estações
+mestre da rede. O TMC é o tempo necessário entre o
+envio do primeiro bit de um telegrama e o recebimento do último bit da resposta relacionada a este mesmo
+telegrama. Este último parâmetro envolve o tempo de
+transmissão de um telegrama além do station delay
+time (TSDR) que representa o tempo necessário para
+um escravo receber um telegrama, processa-lo e enviar uma mensagem de resposta. Outro parâmetro é o
+RET TMC que é o TMC para mensagens de retry. Para
+representar o número de ciclos de mensagens de retry
+por rotação de token tem-se o MT. Além disso, existe
+o TTC, que é o tempo necessário para o envio de um
+token para a próxima estação mestre. Por fim, tem-se
+o parâmetro K que representa o número estimado de
+ciclos de mensagens de baixa prioridade por rotação
+de token.
+Analisando-se esta equação nota-se que alguns parâmetros da mesma são difíceis de serem estimados de
+forma precisa, como por exemplo, o parâmetro MT,
+que representa o número de retries e pode variar dependendo de fatores como o não cumprimento de
+requisitos de instalação, entre outros. Outro parâmetro difícil de ser determinado é o número de mensagens de baixa prioridade por rotação de token.
+Neste contexto, tem-se que na prática, uma série de
+equações mais simplificadas são utilizadas para este
+cálculo. Um exemplo é a equação apresentada por
+Felser (Felser, 2006) onde um valor mínimo para o
+TTR é definido
+min TTR  n * (TTC  TMC )  k *TMC
+
+(2)
+
+Na equação 2, o parâmetro n representa o número de
+estações mestre de uma linha. O parâmetro k é um
+número estimado de mensagens de baixa prioridade
+que são transmitidas em um ciclo. TTC é o tempo necessário para o envio de um token para a próxima
+estação mestre. Por fim, tem-se o TMC que possui o
+mesmo significado do parâmetro apresentado na
+equação 2, mas neste caso, não existe uma diferenciação para o cálculo do T MC para mensagens de baixa
+e de alta prioridade. Outra diferença importante entre
+as equações é que mensagens de retry não são consideradas no cálculo. Para considerar as mensagens de
+retry, Felser (Felser, 2006) sugere um aumento de 10
+a 20 no valor calculado para o T TR.
+A fim de simplificar ainda mais estes cálculos, equações mais simples foram criadas para calcular o tempo de ciclo de mensagens. Nestas, alguns parâmetros
+de pouca relevância para o resultado final foram ignorados ou aproximados. Um exemplo de equação é
+
+ISBN 978-85-8001-069-5
+
+apresentado por Manchester Metropolitan University
+Profibus International Competence Centre (2008).
+TmC  (380  300 * S  11 * D) *T bit75s (3)
+
+A equação 3 calcula o tempo de um ciclo de mensagens. Nesta, a variável S representa o número de escravos da rede e D o número total de bytes de dados
+de entradas e saídas. O valor do parâmetro T bit é dependente da velocidade de transmissão da rede. Por
+exemplo, para uma rede de 1.5MBits, o valor do Tbit
+é 0,667us. Vale destacar que o cálculo realizado na
+equação 3 é bastante aproximado. Os valores numéricos constantes utilizados na equação representam
+valores aproximados e típicos de parâmetros como o
+tempo de espera que o mestre deve respeitar entre a
+recepção do último bit da última resposta e o início
+do primeiro bit da próxima requisição na rede (TID1),
+o tempo que uma estação leva para responder a uma
+requisição (TSDR), o tempo que cada mensagem leva
+para transmitir o seu cabeçalho, entre outros.
+Vitturi (Vitturi, 2004) também propôs uma equação
+para calcular o tempo de ciclo do Profibus DP e nesta, tanto o tempo de transmissão_de_dados cíclicos
+quanto acíclicos são analisados. Além disso, a equação deste autor exige informações como o tempo
+necessário para a transmissão de um token (T TK), o
+tempo de manutenção da rede onde mensagens de
+FDL Status são enviadas (TGAP), o tempo gasto para
+troca de dados entre os mestres e escravos da rede
+(TP), o tempo necessário para a leitura de diagnóstico
+dos escravos (TD), entre outros.
+Nota-se que as equações apresentadas exigem do
+gerenciador da rede Profibus o conhecimento de uma
+série de parâmetros, dificultando muito a configuração. Além da dificuldade em conhecer de forma precisa todos os parâmetros necessários para o cálculo
+do TTR, existem configurações onde mais de um mestre controla uma mesma rede. Esta situação tem acontecido cada vez mais a medida que as empresas integram as redes fieldbus com o departamento de tecnologia da informação a fim de possibilitar melhores
+mecanismos de gerenciamento e manutenção dessas
+redes. Nestes casos é necessário que exista um mestre
+classe 1 para o controle da rede e um mestre classe 2
+para a supervisão e manutenção da mesma (Kaghazchi, 2008). Desta maneira, a maioria das ferramentas
+de configuração não tem conhecimento dos múltiplos
+mestres e por isso, executam o cálculo automático do
+TTR de maneira isolada para cada um dos mestres.
+Sendo assim, o TTR calculado torna-se menor do que
+o necessário, afinal, o T TR correto a ser configurado
+nos dois mestres seria a soma dos tempos de ciclo de
+todos os mestres da rede. Como nem sempre o engenheiro responsável leva em consideração todas estas
+condições, muitas vezes o valor do TTR configurado é
+baixo, fazendo com que a rede fique instável, afinal,
+os escravos podem interromper a troca de dados em
+uma situação como esta.
+Outra prática utilizada para evitar problemas com o
+TTR, é configurar os mestres com um valor de TTR
+muito acima do necessário. Este tipo de prática é
+4469
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+muito utilizada a fim de evitar a necessidade de um
+cálculo mais preciso e trabalhoso deste parâmetro. O
+problema neste tipo de prática é que um valor muito
+alto para o TTR influencia no tempo de watchdog
+caso este último esteja sendo calculado com base no
+TTR, conforme apresentado anteriormente. Assim, um
+dispositivo não consegue perceber se a rede parou de
+funcionar em tempo hábil para entrar em modo de
+segurança, pois ele aguardará um período de
+watchdog elevado.
+Não bastando todos os problemas apresentados, em
+um estudo feito por Kaghazchi (Kaghazchi, 2008),
+afirma-se que mestres de diferentes fabricantes possuem comportamento diferente em configurações de
+redes idênticas.
+A fim de auxiliar o usuário na configuração do T TR, o
+capítulo 3 faz uma proposta para classificar o valor
+do TTR configurado baseando-se para isso no valor do
+TRR obtido a partir da rede em regime de operação.
+3 Solução Proposta
+Esta seção apresenta a maneira pela qual o problema
+descrito na seção anterior foi resolvido. Para um melhor entendimento do mecanismo utilizado, alguns
+conceitos relacionados a sistemas_fuzzy são apresentados.
+A ideia principal de um sistema_fuzzy é aproximar a
+decisão computacional da decisão humana (Ross,
+2005). Em vez da resposta do sistema ser um valor 1
+ou 0, significando respectivamente, verdadeiro e falso, um sistema_nebuloso pode dar como resposta valores como Baixo, Muito Baixo, Médio, Alto, Muito
+Alto, entre outros.
+Seguindo o mesmo raciocínio, tem-se que na lógica
+clássica, um determinado objeto pertence ou não a
+uma determinada categoria ou a um determinado
+conjunto. Esta ideia é flexibilizada quando trata-se
+de conjuntos_fuzzy. Neste caso, um determinado elemento pode pertencer parcialmente a um ou mais
+conjuntos. O termo usado para definir o quanto um
+elemento pertence ou não a um determinado conjunto
+é grau de pertinência. Em particular, as fronteiras
+entre os conjuntos não são claramente definidas, fazendo com que o uso desses sistemas para classificação de informações inexatas torna-se muito indicado
+(Chiang e Hsu, 2002).
+O grau de pertinência de um elemento varia entre 0 e
+1. Se o grau de pertinência é 1, significa que o mesmo está totalmente incluso no conjunto. Grau zero
+significa totalmente excluso. Qualquer valor entre 0 e
+1 indica um grau de pertinência parcial ao conjunto.
+A fim de definir os graus de pertinência de um determinado conjunto, existem as funções de pertinência. Neste trabalho, as funções de pertinência triangular e trapezoidal são usadas.
+Sistemas deste tipo são usados em diversas aplicações. Não foi encontrado na literatura nenhum sistema Fuzzy para a classificação de variáveis temporais
+para redes_de_comunicação, mas assim como neste
+
+ISBN 978-85-8001-069-5
+
+trabalho, muitos autores utilizaram este tipo de sistema para realizar a classificação de algum tipo de informação. Nedeljkovic (Nedeljkovic , 2004), por
+exemplo, utilizou sistemas_fuzzy na classificação de
+imagens. O autor realizou os experimentos a partir da
+ferramenta Matlabs Fuzzy Logic Toolbox. Kavdir
+e Guyer (Kavdir e Guyer, 2003) utilizaram lógica
+fuzzy como suporte  tomada de decisão para determinar o nível de qualidade de maçãs. Na área da saúde, a classificação através de sistemas_fuzzy também é
+bastante explorada, como é o caso do trabalho de
+Harikumar (Harikumar, 2003), que desenvolveu um
+modelo de classificação fuzzy para análise do nível de
+risco de epilepsia baseando-se para isso em sinais de
+Eletroencefalograma. Na área de automação_industrial, assunto deste trabalho, o grande uso desta ferramenta é para realizar operações de controle. Altrock
+e Gebhardt (Altrock e Gebhardt, 1996) escreveram
+um artigo que apresenta e discute oito aplicações da
+lógica_fuzzy na área da automação_industrial. Ainda
+na área de automação_industrial, envolvendo também
+a área da educação, Mossin (Mossin, 2008) publicou
+um trabalho que classificava alunos como Reprovado, Aprovado Com Muitas Restrições, Aprovado
+com Poucas Restrições e Aprovado, em vez de
+apenas aprovar ou reprovar o mesmo. Nota-se então,
+a vasta possibilidade de aplicação dos sistemas_fuzzy
+para classificar algum tipo de informação.
+Neste contexto, utilizou-se neste trabalho um sistema
+fuzzy para auxiliar os usuários na definição da variável de tempo TTR usada em uma rede Profibus DP.
+Dessa forma, a primeira etapa a ser desenvolvida é a
+montagem de cada um dos conjuntos_fuzzy que farão
+parte do sistema_fuzzy completo. Primeiramente definiu-se que o sistema possuirá cinco conjuntos
+MUITO BAIXO, BAIXO, BOM, ALTO ou MUITO
+ALTO. Para saber quando o valor configurado do
+TTR é alto, bom, muito alto, baixo ou muito baixo,
+alguns critérios de análise foram considerados.
+Para fazer estas análises, a primeira informação necessária é o valor do TTR configurado nos mestres da
+rede. Neste caso, o usuário precisará inserir esta informação no software de análise. Após isso, os pacotes da rede devem ser coletados e o cálculo do TRR é
+realizado. Detalhes de como a leitura desses pacotes
+são realizadas podem ser encontrados no subitem 3.1.
+Neste ponto, uma opção seria apenas dizer que o
+valor do TRR está maior ou menor do que o TTR. Assim, o usuário poderia reconfigurar o mestre para um
+valor mais próximo do TRR indicado pelo sistema e o
+problema estaria resolvido. A questão aqui é que
+apontar um valor exato para o TTR é uma tarefa difícil, afinal, o Profibus transmite mensagens acíclicas
+que podem mudar o valor do TRR em diferentes ciclos
+e, além disso, alguns parâmetros devem ser levados
+em consideração para o cálculo, como por exemplo,
+o número de mestres, o baud rate, o número de escravos, o número de entradas e saídas dos escravos,
+repetidores, números de retries por ciclo, a existência
+de mestres classe 2, etc. Neste cenário, a imprecisão
+
+4470
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+característica dos sistemas_nebulosos torna-se uma
+boa alternativa para solucionar tal problema.
+Outra informação importante para a criação do sistema_nebuloso é que o mesmo será construído automaticamente no momento em que a análise de uma rede
+é iniciada. Tal montagem automática acontece, pois o
+valor do TTR muda para cada configuração. Tal valor
+está diretamente relacionado com o número de dispositivos, seus respectivos módulos configurados em
+operação em uma rede entre outros fatores já citados
+no parágrafo anterior. Sendo assim, um valor de TTR
+que é bom para uma determinada configuração pode
+ser alto para outra.
+Neste cenário, a questão que surge é Quando o TTR
+vai ser considerado bom em uma configuração?
+Considerando a quantidade de fatores que influenciam no valor do TTR, conclui-se que o valor deste pode
+ser considerado totalmente bom, ou seja, com grau
+de pertinência máximo no conjunto BOM, em um
+intervalo de valores próximo ao TRR medido em determinado momento. Definiu-se então para o conjunto BOM a função de pertinência trapezoidal. Esta é
+definida da seguinte maneira
+
+Figura 1- Função trapezoidal
+
+Seguindo a Figura 1, nota-se a necessidade de definir
+os valores para a, m, n e b. Os dois principais valores
+a serem definidos são os valores de m e de n, afinal,
+estes são os limites que vão dizer se um dado valor
+de TTR é bom com grau de pertinência máximo. Considerando que igualar o valor do T RR com o TTR deixaria uma margem de erro muito pequena, assume-se
+que m possuirá o valor do T RR medido em um determinado ciclo. A Figura 2 ilustra tal ideia. Neste momento, o próximo parâmetro a ser definido é o valor
+de n. Para tal, alguns fatores que podem influenciar
+no aumento ou na diminuição dos valores de TRR
+foram analisados e notou-se que o pacote de dados
+que pode atrasar de maneira significativa o tempo de
+TRR é o retry. Este pacote é enviado sempre que o
+mestre faz uma requisição a um escravo e não recebe
+nenhuma resposta em um determinado intervalo de
+tempo. Assim, para se estimar o valor de n, incrementa-se ao TRR obtido da rede, o tempo máximo que um
+ciclo pode ser atrasado pelas mensagens de retry.
+Para estimar este atraso, o seguinte cálculo é realizado
+Tempo atraso  (num devs * 2 * TSlot).
+O parâmetro num devs representa o número de
+escravos ativos na rede online. O outro parâmetro é o
+TSlot  Slot Time  É o tempo máximo que o mestre
+aguarda por uma resposta de um escravo  sendo
+portanto o tempo de espera nas mensagens de retry.
+Estes são conhecidos a partir das mensagens Profibus
+
+ISBN 978-85-8001-069-5
+
+transmitidas na rede. Por fim, tem-se a constante 2.
+Esta última representa a quantidade de retries que um
+único escravo pode receber em um ciclo. Este valor é
+configurado pelo usuário, mas baseando-se na análise
+de várias configurações existentes no mercado, sabese que normalmente a quantidade de retries configurados por dispositivo é dois.
+Tem-se então, na Figura 2, detalhes de como será
+feita a criação do conjunto fuzzy BOM. O conjunto
+em questão está com a cor azul.
+Com o modelo para a montagem do conjunto BOM
+definido, a próxima etapa é definir quando o tempo
+de TTR vai ser MUITO ALTO ou MUITO BAIXO.
+Tal definição está diretamente relacionada ao tempo
+de watchdog (TWD). Já foi citado neste artigo que a
+recomendação é que o TWD seja de 5 a 10 vezes o
+valor do TTR. Desta maneira, conclui-se que um valor
+que pode ser considerado muito alto por prejudicar a
+rede está próximo de 5 x TRR. Por exemplo, se o TTR
+do sistema for 2ms tem-se que um bom valor para o
+TWD é 10ms. Neste momento, mede-se o TRR do sistema e obtém-se o valor de 10ms. Neste caso, o TRR
+tem o mesmo valor do T WD, fazendo com que os escravos interrompam a troca de dados para entrar em
+modo seguro, prejudicando assim o funcionamento
+da rede.
+Outro exemplo é o caso do valor do T TR estar configurado em 10ms. Neste caso, um bom valor para o
+TWD seria de 50ms. Supõe-se então que o valor do
+TRR da rede é de 2ms, ou seja, cinco vezes menor do
+que o TTR configurado. Neste caso, os dispositivos
+demoram 25 ciclos para entrar em modo seguro, fazendo com que a planta industrial corra risco de ser
+danificada.
+Desta maneira, tem-se definido que o valor onde o
+grau de pertinência do conjunto MUITO ALTO é 1, é
+5 x TRR. O mesmo raciocínio foi mantido no momento
+de definir o conjunto MUITO BAIXO. A Figura 2
+apresenta os conjuntos MUITO ALTO e MUITO
+BAIXO nas cores preta e vermelha respectivamente.
+
+Figura 2 - Parâmetros e montagem do conjunto Fuzzy
+
+Por fim, para a criação dos conjuntos BAIXO e
+ALTO, nas cores verde e rosa da Figura 2, um valor
+intermediário entre os conjuntos BOMMUITO
+BAIXO e BOMMUITO ALTO respectivamente foi
+calculado. Este valor representa o grau de pertinência
+máximo desses dois últimos conjuntos.
+Nota-se que a função de pertinência do conjunto
+BOM é a função trapezoidal. Tal decisão foi tomada,
+pois mesmo o valor do T TR sendo um pouco diferente
+do valor do TRR, tal valor ainda pode ser considerado
+
+4471
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+totalmente bom. É importante notar que estes cálculos são aproximados, justificando o uso de sistemas
+nebulosos. Outro detalhe importante é que o conjunto
+fuzzy BAIXO e MUITO BAIXO possuem um universo de discurso menor do que os outros. Tal fato
+acontece, pois um valor de TTR menor do que o TRR
+certamente vai causar falhas na rede. Quando o TTR é
+maior do que o TRR, o sistema irá continuar funcionando, mas problemas relacionados ao watchdog
+poderão acontecer.
+Com o sistema_nebuloso criado, basta que o usuário
+informe o valor do TTR para que o mesmo seja classificado. Além de classificar o TTR em relação ao TRR
+medido, o sistema sugere alguns valores para uma
+reconfiguração da rede. Por exemplo, se o valor do
+TTR estiver baixo o sistema fornecerá uma saída assim O valor do TTR de 4ms é baixo em relação ao
+TRR de 10ms medido na rede. Um valor bom para a
+rede neste momento está próximo a 11ms, porém este
+fornece uma margem de erro pequena. Para uma
+margem de erro maior que não interfira no TWD,
+configure o TTR com um valor alto próximo de
+31ms..
+A leitura dos pacotes de uma rede Profibus além da
+classificação do TTR através de um sistema_fuzzy é
+parte de um sistema maior. Tal sistema é apresentado
+no subitem 3.1.
+3.1 Visão geral do sistema de leitura de pacotes Profibus.
+Para a obtenção do valor do TRR a partir de uma rede
+Profibus, alguns módulos de software e hardware
+foram criados e integrados. A Figura 3 mostra uma
+visão superficial de como o sistema proposto está
+estruturado. É importante notar que a análise fuzzy é
+apenas uma das análises realizadas pelo sistema proposto. Mais detalhes do sistema completo podem ser
+encontrados em Mossin (Mossin, 2012).
+
+partir daí, fará a leitura dos pacotes Profibus, que por
+sua vez, serão enviados ao software de análise através de um cabo Ethernet. O segundo módulo é o próprio software de análise, desenvolvido em Java e
+denominado ProfDoctor. Este receberá os dados e
+através do sistema_nebuloso proposto irá classificar o
+TTR. Considerando algumas dificuldades na emulação
+de cenários de teste em laboratório, os resultados
+apresentados neste artigo foram obtidos através de
+um simulador de telegramas de redes Profibus. Assim, os mesmos pacotes de mensagens que o hardware envia ao software também são criados e enviados a
+partir do simulador, eliminando a necessidade de uma
+rede Profibus DP real. Tal simulador foi desenvolvido por Torres (2011). A validade deste tipo de análise é a mesma em comparação com o uso de uma rede
+real, afinal, no quesito variáveis de tempo das redes
+Profibus, o nível de fidelidade do simulador em relação a uma rede Profibus real é muito alta.
+4 Resultados
+Uma configuração Profibus é primeiramente criada de maneira off-line. É neste momento que o valor
+do TTR é calculado. Com a configuração pronta, um
+download é feito para uma planta real. Neste trabalho, a planta real foi substituída pelo simulador, como
+já descrito no capítulo anterior.
+Para a obtenção do valor do T TR na configuração offline, uma configuração foi criada a partir da ferramenta System 302 Network Configurator do fabricante Smar Equipamentos Industriais. Para tal, foi
+utilizado o mestre DF73 também do fabricante Smar
+Equipamentos Industriais, 3 escravos do tipo IO do
+fabricante WAGO e 3 escravos, também do tipo IO,
+do fabricante SENSE. Os escravos são WAGO 750333, WAGO 752, WAGO 750-833, SENSE DP-KD2EA, SENSE DP-B-FDN e SENSE DP-HD-2SA.
+Para esta configuração, o Network Configurator sugeriu um valor de TTR de 2.9 ms.
+Seguindo este mesma linha, foi criada no simulador
+(parte online do teste) uma configuração com 1 mestre e 6 escravos. Não é possível especificar o fabricante e outros detalhes de um sistema através do simulador, mas para a obtenção dos resultados deste
+sistema tal nível de detalhamento é desnecessário.
+Com tal configuração criada e executada no simulador, foi obtido um valor de 2.8ms para o TRR. A partir deste valor do TRR, o sistema_fuzzy foi montado. A
+Figura 4 mostra tal sistema.
+
+Figura 3 - Visão geral dos três módulos do projeto (Hardware,
+Simulador e Software de análise)
+
+Na Figura 3, podem-se destacar os três principais
+módulos do sistema. O primeiro é um hardware responsável pela captura das mensagens do Profibus
+DP. Este módulo se conectará a rede Profibus DP e a
+
+ISBN 978-85-8001-069-5
+
+4472
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+rede. Um valor bom para a rede neste momento está
+próximo a 1.5ms, porém este fornece uma margem
+de erro pequena. Para uma margem de erro maior
+que não interfira no TWD, recomenda-se que o valor
+configurado atualmente seja mantido..
+
+Figura 4 - Sistema fuzzy com TRR de 2.8ms
+Para este primeiro cenário, o sistema tem como saída
+O valor do TTR de 2.9ms é bom em relação ao TRR
+de 2.8ms medido na rede, porém este fornece uma
+margem de erro pequena. Para uma margem de erro
+maior que não interfira no TWD, configure o TTR com
+um valor alto próximo de 10ms..
+Após esta primeira análise, algumas mudanças foram
+feitas na configuração do simulador para que o valor
+do TRR aumentasse ou diminuísse.
+Na primeira modificação, mais escravos foram inseridos no simulador para que o valor do T RR aumente
+de forma que o sistema passe a classificar o T TR de
+2.9ms como baixo. O valor do TRR obtido neste teste
+foi próximo de 7ms. Figura 5 mostra o sistema Fuzzy
+criado.
+
+Figura 5 - Sistema fuzzy com TRR de 7ms
+
+Neste caso, a saída do sistema foi O valor do TTR
+de 2.9ms é baixo em relação ao TRR de 7ms medido
+na rede. Um valor bom para a rede neste momento
+está próximo a 8ms, porém este fornece uma margem
+de erro pequena. Para uma margem de erro maior
+que não interfira no TWD, configure o TTR com um
+valor alto próximo de 22ms..
+Na segunda e última modificação, foram retirados
+alguns escravos da rede de forma que o T RR medido
+diminuiu. Assim, o sistema Fuzzy da Figura 6 foi
+criado.
+
+Figura 6 - Sistema fuzzy com TRR de 1ms
+
+Neste caso, a saída do sistema foi O valor do TTR
+de 2.9ms é alto em relação ao TRR de 1ms medido na
+
+ISBN 978-85-8001-069-5
+
+A partir dos testes realizados, nota-se que através de
+um sistema_fuzzy, o usuário pode ser orientado a configurar corretamente o valor do TTR. Outra questão
+notada está relacionada com a imprecisão das respostas, afinal, determinar um tempo exato é uma tarefa
+muito complexa.
+5 Conclusão
+Um sistema a fim de indicar ao usuário se uma das
+principais variáveis de tempo da rede Profibus DP, o
+TTR, está configurada de maneira satisfatória foi proposto neste artigo. Para tal, um sistema_nebuloso foi
+desenvolvido.
+A partir das análises e estudos realizados, a primeira
+conclusão a ser obtida é que boa parte dos usuários
+estimam o valor da variável de tempo TTR de maneira
+incorreta e aleatória. Considerando a característica
+dessa variável de ser imprecisa, mesmo com alguns
+erros de configuração, a rede acaba funcionando
+normalmente, mas dependendo das mudanças realizadas em algum momento de manutenção da rede
+(como adição de mestres classe 2 para parametrização ou gerenciamento de ativos), problemas acabam
+aparecendo causando prejuízos.
+Neste cenário, conclui-se que uma ferramenta para
+indicar ao usuário que o TTR pode ser melhor configurado torna-se muito útil. Outra conclusão importante é a de que o uso de um sistema_nebuloso para
+tal tarefa foi satisfatório, afinal, todos os cenários
+testados na seção de resultados apresentaram uma
+resposta útil ao usuário responsável por configurar a
+rede.
+Agradecimentos
+Os autores agradecem  Escola de Engenharia de
+São Carlos (USP) pelo suporte acadêmico fornecido
+e  Smar Equipamentos Industriais.
+Referências Bibliográficas
+Berge, J. (2002). Fieldbus for process control
+engineering, operation, and maintenance.
+Research Triangle Park ISA Books.
+Chiang, J. Hsu, J. Fuzzy (2002). classification trees
+for data analysis,Fuzzy Sets System,v, 130, n, 1.
+Felser, M. (2006). Quality of profibus installations.
+Workshop on Factory Communication Systems,
+2006 IEEE International. pg. 113-118.
+Harikumar, R. and Sabarish Narayanan, B.. "Fuzzy
+Techniques for Classification of Epilepsy risk
+level from EEG Signals", Proceedings of IEEE
+4473
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+TENCON 2003. Conference on Convergent
+Technologies for Asia-Pacific Region,On
+page(s) 209 - 213 Vol.1 ISBN 0-7803-8162-9.
+Kaghazchi, H.Hongxin Li  Ulrich, M. (2008).
+Inuence of Token Rotation Time in Multi
+Master
+PROFIBUS
+Networks.
+IEEE
+International
+Workshop
+on
+Factory
+Communication Systems (WFCS 2008). p. 189197. May, 2008
+Kavdir, I. Guyer, D. E. (2003) Apple grading using
+fuzzy logic,Turk J. Agric. For.,v, 27, n, 6.
+Manchester Metropolitan University Profibus
+International Competence Centre (2008).
+Pratical Steps for a successful PROFIBUS
+Project. Manchester Metropolitan University.
+Disponível
+em
+httpwww.profibus.comuploadsmediapxddam
+key5B91015DSuccessfulProfibusProject
+XuiJi.pdf. Acesso em 20052012.
+Mossin, E. A. (2012). Diagnóstico Inteligente de
+Redes Profibus. Dissertação (Qualificação de
+Doutorado). Escola de Engenharia de São
+Carlos, USP.
+Mossin, E. A.  Pantoni, R. P.  Brandão, D. . Sistema
+Fuzzy para avaliação_de_desempenho de alunos
+na área de automação_industrial. In XVII
+Congresso Brasileiro de Automática, 2008, Juiz
+de Fora. Anais do XVII CBA, 2008.
+Nedeljkovic I., 2004. Image classification based on
+fuzzy logic. In the International Society for
+Photogrammetry and Remote Sensing, Istanbul,
+Turkey, Vol34, PartXXX, pp. 83-89.
+Normative Parts of Profibus FMS, DP and PA,
+according to the European Standard EN50170
+Volume 2. Edition 1.0 (1998).
+Ross, T. J. (2005). Fuzzy logic with engineering
+applications. 2a edição. USA. Willey, 2005.
+SIEMENS (2004). Correction to bus time
+calculations.
+Disponível
+em
+httpsupport.automation.siemens.comWWllisa
+pi.dll11303341?funcllobjId23328318obj
+ActioncsViewlangensiteidcseusaktprim
+0extranetstandardviewregWWloadtre
+econtent. Acesso em 20042012.
+Torres, R. V. (2011). Simulador de redes Profibus
+DP dedicado  ferramenta de diagnóstico.
+Dissertação (Qualificação de Mestrado). Escola
+de Engenharia de São Carlos, USP.
+Vitturi, S. (2004). On the effects of the acyclic trafc
+on PROFIBUS DP networks, Computer
+Standards  Interfaces, vol. 26, no. 2, pp. 131
+144, 2004.
+
+ISBN 978-85-8001-069-5
+
+4474

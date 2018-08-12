@@ -1,0 +1,858 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ODOMETRIA TELEMÉTRICA COM UM ESCÂNER  LASER MONOCAMADA
+PARA VEÍCULOS EM AMBIENTES EXTERNOS
+Renato José Martins,, Samuel Siqueira Bueno, Luiz G. B. Mirisola, Josué J. G.
+Ramos, Hélio Azevedo, Ely Carneiro de Paiva, Paulo A. Valente Ferreira
+
+
+Centro de Tecnologia da Informação Renato Archer - CTI
+Divisão de Robótica e Visão Computacional - DRVC
+Campinas, São Paulo, Brasil
+
+
+Universidade Federal do ABC - UFABC
+Centro de Matemática, Computação e Cognição - CMCC
+Santo André, São Paulo, Brasil
+
+
+Universidade Estadual de Campinas - UNICAMP
+Faculdade de Engenharia Mecânica - FEM
+Campinas, São Paulo, Brasil
+
+
+
+Universidade Estadual de Campinas - UNICAMP
+Faculdade de Engenharia Elétrica e de Computação - FEEC
+Campinas, São Paulo, Brasil
+Emails renato.martins@cti.gov.br, samuel.bueno@cti.gov.br,
+luiz.mirisola@ufabc.edu.br, josue.ramos@cti.gov.br, helio.azevedo@cti.gov.br,
+elypaiva@fem.unicamp.br, valente@dt.fee.unicamp.br
+Abstract Odometry strategies based on monolayer laser sensors, for outdoor vehicles, are discussed in this
+article. Two techniques are considered for estimating the rigid_transformation between two sets of laser points
+the Iterative Closest Point (ICP) and the Polar Scan Matching (PSM). PSM is more appropriate for real time
+applications and its use in a telemetric odometry scheme is experimentally validated with a robotic land vehicle.
+Telemetric Odometry, Laser Scanner, Outdoor Robotic Vehicles
+
+Keywords
+
+Resumo Estratégias de odometria baseadas em dados de sensor_laser monocamada, para veículos robóticos
+em ambiente_externo, são abordadas nesse artigo. Duas técnicas são consideradas para a estimação da transformação rígida entre dois conjuntos de pontos laser o Iterative Closest Point (ICP) e o Polar Scan Matching
+(PSM). O PSM mostra-se mais apropriado s aplicações em tempo_real e sua utilização em um esquema de
+odometria_telemétrica é validada experimentalmente com um veículo_robótico_terrestre.
+Palavras-chave
+
+
+
+Introdução
+
+Em veículos robóticos é crescente o uso de sensores externoceptivos - como lasers e câmeras, pela
+riqueza e complementaridade de informações, embora a grande quantidade de dados leve  necessidade de adoção de processadores e métodos computacionalmente mais eficientes. Considerando
+especificamente os lasers, seu funcionamento consiste em medir o tempo de voo da onda emitida
+e refletida e, assim, a distância entre o laser e o
+obstáculo. A natureza da informação obtida pode
+ser tanto polar (lasers 2D) quanto esférica (3D),
+multi ou monocamadas.
+Para fins de localização, metodologias de alinhamento de dados utilizando pontos de um sensor_laser podem ser classificadas, a princípio,
+como (Lingemann et al., 2004)
+ Métodos Relativos Determinam incrementalmente o deslocamento efetuado entre
+dois instantes, através do processo de alinhamento entre os dados adquiridos pelo laser
+(Scan Matching)
+
+ISBN 978-85-8001-069-5
+
+ Métodos Absolutos Neste caso, a localização não é realizada de maneira incremental, mas sim baseada na associação de uma
+camada laser com alguma região do ambiente
+explorado. Este tipo de metodologia pressupõe um mapa do ambiente (em representação
+métrica ou topológica) no qual um processo
+de associação será realizado (veja por exemplo (Huang and Anguelov, 2010)).
+A odometria_telemétrica (método relativo) consiste na recuperação da pose (posição e orientação)
+a partir da correspondência entre dois conjuntos
+de pontos fornecidos pelo laser nos instantes de
+tempo (tk ) e (tk+d ). O sucesso na estimação de
+pose via scan matching é ligada diretamente  similaridade estrutural do ambiente em cada instante (considerando a hipótese de ambientes predominantemente estáticos). Em geral, a utilização
+de pequenos valores de d é desejável, pois caso o
+ambiente tenha se modificado consideravelmente
+a correspondência dos pontos pode não ocorrer
+(para d  1 temos o período de amostragem do
+
+1008
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+sensor). Além disso, existe o agravante de não se
+conhecer a associação correta entre os dois conjuntos. Uma associação de pontos errônea estimaria
+uma transformação que não representa a evolução
+real da pose.
+Os métodos relativos apresentam subdivisões de
+acordo com a natureza dos dados usados no alinhamento. Tem-se assim desde o matching usando
+diretamente os dados brutos dos dois conjuntos de
+pontos até métodos que extraem primitivas (features) dos dados - como retas, arestas ou outras estruturas - e as usa no matching (Victorino, 2002).
+Um dos mais conhecidos algoritmos de scan matching usando dados brutos (duas nuvens de pontos) é o Iterative Closest Point - ICP (Besl and
+McKay, 1992) (Lu and Milios, 1997). Apesar da
+grande versatilidade quanto  natureza dos dados usados no processo de estimação, este algoritmo apresenta alto custo_computacional. A fim
+de contornar essa restrição, visto que em geral a
+estimação usando lasers deve ser feita em tempo
+real em várias aplicações - principalmente em robótica, foram desenvolvidas outras metodologias
+mais específicas. Uma delas é o Polar Scan Matching - PSM (Diosi and Kleeman, 2005)(Diosi
+and Kleeman, 2007)(Gallegos and Rives, 2010),
+focada principalmente para dados com resolução
+angular fixa (o ângulo entre duas medidas consecutivas).
+Este artigo está estruturado na seguinte forma.
+Primeiramente, na seção 2 são introduzidas a notação e as representações cartesiana e polar adotadas. Na seção 3 é colocado o problema de estimação da transformação rígida entre dois conjuntos de pontos sua solução para o caso ideal,
+de correspondência conhecida, é abordado na seção 4. As duas seções seguintes tratam dos casos
+mais realistas em que a correspondência é desconhecida. Assim, na seção 5 usa-se um processo
+iterativo (o ICP), enquanto que a técnica descrita
+na seção 6 dispensa a necessidade de uma associação explícita (o PSM). Posteriormente, usando o
+PSM, na seção 7 são apresentados resultados experimentais de odometria_telemétrica obtidos com
+a plataforma do projeto VERO - VEículo RObótico de exterior desenvolvido pelo CTI e colaboradores (Bueno et al., 2009).
+2
+
+Notação
+
+Os métodos abordados neste artigo usam duas
+representações para os dados do laser.
+Na
+formulação geral do problema e no ICP, adota-se
+a representação cartesiana para as nuvens de
+pontos P e Q, n-dimensionais,
+cujos centros
+de
+P
+P
+massa são m1  k1 ki1 Pi e m2  k1 ki1 Qi .
+Os dados centralizados (subtraídos os centros
+de massa) serão denotados por Pi  Pi  m1 e
+Qi  Qi  m2 . A matriz de covariância é deno-
+
+ISBN 978-85-8001-069-5
+
+Pk
+ T
+T
+tada por S 
+i1 Pi Qi  finalmente U e V
+são os vetores ortonormais da decomposição em
+valores singulares (Singular Value Decomposition
+- SVD) de S, de maneira que S  ULVT , e L a
+matriz diagonal dos seus autovalores.
+Os dados na representação polar, usada
+no PSM, são tratados especificamente
+no caso bidimensional.
+Assim, o conjunto de referência é representado por
+P
+
+(rr1 , r1 ), (rr2 , r2 ), . . . , (rrk , rk )
+e o conjunto de alinhamento por Q 
+(r1 , 1 ), (r2 , 2 ), . . . , (rk , k ), em que (r ,
+ ) é o par distância e ângulo respectivamente.
+3
+
+Colocação do Problema
+
+O problema de estimação da transformação rígida
+entre dois conjuntos de pontos (ou Scan Matching)
+pode ser formulado como segue. Dado dois conjuntos finitos
+n
+
+(1)
+
+n
+
+(2)
+
+P  P1 , P2 , P3 ,    , Pk   R , n  N
+Q  Q1 , Q2 , Q3 ,    , Qk   R , n  N
+
+o objetivo consiste em estimar a rotação R 
+SO(n, R) e translação t  Rn1 , que transformem
+os pontos de Q nos pontos em P, ou seja, que minimizem o erro quadrático médio
+e(R, t) 
+
+k
+1X
+kPi  (RQi + t)k2
+k i1
+
+(3)
+
+As seguintes seções apresentam as soluções dessa
+problemática para três cenários possíveis o caso
+ideal em que a associação entre pontos é conhecida o caso em que a associação é desconhecida
+e usa-se um método iterativo (o ICP) o caso em
+que a associação é desconhecida e não é explicitamente tratada no método (o PSM).
+4
+
+Primeiro caso Correspondência
+conhecida
+
+Caso a associação de pontos dos conjuntos P e Q
+seja conhecida, a solução do problema pode ser
+atingida em apenas uma iteração através de uma
+decomposição em valores singulares (SVD).
+Teorema 1 Se o posto de S for completo
+(rank(S)  n), ou seja se as linhascolunas de
+S forem linearmente independentes, então a solução ótima de min e(R, t) é única e dada por
+R,t
+
+R  UVT
+
+e
+
+t  m1  Rm2
+
+(4)
+
+Prova Basta espandir (3) pela relação kxk2 
+xT x e verificar as condições necessárias de otimae
+2
+lidade de primeira ordem e
+t  0 e R  0.
+
+1009
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+A solução dada pelo teorema 1 é dependende do
+posto da matriz S, podendo haver mais de uma
+(ou infinitas) rotações possíveis caso ela não tenha
+posto completo. Se S tem posto deficiente de 1
+(pontos coplanares em R3 ou pontos colineares em
+R2 ), o produto UVT pode corresponder a uma
+reflexão e não uma rotação. Tome por exemplo em
+R2 , P  (3, 2), (4, 1) e Q  (1, 1), (2, 2) em
+que a transformação entre os pontos centralizados
+(P e Q ) pode ser tanto uma rotação de   2
+quanto uma reflexão em torno do eixo X. Para
+este caso ainda é possível garantir a unicidade da
+transformação com uma adaptação da rotação em
+(4) dada por
+R  Udiag(1, 1, . . . , 1, det(UVT ))VT
+
+(5)
+
+sendo diag() uma matriz diagonal. No entanto,
+para matrizes com deficiência de posto maior que
+1 existem infinitas possibilidades de rotações e reflexões (para maiores detalhes de casos de posto
+deficiente em R3 veja (Kanatani, 1994)).
+5
+
+Segundo Caso Correspondência
+desconhecida - o ICP
+
+Nesta situação, em geral, não é possível estimar a
+transformação rígida em uma única iteração. Assim, o problema é resolvido, iterativamente, em
+duas etapas. Em um primeiro momento é feita
+uma associação entre os pontos (usando alguma
+métrica) e em seguida o cálculo da transformação é realizado usando (4). Esse processo é repetido até convergir. O Iterative Closest Point ICP é fundamentado nestas duas etapas, sendo
+que o critério de associação é a distância_euclidiana d2 (Pi , Qi )  (Pi  Qi )T (Pi  Qi ). Assim o
+processo de associação pode ser descrito por
+Definição 2 Seja Pi  P o ponto Qj  Q mais
+próximo a Pi segundo a métrica euclidiana, chamado de Qj , é tal que
+kPi  Qj k  kPi  Qj k, para Qj  Q
+
+(6)
+
+Se card(P)  card(Q)  k, o número de operações necessárias para a associação é igual a O(k 2 ).
+Isto faz com que 92.5 do custo_computacional seja gasto na etapa de associação (Nchter
+et al., 2011). Com o intuito de otimizar esta etapa,
+implementações e representações mais eficientes,
+como árvores k dimensionais (kd trees) ou tesselação (divisão em pequenas regiões em formato
+regular), podem reduzir as buscas para O(k log k)
+(Nchter et al., 2004) (Nchter et al., 2011). Um
+resumo do ICP é apresentado no algoritmo 1.
+A etapa de associação pode ser bastante dificultada em ambientes que são homogêneos em sua
+extensão. Tome por exemplo um corredor longo,
+com o laser se movimentando na parte interna
+e paralelamente ao corredor. Os conjuntos de
+
+ISBN 978-85-8001-069-5
+
+Algoritmo 1  Resumo do ICP
+1 while e(R, t) >  do
+2
+f azassociacao(P, Q)
+3
+U, VT   svd(P , Q )
+4
+R, t  encontratrigida(U, VT , m1 , m2 )
+5
+for all (Qi  Q) do
+6
+Qi  RQi + t
+7
+end for
+8
+e(R, t)  calculaerro(P, Q)
+9 end while
+pontos observados serão os mesmos independentemente da translação realizada pelo laser, e a evolução de pose real não pode ser observada.
+O ICP apresenta aplicações em inúmeras áreas
+devido  sua generalidade, mas tem como inconvenientes o custo_computacional elevado (haja visto
+o problema da associação), como também o possível número elevado de iterações para a convergência. Para o caso de dados provenientes de sensores
+laser métodos aproximativos que trabalham dados com resolução constante podem ser utilizados,
+como o PSM, que contorna a etapa de associação
+e permite uma implementação eficiente.
+6
+
+Terceiro Caso Correspondência
+desconhecida - o PSM
+
+O Polar Scan Matching (PSM) é também baseado no alinhamento de dois conjuntos de pontos
+(Scan Matching). A principal diferença entre o
+ICP e o PSM é que, no último, não existe necessidade de um método de associação explícito
+para a correspondência entre os pontos originais
+das duas nuvens de pontos. O processo consiste
+em considerar que o ponto de correspondência de
+Pi  P é aquele que se encontra na mesma direção, ou seja, o ponto Qi  Q (inicialmente tem-se
+que ri  i ). Caso não exista um correspondente a ri em Q uma interpolação para a correspondência é feita usando um segmento de reta
+ligando (ri1 , i1 ) e (ri+1 , i+1 ). Este processo é
+repetido a cada iteração. No entanto, para que a
+interpolação seja válida é necessário garantir que
+os pontos (ri1 , i1 ) e (ri+1 , i+1 ) pertençam ao
+mesmo objetosuperfície. Assim, esta etapa pressupõe uma certa estruturação do ambiente. Uma
+vez obtida a correspondência direta, as etapas de
+estimação da transformação rígida (R, t) são então aplicadas como a seguir.
+O critério de otimalidade do custo apresentado em
+(3), escrito na forma polar, será tal que
+e1 (t, R)  min
+t,R
+
+k
+X
+
+wi (rip (t, R)  rri )2
+
+(7)
+
+i1
+
+Com wi sendo a ponderação e rip () 
+
+ T 
+ 12
+ri cos ( + i )
+ri cos ( + i )
+
++t
++t
+ri sin ( + i )
+ri sin ( + i )
+
+1010
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+e   arctan(R21 R11 ). Uma informação importante é que a translação e a rotação podem
+ser determinadas independentemente de maneira
+sequêncial, podendo a rotação ser determinada
+posteriormente. A translação que minimiza o
+custo em (7) é apresentada no teorema 3.
+Teorema 3 A translação t que minimiza o custo
+em (7), é tal que
+t  (HT WH)1 HT W(rp  r)
+
+(8)
+
+Em que W é a matriz diagonal de ponderação de
+cada medida e
+
+T
+cos(r1 ) cos(r2 ) . . . cos(rk )
+H
+(9)
+sin(r1 ) sin(r2 ) . . . sin(rk )
+Prova Ver (Diosi and Kleeman, 2007).
+
+2
+
+Caso a ponderação das medidas seja uniforme
+(como no ICP), a matriz W pode ser substituída
+pela identidade em (8). Outro esquema de ponderação de acordo com a magnitude dos erros de
+correspondência é apresentada em (Diosi and Klek0
+eman, 2007) como wi  k0 +k
+m sendo k0 e m consi
+p
+tantes positivas e ki  ri rri . Assim, wi assume
+grandes valores no caso de medidas que apresentam pequenos erros de correspondência.
+A estimação da rotação consiste em realizar deslocamentos angulares entre os dois conjuntos e
+verificar o erro resultante. Assim, calculando
+os erros para diferentes deslocamentos angulares
+em uma janela J  a, a  N  a, a +
+1, . . . , 1, 0, 1, . . . , a  1, a temos que
+   argmin
+a
+
+a
+X
+
+eo (j)
+
+(10)
+
+ja
+
+Em que k  card(Q),  é a resolução angular e
+min kj,k
+
+eo (j) 
+
+X
+
+p
+ri+j
+ rri 
+
+(11)
+
+imax 1j,1
+
+A rotação R() é obtida quando encontrado o menor erro entre os dois conjuntos de pontos em (10).
+Para obter um resultado consistente, a resolução
+do sensor deve ser constante. Dados de lasers ou
+outros tipos de conjuntos de pontos que apresentam representação polar com resolução variável
+devem utilizar outro algoritmo de estimação em
+que a asociação seja uma etapa como, por exemplo, o ICP.
+Finalmente a etapa de projeção consiste em representar o conjunto Q no referencial de P usando a
+estimativa de pose fornecida na etapa de translação e rotação precendentes R, t  x y . Ou
+seja
+p
+rip  (ri cos ( + i ) + x)2 + (ri sin ( + i ) + y)2
+ISBN 978-85-8001-069-5
+
+Algoritmo 2  Resumo do PSM
+1 while e1 (R, t) >  do
+2
+f azinterpolacao(Q)
+3
+t  estimatranslacao(P, Q)
+ em (8)
+4
+  estimarotacao(P, Q)  usando (10)
+5
+f azprojecao(Q, t, )
+ usando (12)
+6
+e1 (R, t)  calculaerro(P, Q)  em (7)
+7 end while
+
+pi
+
+ arctan
+
+
+
+y + ri sin ( + i )
+x + ri cos ( + i )
+
+
+
+(12)
+
+O PSM pode ser sumarizado nas etapas distintas
+como mostrado no Algoritmo 2.
+Em relação ao ICP, o custo_computacional é reduzido pela ausência da etapa de associação. Além
+disso, segundo (Diosi and Kleeman, 2007) este
+algoritmo apresenta características como estabilidade numérica e convergência superiores ao ICP.
+Como no ICP, uma primeira projeção de inicialização pode ser obtida de outros sensores já existentes, como a odometria das rodas, ou de informações provenientes de uma unidade de medidas inerciais (IMU), aumentando a velocidade
+de convergência.
+7
+
+Resultados Experimentais
+
+Esta seção apresenta os resultados experimentais
+de odometria_telemétrica usando o PSM. Os dados foram coletados de um laser monocamada
+SICK LMS 200 montado paralelo ao solo,  frente
+da plataforma experimental do projeto VERO
+um sistema GPSInercial Applanix de precisão
+centimétrica fornece referências absolutas de pose
+(Bueno et al., 2009). Os sistemas de coordenadas
+do laser (XL , YL ), do referencial local de localização do veículo (XV , YV ) e o global (X0 , Y0 ) estão
+indicados na fig. 1. O veículo executou um percurso de 750 metros em ambiente urbano, por vias
+internas e estacionamento no Campus do CTI o
+percurso é ilustrado pela fig. 2, e contém duas regiões com diferentes níveis de estruturação uma
+longa via (ambiente tipo corredor) com árvores
+esparsamente distribuídas (Parte I) e o estacionamento com vários veículos (ambiente mais estruturado) em formato retangular (Parte II).
+7.1
+
+Pré-Tratamento
+
+Informações aberrantes (ou ruidosas) acontecem
+quando, por exemplo, um mesmo raio do feixe do
+laser toca duas superfícies. O laser nesta situação
+fornece a média das distâncias obtidas (normalmente incoerentes). Uma descrição geral dos tipos
+de imprecisão, que acometem sensores laser, pode
+ser encontrada em (Li and Olson, 2011). A etapa
+de pré-tratamento permite eliminar parte desses
+
+1011
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+dados e com isso fornecer medidas mais apropriadas visando maior robustez para o processo de
+estimação.
+Além disso, é possível classificar em grupos (clusters) pontos que possam pertencer ao mesmo objeto visto na cena e assim permitir que o processo
+de interpolação do PSM possa ocorrer entre eles
+caso necessário, uma vez que a interpolação entre (ri1 , i1 ) e (ri+1 , i+1 ) tende a ser uma boa
+aproximação apenas se ambos pertencem  mesma
+superfície (esta sendo preferencialmente suave).
+Assim, primeiramente, um filtro mediano como
+uma janela de tamanho j (no caso deste trabalho heuristicamente j  3) é utilizada para retirar
+pontos aberrantes do tipo ruído impulsivo. Posteriormente, a classificação dos pontos que pertencem a um mesmo objeto é realizada, bem como
+a seleção daqueles que apresentem um tamanho
+mínimo l (neste caso l  4).
+7.2
+
+Localização e Mapeamento
+
+A estimação da pose é realizada em cada instante
+utilizando o PSM. Apenas para fins de comparação, é realizada também a estimação da pose via
+odometria múltiplos encoders (MEO) (Martins
+et al., 2011), esta sendo gerada a partir dos deslocamentos das quatro rodas e do ângulo de direção, sendo mais precisa que a odometria diferencial por minimizar a influência de erros provenientes, por exemplo, de escorregamentos e assimetriasdeformações das rodas.
+A figura 3 mostra a evolução da orientação obtida
+pela odometria_telemétrica, odometria múltiplos
+encoders e do referencial de posição. Assim como
+a odometria MEO, a informação de pose proveniente do processo de scan matching, por se tratar
+de uma estimação incremental e sem correção, é
+
+Figura 1 Referenciais do Veículo. O laser SICK
+está na origem do referencial (XL , YL ). A odometria é obtida por sua vez no referêncial (XV , YV ),
+no mesmo referencial do sistema de posicionamento Applanix.
+
+ISBN 978-85-8001-069-5
+
+sujeita  divergência ao longo do tempo (devido
+a acumulação de imprecisões). Na primeira parte
+do conjunto de dados (ver Parte I na figura 3) a
+odometria_telemétrica apresenta um acúmulo de
+imprecisões maior que a MEO, devido a pequena
+quantidade de pontos disponíveis em vários instantes (veja o gráfico no canto superior direito da
+fig 4). Uma estratégia seria utilizar outra fonte
+sensorial disponível caso o ambiente não tenha estruturas vistas pelo laser, ou a quantidade de pontos seja pequena (um conjunto acima de 30 pontos
+é desejável após a etapa de tratamento).
+No trecho mais estruturado do percurso (estacionamento) a qualidade da odometria_telemétrica
+é comparável  odometria MEO (a fig 5 mostra
+o erro cometido pela odometria_telemétrica e a
+MEO em relação a orientação do sistema Applanix em uma parte do estacionamento). A média
+de pontos nesse trecho do trajeto é de 92 pontos
+(média bastante superior aos 13 pontos mostrados
+no gráfico inferior direito da figura 4 adquiridos no
+instante t  127s enquanto o veículo trafegava na
+Parte I).
+Finalmente, a figura 6 mostra em detalhe parte do
+mapeamento no trecho mais estruturado do percurso, com vários veículos estacionados usando a
+informação da pose estimada pelo PSM. Os perfis dos veículos são facilmente identificáveis evidenciando a qualidade da estimação localmente.
+Percebe-se, no entanto, a tendência  divergência
+da odometria_telemétrica.
+8
+
+Conclusões Finais
+
+Este artigo abordou o tema de estratégias de odometria baseadas em dados de sensor_laser monocamada. O problema da estimação da transformação rígida entre dois conjuntos de pontos produzidos por um sensor_laser, entre duas amostragens sucessivas, foi colocado de uma forma geral.
+Sua solução para o caso ideal, de correspondência
+conhecida, forneceu a base para a abordagem posterior de dois cenários em que a correspondência
+é desconhecida o processo iterativo do ICP e o
+PSM, que dispensa a necessidade de uma associação explícita.
+Usando o PSM - que apresenta menor carga_computacional, foram apresentados e discutidos resultados experimentais de odometria_telemétrica,
+para um veículo_robótico_terrestre que navega em
+ambiente_externo. Embora esteja sujeita ao processo de divergência a longo termo, a odometria
+telemétrica em regiões com grande quantidade de
+pontos, tem qualidade comparável  aquela da
+odometria das rodas, estando assim apta a esquemas mais completos de localização globalmente
+consistentes como na fusão com GPS e outros sensores absolutos, como também em esquemas de
+SLAM (localização e mapeamento simultâneos)
+(Nieto et al., 2007)(Bosse et al., 2004).
+
+1012
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+70
+
+60
+
+50
+
+40
+
+30
+
+20
+
+10
+
+0
+
+10
+
+20
+
+30
+
+0
+
+50
+
+100
+
+150
+
+200
+
+250
+
+Figura 2 Mapeamento dos dados laser no percurso usando a localização de um referencial absoluto.
+2
+
+1
+
+MEO
+
+PARTE II
+
+laser odometry
+
+0
+
+ground
+
+attitude rad
+
+1
+
+PARTE I
+2
+
+3
+
+4
+
+5
+
+6
+
+0
+
+100
+
+200
+
+300
+
+400
+
+500
+
+600
+
+time s
+
+Figura 3 Orientação do veículo ao longo do percurso odometria MEO (em vermelho tracejado), odometria_telemétrica PSM (círculos em azul) e orientação de referência (em verde). A região Parte I na
+figura indica os dados em que o veículo VERO percorria a via de acesso ao estacionamento enquanto
+que os dados na Parte II foram obtidos ao longo de duas voltas no mesmo.
+
+numero de pontos
+
+150
+
+100
+
+50
+
+0
+
+0
+
+100
+
+200
+
+300
+time s
+
+400
+
+500
+
+600
+
+10
+
+Laser
+
+5
+0
+
+5
+10
+
+0
+
+2
+
+4
+
+6
+8
+direcao da via m
+
+10
+
+12
+
+14
+
+Figura 4 A imagem foi obtida de uma câmera montada acima do laser mostrando a região tipo corredor
+(Parte I) com finos troncos regularmente distribuídos.  direita na parte inferior temos um conjunto
+de pontos (em azul) típico obtido nessa mesma região da imagem, com a posição do laser indicada na
+origem. A figura no canto superior direito mostra o número de pontos disponíveis ao longo do percurso.
+
+ISBN 978-85-8001-069-5
+
+1013
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+0.06
+
+absolute increment attitude error rad
+
+MEO error
+laser odometry error
+
+0.04
+
+Diosi, A. and Kleeman, L. (2005). Laser scan matching in polar coordinates with application to
+SLAM, IEEE International Conference on Intelligent Robots and Systems .
+
+0.02
+
+0
+
+0.02
+
+Diosi, A. and Kleeman, L. (2007). Fast laser scan matching using polar coordinates, The International
+Journal of Robotics Research 26 11251153.
+
+0.04
+
+0.06
+
+0.08
+375
+
+380
+
+385
+
+390
+
+395
+time s
+
+400
+
+405
+
+410
+
+415
+
+Figura 5 Erro de orientação da odometria MEO em vermelho tracejado telemétrica - em azul círculos. Ambos em relação ao sistema_de_localização
+absoluto.
+
+Gallegos, G. and Rives, P. (2010). Indoor SLAM based
+on composite sensor mixing laser scans and omnidirectional images, IEEE International Conference on Robotics and Automation.
+Huang, Q.-X. and Anguelov, D. (2010). High quality
+pose estimation by aligning multiple scans to a
+latent map, IEEE International Conference on
+Robotics and Automation.
+Kanatani, K. (1994). Analysis of 3D rotation fitting,
+IEEE Transactions on Pattern Analysis and Machine Intelligence 16.
+
+65
+
+60
+
+Li, Y. and Olson, E. B. (2011). Structure tensors for
+general purpose LIDAR feature extraction, IEEE
+International Conference on Robotics and Automation.
+
+55
+metros m
+
+nheira, J. R. (2009). Uma plataforma para pesquisa e desenvolvimento em robótica terrestre de
+exterior, IX Simpósio Brasileiro de Automação
+Inteligente.
+
+50
+
+Lingemann, K., Surmann, H., Nchter, A. and Hertzberg, J. (2004). Indoor and outdoor localization
+for fast mobile robots, IEEE International Conference on Intelligent Robots and Systems.
+
+45
+
+40
+
+35
+115
+
+120
+
+125
+
+130
+135
+metros m
+
+140
+
+145
+
+150
+
+Figura 6 Mapeamento usando a posição e orientação fornecidas pelo PSM na primeira volta no
+estacionamento.
+Agradecimentos
+Os autores agradecem os financiamentos do programa
+PCI-CTIMCT (5510222011  6) e dos projetos NAGUIVA (4907222010  5 - CNPqFCT - Portugal),
+MUNAVE (4901802009  4 - CNPqCNRS - França)
+e INCT-SEC (5739632008  8 - CNPq e 0857870  9
+- FAPESP), bem como a atuação de Douglas Figueiredo, Tiago Tarossi e Fernando Casanova no veículo e
+seus sistemas, e aos pesquisadores do projeto VERO.
+Referências
+Besl, P. J. and McKay, N. D. (1992). A method for
+registration of 3D shapes, IEEE Transactions on
+Pattern Analysis and Machine Intelligence 14.
+Bosse, M., Newman, P., Leonard, J. and Teller, S.
+(2004). Simultaneous localization and map building in large-scale cyclic enviroments using the
+atlas framework, The International Journal of
+Robotics Research 23.
+
+Lu, F. and Milios, E. (1997). Robot pose estimation
+in unknown environments by matching 2D range
+scans, Journal of intelligent  robotic systems
+18 249275.
+Martins, R. J., Bueno, S. S., Mirisola, L. G. B.,
+de Paiva, E. C. and Ferreira, P. A. V. (2011).
+Cinemática e localização em robótica terrestre
+usando múltiplos encoders, X Simpósio Brasileiro
+de Automação Inteligente.
+Nieto, J., Bailey, T. and Nebot, E. (2007). Recursive
+scan-matching SLAM, Robotics and Autonomous
+Systems 55.
+Nchter, A., Feyzabadi, S., Qiu, D. and May, S.
+(2011). SLAM  la carte GPGPU for globally
+consistent scan matching, European Conference
+on Mobile Robotics.
+Nchter, A., Surmann, H., Lingemann, K., Hertzberg,
+J. and Thrun, S. (2004). 6D SLAM with an application in autonomous mine mapping, IEEE International Conference on Robotics and Automation.
+Victorino, A. C. (2002). La commande référencée capteur une approche robuste au problme de navigation, localisation et cartographie simultannées
+pour un robot dintérieur, PhD thesis, INRIA
+Sophia Antipolis, França.
+
+Bueno, S. S., Azevedo, H., Mirisola, L. G., de Paiva,
+E. C., Ramos, J. J., Victorino, A. C. and Azi-
+
+ISBN 978-85-8001-069-5
+
+1014

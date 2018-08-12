@@ -1,0 +1,594 @@
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+LOCALIZAÇÃO BASEADA EM APARÊNCIAS UTILIZANDO SENSORES DE ULTRASSOM
+SAMIR E. DA SILVA
+
+Laboratório de Automação, Engenharia de Automação e Controle , Faculdade do Centro Leste (UCL)
+E-mails samirehlert@ucl.br
+CLEBSON J. M. DE OLIVEIRA, RAQUEL F. VASSALLO, EVANDRO O. T. SALLES
+
+VIROS LABCISNE, Engenharia Elétrica, Universidade Federal do Espírito Santo (UFES)
+E-mails clebson.oliveira@aluno.ufes.br, raquel@ele.ufes.br,
+evandro.salles@ufes.br
+Abstract This article presents a localization model based on ultrasonic sensors that takes into account only the environment
+features. The collected information is used to extract characteristics that reflect the surroundings shape, and thus be able to
+differentiate them. During tests the robot was remotely operated, therefore it was driven to each location to collect data samples
+and later use it to identify the robots current location. The proposed localization method has proven able to identify probable
+localizations of the robot independently of odometry. However, the model is only able to identify the place in which the robot is
+without determining its precise position within this place.
+Keywords Localization, Ultrasound Sensors, Probability Mass Function.
+Resumo Este artigo apresenta um modelo de localização baseado em sensores_ultrassônicos, considerando apenas a aparência
+do ambiente. As informações coletadas são utilizadas para extrair características que reflitam a forma do ambiente, e assim ser
+capaz de diferenciá-los. Nos testes o robô foi operado remotamente, assim o robô era conduzido até cada local onde coletava
+amostras e posteriormente as utilizava para identificar o local em que se encontrava. O modelo de localização proposto provou ser
+capaz de identificar prováveis localizações do robô de forma independente da odometria. Porém, o modelo somente é capaz de
+identificar o lugar em que o robô se encontra sem determinar sua posição precisa dentro deste lugar.
+Palavras-chave .
+
+1 Introdução
+O problema de localização na robótica_móvel
+refere-se  necessidade de se conhecer a posição e
+orientação do robô em relação ao mapa do ambiente.
+Localização é o processo que estabelece
+correspondência entre o sistema de coordenadas do
+mapa e o sistema de coordenadas local do robô.
+Conhecer essa correspondência permite ao robô
+expressar as coordenadas de objetos de interesse em
+seu próprio sistema de coordenadas, o que é um prérequisito necessário  navegação (Thrun, et al.,
+2005).
+Robôs móveis frequentemente utilizam odometria
+para se localizar em um ambiente. Porém os erros de
+posicionamento se acumulam com o tempo e a
+posição estimada se torna cada vez mais imprecisa.
+Daí a necessidade de se utilizar dados obtidos do
+ambiente através de sensores para correção da
+localização estimada. Assim, o mapeamento e
+localização são dependentes um do outro, uma vez
+que a localização do robô no ambiente depende de
+um mapa, e para se gerar um bom mapa é necessária
+uma boa localização do robô (Yamauchi, et al.,
+1998).
+Em (Stojanovi  Stojanovi, 2014) são
+apresentados exemplos de aplicações de mercado
+para localização em ambientes internos, baseados
+em LBS (Location-Based Services) e são
+caracterizadas algumas linhas de pesquisa
+
+ISSN 2525-8311
+
+proeminentes para resolver o problema de
+localização.
+Vários serviços, muitas vezes referidos como
+serviços baseados em localização (LBS) e sensíveis
+ao contexto, surgiram em muitos domínios
+diferentes, tais como navegação de pessoas, guias
+de turismo móveis, rastreamento_de_veículos,
+monitoramento de tráfego, cuidados de saúde
+pervasivos, gerenciamento de emergências,
+proteção do ambiente, análise do comportamento
+animal, entre outros (Stojanovi  Stojanovi,
+2014). A base desses serviços é a habilidade de
+perceber e determinar em tempo_real a localização
+de usuários em movimento.
+Aplicações como a apresentada em (Pinheiro, et al.,
+2015) mostram a necessidade de se determinar a
+postura do robô de forma precisa. Pinheiro e seus
+colegas apresentam uma abordagem para o
+planejamento de robôs_móveis com o objetivo de
+resolver o problema de tarefas de limpeza em
+ambientes internos. De forma geral, o robô precisa
+primeiramente determinar sua postura para então se
+movimentar para o destino final e limpar. O modelo
+proposto utiliza a abordagem de planejamento
+multinível no qual a missão é tratada apenas de
+forma online e o usuário configura a tarefa de
+limpeza ou o robô usa uma agenda com tarefas prédefinidas. Planejamentos POMD (Partially
+Observable Markov Decision) são criados para
+
+2145
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+determinar a localização, usando o mapa e os
+parâmetros do robô. Estes planejamentos são criados
+de forma off-line apenas uma vez e utilizados
+independentemente das missões executadas. O robô
+determina sua postura em nível de salas
+representativas do ambiente e em seguida aprofunda
+sua busca para determinar sua postura de forma mais
+precisa. Os experimentos, tanto com simuladores
+quanto com robôs reais, conseguiram determinar a
+postura do robô e completar as tarefas programadas
+de forma rápida e mantendo a precisão da
+localização.
+Em (Zhang, et al., 2012) é apresentado um sistema
+de localização baseado em infraestrutura de rede
+sem fio, através da utilização de transmissores e
+receptores ultrassônicos para obtenção de medidas
+TDOA (Time Difference of Arrival) precisas e
+estimadores IMM (Interacting Multiple Model) para
+calcular a posição atual do robô utilizando dois
+filtros, Extended Kalman Filter (EKF) e Robust
+Extended Kalman Filter (REKF). A filtragem
+garante robustez em relação a ruídos tanto em
+ambientes LOS (Line-of-sight) quanto em ambientes
+NLOS (Non-line-of-sight).
+Os resultados apresentados em (Zhang, et al., 2012)
+mostraram que o sistema consegue ser robusto em
+diferentes ambientes e assim conseguiu apresentar
+uma solução para o problema de localização de
+forma precisa. No entanto, é necessário estruturar o
+ambiente de trabalho do robô, porque o sistema
+utiliza receptores para calcular as medidas TDOA
+(Time Difference of Arrival).
+Assim, considerando o contexto da robótica_móvel
+em ambientes internos e o problema de localização
+de objetos em movimento, o objetivo deste trabalho
+é definir um algoritmo de localização não métrico
+baseado em características obtidas dos sensores
+ultrassônicos presentes em um robô_móvel. Neste
+trabalho a definição dos locais e a movimentação do
+robô são controladas pelo usuário, pois se deseja
+representar os ambientes através de sua aparência e
+verificar se esta representação consegue ser
+suficientemente robusta. Assim, a trajetória feita
+pelo robô ou o planejamento desta trajetória não são
+escopo deste trabalho.
+2 Modelos de Localização.
+A utilização de informações métricas em ambientes
+internos pode ser uma excelente abordagem para o
+problema de localização quando o ambiente pode ser
+estruturado, como o modelo proposto em (Zhang, et
+al., 2012). No entanto, quando a estruturação não é
+possível ou não é desejada por questões de custo, é
+interessante utilizar informações de aparência dos
+ambientes, que são comumente utilizadas por
+
+ISSN 2525-8311
+
+sistemas de localização baseados em câmeras como
+o algoritmo SeqSlam (Milford  Wyeth, 2012).
+Dessa forma, o modelo proposto neste trabalho
+utiliza informações dos sensores_ultrassônicos para
+representar a aparência do ambiente. Cada local do
+ambiente é representado por funções massa de
+probabilidade (Probability Mass Function - PMF)
+das características calculadas a partir dos dados de
+ultrassom do robô. Para definir a provável posição
+do robô, procura-se o local que apresentar a maior
+média das probabilidades, considerando as
+informações dos sensores no momento da
+localização.
+Para desenvolver o modelo de localização este
+trabalho utilizou o modelo de caracterização de
+cenas C-IGL (de Oliveira, et al., 2015), porém
+utilizando informações de sensores ultrassom ao
+invés de câmeras.
+Para mostrar a necessidade de utilizar
+informações robustas em relação a erros de
+odometria, foram apresentados dois modelos de
+localização um modelo métrico, calculando a
+distância do robô a cada local definido e o modelo
+proposto neste trabalho utilizando funções massa de
+probabilidade dos sensores_ultrassônicos.
+O primeiro método depende da odometria do robô
+para realizar a localização e o segundo define
+características referentes a cada local, baseando-se
+apenas
+nas
+respostas
+dos
+sensores,
+e
+consequentemente não depende da odometria do
+robô.
+2.1 Localização baseada na posição.
+A localização neste modelo é realizada
+armazenando as posições do robô para cada local
+durante a fase de caracterização, o robô é conduzido
+a cada local que deve ser caracterizado para que
+possa armazenar as informações, que serão
+utilizadas para sua posterior localização. Para
+determinar a localização do robô é então calculada a
+distância entre a posição atual do robô e as posições
+dos locais definidos.
+Assim, durante a construção do mapa são
+armazenadas as coordenadas cartesianas,  e , do
+robô em cada lugar que se deseja incluir no mapa.
+Uma vez que todos os lugares a serem mapeados
+tenham sido definidos a localização é realizada,
+calculando-se a distância entre a posição atual do
+robô  e as posições mapeadas anteriormente
+ . Para tanto,
+  (   )2 + (   )2
+
+(1)
+
+determina a distância do robô a cada local  . Com
+todas as distâncias determinadas é então identificado
+o local que apresenta a menor distância, sendo
+considerada esta a provável posição do robô.
+
+2146
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+Em (1),  e  são as coordenadas
+cartesianas obtidas através da odometria para o local
+em que se está realizando a localização e  e  são
+as coordenadas cartesianas obtidas da odometria do
+robô quando o lugar  foi mapeado. Dessa forma, 
+é a distância entre o local em que o robô se encontra
+segundo sua odometria e a referência de posição
+armazenada para o local .
+Vale ressaltar que neste trabalho não foi empregada
+nenhuma tratativa para corrigir a odometria do robô,
+pois o objetivo dos testes é justamente entender
+como estes erros afetam um modelo de localização
+que seja baseado apenas na odometria.
+2.2 Localização empregando características
+Esta estratégia de localização visa possibilitar a
+localização global sem utilizar informação
+decorrente da odometria. Assim, foram definidas
+características dependentes apenas da distância
+retornada pelos sensores_ultrassônicos. Baseando-se
+nas distâncias retornadas pelos sensores foram
+calculadas as seguintes características média
+aritmética, desvio padrão, moda, mediana,
+coeficiente de variação (desvio padrão dividido pela
+média aritmética), a moda dividida pela média
+aritmética, a mediana dividida pela média, além da
+soma das distâncias retornadas por dois sensores
+diretamente opostos.
+A Figura 1 demonstra a obtenção dos valores
+utilizados para caracterizar os ambientes.
+No momento da caracterização do ambiente, a
+entrada do cálculo é uma medição do cinturão de
+sensores_ultrassônicos do robô dk,  k  0,15, e em
+seguida são calculadas todas as informações
+utilizadas para caracterização, aqui denominadas
+características . Após a leitura de várias medições
+do cinturão ultrassônico são então calculadas as
+distribuições de probabilidades. No instante de
+localização uma medição do cinturão é utilizada
+para determinar a provável localização do robô
+através do cálculo da probabilidade dessa medição
+em relação s distribuições de probabilidade dos
+diversos lugares caracterizados.
+
+Como o cinturão ultrassônico do robô é formado por
+16 sensores, a soma das distâncias retornadas por
+sensores diretamente opostos proporciona 8 valores
+por medição. Porém, foi observado um desempenho
+pior quando os ambientes são grandes e fazem com
+que alguns sensores não percebam obstáculos. Foi
+concluído que a utilização de todas as leituras de
+distância pode prejudicar a representação dos
+ambientes porque a não observação de um obstáculo
+gera uma falsa leitura que depende do alcance dos
+sensores. Assim, para as distâncias considerando-se
+dois sensores diretamente opostos, passou-se a
+ignorar os resultados obtidos para os casos em que
+pelo menos um dos sensores informasse o valor de
+seu alcance máximo.
+A frequência de ocorrência da caraterística  no
+lugar  é expressa pela função de frequência absoluta
+ (). Para calcular a função massa de
+probabilidade (Probability Mass Function - PMF)
+ () é necessário normalizar  pelas  amostras
+de  divididas em intervalos, como apresentado em
+ () 
+
+ ()
+.
+
+
+Assim, a função_massa_de_probabilidade  () é
+utilizada no modelo proposto para caracterizar o
+lugar  em relação  característica .
+Para cada lugar do ambiente  são capturadas
+várias amostras para calcular a PMF de cada
+característica, e este processo é repetido até que
+todos os lugares do ambiente sejam caracterizados
+de forma offline.
+Dessa forma, a probabilidade  da característica ,
+calculada no instante atual, pertencer ao lugar , é
+calculada através da PMF do lugar , segundo
+ ()   (  ).
+
+
+
+ISSN 2525-8311
+
+(3)
+
+Como o modelo proposto utiliza várias
+características, para cada local são calculadas as
+médias das probabilidades obtidas através da
+amostra atual  (). Logo, para determinar a
+localização  do robô utilizou-se a abordagem da
+maior probabilidade calculada entre os  lugares
+caracterizados,
+  argmax( ()) ,     .
+
+Figura 1. Esquema representando a relação entre as informações
+relevantes para o método baseado em características.
+
+(2)
+
+(4)
+
+Determinando-se a maior média obtida, é então
+definido o local correspondente  localização atual
+do robô. Para o cálculo da probabilidade  foram
+utilizados três tipos de médias aritmética,
+geométrica e harmônica. Para verificar qual média
+fornece o melhor resultado o cálculo de cada uma
+delas foi efetuado paralelamente.
+Considerando todas as médias calculadas a
+aritmética sempre apesentou o maior valor, seguida
+
+2147
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+pela geométrica e pôr fim a harmônica. Dessa forma,
+a média aritmética sofre maior influência de valores
+elevados enquanto a harmônica é mais influenciada
+por valores menores, e a média geométrica apresenta
+um comportamento intermediário. Após efetuar
+alguns testes preliminares de localização verificouse que para a maioria dos casos a média geométrica
+apresentou maior taxa de acerto.
+
+As matrizes de confusão apresentadas nas Tabelas
+1, 2, 3 e 4, correspondem aos resultados obtidos
+durante simulação para cada método de localização
+utilizado.
+Tabela 1. Matriz de confusão para o método métrico obtida da
+simulação.
+
+3 Resultados
+Aqui são presentados os resultados de alguns
+dos testes e simulações realizados no decorrer do
+trabalho. Para os testes realizados com o robô, os
+filtros para correção de erros de odometria foram
+desligados.
+3.1 Método de Avaliação
+Para avaliar os resultados dos testes e
+simulações no decorrer do trabalho foram utilizadas
+matrizes de confusão para se comparar os resultados
+obtidos para cada execução do programa.
+Para possibilitar a análise dos resultados e verificar
+erros, foram criados arquivos de logs, contendo
+informações úteis, como posição do robô segundo
+sua odometria no momento de cada aquisição de
+dados e operação de localização, informações
+obtidas dos sensores, informações calculadas
+durante a execução do programa, resultados das
+verificações, o local ao qual as informações foram
+acrescentadas, e o local em que o usuário informou
+como sendo o correto durante uma operação de
+localização. Essas informações foram utilizadas para
+corrigir eventuais erros presentes no programa, bem
+como extrair os resultados dos testes.
+
+Tabela 2. Matriz de confusão para o método utilizando a média
+aritmética das características obtida da simulação.
+
+Tabela 3. Matriz de confusão para o método utilizando a média
+geométrica das características obtida da simulação.
+
+3.2 Resultado da Simulação
+Os resultados apresentados aqui foram obtidos
+através de simulação utilizando o software
+MobileSim e o mapa office.map apresentado na
+Figura 2, fornecido com a biblioteca ARIA, os
+números presentes no mapa correspondem 
+identificação utilizada para cada local.
+
+Figura 2. Mapa utilizado nas simulações apresentando a
+identificação dos locais utilizada para as simulações.
+
+ISSN 2525-8311
+
+Tabela 4. Matriz de confusão para o método utilizando a média
+Harmônica das características obtida da simulação.
+
+A Tabela 1 apresenta a matriz de confusão obtida
+aplicando-se o método métrico na simulação, que
+apresentou uma taxa de acerto de 97,54. As
+Tabelas 2, 3 e 4, apresentam as matrizes de confusão
+obtidas aplicando-se o método baseado em
+características na simulação. O método utilizando a
+média Aritmética apresentou uma taxa de acerto de
+
+2148
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+71,43, o método utilizando a média geométrica
+apresentou taxa de aceto de 77,83 e o método
+utilizando a média harmônica obteve uma taxa de
+acerto de 69,46. O desempenho relativamente
+baixo do método baseado em características para a
+simulação se deve  similaridade dos locais
+definidos. Como pode ser observado na Figura 2, o
+mapa utilizado representa um ambiente vazio, no
+sentido de que não existem objetos disposto em seu
+interior, o que acaba por tonar muitos dos locais
+semelhantes, situação que é diferente de aplicações
+em ambientes reais.
+3.3 Resultados Práticos
+
+Tabela 6. Matriz de confusão para o método utilizando a média
+aritmética das características, nos lugares apresentados na Figura
+3.
+
+Tabela 7. Matriz de confusão para o método utilizando a média
+geométrica das características, nos lugares apresentados na
+Figura 3.
+
+Os testes práticos utilizaram um robô modelo
+Pioneer 3-AT da Adept MobileRobots e foram
+realizados em alguns lugares de um prédio da
+Universidade Federal do Espírito Santo (UFES). Foi
+utilizada uma sala e dois corredores conforme
+mostrado na Figura 3.
+
+Tabela 8. Matriz de confusão para o método utilizando a média
+harmônica das características, nos lugares apresentados na
+Figura 3.
+
+Figura 3. Fotos dos locais utilizados para testes práticos com
+seus respectivos índices e referências para indicar o caminho
+entre cada local.
+
+Na Figura 3 os números apresentados nos quadrados
+do canto superior esquerdo de cada foto representam
+a identificação dos lugares e os números nas setas e
+quadrados indicam a transição entre os lugares.
+Os testes foram realizados com os ambientes em uso
+a fim de verificar se a utilização do método baseado
+em características se mostraria eficiente em
+ambientes dinâmicos.
+As matrizes de confusão apresentadas nas Tabelas 5,
+6, 7 e 8 correspondem aos resultados obtidos durante
+o teste para cada método de localização utilizado.
+Tabela 5. Matriz de confusão para o método métrico, nos lugares
+apresentados na Figura 3.
+
+ISSN 2525-8311
+
+A Tabela 5 apresenta a matriz de confusão obtida
+para o método métrico, que obteve uma taxa de
+acerto de 78,77. As Tabelas 6, 7 e 8 apresentam as
+matrizes de confusão obtidas para o método baseado
+em características. Para o teste com a média
+aritmética obteve-se uma taxa de acerto de 74,06,
+o método utilizando a média geométrica apresentou
+taxa de aceto de 82,55 e o método utilizando a
+média harmônica obteve-se uma taxa de aceto de
+79,72.
+Foi observado que a distância percorrida pelo robô
+durante os testes influenciou de forma negativa o
+desempenho do método métrico, que é justificável
+pela propagação do erro de odometria no decorrer do
+teste. Por outro lado, os resultados dos métodos
+utilizando características sofreram menos variação
+se comparados aos respectivos resultados da
+simulação, pois não estão sujeitas  influência do
+erro de odometria, sendo afetados apenas pela
+semelhança entre os locais considerados e pela
+qualidade das informações utilizadas para gerar as
+PMFs.
+
+2149
+
+XXI Congresso Brasileiro de Automática - CBA2016
+UFES, Vitória - ES, 3 a 7 de outubro
+
+4 Conclusão
+Este trabalho apresentou um sistema para
+estimar a posição de um robô de forma independente
+de informações métricas, extraindo características
+acerca de cada ambiente através de relações entre as
+informações obtidas através dos 16 sonares
+presentes no robô utilizado. Cada lugar determinado
+pelo usuário foi caracterizado por Funções Massa de
+Probabilidade (PMFs) das características definidas
+no modelo.
+O modelo determina a localização do robô buscando
+o local que apresente a maior média das
+probabilidades das características, considerando os
+valores das medições atuais.
+Para utilizar as informações de probabilidade
+provenientes de todas as características propostas
+foram feitos testes considerando as médias
+aritmética, geométrica e harmônica, e verificou-se
+que a utilização da média geométrica apresentou
+melhores resultados para a maioria dos casos, tanto
+na simulação quanto nos testes com robô real.
+O modelo proposto, baseado apenas na aparência
+dos lugares foi comparado a um modelo métrico
+simples, baseado na distância_euclidiana entre a
+posição atual do robô e as posições previamente
+mapeadas. A comparação desses dois métodos
+mostrou que, enquanto o método utilizando
+informações métricas apresentava uma piora nos
+resultados o método considerando as características
+tende a apresentar resultados mais estáveis. O pior
+resultado utilizando odometria se deve  não
+aplicação de métodos de correção como filtros de
+kalman, que poderiam mascarar o resultado da
+localização utilizando a odometria bruta enquanto o
+robô se deslocava pelo ambiente. O resultado desta
+comparação mostra que o modelo proposto é
+independente da odometria do robô e capaz de
+identificar ambientes.
+Contudo, o método baseado em características é
+dependente da quantidade de informações coletadas,
+o que significa que uma baixa quantidade de
+amostras prejudica a qualidade da localização.
+Também foi verificado que a caracterização de
+lugares que apresentem objetos similares, e a
+existência de locais que apresentem uma
+configuração parecida, prejudica o modelo de
+localização.
+Além disso, por se tratar de um modelo baseado em
+aparências de alto nível, não é possível extrair a
+postura do robô de forma precisa dentro do lugar. No
+entanto, o modelo possibilita uma forma de estimar
+a posição do robô sem conhecimento de seu
+posicionamento e orientação e sem utilizar
+informações a priori, o que mostra que este trabalho
+pode ser utilizado para resolver o importante
+problema da determinação da posição inicial global
+do robô. Além disso, o fato de utilizar apenas as
+informações dos sensores_ultrassônicos embarcados
+
+ISSN 2525-8311
+
+no robô não há necessidade de estruturar o ambiente
+como o modelo proposto em (Zhang, et al., 2012).
+Como um trabalho futuro necessário pretende-se
+avaliar o modelo em ambientes com maior número
+de lugares para verificar se os resultados
+encontrados se mantêm. Além disso, esse trabalho
+pode ser aplicado em conjunto com outras técnicas
+de refinamento da localização como a abordagem
+proposta utilizada em (Pinheiro, et al., 2015).
+Referências Bibliográficas
+de Oliveira, C. J. M., Vassalo, R. F.  Salles, E. O.
+T., 2015. Prefiltering effect on visual initial global
+localization. Anais do XII Simpósio Brasileiro de
+Automação Inteligente (XII SBAI), pp. 1188-1193.
+Milford, M. J.  Wyeth, G. F., 2012. Seqslam
+Visual route-based navigation for sunny summer
+days and stormy winter nights. Robotics and Automation (ICRA), 2012 IEEE International
+Conference, May, pp. 16431649.
+Pinheiro, P., Cardozo, E., Wainer, J.  Rohmer, E.,
+2015. Cleaning Task Planning for an Autonomous
+Robot in Indoor Places with Multiples Rooms.
+International Journal of Machine Learning and
+Computing, 5(2), pp. 86-90.
+Stojanovi, D.  Stojanovi, . N., 2014. Indoor
+localization and tracking Methods, technologies
+and research challenges. Facta Universitatis, Series
+Automatic Control and Robotics, 13(1), pp. 57-72.
+Thrun, S., Burgard, W.  Fox, D., 2005.
+Probabilistic Robotics. Cambridge MIT Press.
+Yamauchi, B., Schultz, A.  Adams, W., 1998.
+Mobile robot exploration and map-building with
+continuous localization. Leuven, Bélgica, IEEE, pp.
+3715 - 3720.
+Zhang, R., Hinger, F.  Reindl, L., 2012. TDOAbased localization using interacting multiple model
+estimator and ultrasonic transmitterreceiver. IEEE
+Transactions on Instrumentation and Measurement,
+62(8), pp. 2205-2214.
+
+2150

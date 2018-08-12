@@ -1,0 +1,1091 @@
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+CONTROLE PREDITIVO PARA MITIGACAO DE DANO EMPREGANDO
+PROGNOSTICO DE FALHAS
+Juliana Teixeira Pains Oliveira, Roberto Kawakami Harrop Galvao, Takashi
+Yoneyama
+
+
+Departamento de Sistemas e Controle, Divisao de Engenharia Eletronica
+Instituto Tecnologico de Aeronautica
+Sao Jose dos Campos, Sao Paulo, Brasil
+
+Emails julianapains@gmail.com, kawakami@ita.br, takashi@ita.br
+Abstract In order to maintain a plant running until the next scheduled maintenance, the control effort
+should be distributed over time so that the degradation of the actuator does not cause its breakdown or failure.
+In this work, it is assumed that the degradation of the actuator is connected with the accumulated effort exerted
+over time and evaluated by a conveniently defined index which associates the risk of breakdown with a threshold
+value. This paper proposes two new approaches to the degradation restriction imposed to the control system.
+Two model-based predictive controllers to handle the degradation restriction with ability to mitigate the problem
+of actuator wear out are designed and implemented. A double integrator is used as a plant with the aim of
+illustrating the details of the proposed methods. The proposed approaches are compared using Monte Carlo
+simulation.
+Keywords
+
+Model Predictive Control, Degradation, Maintenance.
+
+Resumo Com o objetivo de manter uma planta em operacao ate a proxima manutencao programada, o
+esforco_de_controle deve ser distribudo ao longo do tempo de forma que a degradacao do atuador nao cause sua
+avaria ou falha. Neste trabalho, assume-se que a degradacao do atuador e relacionada com o esforco exercido
+acumulado ao longo do tempo e avaliada por um ndice convenientemente definido que associa o risco de avaria
+com um valor limiar. Esse artigo propoe duas novas abordagens para a restricao da degradacao imposta ao
+sistema_de_controle. Dois controladores preditivos baseados em modelo com capacidade de mitigar o problema
+de desgaste do atuador sao projetados e implementados. Um integrador duplo e utilizado como planta com o
+objetivo de ilustrar os detalhes dos metodos propostos. As abordagens propostas sao comparadas utilizando uma
+simulacao de Monte Carlo.
+Palavras-chave
+
+.
+
+Introducao
+
+Polticas de manutencao sao utilizadas com o intuito de manter uma planta em operacao segura
+durante um determinado perodo. Inspecoes e correcoes fazem parte da poltica de manutencao de
+forma a evitar falha ou parada de algum equipamento essencial para o processo, visando garantir
+a continuidade operacional do sistema. Para determinar o momento em que um equipamento deve
+ser retirado do processo para manutencao, algumas analises sao realizadas com base em dados
+estatsticos, sendo o MTBF (Mean Time Between
+Failures) um dos indicadores mais usados na industria. Entretanto, a utilizacao desses ndices
+nao garante que um equipamento nao falhe antes da proxima manutencao programada (Pereira
+et al., 2010a Vachtsevanos et al., 2006).
+Uma abordagem para responder aos desafios
+economicos e tecnologicos para uma operacao e
+manutencao confiavies e de custo eficaz e a combinacao de monitoracao, prognostico de falha e metodos de predicao da vida util remanescente (Ray
+and Tangirala, 1996 Patankar and Ray, 1999).
+Com o monitoramento de variaveis relacionadas com a degradacao dos componentes do sistema
+como vibracao, temperatura, umidade, nvel, mudanca do ponto de operacao, entre outras, pode-se
+
+ISBN 978-85-8001-069-5
+
+aumentar a eficiencia da poltica de manutencao,
+permitindo que o sistema funcione seguramente
+ate a proxima parada programada. Com efeito,
+em muitos casos e fundamental evitar a ocorrencia de falhas durante a operacao do sistema, de
+modo a evitar danos materiais e riscos ao operador (Deloux et al., 2009).
+Na pratica, como resultado da falha de um
+atuador, o grau de redundancia do sistema e as
+capacidades disponveis dos atuadores podem ser
+significativamente reduzidos. Como resultado, os
+atuadores restantes poderao ser sujeitados a um
+esforco alem do normal para manter o desempenho do sistema proximo as especificacoes originais
+de projeto. Tal regime de operacao podera acarretar falhas adicionais, agravando ainda mais o
+problema (Zhang and Jiang, 2003).
+Recentemente, estudos tem sido realizados sobre a concepcao de leis de controle que levam em
+consideracao prognosticos de falhas em componentes da planta (Tang et al., 2008 Tang et al., 2007),
+tais como valvulas, pistoes, engrenagens e outros
+componentes. No caso de atuadores, a extensao
+da vida util pode ser conseguida atraves da reducao ou da redistribuicao do esforco_de_controle, a
+fim de diminuir o risco de falhas que imponham
+um desligamento completo da planta (Barbosa
+et al., 2012). Nesse contexto, o uso de contro-
+
+4295
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+ladores preditivos permite que restricoes operacionais sejam impostas de forma que a garantir
+que a degradacao acumulada seja aceitavel ate o
+fim do horizonte de manutencao previsto (Pereira
+et al., 2010b).
+O Controle Preditivo Baseado em Modelo
+(Model based Predictive Control, MPC ) e um conjunto de tecnicas que se baseiam na teoria_de_controle_otimo. Tipicamente, a funcao de custo e avaliada com base no esforco_de_controle e na sada
+da planta predita ao longo de um horizonte movel. Em geral, a solucao do problema de otimizacao e atualizada a cada instante de amostragem, fazendo-se uso das novas leituras dos sensores. Uma das principais caractersticas que contribuem para a disseminacao da tecnica de controle_preditivo nas industrias e a sua capacidade de
+tratar restricoes de operacao da planta explicitamente, como, neste trabalho, o limite de degradacao do atuador (Camacho and Bordons, 1999 Maciejowski, 2000 Rossiter, 2003).
+Neste artigo, sao propostos dois enfoques para
+o projeto_de_controladores preditivos baseados em
+modelo que apresentam a capacidade de mitigar
+degradacoes dos atuadores. Para isso, duas novas
+abordagens para a restricao sao impostas em relacao a um ndice que representa a degradacao do
+atuador, o que influencia diretamente o esforco de
+controle que pode ser utilizado em cada um dos
+casos.
+O primeiro enfoque, denominado DMMPC
+(damage-mitigating model predictive control), e
+um controlador_preditivo para mitigacao de
+dano, baseado no valor de limiar de degradacao. O segundo enfoque, denominado DMMPCP
+(damage-mitigating model predictive control employing failure prognosis), e um controlador_preditivo para mitigacao de dano empregando prognostico de falha, baseado em valores passados da degradacao do atuador e no valor limiar. A restricao
+sobre os esforcos de controle assegura que o valor
+final do ndice de degradacao do atuador nao ultrapasse um valor limite pre-estabelecido durante
+um determinado perodo de tempo de forma que
+o equipamento nao apresente falha antes da proxima manutencao programada.
+Um integrador duplo e utilizado como exemplo de sistema a ser controlado para o estudo de
+caso visando ilustrar os detalhes das abordagens
+propostas.
+Este artigo encontra-se organizado da seguinte forma a secao 2 apresenta uma formulacao
+de MPC com funcao de custo de norma 1, que foi
+adotada na abordagem proposta. A secao 3 detalha as formulacoes DMMPC e DMMPCP propostas para mitigacao de dano. A secao 4 descreve o
+ambiente de simulacao utilizado, bem como os parametros adotados para o controlador. A secao 5
+discute os resultados das simulacoes. Conclusoes
+e sugestoes de trabalhos futuros sao apresentadas
+
+ISBN 978-85-8001-069-5
+
+na secao 6.
+2
+
+2.1
+
+Formulacao MPC usando funcao de
+custo de norma 1
+Notacao
+
+A tabela 1 apresenta a notacao que sera utilizada
+ao longo do texto.
+Tabela 1 Lista de Smbolos
+Descricao
+Matriz identidade de dimensao
+  .
+Matriz coluna   1 de elementos zero e um, respectivamente.
+Matriz    de elementos
+zero e um, respectivamente.
+Matrix bloco coluna com   1
+blocos .
+Matrix bloco com   
+blocos .
+
+Notacao
+I
+0 , 1
+0 , 1
+
+
+
+2.2
+
+Modelo do Processo
+
+O modelo de processo utilizado nesta formulacao
+de controle e representado em espaco_de_estados,
+conforme a equacao (1)
+
+x(t)  Ax(t) + Bu(t)
+(1)
+y(t)  Cx(t)
+onde x(t)  Rn e o estado, u(t)  Rp e a variavel
+manipulada, y(t)  Rq e a sada e A  Rnm , B
+ Rnp e C  Rqn sao as matrizes de estado,
+entrada e sada, respectivamente.
+2.3
+
+Controle Preditivo baseado em Modelo
+
+A funcao de custo de um controlador_preditivo
+tipicamente envolve um compromisso entre a minimizacao do erro de rastreamento e do esforco de
+controle. A funcao de custo adotada neste trabalho utiliza a norma 1 como mostra a equacao (2).
+Essa abordagem e conveniente ja que a degradacao do atuador sera assumida como proporcional
+a magnitude da acao de controle como sera apresentado na secao 3.
+Jy(.), u(.)
+
+
+
+q
+N X
+X
+
+yi (k + jk)  ri (k + j) +
+
+j1 i1
+
++
+
+p
+M X
+X
+i ui (k + j  1k)
+
+(2)
+
+j1 i1
+
+Na equacao (2), ri corresponde a trajetoria de
+referencia da i -esima variavel controlada e i  0
+e um parametro de projeto. Os horizontes de
+controle e de predicao sao denotados, respectivamente, por M e N , com M  N . E assumido
+que o controle seja feito igual a zero entre o final do horizonte de controle e o final do horizonte
+
+4296
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+de predicao, ou seja, ui (k + j  1k)  0 para
+M < j  N.
+A equacao de predicao no MPC pode ser descrita como na equacao (3)
+Y (k)  H U (k) + Fu (k),
+
+(3)
+
+onde
+
+
+y(k + 1k)
+y(k + 2k)
+..
+.
+
+
+
+Y (k)  
+
+
+
+
+
+,
+
+
+(4)
+
+y(k + N k)
+
+
+u(kk)
+u(k + 1k)
+..
+.
+
+
+
+U (k)  
+
+
+
+
+
+
+
+
+(5)
+
+Limites para os valores de controles sao geralmente utilizados em aplicacoes praticas. Neste
+trabalho, essas restricoes surgem a partir da imposicao da restricao de degradacao como sera mostrado na secao 3.
+Finalmente, introduzindo-se a seguinte notacao
+
+
+
+
+0pM
+U (k)
+ 0qN 
+ (k) 
+
+
+
+(10)
+a(k)  
+ (k)  , c   0pM  ,
+1
+(k)
+o problema de otimizacao pode ser escrito na
+forma padrao de programacao_linear padrao, como
+apresentado na equacao (11)
+
+u(k + M  1k)
+
+
+
+H
+
+
+min
+
+0qp
+CB
+..
+.
+
+...
+...
+..
+.
+
+0qp
+0qp
+..
+.
+
+CAN 1 B
+
+CAN 2 B
+
+...
+
+CAN M B
+
+
+
+
+Fu (k)  
+
+
+CA
+CA2
+..
+.
+CAN
+
+
+
+ (6) onde
+
+
+
+
+
+
+ x(k)
+
+
+(7)
+
+A reformulacao do problema quando a funcao de custo utilizada e de norma 1 pode ser encontrada em Camacho e Bordons (1999). Dado
+(j)  Rq , (j)  Rp e   R tal que
+i (k + j)  yi (k + jk)  ri (k + j)  i (k + j)
+i  1, . . . , q e j  1, . . . , N
+
+T
+
+a(k)
+
+s.a Da(k)  b0 (k)
+
+
+
+CB
+CAB
+..
+.
+
+a(k) c
+
+
+
+
+D
+
+
+
+
+H
+H
+IpM
+IpM
+0TpM
+0TpM
+
+IqN
+IqN
+0pM x qN
+0pM x qN
+TqN
+TqN
+
+(11)
+
+0qN x pM
+0qN x pM
+IpM
+IpM
+TpM
+TpM
+
+0qN
+0qN
+0pM
+0pM
+1
+0
+
+
+
+
+
+ (12)
+
+
+
+
+e
+
+
+
+
+0
+b (k)  
+
+
+
+
+Fu (k) + R
+Fu (k)  R
+0pM
+0pM
+0
+0
+
+
+
+
+
+
+
+
+
+
+(13)
+
+i (k + j)  ui (k + j  1k)  i (k + j)
+
+3 MPC com restricoes na degradacao do
+i  1, . . . , p e j  1, . . . , M
+atuador
+q
+p
+N X
+M X
+X
+X
+0
+i (k + j) +
+i i (k + j)  (k) (8) Esta secao trata da adicao de restricoes associadas
+j1 i1
+j1 i1
+a degradacao no sistema_de_controle. Tais restricoes serao impostas ao problema de otimizacao do
+entao tem-se que  e um limitante superior do
+MPC de forma a evitar falha do atuador atraves
+custo J. Entao, o problema de otimizacao pode
+de uma distribuicao adequada do esforco de conser reescrito como
+trole (Pereira et al., 2010a).
+min U ,(k),(k),(k) (k)
+Considere que o problema de controle inicia
+em
+k
+ 0 e a intervencao para a manutencao esteja
+s. a
+programada para k  kM . E desejado que o controlador funcione sem falhas no atuador durante
+(k)  H U (k) + Fu (k)  R  (k)
+o intervalo 0, kM . Para atingir esse objetivo, a
+(k)  U  (k)
+(9)
+degradacao acumulada do atuador devera permanecer abaixo de um limiar seguro ate o momento
+0  TN (k) + TN (k)  (k)
+da intervencao de manutencao.
+T
+T
+onde   1 2 . . . q  ,   1 2 . . . p  e
+Assumindo que a taxa de desgaste do atuador
+
+
+
+
+seja proporcional ao esforco_de_controle, um ndice
+(k + 1)
+(k + 1)
+que representa a degradacao acumulada z(k)  Rp
+ (k + 2) 
+ (k + 2) 
+
+
+
+
+pode ser dado pela equacao (14)
+(k)  
+ , (k)  
+
+..
+..
+
+
+
+
+.
+.
+z(k + 1)  z(k) + u(k)
+(14)
+(k + N )
+(k + M )
+
+ISBN 978-85-8001-069-5
+
+4297
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+onde  e uma matriz diagonal p  p de coeficientes
+de degradacao 1 , 2 , . . . , p , associada com os p
+elementos do vetor de controle u(k). Esses coeficientes podem estar relacionados com variaveis
+medidas tais como vibracao, resistencia eletrica
+interna e temperatura (Deloux et al., 2009).
+Os valores de 1 , 2 , . . . , p e de um limiar de
+seguranca zthresh para a degradacao acumulada
+sao assumidos constantes e conhecidos.
+Para que o efeito da degradacao seja devidamente considerado na determinacao do controle
+otimo, e necessario que os horizontes de predicao
+e controle sejam grandes o suficiente. Contudo, o
+problema de otimizacao resultante pode ser numericamente intratavel devido a grande quantidade
+de restricoes e variaveis de decisao. Alternativamente, de acordo com (Pereira et al., 2010a) podese racionar uniformemente a degradacao permitida ao longo do horizonte de manutencao. No
+instante k, a degradacao acumulada e dada por
+z(k). Entao, a degradacao permitida ao longo do
+intervalo k, kM  devera ser zthresh  z(k). Assim,
+dentro de um horizonte de predicao de N passos,
+a degradacao pode aumentar atraves da equacao
+apresentada em (15)
+N
+
+zthresh  z(k)
+kM + N  k
+
+zthresh  z(k)
+kM + N  k
+
+
+
+min a(k) cT a(k)
+
+
+
+A
+b
+a
+,
+D
+b0
+
+(18)
+
+onde
+
+A
+
+IpM
+IpM
+
+0pM
+0pM
+
+x qN
+x qN
+
+0pM
+0pM
+
+x pM
+x pM
+
+0pM
+0pM
+
+
+(19)
+
+e
+
+b(k) 
+
+(16)
+
+Nesse trabalho, a restricao nao e imposta sobre a degradacao acumulada do sistema ao final do horizonte de predicao, mas sobre a excursao maxima do sinal de controle. Essa alteracao na restricao de degradacao e feita em relacao
+a (Pereira et al., 2010a), pois percebeu-se que utilizando a abordagem do artigo para sistemas com
+apenas um atuador, o esforco_de_controle se concentrava nos instantes iniciais, necessitando-se aumentar bastante o horizonte de predicao para que
+o esforco_de_controle fosse distribudo de forma
+mais uniforme a fim de evitar problemas de naofactibilidade. Como um aumento no horizonte de
+predicao acarreta aumento da carga_computacional, soluciou-se o problema encontrado, fazendo
+que a restricao em relacao a degradacao fosse imposta sobre a excursao maxima do sinal de controle (umax ) e nao sobre a degradacao acumulada
+ao fim do horizonte de predicao.
+Ao se calcular umax de modo que o modulo
+do controle permaneca abaixo desse limite durante
+todo o horizonte de controle, a degradacao z(k +
+N k) torna-se menor ou igual a zmax . Assim, a
+
+ISBN 978-85-8001-069-5
+
+Esse limite para a excursao do controle e aplicado ao modulo de todos os elementos da sequencia de controle u(kk), u(k + 1k),    , u(k + M 
+1k). Deve-se ainda lembrar que se impoe u(k +
+M k)  u(k+M +1k)      u(k+N 1k)  0.
+Assim, a formulacao DMMPC envolve o seguinte problema de programacao_linear a ser resolvido no instante k
+
+(15)
+
+onde o termo N no denominador e adicionado para
+corrigir os efeitos de borda que aumentam quando
+k esta proximo de kM . Entao, a degradacao total
+no final do horizonte de predicao deve satisfazer
+a restricao z(k + N k)  zmax (k), onde zmax (k) e
+apresentada na equacao (16)
+zmax (k)  z(k) + N
+
+depender do valor de controle permitido, obtemse o valor da degradacao acumulada de forma a
+nao ultrapassar o valor limite zthresh .
+Na formulacao DMMPC aqui proposta, o valor limite para a excursao de controle a ser utilizado e expresso pela equacao (17)
+
+
+zmax (k)  z(k)
+(17)
+umax (k) 
+M
+
+Ip M umax
+Ip M umax
+
+
+(20)
+
+Ja na abordagem DMMPCP, que emprega
+um prognostico da evolucao futura da degradacao
+com base no historico passado da degradacao, a
+equacao (16) e modificada por meio da introducao
+(k)
+de um peso dado por des
+(k) como mostra a equacao (21). Esse peso tem o objetivo de distribuir
+a degradacao restante de forma mais uniforme ao
+longo do tempo ate kM .
+zmax (k)  z(k) + N
+
+zthresh  z(k) des (k)
+(21)
+kM + N  k (k)
+
+O primeiro valor de  e o valor do coeficiente
+angular da reta obtida por meio de regressao linear empregando os valores de degradacao z(k)
+para k  0, 1, ..., 9. Ate a decima amostra, utilizase a equacao (16) na abordagem DMMPCP. Nos
+instantes subsequentes, o valor de  e obtido, tambem por regressao linear, empregando uma janela
+movel com os valores de degradacao nos ultimos
+10 perodos de amostragem. Desse modo, (k) e
+calculado utilizando z(k  9), z(k  8), ..., z(k).
+Ja o valor de des e calculado atraves da seguinte expressao
+des (k) 
+
+zthresh  z(k)
+kM  k
+
+(22)
+
+O objetivo da introducao do peso e fazer um prognostico de forma que o sistema seja capaz de racionar o esforco_de_controle da maneira mais adequada, conciliando regulacao e mitigacao da degradacao do atuador.
+
+4298
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+As figuras 1 e 2 apresentam exemplos para
+ilustrar os significados de (k) e des (k). Nestas
+figuras, o coeficiente angular da reta em verde corresponde a (k), ja o coeficiente angular da reta
+azul corresponde a des (k). Para estes exemplos,
+zthresh  0, 4, kM  100 e k  9.
+No caso da figura 1, onde des (k) e menor
+que (k), se o calculo de zmax (k) nao empregasse
+o peso proposto, haveria um grande aumento de
+degradacao nos instantes iniciais, o que reduziria o
+valor maximo permitido para a magnitude do controle no trecho final do horizonte de manutencao.
+Ja na figura 2, onde des (k) e maior que (k), se
+o peso nao fosse empregado, haveria uma subutilizacao do atuador, o que poderia levar o sistema
+a nao atingir sua melhor regulacao.
+
+Degradação
+Acumulada
+Função de
+Custo
+
+Figura 2 (k) e des (k) para o caso de degradacao
+modesta nos instantes iniciais de operacao.
+
+4
+
+ * (k  k)
+
+r(k)
+
+ISBN 978-85-8001-069-5
+
++
+
+Otimizador
+
+(k+ i  k)
+i  1, ..., N
+
+ (k+ i  k)
+i  1, ..., N
+
+Planta
+
++
+
+w (k)
+
+x(k)
+
+Modelo de
+Predição
+
+Figura 3 Diagrama de Simulacao do MPC.
+
+
+
+1
+
+0
+
+
+
+
+
+x1 (t)
+x2 (t)
+
+
+
+Apos simulacoes preliminares, verificou-se que
+
+. O
+um perodo de amostragem adequado e   10
+metodo de discretizacao utilizado foi o segurador
+de ordem zero considerando que o controle permanece constante entre os instantes de amostragem.
+As variaveis de estado, x1 (k) e x2 (k) podem
+ser interpretadas como posicao e velocidade, respectivamente. O controle u(k) corresponde a aceleracao imposta como resultado da aplicacao de
+uma forca externa e a sada y(k) representa a posicao. E adicionado um rudo branco w(k) com
+distribuicao N(00,01) para simular uma perturbacao_na_entrada_da_planta.
+A tabela 2 apresenta os parametros utilizados
+na simulacao.
+O problema de controle consiste na regulacao
+da sada y(k) em torno da referencia r  0. O
+sistema e assumido estar inicialmente em repouso
+(x1 (0)  x2 (0)  0).
+Tabela 2 Lista de Parametros empregados nas
+simulacoes
+Parametro
+N
+M
+kM
+r(k)
+
+
+zthresh
+
+
+Estudo de Caso
+
+As simulacoes foram realizadas no ambiente
+SimulinkMatlab R utilizando o diagrama_de_blocos apresentado na figura 3.
+Para solucionar o problema de programacao
+linear envolvido no MPC foi utilizada a funcao
+linprog do Matlab Optimization Toolbox R .
+O modelo em espaco_de_estados do integrador
+duplo utilizando nesse estudo de caso e dado pela
+equacao (23).
+
+ 
+
+  
+
+x1 (t)
+0 1
+x1 (t)
+0 
+u(t)
+
++
+x2 (t)
+0 0
+x2 (t)
+1
+(23)
+
+Coeficientes de
+Degradação
+
+z(k)
+
+y(t) 
+
+Figura 1 (k) e des (k) para o caso de degradacao
+pronunciada nos instantes iniciais de operacao.
+
+Restrições
+
+5
+
+Valor
+25
+5
+100
+0
+0
+1
+0,4
+0,1
+
+Resultados e Comentarios
+
+As Figuras 4, 5 e 6 apresentam, respectivamente,
+a sada y(k), o controle u(k) e a degradacao z(k)
+obtidos mediante simulacao com as abordagens
+DMMPC e DMMPCP.
+
+4299
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Figura 4 Comparacao das posicoes para as abordagens DMMPC e DMMPCP.
+
+Figura 6 Comparacao das degradacoes para as
+abordagens DMMPC e DMMPCP.
+
+Figura 5 Comparacao dos controles para as abordagens DMMPC e DMMPCP.
+
+conservadora, proporcionando uma melhor regulacao da sada sem violar a degradacao maxima
+permitida.
+Vale observar que as magnitudes dos controles
+tendem a ser maiores no final da simulacao, que
+representa o instante da manutencao programada.
+Isso ocorre pois, com a proximidade do instante
+de manutencao, o limitante para a magnitude de
+u(k) torna-se maior, permitindo a aplicacao de um
+maior esforco_de_controle para melhorar a regulacao.
+Uma simulacao de Monte Carlo foi realizada com os dois controladores, DMMPC e
+DMMPCP, para 100 realizacoes do rudo gaussiano aditivo inserido como perturbacao de entrada
+na planta. As tabelas 3 e 4 apresentam os valores
+de variancia utilizados na simulacao, o valor_rms
+medio da variavel regulada, a degradacao final media e a degradacao final maxima obtida para as
+diversas realizacoes.
+
+Como pode ser observado na Figura 4, a sada
+do sistema cresce a partir de k  0, apesar do sinal
+de controle aplicado nesse instante ter sido nulo,
+como mostra a Figura 5. Como o sistema se encontrava inicialmente em repouso, tal comportamento pode ser atribudo ao efeito da perturbacao
+de entrada w(k) no instante inicial. Para reconduzir a sada ao valor desejado (zero neste exemplo),
+os controladores DMMPC e DMMPCP aplicam
+um sinal de controle negativo a partir de k  1.
+Contudo, a magnitude de tal controle e restrita
+pelo limitante dado por (17), o que compromete o
+desempenho de regulacao.
+A partir dos instante k  10, o controlador DMMPCP passa a usar o limitante de controle dado por (21). Como se pode observar
+na Figura 5, a adocao desse novo limitante permite um aumento na magnitude do controle, em
+comparacao com a abordagem DMMPC, que e
+mais conservadora. Como resultado, o controlador
+DMMPCP passa a proporcionar uma melhor regulacao da sada a partir de k  10, como mostra
+a Figura 4. Com efeito, calculando-se o valor_rms
+(root-mean-square) da sada y(k) em cada caso,
+obtem-se 0,23 e 0,14 com as abordagens DMMPC
+e DMMPCP, respectivamente. Vale salientar que
+a restricao de degradacao (z(100)  0, 4) foi respeitada pelos dois controladores, como mostra a
+Figura 6. A maior degradacao resultante do uso
+da abordagem DMMPCP esta condizente com
+a maior magnitude do controle observada na Figura 5. Como resultado, pode-se concluir que o
+controlador DMMPCP atuou de forma menos
+
+ISBN 978-85-8001-069-5
+
+Tabela 3 Simulacoes de Monte Carlo - DMMPC
+Valor rms z(k)f inal z(k)f inal
+Variancia
+de y(k)
+(media) (maximo)
+(media)
+0,001
+0,0338
+0,2041
+0,2182
+0,003
+0,1599
+0,2112
+0,2197
+0,005
+0,3086
+0,2136
+0,2197
+0,01
+0,7338
+0,2162
+0,2197
+0,02
+1,5191
+0,2180
+0,2197
+0,05
+3,3411
+0,2191
+0,2197
+
+Tabela 4
+DMMPCP
+Variancia
+0,001
+0,003
+0,005
+0,01
+0,02
+0,05
+
+Simulacoes de Monte Carlo Valor rms
+de y(k)
+(media)
+0,0145
+0,0726
+0,1614
+0,3940
+0,9403
+2,4956
+
+z(k)f inal
+(media)
+
+z(k)f inal
+(maximo)
+
+0,3144
+0,3356
+0,3415
+0,3435
+0,3461
+0,3476
+
+0,3416
+0,3474
+0,3482
+0,3489
+0,3487
+0,3492
+
+4300
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+Como se observa na ultima coluna das tabelas 3 e 4, a restricao de degradacao sempre foi satisfeita, nunca excedendo o valor limite zthresh 
+0, 4.
+As figuras 7 e 8 apresentam os graficos gerados
+a partir dos dados das tabelas 3 e 4.
+
+Mais uma vez, pode-se salientar que a abordagem
+DMMPCP foi menos conservadora, permitindo
+que o valor final da degradacao ficasse mais proximo do limiar adotado (0,4), em comparacao com
+a abordagem DMMPC.
+Para analisar a questao da robustez em relacao a erros_de_modelagem da planta, realizou-se
+uma simulacao de Monte Carlo, onde o ganho da
+planta real era 20 menor que o ganho assumido
+no modelo MPC. As figuras 9 e 10 apresentam os
+resultados assim obtidos.
+
+Figura 7 Grafico de valor_rms da variavel regulada para as abordagens DMMPC e DMMPCP.
+
+Figura 9 Grafico de valor_rms da variavel regulada para as abordagens DMMPC e DMMPCP
+na presenca de descasamento de modelo.
+
+Figura 8 Grafico de degradacao final para as
+abordagens DMMPC e DMMPCP.
+O uso da abordagem DMMPC resulta em um
+maior valor_rms para a variavel regulada, em comparacao com a abordagem DMMPCP ja que a
+regulacao em torno da referencia e melhor no segundo caso. A insercao do prognostico na abordagem DMMPCP permite um relaxamento na
+restricao relacionada com a degradacao do atuador. Assim, essa abordagem apresenta maiores
+valores de degradacao que a DMMPC, pois, nesse
+caso, permite-se que o controle seja mais agressivo e como consequencia, provoca-se um maior
+desgaste do atuador e uma melhor regulacao.
+As figuras 7 e 8 tambem mostram que tanto
+o valor_rms da variavel regulada quanto o valor
+final da degradacao tornam-se maiores com o aumento na variancia da perturbacao. Com efeito,
+o aumento na intensidade da perturbacao tende
+a dificultar a tarefa de controle, prejudicando a
+regulacao da sada da planta e exigindo acoes corretivas mais intensas por parte do controlador. E
+interessante ressaltar que o valor final da degradacao, tando para a abordagem DMMPC quanto
+para a DMMPCP, nao varia de forma expressiva
+com o aumento da variancia da perturbacao. Tal
+resultado pode ser atribudo as restricoes adotadas nos controladores para limitar a degradacao.
+
+ISBN 978-85-8001-069-5
+
+Figura 10 Grafico de degradacao final para as
+abordagens DMMPC e DMMPCP na presenca
+de descasamento de modelo.
+Analisando as figuras 9 e 10, percebe-se que
+o sistema e robusto em relacao a erros_de_modelagem da planta, pois mesmo considerando que
+a planta real tinha um ganho 20 menor que o
+modelo utilizado no MPC, o sistema obteve uma
+boa regulacao e nao ultrapassou o valor limiar de
+degradacao estabelecido.
+6
+
+Conclusoes
+
+Esse artigo apresentou controladores preditivos
+que buscam prolongar a vida util do atuador ate
+o instante da manutencao programada. Para mitigar o problema da degradacao do atuador foram
+impostas restricoes sobre a excursao do sinal de
+controle. Com isso, o desgaste do atuador e mantido em um limite seguro de operacao de forma a
+nao falhar antes da proxima manutencao programada.
+
+4301
+
+Anais do XIX Congresso Brasileiro de Automática, CBA 2012.
+
+As simulacoes apresentadas mostraram que a
+abordagem DMMPCP obteve regulacoes melhores em torno do valor de referencia sem comprometer o atendimento a restricao de degradacao. Essa
+vantagem se deve ao uso do prognostico de falhas
+introduzido a partir das variaveis (k) e des (k)
+na equacao (21). A insercao desse prognostico
+permite que o controlador DMMPCP seja mais
+agressivo que o DMMPC, que se mostra bastante
+conservador, nao obtendo uma regulacao tao satisfatoria para evitar um aumento na degradacao
+ainda que essa permaneca dentro do valor limiar.
+As simulacoes apresentadas tambem mostram
+que os controladores sao robustos em relacao aos
+efeitos do erro de modelagem da planta.
+E importante ressaltar que mesmo relaxando
+as restricoes de degradacao atraves da introducao
+do prognostico, elas nao foram violadas em nenhum momento durante a solucao do problema
+de otimizacao.
+Uma sugestao de trabalho futuro seria a
+utilizacao de tecnicas de relaxamento_de_restricoes para verificar o que ocorre se for permitida
+uma pequena violacao na restricao de degradacao.
+Uma possibilidade seria o emprego de abordagens
+fuzzy para esse proposito (Zimmermann, 1992 Sivakumar et al., 2010 Gandolpho, 2005).
+Agradecimentos
+Os autores agradecem o apoio da Capes (ProEngenharias), FAPESP (processo 201117610-0),
+CNPq (produtividade em pesquisa) e Chemtech.
+Referencias
+Barbosa, H. S., Galvao, R. K. H. and Yoneyama,
+T. (2012). Model predictive control of linear systems subject to actuator degradation, Control and Intelligent Systems (in
+press) .
+Camacho, E. F. and Bordons, C. (1999). Model
+Predictive Control, Springer.
+Deloux, E., Castanier, B. and Berenguer, C.
+(2009). Predictive maintenance policy for
+a gradually deteriorating system subject to
+stress, Reliability Engineering and System
+Safety 94 418431.
+Gandolpho, A. A. (2005). Metodologia de Resolucao de Problemas de Programacao Linear Fuzzy, PhD thesis, Pontfica Universidade Catolica do Rio de Janeiro.
+
+lity, IEEE Transactions on Control Systems
+Technology 5 606612.
+Pereira, E. B., Galvao, R. K. H. and Yoneyama,
+T. (2010a). Model predictive control using
+prognosis and health monitoring of actuators,
+IEEE International Symposium on Industrial
+Electronics (ISIE) .
+Pereira, E. B., Galvao, R. K. H. and Yoneyama, T.
+(2010b). Model predictive control with constraints on accumulated degradation of actuators, ABCM Symposium Series in Mechatronics 4 394402.
+Ray, A. and Tangirala, S. (1996). Stochastic modeling of fatigue crack dynamics for on-line
+prognostics, IEEE Transactions on Control
+Systems Technology 4 443451.
+Rossiter, J. (2003). Model-Based Predictive Control, CRC Press.
+Sivakumar, R., Maniac, K. S., Nerthiga, V., Akila,
+R. and Balu, K. (2010). Application of
+fuzzy model predictive control in multivariable control of distillation column, International Journal of Chemical Engineering and
+Applications 1 3842.
+Tang, L., Kacprzynski, G., Goebel, K. and Reimann, J. (2007). Prognostics in the control
+loop, Proc. AAAI Fall Symposium on Artificial Intelligence for Prognostics.
+Tang, L., Kacprzynski, G. J., Goebel, K. and Saxena, A. (2008). Prognostics-enhanced automated contingency management for advanced autonomous systems, Proc. International
+Conference on Prognostics and Health Management.
+Vachtsevanos, G., Lewis, F. L., Roemer, M., Hess,
+A. and Wu., B. (2006). Intelligent Fault Diagnosis and Prognosis for Engineering Systems,
+John Wiley  Sons.
+Zhang, Y. and Jiang, J. (2003). Fault tolerant control system design with explicit consideration
+of performance degradation, IEEE Transactions on Aerospace and Electronic Systems
+39 838848.
+Zimmermann, H.-J. (1992). Fuzzy Set Theory
+and its applications, Kluwer Academic Publishers.
+
+Maciejowski, J. (2000). Predictive Control with
+Constraints, Prentice Hall.
+Patankar, R. and Ray, A. (1999). Damage mitigating controller design for structural durabi-
+
+ISBN 978-85-8001-069-5
+
+4302

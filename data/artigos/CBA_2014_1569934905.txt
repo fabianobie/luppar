@@ -1,0 +1,495 @@
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+PROPOSTA DE ARQUITETURA DE SEGMENTAÇÃO RÁPIDA DE IMAGENS POR CORES EM FPGA
+IGO AMAURÍ D. S. LUZ, P. C. M. A. FARIAS, LAUÊ RAMI S. C. D. JESUS, JOÃO MARCELO S. SOUZA, JOAQUIM
+RANYERE S. D. OLIVEIRA, NELSON A. F. NETO.
+1.
+
+PPGEE - Programa de Pós Graduação em Engenharia Elétrica, Escola Politécnica, Universidade Federal da Bahia
+E-mails igoamauri@gmail.com, paulo.farias@ufba.br, lauerami, joaomssouza, jranyere, nelsonafn@gmail.com
+
+Abstract The technique of segmentation of images by color is used in several solutions that make use of computer_vision in
+real time, for example, object detection and identification parameters of the image. Thus, it is necessary to use hardware solutions
+associated with an efficient algorithm. This paper propose an architecture for hardware implementation of a fast algorithm for
+segmentation of images by color. The project proposes the inclusion of the same in FPGA (Cyclone II  DE-2) using Verilog, a
+hardware description language HDL. The embedded application is composed of a module responsible for processing and four
+memories, responsible for storing data used by design. In this paper we will discuss theories related to work, the methodology
+used for development the design and functional verification, the results obtained and finally the conclusions of work.
+Keywords Segmentation of Color, Computer Vision, Processing of Images, Field-Programmable Gate Array, RTL Design.
+Resumo A técnica de segmentação de imagens por cores é utilizada em diversas soluções que fazem uso de visão_computacional em tempo_real, por exemplo, detecção_de_objetos e identificação_de_parâmetros na imagem. Dessa forma, faz-se necessário o
+uso de soluções em hardware, associadas a um algoritmo eficiente. Esse artigo propõe uma arquitetura para a implementação em
+hardware de um algoritmo de segmentação rápida de imagens por cores. O projeto propõe a inserção do mesmo em FPGA
+(Cyclone II - DE-2) através do Verilog, uma linguagem de descrição de hardware HDL. A aplicação embarcada é composta de
+um módulo responsável pelo processamento e quatro memórias, responsáveis por armazenar os dados utilizados pelo design.
+Nesse artigo serão abordadas as teorias relacionadas ao trabalho, a metodologia de desenvolvimento do design e verificação funcional utilizada, os resultados obtidos e por fim a conclusão do trabalho.
+Palavras-chave .
+
+1
+
+YCbCr e Hue Saturation Value (HSV) (Zhou et al.,
+2005).
+As abordagens de Visão Computacional para a
+segmentação_de_cores são comumente desenvolvidas
+em software, utilizando sistemas de propósito geral,
+baseados em linguagens de programação de alto
+nível, como Java, C, C++, Python, entre outras. Essas
+soluções não são eficientes para problemas que necessitem do desenvolvimento de um hardware embarcado, a exemplo de uma aplicação específica de
+reconhecimento e triagemseleção de itens ou situações que requerem o uso de arquiteturas reconfiguráveis, tais como Field-Programmable Gate Array
+(FPGA). Como exemplo, o dispositivo desenvolvido
+pela Newton Laboratories capaz de fornecer dados de
+rastreamento de cor em tempo_real (Newton, 1999)
+ou a proposta de Zhou et al. (2005) de uma solução
+de alta performance em hardware para a classificação
+de imagens por cor utilizada em robôs_móveis que se
+utiliza de processamento_paralelo.
+Sluzek and Minh (2006) também desenvolveram
+solução em hardware para segmentação_de_cores.
+Nesse trabalho, foi desenvolvido um dispositivo
+capaz de fornecer imagens processadas na mesma
+taxa em que quadros de vídeos são capturados. Dessa
+forma, alcançando o desempenho necessário para a
+aplicação. Ma et al (2011) desenvolveram um dispositivo de processamento_de_imagem voltado para
+pessoas que possuem deficiência visual, o qual pode
+ser usado, por exemplo, para ajudar a identificação
+das cores pelas pessoas que possuem esta deficiência.
+
+Introdução
+
+A segmentação de imagens por cores é uma técnica essencial em diversas áreas que fazem uso da
+visão_computacional. Através dela é possível identificar objetos, regiões de interesse, entre outras características de uma cenaimagem. Além disso, aplicações em tempo_real que interagem com o mundo
+físico utilizam a segmentação_por_cores como uma
+das suas principais técnicas. Um exemplo é a RoboCup (Kitano et al., 1997). A segmentação de imagens por cores foi usada, também, por Said et al.
+(2012). Nesse trabalho foi desenvolvido um sistema
+voltado para robôs autônomos que detecta e rastreia
+múltiplos objetos em ambientes não controlados e em
+tempo_real.
+A função básica da segmentação é classificar
+cada pixel de uma imagem em classes de cores previamente definidas. Para tal, utilizam-se técnicas
+como a limiarização linear da cor, a qual consiste no
+particionamento do espaço de cor com limites lineares, e a classificação dos vizinhos próximos, na qual
+o pixel é classificado de acordo com a sua proximidade em relação  localização específica no espaço
+de cor de exemplares de pixels previamente determinados (Brown and Koplowitz, 1979). Outras técnicas
+podem ser encontradas em Bruce et al. (2000).
+A escolha do espaço de cor a ser utilizado depende das características do projeto, do tipo de digitalização, da aplicação, entre outros fatores. Dentre
+os espaços de cores existentes, destacam-se Hue
+Saturation Intensity (HSI), Red Green Blue (RGB),
+2534
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+A fim de propor uma solução para os problemas
+dos equipamentos de processamento_de_imagens que
+apresentam alto consumo_de_energia e custo, Yan
+Liping and Song Kai (2010), desenvolveram um
+sistema de processamento_de_imagem em plataforma
+embarcada. Propondo, assim, uma alternativa em
+plataformas para o desenvolvimento, por exemplo,
+de sistemas_em_tempo_real.
+Nesse contexto, esse trabalho apresenta uma
+proposta de arquitetura para solução em hardware de
+segmentação_por_cores baseada no algoritmo proposto por Bruce et al. (2000). Esse algoritmo tem como
+proposta fazer com que o processo de segmentação
+seja mais rápido através da redução da quantidade de
+operações realizadas.
+Foi definida a utilização desse algoritmo devido
+a sua natureza viabilizar o embarque do mesmo em
+FPGA, pois a sua estrutura baseia-se em operações
+lógicas simples. Outro fator preponderante foi o fato
+deste ser utilizado no sistema SSL-Vision da RoboCup, e também por fazer parte da biblioteca
+CMVision (Zickler et. al., 2010).
+O processo de construção desse trabalho se deu
+através do desenvolvimento do modelo em Matlab e,
+a partir deste, o Register Transfer Level (RTL) utilizando o Verilog como linguagem de descrição de
+hardware (HDL). O módulo RTL é genérico e pode
+ser utilizado com diferentes dispositivos FPGA.
+Após a finalização do RTL foi realizada a verificação
+funcional do design utilizando a metodologia baseada em golden model.
+A organização do texto foi feito da seguinte maneira A Seção 2 apresenta conceitos relativos ao
+FPGA a Seção 3 aborda a metodologia do trabalho,
+detalhando o algoritmo implementado e a arquitetura
+proposta a Seção 4 apresenta os resultados experimentais obtidos e por fim, a Seção 5 apresenta a
+conclusão do trabalho.
+
+Dessa forma, esse dispositivo proporciona a adição,
+remoção ou alteração das funcionalidades, não impactando no tempo de projeto, possibilitando a realização de diferentes ciclos de desenvolvimento e a
+execução de testes através das prototipagens com o
+objetivo de verificar o funcionamento da implementação física.
+3 Metodologia
+A metodologia faz uso das técnicas descritas em
+(Bruce et al., 2000) e metodologias de sistemas para
+hardware embarcado, FPGAs.
+3.1 Algoritmos de Segmentação
+O algoritmo de segmentação utiliza as técnicas de
+classificação rápida de cores desenvolvidas por Bruce et al. (2000). Este minimiza os cálculos em tempo
+real, que determinam o processo de decisão dos espaços de cores, mas, em contrapartida, faz uso de
+tabelas para determinar a classificação, as quais devem ser calculadas previamente. Do ponto de vista
+dos dispositivos embarcados, estes requisitos são
+factíveis para uso, mesmo com as limitações de
+hardwareprocessamento encontradas em tais, tornando esse algoritmo aplicável em FPGAs, microcontroladores, dentre outros.
+O trabalho desenvolvido por Bruce et al. (2000)
+baseia-se na utilização de limiares em três dimensões, como por exemplo, o RGB e YUV. O mesmo
+não limita qual espaço de cor deve ser utilizado, mas,
+a título de exemplo, utilizou o YUV. Nessa proposta,
+os autores definiram que cada elemento do espaço de
+cor seria um valor inteiro de 32 bits, ou seja, reduzindo a representação das cores para um universo de
+32 cores.
+Na modelagem do sistema optou-se por usar o
+formato de cores YCbCr, pois o mesmo é usado nos
+padrões Joint Photographic Experts Group (JPEG) e
+Moving Picture Experts Group (MPEG), o que facilita o uso do procedimento em aplicações que tenham
+esse formatos como fonte de dados. Cada componente é reduzido do espaço de cor original para um tamanho predeterminado pelo limiar, que é definido
+pela aplicação antes da geração das tabelas de classificação.
+Na aplicação, o espaço de cores é reduzido de
+16.777.216 para 64, onde cada combinação de Y, Cb
+e Cr determina um novo espaço de cor de 64 posições. Ou seja, as cores na imagem original são reagrupadas em um novo universo de apenas 64 cores
+distintas. Para isso são utilizadas 3 tabelas (uma para
+Y, uma para Cb e outra para Cr) que indicam as
+quais grupos de cores cada componente pode pertencer e a intersecção entre os possíveis grupos define o
+segmento de cor do componente. As tabelas de mapeamento são definidas por um processamento exaustivo, apresentado na subseção 3.1.
+Para a execução do algoritmo foi representado o
+pixel com 24 bits e cada componente de cor (Y, Cb e
+
+2 Arquitetura de Hardware Reconfigurável
+FPGA foi um dos recursos utilizados para a realização deste projeto. O dispositivo FPGA apresenta uma
+matriz bidimensional de células lógicas e programáveis (Chu, 2008). Um projeto pode ser implementado
+neste dispositivo através da especificação da função
+das células lógicas, definindo as conexões de cada
+porta lógica. Atualmente, a utilização desta tecnologia de hardware tem crescido entre os projetistas de
+diversas áreas como telecomunicações, processamento_de_sinais e imagens, robótica, equipamentos médicos, automotiva, bem como na área de projetos de
+circuitos integrados digitais no geral, entre outros
+(Monmasson e Cirstea, 2007).
+O FPGA e os Processadores Digitais de Sinais
+(DSP) são capazes de fornecer os recursos necessários para implementação do projeto proposto. Tais
+dispositivos permitem ao projetista desenvolver e
+simular projetos sofisticados de maneira rápida e
+eficiente. No entanto, uma característica relevante
+para o projeto é a flexibilidade fornecida pelo FPGA.
+2535
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+Cr) com 8 bits, (256 possibilidades) o que permite
+representar 16.777.216 cores possíveis por pixel.
+Cada valor associado a um componente do espaço de
+cores YCbCr de um dado pixel referencia um endereço de sua respectiva memória de 64 bits.
+Em uma imagem em YCbCr, a execução do algoritmo percorre pixel a pixel, da esquerda para
+direita e de cima para baixo, onde cada pixel de 24
+bits, com componentes Y, Cb e Cr (de 8 bits cada)
+endereçam suas respectivas tabelas de mapeamento.
+Cada tabela retorna uma palavra contendo a informação de qual cor o componente esta associado, a figura 1 representa esse processo. A relação posição do
+bit versus cor associada utiliza o espectro Hue do
+sistema_de_cor HSV, como representada na Figura 1.
+O modelo que determina esta associação é explanado
+na subseção 3.1.1.
+
+3.1.1 Mapeamento das Classes de Cores
+Uma das etapas do trabalho proposto é a construção
+das tabelas de mapeamento, concentrando o maior
+esforço computacional. Para definir o mapeamento
+das classes de cores são realizadas iterações exaustivas com todas as possibilidades inerentes ao universo
+de cor escolhido, o YCbCr.
+Como mencionado na subseção 3.1, e indicado
+na Figura 1, existe uma relação entre a posição da cor
+versus a cor associada. Esta relação é determinada
+por um mapeador que a cada iteração de cor YCbCr
+define o novo universo.
+A Figura 3 ilustra o processo de iteração das
+16.777.216 possibilidades do YCbCr e a definição
+dos novos universos de cores para cada um destes
+componentes. Como pode ser visto, o mapeador
+provê a relação de cada uma das 16.777.216 cores
+em 256 e posteriormente em 64. O resultado retorna
+as respectivas tabelas de 64x256 de Y, Cb e Cr. As
+tabelas resultantes são utilizadas no processo final de
+segmentação, como descrito na subseção 3.1.
+
+Figura 1. Relação posição binária versus cor associada
+
+As cores associadas para Y, Cb e Cr são comparadas bit a bit fazendo-se a interseção (operação
+lógica E) para determinar a palavra resultante,
+também de 64 bits, de modo que contenha somente
+uma posição com bit válido, indicando o segmento
+do pixel (ver Figura 2).
+O segmento ao qual o pixel pertence é usado para endereçar uma tabela que retorna a respectiva cor
+no sistema YCbCr. Esta cor, que identifica o segmento, é substituída no lugar do antigo pixel na imagem, dependendo do modo de operação. A Figura 2
+representa estes passos e indica como é feita a composição do sistema de segmentação.
+
+Figura 3. Algoritmo Exaustivo de Caracterização do espaço de cor
+YCbCr.
+
+O mapeador utiliza o componente de cor Hue
+(Matriz) do espaço HSV para definir o novo universo
+de cor reduzido. Dada uma cor em YCbCr, ela é
+transformada em HSV, os componentes S (Saturation) e V (Value) são descartados e o componente
+Hue é mantido para representar a escala de segmentos. Considerando o espaço de cor definido pelo
+canal Hue como sendo de 256 possibilidades (8 bits),
+utiliza-se o threshold determinado e então é realizada
+a discretização do componente para 64 possibilidades. Cada cor das 64 possibilidades é representada
+por um bit, ou seja, a presença do bit válido (valor 1)
+em alguma das posições, indica a existência da cor
+correspondente.
+Para cada uma das possíveis combinações de
+YCbCr, identifica-se a cor e preenche a palavra de 64
+bits no endereço da memória referente a cada um dos
+componentes (Y, Cb e Cr), desse modo, as posições
+identificadas são marcadas com o bit válido na respectiva cor, sendo assim, são geradas as tabelas para
+cada Y, Cb e Cr, como indicado na Figura 4.
+
+Figura 2. Fluxograma do Processo de Segmentação
+
+Ao final do processamento de todos os pixels, a
+imagem segmentada pode ser exibida de duas formas mostrando todos os segmentos ou apenas o
+selecionado.
+2536
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+no máximo N pulsos de relógio, sendo N o número
+de cores do espaço de cor.
+O controle do hardware é feito através dos comandos
+ start - comando de inicialização do sistema, deve acontecer com a imagem
+previamente carregada na memória.
+ onecolor - indica se a imagem será
+substituída por todas as segmentações
+correspondentes ou por somente uma
+cor escolhida.
+ color - indica qual cor será utilizada
+dentre as possível no espaço de cor caso
+a opção de onecolor seja definida.
+ finish - o hardware indica que a imagem já está totalmente substituída na
+memória.
+O hardware desenvolvido foi sintetizado no
+FPGA Cyclone II EP2C35F672C6 e obteve uma
+netlist com 395 elementos lógicos dentre os quais
+364 funções combinacionais e 151 registradores
+dedicados o que equivale a 1 do total de recursos
+disponíveis no FPGA.
+O tempo médio de ciclos de relógio foi de 63
+pulsos por pixel da imagem o que permite a realização da segmentação de uma imagem de 480x320
+pixels em 9,6 ms a 100 MHz.
+
+Figura 4. Redução do espaço de Cor
+
+Ao final, o uso das palavras binárias de 64 bits
+para representar a cor, facilita a utilização em sistemas de hardware dedicado, por fazerem uso de componentes lógicos simples (comparação com E
+(AND) Bitwise) na decisão das classes e espaços de
+cor. O processamento de massa e exaustivo é realizado de maneira off-line por um sistema auxiliar, deixando somente operações lógicas simples para o
+sistema de hardware dedicado que irá executar as
+operações de segmentação em tempo_real, este, que
+normalmente é provido de poucos recursos computacionais.
+3.2 Desenvolvimento
+signArquitetura
+
+do
+
+Modelo
+
+e
+
+do
+
+De-
+
+Figura 6. Visão Geral do Projeto
+
+3.3 Verificação do Design
+Com o propósito de validar o módulo RTL, foi realizada a verificação funcional da implementação da
+segmentação_de_cores em hardware. Para isso, foi
+desenvolvido um testbench simples para que pudesse
+fazer a interface do RTL com o Matlab e também
+estimular as entradas do módulo. A figura 7 ilustra o
+a arquitetura.
+
+Figura 5. Arquitetura
+
+A arquitetura de hardware foi desenvolvida conforme
+a figura 5. Uma memória RAM armazena uma imagem no formato YCbCr usando 24 bits de representação (8 bits para cada componente). Essa imagem é
+processada pixel a pixel, no módulo Segmentation, e
+substituída na memória RAM pelos valores obtidos
+da cor correspondente em uma tabela de cores armazenada em uma memória ROM interna ao módulo. O
+mapeamento de classes de cores é armazenado separadamente em três ROMs, o que permite que o valor
+correspondente do pixel seja utilizado diretamente
+como endereço da classe de cor.
+O resultado obtido pela agregação das classes
+através de uma operação AND não retorna o valor
+ideal com apenas uma cor classificada, devido a nãolinearidade do algoritmo gerador das classes. Desse
+modo, sobre o valor obtido é calculado uma mediana
+otimizada para a execução em hardware, consumindo
+
+Figura 7. Ambiente de Verificação
+
+O Testbench foi desenvolvido tendo como modelo_de_referência um modelo em Matlab do algoritmo de segmentação_de_cores proposto. Dessa forma,
+
+2537
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+ao passo em que o módulo RTL gera as saídas, estas
+são comparadas com as saídas do modelo em Matlab
+e assim é feita a validação dos resultados.
+Como pode ser observado na figura 7, foi necessário integrar o Matlab com o ambiente de verificação para que fossem geradas as entradas a serem
+estimuladas no RTL. Nesse contexto, o Matlab realiza a leitura do arquivo de imagem e o converte no
+espaço de cores YCbCr, e então, o ambiente de verificação acessa a saída do Matlab e estimula a entrada
+do RTL.
+Após a segmentação das cores da imagem, o
+RTL tem como saída a imagem também no espaço de
+cores YCbCr, sendo assim, para que fosse possível
+visualizar o resultado, utilizou o Matlab para acessar
+essa saída e mostrar a imagem resultante.
+
+A Figura 9 mostra que o produto desenvolvido
+segmentou as cores presentes na figura 8 de forma
+satisfatória.
+Outro teste foi realizado, utilizando a Figura 10
+como entrada.
+
+Figura 10. Segundo Teste - Imagem Original
+
+Como resultado da segmentação da Figura 10,
+temos a Figura 11.
+
+4 Resultados
+O ambiente para verificação do produto, descrito na
+seção 3.3, foi desenvolvido utilizando a ferramenta
+de verificação Incisive Simulator da Cadence, juntamente com o Matlab. O Matlab gerou as memórias
+necessárias para a execução do RTL, e também, a
+figura de entrada em YCbCr para que fosse processada. Essa ferramenta foi responsável também pela
+transformação do arquivo da imagem segmentada
+gerada pelo RTL, no formato .hex, para o formato
+.jpg. A ferramenta de simulação foi responsável por
+executar o testbench, dessa forma, fazendo a integração dos componentes e também estimulando o RTL.
+Dessa forma, os resultados foram obtidos utilizando
+esse processo de simulação.
+Um primeiro teste realizado utilizou-se como
+imagem de entrada a Figura 8.
+
+Figura 11. Segundo Teste - Imagem Segmentada
+
+Após a validação do funcionamento do módulo,
+foi realizada a síntese do RTL para o FPGA da família Cyclone II com identificador do dispositivo
+EP2C35F672C6. A Tabela 1 mostram os resultados
+encontrados ao final da síntese.
+Tabela 1. Resultado da síntese para FPGA.
+
+Elementos
+
+Figura 8. Imagem Original (Círculos Coloridos)
+
+Como resultado da segmentação da Figura 8,
+temos a imagem segmentada mostrada na Figura 9.
+
+Utilização
+
+Total de elementos lógicos
+Total de funções combinacionais
+Dedicated logic registers
+
+395  33,216 (1)
+
+Total de registradores
+
+151
+
+Total de pinos
+
+297  475 (63)
+
+364  33,216 (1)
+151  33,216 (<1)
+
+Através dos resultados da síntese apresentados
+na Tabela 1, pode-se observar a baixa utilização dos
+recursos do FPGA. A reduzida quantidade de elementos lógicos utilizados, juntamente com as reduzidas funções lógicas, deve-se ao fato de que o algoritmo implementado possui poucas operações lógicas, executando, basicamente, operações de comparação.
+A utilização de menos de 1 dos registradores
+deve-se ao fato de que o design, basicamente, regis-
+
+Figura 9. Imagem Segmentada (Círculos Coloridos)
+
+2538
+
+Anais do XX Congresso Brasileiro de Automática
+Belo Horizonte, MG, 20 a 24 de Setembro de 2014
+
+tra os sinais de interface com a memória RAM, que
+representa a imagem.
+
+Chu, P. P. (2008). FPGA prototyping by Verilog
+examples. Wiley-Interscience. ISBN 978-0-47018532-2.
+Kitano, H., Kuniyoshi, Y., Noda, I., Asada, M.,
+Matsubara, H. and Osawa, E. (1997). RoboCup
+A challenge problem for AI. AI Magazine,
+18(1), pp 7385
+Liping, Y., Kai, S. (2010). Design and Realization of
+Image Processing System Based on Embedded
+Platform. Information Technology and Applications (IFITA), 2010 International Forum on
+(Volume2 ), Pages 446-449.
+Ma, Y., En Wang, E., Wang, Y. (2011). An embedded image processing device for color vision deficiency. Biomedical Engineering and Informatics (BMEI), 2011 4th International Conference
+on (Volume2 ), Pages 1041  1045.
+Monmasson, E. and Cirstea, M. N. (2007). FPGA
+Design Methodology for Industrial Control Systems - A Review. IEEE Transactions On Industrial Electronics, Vol. 54, NO. 4.
+Newton Laboratories. (1999) Cognachrome image
+capture device. httpwww.newtonlabs.com.
+Said, T., Ghoniemy, S., Karam, O. (2012). Real-time
+multi-object detection and tracking for autonomous robots in uncontrolled environments.
+Computer Engineering  Systems (ICCES),
+2012 Seventh International Conference on, Pages 67-72.
+Sluzek, A., Minh, P.K.D. (2006). Embedded Vision
+Module for Robot-soccer. Computer Systems
+and Applications, 2006. IEEE International Conference on, Pages 159-162.
+Zickler, S., Laue, T., Birbach, O., Wongphati, M.,
+Veloso, M. (2010) SSL-Vision The Shared Vision System for the RoboCup Small Size
+League. RoboCup 2009 Robot Soccer World
+Cup XIII, Pages 425-436.
+Zhou, Q., Yuan, K., Wang, H. and Hu, H. (2005).
+FPGA-based colour image classification for mobile robot navigation. IEEE International Conference on Industrial Technology, ICIT, pp.
+921-925.
+
+5 Conclusão
+Esse trabalho apresenta uma proposta de arquitetura
+em hardware para segmentação rápida de imagens
+por cores baseado no algoritmo proposto por Bruce
+et al. (200). Através deste é possível classificar cada
+pixel da imagem de forma rápida, pois o mesmo
+propõe reduzidas operações de comparações no processo de classificação dos pixels. Sendo assim, baseados nesse artigo foi desenvolvida uma solução própria para o problema.
+Nesse trabalho foi desenvolvido o RTL e a fim
+de verificar o mesmo, foi construiu-se, também, um
+modelo_de_referência em Matlab para que fossem
+comparados os resultados. Com isso, garantindo o
+correto funcionamento do sistema.
+Com relação  aplicação de segmentação, o trabalho proposto por Bruce et al. (2000) minimiza o
+processamento de tempo_real, através da utilização
+de operadores lógicos simples, se tornando uma
+alternativa para implementação em dispositivos de
+lógica reduzida, como FPGAs, mas em contrapartida,
+exige o uso de um pré-processamento das tabelas de
+mapeamento por meio de um sistema auxiliar, além
+de requisitar o uso de memórias para o armazenamento das tabelas. Ou seja, o custo_computacional do
+processamento é substituído pela utilização das memórias.
+A partir dos resultados apresentados, observa-se
+que o proposito do trabalho foi alcançado. Foram
+executados os testes citados e todos eles tiveram
+resultados satisfatórios, ou seja, a segmentação de
+cores das imagens testadas foi realizada com êxito
+pelo RTL.
+Como melhoria e próximos passos desse trabalho, propõe-se executar testes utilizando a placa de
+FPGA, para observar o comportamento e o desempenho do módulo. Outro ponto seria a mudança da
+arquitetura implementada para adicionar uma interface com uma câmera no FPGA, para que assim, possa
+ser realizada a segmentação em tempo_real. Para isso,
+é necessário fazer adaptações no módulo RTL desenvolvido e também implementar a interface com a
+câmera no FPGA.
+Referências Bibliográficas
+Brown, T. and Koplowitz, J. (1979). The weighted
+nearest neighbor rule for class dependent sample
+sizes. IEEE Transactions on Information Theory,
+pp 617-619.
+Bruce, J., Balch, T. and Veloso, M. (2000). Fast and
+Inexpensive Color Image Segmentation for Interactive Robots. In Proceedings of the 2000
+IEEE  RSJ Int. Conf. on Intelligent Robots and
+Systems (IROS 2000), vol. 3, pp 20612066.
+
+2539
