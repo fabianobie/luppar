@@ -288,5 +288,8 @@ def ready():
         gc.enable()
         SOURCES_LIST[s.slug] = source
         print(s.name)
-
-ready()
+try:
+    ready()
+except:
+    traceback.print_exc(file=sys.stdout)
+    pass
