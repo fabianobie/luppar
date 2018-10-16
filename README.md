@@ -31,13 +31,16 @@
 
 #### PYTHON
 Instalar python 3.6 e Pip3
+ ```bash
     $ sudo apt install python3
     $ sudo apt install python3-pip
+```
 
 #### MYSQL
 Instalar mysql sever
+ ```bash
     $ sudo apt install mysql-server
-
+```
 Configurar mysql e criar o *schema* 'luppar'
 
     $ mysql -u root -p
@@ -61,7 +64,7 @@ $ cd
 ```
 
 ```shell
-$ ﻿cd
+$ cd
 $ git clone https://github.com/fabianobie/luppar.git
 $ cd luppar
 $ pip3 install -r requirements.txt
